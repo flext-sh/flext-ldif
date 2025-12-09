@@ -666,15 +666,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 validation_violations=[],  # No validation issues
                 metadata=m.Ldif.QuirkMetadata(
                     quirk_type=FlextLdifServersOudConstants.SERVER_TYPE,  # OUD quirk type from Constants
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                        **{
-                            # Use Constants for metadata keys instead of hardcoded strings
-                            FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
-                            FlextLdifServersOudConstants.FORMAT_TYPE_KEY: (
-                                FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE
-                            ),
-                        }
-                    ),
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**{
+                        # Use Constants for metadata keys instead of hardcoded strings
+                        FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
+                        FlextLdifServersOudConstants.FORMAT_TYPE_KEY: (
+                            FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE
+                        ),
+                    }),
                 ),
             )
 

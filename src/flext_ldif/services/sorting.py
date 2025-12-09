@@ -624,10 +624,9 @@ class FlextLdifSorting(
         # Extract results from batch result with explicit type narrowing
         processed_raw = batch_data.get("results", [])
         # Loop-based narrowing for mypy compatibility (list comp breaks type inference)
-        processed: list[m.Ldif.Entry] = []
-        for item in processed_raw:
-            if isinstance(item, m.Ldif.Entry):
-                processed.append(item)  # noqa: PERF401
+        processed: list[m.Ldif.Entry] = [
+            item for item in processed_raw if isinstance(item, m.Ldif.Entry)
+        ]
         return r[list[m.Ldif.Entry]].ok(processed)
 
     @staticmethod
@@ -735,10 +734,9 @@ class FlextLdifSorting(
         batch_data = batch_result.value
         processed_raw = batch_data.get("results", [])
         # Loop-based narrowing for mypy compatibility (list comp breaks type inference)
-        processed: list[m.Ldif.Entry] = []
-        for item in processed_raw:
-            if isinstance(item, m.Ldif.Entry):
-                processed.append(item)  # noqa: PERF401
+        processed: list[m.Ldif.Entry] = [
+            item for item in processed_raw if isinstance(item, m.Ldif.Entry)
+        ]
         return r[list[m.Ldif.Entry]].ok(processed)
 
     @staticmethod

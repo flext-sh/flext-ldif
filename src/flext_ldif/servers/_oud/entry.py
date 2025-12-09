@@ -1324,12 +1324,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if attr_name not in acl_comments_dict:
                     acl_comments_dict[attr_name] = []
                 for acl_value in transformation.original_values:
-                    acl_comments_dict[attr_name].extend(
-                        [
-                            f"# [REMOVED] {attr_name}: {acl_value}",
-                            f"# [SKIP_TO_04] {attr_name}: {acl_value}",
-                        ]
-                    )
+                    acl_comments_dict[attr_name].extend([
+                        f"# [REMOVED] {attr_name}: {acl_value}",
+                        f"# [SKIP_TO_04] {attr_name}: {acl_value}",
+                    ])
 
     @staticmethod
     def _normalize_acl_values(
@@ -1417,20 +1415,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
         if isinstance(acl_values, list):
             for acl_value in acl_values:
-                comments.extend(
-                    [
-                        f"# [TRANSFORMED] {original_attr}: {acl_value}",
-                        f"# [SKIP_TO_04] {attr_name}: {acl_value}",
-                    ]
-                )
+                comments.extend([
+                    f"# [TRANSFORMED] {original_attr}: {acl_value}",
+                    f"# [SKIP_TO_04] {attr_name}: {acl_value}",
+                ])
         else:
             acl_val_str = str(acl_values)
-            comments.extend(
-                [
-                    f"# [TRANSFORMED] {original_attr}: {acl_val_str}",
-                    f"# [SKIP_TO_04] {attr_name}: {acl_val_str}",
-                ]
-            )
+            comments.extend([
+                f"# [TRANSFORMED] {original_attr}: {acl_val_str}",
+                f"# [SKIP_TO_04] {attr_name}: {acl_val_str}",
+            ])
 
     def _add_oud_acl_comments(
         self,

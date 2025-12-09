@@ -820,11 +820,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                 {
                                     "metadata": FlextLdifModelsDomains.QuirkMetadata(
                                         quirk_type=self._get_server_type(),
-                                        extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-                                            {
-                                                "original_format": acl_line.strip(),
-                                            }
-                                        ),
+                                        extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
+                                            "original_format": acl_line.strip(),
+                                        }),
                                     ),
                                 },
                             ),
@@ -1082,15 +1080,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     original_attribute_case=FlextLdifModelsMetadata.DynamicMetadata(
                         **original_attribute_case,
                     ),
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-                        {
-                            "server_type": "relaxed",
-                            "rfc_parse_failed": True,
-                            "rfc_error": str(parent_result.error)
-                            if parent_result.error
-                            else None,
-                        }
-                    ),
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
+                        "server_type": "relaxed",
+                        "rfc_parse_failed": True,
+                        "rfc_error": str(parent_result.error)
+                        if parent_result.error
+                        else None,
+                    }),
                 )
 
                 entry = FlextLdifModelsDomains.Entry(

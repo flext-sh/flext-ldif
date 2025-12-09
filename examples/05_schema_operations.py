@@ -576,9 +576,9 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
     batch_results["summary"] = {
         "total_batches": len(schema_batches),
         "total_schema_entries": total_schema_entries,
-        "batches_processed": len(
-            [b for b in batch_results if not b.endswith("_error") and b != "summary"]
-        ),
+        "batches_processed": len([
+            b for b in batch_results if not b.endswith("_error") and b != "summary"
+        ]),
     }
 
     return FlextResult.ok(batch_results)
@@ -681,15 +681,13 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     entries_file = output_dir / "entries.ldif"
     entries_write = api.write(test_entries, entries_file)
 
-    return FlextResult.ok(
-        {
-            "schema_entries": len(schema_entries),
-            "schema_valid": schema_report.valid_entries,
-            "test_entries": len(test_entries),
-            "entries_valid": entry_report.valid_entries,
-            "parallel_transformed": transformed_count,
-            "schema_file_written": schema_write.is_success,
-            "entries_file_written": entries_write.is_success,
-            "pipeline_completed": True,
-        }
-    )
+    return FlextResult.ok({
+        "schema_entries": len(schema_entries),
+        "schema_valid": schema_report.valid_entries,
+        "test_entries": len(test_entries),
+        "entries_valid": entry_report.valid_entries,
+        "parallel_transformed": transformed_count,
+        "schema_file_written": schema_write.is_success,
+        "entries_file_written": entries_write.is_success,
+        "pipeline_completed": True,
+    })

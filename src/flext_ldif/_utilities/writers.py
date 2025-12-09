@@ -175,22 +175,20 @@ class FlextLdifUtilitiesWriters:
                     entry = entry_raw
                 else:
                     # Convert EntryProtocol to Entry via model_validate
-                    entry = FlextLdifModelsDomains.Entry.model_validate(
-                        {
-                            "dn": (
-                                entry_raw.dn.value
-                                if hasattr(entry_raw.dn, "value")
-                                else str(entry_raw.dn)
-                                if entry_raw.dn
-                                else None
-                            ),
-                            "attributes": (
-                                entry_raw.attributes.attributes
-                                if hasattr(entry_raw.attributes, "attributes")
-                                else entry_raw.attributes or None
-                            ),
-                        }
-                    )
+                    entry = FlextLdifModelsDomains.Entry.model_validate({
+                        "dn": (
+                            entry_raw.dn.value
+                            if hasattr(entry_raw.dn, "value")
+                            else str(entry_raw.dn)
+                            if entry_raw.dn
+                            else None
+                        ),
+                        "attributes": (
+                            entry_raw.attributes.attributes
+                            if hasattr(entry_raw.attributes, "attributes")
+                            else entry_raw.attributes or None
+                        ),
+                    })
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
@@ -201,24 +199,20 @@ class FlextLdifUtilitiesWriters:
                         entry = entry_transformed
                     else:
                         # Convert EntryProtocol to Entry via model_validate
-                        entry = FlextLdifModelsDomains.Entry.model_validate(
-                            {
-                                "dn": (
-                                    entry_transformed.dn.value
-                                    if hasattr(entry_transformed.dn, "value")
-                                    else str(entry_transformed.dn)
-                                    if entry_transformed.dn
-                                    else None
-                                ),
-                                "attributes": (
-                                    entry_transformed.attributes.attributes
-                                    if hasattr(
-                                        entry_transformed.attributes, "attributes"
-                                    )
-                                    else entry_transformed.attributes or None
-                                ),
-                            }
-                        )
+                        entry = FlextLdifModelsDomains.Entry.model_validate({
+                            "dn": (
+                                entry_transformed.dn.value
+                                if hasattr(entry_transformed.dn, "value")
+                                else str(entry_transformed.dn)
+                                if entry_transformed.dn
+                                else None
+                            ),
+                            "attributes": (
+                                entry_transformed.attributes.attributes
+                                if hasattr(entry_transformed.attributes, "attributes")
+                                else entry_transformed.attributes or None
+                            ),
+                        })
 
                 # Write entry parts
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -533,22 +527,20 @@ class FlextLdifUtilitiesWriters:
                     else:
                         # Convert EntryProtocol to Entry via model_validate
                         entries_typed.append(
-                            FlextLdifModelsDomains.Entry.model_validate(
-                                {
-                                    "dn": (
-                                        entry.dn.value
-                                        if hasattr(entry.dn, "value")
-                                        else str(entry.dn)
-                                        if entry.dn
-                                        else None
-                                    ),
-                                    "attributes": (
-                                        entry.attributes.attributes
-                                        if hasattr(entry.attributes, "attributes")
-                                        else entry.attributes or None
-                                    ),
-                                }
-                            ),
+                            FlextLdifModelsDomains.Entry.model_validate({
+                                "dn": (
+                                    entry.dn.value
+                                    if hasattr(entry.dn, "value")
+                                    else str(entry.dn)
+                                    if entry.dn
+                                    else None
+                                ),
+                                "attributes": (
+                                    entry.attributes.attributes
+                                    if hasattr(entry.attributes, "attributes")
+                                    else entry.attributes or None
+                                ),
+                            }),
                         )
 
                 # Write each entry using manual loop for clear type inference

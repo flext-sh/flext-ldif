@@ -555,7 +555,7 @@ class FlextLdifConfig(FlextConfig):
         """
         # Normalize aliases to canonical form (ad → active_directory, etc)
         # Import here to avoid circular import
-        from flext_ldif.utilities import u  # noqa: PLC0415
+        from flext_ldif.utilities import u
 
         normalized = u.Ldif.Server.normalize_server_type(v)
 
@@ -714,7 +714,7 @@ class FlextLdifConfig(FlextConfig):
 
         # Normalize aliases to canonical form (ad → active_directory, etc)
         # Import here to avoid circular import
-        from flext_ldif.utilities import u  # noqa: PLC0415
+        from flext_ldif.utilities import u
 
         normalized = u.Ldif.Server.normalize_server_type(v)
 

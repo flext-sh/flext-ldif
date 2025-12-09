@@ -711,12 +711,10 @@ class FlextLdifServersBaseSchemaAcl(
         # RFC ACI format: acl "name"
         pattern = re.compile(r'acl\s+"[^"]*"')
         replacement_template = 'acl "{0}"'
-        return FlextResult[tuple[re.Pattern[str], str]].ok(
-            (
-                pattern,
-                replacement_template,
-            )
-        )
+        return FlextResult[tuple[re.Pattern[str], str]].ok((
+            pattern,
+            replacement_template,
+        ))
 
     def convert_rfc_acl_to_aci(
         self,

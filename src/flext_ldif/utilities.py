@@ -969,7 +969,7 @@ class FlextLdifUtilities(FlextUtilities):
                     predicate_or_filter1
                 )
 
-                return FlextLdifUtilities.Ldif._filter_base_class(  # noqa: SLF001
+                return FlextLdifUtilities.Ldif._filter_base_class(
                     items_or_entries,
                     predicate,
                     mapper,
@@ -983,7 +983,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type already narrowed by isinstance checks
                 entries: Sequence[p.Ldif.EntryProtocol] = items_or_entries
                 filter_entry: EntryFilter[p.Ldif.EntryProtocol] = predicate_or_filter1
-                return FlextLdifUtilities.Ldif._filter_ldif_entries(  # noqa: SLF001
+                return FlextLdifUtilities.Ldif._filter_ldif_entries(
                     entries,
                     filter_entry,
                     filters,
@@ -1004,7 +1004,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             # Type narrowing: items_or_entries is compatible with base class signature
             # Return type already declared in _filter_base_class signature
-            return FlextLdifUtilities.Ldif._filter_base_class(  # noqa: SLF001
+            return FlextLdifUtilities.Ldif._filter_base_class(
                 items_or_entries,
                 predicate_wrapper,
                 mapper,

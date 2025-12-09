@@ -1431,7 +1431,7 @@ class FlextLdifModelsDomains:
                 # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__()
                 # This is the correct Pydantic 2 pattern for frozen models in validators
                 # Ruff PLC2801: Ignored - required for frozen Pydantic models
-                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801
+                object.__setattr__(self, "validation_violations", violations)
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self

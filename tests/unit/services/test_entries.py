@@ -979,14 +979,12 @@ class TestsFlextLdifEntries(s):
             tm.ok(service.validate_dn_component("2invalid", "value"), eq=False)
 
         elif test_type == "validate_attr_names_batch":
-            validated = service.validate_attribute_names(
-                [
-                    c.Names.CN,
-                    c.Names.MAIL,
-                    "2invalid",
-                    c.Names.OBJECTCLASS,
-                ]
-            ).unwrap()
+            validated = service.validate_attribute_names([
+                c.Names.CN,
+                c.Names.MAIL,
+                "2invalid",
+                c.Names.OBJECTCLASS,
+            ]).unwrap()
             assert validated[c.Names.CN] is True
             assert validated["2invalid"] is False
 

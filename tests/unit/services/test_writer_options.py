@@ -164,19 +164,17 @@ class TestsFlextLdifWriterFormatOptions(s):
     @pytest.fixture
     def entry_with_metadata(self) -> p.Entry:
         """Create an entry with metadata for testing."""
-        extensions = m.Ldif.DynamicMetadata.model_validate(
-            {
-                "attribute_order": [
-                    "objectClass",
-                    "cn",
-                    "sn",
-                    "mail",
-                    c.Names.TELEPHONE_NUMBER,
-                ],
-                "hidden_attributes": [c.Names.TELEPHONE_NUMBER],
-                "source_file": "test.ldif",
-            }
-        )
+        extensions = m.Ldif.DynamicMetadata.model_validate({
+            "attribute_order": [
+                "objectClass",
+                "cn",
+                "sn",
+                "mail",
+                c.Names.TELEPHONE_NUMBER,
+            ],
+            "hidden_attributes": [c.Names.TELEPHONE_NUMBER],
+            "source_file": "test.ldif",
+        })
         metadata = m.Ldif.QuirkMetadata(
             quirk_type="rfc",
             target_server_type="rfc",
@@ -218,13 +216,11 @@ class TestsFlextLdifWriterFormatOptions(s):
     @pytest.fixture
     def entry_with_aci_and_acl_metadata(self) -> p.Entry:
         """Create an entry with aci attribute and ACL_ORIGINAL_FORMAT metadata."""
-        extensions = m.Ldif.DynamicMetadata.model_validate(
-            {
-                lib_c.MetadataKeys.ACL_ORIGINAL_FORMAT: (
-                    "access to attr=(cn,sn) by self (read) by * (search)"
-                ),
-            }
-        )
+        extensions = m.Ldif.DynamicMetadata.model_validate({
+            lib_c.MetadataKeys.ACL_ORIGINAL_FORMAT: (
+                "access to attr=(cn,sn) by self (read) by * (search)"
+            ),
+        })
         metadata = m.Ldif.QuirkMetadata(
             quirk_type="oud",
             target_server_type="oud",

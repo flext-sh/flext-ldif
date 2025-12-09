@@ -432,22 +432,18 @@ class FlextLdifConstants(FlextConstants):
             # RFC 2849 §2 - Characters requiring base64 encoding at value start
             # "The distinguishing characteristic of an LDIF file is that it
             #  begins with a version number."
-            BASE64_START_CHARS: Final[frozenset[str]] = frozenset(
-                {
-                    " ",  # ASCII 32 - space at start
-                    "<",  # Less-than sign (URL indicator conflict)
-                    ":",  # Colon (separator conflict)
-                }
-            )
+            BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
+                " ",  # ASCII 32 - space at start
+                "<",  # Less-than sign (URL indicator conflict)
+                ":",  # Colon (separator conflict)
+            })
 
             # RFC 2849 §2 - Characters requiring base64 encoding anywhere in value
-            BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset(
-                {
-                    "\x00",  # NUL character
-                    "\n",  # Newline (line separator)
-                    "\r",  # Carriage return
-                }
-            )
+            BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset({
+                "\x00",  # NUL character
+                "\n",  # Newline (line separator)
+                "\r",  # Carriage return
+            })
 
             # RFC 2849 §2 - SAFE-CHAR range (no base64 needed)
             # SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F (all but NUL, LF, CR)
@@ -458,16 +454,14 @@ class FlextLdifConstants(FlextConstants):
             # RFC 2849 §2 - SAFE-INIT-CHAR (valid first character of SAFE-STRING)
             # SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
             # Excludes: NUL, LF, CR, SPACE(0x20), COLON(0x3A), LESSTHAN(0x3C)
-            SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset(
-                {
-                    0x00,
-                    0x0A,
-                    0x0D,
-                    0x20,
-                    0x3A,
-                    0x3C,
-                }
-            )
+            SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({
+                0x00,
+                0x0A,
+                0x0D,
+                0x20,
+                0x3A,
+                0x3C,
+            })
 
             # RFC 2849 §2 - BASE64-CHAR (valid characters in base64 encoding)
             # BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
@@ -490,13 +484,11 @@ class FlextLdifConstants(FlextConstants):
             # RFC 2849 §4 - Change record types
             # RFC 2849 §4 - Modify operation types
             # DRY: String literals used directly; no separate constants needed.
-            MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset(
-                {
-                    "add",
-                    "delete",
-                    "replace",
-                }
-            )
+            MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset({
+                "add",
+                "delete",
+                "replace",
+            })
 
             # RFC 2849 §5 - Control record keywords
             KEYWORD_DN: Final[str] = "dn"
@@ -512,27 +504,23 @@ class FlextLdifConstants(FlextConstants):
 
             # RFC 4512 §4.1 - Schema usage values for attributeType
             # DRY: String literals used directly; no separate constants needed.
-            SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset(
-                {
-                    "userApplications",
-                    "directoryOperation",
-                    "distributedOperation",
-                    "dSAOperation",
-                }
-            )
+            SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset({
+                "userApplications",
+                "directoryOperation",
+                "distributedOperation",
+                "dSAOperation",
+            })
 
             # RFC 4512 §4.1.1 - ObjectClass kinds
             SCHEMA_KIND_ABSTRACT: Final[str] = "ABSTRACT"
             SCHEMA_KIND_STRUCTURAL: Final[str] = "STRUCTURAL"
             SCHEMA_KIND_AUXILIARY: Final[str] = "AUXILIARY"
 
-            SCHEMA_KINDS: Final[frozenset[str]] = frozenset(
-                {
-                    SCHEMA_KIND_ABSTRACT,
-                    SCHEMA_KIND_STRUCTURAL,
-                    SCHEMA_KIND_AUXILIARY,
-                }
-            )
+            SCHEMA_KINDS: Final[frozenset[str]] = frozenset({
+                SCHEMA_KIND_ABSTRACT,
+                SCHEMA_KIND_STRUCTURAL,
+                SCHEMA_KIND_AUXILIARY,
+            })
 
             # RFC 4512 - ABNF Syntax Characters
             # WSP = 0*SPACE, SP = 1*SPACE, SPACE = %x20
@@ -582,18 +570,16 @@ class FlextLdifConstants(FlextConstants):
             ATTR_SUBSCHEMA_SUBENTRY: Final[str] = "subschemaSubentry"
             ATTR_ENTRY_DN: Final[str] = "entryDN"
 
-            OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-                {
-                    ATTR_CREATORS_NAME,
-                    ATTR_CREATE_TIMESTAMP,
-                    ATTR_MODIFIERS_NAME,
-                    ATTR_MODIFY_TIMESTAMP,
-                    ATTR_STRUCTURAL_OBJECTCLASS,
-                    ATTR_GOVERNING_STRUCTURE_RULE,
-                    ATTR_SUBSCHEMA_SUBENTRY,
-                    ATTR_ENTRY_DN,
-                }
-            )
+            OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+                ATTR_CREATORS_NAME,
+                ATTR_CREATE_TIMESTAMP,
+                ATTR_MODIFIERS_NAME,
+                ATTR_MODIFY_TIMESTAMP,
+                ATTR_STRUCTURAL_OBJECTCLASS,
+                ATTR_GOVERNING_STRUCTURE_RULE,
+                ATTR_SUBSCHEMA_SUBENTRY,
+                ATTR_ENTRY_DN,
+            })
 
             # RFC 4512 - Schema entry attribute names
             ATTR_OBJECTCLASSES: Final[str] = "objectClasses"
@@ -605,18 +591,16 @@ class FlextLdifConstants(FlextConstants):
             ATTR_DITSTRUCTURERULES: Final[str] = "dITStructureRules"
             ATTR_NAMEFORMS: Final[str] = "nameForms"
 
-            SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-                {
-                    ATTR_OBJECTCLASSES,
-                    ATTR_ATTRIBUTETYPES,
-                    ATTR_MATCHINGRULES,
-                    ATTR_MATCHINGRULEUSE,
-                    ATTR_LDAPSYNTAXES,
-                    ATTR_DITCONTENTRULES,
-                    ATTR_DITSTRUCTURERULES,
-                    ATTR_NAMEFORMS,
-                }
-            )
+            SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+                ATTR_OBJECTCLASSES,
+                ATTR_ATTRIBUTETYPES,
+                ATTR_MATCHINGRULES,
+                ATTR_MATCHINGRULEUSE,
+                ATTR_LDAPSYNTAXES,
+                ATTR_DITCONTENTRULES,
+                ATTR_DITSTRUCTURERULES,
+                ATTR_NAMEFORMS,
+            })
 
             # =================================================================
             # RFC 4514: LDAP Distinguished Names
@@ -631,94 +615,80 @@ class FlextLdifConstants(FlextConstants):
             # (stringchar - allows SPACE except at boundaries)
 
             # Characters excluded from LUTF1 (lead char) - includes SPACE(0x20), SHARP(0x23)
-            DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-                {
-                    0x00,
-                    0x20,
-                    0x22,
-                    0x23,
-                    0x2B,
-                    0x2C,
-                    0x3B,
-                    0x3C,
-                    0x3E,
-                    0x5C,
-                }
-            )
+            DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+                0x00,
+                0x20,
+                0x22,
+                0x23,
+                0x2B,
+                0x2C,
+                0x3B,
+                0x3C,
+                0x3E,
+                0x5C,
+            })
             # Characters excluded from TUTF1 (trail char) - includes SPACE(0x20)
-            DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-                {
-                    0x00,
-                    0x20,
-                    0x22,
-                    0x2B,
-                    0x2C,
-                    0x3B,
-                    0x3C,
-                    0x3E,
-                    0x5C,
-                }
-            )
+            DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+                0x00,
+                0x20,
+                0x22,
+                0x2B,
+                0x2C,
+                0x3B,
+                0x3C,
+                0x3E,
+                0x5C,
+            })
             # Characters excluded from SUTF1 (string char)
-            DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-                {
-                    0x00,
-                    0x22,
-                    0x2B,
-                    0x2C,
-                    0x3B,
-                    0x3C,
-                    0x3E,
-                    0x5C,
-                }
-            )
+            DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+                0x00,
+                0x22,
+                0x2B,
+                0x2C,
+                0x3B,
+                0x3C,
+                0x3E,
+                0x5C,
+            })
 
             # RFC 4514 §2.4 - special = escaped / SPACE / SHARP / EQUALS
             # escaped = DQUOTE / PLUS / COMMA / SEMI / LANGLE / RANGLE
-            DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset(
-                {
-                    '"',
-                    "+",
-                    ",",
-                    ";",
-                    "<",
-                    ">",
-                    " ",
-                    "#",
-                    "=",
-                }
-            )
-            DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset(
-                {
-                    '"',
-                    "+",
-                    ",",
-                    ";",
-                    "<",
-                    ">",
-                }
-            )
+            DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset({
+                '"',
+                "+",
+                ",",
+                ";",
+                "<",
+                ">",
+                " ",
+                "#",
+                "=",
+            })
+            DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset({
+                '"',
+                "+",
+                ",",
+                ";",
+                "<",
+                ">",
+            })
 
             # RFC 4514 §2.4 - Characters requiring escaping in DN attribute values
-            DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
-                {
-                    '"',  # Quotation mark
-                    "+",  # Plus sign (RDN separator)
-                    ",",  # Comma (RDN separator)
-                    ";",  # Semicolon (alternative RDN separator)
-                    "<",  # Less-than
-                    ">",  # Greater-than
-                    "\\",  # Backslash (escape character)
-                }
-            )
+            DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset({
+                '"',  # Quotation mark
+                "+",  # Plus sign (RDN separator)
+                ",",  # Comma (RDN separator)
+                ";",  # Semicolon (alternative RDN separator)
+                "<",  # Less-than
+                ">",  # Greater-than
+                "\\",  # Backslash (escape character)
+            })
 
             # RFC 4514 §2.4 - Characters requiring escaping at value start/end
-            DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset(
-                {
-                    " ",  # Space at start
-                    "#",  # Hash at start (indicates hex string)
-                }
-            )
+            DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset({
+                " ",  # Space at start
+                "#",  # Hash at start (indicates hex string)
+            })
             DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({" "})  # Space at end
 
             # RFC 4514 §3 - Required attribute type short names
@@ -735,19 +705,17 @@ class FlextLdifConstants(FlextConstants):
             DN_ATTR_UID: Final[str] = "UID"  # userId (0.9.2342.19200300.100.1.1)
 
             # RFC 4514 §3 - Mapping from short name to OID
-            DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType(
-                {
-                    "CN": "2.5.4.3",
-                    "L": "2.5.4.7",
-                    "ST": "2.5.4.8",
-                    "O": "2.5.4.10",
-                    "OU": "2.5.4.11",
-                    "C": "2.5.4.6",
-                    "STREET": "2.5.4.9",
-                    "DC": "0.9.2342.19200300.100.1.25",
-                    "UID": "0.9.2342.19200300.100.1.1",
-                }
-            )
+            DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType({
+                "CN": "2.5.4.3",
+                "L": "2.5.4.7",
+                "ST": "2.5.4.8",
+                "O": "2.5.4.10",
+                "OU": "2.5.4.11",
+                "C": "2.5.4.6",
+                "STREET": "2.5.4.9",
+                "DC": "0.9.2342.19200300.100.1.25",
+                "UID": "0.9.2342.19200300.100.1.1",
+            })
 
             # RFC 4514 - RDN separator (comma is primary, semicolon is alternative)
             DN_RDN_SEPARATOR: Final[str] = ","
@@ -991,50 +959,46 @@ class FlextLdifConstants(FlextConstants):
             # FEATURE CATEGORY SETS
             # =====================================================================
 
-            RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset(
-                {
-                    ACL_READ,
-                    ACL_WRITE,
-                    ACL_ADD,
-                    ACL_DELETE,
-                    ACL_SEARCH,
-                    ACL_COMPARE,
-                    ACL_SUBJECT_USER_DN,
-                    ACL_SUBJECT_GROUP_DN,
-                    ACL_SUBJECT_SELF,
-                    ACL_SUBJECT_ANONYMOUS,
-                    ACL_SUBJECT_ALL,
-                    ACL_TARGET_ENTRY,
-                    ACL_TARGET_ATTRS,
-                    ACL_TARGET_DN,
-                    SCHEMA_ATTR_SYNTAX,
-                    SCHEMA_ATTR_MATCHING,
-                    SCHEMA_ATTR_SINGLE_VALUE,
-                    SCHEMA_OC_SUP,
-                    SCHEMA_OC_KIND,
-                    ENTRY_DN,
-                    ENTRY_CHANGETYPE,
-                    ENTRY_CONTROLS,
-                }
-            )
+            RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset({
+                ACL_READ,
+                ACL_WRITE,
+                ACL_ADD,
+                ACL_DELETE,
+                ACL_SEARCH,
+                ACL_COMPARE,
+                ACL_SUBJECT_USER_DN,
+                ACL_SUBJECT_GROUP_DN,
+                ACL_SUBJECT_SELF,
+                ACL_SUBJECT_ANONYMOUS,
+                ACL_SUBJECT_ALL,
+                ACL_TARGET_ENTRY,
+                ACL_TARGET_ATTRS,
+                ACL_TARGET_DN,
+                SCHEMA_ATTR_SYNTAX,
+                SCHEMA_ATTR_MATCHING,
+                SCHEMA_ATTR_SINGLE_VALUE,
+                SCHEMA_OC_SUP,
+                SCHEMA_OC_KIND,
+                ENTRY_DN,
+                ENTRY_CHANGETYPE,
+                ENTRY_CONTROLS,
+            })
 
-            VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset(
-                {
-                    ACL_SELF_WRITE,
-                    ACL_PROXY_AUTH,
-                    ACL_BROWSE_PERMISSION,
-                    ACL_AUTH_PERMISSION,
-                    ACL_ALL_PERMISSIONS,
-                    ACL_NEGATIVE_PERMISSIONS,
-                    ACL_DNATTR_SUBJECT,
-                    ACL_GUIDATTR_SUBJECT,
-                    ACL_BIND_IP,
-                    ACL_BIND_TIME,
-                    ACL_BIND_AUTHMETHOD,
-                    ACL_BIND_SSF,
-                    ACL_TARGET_FILTER,
-                }
-            )
+            VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset({
+                ACL_SELF_WRITE,
+                ACL_PROXY_AUTH,
+                ACL_BROWSE_PERMISSION,
+                ACL_AUTH_PERMISSION,
+                ACL_ALL_PERMISSIONS,
+                ACL_NEGATIVE_PERMISSIONS,
+                ACL_DNATTR_SUBJECT,
+                ACL_GUIDATTR_SUBJECT,
+                ACL_BIND_IP,
+                ACL_BIND_TIME,
+                ACL_BIND_AUTHMETHOD,
+                ACL_BIND_SSF,
+                ACL_TARGET_FILTER,
+            })
 
             # =====================================================================
             # RFC FALLBACK VALUES (when vendor feature not supported)
@@ -1042,23 +1006,21 @@ class FlextLdifConstants(FlextConstants):
             # Servers declare their own FEATURE_TO_LOCAL mappings in their Constants
             # These are generic RFC fallbacks when a feature cannot be translated
 
-            RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType(
-                {
-                    ACL_SELF_WRITE: "write",  # Degrade to write
-                    ACL_BROWSE_PERMISSION: "read,search",  # Expand to RFC permissions
-                    ACL_PROXY_AUTH: None,  # No RFC equivalent, preserve in metadata
-                    ACL_AUTH_PERMISSION: None,  # No RFC equivalent, preserve in metadata
-                    ACL_ALL_PERMISSIONS: "read,write,add,delete,search,compare",
-                    ACL_DNATTR_SUBJECT: None,  # Server-specific, preserve in metadata
-                    ACL_GUIDATTR_SUBJECT: None,  # Server-specific, preserve in metadata
-                    ACL_NEGATIVE_PERMISSIONS: None,  # Preserve in metadata
-                    ACL_BIND_IP: None,  # Preserve in metadata
-                    ACL_BIND_TIME: None,  # Preserve in metadata
-                    ACL_BIND_AUTHMETHOD: None,  # Preserve in metadata
-                    ACL_BIND_SSF: None,  # Preserve in metadata
-                    ACL_TARGET_FILTER: None,  # Preserve in metadata
-                }
-            )
+            RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType({
+                ACL_SELF_WRITE: "write",  # Degrade to write
+                ACL_BROWSE_PERMISSION: "read,search",  # Expand to RFC permissions
+                ACL_PROXY_AUTH: None,  # No RFC equivalent, preserve in metadata
+                ACL_AUTH_PERMISSION: None,  # No RFC equivalent, preserve in metadata
+                ACL_ALL_PERMISSIONS: "read,write,add,delete,search,compare",
+                ACL_DNATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+                ACL_GUIDATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+                ACL_NEGATIVE_PERMISSIONS: None,  # Preserve in metadata
+                ACL_BIND_IP: None,  # Preserve in metadata
+                ACL_BIND_TIME: None,  # Preserve in metadata
+                ACL_BIND_AUTHMETHOD: None,  # Preserve in metadata
+                ACL_BIND_SSF: None,  # Preserve in metadata
+                ACL_TARGET_FILTER: None,  # Preserve in metadata
+            })
 
             # =====================================================================
             # METADATA KEYS FOR FEATURE PRESERVATION
@@ -1435,25 +1397,23 @@ class FlextLdifConstants(FlextConstants):
 
             # Schema entry DN patterns per server (case-insensitive, immutable)
             SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, Sequence[str]]] = (
-                MappingProxyType(
-                    {
-                        "rfc": ("cn=schema",),  # RFC 4512 standard
-                        "oid": ("cn=schema", "cn=subschema"),  # OID uses both
-                        "oud": ("cn=schema",),  # OUD follows RFC
-                        "openldap": ("cn=schema", "cn=subschema"),  # OpenLDAP flexible
-                        "openldap1": ("cn=schema",),  # OpenLDAP 1.x
-                        "ad": ("cn=schema", "cn=aggregate"),  # AD schema container
-                        "389ds": ("cn=schema",),  # 389 DS
-                        "apache_directory": ("ou=schema",),  # Apache DS uses ou=schema
-                        "novell_edirectory": ("cn=schema",),  # Novell
-                        "ibm_tivoli": ("cn=schema",),  # IBM Tivoli
-                        "relaxed": (
-                            "cn=schema",
-                            "cn=subschema",
-                            "ou=schema",
-                        ),  # Accept all
-                    }
-                )
+                MappingProxyType({
+                    "rfc": ("cn=schema",),  # RFC 4512 standard
+                    "oid": ("cn=schema", "cn=subschema"),  # OID uses both
+                    "oud": ("cn=schema",),  # OUD follows RFC
+                    "openldap": ("cn=schema", "cn=subschema"),  # OpenLDAP flexible
+                    "openldap1": ("cn=schema",),  # OpenLDAP 1.x
+                    "ad": ("cn=schema", "cn=aggregate"),  # AD schema container
+                    "389ds": ("cn=schema",),  # 389 DS
+                    "apache_directory": ("ou=schema",),  # Apache DS uses ou=schema
+                    "novell_edirectory": ("cn=schema",),  # Novell
+                    "ibm_tivoli": ("cn=schema",),  # IBM Tivoli
+                    "relaxed": (
+                        "cn=schema",
+                        "cn=subschema",
+                        "ou=schema",
+                    ),  # Accept all
+                })
             )
 
             # =============================================================================
@@ -1502,35 +1462,33 @@ class FlextLdifConstants(FlextConstants):
 
             # Server-specific binary attributes (in addition to RFC standard, immutable)
             SERVER_BINARY_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
-                MappingProxyType(
-                    {
-                        "oid": frozenset(
-                            [
-                                "orclguid",  # Oracle GUID
-                                "userpassword",  # OID may store binary passwords
-                            ],
-                        ),
-                        "oud": frozenset(
-                            [
-                                "ds-sync-hist",  # OUD synchronization history
-                                "ds-sync-state",  # OUD sync state
-                            ],
-                        ),
-                        "ad": frozenset(
-                            [
-                                "objectguid",  # AD GUID (already in RFC list but emphasizing)
-                                "objectsid",  # AD Security ID
-                                "msexchmailboxguid",  # Exchange mailbox GUID
-                                "msexchmailboxsecuritydescriptor",  # Exchange security
-                            ],
-                        ),
-                        "openldap": frozenset(
-                            [
-                                "entryuuid",  # OpenLDAP entry UUID (binary format)
-                            ],
-                        ),
-                    }
-                )
+                MappingProxyType({
+                    "oid": frozenset(
+                        [
+                            "orclguid",  # Oracle GUID
+                            "userpassword",  # OID may store binary passwords
+                        ],
+                    ),
+                    "oud": frozenset(
+                        [
+                            "ds-sync-hist",  # OUD synchronization history
+                            "ds-sync-state",  # OUD sync state
+                        ],
+                    ),
+                    "ad": frozenset(
+                        [
+                            "objectguid",  # AD GUID (already in RFC list but emphasizing)
+                            "objectsid",  # AD Security ID
+                            "msexchmailboxguid",  # Exchange mailbox GUID
+                            "msexchmailboxsecuritydescriptor",  # Exchange security
+                        ],
+                    ),
+                    "openldap": frozenset(
+                        [
+                            "entryuuid",  # OpenLDAP entry UUID (binary format)
+                        ],
+                    ),
+                })
             )
 
             # =============================================================================
@@ -1540,48 +1498,46 @@ class FlextLdifConstants(FlextConstants):
             # Operational attributes that may be missing and should not trigger
             # warnings (immutable)
             OPERATIONAL_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
-                MappingProxyType(
-                    {
-                        "oid": frozenset(
-                            [
-                                "orclguid",
-                                "createtimestamp",
-                                "modifytimestamp",
-                                "creatorsname",
-                                "modifiersname",
-                            ],
-                        ),
-                        "oud": frozenset(
-                            [
-                                "entryuuid",
-                                "ds-sync-generation-id",
-                                "ds-sync-state",
-                                "createtimestamp",
-                                "modifytimestamp",
-                            ],
-                        ),
-                        "ad": frozenset(
-                            [
-                                "objectguid",
-                                "objectsid",
-                                "whencreated",
-                                "whenchanged",
-                                "usnchanged",
-                                "usncreated",
-                            ],
-                        ),
-                        "openldap": frozenset(
-                            [
-                                "entryuuid",
-                                "entrycsn",
-                                "createtimestamp",
-                                "modifytimestamp",
-                                "creatorsname",
-                                "modifiersname",
-                            ],
-                        ),
-                    }
-                )
+                MappingProxyType({
+                    "oid": frozenset(
+                        [
+                            "orclguid",
+                            "createtimestamp",
+                            "modifytimestamp",
+                            "creatorsname",
+                            "modifiersname",
+                        ],
+                    ),
+                    "oud": frozenset(
+                        [
+                            "entryuuid",
+                            "ds-sync-generation-id",
+                            "ds-sync-state",
+                            "createtimestamp",
+                            "modifytimestamp",
+                        ],
+                    ),
+                    "ad": frozenset(
+                        [
+                            "objectguid",
+                            "objectsid",
+                            "whencreated",
+                            "whenchanged",
+                            "usnchanged",
+                            "usncreated",
+                        ],
+                    ),
+                    "openldap": frozenset(
+                        [
+                            "entryuuid",
+                            "entrycsn",
+                            "createtimestamp",
+                            "modifytimestamp",
+                            "creatorsname",
+                            "modifiersname",
+                        ],
+                    ),
+                })
             )
 
             # NOTE: ErrorMessages class removed (removed unused error message constants)
@@ -2914,12 +2870,10 @@ class FlextLdifConstants(FlextConstants):
 
             # Universal boolean check (RFC-compliant values only)
             RFC_TRUE_VALUES: Final[frozenset[str]] = frozenset([TRUE_RFC, TRUE_LOWER])
-            RFC_FALSE_VALUES: Final[frozenset[str]] = frozenset(
-                [
-                    FALSE_RFC,
-                    FALSE_LOWER,
-                ]
-            )
+            RFC_FALSE_VALUES: Final[frozenset[str]] = frozenset([
+                FALSE_RFC,
+                FALSE_LOWER,
+            ])
 
         # =============================================================================
         # METADATA KEYS - Quirk Processing and Entry Extension Metadata
@@ -3654,18 +3608,14 @@ class FlextLdifConstants(FlextConstants):
             ALIASES: Final[Mapping[str, str]] = MappingProxyType(_ALIASES_DICT)
 
             # Server type variants (for compatibility checks)
-            ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(
-                [
-                    "oid",
-                    "oracle_oid",
-                ]
-            )
-            ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset(
-                [
-                    "oud",
-                    "oracle_oud",
-                ]
-            )
+            ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset([
+                "oid",
+                "oracle_oid",
+            ])
+            ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset([
+                "oud",
+                "oracle_oud",
+            ])
             OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset(
                 [
                     "openldap",
@@ -3690,62 +3640,54 @@ class FlextLdifConstants(FlextConstants):
 
             # LDIF format validation mapping - using hardcoded values
             # Note: No FormatType enum exists, using direct values
-            LDIF_FORMAT_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType(
-                {
-                    "RFC2849": "RFC2849",
-                    "EXTENDED": "EXTENDED",
-                    "CUSTOM": "CUSTOM",
-                }
-            )
+            LDIF_FORMAT_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+                "RFC2849": "RFC2849",
+                "EXTENDED": "EXTENDED",
+                "CUSTOM": "CUSTOM",
+            })
 
             # LDIF format validation set - using hardcoded values
-            LDIF_FORMAT_VALIDATION_SET: Final[frozenset[str]] = frozenset(
-                {
-                    "RFC2849",
-                    "EXTENDED",
-                    "CUSTOM",
-                }
-            )
+            LDIF_FORMAT_VALIDATION_SET: Final[frozenset[str]] = frozenset({
+                "RFC2849",
+                "EXTENDED",
+                "CUSTOM",
+            })
 
             # Server types validation mapping - hardcoded to avoid forward reference
             # Canonical types only (excludes ORACLE_* aliases)
-            SERVER_TYPE_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType(
-                {
-                    "oid": "oid",
-                    "oud": "oud",
-                    "openldap": "openldap",
-                    "openldap1": "openldap1",
-                    "openldap2": "openldap2",
-                    "active_directory": "active_directory",
-                    "apache_directory": "apache_directory",
-                    "generic": "generic",
-                    "rfc": "rfc",
-                    "389ds": "389ds",
-                    "relaxed": "relaxed",
-                    "novell_edirectory": "novell_edirectory",
-                    "ibm_tivoli": "ibm_tivoli",
-                }
-            )
+            SERVER_TYPE_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+                "oid": "oid",
+                "oud": "oud",
+                "openldap": "openldap",
+                "openldap1": "openldap1",
+                "openldap2": "openldap2",
+                "active_directory": "active_directory",
+                "apache_directory": "apache_directory",
+                "generic": "generic",
+                "rfc": "rfc",
+                "389ds": "389ds",
+                "relaxed": "relaxed",
+                "novell_edirectory": "novell_edirectory",
+                "ibm_tivoli": "ibm_tivoli",
+            })
 
             # Server types validation set - hardcoded to avoid forward reference
             # Canonical types only (excludes ORACLE_* aliases)
-            SERVER_TYPE_VALIDATION_SET: Final[frozenset[str]] = frozenset(
-                {
-                    "oid",
-                    "oud",
-                    "openldap",
-                    "openldap1",
-                    "openldap2",
-                    "active_directory",
-                    "apache_directory",
-                    "generic",
-                    "rfc",
-                    "389ds",
-                    "relaxed",
-                    "novell_edirectory",
-                    "ibm_tivoli",
-                }
-            )
+            SERVER_TYPE_VALIDATION_SET: Final[frozenset[str]] = frozenset({
+                "oid",
+                "oud",
+                "openldap",
+                "openldap1",
+                "openldap2",
+                "active_directory",
+                "apache_directory",
+                "generic",
+                "rfc",
+                "389ds",
+                "relaxed",
+                "novell_edirectory",
+                "ibm_tivoli",
+            })
 
             # All validation/getter functions removed - use utilities instead
 
@@ -4404,64 +4346,62 @@ class FlextLdifConstants(FlextConstants):
             )
 
             # Mapping of OID to human-readable name (immutable)
-            OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType(
-                {
-                    "2.5.5.5": "integer",  # INTEGER (RFC 2252/4517 standard)
-                    "1.3.6.1.4.1.1466.115.121.1.1": "aci",
-                    "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
-                    "1.3.6.1.4.1.1466.115.121.1.3": "attribute_type_description",
-                    "1.3.6.1.4.1.1466.115.121.1.4": "audio",
-                    "1.3.6.1.4.1.1466.115.121.1.5": "binary",
-                    "1.3.6.1.4.1.1466.115.121.1.6": "bit_string",
-                    "1.3.6.1.4.1.1466.115.121.1.7": "boolean",
-                    "1.3.6.1.4.1.1466.115.121.1.8": "certificate",
-                    "1.3.6.1.4.1.1466.115.121.1.9": "certificate_list",
-                    "1.3.6.1.4.1.1466.115.121.1.10": "certificate_pair",
-                    "1.3.6.1.4.1.1466.115.121.1.11": "country_string",
-                    "1.3.6.1.4.1.1466.115.121.1.12": "dn",
-                    "1.3.6.1.4.1.1466.115.121.1.13": "data_quality_syntax",
-                    "1.3.6.1.4.1.1466.115.121.1.14": "delivery_method",
-                    "1.3.6.1.4.1.1466.115.121.1.15": "directory_string",
-                    "1.3.6.1.4.1.1466.115.121.1.16": "dit_content_rule_description",
-                    "1.3.6.1.4.1.1466.115.121.1.17": "dit_structure_rule_description",
-                    "1.3.6.1.4.1.1466.115.121.1.18": "dlexp_time",
-                    "1.3.6.1.4.1.1466.115.121.1.19": "dn_with_binary",
-                    "1.3.6.1.4.1.1466.115.121.1.20": "dn_with_string",
-                    "1.3.6.1.4.1.1466.115.121.1.21": "directory_string",
-                    "1.3.6.1.4.1.1466.115.121.1.22": "enhanced_guide",
-                    "1.3.6.1.4.1.1466.115.121.1.23": "facsimile_telephone_number",
-                    "1.3.6.1.4.1.1466.115.121.1.24": "fax",
-                    "1.3.6.1.4.1.1466.115.121.1.25": "generalized_time",
-                    "1.3.6.1.4.1.1466.115.121.1.26": "guide",
-                    "1.3.6.1.4.1.1466.115.121.1.27": "ia5_string",
-                    "1.3.6.1.4.1.1466.115.121.1.28": "jpeg",
-                    "1.3.6.1.4.1.1466.115.121.1.29": "ldap_syntax_description",
-                    "1.3.6.1.4.1.1466.115.121.1.30": "matching_rule_description",
-                    "1.3.6.1.4.1.1466.115.121.1.31": "matching_rule_use_description",
-                    "1.3.6.1.4.1.1466.115.121.1.32": "mhs_or_address",
-                    "1.3.6.1.4.1.1466.115.121.1.33": "modify_increment",
-                    "1.3.6.1.4.1.1466.115.121.1.34": "name_and_optional_uid",
-                    "1.3.6.1.4.1.1466.115.121.1.35": "name_form_description",
-                    "1.3.6.1.4.1.1466.115.121.1.36": "numeric_string",
-                    "1.3.6.1.4.1.1466.115.121.1.37": "object_class_description",
-                    "1.3.6.1.4.1.1466.115.121.1.38": "oid",
-                    "1.3.6.1.4.1.1466.115.121.1.39": "octet_string",
-                    "1.3.6.1.4.1.1466.115.121.1.40": "other_mailbox",
-                    "1.3.6.1.4.1.1466.115.121.1.41": "postal_address",
-                    "1.3.6.1.4.1.1466.115.121.1.42": "protocol_information",
-                    "1.3.6.1.4.1.1466.115.121.1.43": "presentation_address",
-                    "1.3.6.1.4.1.1466.115.121.1.44": "printable_string",
-                    "1.3.6.1.4.1.1466.115.121.1.50": "telephone_number",
-                    "1.3.6.1.4.1.1466.115.121.1.51": "teletex_terminal_identifier",
-                    "1.3.6.1.4.1.1466.115.121.1.52": "telex_number",
-                    "1.3.6.1.4.1.1466.115.121.1.53": "time_of_day",
-                    "1.3.6.1.4.1.1466.115.121.1.54": "utctime",
-                    "1.3.6.1.4.1.1466.115.121.1.55": "utf8_string",
-                    "1.3.6.1.4.1.1466.115.121.1.56": "unicode_string",
-                    "1.3.6.1.4.1.1466.115.121.1.57": "uui",
-                    "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
-                }
-            )
+            OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
+                "2.5.5.5": "integer",  # INTEGER (RFC 2252/4517 standard)
+                "1.3.6.1.4.1.1466.115.121.1.1": "aci",
+                "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
+                "1.3.6.1.4.1.1466.115.121.1.3": "attribute_type_description",
+                "1.3.6.1.4.1.1466.115.121.1.4": "audio",
+                "1.3.6.1.4.1.1466.115.121.1.5": "binary",
+                "1.3.6.1.4.1.1466.115.121.1.6": "bit_string",
+                "1.3.6.1.4.1.1466.115.121.1.7": "boolean",
+                "1.3.6.1.4.1.1466.115.121.1.8": "certificate",
+                "1.3.6.1.4.1.1466.115.121.1.9": "certificate_list",
+                "1.3.6.1.4.1.1466.115.121.1.10": "certificate_pair",
+                "1.3.6.1.4.1.1466.115.121.1.11": "country_string",
+                "1.3.6.1.4.1.1466.115.121.1.12": "dn",
+                "1.3.6.1.4.1.1466.115.121.1.13": "data_quality_syntax",
+                "1.3.6.1.4.1.1466.115.121.1.14": "delivery_method",
+                "1.3.6.1.4.1.1466.115.121.1.15": "directory_string",
+                "1.3.6.1.4.1.1466.115.121.1.16": "dit_content_rule_description",
+                "1.3.6.1.4.1.1466.115.121.1.17": "dit_structure_rule_description",
+                "1.3.6.1.4.1.1466.115.121.1.18": "dlexp_time",
+                "1.3.6.1.4.1.1466.115.121.1.19": "dn_with_binary",
+                "1.3.6.1.4.1.1466.115.121.1.20": "dn_with_string",
+                "1.3.6.1.4.1.1466.115.121.1.21": "directory_string",
+                "1.3.6.1.4.1.1466.115.121.1.22": "enhanced_guide",
+                "1.3.6.1.4.1.1466.115.121.1.23": "facsimile_telephone_number",
+                "1.3.6.1.4.1.1466.115.121.1.24": "fax",
+                "1.3.6.1.4.1.1466.115.121.1.25": "generalized_time",
+                "1.3.6.1.4.1.1466.115.121.1.26": "guide",
+                "1.3.6.1.4.1.1466.115.121.1.27": "ia5_string",
+                "1.3.6.1.4.1.1466.115.121.1.28": "jpeg",
+                "1.3.6.1.4.1.1466.115.121.1.29": "ldap_syntax_description",
+                "1.3.6.1.4.1.1466.115.121.1.30": "matching_rule_description",
+                "1.3.6.1.4.1.1466.115.121.1.31": "matching_rule_use_description",
+                "1.3.6.1.4.1.1466.115.121.1.32": "mhs_or_address",
+                "1.3.6.1.4.1.1466.115.121.1.33": "modify_increment",
+                "1.3.6.1.4.1.1466.115.121.1.34": "name_and_optional_uid",
+                "1.3.6.1.4.1.1466.115.121.1.35": "name_form_description",
+                "1.3.6.1.4.1.1466.115.121.1.36": "numeric_string",
+                "1.3.6.1.4.1.1466.115.121.1.37": "object_class_description",
+                "1.3.6.1.4.1.1466.115.121.1.38": "oid",
+                "1.3.6.1.4.1.1466.115.121.1.39": "octet_string",
+                "1.3.6.1.4.1.1466.115.121.1.40": "other_mailbox",
+                "1.3.6.1.4.1.1466.115.121.1.41": "postal_address",
+                "1.3.6.1.4.1.1466.115.121.1.42": "protocol_information",
+                "1.3.6.1.4.1.1466.115.121.1.43": "presentation_address",
+                "1.3.6.1.4.1.1466.115.121.1.44": "printable_string",
+                "1.3.6.1.4.1.1466.115.121.1.50": "telephone_number",
+                "1.3.6.1.4.1.1466.115.121.1.51": "teletex_terminal_identifier",
+                "1.3.6.1.4.1.1466.115.121.1.52": "telex_number",
+                "1.3.6.1.4.1.1466.115.121.1.53": "time_of_day",
+                "1.3.6.1.4.1.1466.115.121.1.54": "utctime",
+                "1.3.6.1.4.1.1466.115.121.1.55": "utf8_string",
+                "1.3.6.1.4.1.1466.115.121.1.56": "unicode_string",
+                "1.3.6.1.4.1.1466.115.121.1.57": "uui",
+                "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
+            })
 
             # Mapping of human-readable name to OID
             NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
@@ -4479,66 +4419,64 @@ class FlextLdifConstants(FlextConstants):
             )
 
             # Mapping of syntax names to type categories (immutable)
-            NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType(
-                {
-                    "boolean": "boolean",
-                    "integer": "integer",
-                    "dn": "dn",
-                    "distinguished_name": "dn",
-                    "generalized_time": "time",
-                    "utc_time": "time",
-                    "utctime": "time",
-                    "time_of_day": "time",
-                    "dlexp_time": "time",
-                    "audio": "binary",
-                    "binary": "binary",
-                    "certificate": "binary",
-                    "certificate_list": "binary",
-                    "certificate_pair": "binary",
-                    "fax": "binary",
-                    "jpeg": "binary",
-                    "octet_string": "binary",
-                    "directory_string": "string",
-                    "ia5_string": "string",
-                    "printable_string": "string",
-                    "utf8_string": "string",
-                    "unicode_string": "string",
-                    "teletex_terminal_identifier": "string",
-                    "telephone_number": "string",
-                    "facsimile_telephone_number": "string",
-                    "guide": "string",
-                    "enhanced_guide": "string",
-                    "access_point": "string",
-                    "attribute_type_description": "string",
-                    "country_string": "string",
-                    "dn_with_binary": "string",
-                    "dn_with_string": "string",
-                    "ldap_syntax_description": "string",
-                    "matching_rule_description": "string",
-                    "matching_rule_use_description": "string",
-                    "name_and_optional_uid": "string",
-                    "name_form_description": "string",
-                    "numeric_string": "string",
-                    "object_class_description": "string",
-                    "oid": "string",
-                    "other_mailbox": "string",
-                    "postal_address": "string",
-                    "protocol_information": "string",
-                    "presentation_address": "string",
-                    "telex_number": "string",
-                    "teletex_number": "string",
-                    "uui": "string",
-                    "substring_assertion": "string",
-                    "mhs_or_address": "string",
-                    "aci": "string",
-                    "delivery_method": "string",
-                    "data_quality_syntax": "string",
-                    "dit_content_rule_description": "string",
-                    "dit_structure_rule_description": "string",
-                    "modify_increment": "integer",
-                    "bit_string": "string",
-                }
-            )
+            NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType({
+                "boolean": "boolean",
+                "integer": "integer",
+                "dn": "dn",
+                "distinguished_name": "dn",
+                "generalized_time": "time",
+                "utc_time": "time",
+                "utctime": "time",
+                "time_of_day": "time",
+                "dlexp_time": "time",
+                "audio": "binary",
+                "binary": "binary",
+                "certificate": "binary",
+                "certificate_list": "binary",
+                "certificate_pair": "binary",
+                "fax": "binary",
+                "jpeg": "binary",
+                "octet_string": "binary",
+                "directory_string": "string",
+                "ia5_string": "string",
+                "printable_string": "string",
+                "utf8_string": "string",
+                "unicode_string": "string",
+                "teletex_terminal_identifier": "string",
+                "telephone_number": "string",
+                "facsimile_telephone_number": "string",
+                "guide": "string",
+                "enhanced_guide": "string",
+                "access_point": "string",
+                "attribute_type_description": "string",
+                "country_string": "string",
+                "dn_with_binary": "string",
+                "dn_with_string": "string",
+                "ldap_syntax_description": "string",
+                "matching_rule_description": "string",
+                "matching_rule_use_description": "string",
+                "name_and_optional_uid": "string",
+                "name_form_description": "string",
+                "numeric_string": "string",
+                "object_class_description": "string",
+                "oid": "string",
+                "other_mailbox": "string",
+                "postal_address": "string",
+                "protocol_information": "string",
+                "presentation_address": "string",
+                "telex_number": "string",
+                "teletex_number": "string",
+                "uui": "string",
+                "substring_assertion": "string",
+                "mhs_or_address": "string",
+                "aci": "string",
+                "delivery_method": "string",
+                "data_quality_syntax": "string",
+                "dit_content_rule_description": "string",
+                "dit_structure_rule_description": "string",
+                "modify_increment": "integer",
+                "bit_string": "string",
+            })
 
             # Service and initialization keys
             SERVICE_NAMES: Final[str] = "service_names"

@@ -206,9 +206,9 @@ class TestDeduplicationHelpers:
     ) -> list[p.Entry]:
         """Remove attributes and validate - use s() service methods."""
         service = s()
-        return service.create_entries(
-            [(str(e.dn), e.attributes.attributes) for e in entries]
-        )
+        return service.create_entries([
+            (str(e.dn), e.attributes.attributes) for e in entries
+        ])
         # Basic implementation - can be enhanced
 
     @staticmethod

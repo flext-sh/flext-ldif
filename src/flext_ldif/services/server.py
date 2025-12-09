@@ -285,10 +285,10 @@ class FlextLdifServer:
             normalized_type = self._normalize_server_type(server_type)
         except ValueError as e:
             # Invalid server type - return failure instead of raising
-            # Type: QuirkInstanceType is union of quirk protocols
+
             # Using object since services cannot import typings/protocols
             return r[object | None].fail(str(e))
-        # Type: QuirkInstanceType is union of quirk protocols (SchemaProtocol | AclProtocol | EntryProtocol)
+
         # Using object since services cannot import typings/protocols
         base: object | None = u.mapper().get(
             self._bases,

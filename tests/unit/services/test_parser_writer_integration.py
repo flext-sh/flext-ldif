@@ -364,16 +364,14 @@ class FlextLdifParserWriterIntegrationTests(tt):
         lines = ["version: 1", ""]
 
         for i in range(count):
-            lines.extend(
-                [
-                    f"dn: cn=user{i},{c.DNs.EXAMPLE}",
-                    f"objectClass: {c.Names.PERSON}",
-                    f"cn: User {i}",
-                    f"sn: User{i}",
-                    f"mail: user{i}@example.com",
-                    "",
-                ]
-            )
+            lines.extend([
+                f"dn: cn=user{i},{c.DNs.EXAMPLE}",
+                f"objectClass: {c.Names.PERSON}",
+                f"cn: User {i}",
+                f"sn: User{i}",
+                f"mail: user{i}@example.com",
+                "",
+            ])
 
         return "\n".join(lines)
 

@@ -48,28 +48,22 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     # CORE IDENTITY - Server identification and metadata
     # =====================================================================
     CANONICAL_NAME: ClassVar[str] = "oud"
-    ALIASES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "oud",
-            "oracle_oud",  # Backward compatibility alias
-        ]
-    )
+    ALIASES: ClassVar[frozenset[str]] = frozenset([
+        "oud",
+        "oracle_oud",  # Backward compatibility alias
+    ])
 
     # =====================================================================
     # CONVERSION CAPABILITIES
     # =====================================================================
-    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(
-        [
-            "oud",
-            "rfc",
-        ]
-    )
-    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
-        [
-            "oud",
-            "rfc",
-        ]
-    )
+    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
+        "oud",
+        "rfc",
+    ])
+    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
+        "oud",
+        "rfc",
+    ])
 
     # =====================================================================
     # ACL CONFIGURATION

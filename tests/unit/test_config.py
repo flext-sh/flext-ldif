@@ -608,11 +608,9 @@ class TestsTestFlextLdifConfig(s):
 
         def test_extra_fields_ignored(self) -> None:
             """Test that extra fields are ignored (extra='ignore' in model_config)."""
-            config = FlextLdifConfig.model_validate(
-                {
-                    "ldif_encoding": "utf-8",
-                    "unknown_field": "ignored",
-                }
-            )
+            config = FlextLdifConfig.model_validate({
+                "ldif_encoding": "utf-8",
+                "unknown_field": "ignored",
+            })
             assert config.ldif_encoding == "utf-8"
             assert not hasattr(config, "unknown_field")

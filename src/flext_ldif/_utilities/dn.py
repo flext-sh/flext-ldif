@@ -1046,12 +1046,10 @@ class FlextLdifUtilitiesDN:
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
 
-        return r.ok(
-            (
-                norm1_result.unwrap().lower(),
-                norm2_result.unwrap().lower(),
-            )
-        )
+        return r.ok((
+            norm1_result.unwrap().lower(),
+            norm2_result.unwrap().lower(),
+        ))
 
     @staticmethod
     def compare_dns(
@@ -1698,13 +1696,11 @@ class FlextLdifUtilitiesDN:
                     failed_count += 1
                     continue
 
-            return r.ok(
-                {
-                    "transformed_count": transformed_count,
-                    "failed_count": failed_count,
-                    "total_count": transformed_count + failed_count,
-                }
-            )
+            return r.ok({
+                "transformed_count": transformed_count,
+                "failed_count": failed_count,
+                "total_count": transformed_count + failed_count,
+            })
 
         except Exception as e:
             return r.fail(f"LDIF directory transformation failed: {e}")
@@ -2066,9 +2062,9 @@ class FlextLdifUtilitiesDN:
             if batch_result.is_failure:
                 return r.fail(batch_result.error or "Normalization failed")
             batch_data = batch_result.value
-            return r.ok(
-                [item for item in batch_data["results"] if isinstance(item, str)]
-            )
+            return r.ok([
+                item for item in batch_data["results"] if isinstance(item, str)
+            ])
 
         batch_result = u.Collection.batch(
             list(dns),
