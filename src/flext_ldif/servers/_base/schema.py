@@ -36,18 +36,15 @@ from typing import ClassVar, Self, cast
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-
-# Removed: from flext_ldif.protocols import p (use string literals or hasattr checks)
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
-
-# Removed: from flext_ldif.utilities import u (not used - removed to break circular import)
 
 logger = FlextLogger(__name__)
 
@@ -55,11 +52,7 @@ logger = FlextLogger(__name__)
 class FlextLdifServersBaseSchema(
     QuirkMethodsMixin,
     FlextService[
-        (
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
-        )
+        (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str)
     ],
 ):
     """Base class for schema quirks - FlextService V2 with enhanced usability.
@@ -103,7 +96,7 @@ class FlextLdifServersBaseSchema(
         - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
 
         **Protocol Compliance**: All implementations MUST satisfy
-        p.Ldif.Quirks.SchemaProtocol through structural typing.
+        p.Ldif.SchemaQuirkProtocol through structural typing.
         This means all public methods must match protocol signatures exactly.
 
         **Validation**: Use hasattr(quirk, "parse") and hasattr(quirk, "write")
@@ -250,7 +243,7 @@ class FlextLdifServersBaseSchema(
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
         """Parse server-specific attribute definition (internal).
 
         Extracts attribute metadata (OID, NAME, DESC, SYNTAX, etc.)
@@ -269,7 +262,7 @@ class FlextLdifServersBaseSchema(
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
         """Parse server-specific objectClass definition (internal).
 
         Extracts objectClass metadata (OID, NAME, SUP, MUST, MAY, etc.)
@@ -294,8 +287,8 @@ class FlextLdifServersBaseSchema(
 
     def _hook_post_parse_attribute(
         self,
-        attr: FlextLdifModelsDomains.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+        attr: p.Ldif.SchemaAttributeProtocol,
+    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
         """Hook called after parsing an attribute definition.
 
         Override in subclasses for server-specific post-processing of parsed attributes.
@@ -312,7 +305,7 @@ class FlextLdifServersBaseSchema(
             attr: Parsed SchemaAttribute from parse_attribute()
 
         Returns:
-            FlextResult[FlextLdifModelsDomains.SchemaAttribute] - modified or original attribute
+            FlextResult[p.Ldif.SchemaAttributeProtocol] - modified or original attribute
 
         **Example:**
             def _hook_post_parse_attribute(self, attr):
@@ -326,8 +319,8 @@ class FlextLdifServersBaseSchema(
 
     def _hook_post_parse_objectclass(
         self,
-        oc: FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+        oc: p.Ldif.SchemaObjectClassProtocol,
+    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
         """Hook called after parsing an objectClass definition.
 
         Override in subclasses for server-specific post-processing of parsed objectClasses.
@@ -344,7 +337,7 @@ class FlextLdifServersBaseSchema(
             oc: Parsed SchemaObjectClass from parse_objectclass()
 
         Returns:
-            FlextResult[FlextLdifModelsDomains.SchemaObjectClass] - modified or original objectClass
+            FlextResult[p.Ldif.SchemaObjectClassProtocol] - modified or original objectClass
 
         **Example:**
             def _hook_post_parse_objectclass(self, oc):
@@ -360,7 +353,7 @@ class FlextLdifServersBaseSchema(
 
     def can_handle_attribute(
         self,
-        attr_definition: str | FlextLdifModelsDomains.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttributeProtocol,
     ) -> bool:
         """Check if this quirk can handle the attribute definition.
 
@@ -383,7 +376,7 @@ class FlextLdifServersBaseSchema(
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | FlextLdifModelsDomains.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
     ) -> bool:
         """Check if this quirk can handle the objectClass definition.
 
@@ -421,7 +414,7 @@ class FlextLdifServersBaseSchema(
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
         """Parse attribute definition (public API).
 
         Delegates to _parse_attribute() for server-specific implementation.
@@ -438,7 +431,7 @@ class FlextLdifServersBaseSchema(
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
         """Parse objectClass definition (public API).
 
         Delegates to _parse_objectclass() for server-specific implementation.
@@ -455,10 +448,7 @@ class FlextLdifServersBaseSchema(
     def route_parse(
         self,
         definition: str,
-    ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-    ]:
+    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
         """Route schema definition to appropriate parse method.
 
         Generic implementation that automatically detects if definition is
@@ -489,36 +479,24 @@ class FlextLdifServersBaseSchema(
             oc_result = self._parse_objectclass(definition)
             if oc_result.is_failure:
                 return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                    )
+                    (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol)
                 ].fail(
                     oc_result.error or "Parse failed",
                 )
             return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                )
+                (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol)
             ].ok(
                 oc_result.unwrap(),
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.is_failure:
             return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                )
+                (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol)
             ].fail(
                 attr_result.error or "Parse failed",
             )
         return FlextResult[
-            (
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            )
+            (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol)
         ].ok(
             attr_result.unwrap(),
         )
@@ -526,10 +504,7 @@ class FlextLdifServersBaseSchema(
     def parse(
         self,
         definition: str,
-    ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-    ]:
+    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
         """Parse schema definition (attribute or objectClass).
 
         Generic implementation that automatically routes to parse_attribute()
@@ -547,7 +522,7 @@ class FlextLdifServersBaseSchema(
 
     def write_attribute(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> FlextResult[str]:
         """Write attribute to RFC-compliant string format (public API).
 
@@ -564,7 +539,7 @@ class FlextLdifServersBaseSchema(
 
     def write_objectclass(
         self,
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
     ) -> FlextResult[str]:
         """Write objectClass to RFC-compliant string format (public API).
 
@@ -581,7 +556,7 @@ class FlextLdifServersBaseSchema(
 
     def _write_attribute(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format (internal).
 
@@ -599,7 +574,7 @@ class FlextLdifServersBaseSchema(
 
     def _write_objectclass(
         self,
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format (internal).
 
@@ -615,7 +590,7 @@ class FlextLdifServersBaseSchema(
 
     def _hook_validate_attributes(
         self,
-        attributes: list[FlextLdifModelsDomains.SchemaAttribute],
+        attributes: list[p.Ldif.SchemaAttributeProtocol],
         available_attrs: set[str],
     ) -> FlextResult[bool]:
         """Hook for server-specific attribute validation during schema extraction.
@@ -747,7 +722,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def _preserve_formatting(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         attr_definition: str,
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
@@ -769,7 +744,7 @@ class FlextLdifServersBaseSchema(
         substr_oid: str | None = None,
         sup_oid: str | None = None,
         server_type: str | None = None,
-    ) -> FlextLdifModelsDomains.QuirkMetadata | None:
+    ) -> m.Ldif.QuirkMetadata | None:
         """Build metadata for attribute including extensions and OID validation.
 
         Business Rule: Tracks OID validation for attribute, syntax, matching
@@ -828,7 +803,7 @@ class FlextLdifServersBaseSchema(
 
         # Create metadata
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        metadata = FlextLdifModelsDomains.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata(**metadata_extensions)
             if metadata_extensions
@@ -865,9 +840,7 @@ class FlextLdifServersBaseSchema(
         attr_definition: str | None,
         oc_definition: str | None,
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-        | str
+        p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str
     ]:
         """Handle parse operation for schema quirk.
 
@@ -887,13 +860,11 @@ class FlextLdifServersBaseSchema(
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
             if attr_result.is_success:
-                parsed_attr: FlextLdifModelsDomains.SchemaAttribute = (
-                    attr_result.unwrap()
-                )
+                parsed_attr: p.Ldif.SchemaAttributeProtocol = attr_result.unwrap()
                 return FlextResult[
                     (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | str
                     )
                 ].ok(
@@ -902,8 +873,8 @@ class FlextLdifServersBaseSchema(
             error_msg: str = attr_result.error or "Parse attribute failed"
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].fail(
@@ -912,11 +883,11 @@ class FlextLdifServersBaseSchema(
         if oc_definition:
             oc_result = self.parse_objectclass(oc_definition)
             if oc_result.is_success:
-                parsed_oc: FlextLdifModelsDomains.SchemaObjectClass = oc_result.unwrap()
+                parsed_oc: p.Ldif.SchemaObjectClassProtocol = oc_result.unwrap()
                 return FlextResult[
                     (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | str
                     )
                 ].ok(
@@ -925,31 +896,25 @@ class FlextLdifServersBaseSchema(
             error_msg = oc_result.error or "Parse objectclass failed"
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].fail(
                 error_msg,
             )
         return FlextResult[
-            (
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-                | str
-            )
+            (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str)
         ].fail(
             "No parse parameter provided",
         )
 
     def _handle_write_operation(
         self,
-        attr_model: FlextLdifModelsDomains.SchemaAttribute | None,
-        oc_model: FlextLdifModelsDomains.SchemaObjectClass | None,
+        attr_model: p.Ldif.SchemaAttributeProtocol | None,
+        oc_model: p.Ldif.SchemaObjectClassProtocol | None,
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-        | str
+        p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str
     ]:
         """Handle write operation for schema quirk.
 
@@ -972,8 +937,8 @@ class FlextLdifServersBaseSchema(
                 written_text: str = write_result.unwrap()
                 return FlextResult[
                     (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | str
                     )
                 ].ok(
@@ -982,8 +947,8 @@ class FlextLdifServersBaseSchema(
             error_msg: str = write_result.error or "Write attribute failed"
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].fail(
@@ -995,8 +960,8 @@ class FlextLdifServersBaseSchema(
                 written_text = write_oc_result.unwrap()
                 return FlextResult[
                     (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | str
                     )
                 ].ok(
@@ -1005,37 +970,27 @@ class FlextLdifServersBaseSchema(
             error_msg = write_oc_result.error or "Write objectclass failed"
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].fail(
                 error_msg,
             )
         return FlextResult[
-            (
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-                | str
-            )
+            (p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str)
         ].fail(
             "No write parameter provided",
         )
 
     def _auto_detect_operation(
         self,
-        data: (
-            str
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-        ),
+        data: (str | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol),
         operation: str | None,
     ) -> (
         str
         | FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
+            p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str
         ]
     ):
         """Auto-detect operation from data type.
@@ -1065,16 +1020,10 @@ class FlextLdifServersBaseSchema(
 
     def _route_operation(
         self,
-        data: (
-            str
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-        ),
+        data: (str | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol),
         operation: str,
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-        | str
+        p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str
     ]:
         """Route data to appropriate parse or write handler.
 
@@ -1095,8 +1044,8 @@ class FlextLdifServersBaseSchema(
             if not isinstance(data, str):
                 return FlextResult[
                     (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | str
                     )
                 ].fail(f"parse operation requires str, got {type(data).__name__}")
@@ -1123,14 +1072,14 @@ class FlextLdifServersBaseSchema(
             )
 
         if operation == "write":
-            if isinstance(data, FlextLdifModelsDomains.SchemaAttribute):
+            if isinstance(data, p.Ldif.SchemaAttributeProtocol):
                 return self._handle_write_operation(attr_model=data, oc_model=None)
-            if isinstance(data, FlextLdifModelsDomains.SchemaObjectClass):
+            if isinstance(data, p.Ldif.SchemaObjectClassProtocol):
                 return self._handle_write_operation(attr_model=None, oc_model=data)
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].fail(
@@ -1146,16 +1095,14 @@ class FlextLdifServersBaseSchema(
         *,
         data: (
             str
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | None
         ) = None,
         operation: str | None = None,
         **kwargs: dict[str, object],
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass
-        | str
+        p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | str
     ]:
         """Execute schema operation with auto-detection: str→parse, Model→write.
 
@@ -1176,8 +1123,8 @@ class FlextLdifServersBaseSchema(
                 data_raw,
                 (
                     str,
-                    FlextLdifModelsDomains.SchemaAttribute,
-                    FlextLdifModelsDomains.SchemaObjectClass,
+                    p.Ldif.SchemaAttributeProtocol,
+                    p.Ldif.SchemaObjectClassProtocol,
                 ),
             ):
                 data = data_raw
@@ -1198,8 +1145,8 @@ class FlextLdifServersBaseSchema(
             empty_str: str = ""
             return FlextResult[
                 (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
+                    p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | str
                 )
             ].ok(
@@ -1226,13 +1173,12 @@ class FlextLdifServersBaseSchema(
 
     def write(
         self,
-        model: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        model: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
     ) -> FlextResult[str]:
         """Write schema model to string format.
 
         Dispatches to write_attribute or write_objectclass based on model type.
-        This satisfies p.Ldif.Quirks.SchemaProtocol.
+        This satisfies p.Ldif.SchemaQuirkProtocol.
 
         Args:
             model: SchemaAttribute or SchemaObjectClass model to write
@@ -1241,7 +1187,7 @@ class FlextLdifServersBaseSchema(
             FlextResult with string representation
 
         """
-        if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
+        if isinstance(model, p.Ldif.SchemaAttributeProtocol):
             return self.write_attribute(model)
         # model is SchemaObjectClass (Union type narrows after first check)
         return self.write_objectclass(model)

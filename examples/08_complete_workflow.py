@@ -36,7 +36,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_ldif import FlextLdif, m, u
+from flext_ldif import FlextLdif, m, p, u
 
 
 def railway_oriented_composition() -> None:
@@ -308,7 +308,7 @@ def schema_driven_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Step 1: Create entries using direct API methods
-    def create_user_entry(i: int) -> m.Ldif.Entry | None:
+    def create_user_entry(i: int) -> p.Entry | None:
         """Create user entry."""
         person_result = api.create_entry(
             dn=f"cn=User {i},ou=People,dc=example,dc=com",
@@ -321,13 +321,13 @@ def schema_driven_workflow() -> None:
 
         return person_result.unwrap() if person_result.is_success else None
 
-    batch_result = u.Ldif.process(
+    batch_result = u.process(
         list(range(5)),
         create_user_entry,
         on_error="skip",
     )
     _entries = (
-        cast("list[m.Ldif.Entry]", batch_result.value["results"])
+        cast("list[p.Entry]", batch_result.value["results"])
         if batch_result.is_success
         else []
     )
@@ -357,7 +357,7 @@ sn: Test
     entries = parse_result.unwrap()
 
     # Extract ACLs using direct API method (no service instantiation!)
-    def process_entry_acl(entry: m.Ldif.Entry) -> bool | None:
+    def process_entry_acl(entry: p.Entry) -> bool | None:
         """Extract and evaluate ACLs from entry."""
         acl_result = api.extract_acls(entry)
 
@@ -368,8 +368,8 @@ sn: Test
             # Cast to expected type since models are compatible at runtime
             acls_list = acl_response.acls if hasattr(acl_response, "acls") else []
             # Type cast needed because domain and public Acl models are structurally compatible
-            # Use m.Ldif.Acl for type hint
-            public_acls = cast("list[m.Ldif.Acl]", acls_list)
+            # Use m.Acl for type hint
+            public_acls = cast("list[m.Acl]", acls_list)
 
             if public_acls:
                 # Evaluate ACL rules using direct API method
@@ -379,7 +379,7 @@ sn: Test
                     return eval_result.unwrap()
         return None
 
-    _ = u.Ldif.process(
+    _ = u.process(
         entries,
         process_entry_acl,
         on_error="skip",
@@ -391,7 +391,7 @@ def batch_processing_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Create large dataset
-    entries: list[m.Ldif.Entry] = []
+    entries: list[p.Entry] = []
     for i in range(20):
         result = api.create_entry(
             dn=f"cn=BatchUser{i},ou=People,dc=example,dc=com",
@@ -506,7 +506,7 @@ cn: test
 
     if not validation_report.is_valid:
         # Handle validation errors and attempt recovery by fixing entries
-        def fix_entry(entry: m.Ldif.Entry) -> None:
+        def fix_entry(entry: p.Entry) -> None:
             """Fix entry by adding missing required attribute."""
             # Add missing required attribute
             if entry.attributes:
@@ -518,7 +518,7 @@ cn: test
                 ):
                     entry.attributes.add_attribute("sn", "recovered")
 
-        _ = u.Ldif.process(
+        _ = u.process(
             entries,
             fix_entry,
             on_error="skip",

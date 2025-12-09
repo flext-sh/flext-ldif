@@ -36,10 +36,11 @@ from flext_core import (
 from flext_core.runtime import FlextRuntime
 from flext_core.utilities import ValidatorSpec
 
+# Local aliases for model types (utilities cannot import models)
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-
-# ProcessConfig and ServerType are now in m.Ldif.Config namespace
+from flext_ldif._utilities.configs import ProcessConfig
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
@@ -48,6 +49,8 @@ from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif._utilities.filters import (
     EntryFilter,
 )
+
+# Import fluent classes for DnOps and EntryOps
 from flext_ldif._utilities.fluent import DnOps, EntryOps
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
@@ -73,7 +76,6 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import c
-from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
@@ -120,28 +122,28 @@ class FlextLdifUtilities(FlextUtilities):
         from flext_ldif import u
 
         # LDIF-specific access
-        u.Ldif.DN.parse("cn=test,dc=example,dc=com")
-        u.Ldif.Entry.has_objectclass(entry, "person")
+        u.DN.parse("cn=test,dc=example,dc=com")
+        u.Entry.has_objectclass(entry, "person")
 
         # Power methods
-        result = u.Ldif.process(entries, source_server="oid")
+        result = u.process(entries, source_server="oid")
         result = u.transform(entries, Normalize.dn())
         result = u.filter(entries, Filter.by_objectclass("person"))
     """
 
     # === LDIF NAMESPACE ===
     # Project-specific namespace for LDIF utilities
-    # Access via u.Ldif.* pattern for better organization
+    # Access via u.* pattern for better organization
     class Ldif:
         """LDIF-specific utility namespace.
 
         This namespace groups all LDIF-specific utilities for better organization
-        and cross-project access. Access via u.Ldif.* pattern.
+        and cross-project access. Access via u.* pattern.
 
         Example:
             from flext_ldif import u
-            result = u.Ldif.DN.parse("cn=test,dc=example")
-            entry = u.Ldif.Entry.create("cn=test", attrs={"cn": ["test"]})
+            result = u.DN.parse("cn=test,dc=example")
+            entry = u.Entry.create("cn=test", attrs={"cn": ["test"]})
 
         """
 
@@ -156,7 +158,7 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, value: t.GeneralValueType) -> None:
+            def __init__(self, value: t.Ldif.ValueType) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:
@@ -164,7 +166,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 """
                 self._value = value
-                self._default: t.GeneralValueType | None = None
+                self._default: t.Ldif.ValueType | None = None
                 self._target_type: str | None = None
                 self._safe_mode = False
 
@@ -197,7 +199,7 @@ class FlextLdifUtilities(FlextUtilities):
                 self._safe_mode = True
                 return self
 
-            def build(self) -> t.GeneralValueType:
+            def build(self) -> t.Ldif.ValueType:
                 """Build and return the converted value using parent utilities."""
                 if self._value is None:
                     return self._default
@@ -350,8 +352,67 @@ class FlextLdifUtilities(FlextUtilities):
         class DN(FlextLdifUtilitiesDN):
             """DN utilities for LDIF operations."""
 
-        class Entry(FlextLdifUtilitiesEntry):
-            """Entry utilities for LDIF operations."""
+        class Entry:
+            """Entry utilities for LDIF operations using composition to avoid circular imports."""
+
+            @staticmethod
+            def is_schema_entry(
+                entry: p.Ldif.EntryProtocol, *, strict: bool = True
+            ) -> bool:
+                """Check if entry is a REAL schema entry with schema definitions."""
+                return FlextLdifUtilitiesEntry.is_schema_entry(entry, strict=strict)
+
+            @staticmethod
+            def has_objectclass(
+                entry: p.Ldif.EntryProtocol,
+                objectclasses: str | tuple[str, ...],
+            ) -> bool:
+                """Check if entry has specified objectClass."""
+                return FlextLdifUtilitiesEntry.has_objectclass(entry, objectclasses)
+
+            @staticmethod
+            def has_all_attributes(
+                entry: p.Ldif.EntryProtocol,
+                attributes: list[str],
+            ) -> bool:
+                """Check if entry has all specified attributes."""
+                return FlextLdifUtilitiesEntry.has_all_attributes(entry, attributes)
+
+            @staticmethod
+            def has_any_attributes(
+                entry: p.Ldif.EntryProtocol,
+                attributes: list[str],
+            ) -> bool:
+                """Check if entry has any of the specified attributes."""
+                return FlextLdifUtilitiesEntry.has_any_attributes(entry, attributes)
+
+            @staticmethod
+            def remove_attributes(
+                entry: p.Ldif.EntryProtocol,
+                attributes: list[str],
+            ) -> p.Ldif.EntryProtocol:
+                """Remove specified attributes from entry."""
+                return FlextLdifUtilitiesEntry.remove_attributes(entry, attributes)
+
+            @staticmethod
+            def transform_batch(
+                entries: Sequence[p.Ldif.EntryProtocol],
+                config: FlextLdifModelsConfig.EntryTransformConfig | None = None,
+                **kwargs: object,
+            ) -> r[list[p.Ldif.EntryProtocol]]:
+                """Transform multiple entries with common operations."""
+                return FlextLdifUtilitiesEntry.transform_batch(
+                    entries, config, **kwargs
+                )
+
+            @staticmethod
+            def filter_batch(
+                entries: Sequence[p.Ldif.EntryProtocol],
+                config: FlextLdifModelsConfig.EntryFilterConfig | None = None,
+                **kwargs: object,
+            ) -> r[list[p.Ldif.EntryProtocol]]:
+                """Filter entries based on criteria."""
+                return FlextLdifUtilitiesEntry.filter_batch(entries, config, **kwargs)
 
         class Events(FlextLdifUtilitiesEvents):
             """Event utilities for LDIF operations."""
@@ -393,9 +454,9 @@ class FlextLdifUtilities(FlextUtilities):
             items: object,
             processor_normalized: object,
             processor: object | None,
-            config: m.Ldif.Config.ProcessConfig | None,
-            source_server: m.Ldif.Config.ServerType,
-            target_server: m.Ldif.Config.ServerType | None,
+            config: ProcessConfig | None,
+            source_server: c.Ldif.ServerTypes,
+            target_server: c.Ldif.ServerTypes | None,
         ) -> bool:
             """Check if this is an LDIF-specific process call."""
             is_sequence_entry = isinstance(items, Sequence) and not isinstance(
@@ -404,7 +465,7 @@ class FlextLdifUtilities(FlextUtilities):
             )
             has_ldif_config = (
                 (processor_normalized is None and processor is None)
-                or isinstance(processor_normalized, m.Ldif.Config.ProcessConfig)
+                or isinstance(processor_normalized, ProcessConfig)
                 or config is not None
                 or source_server != "auto"
                 or target_server is not None
@@ -413,33 +474,32 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def process_ldif_entries(
-            entries: Sequence[m.Ldif.Entry],
-            config: m.Ldif.Config.ProcessConfig | None,
-            source_server: m.Ldif.Config.ServerType,
-            target_server: m.Ldif.Config.ServerType | None,
+            entries: Sequence[p.Ldif.EntryProtocol],
+            config: ProcessConfig | None,
+            source_server: c.Ldif.ServerTypes,
+            target_server: c.Ldif.ServerTypes | None,
             *,
             _normalize_dns: bool,  # Unused: reserved for future DN normalization control
             _normalize_attrs: bool,  # Unused: reserved for future attribute normalization control
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> FlextLdifResult[list[p.Ldif.EntryProtocol]]:
             """Process LDIF entries with pipeline."""
             if config is None:
                 # Create ProcessConfig with default factory
                 # Use model_copy to update server types (Pydantic v2 pattern)
-                config_base = m.Ldif.Config.ProcessConfig()
+                config_base = ProcessConfig()
                 config_base_model = config_base
                 process_config = config_base_model.model_copy(
                     update={
                         "source_server": source_server,
-                        "target_server": target_server
-                        or m.Ldif.Config.ServerType.RFC,
+                        "target_server": target_server or c.Ldif.ServerTypes.RFC,
                     }
                 )
                 # Create TransformConfig with ProcessConfig
-                transform_config = m.Ldif.Config.TransformConfig()
+                transform_config = FlextLdifModelsConfig.TransformConfig()
                 transform_config.process_config = process_config
             else:
                 # Create TransformConfig with existing ProcessConfig
-                transform_config = m.Ldif.Config.TransformConfig()
+                transform_config = FlextLdifModelsConfig.TransformConfig()
                 transform_config.process_config = config
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
@@ -447,10 +507,10 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextLdifResult.fail(
                     pipeline_result.error or "Pipeline execution failed"
                 )
-            # Convert FlextLdifModelsDomains.Entry to m.Ldif.Entry using model_validate
+            # Convert FlextLdifModelsDomains.Entry to p.Ldif.EntryProtocol using model_validate
             domain_entries = pipeline_result.unwrap()
-            converted_entries: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(entry.model_dump())
+            converted_entries: list[p.Ldif.EntryProtocol] = [
+                p.Ldif.EntryProtocol.model_validate(entry.model_dump())
                 for entry in domain_entries
             ]
             return FlextLdifResult.ok(converted_entries)
@@ -479,7 +539,9 @@ class FlextLdifUtilities(FlextUtilities):
             if FlextLdifUtilities.Ldif.is_two_arg_processor(predicate):
                 # TypeGuard ensures predicate is Callable[[str, T], bool]
                 try:
-                    result = FlextLdifUtilities.Ldif.call_processor(predicate, key, value)
+                    result = FlextLdifUtilities.Ldif.call_processor(
+                        predicate, key, value
+                    )
                     if isinstance(result, bool):
                         return result
                 except (TypeError, ValueError):
@@ -653,9 +715,9 @@ class FlextLdifUtilities(FlextUtilities):
             predicate: Callable[[T], bool] | Callable[[str, T], bool] | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
-            config: m.Ldif.Config.ProcessConfig | None = None,
-            source_server: m.Ldif.Config.ServerType = m.Ldif.Config.ServerType.AUTO,
-            target_server: m.Ldif.Config.ServerType | None = None,
+            config: ProcessConfig | None = None,
+            source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
+            target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
         ) -> r[list[R]]: ...
@@ -663,20 +725,20 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @overload
         def process(
-            items_or_entries: Sequence[m.Ldif.Entry],
-            processor_or_config: m.Ldif.Config.ProcessConfig | None = None,
+            items_or_entries: Sequence[p.Ldif.EntryProtocol],
+            processor_or_config: ProcessConfig | None = None,
             *,
-            processor: Callable[[m.Ldif.Entry], object] | None = None,
+            processor: Callable[[p.Ldif.EntryProtocol], object] | None = None,
             on_error: str = "collect",
-            predicate: Callable[[m.Ldif.Entry], bool] | None = None,
+            predicate: Callable[[p.Ldif.EntryProtocol], bool] | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
-            config: m.Ldif.Config.ProcessConfig | None = None,
-            source_server: m.Ldif.Config.ServerType = m.Ldif.Config.ServerType.AUTO,
-            target_server: m.Ldif.Config.ServerType | None = None,
+            config: ProcessConfig | None = None,
+            source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
+            target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]: ...
+        ) -> FlextLdifResult[list[p.Ldif.EntryProtocol]]: ...
 
         @staticmethod
         def process[T, R](
@@ -686,13 +748,10 @@ class FlextLdifUtilities(FlextUtilities):
                 | tuple[T, ...]
                 | dict[str, T]
                 | Mapping[str, T]
-                | Sequence[m.Ldif.Entry]
+                | Sequence[p.Ldif.EntryProtocol]
             ),
             processor_or_config: (
-                Callable[[T], R]
-                | Callable[[str, T], R]
-                | m.Ldif.Config.ProcessConfig
-                | None
+                Callable[[T], R] | Callable[[str, T], R] | ProcessConfig | None
             ) = None,
             *,
             processor: Callable[[T], R] | Callable[[str, T], R] | None = None,
@@ -700,12 +759,12 @@ class FlextLdifUtilities(FlextUtilities):
             predicate: Callable[[T], bool] | Callable[[str, T], bool] | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
-            config: m.Ldif.Config.ProcessConfig | None = None,
-            source_server: m.Ldif.Config.ServerType = m.Ldif.Config.ServerType.AUTO,
-            target_server: m.Ldif.Config.ServerType | None = None,
+            config: ProcessConfig | None = None,
+            source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
+            target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[R]] | FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> r[list[R]] | FlextLdifResult[list[p.Ldif.EntryProtocol]]:
             """Universal entry processor.
 
             Processes entries with DN normalization, attribute normalization,
@@ -752,7 +811,7 @@ class FlextLdifUtilities(FlextUtilities):
                 target_server,
             ) and is_entry_sequence(items_or_entries):
                 # Type narrowing: items_or_entries is Sequence after is_entry_sequence check
-                # We know from is_ldif_process_call that entries contain m.Ldif.Entry instances
+                # We know from is_ldif_process_call that entries contain p.Ldif.EntryProtocol instances
                 entries_obj: object = items_or_entries
                 if isinstance(entries_obj, (list, tuple)):
                     return FlextLdifUtilities.Ldif.process_ldif_entries(
@@ -775,7 +834,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Processor can accept 1 or 2 args - use VariadicCallable for flexibility
             # Type narrowing: exclude ProcessConfig and None
             if processor_normalized is None or isinstance(
-                processor_normalized, m.Ldif.Config.ProcessConfig
+                processor_normalized, ProcessConfig
             ):
                 msg = "processor is required for base class process"
                 return r.fail(msg)
@@ -814,10 +873,10 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def transform_entries(
-            entries: Sequence[m.Ldif.Entry],
-            *transformers: EntryTransformer[m.Ldif.Entry],
+            entries: Sequence[p.Ldif.EntryProtocol],
+            *transformers: EntryTransformer[p.Ldif.EntryProtocol],
             fail_fast: bool = True,
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> FlextLdifResult[list[p.Ldif.EntryProtocol]]:
             """Apply LDIF entry transformations via pipeline.
 
             This is the LDIF-specific entry transformation method.
@@ -838,17 +897,17 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             pipeline = Pipeline(fail_fast=fail_fast)
-            # All transformers and pipeline now use m.Ldif.Entry, no conversion needed
+            # All transformers and pipeline now use p.Ldif.EntryProtocol, no conversion needed
             for transformer in transformers:
                 _ = pipeline.add(transformer)  # Explicitly ignore return value
-            # entries are already m.Ldif.Entry, pipeline expects m.Ldif.Entry
+            # entries are already p.Ldif.EntryProtocol, pipeline expects p.Ldif.EntryProtocol
             entries_list = list(entries)
             pipeline_result = pipeline.execute(entries_list)
             if pipeline_result.is_failure:
                 return FlextLdifResult.fail(
                     pipeline_result.error or "Pipeline execution failed"
                 )
-            # Pipeline returns list[m.Ldif.Entry], which matches return type
+            # Pipeline returns list[p.Ldif.EntryProtocol], which matches return type
             transformed_entries = pipeline_result.unwrap()
             return FlextLdifResult.ok(transformed_entries)
 
@@ -863,13 +922,13 @@ class FlextLdifUtilities(FlextUtilities):
                 | tuple[T, ...]
                 | dict[str, T]
                 | Mapping[str, T]
-                | Sequence[m.Ldif.Entry]
+                | Sequence[p.Ldif.EntryProtocol]
             ),
             predicate_or_filter1: (
                 FlextLdifUtilities.Ldif.VariadicCallable[bool]
-                | EntryFilter[m.Ldif.Entry]
+                | EntryFilter[p.Ldif.EntryProtocol]
             ),
-            *filters: EntryFilter[m.Ldif.Entry],
+            *filters: EntryFilter[p.Ldif.EntryProtocol],
             mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
             mode: Literal["all", "any"] = "all",
         ) -> (
@@ -877,7 +936,7 @@ class FlextLdifUtilities(FlextUtilities):
             | list[R]
             | dict[str, T]
             | dict[str, R]
-            | FlextLdifResult[list[m.Ldif.Entry]]
+            | FlextLdifResult[list[p.Ldif.EntryProtocol]]
         ):
             """Filter entries using composable filter predicates.
 
@@ -922,8 +981,8 @@ class FlextLdifUtilities(FlextUtilities):
                 (str, bytes, dict),
             ):
                 # Type already narrowed by isinstance checks
-                entries: Sequence[m.Ldif.Entry] = items_or_entries
-                filter_entry: EntryFilter[m.Ldif.Entry] = predicate_or_filter1
+                entries: Sequence[p.Ldif.EntryProtocol] = items_or_entries
+                filter_entry: EntryFilter[p.Ldif.EntryProtocol] = predicate_or_filter1
                 return FlextLdifUtilities.Ldif._filter_ldif_entries(  # noqa: SLF001
                     entries,
                     filter_entry,
@@ -942,7 +1001,7 @@ class FlextLdifUtilities(FlextUtilities):
                     entry_filter: EntryFilter[object] = predicate_or_filter1
                     return entry_filter.matches(item)
                 return False
-            
+
             # Type narrowing: items_or_entries is compatible with base class signature
             # Return type already declared in _filter_base_class signature
             return FlextLdifUtilities.Ldif._filter_base_class(  # noqa: SLF001
@@ -959,7 +1018,7 @@ class FlextLdifUtilities(FlextUtilities):
                 | tuple[T, ...]
                 | dict[str, T]
                 | Mapping[str, T]
-                | Sequence[m.Ldif.Entry]
+                | Sequence[p.Ldif.EntryProtocol]
             ),
             predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool],
             mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None,
@@ -1021,19 +1080,19 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def _filter_ldif_entries(
-            entries: Sequence[m.Ldif.Entry],
-            predicate_or_filter1: EntryFilter[m.Ldif.Entry],
-            filters: tuple[EntryFilter[m.Ldif.Entry], ...],
+            entries: Sequence[p.Ldif.EntryProtocol],
+            predicate_or_filter1: EntryFilter[p.Ldif.EntryProtocol],
+            filters: tuple[EntryFilter[p.Ldif.EntryProtocol], ...],
             mode: Literal["all", "any"],
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> FlextLdifResult[list[p.Ldif.EntryProtocol]]:
             """Filter LDIF entries using EntryFilter (internal helper)."""
-            filter_list: list[EntryFilter[m.Ldif.Entry]] = [
+            filter_list: list[EntryFilter[p.Ldif.EntryProtocol]] = [
                 predicate_or_filter1,
             ] + list(filters)
             if not filter_list:
                 return FlextLdifResult.ok(list(entries))
             # Combine filters based on mode
-            combined: EntryFilter[m.Ldif.Entry] = filter_list[0]
+            combined: EntryFilter[p.Ldif.EntryProtocol] = filter_list[0]
             for f in filter_list[1:]:
                 combined = combined & f if mode == "all" else combined | f
             filtered = [entry for entry in entries if combined.matches(entry)]
@@ -1041,7 +1100,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def validate[T](
-            value_or_entries: T | Sequence[m.Ldif.Entry],
+            value_or_entries: T | Sequence[p.Ldif.EntryProtocol],
             *validators_or_none: ValidatorSpec,
             mode: str = "all",
             fail_fast: bool = True,
@@ -1111,7 +1170,7 @@ class FlextLdifUtilities(FlextUtilities):
                 and len(validators_or_none) == 0
             ):
                 # LDIF-specific validate - type narrowing ensures list[Entry]
-                entries: list[m.Ldif.Entry] = value_or_entries
+                entries: list[p.Ldif.EntryProtocol] = value_or_entries
                 pipeline = ValidationPipeline(
                     strict=strict,
                     collect_all=collect_all,
@@ -1165,7 +1224,7 @@ class FlextLdifUtilities(FlextUtilities):
             return DnOps(dn)
 
         @classmethod
-        def entry(cls, entry: m.Ldif.Entry) -> EntryOps:
+        def entry(cls, entry: p.Ldif.EntryProtocol) -> EntryOps:
             """Create fluent entry operations.
 
             Args:
@@ -2151,7 +2210,9 @@ class FlextLdifUtilities(FlextUtilities):
             result_val: object,
         ) -> object:
             """Evaluate a no-arg result value."""
-            if callable(result_val) and FlextLdifUtilities.Ldif.is_no_arg_callable(result_val):
+            if callable(result_val) and FlextLdifUtilities.Ldif.is_no_arg_callable(
+                result_val
+            ):
                 # TypeGuard ensures result_val is Callable[[], object]
                 return result_val()
             return result_val
@@ -2163,7 +2224,9 @@ class FlextLdifUtilities(FlextUtilities):
             value: object,
         ) -> object:
             """Evaluate a value-arg result value."""
-            if callable(result_val) and FlextLdifUtilities.Ldif.is_object_arg_callable(result_val):
+            if callable(result_val) and FlextLdifUtilities.Ldif.is_object_arg_callable(
+                result_val
+            ):
                 # TypeGuard ensures result_val is Callable[[object], object]
                 return result_val(value)
             return result_val
@@ -2982,6 +3045,7 @@ class FlextLdifUtilities(FlextUtilities):
                             if isinstance(o, dict):
                                 return t(o)
                             return o
+
                         return wrapped
 
                     # Type narrowing: transform is Callable after check
@@ -3516,9 +3580,9 @@ class FlextLdifUtilities(FlextUtilities):
 
 
 # NOTE: Dynamic assignments (FlextLdifUtilities.Ldif.Entry = ...) are FORBIDDEN per CLAUDE.md
-# Root aliases are PROIBIDOS - always use u.Ldif.* namespace completo
+# Root aliases are PROIBIDOS - always use u.* namespace completo
 # Removed: FlextLdifUtilities.process
-# Use: u.Ldif.process
+# Use: u.process
 
 # Runtime alias for basic class (objetos nested sem aliases redundantes)
 # Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes

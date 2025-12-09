@@ -150,7 +150,7 @@ class FlextLdifServiceRegistry:
         filter_factory = getattr(cls, "_filter_factory", None)
         if filter_factory is None:
             raise RuntimeError(cls._FILTER_NOT_REGISTERED)
-        # Cast needed: getattr returns Any, but we know it's FilterFactoryType after None check
+        # Cast needed: getattr returns object, but we know it's FilterFactoryType after None check
         return cast("FilterFactoryType", filter_factory)()
 
     @classmethod
@@ -184,7 +184,7 @@ class FlextLdifServiceRegistry:
         categorization_factory = getattr(cls, "_categorization_factory", None)
         if categorization_factory is None:
             raise RuntimeError(cls._CATEGORIZATION_NOT_REGISTERED)
-        # Cast needed: getattr returns Any, but we know it's CategorizationFactoryType after None check
+        # Cast needed: getattr returns object, but we know it's CategorizationFactoryType after None check
         return cast("CategorizationFactoryType", categorization_factory)(server_type)
 
     @classmethod

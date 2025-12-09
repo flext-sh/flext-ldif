@@ -79,7 +79,7 @@ class FlextLdifModelsDomains:
         )
 
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            c.Ldif.LdifPatterns.DN_COMPONENT,
+            r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$",
             re.IGNORECASE,
         )
 
@@ -1209,15 +1209,15 @@ class FlextLdifModelsDomains:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type identifier (e.g., 'oid', 'oud')",
         )
-        schemas: list[p.Ldif.Quirks.SchemaProtocol] = Field(
+        schemas: list[p.Ldif.SchemaQuirkProtocol] = Field(
             default_factory=list,
             description="List of Schema quirk model instances",
         )
-        acls: list[p.Ldif.Quirks.AclProtocol] = Field(
+        acls: list[p.Ldif.AclQuirkProtocol] = Field(
             default_factory=list,
             description="List of ACL quirk model instances",
         )
-        entrys: list[p.Ldif.Quirks.EntryProtocol] = Field(
+        entrys: list[p.Ldif.EntryQuirkProtocol] = Field(
             default_factory=list,
             description="List of Entry quirk model instances",
         )
@@ -1558,7 +1558,7 @@ class FlextLdifModelsDomains:
     class Entry(FlextModelsBase.ArbitraryTypesModel):
         """LDIF entry domain model.
 
-        Implements p.Ldif.Models.EntryProtocol through structural typing.
+        Implements p.Models.EntryProtocol through structural typing.
         The protocol requires:
         - dn: str
         - attributes: FlextLdifModelsMetadata.DynamicMetadata
@@ -1587,14 +1587,14 @@ class FlextLdifModelsDomains:
         # RFC compliance is enforced in validate_entry_rfc_compliance, not here.
         dn: FlextLdifModelsDomains.DistinguishedName | None = Field(
             ...,
-            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
+            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
         )
         attributes: FlextLdifModelsDomains.LdifAttributes | None = Field(
             ...,
-            description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
+            description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
         )
 
-        # PROTOCOL COMPLIANCE: Entry FULLY satisfies EntryProtocol
+        # PROTOCOL COMPLIANCE: Entry FULLY satisfies p.Ldif.Entry.EntryProtocol
         # Field validators coerce inputs to proper types BEFORE Pydantic validation:
         # - dn: Accepts str | DistinguishedName via field validator
         # - attributes: Accepts dict | LdifAttributes via field validator
@@ -1716,7 +1716,7 @@ class FlextLdifModelsDomains:
 
         @computed_field
         def dn_str(self) -> str:
-            """Protocol compliance: EntryProtocol requires dn: str.
+            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires dn: str.
 
             Returns the DN as a string for protocol compatibility.
             """
@@ -1726,7 +1726,7 @@ class FlextLdifModelsDomains:
 
         @computed_field
         def attributes_dict(self) -> dict[str, list[str]]:
-            """Protocol compliance: EntryProtocol requires attributes: dict[str, list[str]].
+            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires attributes: dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
             """
@@ -3009,7 +3009,7 @@ class FlextLdifModelsDomains:
 
         # Validation status
         validation_status: str = Field(
-            default=c.Ldif.ValidationStatus.VALID,
+            default="valid",
             description="Validation status (use ValidationStatus constants)",
         )
         validation_warnings: list[str] = Field(

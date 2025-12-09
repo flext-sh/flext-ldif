@@ -43,12 +43,7 @@ from flext_core.runtime import FlextRuntime
 
 from flext_ldif.protocols import p
 
-# REMOVED: Runtime aliases redundantes - use p.Ldif.* diretamente (já importado com runtime alias)
-# FilterProtocol = p.Ldif.Utilities.FilterProtocol  # Use p.Ldif.Utilities.FilterProtocol directly
-# TransformerProtocol = p.Ldif.Utilities.TransformerProtocol  # Use p.Ldif.Utilities.TransformerProtocol directly
-
-# Alias for simplified usage - after all imports
-r = FlextResult  # Result
+r = FlextResult
 
 # Type variable for the result value type
 type ResultValue[T] = T
@@ -109,16 +104,18 @@ class FlextLdifResult[T]:
 
         """
         # Convert RuntimeResult to FlextResult if needed
+        inner_result: FlextResult[T]
         if isinstance(inner, FlextRuntime.RuntimeResult):
             # RuntimeResult is compatible with FlextResult interface
             # Convert by creating new FlextResult with same value/error
             if inner.is_success:
-                self._inner: FlextResult[T] = r.ok(inner.value)
+                inner_result = r.ok(inner.value)
             else:
                 error_msg = inner.error if hasattr(inner, "error") else str(inner)
-                self._inner = r.fail(error_msg)
+                inner_result = r.fail(error_msg)
         else:
-            self._inner = inner
+            inner_result = inner
+        self._inner = inner_result
 
     # =========================================================================
     # FACTORY METHODS - Create new results
@@ -304,7 +301,7 @@ class FlextLdifResult[T]:
 
     @overload
     def __or__(
-        self, transformer: p.Ldif.Utilities.TransformerProtocol[T]
+        self, transformer: p.Ldif.TransformerProtocol[T]
     ) -> FlextLdifResult[T]: ...
 
     @overload
@@ -319,7 +316,7 @@ class FlextLdifResult[T]:
     def __or__(
         self,
         transformer: (
-            p.Ldif.Utilities.TransformerProtocol[T]
+            p.Ldif.TransformerProtocol[T]
             | Callable[[T], T]
             | Callable[[T], FlextResult[T]]
         ),
@@ -350,8 +347,8 @@ class FlextLdifResult[T]:
             return FlextLdifResult.fail(self.error)
 
         # Business Rule: Apply transformer to success value
-        # Transformer can be p.Ldif.Utilities.TransformerProtocol (has apply method) or callable
-        # p.Ldif.Utilities.TransformerProtocol.apply() returns FlextResult[T] or T
+        # Transformer can be p.Ldif.TransformerProtocol (has apply method) or callable
+        # p.Ldif.TransformerProtocol.apply() returns FlextResult[T] or T
         # Callable transforms T -> T or T -> FlextResult[T]
         # Check if it has apply method (TransformerProtocol)
         # Business Rule: Access apply method via getattr for type safety
@@ -363,7 +360,7 @@ class FlextLdifResult[T]:
                 transform_result = apply_method(self.value)
                 if isinstance(transform_result, FlextResult):
                     return FlextLdifResult.from_result(transform_result)
-                return FlextLdifResult.ok(cast("T", transform_result))
+                return FlextLdifResult.ok(transform_result)
 
         # It's a callable (function or lambda)
         if callable(transformer):
@@ -498,15 +495,19 @@ class FlextLdifResult[T]:
 
     def filter(
         self,
-        predicate: p.Ldif.Utilities.FilterProtocol[T] | Callable[[T], bool],
+        predicate: p.Ldif.FilterProtocol[T] | Callable[[T], bool],
     ) -> FlextLdifResult[T]:
         """Filter the result value using a predicate.
 
-        For sequence values, filters elements matching the predicate.
-        For single values, returns empty list if predicate fails.
+        For sequence values, filters elements matching the predicate and returns
+        a new sequence of the same type T. For single values, returns the value
+        if it matches, or a failure if it doesn't match.
+
+        Business Rule: The filter method preserves the type T. When T is list[Entry],
+        filtering returns FlextLdifResult[list[Entry]] with matching entries.
 
         Args:
-            predicate: Filter predicate (p.Ldif.Utilities.FilterProtocol or callable)
+            predicate: Filter predicate (p.Ldif.FilterProtocol or callable)
 
         Returns:
             FlextLdifResult with filtered value or propagated error
@@ -517,63 +518,30 @@ class FlextLdifResult[T]:
 
         value = self.value
 
-        # Business Rule: Filter result value using predicate
-        # Predicate can be p.Ldif.Utilities.FilterProtocol (has matches method) or callable
-        # p.Ldif.Utilities.FilterProtocol.matches() returns bool
-        # Callable returns bool
-        # Get the matches function with proper type narrowing
-        def get_matches_func(
-            pred: p.Ldif.Utilities.FilterProtocol[T] | Callable[[T], bool],
-        ) -> Callable[[T], bool]:
-            """Extract matches function from predicate.
+        # Get matches function from predicate - check for matches method first
+        matches_func: Callable[[T], bool]
+        predicate_matches = getattr(predicate, "matches", None)
+        if predicate_matches is not None and callable(predicate_matches):
+            # FilterProtocol with matches method
+            matches_func = predicate_matches
+        elif callable(predicate):
+            matches_func = predicate
+        else:
+            return FlextLdifResult.fail("Invalid predicate type")
 
-            Business Rule: p.Ldif.Utilities.FilterProtocol has matches() method, callable predicates
-            are used directly. This enables both protocol-based and function-based filtering.
-            Implication: Use getattr for type-safe access to matches method, avoiding
-            pyright errors about FunctionType not having matches attribute.
-            """
-            # Business Rule: Access matches method via getattr for type safety
-            # Implication: Type checker cannot infer that pred.matches exists even after
-            # hasattr check, so we use getattr to satisfy pyright strict mode.
-            matches_method = getattr(pred, "matches", None)
-            if matches_method is not None and callable(matches_method):
-                return cast("Callable[[T], bool]", matches_method)
-            # Predicate is callable directly
-            if callable(pred):
-                return pred
-            # Invalid predicate type
-            msg = "Predicate must be p.Ldif.Utilities.FilterProtocol or callable"
-            raise TypeError(msg)
-
-        matches_func = get_matches_func(predicate)
-
-        # Handle sequence of entries
+        # Handle sequence of entries - filter elements and preserve type
         if isinstance(value, Sequence) and not isinstance(value, str):
-            # Type narrowing: value is Sequence[T], filtered is list[T]
-            # When T is a sequence type (e.g., list[Entry]), filtered is list[T]
-            # Return type should be FlextLdifResult[T] where T is the sequence type
-            filtered = [item for item in value if matches_func(item)]
-            # Type narrowing: filtered is list[T], but T in FlextLdifResult[T] is already the sequence type
-            # So we need to cast to T (which is the sequence type itself)
-            return FlextLdifResult[T].ok(cast("T", filtered))
+            # Filter elements - result is always a list for type consistency
+            filtered_elements = [item for item in value if matches_func(item)]
+            # Type narrowing: filtered_elements is always list[E] where E is element type
+            # This preserves the original sequence type while filtering elements
+            return FlextLdifResult(r.ok(cast("T", filtered_elements)))
 
-        # Handle single value
-        # Type narrowing: value is T (not str, since is_failure is False)
-        # But type checker may not infer this, so we check and narrow
-        if not isinstance(value, str):
-            value_typed: T = value
-            if matches_func(value_typed):
-                return FlextLdifResult[T].ok(value_typed)
+        # Handle single value - return if matches, fail otherwise
+        if matches_func(value):
+            return FlextLdifResult.ok(value)
 
-        # Empty list case - return empty list matching the input type
-        # If value was a sequence, return empty list of that type
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            empty_list: list[T] = []
-            # Type narrowing: empty_list is list[T], but T in FlextLdifResult[T] is the sequence type
-            return FlextLdifResult[T].ok(cast("T", empty_list))
-        # Single value case - return empty list
-        empty_list_single: list[T] = []
-        return FlextLdifResult[T].ok(cast("T", empty_list_single))
+        return FlextLdifResult.fail("Value did not match filter predicate")
 
     def on_success(self, func: Callable[[T], None]) -> Self:
         """Execute a function on success value without changing result.

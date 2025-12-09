@@ -41,14 +41,16 @@ from typing import Literal, Self
 
 from flext_core import FlextResult
 
-# Type aliases using facade for consistency
-# Use facade Entry type (m.Ldif.Entry) to match transformer types
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
+
+# Import removed to avoid circular dependency
+# Import CaseFoldOption directly to avoid circular import issues
+from flext_ldif.constants import c
 from flext_ldif.models import m
 
-# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# REMOVED: Runtime aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
 # LdifAttributes: TypeAlias = m.Ldif.LdifAttributes  # Use m.Ldif.LdifAttributes directly
 
@@ -90,7 +92,7 @@ class DnOps:
     def normalize(
         self,
         *,
-        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
     ) -> Self:
         """Normalize the DN.
 
@@ -370,7 +372,7 @@ class EntryOps:
     def normalize_dn(
         self,
         *,
-        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
         validate: bool = True,
     ) -> Self:
         """Normalize the entry's DN.

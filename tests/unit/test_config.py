@@ -108,8 +108,8 @@ VALIDATION_RANGES: tuple[ValidationRange, ...] = (
     ),
     ValidationRange(
         field_name="memory_limit_mb",
-        min_value=lib_c.Ldif.LdifProcessing.MIN_MEMORY_MB,
-        max_value=lib_c.Ldif.LdifProcessing.MAX_MEMORY_MB,
+        min_value=lib_c.LdifProcessing.MIN_MEMORY_MB,
+        max_value=lib_c.LdifProcessing.MAX_MEMORY_MB,
         valid_values=[64, 512, 4096],
         invalid_below=63,
         invalid_above=8193,
@@ -181,7 +181,7 @@ class TestsTestFlextLdifConfig(s):
         assert config.ldif_max_entries == 1000000
         assert config.ldif_chunk_size == 1000
         assert config.ldif_encoding == "utf-8"
-        assert config.memory_limit_mb == lib_c.Ldif.LdifProcessing.MIN_MEMORY_MB
+        assert config.memory_limit_mb == lib_c.LdifProcessing.MIN_MEMORY_MB
 
     def test_initialization_with_overrides(self) -> None:
         """Test configuration initialization with field overrides."""
@@ -340,7 +340,7 @@ class TestsTestFlextLdifConfig(s):
         def test_server_type_valid(self, server_type: str) -> None:
             """Test valid server_type values."""
             # Normalize and cast: use normalize_server_type to ensure valid ServerTypeLiteral
-            normalized = lib_c.Ldif.normalize_server_type(server_type)
+            normalized = lib_c.normalize_server_type(server_type)
             config = FlextLdifConfig(server_type=normalized)
             assert config.server_type == normalized
 
@@ -571,7 +571,7 @@ class TestsTestFlextLdifConfig(s):
         def test_batch_size_default(self) -> None:
             """Test default batch size."""
             config = FlextLdifConfig()
-            assert config.ldif_batch_size == lib_c.Ldif.DEFAULT_BATCH_SIZE
+            assert config.ldif_batch_size == lib_c.DEFAULT_BATCH_SIZE
 
         def test_fail_on_warnings_default(self) -> None:
             """Test fail_on_warnings is disabled by default."""
@@ -608,9 +608,11 @@ class TestsTestFlextLdifConfig(s):
 
         def test_extra_fields_ignored(self) -> None:
             """Test that extra fields are ignored (extra='ignore' in model_config)."""
-            config = FlextLdifConfig.model_validate({
-                "ldif_encoding": "utf-8",
-                "unknown_field": "ignored",
-            })
+            config = FlextLdifConfig.model_validate(
+                {
+                    "ldif_encoding": "utf-8",
+                    "unknown_field": "ignored",
+                }
+            )
             assert config.ldif_encoding == "utf-8"
             assert not hasattr(config, "unknown_field")

@@ -12,12 +12,8 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from flext_ldif import FlextLdifParser
-from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, c, s
-
-# Test constants - always at top of module, no type checking
-# Use classes directly, no instantiation needed
+from tests import RfcTestHelpers, c, p, s
 
 
 class TestsFlextLdifRfcSchemaParserInitialization(s):
@@ -258,8 +254,8 @@ class TestRfcSchemaQuirkDirectUsage:
     def test_schema_quirk_methods(
         self,
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
-        sample_schema_attribute: m.Ldif.SchemaAttribute,
-        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
+        sample_schema_attribute: p.Ldif.SchemaAttribute,
+        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Schema quirk can_handle and should_filter methods."""
         assert rfc_schema_quirk.can_handle_attribute("any attribute definition") is True

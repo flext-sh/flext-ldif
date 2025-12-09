@@ -16,7 +16,7 @@ from flext_core import FlextLogger
 
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 
-# Removed: from flext_ldif.protocols import p (use string literals or hasattr checks)
+# Removed: from flext_ldif.protocols import FlextLdifProtocols (use string literals or hasattr checks)
 
 # Use FlextLdifUtilitiesServer directly to avoid circular import with utilities.py
 
@@ -137,7 +137,7 @@ def _get_parent_quirk_safe_impl(
         ParentQuirkProtocol instance or None if not set or invalid type.
 
     """
-    parent_raw = getattr(instance, "_parent_quirk", None)
+    parent_raw: object | None = getattr(instance, "_parent_quirk", None)
     # Use protocol isinstance check for type narrowing
     # Use hasattr check for protocol compliance (structural typing)
     if parent_raw is not None and hasattr(parent_raw, "_parent_quirk"):

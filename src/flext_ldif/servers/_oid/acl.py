@@ -18,17 +18,19 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, ClassVar, Literal, cast
+from typing import ClassVar, Literal, cast
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities as u_core
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcAcl,
+)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -42,7 +44,7 @@ logger = FlextLogger(__name__)
 _OidConstants = FlextLdifServersOidConstants
 
 
-class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
+class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
     r"""Oracle Internet Directory (OID) ACL implementation.
 
     OID vs RFC ACL Differences
@@ -248,7 +250,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     # - write_acl(): Serializes RFC-compliant model to OID ACL format
     # - get_acl_attribute_name(): Returns "orclaci" (OID-specific, overridden)
 
-    def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL.
 
         Detects Oracle OID ACL by checking for Oracle-specific ACL syntax patterns:
@@ -265,7 +267,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             True if this is Oracle OID ACL format
 
         """
-        if isinstance(acl_line, FlextLdifModelsDomains.Acl):
+        if isinstance(acl_line, m.Ldif.Acl):
             # Check metadata for OID server type
             if acl_line.metadata and acl_line.metadata.quirk_type:
                 return acl_line.metadata.quirk_type == self._get_server_type()
@@ -292,27 +294,27 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _update_acl_with_oid_metadata(
         self,
-        acl_data: FlextLdifModelsDomains.Acl,
+        acl_data: m.Ldif.Acl,
         _acl_line: str,  # Unused but required by interface
-    ) -> FlextLdifModelsDomains.Acl:
+    ) -> m.Ldif.Acl:
         """Update ACL with OID server type and metadata."""
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (
             acl_data.metadata.model_copy(update={"quirk_type": server_type})
             if acl_data.metadata
-            else FlextLdifModelsDomains.QuirkMetadata.create_for(
+            else m.Ldif.QuirkMetadata.create_for(
                 server_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        # Use dict[str, Any] for model_copy update to avoid type checker strictness
-        update_dict: dict[str, Any] = {
+        # Use specific type for model_copy update
+        update_dict: dict[str, object] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }
         return acl_data.model_copy(update=update_dict)
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         r"""Parse Oracle OID ACL string to RFC-compliant internal model.
 
         OID vs RFC ACL Parsing
@@ -377,7 +379,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             subject='group',
             subject_dn='cn=Admins,dc=example,dc=com',
             scope='subtree',
-            metadata=FlextLdifModelsDomains.QuirkMetadata(
+            metadata=m.Ldif.QuirkMetadata(
                 server_type='oid',
                 extensions={
                     "original_format": "orclaci: access to entry by...",
@@ -413,7 +415,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ):
             # Parent parser populated the model, use it with OID server_type
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
-            return FlextResult[FlextLdifModelsDomains.Acl].ok(updated_acl)
+            return FlextResult[m.Ldif.Acl].ok(updated_acl)
 
         # Not an OID ACL - use parent result or fall through
         if (
@@ -421,7 +423,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             and (acl_data := parent_result.unwrap())
             and not self.can_handle_acl(acl_line)
         ):
-            return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_data)
+            return FlextResult[m.Ldif.Acl].ok(acl_data)
 
         # RFC parser failed - use OID-specific parsing
         return self._parse_oid_specific_acl(acl_line)
@@ -700,7 +702,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _build_metadata_extensions(
         self,
         metadata: (
-            FlextLdifModelsDomains.QuirkMetadata
+            m.Ldif.QuirkMetadata
             | dict[
                 str,
                 str
@@ -739,7 +741,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _extract_extensions_dict(
         self,
         metadata: (
-            FlextLdifModelsDomains.QuirkMetadata
+            m.Ldif.QuirkMetadata
             | dict[
                 str,
                 str
@@ -761,15 +763,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             Dictionary of extensions or empty dict if none found
 
         """
-        # Ensure metadata is FlextLdifModelsDomains.QuirkMetadata (public facade)
-        if not isinstance(metadata, FlextLdifModelsDomains.QuirkMetadata):
+        # Ensure metadata is m.Ldif.QuirkMetadata (public facade)
+        if not isinstance(metadata, m.Ldif.QuirkMetadata):
             if hasattr(metadata, "model_dump"):
                 metadata_dict = metadata.model_dump()
-                metadata = FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                    metadata_dict
-                )
+                metadata = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
             elif isinstance(metadata, dict):
-                metadata = FlextLdifModelsDomains.QuirkMetadata.model_validate(metadata)
+                metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
             else:
                 return {}
 
@@ -843,7 +843,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _normalize_to_dict(
         value: (
             m.Ldif.AclSubject
-            | FlextLdifModelsDomains.QuirkMetadata
+            | m.Ldif.QuirkMetadata
             | dict[str, str | int | bool]
             | str
             | None
@@ -877,7 +877,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: (FlextLdifModelsDomains.AclPermissions | dict[str, bool] | None),
+        permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
     ) -> dict[str, bool]:
         """Normalize permissions to dict for formatting.
 
@@ -972,11 +972,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _prepare_subject_and_permissions_for_write(
         self,
         acl_subject: (m.Ldif.AclSubject | dict[str, str | int | bool]),
-        acl_permissions: (
-            FlextLdifModelsDomains.AclPermissions | dict[str, bool] | None
-        ),
+        acl_permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
         metadata: (
-            FlextLdifModelsDomains.QuirkMetadata
+            m.Ldif.QuirkMetadata
             | dict[
                 str,
                 str
@@ -1009,27 +1007,23 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         # Normalize metadata - preserve extensions dict for source_subject_type lookup
         # Business Rule: metadata can be domain or facade, but we need facade
-        metadata_public: FlextLdifModelsDomains.QuirkMetadata | None = None
+        metadata_public: m.Ldif.QuirkMetadata | None = None
         if metadata:
             # Business Rule: Preserve full metadata including extensions dict
             # The extensions dict contains source_subject_type needed for ACL writing
-            if isinstance(metadata, FlextLdifModelsDomains.QuirkMetadata):
+            if isinstance(metadata, m.Ldif.QuirkMetadata):
                 # Already public facade, use as-is
                 metadata_public = metadata
             elif hasattr(metadata, "model_dump"):
                 # Domain model, convert to facade
                 metadata_dict_raw = metadata.model_dump()
-                metadata_public = FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                    metadata_dict_raw
-                )
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict_raw)
             elif isinstance(metadata, dict):
                 # Validate dict directly - preserve all fields including extensions
-                metadata_public = FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                    metadata
-                )
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)
             else:
                 metadata_dict = self._normalize_to_dict(metadata)
-                metadata_public = FlextLdifModelsDomains.QuirkMetadata.model_validate(
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(
                     metadata_dict,
                 )
 
@@ -1090,7 +1084,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> dict[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features.
 
-        Delegates to u.Ldif.Metadata.build_acl_metadata_complete()
+        Delegates to u.Metadata.build_acl_metadata_complete()
         for unified ACL metadata construction.
 
         Args:
@@ -1136,7 +1130,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _parse_oid_specific_acl(
         self,
         acl_line: str,
-    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
+    ) -> FlextResult[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
         # OID ACL format: orclaci: access to [Union[entry, attr]=(...)]
         #   [by subject (permissions)] [filter=(...)] [added_object_constraint=()]
@@ -1249,10 +1243,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             # Architecture: Filter permissions to RFC-compliant only
             # Server-specific permissions (like OID's "none") are preserved in metadata.extensions
             # via build_acl_metadata_complete(permissions=config.perms_dict) above
-            rfc_compliant_perms = (
-                FlextLdifModelsDomains.AclPermissions.get_rfc_compliant_permissions(
-                    perms_dict,
-                )
+            rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
+                perms_dict,
             )
 
             # Ensure rfc_subject_type is a valid Literal type for AclSubject
@@ -1281,7 +1273,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             # Create DynamicMetadata instance from dict
             extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
 
-            acl_model = FlextLdifModelsDomains.Acl(
+            acl_model = m.Ldif.Acl(
                 name=FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
                 target=m.Ldif.AclTarget(
                     target_dn=target_dn,
@@ -1291,17 +1283,15 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                     subject_type=subject_type_literal,
                     subject_value=rfc_subject_value,
                 ),
-                permissions=FlextLdifModelsDomains.AclPermissions(
-                    **rfc_compliant_perms
-                ),
+                permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
                 server_type=server_type,
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.Ldif.QuirkMetadata(
                     quirk_type=server_type,
                     extensions=extensions_metadata,
                 ),
                 raw_acl=acl_line,
             )
-            return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_model)
+            return FlextResult[m.Ldif.Acl].ok(acl_model)
         except Exception as e:
             # Python 3.13: Walrus operator for cleaner code
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
@@ -1314,7 +1304,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line_length=len(acl_line),
             )
             # Return error result
-            return FlextResult[FlextLdifModelsDomains.Acl].fail(
+            return FlextResult[m.Ldif.Acl].fail(
                 f"OID ACL parsing failed: {e}",
             )
 
@@ -1343,7 +1333,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _write_acl(
         self,
-        acl_data: FlextLdifModelsDomains.Acl,
+        acl_data: m.Ldif.Acl,
         _format_option: str | None = None,
     ) -> FlextResult[str]:
         r"""Write ACL to OID orclaci format (Phase 2: Denormalization).
@@ -1374,7 +1364,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             target=AclTarget(target_dn='entry', attributes=None),
             subject=AclSubject(type='group', dn='cn=Admins,...'),
             scope='subtree',
-            metadata=FlextLdifModelsDomains.QuirkMetadata(server_type='oid', ...)
+            metadata=m.Ldif.QuirkMetadata(server_type='oid', ...)
         )
 
         Output (OID Format)
@@ -1447,32 +1437,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 if not isinstance(acl_data.subject, m.Ldif.AclSubject)
                 else acl_data.subject
             )
-            # Ensure permissions is always FlextLdifModelsDomains.AclPermissions | None (public facade)
+            # Ensure permissions is always m.Ldif.AclPermissions | None (public facade)
             if acl_data.permissions:
-                if isinstance(
-                    acl_data.permissions, FlextLdifModelsDomains.AclPermissions
-                ):
+                if isinstance(acl_data.permissions, m.Ldif.AclPermissions):
                     permissions_public = acl_data.permissions
                 else:
                     permissions_dict = acl_data.permissions.model_dump()
-                    permissions_public = (
-                        FlextLdifModelsDomains.AclPermissions.model_validate(
-                            permissions_dict,
-                        )
+                    permissions_public = m.Ldif.AclPermissions.model_validate(
+                        permissions_dict,
                     )
             else:
                 permissions_public = None
-            # Ensure metadata is always FlextLdifModelsDomains.QuirkMetadata | None (public facade)
+            # Ensure metadata is always m.Ldif.QuirkMetadata | None (public facade)
             if acl_data.metadata:
-                if isinstance(acl_data.metadata, FlextLdifModelsDomains.QuirkMetadata):
+                if isinstance(acl_data.metadata, m.Ldif.QuirkMetadata):
                     metadata_public = acl_data.metadata
                 else:
                     metadata_dict = acl_data.metadata.model_dump()
-                    metadata_public = (
-                        FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                            metadata_dict
-                        )
-                    )
+                    metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
             else:
                 metadata_public = None
             subject_clause, permissions_clause = (
@@ -1491,15 +1473,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
 
         # Add metadata extensions (consolidated in helper)
-        # Ensure metadata is FlextLdifModelsDomains.QuirkMetadata (public facade)
+        # Ensure metadata is m.Ldif.QuirkMetadata (public facade)
         if acl_data.metadata:
-            if isinstance(acl_data.metadata, FlextLdifModelsDomains.QuirkMetadata):
+            if isinstance(acl_data.metadata, m.Ldif.QuirkMetadata):
                 metadata_public = acl_data.metadata
             else:
                 metadata_dict = acl_data.metadata.model_dump()
-                metadata_public = FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                    metadata_dict
-                )
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
         else:
             metadata_public = None
         acl_parts.extend(self._build_metadata_extensions(metadata_public))
@@ -1510,7 +1490,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _get_source_subject_type(
         self,
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+        metadata: m.Ldif.QuirkMetadata | None,
     ) -> str | None:
         """Get source subject type from metadata."""
         if not metadata or not metadata.extensions:
@@ -1557,7 +1537,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _map_rfc_subject_to_oid(
         self,
         rfc_subject: m.Ldif.AclSubject,
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+        metadata: m.Ldif.QuirkMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing.
 

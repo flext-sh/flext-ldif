@@ -286,7 +286,7 @@ class FlextLdifValidation(
 
         """
         try:
-            is_valid = u.Ldif.Attribute.validate_attribute_name(name)
+            is_valid = u.Attribute.validate_attribute_name(name)
             return r[bool].ok(is_valid)
 
         except Exception as e:
@@ -359,7 +359,7 @@ class FlextLdifValidation(
             max_len = (
                 max_length
                 if max_length is not None
-                else c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                else c.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
                 return r[bool].ok(False)

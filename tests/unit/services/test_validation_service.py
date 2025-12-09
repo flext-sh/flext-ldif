@@ -14,8 +14,6 @@ from flext_tests import tm
 from flext_ldif.services.validation import FlextLdifValidation
 from tests import c, m, s
 
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-
 
 class TestsTestFlextLdifValidation(s):
     """Test FlextLdifValidation service with consolidated parametrized tests.

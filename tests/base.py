@@ -20,7 +20,7 @@ from itertools import starmap
 
 from flext_tests import s as flext_tests_s
 
-from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
 
 
@@ -51,7 +51,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> m.Ldif.Entry:
+    ) -> p.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
@@ -59,7 +59,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
             attributes: Dictionary of attribute names to values
 
         Returns:
-            m.Ldif.Entry: Real Entry instance
+            p.Entry: Real Entry instance
 
         Raises:
             AssertionError: If entry creation fails
@@ -75,14 +75,14 @@ class FlextLdifTestsServiceBase(flext_tests_s):
     def create_entries(
         self,
         entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Create multiple test entries.
 
         Args:
             entries_data: Sequence of (dn, attributes) tuples
 
         Returns:
-            list[m.Ldif.Entry]: List of real Entry instances
+            list[p.Entry]: List of real Entry instances
 
         """
         return list(starmap(self.create_entry, entries_data))

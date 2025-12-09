@@ -14,9 +14,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.services.filters import FlextLdifFilters
-from tests import Filters, OIDs, TestDeduplicationHelpers, c, m, s
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from tests import Filters, OIDs, TestDeduplicationHelpers, c, p, s
 
 # Use factory directly to eliminate duplication
 create_entry = s.create_entry
@@ -128,7 +126,7 @@ class InternalHelperScenario(StrEnum):
 
 
 @pytest.fixture
-def user_entries() -> list[m.Ldif.Entry]:
+def user_entries() -> list[p.Entry]:
     """Create user entries for filtering tests."""
     return [
         create_entry(
@@ -158,7 +156,7 @@ def user_entries() -> list[m.Ldif.Entry]:
 
 
 @pytest.fixture
-def hierarchy_entries() -> list[m.Ldif.Entry]:
+def hierarchy_entries() -> list[p.Entry]:
     """Create hierarchy/container entries."""
     return [
         create_entry(
@@ -183,7 +181,7 @@ def hierarchy_entries() -> list[m.Ldif.Entry]:
 
 
 @pytest.fixture
-def schema_entries() -> list[m.Ldif.Entry]:
+def schema_entries() -> list[p.Entry]:
     """Create schema entries."""
     return [
         create_entry(
@@ -209,10 +207,10 @@ def schema_entries() -> list[m.Ldif.Entry]:
 
 @pytest.fixture
 def mixed_entries(
-    user_entries: list[m.Ldif.Entry],
-    hierarchy_entries: list[m.Ldif.Entry],
-    schema_entries: list[m.Ldif.Entry],
-) -> list[m.Ldif.Entry]:
+    user_entries: list[p.Entry],
+    hierarchy_entries: list[p.Entry],
+    schema_entries: list[p.Entry],
+) -> list[p.Entry]:
     """Create mixed entry collection with ACL entries."""
     acl_entry = create_entry(
         Filters.DN_ACL_POLICY,
@@ -262,10 +260,10 @@ class TestsFlextLdifFilterService(s):
         def test_public_api_methods(
             self,
             scenario: PublicAPIScenario,
-            user_entries: list[m.Ldif.Entry],
-            hierarchy_entries: list[m.Ldif.Entry],
-            schema_entries: list[m.Ldif.Entry],
-            mixed_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
+            hierarchy_entries: list[p.Entry],
+            schema_entries: list[p.Entry],
+            mixed_entries: list[p.Entry],
         ) -> None:
             """Test public API classmethod helpers with parametrization."""
             if scenario == PublicAPIScenario.BY_DN_BASIC:
@@ -420,7 +418,7 @@ class TestsFlextLdifFilterService(s):
         def test_execute_patterns(
             self,
             scenario: ExecutePatternScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test execute() pattern and builder methods with parametrization."""
             if scenario == ExecutePatternScenario.EXECUTE_FILTERS:
@@ -483,7 +481,7 @@ class TestsFlextLdifFilterService(s):
         def test_builder_patterns(
             self,
             scenario: BuilderPatternScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test builder pattern methods with parametrization."""
             if scenario == BuilderPatternScenario.BUILDER_BASIC:
@@ -757,7 +755,7 @@ class TestsFlextLdifFilterService(s):
         def test_transformation_scenarios(
             self,
             scenario: TransformationScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test transformation and filtering with parametrization."""
             if scenario == TransformationScenario.REMOVE_ATTRIBUTES:
@@ -823,7 +821,7 @@ class TestsFlextLdifFilterService(s):
         def test_exclusion_scenarios(
             self,
             scenario: ExclusionScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test exclusion and marking behavior with parametrization."""
             if scenario == ExclusionScenario.EXCLUSION_MARKING:
@@ -883,7 +881,7 @@ class TestsFlextLdifFilterService(s):
         def test_edge_case_scenarios(
             self,
             scenario: EdgeCaseScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test edge cases and error handling with parametrization."""
             if scenario == EdgeCaseScenario.EDGE_CASES:
@@ -946,7 +944,7 @@ class TestsFlextLdifFilterService(s):
         def test_internal_helper_scenarios(
             self,
             scenario: InternalHelperScenario,
-            user_entries: list[m.Ldif.Entry],
+            user_entries: list[p.Entry],
         ) -> None:
             """Test internal helper methods with parametrization."""
             if scenario == InternalHelperScenario.INTERNAL_NORMALIZATION:

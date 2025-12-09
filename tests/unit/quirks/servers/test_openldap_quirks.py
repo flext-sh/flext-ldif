@@ -562,7 +562,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         acl_quirk: FlextLdifServersOpenldap.Acl,
     ) -> None:
         """Test writing ACL in RFC format."""
-        acl_data = m.Ldif.Acl(
+        acl_data = m.Acl(
             name="test-acl",
             target=m.AclTarget(
                 target_dn="*",

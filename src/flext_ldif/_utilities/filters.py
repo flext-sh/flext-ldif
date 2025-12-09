@@ -37,7 +37,7 @@ from re import Pattern
 from typing import Literal
 
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif.models import m
+from flext_ldif.models import FlextLdifModels as m
 
 # =========================================================================
 # BASE FILTER CLASS

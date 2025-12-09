@@ -10,7 +10,7 @@ from flext_core import FlextResult
 
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entries import FlextLdifEntries
-from tests import m, s
+from tests import m, p, s
 
 
 class TestsTestFlextLdifEntriesInitialization(s):
@@ -75,11 +75,11 @@ class TestEntryAdaptation:
         self,
         dn_string: str,
         attributes: dict[str, list[str]],
-    ) -> m.Ldif.Entry:
+    ) -> p.Entry:
         """Helper to create entry with DN and attributes."""
-        dn = m.Ldif.DistinguishedName(value=dn_string)
-        ldif_attributes = m.Ldif.LdifAttributes(attributes=attributes)
-        entry_result = m.Ldif.Entry.create(dn=dn, attributes=ldif_attributes)
+        dn = m.DistinguishedName(value=dn_string)
+        ldif_attributes = m.LdifAttributes(attributes=attributes)
+        entry_result = p.Entry.create(dn=dn, attributes=ldif_attributes)
         assert entry_result.is_success
         return entry_result.unwrap()
 

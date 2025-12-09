@@ -23,6 +23,7 @@ from tests import (
     TestsFlextLdifConstants,
     c,
     m,
+    p,
     s,
 )
 
@@ -611,8 +612,8 @@ description: {large_value}
     def test_write_entries_variations(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entry: m.Ldif.Entry,
-        sample_entries: list[m.Ldif.Entry],
+        sample_entry: p.Entry,
+        sample_entries: list[p.Entry],
     ) -> None:
         """Test writing various entry configurations."""
         _ = RfcTestHelpers.test_write_entries_to_string(
@@ -680,7 +681,7 @@ description: {large_value}
     def test_write_comprehensive_to_file(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[m.Ldif.Entry],
+        sample_entries: list[p.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing entries to file."""
@@ -695,7 +696,7 @@ description: {large_value}
     def test_write_to_nonexistent_directory(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[m.Ldif.Entry],
+        sample_entries: list[p.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing to file in non-existent directory."""
@@ -913,8 +914,8 @@ objectClass: person
     def test_entry_quirk_can_handle_methods(
         self,
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
-        sample_schema_attribute: m.Ldif.SchemaAttribute,
-        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
+        sample_schema_attribute: p.Ldif.SchemaAttribute,
+        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Entry quirk can_handle methods."""
         assert (
@@ -935,9 +936,9 @@ objectClass: person
     def test_acl_quirk_can_handle_methods(
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
-        sample_acl: m.Ldif.Acl,
-        sample_schema_attribute: m.Ldif.SchemaAttribute,
-        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
+        sample_acl: m.Acl,
+        sample_schema_attribute: p.Ldif.SchemaAttribute,
+        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
     ) -> None:
         """Test ACL quirk can_handle methods."""
         assert rfc_acl_quirk.can_handle_acl("access to entry by * (browse)") is True
@@ -967,7 +968,7 @@ objectClass: person
             expected_content=acl_line,
         )
 
-        name_only_acl = m.Ldif.Acl(name="test_acl", server_type="rfc")
+        name_only_acl = m.Acl(name="test_acl", server_type="rfc")
         _ = RfcTestHelpers.test_acl_quirk_write_and_verify(
             rfc_acl_quirk,
             name_only_acl,
@@ -975,7 +976,7 @@ objectClass: person
         )
 
         # Test empty ACL through public write() method
-        empty_acl = m.Ldif.Acl(server_type="rfc")
+        empty_acl = m.Acl(server_type="rfc")
         result = rfc_acl_quirk.write(empty_acl)
         assert result.is_failure
         assert result.error is not None

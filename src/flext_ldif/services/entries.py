@@ -218,7 +218,10 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
         # operation_fn returns r[Entry], so batch extracts .value and R = Entry
-        results: list[m.Ldif.Entry] = batch_data["results"]  # type: ignore[assignment]  # BatchResultDict.results is list[object] but we know it's list[Entry]
+        raw_results = batch_data["results"]
+        if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):
+            return r.fail("All results should be Entry instances")
+        results: list[m.Ldif.Entry] = raw_results  # Type narrowed by check
         return r.ok(results)
 
     def remove_attributes_batch(
@@ -266,7 +269,10 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r.fail(batch_result.error or "Batch processing failed")
         batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
-        results: list[m.Ldif.Entry] = batch_data["results"]  # type: ignore[assignment]  # BatchResultDict.results is list[object] but we know it's list[Entry]
+        raw_results = batch_data["results"]
+        if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):
+            return r.fail("All results should be Entry instances")
+        results: list[m.Ldif.Entry] = raw_results  # Type narrowed by check
         return r.ok(results)
 
     @staticmethod
@@ -479,7 +485,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Type narrowing: found_kv is tuple[str, str | list[str]] | None
         if not found_kv:
             return r.fail("Entry is missing objectClass attribute")
-        
+
         # Type narrowing: found_kv[1] is str | list[str] (attribute value)
         objectclasses: str | list[str] = found_kv[1]
 
@@ -767,7 +773,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     ) -> r[m.Ldif.Entry]:
         """Remove operational attributes from entry.
 
-        Business Rule: Operational attributes removal uses u.Ldif.Entry
+        Business Rule: Operational attributes removal uses u.Entry
         for RFC 4512 compliant detection. Operation is immutable - returns new entry
         instance with operational attributes removed. Entry metadata is preserved.
 

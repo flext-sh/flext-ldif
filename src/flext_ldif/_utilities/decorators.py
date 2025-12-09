@@ -28,24 +28,12 @@ from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import c
+from flext_ldif._shared import normalize_server_type
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
-# Use flext-core utilities directly to avoid circular dependency
-# For decorators that need FlextLdifUtilities, use lazy import inside decorator functions
-# r is already imported from flext_core
-# t is imported from flext_ldif.typings (FlextLdifTypes)
-
 logger = FlextLogger(__name__)
-
-# Type aliases moved to t.Ldif.Decorators - use those instead
-# ProtocolType = t.Ldif.Decorators.ProtocolType
-# ParseMethodArg = t.Ldif.Decorators.ParseMethodArg
-# WriteMethodArg = t.Ldif.Decorators.WriteMethodArg
-# ParseMethod = t.Ldif.Decorators.ParseMethod
-# WriteMethod = t.Ldif.Decorators.WriteMethod
-# SafeMethod = t.Ldif.Decorators.SafeMethod
 
 
 def generate_iso_timestamp() -> str:
@@ -65,8 +53,8 @@ class FlextLdifUtilitiesDecorators:
     def _get_server_type_from_class(
         obj: (
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
             | str
             | float
@@ -96,8 +84,8 @@ class FlextLdifUtilitiesDecorators:
     def _attach_metadata_if_present(
         result_value: (
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
             | str
             | float
@@ -132,23 +120,17 @@ class FlextLdifUtilitiesDecorators:
         # Normalize quirk_type if provided, otherwise None
         # normalize_server_type validates and returns a valid ServerTypeLiteral string
         normalized_quirk_type: str | None = (
-            c.normalize_server_type(quirk_type) if quirk_type else None
+            normalize_server_type(quirk_type) if quirk_type else None
         )
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_dict),
         )
 
-        # Attach metadata using type narrowing with isinstance check
-        # Type narrowing confirmed by isinstance check
-        if isinstance(
-            result_value,
-            (
-                m.Ldif.Entry,
-                m.Ldif.SchemaAttribute,
-                m.Ldif.SchemaObjectClass,
-            ),
-        ):
+        # Attach metadata by checking if object is a model instance with metadata
+        # Use runtime type check instead of protocol isinstance to avoid mypy issues
+        if hasattr(result_value, "metadata") and hasattr(result_value, "model_fields"):
+            # This is a Pydantic model with metadata field - assign directly
             result_value.metadata = metadata
 
     @staticmethod
@@ -183,12 +165,11 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: m.Ldif.Decorators.ProtocolType,
-                *args: object,
-                **kwargs: object,
+                self: object,
+                arg: str,
             ) -> r[object]:
                 """Call original function and attach metadata to result."""
-                result = func(self, *args, **kwargs)
+                result = cast("r[object]", func(self, arg))
 
                 # If result is successful, attach metadata using helper methods
                 if result.is_success:
@@ -199,8 +180,8 @@ class FlextLdifUtilitiesDecorators:
                         unwrapped,
                         (
                             m.Ldif.Entry,
-                            m.Ldif.SchemaAttribute,
-                            m.Ldif.SchemaObjectClass,
+                            p.Ldif.SchemaAttributeProtocol,
+                            p.Ldif.SchemaObjectClassProtocol,
                             m.Ldif.Acl,
                         ),
                     ):
@@ -225,7 +206,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def attach_write_metadata(
         _quirk_type: str,
-    ) -> m.Ldif.Decorators.WriteMethodDecorator:
+    ) -> t.Ldif.Decorators.WriteMethodDecorator:
         """Decorator to automatically attach metadata to write method results.
 
         Wraps write_attribute, write_objectclass, write_acl, write_entry methods
@@ -246,29 +227,29 @@ class FlextLdifUtilitiesDecorators:
         """
 
         def decorator(
-            func: m.Ldif.Decorators.WriteMethod,
-        ) -> m.Ldif.Decorators.WriteMethod:
+            func: t.Ldif.Decorators.WriteMethod,
+        ) -> t.Ldif.Decorators.WriteMethod:
             """Wrapper function for write methods."""
 
             @wraps(func)
             def wrapper(
-                self: m.Ldif.Decorators.ProtocolType,
-                arg: m.Ldif.Decorators.WriteMethodArg,
-            ) -> r[object]:
+                self: t.Ldif.Decorators.ProtocolType,
+                arg: t.Ldif.Decorators.WriteMethodArg,
+            ) -> object:
                 """Call original function - write methods don't modify inputs."""
                 # Write methods typically return strings, not models
                 # So metadata attachment would be on the input model
                 return func(self, arg)
 
             # Type narrowing: wrapper is compatible with WriteMethod type
-            return cast("m.Ldif.Decorators.WriteMethod", wrapper)
+            return cast("t.Ldif.Decorators.WriteMethod", wrapper)
 
         return decorator
 
     @staticmethod
     def _safe_operation(
         operation_name: str,
-    ) -> m.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.SafeMethodDecorator:
         """Generic decorator to wrap methods with standardized error handling.
 
         Internal helper used by safe_parse and safe_write decorators.
@@ -283,15 +264,15 @@ class FlextLdifUtilitiesDecorators:
         """
 
         def decorator(
-            func: m.Ldif.Decorators.SafeMethod,
-        ) -> m.Ldif.Decorators.SafeMethod:
+            func: t.Ldif.Decorators.SafeMethod,
+        ) -> t.Ldif.Decorators.SafeMethod:
             """Wrapper that adds error handling."""
 
             @wraps(func)
             def wrapper(
-                self: m.Ldif.Decorators.ProtocolType,
+                self: t.Ldif.Decorators.ProtocolType,
                 arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> r[object]:
+            ) -> object:
                 """Execute function with automatic error handling."""
                 try:
                     return func(self, arg)
@@ -303,14 +284,14 @@ class FlextLdifUtilitiesDecorators:
                     return r.fail(error_msg)
 
             # Type narrowing: wrapper is compatible with SafeMethod type
-            return cast("m.Ldif.Decorators.SafeMethod", wrapper)
+            return cast("t.Ldif.Decorators.SafeMethod", wrapper)
 
         return decorator
 
     @staticmethod
     def safe_parse(
         operation_name: str,
-    ) -> m.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.SafeMethodDecorator:
         """Decorator to wrap parse methods with standardized error handling.
 
         Consolidates try/except patterns across all servers (eliminates 200-300 lines).
@@ -334,7 +315,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def safe_write(
         operation_name: str,
-    ) -> m.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.SafeMethodDecorator:
         """Decorator to wrap write methods with standardized error handling.
 
         Consolidates try/except patterns for write operations across all servers.

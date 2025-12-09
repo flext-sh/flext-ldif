@@ -12,6 +12,7 @@ from typing import cast
 import pytest
 
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services.schema import FlextLdifSchema
 from tests import c, s
 
@@ -72,7 +73,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         result = schema_service.execute()
         assert result.is_success
         status = result.unwrap()
-        assert isinstance(status, m.SchemaServiceStatus)
+        assert isinstance(status, m.Ldif.SchemaServiceStatus)
         assert status.service == "SchemaService"
         assert status.status == "operational"
         assert status.rfc_compliance == "RFC 4512"
@@ -143,7 +144,7 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute(simple_attribute_definition)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, m.Ldif.SchemaAttribute)
+        assert isinstance(attr, p.Ldif.SchemaAttribute)
         assert attr.oid == "2.5.4.3"
         assert attr.name == "cn"
 
@@ -156,7 +157,7 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute(complex_attribute_definition)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, m.Ldif.SchemaAttribute)
+        assert isinstance(attr, p.Ldif.SchemaAttribute)
         assert attr.oid == "2.5.4.0"
         assert attr.name == "objectClass"
 
@@ -206,7 +207,7 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert result.is_success
         oc = result.unwrap()
-        assert isinstance(oc, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc, p.Ldif.SchemaObjectClass)
         assert oc.oid == "2.5.6.6"
         assert oc.name == "person"
         assert oc.kind == "STRUCTURAL"
@@ -220,7 +221,7 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass(complex_objectclass_definition)
         assert result.is_success
         oc = result.unwrap()
-        assert isinstance(oc, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc, p.Ldif.SchemaObjectClass)
         assert oc.oid == "2.5.6.2"
         assert oc.name == "country"
         assert oc.kind == "STRUCTURAL"
@@ -281,7 +282,7 @@ class TestSchemaServiceValidateAttribute:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating attribute without name."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="",  # Empty name
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -296,7 +297,7 @@ class TestSchemaServiceValidateAttribute:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating attribute without OID."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="",  # Empty OID
             name="testAttr",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -311,7 +312,7 @@ class TestSchemaServiceValidateAttribute:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating attribute with invalid syntax OID."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             syntax="invalid-oid",  # Invalid OID format
@@ -357,7 +358,7 @@ class TestSchemaServiceValidateObjectClass:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating objectClass without name."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="",  # Empty name
             kind="STRUCTURAL",
@@ -372,7 +373,7 @@ class TestSchemaServiceValidateObjectClass:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating objectClass without OID."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="",  # Empty OID
             name="testOC",
             kind="STRUCTURAL",
@@ -387,7 +388,7 @@ class TestSchemaServiceValidateObjectClass:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating objectClass with invalid kind."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="testOC",
             kind="INVALID",  # Invalid kind
@@ -403,7 +404,7 @@ class TestSchemaServiceValidateObjectClass:
     ) -> None:
         """Test validating objectClass with all valid kinds."""
         for kind in ["ABSTRACT", "STRUCTURAL", "AUXILIARY"]:
-            oc = m.Ldif.SchemaObjectClass(
+            oc = p.Ldif.SchemaObjectClass(
                 oid="1.2.3.4",
                 name="testOC",
                 kind=kind,
@@ -472,7 +473,7 @@ class TestSchemaServiceWriteAttribute:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid attribute (should fail validation)."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="",  # Invalid: empty OID
             name="testAttr",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -535,7 +536,7 @@ class TestSchemaServiceWriteObjectClass:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid objectClass (should fail validation)."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="",  # Invalid: empty OID
             name="testOC",
             kind="STRUCTURAL",

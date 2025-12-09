@@ -20,8 +20,6 @@ from flext_ldif.models import m
 from tests import OIDs, Syntax, c, s
 from tests.helpers.compat import OptimizedLdifTestHelpers
 
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-
 
 class TestsFlextLdifParserFormatOptions(s):
     """Test all ParseFormatOptions functionality.

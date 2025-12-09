@@ -16,6 +16,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
+from flext_ldif.protocols import p
 from tests import m, s
 
 
@@ -113,14 +114,14 @@ class WriterTestFactory:
     def create_format_options(
         *,
         base64_encode: bool = False,
-    ) -> m.Ldif.WriteFormatOptions:
+    ) -> m.WriteFormatOptions:
         """Create write format options."""
-        return m.Ldif.WriteFormatOptions(base64_encode_binary=base64_encode)
+        return m.WriteFormatOptions(base64_encode_binary=base64_encode)
 
     @classmethod
-    def create_simple_entry(cls) -> m.Ldif.Entry:
+    def create_simple_entry(cls) -> p.Entry:
         """Create a simple RFC-compliant entry."""
-        return m.Ldif.Entry(
+        return p.Entry(
             dn="cn=testuser,ou=people,dc=example,dc=com",
             attributes={
                 "cn": ["testuser"],
@@ -131,9 +132,9 @@ class WriterTestFactory:
         )
 
     @classmethod
-    def create_multivalue_entry(cls) -> m.Ldif.Entry:
+    def create_multivalue_entry(cls) -> p.Entry:
         """Create entry with multiple values for same attribute."""
-        return m.Ldif.Entry(
+        return p.Entry(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             attributes={
                 "cn": ["testgroup"],
@@ -147,9 +148,9 @@ class WriterTestFactory:
         )
 
     @classmethod
-    def create_second_entry(cls) -> m.Ldif.Entry:
+    def create_second_entry(cls) -> p.Entry:
         """Create a second RFC-compliant entry."""
-        return m.Ldif.Entry(
+        return p.Entry(
             dn="cn=test2,dc=example,dc=com",
             attributes={
                 "cn": ["test2"],

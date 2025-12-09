@@ -17,14 +17,14 @@ from __future__ import annotations
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, m, p
 
 
 class DRYValidationAnalysis:
     """DRY validation analysis: auto-generate → validate → analyze."""
 
     @staticmethod
-    def parallel_validation() -> r[m.Ldif.ValidationResult]:
+    def parallel_validation() -> r[m.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = FlextLdif.get_instance()
 
@@ -36,18 +36,18 @@ class DRYValidationAnalysis:
         total_entries = len(entries)
         if validate_result.is_failure:
             # Create ValidationResult with errors
-            validation_result = m.Ldif.ValidationResult(
+            validation_result = m.ValidationResult(
                 is_valid=False,
                 total_entries=total_entries,
                 valid_entries=0,
                 invalid_entries=total_entries,
                 errors=[str(validate_result.error)],
             )
-            return r[m.Ldif.ValidationResult].ok(validation_result)
+            return r[m.ValidationResult].ok(validation_result)
 
         # Create ValidationResult from successful validation
         is_valid = validate_result.value
-        validation_result = m.Ldif.ValidationResult(
+        validation_result = m.ValidationResult(
             is_valid=is_valid,
             total_entries=total_entries,
             valid_entries=total_entries if is_valid else 0,
@@ -60,7 +60,7 @@ class DRYValidationAnalysis:
     def _generate_test_dataset(
         count: int,
         error_rate: float = 0.0,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
 
@@ -101,8 +101,8 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _analyze_validation_results(
-        validation_result: m.Ldif.ValidationResult,
-    ) -> r[m.Ldif.ValidationResult]:
+        validation_result: m.ValidationResult,
+    ) -> r[m.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
             # Group errors by category for analysis
@@ -132,11 +132,13 @@ class DRYValidationAnalysis:
         valid_entries = total_entries if valid_result else 0
         invalid_entries = total_entries - valid_entries
 
-        return r[dict[str, int | float]].ok({
-            "total_entries": total_entries,
-            "valid_entries": valid_entries,
-            "invalid_entries": invalid_entries,
-            "error_rate": float(invalid_entries) / float(total_entries)
-            if total_entries > 0
-            else 0.0,
-        })
+        return r[dict[str, int | float]].ok(
+            {
+                "total_entries": total_entries,
+                "valid_entries": valid_entries,
+                "invalid_entries": invalid_entries,
+                "error_rate": float(invalid_entries) / float(total_entries)
+                if total_entries > 0
+                else 0.0,
+            }
+        )

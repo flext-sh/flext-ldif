@@ -11,27 +11,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
 import structlog
-from flext_core import FlextRuntime, FlextUtilities as u, r
+from flext_core import FlextRuntime, r
 
 from flext_ldif._models.config import FlextLdifModelsConfig
-from flext_ldif.models import m
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.protocols import p
 
 # Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 
-# REMOVED: Type aliases for nested objects - use m.Ldif.* or FlextLdifModelsDomains.* directly
-# type Entry = FlextLdifModelsDomains.Entry  # Use m.Ldif.Entry or FlextLdifModelsDomains.Entry directly
-# type SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute or FlextLdifModelsDomains.SchemaAttribute directly
-# type SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or FlextLdifModelsDomains.SchemaObjectClass directly
+# REMOVED: Type aliases for nested objects - use m.* or FlextLdifModelsDomains.* directly
+# type Entry = FlextLdifModelsDomains.Entry  # Use p.Ldif.EntryProtocol or FlextLdifModelsDomains.Entry directly
+# type SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute  # Use p.Ldif.SchemaAttributeProtocol or FlextLdifModelsDomains.SchemaAttribute directly
+# type SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass  # Use p.Ldif.SchemaObjectClassProtocol or FlextLdifModelsDomains.SchemaObjectClass directly
 
 logger = structlog.get_logger(__name__)
 
-# REMOVED: EntryAttrs alias - use t.Ldif.Entry.EntryAttrs directly (no redundant aliases for nested objects)
-# EntryAttrs = t.Ldif.Entry.EntryAttrs
+# REMOVED: EntryAttrs alias - use t.Entry.EntryAttrs directly (no redundant aliases for nested objects)
+# EntryAttrs = t.Entry.EntryAttrs
 
 
 class FlextLdifUtilitiesWriters:
@@ -64,7 +65,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: m.Ldif.Entry,
+                entry: p.Ldif.EntryProtocol,
                 lines: list[str],
             ) -> None: ...
 
@@ -73,7 +74,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: m.Ldif.Entry,
+                entry: p.Ldif.EntryProtocol,
                 lines: list[str],
             ) -> None: ...
 
@@ -87,8 +88,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: m.Ldif.Entry,
-            ) -> m.Ldif.Entry: ...
+                entry: p.Ldif.EntryProtocol,
+            ) -> p.Ldif.EntryProtocol: ...
 
         class WriteDnHook(Protocol):
             """Protocol for writing DN line."""
@@ -110,7 +111,7 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_dn_string(entry: m.Ldif.Entry) -> str:
+        def get_dn_string(entry: p.Ldif.EntryProtocol) -> str:
             """Extract DN string from entry."""
             if entry.dn is None:
                 return ""
@@ -120,7 +121,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entry_parts(
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.EntryProtocol,
             config: FlextLdifModelsConfig.EntryWriteConfig,
             lines: list[str],
         ) -> None:
@@ -170,48 +171,54 @@ class FlextLdifUtilitiesWriters:
                 # Type narrowing: config.entry is EntryProtocol, convert to Entry if needed
                 entry_raw = config.entry
                 # Check if it's already Entry model instance
-                if isinstance(entry_raw, m.Ldif.Entry):
+                if isinstance(entry_raw, FlextLdifModelsDomains.Entry):
                     entry = entry_raw
                 else:
                     # Convert EntryProtocol to Entry via model_validate
-                    entry = m.Ldif.Entry.model_validate({
-                        "dn": (
-                            entry_raw.dn.value
-                            if hasattr(entry_raw.dn, "value")
-                            else str(entry_raw.dn)
-                            if entry_raw.dn
-                            else None
-                        ),
-                        "attributes": (
-                            entry_raw.attributes.attributes
-                            if hasattr(entry_raw.attributes, "attributes")
-                            else entry_raw.attributes or None
-                        ),
-                    })
+                    entry = FlextLdifModelsDomains.Entry.model_validate(
+                        {
+                            "dn": (
+                                entry_raw.dn.value
+                                if hasattr(entry_raw.dn, "value")
+                                else str(entry_raw.dn)
+                                if entry_raw.dn
+                                else None
+                            ),
+                            "attributes": (
+                                entry_raw.attributes.attributes
+                                if hasattr(entry_raw.attributes, "attributes")
+                                else entry_raw.attributes or None
+                            ),
+                        }
+                    )
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
                     # transform_entry_hook accepts EntryProtocol (entry satisfies it structurally)
                     entry_transformed = config.transform_entry_hook(entry)
                     # Check if transformed result is already Entry model instance
-                    if isinstance(entry_transformed, m.Ldif.Entry):
+                    if isinstance(entry_transformed, FlextLdifModelsDomains.Entry):
                         entry = entry_transformed
                     else:
                         # Convert EntryProtocol to Entry via model_validate
-                        entry = m.Ldif.Entry.model_validate({
-                            "dn": (
-                                entry_transformed.dn.value
-                                if hasattr(entry_transformed.dn, "value")
-                                else str(entry_transformed.dn)
-                                if entry_transformed.dn
-                                else None
-                            ),
-                            "attributes": (
-                                entry_transformed.attributes.attributes
-                                if hasattr(entry_transformed.attributes, "attributes")
-                                else entry_transformed.attributes or None
-                            ),
-                        })
+                        entry = FlextLdifModelsDomains.Entry.model_validate(
+                            {
+                                "dn": (
+                                    entry_transformed.dn.value
+                                    if hasattr(entry_transformed.dn, "value")
+                                    else str(entry_transformed.dn)
+                                    if entry_transformed.dn
+                                    else None
+                                ),
+                                "attributes": (
+                                    entry_transformed.attributes.attributes
+                                    if hasattr(
+                                        entry_transformed.attributes, "attributes"
+                                    )
+                                    else entry_transformed.attributes or None
+                                ),
+                            }
+                        )
 
                 # Write entry parts
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -253,7 +260,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: m.Ldif.SchemaAttribute,
+                attribute: p.Ldif.SchemaAttributeProtocol,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
@@ -261,8 +268,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: m.Ldif.SchemaAttribute,
-            ) -> m.Ldif.SchemaAttribute: ...
+                attribute: p.Ldif.SchemaAttributeProtocol,
+            ) -> p.Ldif.SchemaAttributeProtocol: ...
 
         class FormatOidHook(Protocol):
             """Protocol for OID formatting."""
@@ -273,7 +280,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            attribute: m.Ldif.SchemaAttribute,
+            attribute: p.Ldif.SchemaAttributeProtocol,
             server_type: str,
             build_parts_hook: BuildPartsHook,
             *,
@@ -327,7 +334,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                objectclass: m.Ldif.SchemaObjectClass,
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
@@ -335,8 +342,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                objectclass: m.Ldif.SchemaObjectClass,
-            ) -> m.Ldif.SchemaObjectClass: ...
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+            ) -> FlextLdifModelsDomains.SchemaObjectClass: ...
 
         class TransformSupHook(Protocol):
             """Protocol for SUP clause transformation."""
@@ -347,7 +354,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            objectclass: m.Ldif.SchemaObjectClass,
+            objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             server_type: str,
             build_parts_hook: BuildPartsHook,
             *,
@@ -407,7 +414,7 @@ class FlextLdifUtilitiesWriters:
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""
 
-            def __call__(self, entry: m.Ldif.Entry) -> r[str]: ...
+            def __call__(self, entry: p.Ldif.EntryProtocol) -> r[str]: ...
 
         class WriteHeaderHook(Protocol):
             """Protocol for writing LDIF header."""
@@ -427,18 +434,21 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
+        def get_entry_dn_for_error(entry: p.Ldif.EntryProtocol) -> str | None:
             """Get DN string for error logging."""
             if entry.dn is None:
                 return None
-            if hasattr(entry.dn, "value") and entry.dn.value:
-                return entry.dn.value[:50]
+            if hasattr(entry.dn, "value"):
+                dn_obj = entry.dn
+                value = getattr(dn_obj, "value", None)
+                if value:
+                    return str(value)[:50]
             return str(entry.dn)[:50] if entry.dn else None
 
         @staticmethod
         def write_single_entry_with_stats(
-            entry: m.Ldif.Entry,
-            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
+            entry: p.Ldif.EntryProtocol,
+            write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]],
             stats: Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""
@@ -457,40 +467,25 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entries_fallback(
-            entries: list[m.Ldif.Entry],
-            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
+            entries: Sequence[p.Ldif.EntryProtocol],
+            write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]],
             stats: Stats,
         ) -> list[str]:
             """Fallback manual processing if batch fails."""
-
-            def process_entry(entry: m.Ldif.Entry) -> str | None:
-                """Process single entry."""
-                return FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
-                    entry,
-                    write_entry_hook,
-                    stats,
+            # Manually process entries instead of using u.Collection.process
+            # to avoid complex generic type inference issues
+            results: list[str] = []
+            for entry in entries:
+                result = (
+                    FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
+                        entry,
+                        write_entry_hook,
+                        stats,
+                    )
                 )
-
-            processed_result = u.Collection.process(
-                entries,
-                processor=process_entry,
-                on_error="skip",
-            )
-            if processed_result.is_success and isinstance(processed_result.value, list):
-                filtered_result_raw = u.Collection.filter(
-                    processed_result.value,
-                    predicate=lambda item: item is not None and isinstance(item, str),
-                )
-                # Type narrowing: filter returns list, ensure all items are str
-                if isinstance(filtered_result_raw, list):
-                    # Filter None values explicitly and ensure all are str
-                    filtered_result: list[str] = [
-                        item
-                        for item in filtered_result_raw
-                        if item is not None and isinstance(item, str)
-                    ]
-                    return filtered_result
-            return []
+                if result is not None:
+                    results.append(result)
+            return results
 
         @staticmethod
         def write(
@@ -530,33 +525,35 @@ class FlextLdifUtilitiesWriters:
                 )
 
                 # Convert EntryProtocol entries to Entry for type compatibility
-                entries_typed: list[m.Ldif.Entry] = []
+                entries_typed: list[FlextLdifModelsDomains.Entry] = []
                 for entry in config.entries:
                     # Check if it's already Entry model instance
-                    if isinstance(entry, m.Ldif.Entry):
+                    if isinstance(entry, FlextLdifModelsDomains.Entry):
                         entries_typed.append(entry)
                     else:
                         # Convert EntryProtocol to Entry via model_validate
                         entries_typed.append(
-                            m.Ldif.Entry.model_validate({
-                                "dn": (
-                                    entry.dn.value
-                                    if hasattr(entry.dn, "value")
-                                    else str(entry.dn)
-                                    if entry.dn
-                                    else None
-                                ),
-                                "attributes": (
-                                    entry.attributes.attributes
-                                    if hasattr(entry.attributes, "attributes")
-                                    else entry.attributes or None
-                                ),
-                            }),
+                            FlextLdifModelsDomains.Entry.model_validate(
+                                {
+                                    "dn": (
+                                        entry.dn.value
+                                        if hasattr(entry.dn, "value")
+                                        else str(entry.dn)
+                                        if entry.dn
+                                        else None
+                                    ),
+                                    "attributes": (
+                                        entry.attributes.attributes
+                                        if hasattr(entry.attributes, "attributes")
+                                        else entry.attributes or None
+                                    ),
+                                }
+                            ),
                         )
 
-                def write_single_entry(entry: m.Ldif.Entry) -> r[str]:
-                    """Write single entry, return FlextResult."""
-                    # write_entry_hook accepts EntryProtocol (entry satisfies it structurally)
+                # Write each entry using manual loop for clear type inference
+                # (avoiding complex generic type inference issues with u.Collection.batch)
+                for entry in entries_typed:
                     result = (
                         FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
                             entry,
@@ -564,40 +561,8 @@ class FlextLdifUtilitiesWriters:
                             stats,
                         )
                     )
-                    if result is None:
-                        return r[str].fail("Failed to write entry")
-                    return r[str].ok(result)
-
-                # Explicit type hint to help mypy with generic type inference
-                batch_result = u.Collection.batch(
-                    entries_typed,
-                    operation=write_single_entry,
-                    on_error="collect",
-                )
-                if batch_result.is_success:
-                    batch_data = batch_result.value
-                    filtered_results_raw = u.Collection.filter(
-                        batch_data["results"],
-                        predicate=lambda r: isinstance(r, str),
-                    )
-                    if isinstance(filtered_results_raw, list):
-                        # Type narrowing: ensure all items are str before extending
-                        filtered_results: list[str] = [
-                            item
-                            for item in filtered_results_raw
-                            if isinstance(item, str)
-                        ]
-                        parts.extend(filtered_results)
-                else:
-                    # Fallback to manual processing if batch fails
-                    # write_entry_hook accepts EntryProtocol (entries satisfy it structurally)
-                    parts.extend(
-                        FlextLdifUtilitiesWriters.Content.write_entries_fallback(
-                            entries_typed,
-                            config.write_entry_hook,
-                            stats,
-                        ),
-                    )
+                    if result is not None:
+                        parts.append(result)
 
                 # Join with separator
                 content = config.entry_separator.join(parts)

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from typing import overload
 
 from flext_core import t
@@ -19,18 +19,16 @@ from flext_core._models.entity import FlextModelsEntity
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif._models.base import FlextLdifModelsBase
+
+# Import moved from TYPE_CHECKING to avoid circular dependency issues
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 
-# NOTE: Use FlextLdifModelsDomains.* for all types in this module
-# This avoids circular imports while maintaining type safety
-# In models.py facade, these are exposed as m.Ldif.* for external use
-# m.Ldif.* and FlextLdifModelsDomains.* are the same classes (public facade vs internal)
-
-# Use type directly from FlextLdifTypes.Schema.SchemaElement (no local alias)
-# Import will be done where needed to avoid circular imports
+# NOTE: Use TYPE_CHECKING imports for models to avoid circular imports
+# Models are accessed via facade in models.py as m.* for external use
+# Internal modules use TYPE_CHECKING to maintain type safety without circular deps
 
 # =============================================================================
 # MODULE-LEVEL MODELS (defined before container for forward reference support)
@@ -227,7 +225,7 @@ class _SchemaAttributeMap(_SchemaElementMap):
             attr = self.get_attribute(key)
             if attr is not None:
                 # Type narrowing: attr is FlextLdifModelsDomains.SchemaAttribute
-                # m.Ldif.SchemaAttribute is the same class (public facade)
+                # FlextLdifModelsDomains.SchemaAttribute is the same class (public facade)
                 attrs.append(attr)
         return attrs
 
@@ -266,7 +264,7 @@ class _SchemaObjectClassMap(_SchemaElementMap):
             oc = self.get_object_class(key)
             if oc is not None:
                 # Type narrowing: oc is FlextLdifModelsDomains.SchemaObjectClass
-                # Both m.Ldif.SchemaObjectClass and FlextLdifModelsDomains.SchemaObjectClass are the same class
+                # Both FlextLdifModelsDomains.SchemaObjectClass and FlextLdifModelsDomains.SchemaObjectClass are the same class
                 ocs.append(oc)
         return ocs
 
@@ -405,9 +403,8 @@ class _BooleanFlags(FlextLdifModelsBase):
         return hash(tuple(sorted(extra.items())))
 
 
-class _FlexibleCategories(
-    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
-):
+# Use simple type hint to avoid circular dependency
+class _FlexibleCategories(FlextModelsCollections.Categories):
     """Flexible entry categorization with dynamic categories.
 
     Replaces dict[str, list[Entry]] pattern with type-safe model.
@@ -435,7 +432,7 @@ class _FlexibleCategories(
         # Allow comparison with dict for backward compatibility
         if isinstance(other, dict):
             return self.categories == other
-        return NotImplemented
+        return False
 
     def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
         """Return iterator over (category, entries) pairs (dict-like interface)."""
@@ -2166,6 +2163,8 @@ class FlextLdifModelsResults:
                     dict(entry.attributes.attributes)
                     if hasattr(entry.attributes, "attributes")
                     else dict(entry.attributes)
+                    if isinstance(entry.attributes, Mapping)
+                    else {}
                 )
 
                 converted_entries.append(

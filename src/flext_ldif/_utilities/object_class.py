@@ -10,10 +10,6 @@ from flext_core import FlextLogger
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
-from flext_ldif.models import m
-
-# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
-# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
 
 
 class _SchemaConstants:
@@ -47,7 +43,7 @@ class FlextLdifUtilitiesObjectClass:
     """RFC 4512 ObjectClass Validation and Correction Utilities.
 
     Pure static methods for validating and fixing ObjectClass definitions
-    according to RFC 4512. These methods modify m.Ldif.SchemaObjectClass models in-place.
+    according to RFC 4512. These methods modify FlextLdifModelsDomains.SchemaObjectClass models in-place.
 
     All methods are static to enable use without instantiation and to avoid
     circular dependencies. Methods are organized by validation/correction type.
@@ -61,19 +57,21 @@ class FlextLdifUtilitiesObjectClass:
     Architecture:
         - Pure functions (no state, no side effects except model modification)
         - Static methods for easy import and use
-        - Type-safe with m.Ldif.SchemaObjectClass
+        - Type-safe with FlextLdifModelsDomains.SchemaObjectClass
         - Server-agnostic where possible, server-specific where necessary
 
     Usage:
         >>> from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-        >>> oc = m.Ldif.SchemaObjectClass(name="test", kind="structural")
+        >>> oc = FlextLdifModelsDomains.SchemaObjectClass(
+        ...     name="test", kind="structural"
+        ... )
         >>> FlextLdifUtilitiesObjectClass.fix_missing_sup(oc)
         >>> assert oc.sup == "top"
     """
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> None:
         """Fix ObjectClass missing SUP (superior) attribute.
 
@@ -98,7 +96,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_auxiliary_without_sup(
-        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (server-specific fix).
 
@@ -139,7 +137,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
@@ -196,7 +194,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute.
 
@@ -221,7 +219,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: m.Ldif.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
         superior_kind: str,
     ) -> None:
         """Align ObjectClass kind with its superior class kind.

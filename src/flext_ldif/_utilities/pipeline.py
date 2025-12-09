@@ -38,10 +38,8 @@ from flext_core import r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize
+from flext_ldif.constants import c
 from flext_ldif.models import m
-
-# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
-# Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
 
 
 # Sentinel for filtered out entries (since r.ok(None) is not allowed)
@@ -384,14 +382,14 @@ class ProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: m.Ldif.Config.TransformConfig | None = None) -> None:
+    def __init__(self, config: m.Ldif.TransformConfig | None = None) -> None:
         """Initialize processing pipeline.
 
         Args:
             config: Processing configuration (uses defaults if None)
 
         """
-        self._config = config or m.Ldif.Config.TransformConfig()
+        self._config = config or m.Ldif.TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
@@ -409,8 +407,8 @@ class ProcessingPipeline:
             case_fold_value = self._config.process_config.dn_config.case_fold
             space_handling_value = self._config.process_config.dn_config.space_handling
 
-            case_enum = m.Ldif.Config.CaseFoldOption(case_fold_value)
-            spaces_enum = m.Ldif.Config.SpaceHandlingOption(space_handling_value)
+            case_enum = c.Ldif.CaseFoldOption(case_fold_value)
+            spaces_enum = m.Ldif.SpaceHandlingOption(space_handling_value)
 
             pipeline.add(
                 Normalize.dn(
@@ -450,7 +448,7 @@ class ProcessingPipeline:
         return self._pipeline.execute(entries)
 
     @property
-    def config(self) -> m.Ldif.Config.TransformConfig:
+    def config(self) -> m.Ldif.TransformConfig:
         """Get the processing configuration."""
         return self._config
 

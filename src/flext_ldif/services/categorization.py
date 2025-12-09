@@ -102,7 +102,7 @@ class FlextLdifCategorization(
 
     Public API for categorizing LDIF entries into 6 categories:
     - schema: Structural schema definitions
-    - hierarchy: Organizational hierarchy (OUs, etc.Ldif.)
+    - hierarchy: Organizational hierarchy (OUs, etc.)
     - users: User account entries
     - groups: Group/role entries
     - acl: Access control list entries
@@ -159,7 +159,7 @@ class FlextLdifCategorization(
             forbidden_attributes: Attributes to remove from all entries
             forbidden_objectclasses: ObjectClasses to remove
             base_dn: Base DN for filtering (optional, used by filter_by_base_dn)
-            server_type: LDAP server type (oid, oud, rfc, etc.Ldif.) for server-specific categorization
+            server_type: LDAP server type (oid, oud, rfc, etc.) for server-specific categorization
             server_registry: FlextLdifServer instance for DI (defaults to global instance)
 
         """
@@ -243,7 +243,7 @@ class FlextLdifCategorization(
         """Execute empty categorization (placeholder - use individual methods).
 
         This service provides multiple public methods for categorization steps.
-        Use validate_dns(), categorize_entries(), etc.Ldif. instead of execute().
+        Use validate_dns(), categorize_entries(), etc. instead of execute().
 
         Returns:
             FlextResult with empty FlexibleCategories
@@ -462,10 +462,10 @@ class FlextLdifCategorization(
         """Get and validate server constants via FlextLdifServer registry.
 
         DELEGATED TO: FlextLdifServer.get_constants() for SRP compliance.
-        No direct knowledge of OID, OUD, etc.Ldif. - all via server registry.
+        No direct knowledge of OID, OUD, etc. - all via server registry.
 
         Args:
-            server_type: Server type identifier (oid, oud, rfc, etc.Ldif.)
+            server_type: Server type identifier (oid, oud, rfc, etc.)
 
         Returns:
             FlextResult with constants class or error message

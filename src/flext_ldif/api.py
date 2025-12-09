@@ -36,7 +36,7 @@ from typing import ClassVar, cast, override
 from flext_core import r
 from pydantic import BaseModel
 
-# Removed: from flext_ldif._models.domain import FlextLdifModelsDomains (use m.Ldif.* instead)
+# Removed: from flext_ldif._models.domain import FlextLdifModelsDomains (use m.* instead)
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -842,10 +842,12 @@ class FlextLdif(FlextLdifServiceBase[object]):
             _ = self.writer
             _ = self.detector
             # Use domain model directly
-            health_entry = m.Ldif.Entry.model_validate({
-                "dn": "cn=health-check",
-                "attributes": {"cn": ["health-check"]},
-            })
+            health_entry = m.Ldif.Entry.model_validate(
+                {
+                    "dn": "cn=health-check",
+                    "attributes": {"cn": ["health-check"]},
+                }
+            )
             return r[object].ok(health_entry)
         except Exception as e:
             return r[object].fail(f"Health check failed: {e}")

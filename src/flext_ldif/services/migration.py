@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final, cast, override
+from typing import Final, override
 
 from flext_core import FlextLogger, r
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_ldif._utilities.pipeline import ProcessingPipeline
 from flext_ldif.base import FlextLdifServiceBase
@@ -107,29 +107,21 @@ class FlextLdifMigrationPipeline(
         if pipeline is None:
             # Create TransformConfig with ProcessConfig inside
             # Convert str to ServerType enum
-            source_type = m.Ldif.Config.ServerType(self.source_server_type)
-            target_type = m.Ldif.Config.ServerType(self.target_server_type)
+            source_type = m.Ldif.ServerType(self.source_server_type)
+            target_type = m.Ldif.ServerType(self.target_server_type)
             # Use model_copy to update server types (Pydantic v2 pattern)
 
-            config_base = m.Ldif.Config.ProcessConfig()
-            config_base_model = cast("BaseModel", config_base)
-            process_config = cast(
-                "m.Ldif.Config.ProcessConfig",
-                config_base_model.model_copy(
-                    update={
-                        "source_server": source_type,
-                        "target_server": target_type,
-                    }
-                ),
+            config_base = m.Ldif.ProcessConfig()
+            process_config = config_base.model_copy(
+                update={
+                    "source_server": source_type,
+                    "target_server": target_type,
+                }
             )
             # Create TransformConfig with ProcessConfig
-            transform_config_base = m.Ldif.Config.TransformConfig()
-            transform_config_base_model = cast("BaseModel", transform_config_base)
-            config = cast(
-                "m.Ldif.Config.TransformConfig",
-                transform_config_base_model.model_copy(
-                    update={"process_config": process_config}
-                ),
+            transform_config_base = m.Ldif.TransformConfig()
+            config = transform_config_base.model_copy(
+                update={"process_config": process_config}
             )
             pipeline = ProcessingPipeline(config)
             object.__setattr__(self, "_processing_pipeline", pipeline)

@@ -163,7 +163,7 @@ sn: test
                 return (str(entry.dn), len(acls))
         return None
 
-    _ = u.Ldif.process(
+    _ = u.process(
         entries,
         process_entry_acls,
         on_error="skip",

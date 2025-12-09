@@ -263,7 +263,7 @@ sn: User
         dn_result = FlextLdifDn.validate_format(str(entry.dn))
         return dn_result.is_success
 
-    _ = u.Ldif.process(
+    _ = u.process(
         entries,
         validate_entry,
         on_error="skip",

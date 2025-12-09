@@ -21,6 +21,7 @@ from flext_tests import tt
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from tests import c
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
@@ -119,7 +120,7 @@ class TestFlextLdifAPIIntegration(tt):
 
         # Validate entry structure
         for entry in entries:
-            assert isinstance(entry, m.Ldif.Entry)
+            assert isinstance(entry, p.Entry)
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -183,9 +184,9 @@ class TestFlextLdifAPIIntegration(tt):
         """Test building entries programmatically using models."""
         # Create entry using Entry model directly
         test_dn = c.RFC.TEST_DN
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value=test_dn),
-            attributes=m.Ldif.LdifAttributes(
+        entry = p.Entry(
+            dn=m.DistinguishedName(value=test_dn),
+            attributes=m.LdifAttributes(
                 attributes={
                     c.Names.CN: [c.General.ATTR_VALUE_TEST],
                     c.Names.SN: [c.General.ATTR_VALUE_USER],

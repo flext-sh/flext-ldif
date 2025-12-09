@@ -17,9 +17,8 @@ import pytest
 from flext_tests import tm, tt, u
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
-from tests import OIDs, Syntax, c, m
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from flext_ldif.protocols import p
+from tests import OIDs, Syntax, c
 
 
 class ParserWriterScenarios(StrEnum):
@@ -121,9 +120,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, f"Failed to parse content for {scenario}"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Ldif.Entry] for write method
-        entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
+        # Convert to list[p.Entry] for write method
+        entries: list[p.Entry] = [
+            entry for entry in entries_list if isinstance(entry, p.Entry)
         ]
 
         # Verify we got entries
@@ -193,9 +192,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, "Failed to parse from file"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Ldif.Entry] for write method
-        entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
+        # Convert to list[p.Entry] for write method
+        entries: list[p.Entry] = [
+            entry for entry in entries_list if isinstance(entry, p.Entry)
         ]
         tm.assert_length_equals(
             entries,
@@ -299,9 +298,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, f"Failed to parse {entry_count} entries"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Ldif.Entry] for write method
-        entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
+        # Convert to list[p.Entry] for write method
+        entries: list[p.Entry] = [
+            entry for entry in entries_list if isinstance(entry, p.Entry)
         ]
         assert len(entries) == entry_count, (
             f"Expected {entry_count} entries, got {len(entries)}"
@@ -365,14 +364,16 @@ class FlextLdifParserWriterIntegrationTests(tt):
         lines = ["version: 1", ""]
 
         for i in range(count):
-            lines.extend([
-                f"dn: cn=user{i},{c.DNs.EXAMPLE}",
-                f"objectClass: {c.Names.PERSON}",
-                f"cn: User {i}",
-                f"sn: User{i}",
-                f"mail: user{i}@example.com",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"dn: cn=user{i},{c.DNs.EXAMPLE}",
+                    f"objectClass: {c.Names.PERSON}",
+                    f"cn: User {i}",
+                    f"sn: User{i}",
+                    f"mail: user{i}@example.com",
+                    "",
+                ]
+            )
 
         return "\n".join(lines)
 

@@ -18,7 +18,7 @@ class ProcessingResult(FlextLdifModelsBase):
     """Result of entry processing (transform or validate operation).
 
     Replaces dict[str, object] returns from processing service to provide
-    type-safe structured results matching EntryProtocol contract.
+    type-safe structured results matching p.Ldif.Entry.EntryProtocol contract.
 
     Attributes:
         dn: Distinguished name of the processed entry

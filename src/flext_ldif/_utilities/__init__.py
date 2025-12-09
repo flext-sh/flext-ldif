@@ -76,7 +76,7 @@ from flext_ldif.typings import t
 # Type alias using forward reference to break circular import
 # Cannot import FlextLdifModelsDomains at module level due to circular dependency
 # Use protocol-based type from typings instead
-# Entry: TypeAlias = t.Ldif.Entry  # REMOVED: Use t.Ldif.Entry directly (no redundant aliases for nested objects)
+# Entry: TypeAlias = t.Entry  # REMOVED: Use t.Entry directly (no redundant aliases for nested objects)
 
 __all__ = [
     "AndFilter",

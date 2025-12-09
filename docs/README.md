@@ -95,7 +95,6 @@ docs/
 
 Working code examples organized by complexity:
 
-
 ### 🚨 Troubleshooting (`troubleshooting.md`)
 
 **[troubleshooting.md](troubleshooting.md)** - Common issues and solutions:

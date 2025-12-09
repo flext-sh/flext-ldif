@@ -46,6 +46,7 @@ from pydantic import ConfigDict
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.constants import c
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
@@ -57,7 +58,7 @@ from flext_ldif.servers._base import (
 
 def _get_server_type_from_utilities(
     quirk_class: type[FlextLdifServersBase | object],
-) -> str:
+) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type is determined by inspecting the class hierarchy
@@ -74,13 +75,7 @@ def _get_server_type_from_utilities(
     """
     # Business Rule: Access Server utility directly via FlextLdifUtilitiesServer
     # Implication: Direct access to avoid circular import with utilities.py
-    server_type_raw = FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
-    # Business Rule: get_parent_server_type returns str, but we need
-    # ServerTypeLiteral. Cast is safe because the method returns valid literals.
-    return cast(
-        "str",
-        server_type_raw,
-    )
+    return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
 
 logger = FlextLogger(__name__)
@@ -602,24 +597,23 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         ):
             msg = "Schema instance does not satisfy SchemaProtocol - missing required methods"
             raise TypeError(msg)
-        # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
+        # Return after structural validation - satisfies pyright without Protocol overlap warnings
 
-        return cast("object", schema_instance)
+        return schema_instance
 
     @property
     def acl_quirk(self) -> object:
         """Get the Acl quirk instance."""
         # Type narrowing: _acl_quirk implements AclProtocol structurally
         # Acl class implements AclProtocol structurally (all methods match)
-        # Mypy doesn't recognize structural typing, so we use cast
-        acl_instance = self._acl_quirk
-        return cast("object", acl_instance)
+        # Mypy doesn't recognize structural typing, so we return directly
+        return self._acl_quirk
 
     @property
     def entry_quirk(self) -> object:
         """Get the Entry quirk instance."""
-        # Type narrowing: _entry_quirk implements EntryProtocol structurally
-        return cast("object", self._entry_quirk)
+        # Type narrowing: _entry_quirk implements p.Ldif.Entry.EntryProtocol structurally
+        return self._entry_quirk
 
     # =========================================================================
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
@@ -747,7 +741,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         """
         # Use isinstance for proper type narrowing and direct method calls
         if isinstance(model, FlextLdifModelsDomains.Entry):
-            # Cast to EntryProtocol after isinstance check for type narrowing
+            # Cast to p.Ldif.Entry.EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
             entry_protocol: object = model
             return cast("r[str]", self.entry_quirk.write(entry_protocol))

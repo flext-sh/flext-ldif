@@ -17,6 +17,7 @@ import pytest
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from tests import tm
@@ -250,9 +251,9 @@ class TestRfcExceptionHandlingRealScenarios:
 
         try:
             # Create test entry
-            test_entry = m.Ldif.Entry(
-                dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
+            test_entry = p.Entry(
+                dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
             # quirk_registry is already a FlextLdifServer instance

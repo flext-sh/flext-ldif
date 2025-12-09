@@ -29,26 +29,19 @@ from flext_core import (
     FlextModels,
     FlextRuntime,
     FlextTypes,
-    FlextUtilities as u,
 )
 
+# Removed: from flext_ldif._collection.server import FlextLdifUtilitiesCollection (does not exist)
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
-# Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
-
-# Type alias for EntryStatistics - use facade type (m.Ldif.EntryStatistics)
-# Both FlextLdifModelsDomains.EntryStatistics and m.Ldif.EntryStatistics are the same class
-# but we use facade type for consistency
-EntryStatisticsType = m.Ldif.EntryStatistics
-
-# Alias for simplified usage
-# Note: u is already imported directly, no need to reassign
+# Import removed to avoid circular dependency
 
 logger = FlextLogger(__name__)
 
@@ -123,7 +116,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _set_model_metadata(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models).
@@ -158,7 +151,9 @@ class FlextLdifUtilitiesMetadata:
     # =========================================================================
 
     @staticmethod
-    def _get_metadata_dict(model: p.Ldif.Constants.ModelWithValidationMetadata) -> dict[str, object]:
+    def _get_metadata_dict(
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
+    ) -> dict[str, object]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -255,13 +250,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _track_metadata_item(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata_key: str,
         item_data: FlextTypes.MetadataAttributeValue,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
-    ) -> p.Ldif.Constants.ModelWithValidationMetadata:
+    ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Generic helper to track items in model validation_metadata.
 
         Consolidates common pattern of get-or-init metadata, add item, set back.
@@ -304,19 +299,22 @@ class FlextLdifUtilitiesMetadata:
         # Type narrowing: metadata values are already compatible with MetadataAttributeValue
         # (str, int, float, bool, None, list, dict are all valid MetadataAttributeValue)
         # Convert dict[str, object] to dict[str, MetadataAttributeValue] with type narrowing
-        metadata_typed: dict[str, t.MetadataAttributeValue] = {}
-        for k, v in metadata.items():
-            # Type narrowing: v is object, but runtime values are compatible with MetadataAttributeValue
-            # (str, int, float, bool, None, list, dict are all valid)
-            if isinstance(v, (str, int, float, bool, type(None), list, dict, Sequence, Mapping)):
-                metadata_typed[k] = v  # type: ignore[assignment]
+        # Type narrowing: filter values compatible with MetadataAttributeValue
+        # (str, int, float, bool, None, list, dict are all valid)
+        metadata_typed: dict[str, t.MetadataAttributeValue] = {
+            k: v
+            for k, v in metadata.items()
+            if isinstance(
+                v, (str, int, float, bool, type(None), list, dict, Sequence, Mapping)
+            )
+        }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
-        return model  # type: ignore[return-value]
+        return model
 
     @staticmethod
     def _extract_source_metadata(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
     ) -> FlextLdifModelsMetadata.DynamicMetadata | None:
         """Extract validation metadata from a model."""
         source_metadata_obj = getattr(model, "validation_metadata", None)
@@ -341,7 +339,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _get_or_create_target_metadata(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
     ) -> FlextLdifModelsMetadata.DynamicMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
@@ -364,10 +362,10 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_validation_metadata(
-        source_model: p.Ldif.Constants.ModelWithValidationMetadata,
-        target_model: p.Ldif.Constants.ModelWithValidationMetadata,
+        source_model: p.Ldif.ModelWithValidationMetadataProtocol,
+        target_model: p.Ldif.ModelWithValidationMetadataProtocol,
         transformation: m.Ldif.Types.TransformationInfo,
-    ) -> p.Ldif.Constants.ModelWithValidationMetadata:
+    ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Copy validation_metadata from source to target, adding transformation.
 
         Preserves RFC violations captured in FASE 1 validators and adds
@@ -382,60 +380,6 @@ class FlextLdifUtilitiesMetadata:
             Target model with preserved metadata and added transformation
 
         """
-        source_metadata = FlextLdifUtilitiesMetadata._extract_source_metadata(
-            source_model,
-        )
-        if source_metadata is None:
-            return target_model  # type: ignore[return-value]
-
-        target_metadata = FlextLdifUtilitiesMetadata._get_or_create_target_metadata(
-            target_model,
-        )
-
-        # Copy violations from source to target
-        FlextLdifUtilitiesMetadata._copy_violations_to_target(
-            source_metadata,
-            target_metadata,
-        )
-
-        # Add transformation to history
-        transformation_dict = (
-            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value(
-                transformation,
-            )
-        )
-
-        if "transformations" not in target_metadata:
-            # Create new list with transformation
-            # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
-            new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-            target_metadata["transformations"] = new_list
-        else:
-            transformations_obj = target_metadata["transformations"]
-            if isinstance(transformations_obj, list):
-                # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
-                # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
-                existing_items: list[Mapping[str, FlextTypes.ScalarValue]] = []
-                for item in transformations_obj:
-                    # Type narrowing: verify item is dict-like (Mapping-compatible)
-                    if isinstance(item, (dict, Mapping)):
-                        existing_items.append(item)  # type: ignore[arg-type]
-                existing_items.append(transformation_dict)
-                target_metadata["transformations"] = existing_items  # type: ignore[assignment]
-            else:
-                # Create new list if current value is not a list (should not happen for transformations)
-                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-                target_metadata["transformations"] = new_list
-
-        # Set conversion path if not already set
-        if "conversion_path" not in target_metadata:
-            source_server = transformation.server or "unknown"
-            target_metadata["conversion_path"] = f"{source_server}->..."
-
-        # Update target model metadata
-        FlextLdifUtilitiesMetadata._set_model_metadata(target_model, target_metadata)
-
-        return target_model  # type: ignore[return-value]
         source_metadata = FlextLdifUtilitiesMetadata._extract_source_metadata(
             source_model,
         )
@@ -463,7 +407,64 @@ class FlextLdifUtilitiesMetadata:
             # Create new list with transformation
             # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
             new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-            target_metadata["transformations"] = new_list
+            target_metadata.transformations = new_list
+        else:
+            transformations_obj = target_metadata["transformations"]
+            if isinstance(transformations_obj, list):
+                # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
+                # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
+                # Type narrowing: filter items that are dict-like (Mapping-compatible)
+                existing_items: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                    item
+                    for item in transformations_obj
+                    if isinstance(item, (dict, Mapping))
+                ]
+                existing_items.append(transformation_dict)
+                target_metadata["transformations"] = existing_items
+            else:
+                # Create new list if current value is not a list (should not happen for transformations)
+                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                    transformation_dict
+                ]
+                target_metadata.transformations = new_list
+
+        # Set conversion path if not already set
+        if "conversion_path" not in target_metadata:
+            source_server = transformation.server or "unknown"
+            target_metadata["conversion_path"] = f"{source_server}->..."
+
+        # Update target model metadata
+        FlextLdifUtilitiesMetadata._set_model_metadata(target_model, target_metadata)
+
+        return target_model
+        source_metadata = FlextLdifUtilitiesMetadata._extract_source_metadata(
+            source_model,
+        )
+        if source_metadata is None:
+            return target_model
+
+        target_metadata = FlextLdifUtilitiesMetadata._get_or_create_target_metadata(
+            target_model,
+        )
+
+        # Copy violations from source to target
+        FlextLdifUtilitiesMetadata._copy_violations_to_target(
+            source_metadata,
+            target_metadata,
+        )
+
+        # Add transformation to history
+        transformation_dict = (
+            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value(
+                transformation,
+            )
+        )
+
+        if "transformations" not in target_metadata:
+            # Create new list with transformation
+            # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
+            new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
+            target_metadata.transformations = new_list
         else:
             transformations_obj = target_metadata["transformations"]
             if isinstance(transformations_obj, list):
@@ -475,14 +476,16 @@ class FlextLdifUtilitiesMetadata:
                     # Type narrowing: verify item is dict-like (Mapping-compatible)
                     if isinstance(item, (dict, Mapping)):
                         # item is dict/Mapping, compatible with Mapping[str, ScalarValue]
-                        existing_items.append(item)  # type: ignore[arg-type]
+                        existing_items.append(item)
                 existing_items.append(transformation_dict)
                 # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue
-                target_metadata["transformations"] = existing_items  # type: ignore[assignment]
+                target_metadata["transformations"] = existing_items
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
-                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-                target_metadata["transformations"] = new_list
+                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                    transformation_dict
+                ]
+                target_metadata.transformations = new_list
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
@@ -496,7 +499,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def extract_rfc_violations(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
     ) -> list[str]:
         """Extract all RFC violations from model validation_metadata.
 
@@ -530,7 +533,6 @@ class FlextLdifUtilitiesMetadata:
 
         # All violation keys to extract from metadata
         violation_keys = ("rfc_violations", "dn_violations", "attribute_violations")
-        violations: list[str] = []
 
         def extract_violations(key: str) -> list[str]:
             """Extract violations for key."""
@@ -541,30 +543,16 @@ class FlextLdifUtilitiesMetadata:
                 return [str(v) for v in value]
             return []
 
-        violations_result = u.Collection.process(
-            violation_keys,
-            processor=extract_violations,
-            on_error="skip",
-        )
-        if violations_result.is_success and isinstance(violations_result.value, list):
-            violations = [
-                v
-                for sublist in violations_result.value
-                if isinstance(sublist, list)
-                for v in sublist
-            ]
-        else:
-            violations = []
-
-        return violations
+        # Process violation keys directly (avoid circular import with utilities)
+        return [v for key in violation_keys for v in extract_violations(key)]
 
     @staticmethod
     def track_conversion_step(
-        model: p.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.ModelWithValidationMetadataProtocol,
         step: str,
         server: str,
         changes: list[str],
-    ) -> p.Ldif.Constants.ModelWithValidationMetadata:
+    ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Add conversion step to model transformation history.
 
         Tracks each step in the conversion pipeline for audit trail and debugging.
@@ -1064,9 +1052,7 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(extracted_raw, dict):
                 # extracted_raw is dict, values are compatible with MetadataAttributeValue
                 # Update combined dict with extracted values
-                for k, v in extracted_raw.items():
-                    # Type narrowing: v is compatible with MetadataAttributeValue
-                    combined[k] = v  # type: ignore[assignment]
+                combined.update(extracted_raw)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
@@ -1328,15 +1314,17 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _update_entry_with_stats(
         entry: m.Ldif.Entry,
-        updated_stats: EntryStatisticsType,
+        updated_stats: m.Ldif.EntryStatistics,
     ) -> m.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
         if entry.metadata is None:
             # Create new metadata if None
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
-                c.normalize_server_type(c.Ldif.ServerTypes.RFC.value),
+                FlextLdifUtilitiesServer.normalize_server_type(
+                    c.Ldif.ServerTypes.RFC.value
+                ),
             )
-        # updated_stats is EntryStatisticsType (FlextLdifModelsDomains.EntryStatistics)
+        # updated_stats is m.Ldif.EntryStatistics (FlextLdifModelsDomains.EntryStatistics)
         # Use model_dump and model_validate to ensure facade type
         stats_dict = updated_stats.model_dump()
         # m.Ldif.EntryStatistics is the facade alias, use it for validation
@@ -1554,9 +1542,9 @@ class FlextLdifUtilitiesMetadata:
             "source_server": quirk_type,
         }
         # Add any extra string/int/bool params using dict update
-        result.update({
-            k: v for k, v in _extra.items() if isinstance(v, str | int | bool)
-        })
+        result.update(
+            {k: v for k, v in _extra.items() if isinstance(v, str | int | bool)}
+        )
         return result
 
     @staticmethod

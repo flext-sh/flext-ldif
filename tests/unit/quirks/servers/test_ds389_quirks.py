@@ -11,10 +11,8 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from tests import RfcTestHelpers, s
+from tests import RfcTestHelpers, c, p, s
 
-from flext_ldif.constants import c as lib_c
-from flext_ldif.models import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
 
 
@@ -191,19 +189,19 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.CN_CONFIG,
         entry_dn="cn=config",
-        attributes={lib_c.Ldif.DictKeys.OBJECTCLASS: ["nscontainer"]},
+        attributes={c.DictKeys.OBJECTCLASS: ["nscontainer"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.CN_MONITOR,
         entry_dn="cn=monitor",
-        attributes={lib_c.Ldif.DictKeys.OBJECTCLASS: ["top"]},
+        attributes={c.DictKeys.OBJECTCLASS: ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.CN_CHANGELOG,
         entry_dn="cn=changelog",
-        attributes={lib_c.Ldif.DictKeys.OBJECTCLASS: ["top"]},
+        attributes={c.DictKeys.OBJECTCLASS: ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
@@ -227,14 +225,14 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.NS_OBJECTCLASS,
         entry_dn="cn=test,dc=example,dc=com",
-        attributes={lib_c.Ldif.DictKeys.OBJECTCLASS: ["top", "nscontainer"]},
+        attributes={c.DictKeys.OBJECTCLASS: ["top", "nscontainer"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.STANDARD_RFC,
         entry_dn="cn=user,dc=example,dc=com",
         attributes={
-            lib_c.Ldif.DictKeys.OBJECTCLASS: ["person"],
+            c.DictKeys.OBJECTCLASS: ["person"],
             "cn": ["user"],
         },
         expected_can_handle=False,
@@ -396,7 +394,7 @@ class TestsTestFlextLdifDs389Quirks(s):
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_parse_objectclass_missing_oid(self) -> None:
@@ -420,7 +418,7 @@ class TestsTestFlextLdifDs389Quirks(s):
             "FlextLdifServersDs389.Schema",
             server.schema_quirk,
         )
-        oc_data = m.Ldif.SchemaObjectClass(
+        oc_data = p.Ldif.SchemaObjectClass(
             oid="2.16.840.1.113730.3.2.1",
             name="nscontainer",
             kind="STRUCTURAL",

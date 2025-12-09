@@ -15,13 +15,12 @@ OID-specific features:
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core import FlextLogger, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -175,8 +174,8 @@ class FlextLdifServersOidSchema(
 
     def _hook_post_parse_attribute(
         self,
-        attr: FlextLdifModelsDomains.SchemaAttribute,
-    ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
+        attr: p.Ldif.SchemaAttributeProtocol,
+    ) -> r[p.Ldif.SchemaAttributeProtocol]:
         """Hook: Transform parsed attribute using OID-specific normalizations.
 
         Called by RFC._parse_attribute() after RFC 4512 baseline parsing.
@@ -295,8 +294,8 @@ class FlextLdifServersOidSchema(
 
     def _hook_post_parse_objectclass(
         self,
-        oc: FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
+        oc: p.Ldif.SchemaObjectClassProtocol,
+    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
         """Hook: Transform parsed objectClass using OID-specific normalizations.
 
         Called by RFC._parse_objectclass() after RFC 4512 baseline parsing.
@@ -423,8 +422,8 @@ class FlextLdifServersOidSchema(
 
     def _transform_case_ignore_substrings(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
-    ) -> FlextLdifModelsDomains.SchemaAttribute:
+        attr_data: p.Ldif.SchemaAttributeProtocol,
+    ) -> p.Ldif.SchemaAttributeProtocol:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.
 
         RFC 4517 compliance: caseIgnoreSubstringsMatch must be SUBSTR, not EQUALITY.
@@ -501,7 +500,7 @@ class FlextLdifServersOidSchema(
 
     def _capture_attribute_values(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> dict[str, str | None]:
         """Capture attribute values for metadata tracking.
 
@@ -520,7 +519,7 @@ class FlextLdifServersOidSchema(
 
     def _add_target_metadata(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
         target_values: dict[str, str | None],
     ) -> None:
         """Add target metadata to attribute."""
@@ -559,7 +558,7 @@ class FlextLdifServersOidSchema(
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
+    ) -> r[p.Ldif.SchemaAttributeProtocol]:
         r"""Parse Oracle OID attribute definition (Phase 1: Normalization).
 
         OID vs RFC Attribute Parsing
@@ -610,7 +609,7 @@ class FlextLdifServersOidSchema(
             equality='octetStringMatch',
             single_value=True,
             x_origin=['Oracle'],
-            metadata=FlextLdifModelsDomains.QuirkMetadata(
+            metadata=m.Ldif.QuirkMetadata(
                 quirk_type='oid',
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(
                     **{
@@ -671,10 +670,10 @@ class FlextLdifServersOidSchema(
 
                 # Preserve ALL schema formatting details for zero data loss
                 # Convert internal QuirkMetadata to public QuirkMetadata if needed
-                metadata_public = FlextLdifModelsDomains.QuirkMetadata.model_validate(
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(
                     attr_data.metadata.model_dump(),
                 )
-                u.Ldif.Metadata.preserve_schema_formatting(
+                u.Metadata.preserve_schema_formatting(
                     metadata_public,
                     attr_definition,
                 )
@@ -682,19 +681,19 @@ class FlextLdifServersOidSchema(
                 # Add target metadata (transformations applied by hook)
                 self._add_target_metadata(attr_data, target_values)
 
-            return r[FlextLdifModelsDomains.SchemaAttribute].ok(attr_data)
+            return r[p.Ldif.SchemaAttributeProtocol].ok(attr_data)
 
         except Exception as e:
             logger.exception(
                 "OID attribute parsing failed",
             )
-            return r[FlextLdifModelsDomains.SchemaAttribute].fail(
+            return r[p.Ldif.SchemaAttributeProtocol].fail(
                 f"OID attribute parsing failed: {e}",
             )
 
     def _write_attribute(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> r[str]:
         r"""Write Oracle OID attribute definition (Phase 2: Denormalization).
 
@@ -745,7 +744,7 @@ class FlextLdifServersOidSchema(
             names=['orclTest'],
             syntax='1.3.6.1.4.1.1466.115.121.1.15',
             substr='caseIgnoreSubstringsMatch',  # RFC format
-            metadata=FlextLdifModelsDomains.QuirkMetadata(
+            metadata=m.Ldif.QuirkMetadata(
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(
                     **{
                         c.Ldif.MetadataKeys.SCHEMA_SOURCE_MATCHING_RULES: {
@@ -841,15 +840,15 @@ class FlextLdifServersOidSchema(
                 for k, v in attr_copy.metadata.extensions.items()
                 if k not in keys_to_remove
             }
-            # Use dict[str, Any] for model_copy update to avoid type checker strictness
-            update_dict: dict[str, Any] = {
+            # Use specific type for model_copy update
+            update_dict: dict[str, object] = {
                 "extensions": FlextLdifModelsMetadata.DynamicMetadata(**new_extensions),
             }
             oid_metadata = attr_copy.metadata.model_copy(update=update_dict)
 
         # Apply transformations with model_copy
-        # Use dict[str, Any] for model_copy update to avoid type checker strictness
-        update_dict: dict[str, Any] = {
+        # Use specific type for model_copy update
+        update_dict: dict[str, object] = {
             "equality": oid_equality,
             "substr": oid_substr,
             "ordering": oid_ordering,
@@ -863,7 +862,7 @@ class FlextLdifServersOidSchema(
 
     def _normalize_sup_from_model(
         self,
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
     ) -> str | (list[str] | None):
         """Normalize SUP from objectClass model.
 
@@ -936,7 +935,7 @@ class FlextLdifServersOidSchema(
 
     def _normalize_auxiliary_typo(
         self,
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
         original_format_str: str,
     ) -> str | None:
         """Normalize AUXILLARY typo to AUXILIARY.
@@ -1002,7 +1001,7 @@ class FlextLdifServersOidSchema(
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
+    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
         """Parse Oracle OID objectClass definition.
 
         Uses RFC 4512 compliant baseline parser with lenient mode for OID quirks,
@@ -1044,20 +1043,20 @@ class FlextLdifServersOidSchema(
                     c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP
                 ] = u.Generators.generate_iso_timestamp()
 
-            return r[FlextLdifModelsDomains.SchemaObjectClass].ok(oc_data)
+            return r[p.Ldif.SchemaObjectClassProtocol].ok(oc_data)
 
         except Exception as e:
             logger.exception(
                 "OID objectClass parsing failed",
             )
-            return r[FlextLdifModelsDomains.SchemaObjectClass].fail(
+            return r[p.Ldif.SchemaObjectClassProtocol].fail(
                 f"OID objectClass parsing failed: {e}",
             )
 
     def _transform_attribute_for_write(
         self,
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
-    ) -> FlextLdifModelsDomains.SchemaAttribute:
+        attr_data: p.Ldif.SchemaAttributeProtocol,
+    ) -> p.Ldif.SchemaAttributeProtocol:
         """Apply OID-specific attribute transformations before writing.
 
         IMPORTANT: Writer denormalization (RFC → OID) happens in _write_attribute.
@@ -1127,7 +1126,7 @@ class FlextLdifServersOidSchema(
                         },
                     )
 
-        return FlextLdifModelsDomains.SchemaAttribute(
+        return p.Ldif.SchemaAttributeProtocol(
             oid=attr_data.oid,
             name=fixed_name,
             desc=attr_data.desc,
@@ -1159,8 +1158,8 @@ class FlextLdifServersOidSchema(
     ) -> r[
         dict[
             str,
-            list[FlextLdifModelsDomains.SchemaAttribute]
-            | list[FlextLdifModelsDomains.SchemaObjectClass],
+            list[p.Ldif.SchemaAttributeProtocol]
+            | list[p.Ldif.SchemaObjectClassProtocol],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.

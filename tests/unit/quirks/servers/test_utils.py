@@ -8,12 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdif
-from flext_ldif.constants import c
-from flext_ldif.models import FlextLdifModels
+from tests import c, p
 
-# Use direct import to avoid circular dependency
-m = FlextLdifModels
+from flext_ldif import FlextLdif
 
 
 class FlextLdifTestUtils:
@@ -63,7 +60,7 @@ class FlextLdifTestUtils:
         ldif_api: FlextLdif,
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Load a fixture LDIF file and return parsed entries.
 
         Args:
@@ -106,7 +103,7 @@ class FlextLdifTestUtils:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         expected_min_count: int | None = None,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Load fixture LDIF file and return parsed entries with validation.
 
         Args:
@@ -149,7 +146,7 @@ class FlextLdifTestUtils:
         expected_has_dn: bool = True,
         expected_has_attributes: bool = True,
         expected_has_objectclass: bool | None = None,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Load fixture and validate entry structure.
 
         Args:
@@ -199,7 +196,7 @@ class FlextLdifTestUtils:
         tmp_path: Path,
         *,
         validate_identical: bool = True,
-    ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry], bool]:
+    ) -> tuple[list[p.Entry], list[p.Entry], bool]:
         """Run roundtrip test on fixture.
 
         Args:
@@ -271,7 +268,7 @@ class FlextLdifTestUtils:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path | None = None,
-    ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry], bool]:
+    ) -> tuple[list[p.Entry], list[p.Entry], bool]:
         """Run a roundtrip test on a fixture.
 
         Parse -> Write -> Parse and compare original vs roundtrip entries.
@@ -330,8 +327,8 @@ class FlextLdifTestUtils:
 
     @staticmethod
     def compare_entries(
-        original_entries: list[m.Ldif.Entry],
-        roundtrip_entries: list[m.Ldif.Entry],
+        original_entries: list[p.Entry],
+        roundtrip_entries: list[p.Entry],
     ) -> tuple[bool, list[str]]:
         """Compare two lists of entries for differences.
 

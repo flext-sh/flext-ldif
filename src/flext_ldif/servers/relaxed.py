@@ -22,7 +22,7 @@ Relaxed Mode Features:
 from __future__ import annotations
 
 import re
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -30,6 +30,9 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcAcl,
+)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -96,7 +99,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from c directly
-        # No duplicate nested StrEnums - use c.AclPermission,
+        # No duplicate nested StrEnums - use c.Ldif.AclPermission,
         # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     # =========================================================================
@@ -748,7 +751,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _parse_acl(): Parses ACL with best-effort approach
         # - _write_acl(): Writes ACL to RFC format - stringify in relaxed mode
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Relaxed ACL quirk for lenient LDIF processing.
 
         Implements minimal validation for ACL entries.
@@ -813,13 +816,15 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         updated_acl = acl.model_copy(
                             update=cast(
-                                "dict[str, Any]",
+                                "dict[str, object]",
                                 {
                                     "metadata": FlextLdifModelsDomains.QuirkMetadata(
                                         quirk_type=self._get_server_type(),
-                                        extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
-                                            "original_format": acl_line.strip(),
-                                        }),
+                                        extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+                                            {
+                                                "original_format": acl_line.strip(),
+                                            }
+                                        ),
                                     ),
                                 },
                             ),
@@ -838,7 +843,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         )
                         updated_acl = acl.model_copy(
                             update=cast(
-                                "dict[str, Any]",
+                                "dict[str, object]",
                                 {"metadata": updated_metadata},
                             ),
                         )
@@ -970,7 +975,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: t.CommonDict.AttributeDictGeneric,
+            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Accept any entry in relaxed mode.
 
@@ -1067,7 +1072,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
                 # Create QuirkMetadata for relaxed fallback
                 # Use FormatDetails for standard format fields, extensions for extra data
-                format_details = m.FormatDetails(
+                format_details = m.Ldif.FormatDetails(
                     dn_line=entry_dn,
                     spacing=entry_dn,  # Store original DN spacing
                 )
@@ -1077,13 +1082,15 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     original_attribute_case=FlextLdifModelsMetadata.DynamicMetadata(
                         **original_attribute_case,
                     ),
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
-                        "server_type": "relaxed",
-                        "rfc_parse_failed": True,
-                        "rfc_error": str(parent_result.error)
-                        if parent_result.error
-                        else None,
-                    }),
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+                        {
+                            "server_type": "relaxed",
+                            "rfc_parse_failed": True,
+                            "rfc_error": str(parent_result.error)
+                            if parent_result.error
+                            else None,
+                        }
+                    ),
                 )
 
                 entry = FlextLdifModelsDomains.Entry(
@@ -1132,7 +1139,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
             # Use generalized parser with relaxed configuration
-            return u.Ldif.Parsers.Content.parse(
+            return u.Parsers.Content.parse(
                 ldif_content=ldif_content,
                 server_type=self._get_server_type(),
                 parse_entry_hook=self._adapted_parse_entry_relaxed,

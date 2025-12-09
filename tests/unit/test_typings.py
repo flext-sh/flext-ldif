@@ -44,7 +44,9 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
 
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core and public flext_ldif modules."""
-        project_root = Path(__file__).parent.parent.parent  # tests/unit/test_typings.py -> project root
+        project_root = Path(
+            __file__
+        ).parent.parent.parent  # tests/unit/test_typings.py -> project root
         types_path = project_root / "src" / "flext_ldif" / "typings.py"
         tree = ast.parse(types_path.read_text())
 

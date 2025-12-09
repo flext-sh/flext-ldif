@@ -16,6 +16,7 @@ from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.protocols import p
 from tests import c, m, s
 
 # =============================================================================
@@ -103,7 +104,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
             pytest.skip("algar-oud-mig data not available in this environment")
 
         # Create test entry
-        entry = m.Ldif.Entry(
+        entry = p.Entry(
             dn=CONFIG_DN,
             attributes={
                 "objectClass": ["top", "configserver"],

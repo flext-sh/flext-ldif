@@ -14,7 +14,7 @@ from typing import Final, cast
 
 from flext_core import FlextLogger, r
 
-from flext_ldif.models import m
+from flext_ldif.protocols import p
 
 logger: Final = FlextLogger(__name__)
 
@@ -66,7 +66,7 @@ class FlextLdifFilters:
     @classmethod
     def _should_include_entry(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.EntryProtocol,
         allowed_attr: frozenset[str],
         allowed_oc: frozenset[str],
         allowed_mr: frozenset[str],
@@ -116,9 +116,9 @@ class FlextLdifFilters:
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Ldif.EntryProtocol],
         allowed_oids: Mapping[str, frozenset[str]],
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[list[p.Ldif.EntryProtocol]]:
         """Filter schema entries by allowed OIDs.
 
         Filters schema entries based on OID whitelists for:
@@ -146,9 +146,9 @@ class FlextLdifFilters:
 
             # If no OID filters specified, return all entries
             if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
-                return r[list[m.Ldif.Entry]].ok(entries)
+                return r[list[p.Ldif.EntryProtocol]].ok(entries)
 
-            filtered: list[m.Ldif.Entry] = [
+            filtered: list[p.Ldif.EntryProtocol] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(
@@ -166,11 +166,11 @@ class FlextLdifFilters:
                 filtered_count=len(filtered),
             )
 
-            return r[list[m.Ldif.Entry]].ok(filtered)
+            return r[list[p.Ldif.EntryProtocol]].ok(filtered)
 
         except Exception as e:
             logger.exception("Failed to filter schema entries by OIDs")
-            return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
+            return r[list[p.Ldif.EntryProtocol]].fail(f"Schema OID filter failed: {e}")
 
     @classmethod
     def _extract_oid_from_schema_attr(

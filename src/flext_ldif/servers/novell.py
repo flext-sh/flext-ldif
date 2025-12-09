@@ -23,15 +23,18 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from flext_core import FlextResult, FlextUtilities as u_core
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcAcl,
+)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -177,10 +180,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
-        # No duplicate nested StrEnums - use c.AclPermission,
+        # No duplicate nested StrEnums - use c.Ldif.AclPermission,
         # c.Ldif.AclAction, and c.Ldif.Encoding directly
         # Note: Novell-specific permissions (object_rights, attr_rights) should be
-        # added to c.AclPermission if needed across the codebase
+        # added to c.Ldif.AclPermission if needed across the codebase
 
     # =========================================================================
     # Server identification (defined in Constants nested class above)
@@ -193,7 +196,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModelsDomains.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if not isinstance(attr_definition, str):
@@ -246,7 +249,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | FlextLdifModelsDomains.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if not isinstance(oc_definition, str):
@@ -277,7 +280,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
             """Parse attribute definition and add Novell metadata.
 
             Args:
@@ -290,12 +293,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
+                metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[FlextLdifModelsDomains.SchemaAttribute].ok(
+                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
                     attr_data.model_copy(
-                        update=cast("dict[str, Any]", {"metadata": metadata}),
+                        update=cast("dict[str, object]", {"metadata": metadata}),
                     ),
                 )
             return result
@@ -303,7 +306,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
             """Parse objectClass definition and add Novell metadata.
 
             Args:
@@ -316,17 +319,17 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
+                metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
+                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
                     oc_data.model_copy(
-                        update=cast("dict[str, Any]", {"metadata": metadata}),
+                        update=cast("dict[str, object]", {"metadata": metadata}),
                     ),
                 )
             return result
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Novell eDirectory ACL quirk."""
 
         def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
@@ -366,15 +369,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return False
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
+        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 # Use static method correctly
                 attr_name, content = self.__class__.splitacl_line(acl_line)
                 if not content:
-                    return FlextResult[FlextLdifModelsDomains.Acl].fail(
-                        "Empty ACL content"
-                    )
+                    return FlextResult[m.Ldif.Acl].fail("Empty ACL content")
                 segments = [
                     segment
                     for segment in content.split(
@@ -412,12 +413,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Implication: Character-by-character parsing is required for remote
                 # auditing to track which permissions were granted/denied
                 char_mapping: dict[str, list[str]] = {
-                    "B": [c.PermissionNames.SEARCH],
-                    "C": [c.PermissionNames.COMPARE],
-                    "D": [c.PermissionNames.DELETE],
-                    "R": [c.PermissionNames.READ],
-                    "W": [c.PermissionNames.WRITE],
-                    "A": [c.PermissionNames.ADD],
+                    "B": [c.Ldif.PermissionNames.SEARCH],
+                    "C": [c.Ldif.PermissionNames.COMPARE],
+                    "D": [c.Ldif.PermissionNames.DELETE],
+                    "R": [c.Ldif.PermissionNames.READ],
+                    "W": [c.Ldif.PermissionNames.WRITE],
+                    "A": [c.Ldif.PermissionNames.ADD],
                     "S": ["supervisor"],  # Novell-specific
                     "E": ["entry"],  # Novell-specific
                 }
@@ -444,12 +445,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             # Add if it looks like an attribute name (not a permission)
                             if (
                                 attr_name.lower()
-                                not in c.PermissionNames.ALL_PERMISSIONS
+                                not in c.Ldif.PermissionNames.ALL_PERMISSIONS
                             ):
                                 attributes.append(attr_name)
 
                 # Build Acl model with nested models
-                acl = FlextLdifModelsDomains.Acl(
+                acl = m.Ldif.Acl(
                     name=FlextLdifServersNovell.Constants.ACL_DEFAULT_NAME,
                     target=m.Ldif.AclTarget(
                         target_dn=scope or "",  # Novell: scope is target DN
@@ -465,20 +466,20 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN
                         ),
                     ),
-                    permissions=FlextLdifModelsDomains.AclPermissions(
+                    permissions=m.Ldif.AclPermissions(
                         **self._build_novell_permissions_from_rights(
                             rights,
                             {
-                                "read": c.PermissionNames.READ,
-                                "write": c.PermissionNames.WRITE,
-                                "add": c.PermissionNames.ADD,
-                                "delete": c.PermissionNames.DELETE,
-                                "search": c.PermissionNames.SEARCH,
-                                "compare": c.PermissionNames.COMPARE,
+                                "read": c.Ldif.PermissionNames.READ,
+                                "write": c.Ldif.PermissionNames.WRITE,
+                                "add": c.Ldif.PermissionNames.ADD,
+                                "delete": c.Ldif.PermissionNames.DELETE,
+                                "search": c.Ldif.PermissionNames.SEARCH,
+                                "compare": c.Ldif.PermissionNames.COMPARE,
                             },
                         ),
                     ),
-                    metadata=FlextLdifModelsDomains.QuirkMetadata.create_for(
+                    metadata=m.Ldif.QuirkMetadata.create_for(
                         self._get_server_type(),
                         extensions=FlextLdifModelsMetadata.DynamicMetadata(
                             original_format=acl_line,
@@ -486,10 +487,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     ),
                     raw_acl=acl_line,
                 )
-                return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
+                return FlextResult[m.Ldif.Acl].ok(acl)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModelsDomains.Acl].fail(
+                return FlextResult[m.Ldif.Acl].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}",
                 )
 
@@ -532,7 +533,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         perms_dict[canonical_name] = True
             return perms_dict
 
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             Novell eDirectory ACLs use "#" delimited segments:
@@ -562,12 +563,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Add rights - collect active permissions from permissions dict
                 # Map canonical permission names to Novell format
                 permission_map = {
-                    "read": c.PermissionNames.READ,
-                    "write": c.PermissionNames.WRITE,
-                    "add": c.PermissionNames.ADD,
-                    "delete": c.PermissionNames.DELETE,
-                    "search": c.PermissionNames.SEARCH,
-                    "compare": c.PermissionNames.COMPARE,
+                    "read": c.Ldif.PermissionNames.READ,
+                    "write": c.Ldif.PermissionNames.WRITE,
+                    "add": c.Ldif.PermissionNames.ADD,
+                    "delete": c.Ldif.PermissionNames.DELETE,
+                    "search": c.Ldif.PermissionNames.SEARCH,
+                    "compare": c.Ldif.PermissionNames.COMPARE,
                 }
                 active_perms: list[str] = []
                 if acl_data.permissions:
@@ -656,11 +657,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def process_entry(
             self,
-            entry: FlextLdifModelsDomains.Entry,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> FlextResult[m.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
-                return FlextResult[FlextLdifModelsDomains.Entry].ok(entry)
+                return FlextResult[m.Ldif.Entry].ok(entry)
 
             attributes = entry.attributes.attributes.copy()
             try:
@@ -693,15 +694,15 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
 
                 # Create new LdifAttributes directly
-                new_attrs = FlextLdifModelsDomains.LdifAttributes(
+                new_attrs = m.Ldif.LdifAttributes(
                     attributes=processed_attributes,
                 )
                 new_entry = entry.model_copy(
                     update={"attributes": new_attrs},
                 )
-                return FlextResult[FlextLdifModelsDomains.Entry].ok(new_entry)
+                return FlextResult[m.Ldif.Entry].ok(new_entry)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                return FlextResult[m.Ldif.Entry].fail(
                     f"Novell eDirectory entry processing failed: {exc}",
                 )

@@ -12,11 +12,12 @@ from typing import ClassVar, Literal
 import pytest
 
 from flext_ldif import FlextLdifWriter
+from flext_ldif.protocols import p
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.typings import t
 from tests import c, m, s
 
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# from flext_ldif.protocols import p
 
 
 class TestsFlextLdifWriterValidationIntegration(s):
@@ -28,7 +29,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
 
     writer: ClassVar[FlextLdifWriter]  # pytest fixture
     validation_service: ClassVar[FlextLdifValidation]  # pytest fixture
-    valid_entry: ClassVar[m.Ldif.Entry]  # pytest fixture
+    valid_entry: ClassVar[p.Entry]  # pytest fixture
 
     @pytest.fixture
     def writer(self) -> FlextLdifWriter:
@@ -41,7 +42,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         return FlextLdifValidation()
 
     @pytest.fixture
-    def valid_entry(self) -> m.Ldif.Entry:
+    def valid_entry(self) -> p.Entry:
         """Create a valid LDAP entry with RFC-compliant attributes."""
         return self.create_entry(
             dn="cn=John Doe,ou=people,dc=example,dc=com",
@@ -73,7 +74,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         @staticmethod
         def validate_all_attributes(
             validation_service: FlextLdifValidation,
-            entry: m.Ldif.Entry,
+            entry: p.Entry,
         ) -> bool:
             """Validate all attribute names in entry."""
             for attr_name in entry.attributes.attributes:
@@ -109,7 +110,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
     def test_valid_entry_validates_successfully(
         self,
         validation_service: FlextLdifValidation,
-        valid_entry: m.Ldif.Entry,
+        valid_entry: p.Entry,
     ) -> None:
         """Test that valid entry attributes pass RFC validation."""
         is_valid = self.Helpers.validate_all_attributes(
@@ -146,7 +147,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
 
     def test_validate_dn_components_with_valid_entry(
         self,
-        valid_entry: m.Ldif.Entry,
+        valid_entry: p.Entry,
     ) -> None:
         """Test DN component validation on valid entry."""
         dn_value = valid_entry.dn.value if valid_entry.dn else ""
@@ -155,13 +156,13 @@ class TestsFlextLdifWriterValidationIntegration(s):
     def test_write_valid_entry_to_string(
         self,
         writer: FlextLdifWriter,
-        valid_entry: m.Ldif.Entry,
+        valid_entry: p.Entry,
     ) -> None:
         """Test writing valid entry to LDIF string format."""
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 include_version_header=True,
                 fold_long_lines=False,
             ),
@@ -179,13 +180,13 @@ class TestsFlextLdifWriterValidationIntegration(s):
     def test_write_entry_with_base64_encoding(
         self,
         writer: FlextLdifWriter,
-        valid_entry: m.Ldif.Entry,
+        valid_entry: p.Entry,
     ) -> None:
         """Test writing entry with base64 encoding for binary values."""
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 base64_encode_binary=True,
                 fold_long_lines=False,
             ),
@@ -224,7 +225,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=entries,
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.Ldif.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.WriteFormatOptions(fold_long_lines=False),
         )
 
         unwrapped = self.assert_success(result, "Write should succeed")

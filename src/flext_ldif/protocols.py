@@ -1,8 +1,7 @@
 """LDIF protocol definitions for flext-ldif domain.
 
 Protocol interfaces for LDIF processing quirks and operations.
-All protocols organized under single FlextLdifProtocols class per
-FLEXT standardization.
+All protocols organized per FLEXT standardization with maximum 2 levels of nesting.
 
 Defines strict structural typing contracts for:
 - Schema quirks (attribute and objectClass processing)
@@ -10,6 +9,10 @@ Defines strict structural typing contracts for:
 - Entry quirks (LDAP entry processing)
 - Conversion operations (server-to-server transformations)
 - Registry operations (quirk discovery and management)
+
+ARCHITECTURE NOTE:
+Protocols are defined at module level or 1 level deep to ensure mypy recognizes
+them as valid types. Deeper nesting (3+ levels) causes mypy [valid-type] errors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,1083 +26,720 @@ from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
-from flext_ldif.typings import t
+from flext_ldif.typings import MetadataType
 
 # =========================================================================
-# PROTOCOL DESIGN NOTES
+# NAMESPACE CLASS
 # =========================================================================
-# Protocols define structural typing interfaces - they use `str` for
-# server_type and category parameters since validation happens at
-# implementation level via c.Ldif.LiteralTypes.
-# This avoids duplicating Literal types and maintains protocol independence.
 
 
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols.
 
-    This class extends the base p with LDIF-specific protocol
-    definitions for the minimal, streamlined public interfaces of quirks.
+    Protocols are defined at module level and referenced here for
+    organized namespace access following FLEXT patterns.
 
-    **Protocol Compliance Strategy:**
-    1. All quirk classes inherit from ABC base classes (Schema, Acl, Entry)
-    2. All base classes satisfy protocols through structural typing (duck typing)
-    3. isinstance() checks validate protocol compliance at runtime
-    4. All methods use "r[T]" for railway-oriented error handling
-    5. execute() method provides polymorphic type-based routing
+    Usage:
+        from flext_ldif.protocols import FlextLdifProtocols
 
-    **Minimal Public Interface:**
-    - Schema: parse(), write()
-    - ACL: parse(), write()
-    - Entry: parse(), write()
-    - execute() method provides automatic type-detection routing for all operations
-
-    **Private Methods (NOT in protocols):**
-    - can_handle_* methods for internal detection logic
-    - _hook_* methods for customization points
-    - process_entry, convert_entry (handled via hooks or conversion)
-
-    **Namespace Structure:**
-    All LDIF-specific protocols are organized under the `.Ldif` namespace
-    to enable proper namespace separation and access from dependent projects
-    (e.g., flext-ldap can access via `.Ldif` from parent).
+        # Access via namespace
+        entry: "FlextLdifProtocols.Ldif.EntryProtocol"  # p.Ldif.Entry.EntryProtocol
+        acl: "FlextLdifProtocols.Ldif.AclProtocol"      # AclProtocol
     """
 
     class Ldif:
-        """LDIF-specific protocol namespace.
+        """LDIF-specific protocol namespace."""
 
-        All LDIF domain-specific protocols are organized here to enable
-        proper namespace separation. Dependent projects (e.g., flext-ldap)
-        can access these protocols via `.Ldif` from the parent class.
-        """
+        # =========================================================================
+        # MODULE-LEVEL PROTOCOL DEFINITIONS
+        # =========================================================================
+        # Define protocols at module level for mypy compatibility.
+        # Then reference them in the FlextLdifProtocols class for namespace access.
 
-        class Models:
-            """Protocol definitions for LDIF domain models.
+        @runtime_checkable
+        class EntryProtocol(Protocol):
+            """Protocol for LDIF Entry models.
 
-            These protocols define the minimal interface that models must satisfy.
-            Models implement these protocols, not the other way around.
+            LDIF entries that all Entry implementations must satisfy.
             """
 
-            @runtime_checkable
-            class EntryProtocol(Protocol):
-                """Protocol for LDIF Entry models.
-
-                Business Rule: Entry protocol defines the structural contract for
-                LDIF entries that all Entry implementations must satisfy. The
-                protocol uses union types to accept both primitive types and domain
-                model wrappers:
-                - dn: Accepts str or DistinguishedName wrapper (has .value property)
-                - attributes: Accepts dict-like Mapping or LdifAttributes wrapper
-                (has .attributes)
-
-                Implication: Code using EntryProtocol should handle both primitive
-                and model types. Use FlextLdifUtilities.DN.get_dn_value() for safe
-                DN extraction. Use FlextLdifUtilities.Attributes helpers for safe
-                attribute access.
-
-                The protocol allows None for these fields to support RFC violation
-                capture during parsing (RFC 2849 § 2 violations are captured, not
-                rejected).
-                """
-
-                @property
-                def dn(self) -> str | object | None:
-                    """Distinguished Name.
-
-                    Can be str, DistinguishedName model, or None for violations.
-
-                    Returns:
-                        Distinguished Name as string, DistinguishedName model,
-                        or None.
-
-                    """
-                    ...
-
-                @property
-                def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
-                    """Entry attributes.
-
-                    Can be Mapping, LdifAttributes model, or None for violations.
-
-                    Returns:
-                        Entry attributes as Mapping, LdifAttributes model, or None.
-
-                    """
-                    ...
-
-                @property
-                def metadata(self) -> t.Metadata | object | None:
-                    """Optional metadata for processing context.
-                    
-                    Accepts t.Metadata (Mapping) or domain-specific metadata models
-                    like QuirkMetadata (Pydantic models) that satisfy the protocol structurally.
-                    """
-                    ...
-
-                def get_objectclass_names(self) -> Sequence[str]:
-                    """Get list of objectClass values from entry."""
-                    ...
-
-                def model_copy(
-                    self,
-                    *,
-                    deep: bool = False,
-                    update: t.Metadata | None = None,
-                ) -> Self:
-                    """Create a copy of the entry with optional updates."""
-                    ...
-
-            @runtime_checkable
-            class EntryWithDnProtocol(Protocol):
-                """Protocol for objects that have a DN attribute.
-
-                Business Rule: Minimal protocol for any object that contains a DN.
-                Accepts both primitive string DNs and DistinguishedName model instances.
-
-                Implication: Always use FlextLdifUtilities.DN.get_dn_value() to extract
-                the string value safely from objects implementing this protocol.
-                Direct access to .dn may return a DistinguishedName object instead of str.
-                """
-
-                @property
-                def dn(self) -> str | object | None:
-                    """DN - str, DistinguishedName model, or None."""
-                    ...
-
-            @runtime_checkable
-            class AttributeValueProtocol(Protocol):
-                """Protocol for objects that have attribute values.
-
-                Minimal protocol for objects that contain attribute values.
-                Used for type-safe attribute value extraction.
-                """
-
-                values: list[str] | str
-
-            @runtime_checkable
-            class AclProtocol(Protocol):
-                """Protocol for LDIF ACL models.
-
-                Defines minimal structural interface for ACL objects.
-                """
-
-                name: str
-                target: Mapping[str, str]
-                subject: Mapping[str, str]
-                permissions: Mapping[str, bool]
-                metadata: t.Metadata | None
-
-            @runtime_checkable
-            class SchemaAttributeProtocol(Protocol):
-                """Protocol for LDIF SchemaAttribute models.
-
-                Defines minimal structural interface for schema attributes.
-                """
-
-                name: str
-                oid: str
-                syntax: str | None
-                single_valued: bool
-                description: str | None
-
-            @runtime_checkable
-            class SchemaObjectClassProtocol(Protocol):
-                """Protocol for LDIF SchemaObjectClass models.
-
-                Defines minimal structural interface for schema object classes.
-                """
-
-                name: str
-                oid: str
-                type: str
-                must_attributes: Sequence[str]
-                may_attributes: Sequence[str]
-                description: str | None
-
-            @runtime_checkable
-            class WriteFormatOptionsProtocol(Protocol):
-                """Protocol for write format options.
-
-                Defines minimal interface for LDIF write format configuration.
-                """
-
-                line_width: int
-                respect_attribute_order: bool
-                sort_attributes: bool
-                write_hidden_attributes_as_comments: bool
-                write_metadata_as_comments: bool
-                include_version_header: bool
-                include_timestamps: bool
-                base64_encode_binary: bool
-                fold_long_lines: bool
-                restore_original_format: bool
-                write_empty_values: bool
-                normalize_attribute_names: bool
-                include_dn_comments: bool
-                write_removed_attributes_as_comments: bool
-                write_migration_header: bool
-                migration_header_template: str | None
-                write_rejection_reasons: bool
-                include_removal_statistics: bool
-                ldif_changetype: str | None
-                ldif_modify_operation: str
-
-            @runtime_checkable
-            class AclWriteMetadataProtocol(Protocol):
-                """Protocol for ACL write metadata.
-
-                Defines minimal structural interface for ACL metadata.
-                """
-
-                source_subject_type: str | None
-
-            @runtime_checkable
-            class CategoryRulesProtocol(Protocol):
-                """Protocol for category rules configuration.
-
-                Business Rule: CategoryRules define patterns to categorize LDIF entries
-                into semantic groups (users, groups, hierarchy, schema, ACLs).
-                Patterns are matched against entry DNs and objectClass values.
-
-                Implication: Pattern matching is case-insensitive. Empty patterns mean
-                no entries match that category. The dn_patterns use fnmatch-style wildcards.
-
-                Note: Properties return list[str] to be compatible with both list
-                and Sequence implementations in concrete classes.
-                """
-
-                @property
-                def user_dn_patterns(self) -> list[str]:
-                    """DN patterns to match user entries (fnmatch wildcards)."""
-                    ...
-
-                @property
-                def group_dn_patterns(self) -> list[str]:
-                    """DN patterns to match group entries."""
-                    ...
-
-                @property
-                def hierarchy_dn_patterns(self) -> list[str]:
-                    """DN patterns to match hierarchy/organizational entries."""
-                    ...
-
-                @property
-                def schema_dn_patterns(self) -> list[str]:
-                    """DN patterns to match schema entries."""
-                    ...
-
-                @property
-                def user_objectclasses(self) -> list[str]:
-                    """ObjectClass names that identify user entries."""
-                    ...
-
-                @property
-                def group_objectclasses(self) -> list[str]:
-                    """ObjectClass names that identify group entries."""
-                    ...
-
-                @property
-                def hierarchy_objectclasses(self) -> list[str]:
-                    """ObjectClass names that identify hierarchy entries."""
-                    ...
-
-                @property
-                def acl_attributes(self) -> list[str]:
-                    """Attribute names that identify ACL entries.
-
-                    Examples:
-                        Common ACL attributes include 'aci' and 'orclACI'.
-
-                    Returns:
-                        List of attribute names that identify ACL entries.
-
-                    """
-                    ...
-
-        class Services:
-            """Service interface protocols for LDIF operations."""
-
-            @runtime_checkable
-            class HasParseMethodProtocol(Protocol):
-                """Protocol for objects with parse method."""
-
-                def parse(
-                    self,
-                    ldif_input: str | Path,
-                    server_type: str | None = None,
-                ) -> FlextProtocols.Result[
-                    Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                ]:
-                    """Parse LDIF content."""
-                    ...
-
-            @runtime_checkable
-            class HasWriteMethodProtocol(Protocol):
-                """Protocol for objects with write method."""
-
-                def write(
-                    self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                    | FlextLdifProtocols.Ldif.EntryProtocol,
-                ) -> FlextProtocols.Result[str]:
-                    """Write entries to LDIF."""
-                    ...
-
-            @runtime_checkable
-            class HasEntryWriteMethodProtocol(Protocol):
-                """Protocol for entry quirk instances with write method."""
-
-                def write(
-                    self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                ) -> FlextProtocols.Result[str]:
-                    """Write entries to LDIF."""
-                    ...
-
-            @runtime_checkable
-            class HasEntriesProtocol(Protocol):
-                """Protocol for objects that have an entries attribute.
-
-                Used by EntryResult and similar result containers.
-                """
-
-                @property
-                def entries(
-                    self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Get list of entries."""
-                    ...
-
-            @runtime_checkable
-            class HasContentProtocol(Protocol):
-                """Protocol for objects that have a content attribute."""
-
-                content: str | None
-
-            @runtime_checkable
-            class UnifiedParseResultProtocol(Protocol):
-                """Unified protocol for all parse result types."""
-
-                @property
-                def entries(
-                    self,
-                ) -> Sequence[
-                    FlextLdifProtocols.Ldif.EntryProtocol
-                    | FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                    | FlextLdifProtocols.Ldif.AclProtocol
-                ]:
-                    """Get all entries (works for any result type)."""
-                    ...
-
-            @runtime_checkable
-            class UnifiedWriteResultProtocol(Protocol):
-                """Unified protocol for all write result types."""
-
-                content: str | None
-
-            @runtime_checkable
-            class FilterEventProtocol(Protocol):
-                """Protocol for filter event objects.
-
-                Defines structural interface for event tracking during filtering operations.
-                """
-
-                unique_id: str
-                event_type: str
-                aggregate_id: str
-                filter_operation: str
-                entries_before: int
-                entries_after: int
-                filter_criteria: Sequence[
-                    Mapping[str, str | int | bool | Sequence[str] | None]
-                ]
-                filter_duration_ms: float
-
-            @runtime_checkable
-            class FlexibleCategoriesProtocol(Protocol):
-                """Protocol for flexible entry categorization.
-
-                Defines structural interface for categorized entry collections.
-                Uses dict-like access (e.g., categories["schema"], categories["users"]).
-                """
-
-                def __getitem__(
-                    self,
-                    key: str,
-                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Get entries for a category by key."""
-                    ...
-
-                def get(
-                    self,
-                    key: str,
-                    default: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                    | None = None,
-                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None:
-                    """Get entries for a category with fallback."""
-                    ...
-
-                def keys(self) -> Sequence[str]:
-                    """Get all category keys."""
-                    ...
-
-                def values(
-                    self,
-                ) -> Sequence[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
-                    """Get all category entry lists."""
-                    ...
-
-                def items(
-                    self,
-                ) -> Sequence[
-                    tuple[str, Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]
-                ]:
-                    """Get all category key-value pairs."""
-                    ...
-
-            @runtime_checkable
-            class EntryResultProtocol(Protocol):
-                """Protocol for EntryResult model.
-
-                Business Rule: EntryResult is the unified result type for LDIF operations
-                returning categorized entries. This protocol enables type-safe service
-                return types without depending on concrete model implementations.
-
-                Implication: Services returning EntryResult can use this protocol in
-                their return type annotations, enabling proper type checking while
-                maintaining abstraction. The protocol uses Sequence for covariance
-                (list[Entry] is assignable to Sequence[EntryProtocol]).
-
-                Note: Uses Sequence[EntryProtocol] instead of list[Entry] to allow
-                covariant return types. Entry implements EntryProtocol via structural
-                typing, so list[Entry] satisfies Sequence[EntryProtocol].
-                """
-
-                @property
-                def entries(
-                    self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Get all entries from all categories combined.
-
-                    Returns:
-                        Sequence of Entry objects implementing EntryProtocol.
-
-                    """
-                    ...
-
-                @property
-                def content(
-                    self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Alias for entries property for backward compatibility.
-
-                    Returns:
-                        Sequence of Entry objects implementing EntryProtocol.
-
-                    """
-                    ...
-
-                def __len__(self) -> int:
-                    """Return the number of entries."""
-                    ...
-
-            @runtime_checkable
-            class FilterServiceProtocol(Protocol):
-                """Protocol for filtering service implementations."""
-
-                def execute(
-                    self,
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Services.UnifiedParseResultProtocol
-                    | FlextLdifProtocols.Ldif.Services.HasEntriesProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                    | str
-                ]:
-                    """Execute filtering based on configured criteria."""
-                    ...
-
-                @classmethod
-                def filter(
-                    cls,
-                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                    *,
-                    criteria: str = "dn",
-                    pattern: str | None = None,
-                    objectclass: str | None = None,
-                    required_attributes: Sequence[str] | None = None,
-                    attributes: Sequence[str] | None = None,
-                    base_dn: str | None = None,
-                    mode: str = "include",
-                    match_all: bool = False,
-                    mark_excluded: bool = False,
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Services.UnifiedParseResultProtocol
-                    | FlextLdifProtocols.Ldif.Services.HasEntriesProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                    | str
-                ]:
-                    """Quick filter with FlextResult for composable operations."""
-                    ...
-
-                def get_last_event(
-                    self,
-                ) -> FlextLdifProtocols.Ldif.Services.FilterEventProtocol | None:
-                    """Get last emitted FilterEvent."""
-                    ...
-
-            @runtime_checkable
-            class CategorizationServiceProtocol(Protocol):
-                """Protocol for entry categorization service implementations."""
-
-                def execute(
-                    self,
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Services.FlexibleCategoriesProtocol
-                ]:
-                    """Execute categorization based on configured rules."""
-                    ...
-
-                def validate_dns(
-                    self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                ) -> FlextProtocols.Result[
-                    Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-                ]:
-                    """Validate entry DNs according to RFC 4514."""
-                    ...
-
-                def categorize_entries(
-                    self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Services.FlexibleCategoriesProtocol
-                ]:
-                    """Categorize all entries into categories."""
-                    ...
-
-                def categorize_entry(
-                    self,
-                    entry: FlextLdifProtocols.Ldif.EntryProtocol,
-                    rules: (
-                        FlextLdifProtocols.Ldif.CategoryRulesProtocol
-                        | Mapping[str, Sequence[str]]
-                        | None
-                    ) = None,
-                    server_type: str | None = None,
-                ) -> tuple[str, str | None]:
-                    """Categorize single entry, return (category, reason)."""
-                    ...
-
-                def filter_by_base_dn(
-                    self,
-                    base_dn: str,
-                ) -> FlextLdifProtocols.Ldif.Services.FlexibleCategoriesProtocol:
-                    """Filter categories by base DN."""
-                    ...
-
-                def filter_schema_by_oids(
-                    self,
-                    allowed_oids: Sequence[str],
-                ) -> FlextLdifProtocols.Ldif.Services.FlexibleCategoriesProtocol:
-                    """Filter schema entries by allowed OIDs."""
-                    ...
-
-        class Quirks:
-            """Protocol definitions for quirk implementations."""
-
-            @runtime_checkable
-            class ParentQuirkProtocol(Protocol):
-                """Protocol for parent quirk (FlextLdifServersBase) instances.
-
-                This protocol defines the minimal interface needed by nested quirk
-                classes (Schema, Acl, Entry) to access their parent server quirk.
-
-                Note: Uses `str` for server_type per protocol design notes -
-                validation via Literal types happens at implementation level.
-                """
-
-                @property
-                def server_type(self) -> str:
-                    """Server type identifier."""
-                    ...
-
-                class Constants:
-                    """Nested Constants class protocol."""
-
-                    PRIORITY: int
-
-            @runtime_checkable
-            class SchemaProtocol(Protocol):
-                """Protocol for Schema quirk implementations."""
-
-                def parse(
-                    self,
-                    attr_definition: str,
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                ]:
-                    """Parse schema definition."""
-                    ...
-
-                def write(
-                    self,
-                    model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
-                ) -> FlextProtocols.Result[str]:
-                    """Write schema definition."""
-                    ...
-
-            @runtime_checkable
-            class AclProtocol(Protocol):
-                """Protocol for ACL quirk implementations."""
-
-                def parse(
-                    self,
-                    acl_line: str,
-                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.AclProtocol]:
-                    """Parse ACL definition."""
-                    ...
-
-                def write(
-                    self,
-                    acl_data: FlextLdifProtocols.Ldif.AclProtocol,
-                ) -> FlextProtocols.Result[str]:
-                    """Write ACL definition."""
-                    ...
-
-            @runtime_checkable
-            class EntryProtocol(Protocol):
-                """Protocol for Entry quirk implementations."""
-
-                def parse(
-                    self,
-                    entry_lines: Sequence[str],
-                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Parse entry definition."""
-                    ...
-
-                def parse_entry(
-                    self,
-                    entry_dn: str,
-                    entry_attrs: Mapping[str, Sequence[str]],
-                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.EntryProtocol]:
-                    """Parse single entry from DN and attributes."""
-                    ...
-
-                def write(
-                    self,
-                    entries: FlextLdifProtocols.Ldif.EntryProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                    format_options: FlextLdifProtocols.Ldif.WriteFormatOptionsProtocol
-                    | None = None,
-                ) -> FlextProtocols.Result[str]:
-                    """Write entries to LDIF."""
-                    ...
-
-            @runtime_checkable
-            class QuirksPort(Protocol):
-                """Protocol for unified quirks interface.
-
-                Gateway interface that supports Schema, ACL, and Entry quirks.
-                """
-
-                def execute(
-                    self,
-                    model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                    | FlextLdifProtocols.Ldif.AclProtocol
-                    | FlextLdifProtocols.Ldif.EntryProtocol
-                    | str,
-                ) -> FlextProtocols.Result[str]:
-                    """Execute quirk operation on any model type."""
-                    ...
-
-        class Registry:
-            """Protocol definitions for quirk registry operations."""
-
-            @runtime_checkable
-            class QuirkRegistryProtocol(Protocol):
-                """Protocol for quirk registry implementations."""
-
-                def get_quirk(
-                    self,
-                    server_type: str,
-                ) -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol | None:
-                    """Get quirk for server type."""
-                    ...
-
-                def register_quirk(
-                    self,
-                    server_type: str,
-                    quirk: FlextLdifProtocols.Ldif.Quirks.SchemaProtocol,
-                ) -> None:
-                    """Register a quirk for server type."""
-                    ...
-
+            @property
+            def dn(self) -> str | object | None:
+                """Distinguished Name (str, DistinguishedName model, or None)."""
+                ...
+
+            @property
+            def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
+                """Entry attributes (Mapping, LdifAttributes model, or None)."""
+                ...
+
+            @property
+            def metadata(self) -> MetadataType | object | None:
+                """Optional metadata for processing context."""
+                ...
+
+            def get_objectclass_names(self) -> Sequence[str]:
+                """Get list of objectClass values from entry."""
+                ...
+
+            def model_copy(
+                self,
+                *,
+                deep: bool = False,
+                update: MetadataType | None = None,
+            ) -> Self:
+                """Create a copy of the entry with optional updates."""
+                ...
+
+        @runtime_checkable
+        class EntryWithDnProtocol(Protocol):
+            """Protocol for objects that have a DN attribute."""
+
+            @property
+            def dn(self) -> str | object | None:
+                """DN - str, DistinguishedName model, or None."""
+                ...
+
+        @runtime_checkable
+        class AttributeValueProtocol(Protocol):
+            """Protocol for objects that have attribute values."""
+
+            values: list[str] | str
+
+        @runtime_checkable
+        class AclProtocol(Protocol):
+            """Protocol for LDIF ACL models."""
+
+            name: str
+            target: Mapping[str, str]
+            subject: Mapping[str, str]
+            permissions: Mapping[str, bool]
+            metadata: MetadataType | None
+
+        @runtime_checkable
+        class SchemaAttributeProtocol(Protocol):
+            """Protocol for LDIF SchemaAttribute models."""
+
+            name: str
+            oid: str
+            syntax: str | None
+            single_valued: bool
+            description: str | None
+
+        @runtime_checkable
+        class SchemaObjectClassProtocol(Protocol):
+            """Protocol for LDIF SchemaObjectClass models."""
+
+            name: str
+            oid: str
+            type: str
+            must_attributes: Sequence[str]
+            may_attributes: Sequence[str]
+            description: str | None
+
+        @runtime_checkable
+        class WriteFormatOptionsProtocol(Protocol):
+            """Protocol for write format options."""
+
+            line_width: int
+            respect_attribute_order: bool
+            sort_attributes: bool
+            write_hidden_attributes_as_comments: bool
+            write_metadata_as_comments: bool
+            include_version_header: bool
+            include_timestamps: bool
+            base64_encode_binary: bool
+            fold_long_lines: bool
+            restore_original_format: bool
+            write_empty_values: bool
+            normalize_attribute_names: bool
+            include_dn_comments: bool
+            write_removed_attributes_as_comments: bool
+            write_migration_header: bool
+            migration_header_template: str | None
+            write_rejection_reasons: bool
+            include_removal_statistics: bool
+            ldif_changetype: str | None
+            ldif_modify_operation: str
+
+        @runtime_checkable
+        class AclWriteMetadataProtocol(Protocol):
+            """Protocol for ACL write metadata."""
+
+            source_subject_type: str | None
+
+        # =========================================================================
+        # SERVICE PROTOCOLS
+        # =========================================================================
+
+        @runtime_checkable
+        class HasParseMethodProtocol(Protocol):
+            """Protocol for objects with parse method."""
+
+            def parse(
+                self,
+                ldif_input: str | Path,
+                server_type: str | None = None,
+            ) -> FlextResult[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
+                """Parse LDIF content."""
+                ...
+
+        @runtime_checkable
+        class HasWriteMethodProtocol(Protocol):
+            """Protocol for objects with write method."""
+
+            def write(
+                self,
+                entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+                | FlextLdifProtocols.Ldif.EntryProtocol,
+            ) -> FlextResult[str]:
+                """Write entries to LDIF."""
+                ...
+
+        @runtime_checkable
+        class HasEntryWriteMethodProtocol(Protocol):
+            """Protocol for entry quirk instances with write method."""
+
+            def write(
+                self,
+                entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+            ) -> FlextResult[str]:
+                """Write entries to LDIF."""
+                ...
+
+        @runtime_checkable
+        class HasEntriesProtocol(Protocol):
+            """Protocol for objects that have an entries attribute."""
+
+            @property
+            def entries(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Get list of entries."""
+                ...
+
+        @runtime_checkable
+        class HasContentProtocol(Protocol):
+            """Protocol for objects that have a content attribute."""
+
+            content: str | None
+
+        @runtime_checkable
+        class UnifiedParseResultProtocol(Protocol):
+            """Unified protocol for all parse result types."""
+
+            @property
+            def entries(
+                self,
+            ) -> Sequence[
+                FlextLdifProtocols.Ldif.EntryProtocol
+                | FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.AclProtocol
+            ]:
+                """Get all entries."""
+                ...
+
+        @runtime_checkable
+        class UnifiedWriteResultProtocol(Protocol):
+            """Unified protocol for all write result types."""
+
+            content: str | None
+
+        @runtime_checkable
+        class FilterEventProtocol(Protocol):
+            """Protocol for filter event objects."""
+
+            unique_id: str
+            event_type: str
+            aggregate_id: str
+            filter_operation: str
+            entries_before: int
+            entries_after: int
+            filter_criteria: Sequence[
+                Mapping[str, str | int | bool | Sequence[str] | None]
+            ]
+            filter_duration_ms: float
+
+        @runtime_checkable
+        class EntryResultProtocol(Protocol):
+            """Protocol for EntryResult model."""
+
+            @property
+            def entries(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Get all entries."""
+                ...
+
+            @property
+            def content(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Alias for entries property."""
+                ...
+
+            def __len__(self) -> int:
+                """Return the number of entries."""
+                ...
+
+        @runtime_checkable
+        class FilterServiceProtocol(Protocol):
+            """Protocol for filtering service implementations."""
+
+            def execute(
+                self,
+            ) -> FlextResult[
+                FlextLdifProtocols.Ldif.UnifiedParseResultProtocol
+                | FlextLdifProtocols.Ldif.HasEntriesProtocol
+                | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+                | str
+            ]:
+                """Execute filtering."""
+                ...
+
+            @classmethod
+            def filter(
+                cls,
+                entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+                *,
+                criteria: str = "dn",
+                pattern: str | None = None,
+                objectclass: str | None = None,
+                required_attributes: Sequence[str] | None = None,
+                attributes: Sequence[str] | None = None,
+                base_dn: str | None = None,
+                mode: str = "include",
+                match_all: bool = False,
+                mark_excluded: bool = False,
+            ) -> FlextResult[
+                FlextLdifProtocols.Ldif.UnifiedParseResultProtocol
+                | FlextLdifProtocols.Ldif.HasEntriesProtocol
+                | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+                | str
+            ]:
+                """Quick filter."""
+                ...
+
+            def get_last_event(
+                self,
+            ) -> FlextLdifProtocols.Ldif.FilterEventProtocol | None:
+                """Get last emitted FilterEvent."""
+                ...
+
+        @runtime_checkable
+        class FlexibleCategoriesProtocol(Protocol):
+            """Protocol for flexible entry categorization."""
+
+            def __getitem__(
+                self, key: str
+            ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Get entries for a category by key."""
+                ...
+
+            def get(
+                self,
+                key: str,
+                default: Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None = None,
+            ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None:
+                """Get entries for a category with fallback."""
+                ...
+
+            def keys(self) -> Sequence[str]:
+                """Get all category keys."""
+                ...
+
+            def values(
+                self,
+            ) -> Sequence[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
+                """Get all category entry lists."""
+                ...
+
+            def items(
+                self,
+            ) -> Sequence[tuple[str, Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]]:
+                """Get all category key-value pairs."""
+                ...
+
+        @runtime_checkable
+        class CategoryRulesProtocol(Protocol):
+            """Protocol for category rules configuration."""
+
+            @property
+            def user_dn_patterns(self) -> list[str]:
+                """DN patterns to match user entries."""
+                ...
+
+            @property
+            def group_dn_patterns(self) -> list[str]:
+                """DN patterns to match group entries."""
+                ...
+
+            @property
+            def hierarchy_dn_patterns(self) -> list[str]:
+                """DN patterns to match hierarchy entries."""
+                ...
+
+            @property
+            def schema_dn_patterns(self) -> list[str]:
+                """DN patterns to match schema entries."""
+                ...
+
+            @property
+            def user_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify user entries."""
+                ...
+
+            @property
+            def group_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify group entries."""
+                ...
+
+            @property
+            def hierarchy_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify hierarchy entries."""
+                ...
+
+            @property
+            def acl_attributes(self) -> list[str]:
+                """Attribute names that identify ACL entries."""
+                ...
+
+        @runtime_checkable
+        class CategorizationServiceProtocol(Protocol):
+            """Protocol for entry categorization service."""
+
+            def execute(
+                self,
+            ) -> FlextResult[FlextLdifProtocols.Ldif.FlexibleCategoriesProtocol]:
+                """Execute categorization."""
+                ...
+
+            def validate_dns(
+                self,
+                entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+            ) -> FlextResult[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
+                """Validate entry DNs."""
+                ...
+
+            def categorize_entries(
+                self,
+                entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+            ) -> FlextResult[FlextLdifProtocols.Ldif.FlexibleCategoriesProtocol]:
+                """Categorize all entries."""
+                ...
+
+            def categorize_entry(
+                self,
+                entry: FlextLdifProtocols.Ldif.EntryProtocol,
+                rules: FlextLdifProtocols.Ldif.CategoryRulesProtocol
+                | Mapping[str, Sequence[str]]
+                | None = None,
+                server_type: str | None = None,
+            ) -> tuple[str, str | None]:
+                """Categorize single entry."""
+                ...
+
+            def filter_by_base_dn(
+                self, base_dn: str
+            ) -> FlextLdifProtocols.Ldif.FlexibleCategoriesProtocol:
+                """Filter categories by base DN."""
+                ...
+
+            def filter_schema_by_oids(
+                self,
+                allowed_oids: Sequence[str],
+            ) -> FlextLdifProtocols.Ldif.FlexibleCategoriesProtocol:
+                """Filter schema entries by allowed OIDs."""
+                ...
+
+        # =========================================================================
+        # QUIRK PROTOCOLS
+        # =========================================================================
+
+        @runtime_checkable
+        class ParentQuirkProtocol(Protocol):
+            """Protocol for parent quirk (FlextLdifServersBase) instances."""
+
+            @property
+            def server_type(self) -> str:
+                """Server type identifier."""
+                ...
+
+            class Constants:
+                """Nested Constants class protocol."""
+
+                PRIORITY: int
+
+        @runtime_checkable
+        class SchemaQuirkProtocol(Protocol):
+            """Protocol for Schema quirk implementations."""
+
+            def parse(
+                self,
+                attr_definition: str,
+            ) -> FlextResult[
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ]:
+                """Parse schema definition."""
+                ...
+
+            def write(
+                self,
+                model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
+            ) -> FlextResult[str]:
+                """Write schema definition."""
+                ...
+
+        @runtime_checkable
+        class AclQuirkProtocol(Protocol):
+            """Protocol for ACL quirk implementations."""
+
+            def parse(
+                self, acl_line: str
+            ) -> FlextResult[FlextLdifProtocols.Ldif.AclProtocol]:
+                """Parse ACL definition."""
+                ...
+
+            def write(
+                self, acl_data: FlextLdifProtocols.Ldif.AclProtocol
+            ) -> FlextResult[str]:
+                """Write ACL definition."""
+                ...
+
+        @runtime_checkable
+        class EntryQuirkProtocol(Protocol):
+            """Protocol for Entry quirk implementations."""
+
+            def parse(
+                self, entry_lines: Sequence[str]
+            ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Parse entry definition."""
+                ...
+
+            def parse_entry(
+                self,
+                entry_dn: str,
+                entry_attrs: Mapping[str, Sequence[str]],
+            ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
+                """Parse single entry from DN and attributes."""
+                ...
+
+            def write(
+                self,
+                entries: FlextLdifProtocols.Ldif.EntryProtocol
+                | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+                format_options: FlextLdifProtocols.Ldif.WriteFormatOptionsProtocol
+                | None = None,
+            ) -> FlextResult[str]:
+                """Write entries to LDIF."""
+                ...
+
+        @runtime_checkable
+        class QuirksPortProtocol(Protocol):
+            """Protocol for unified quirks interface."""
+
+            def execute(
+                self,
+                model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.AclProtocol
+                | FlextLdifProtocols.Ldif.EntryProtocol
+                | str,
+            ) -> FlextResult[str]:
+                """Execute quirk operation on any model type."""
+                ...
+
+        @runtime_checkable
+        class QuirkRegistryProtocol(Protocol):
+            """Protocol for quirk registry implementations."""
+
+            def get_quirk(
+                self, server_type: str
+            ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
+                """Get quirk for server type."""
+                ...
+
+            def register_quirk(
+                self,
+                server_type: str,
+                quirk: FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
+            ) -> None:
+                """Register a quirk for server type."""
+                ...
+
+        # =========================================================================
+        # SERVER CONSTANTS PROTOCOLS
+        # =========================================================================
+
+        @runtime_checkable
+        class ServerConstantsProtocol(Protocol):
+            """Protocol for server Constants classes."""
+
+            DETECTION_OID_PATTERN: str | None
+            DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
+            DETECTION_DN_MARKERS: frozenset[str] | None
+            ACL_ATTRIBUTE_NAME: str | None
+
+        @runtime_checkable
+        class ModelWithValidationMetadataProtocol(Protocol):
+            """Protocol for models with validation_metadata attribute."""
+
+            validation_metadata: MetadataType | None
+
+        # =========================================================================
+        # UTILITY PROTOCOLS
+        # =========================================================================
+
+        @runtime_checkable
+        class TransformerProtocol[T](Protocol):
+            """Protocol for transformers in pipelines."""
+
+            def apply(self, item: T) -> FlextResult[T]:
+                """Apply the transformation."""
+                ...
+
+        @runtime_checkable
+        class BatchTransformerProtocol[T](Protocol):
+            """Protocol for batch transformers."""
+
+            def apply_batch(self, items: Sequence[T]) -> FlextResult[list[T]]:
+                """Apply transformation to batch."""
+                ...
+
+        @runtime_checkable
+        class FilterProtocol[T](Protocol):
+            """Protocol for filters in pipelines."""
+
+            def matches(self, item: T) -> bool:
+                """Check if item matches filter criteria."""
+                ...
+
+            def __and__(
+                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
+            ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                """AND combination."""
+                ...
+
+            def __or__(
+                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
+            ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                """OR combination."""
+                ...
+
+            def __invert__(self) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                """NOT negation."""
+                ...
+
+        @runtime_checkable
+        class ValidationReportProtocol(Protocol):
+            """Protocol for validation reports."""
+
+            @property
+            def is_valid(self) -> bool:
+                """Check if validation passed."""
+                ...
+
+            @property
+            def errors(self) -> list[str]:
+                """Get error messages."""
+                ...
+
+            @property
+            def warnings(self) -> list[str]:
+                """Get warning messages."""
+                ...
+
+        @runtime_checkable
+        class ValidatorProtocol[T](Protocol):
+            """Protocol for validators."""
+
+            def validate(
+                self, item: T
+            ) -> FlextResult[FlextLdifProtocols.Ldif.ValidationReportProtocol]:
+                """Validate an item."""
+                ...
+
+        @runtime_checkable
+        class ValidationRuleProtocol[T](Protocol):
+            """Protocol for validation rules."""
+
+            @property
+            def name(self) -> str:
+                """Get the rule name."""
+                ...
+
+            def check(self, item: T) -> tuple[bool, str | None]:
+                """Check an item against this rule."""
+                ...
+
+        @runtime_checkable
+        class PipelineStepProtocol[TIn, TOut](Protocol):
+            """Protocol for pipeline steps."""
+
+            @property
+            def name(self) -> str:
+                """Get step name."""
+                ...
+
+            def execute(self, input_data: TIn) -> FlextResult[TOut]:
+                """Execute pipeline step."""
+                ...
+
+        @runtime_checkable
+        class FluentBuilderProtocol[TConfig](Protocol):
+            """Protocol for fluent builders."""
+
+            def build(self) -> TConfig:
+                """Build the final configuration object."""
+                ...
+
+        @runtime_checkable
+        class FluentOpsProtocol[T](Protocol):
+            """Protocol for fluent operation chains."""
+
+            def build(self) -> FlextResult[T]:
+                """Build/finalize and return the result."""
+                ...
+
+        @runtime_checkable
+        class LoadableProtocol[T](Protocol):
+            """Protocol for loadable data sources."""
+
+            def load(self) -> FlextResult[T]:
+                """Load and return the data."""
+                ...
+
+        @runtime_checkable
+        class WritableProtocol(Protocol):
+            """Protocol for writable output targets."""
+
+            def write(self, content: str) -> FlextResult[str]:
+                """Write content to the target."""
+                ...
+
+        # =========================================================================
+        # NAMESPACE ALIASES (for FlextLdifProtocols.Ldif.* access)
+        # =========================================================================
+
+        # Core protocols
+        # Entry = p.Ldif.Entry.EntryProtocol  # REMOVED: Entry is concrete model in m.Ldif.Entry
+        SchemaAttribute = SchemaAttributeProtocol
+        SchemaObjectClass = SchemaObjectClassProtocol
+        Acl = AclProtocol
+        WriteFormatOptions = WriteFormatOptionsProtocol
+
+        # Quirk protocols
+        SchemaQuirk = SchemaQuirkProtocol
+        AclQuirk = AclQuirkProtocol
+        EntryQuirk = EntryQuirkProtocol
+
+        # Utility protocols
+        ModelWithValidationMetadata = ModelWithValidationMetadataProtocol
+
+        # Nested constants class (for compatibility)
         class Constants:
-            """Protocol definitions for server Constants classes."""
+            """Constants namespace for protocol access."""
 
-            @runtime_checkable
-            class ServerConstantsProtocol(Protocol):
-                """Protocol for server Constants classes used in detection mixins.
 
-                Defines structural interface for server-specific Constants classes
-                that provide detection patterns and ACL attribute names.
-                All attributes are optional to support different server implementations.
-                """
-
-                # Optional detection attributes used by mixins
-                DETECTION_OID_PATTERN: str | None
-                DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
-                DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
-                DETECTION_DN_MARKERS: frozenset[str] | None
-                ACL_ATTRIBUTE_NAME: str | None
-
-            @runtime_checkable
-            class ModelWithValidationMetadata(Protocol):
-                """Protocol for models that have validation_metadata attribute."""
-
-                validation_metadata: t.Metadata | None
-
-        class Utilities:
-            """Utility protocols for LDIF power methods and pipelines.
-
-            These protocols support fluent DSL operations, transformations, filtering,
-            validation, and pipeline orchestration for LDIF processing.
-            """
-
-            # =================================================================
-            # TRANSFORMER PROTOCOLS - For entry transformations
-            # =================================================================
-
-            @runtime_checkable
-            class TransformerProtocol[T](Protocol):
-                """Protocol for transformers that can be used in pipelines.
-
-                Transformers are applied via the `|` (pipe) operator on FlextLdifResult:
-
-                    result = FlextLdifResult.ok(entries) | MyTransformer()
-
-                The apply method receives the value and returns a FlextResult containing
-                the transformed value or an error.
-
-                Type Parameters:
-                    T: The type being transformed (typically Entry or list[Entry])
-                """
-
-                def apply(self, item: T) -> FlextResult[T]:
-                    """Apply the transformation to an item.
-
-                    Args:
-                        item: The item to transform
-
-                    Returns:
-                        FlextResult containing transformed item or error
-
-                    """
-                    ...
-
-            @runtime_checkable
-            class BatchTransformerProtocol[T](Protocol):
-                """Protocol for transformers that operate on sequences.
-
-                Batch transformers process multiple items at once, which can be
-                more efficient than transforming items one by one.
-
-                Type Parameters:
-                    T: The type of items in the sequence (typically Entry)
-                """
-
-                def apply_batch(self, items: Sequence[T]) -> FlextResult[list[T]]:
-                    """Apply the transformation to a batch of items.
-
-                    Args:
-                        items: Sequence of items to transform
-
-                    Returns:
-                        FlextResult containing list of transformed items or error
-
-                    """
-                    ...
-
-            # =================================================================
-            # FILTER PROTOCOLS - For entry filtering
-            # =================================================================
-
-            @runtime_checkable
-            class FilterProtocol[T](Protocol):
-                """Protocol for filters that can be used in pipelines.
-
-                Filters are used to select entries matching certain criteria.
-                They support operator composition:
-
-                    - filter1 & filter2 - AND combination
-                    - filter1 | filter2 - OR combination
-                    - ~filter - NOT (negation)
-
-                Type Parameters:
-                    T: The type being filtered (typically Entry)
-                """
-
-                def matches(self, item: T) -> bool:
-                    """Check if an item matches the filter criteria.
-
-                    Args:
-                        item: The item to check
-
-                    Returns:
-                        True if the item matches, False otherwise
-
-                    """
-                    ...
-
-                def __and__(
-                    self,
-                    other: FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T],
-                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
-                    """AND combination: filter1 & filter2."""
-                    ...
-
-                def __or__(
-                    self,
-                    other: FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T],
-                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
-                    """OR combination: filter1 | filter2."""
-                    ...
-
-                def __invert__(
-                    self,
-                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
-                    """NOT negation: ~filter."""
-                    ...
-
-            # =================================================================
-            # VALIDATOR PROTOCOLS - For validation rules
-            # =================================================================
-
-            @runtime_checkable
-            class ValidationReportProtocol(Protocol):
-                """Protocol for validation reports returned by validators."""
-
-                @property
-                def is_valid(self) -> bool:
-                    """Check if validation passed."""
-                    ...
-
-                @property
-                def errors(self) -> list[str]:
-                    """Get list of error messages."""
-                    ...
-
-                @property
-                def warnings(self) -> list[str]:
-                    """Get list of warning messages."""
-                    ...
-
-            @runtime_checkable
-            class ValidatorProtocol[T](Protocol):
-                """Protocol for validators that check entries or schemas.
-
-                Validators are used in the validate() power method to check
-                entries against rules (RFC compliance, schema, custom).
-
-                Type Parameters:
-                    T: The type being validated (Entry, SchemaAttribute, etc.)
-                """
-
-                def validate(
-                    self,
-                    item: T,
-                ) -> FlextResult[
-                    FlextLdifProtocols.Ldif.Utilities.ValidationReportProtocol
-                ]:
-                    """Validate an item.
-
-                    Args:
-                        item: The item to validate
-
-                    Returns:
-                        FlextResult containing ValidationReport or error
-
-                    """
-                    ...
-
-            @runtime_checkable
-            class ValidationRuleProtocol[T](Protocol):
-                """Protocol for individual validation rules.
-
-                Rules are composable units that check specific aspects of an item.
-                Multiple rules can be combined into a validator.
-
-                Type Parameters:
-                    T: The type being validated
-                """
-
-                @property
-                def name(self) -> str:
-                    """Get the rule name for error messages."""
-                    ...
-
-                def check(self, item: T) -> tuple[bool, str | None]:
-                    """Check an item against this rule.
-
-                    Args:
-                        item: The item to check
-
-                    Returns:
-                        Tuple of (passed, error_message). error_message is None if passed.
-
-                    """
-                    ...
-
-            # =================================================================
-            # PIPELINE PROTOCOLS - For pipeline orchestration
-            # =================================================================
-
-            @runtime_checkable
-            class PipelineStepProtocol[TIn, TOut](Protocol):
-                """Protocol for pipeline steps that transform data.
-
-                Pipeline steps are the building blocks of the process() and
-                transform() power methods. Each step receives input and produces
-                output, which becomes the input for the next step.
-
-                Type Parameters:
-                    TIn: Input type for this step
-                    TOut: Output type for this step
-                """
-
-                @property
-                def name(self) -> str:
-                    """Get step name for logging/debugging."""
-                    ...
-
-                def execute(self, input_data: TIn) -> FlextResult[TOut]:
-                    """Execute this pipeline step.
-
-                    Args:
-                        input_data: Input data from previous step
-
-                    Returns:
-                        FlextResult containing output data or error
-
-                    """
-                    ...
-
-            # =================================================================
-            # BUILDER PROTOCOLS - For builder patterns
-            # =================================================================
-
-            @runtime_checkable
-            class FluentBuilderProtocol[TConfig](Protocol):
-                """Protocol for fluent builders that construct configuration objects.
-
-                Builders provide a fluent interface for constructing complex
-                configuration objects with method chaining.
-
-                Type Parameters:
-                    TConfig: The configuration type being built
-                """
-
-                def build(self) -> TConfig:
-                    """Build the final configuration object.
-
-                    Returns:
-                        The constructed configuration object
-
-                    """
-                    ...
-
-            @runtime_checkable
-            class FluentOpsProtocol[T](Protocol):
-                """Protocol for fluent operation chains (DnOps, EntryOps).
-
-                Fluent ops provide method chaining for common operations,
-                with a terminal build() method that returns the result.
-
-                Type Parameters:
-                    T: The type being operated on (str for DN, Entry for entries)
-                """
-
-                def build(self) -> FlextResult[T]:
-                    """Build/finalize and return the result.
-
-                    Returns:
-                        FlextResult containing the final value or error
-
-                    """
-                    ...
-
-            # =================================================================
-            # IO PROTOCOLS - For data sources and targets
-            # =================================================================
-
-            @runtime_checkable
-            class LoadableProtocol[T](Protocol):
-                """Protocol for loadable data sources.
-
-                Represents anything that can be loaded as LDIF data:
-                - File paths (str, Path)
-                - Raw LDIF content (bytes)
-                - Pre-parsed entries (Sequence[Entry])
-                """
-
-                def load(self) -> FlextResult[T]:
-                    """Load and return the data.
-
-                    Returns:
-                        FlextResult containing loaded data or error
-
-                    """
-                    ...
-
-            @runtime_checkable
-            class WritableProtocol(Protocol):
-                """Protocol for writable output targets.
-
-                Represents anything that can receive LDIF output:
-                - File paths
-                - File-like objects
-                - String builders
-                """
-
-                def write(self, content: str) -> FlextResult[str]:
-                    """Write content to the target.
-
-                    Args:
-                        content: The content to write
-
-                    Returns:
-                        FlextResult containing written content or error
-
-                    """
-                    ...
-
-        # ====================================================================
-        # PROTOCOL ALIASES - Expose protocols at Ldif level for convenience
-        # ====================================================================
-        # These aliases expose Models protocols at the Ldif namespace level
-        # to enable references like p.Ldif.Models.EntryProtocol instead of
-        # p.Ldif.Models.EntryProtocol, matching the pattern used throughout
-        # the codebase (config.py, services, etc.)
-
-        EntryProtocol = Models.EntryProtocol
-        EntryWithDnProtocol = Models.EntryWithDnProtocol
-        AttributeValueProtocol = Models.AttributeValueProtocol
-        AclProtocol = Models.AclProtocol
-        SchemaAttributeProtocol = Models.SchemaAttributeProtocol
-        SchemaObjectClassProtocol = Models.SchemaObjectClassProtocol
-        WriteFormatOptionsProtocol = Models.WriteFormatOptionsProtocol
-        AclWriteMetadataProtocol = Models.AclWriteMetadataProtocol
-        CategoryRulesProtocol = Models.CategoryRulesProtocol
-
-
-# Runtime alias for basic class (objetos nested sem aliases redundantes)
-# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
+# Runtime alias
 p = FlextLdifProtocols
 
-__all__ = [
-    "FlextLdifProtocols",
-    "p",
-]
+__all__ = ["FlextLdifProtocols", "p"]

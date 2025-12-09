@@ -38,7 +38,7 @@ class FlextLdifDn(
     Business Rule: DN service provides RFC 4514 compliant operations for
     Distinguished Names. Service handles parsing, validation, normalization,
     cleaning, escaping/unescaping, comparison, and RDN parsing. All pure DN
-    operations delegate to u.DN to avoid code duplication.
+    operations delegate to u.Ldif.DN to avoid code duplication.
     Service uses nested classes (Parser, Normalizer, Registry) for SRP compliance.
 
     Implication: DN service enables consistent DN handling across the codebase.

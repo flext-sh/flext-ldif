@@ -23,7 +23,7 @@ from flext_ldif import FlextLdif, FlextLdifProtocols, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
-from tests import c, m, s
+from tests import c, m, p, s
 
 # Module-level constants
 _OPERATIONAL_ATTRS: Final[list[str]] = [
@@ -57,7 +57,7 @@ class RealLdifLoader:
     """Load REAL LDIF fixture data from test fixtures directory."""
 
     @staticmethod
-    def load_oid_entries() -> list[m.Ldif.Entry]:
+    def load_oid_entries() -> list[p.Entry]:
         """Load real OID LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "oid" / "oid_entries_fixtures.ldif"
         ldif = FlextLdif()
@@ -68,7 +68,7 @@ class RealLdifLoader:
         raise ValueError(msg)
 
     @staticmethod
-    def load_oud_entries() -> list[m.Ldif.Entry]:
+    def load_oud_entries() -> list[p.Entry]:
         """Load real OUD LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "oud" / "oud_entries_fixtures.ldif"
         ldif = FlextLdif()
@@ -79,7 +79,7 @@ class RealLdifLoader:
         raise ValueError(msg)
 
     @staticmethod
-    def load_openldap2_entries() -> list[m.Ldif.Entry]:
+    def load_openldap2_entries() -> list[p.Entry]:
         """Load real OpenLDAP2 LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "openldap2" / "openldap2_entries_fixtures.ldif"
         ldif = FlextLdif()
@@ -90,7 +90,7 @@ class RealLdifLoader:
         raise ValueError(msg)
 
     @staticmethod
-    def load_rfc_entries() -> list[m.Ldif.Entry]:
+    def load_rfc_entries() -> list[p.Entry]:
         """Load real RFC LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "rfc" / "rfc_entries_fixtures.ldif"
         ldif = FlextLdif()
@@ -107,25 +107,25 @@ class RealLdifLoader:
 
 
 @pytest.fixture
-def oid_entries() -> list[m.Ldif.Entry]:
+def oid_entries() -> list[p.Entry]:
     """Load real OID LDIF entries."""
     return RealLdifLoader.load_oid_entries()
 
 
 @pytest.fixture
-def oud_entries() -> list[m.Ldif.Entry]:
+def oud_entries() -> list[p.Entry]:
     """Load real OUD LDIF entries."""
     return RealLdifLoader.load_oud_entries()
 
 
 @pytest.fixture
-def openldap2_entries() -> list[m.Ldif.Entry]:
+def openldap2_entries() -> list[p.Entry]:
     """Load real OpenLDAP2 LDIF entries."""
     return RealLdifLoader.load_openldap2_entries()
 
 
 @pytest.fixture
-def rfc_entries() -> list[m.Ldif.Entry]:
+def rfc_entries() -> list[p.Entry]:
     """Load real RFC LDIF entries."""
     return RealLdifLoader.load_rfc_entries()
 
@@ -228,9 +228,7 @@ class TestsFlextLdifEntries(s):
         """Factory methods for creating test entries."""
 
         @staticmethod
-        def create_test_entry(
-            dn: str | None = None, **overrides: object
-        ) -> m.Ldif.Entry:
+        def create_test_entry(dn: str | None = None, **overrides: object) -> p.Entry:
             """Create test entry using factory."""
             if dn is None:
                 dn = c.DNs.TEST_USER
@@ -246,13 +244,13 @@ class TestsFlextLdifEntries(s):
             result = service.create_entry(dn, attrs)
             if result.is_success:
                 return result.unwrap()
-            return m.Ldif.Entry.model_construct(
-                dn=m.Ldif.DistinguishedName(value=dn),
-                attributes=m.Ldif.LdifAttributes(attributes=attrs),
+            return p.Entry.model_construct(
+                dn=m.DistinguishedName(value=dn),
+                attributes=m.LdifAttributes(attributes=attrs),
             )
 
         @staticmethod
-        def create_simple_entry() -> m.Ldif.Entry:
+        def create_simple_entry() -> p.Entry:
             """Create a simple test entry using factory."""
             return tf.create_entry(
                 f"cn=john,ou=users,{c.DNs.EXAMPLE}",
@@ -263,7 +261,7 @@ class TestsFlextLdifEntries(s):
             )
 
         @staticmethod
-        def create_entry_with_operational_attrs() -> m.Ldif.Entry:
+        def create_entry_with_operational_attrs() -> p.Entry:
             """Create entry with operational attributes."""
             return tf.create_entry(
                 f"cn=jane,ou=users,{c.DNs.EXAMPLE}",
@@ -280,7 +278,7 @@ class TestsFlextLdifEntries(s):
             )
 
         @staticmethod
-        def create_entries_batch() -> list[m.Ldif.Entry]:
+        def create_entries_batch() -> list[p.Entry]:
             """Create batch of entries for testing."""
             operational_attrs = _OPERATIONAL_ATTRS
             return [
@@ -300,7 +298,7 @@ class TestsFlextLdifEntries(s):
             ]
 
         @staticmethod
-        def create_simple_user_entry() -> m.Ldif.Entry:
+        def create_simple_user_entry() -> p.Entry:
             """Create a simple user entry."""
             service = FlextLdifEntries()
             result = service.create_entry(
@@ -428,9 +426,9 @@ class TestsFlextLdifEntries(s):
 
     def test_get_entry_dn_from_entry_missing_dn(self) -> None:
         """Test get_entry_dn with Entry model missing DN."""
-        entry = m.Ldif.Entry.model_construct(
+        entry = p.Entry.model_construct(
             dn=None,
-            attributes=m.Ldif.LdifAttributes.model_construct(attributes={}),
+            attributes=m.LdifAttributes.model_construct(attributes={}),
         )
         service = FlextLdifEntries()
         result = service.get_entry_dn(entry)
@@ -689,7 +687,7 @@ class TestsFlextLdifEntries(s):
         )
         entries_batch = self.Factories.create_entries_batch()
 
-        fixtures: dict[str, m.Ldif.Entry | list[m.Ldif.Entry]] = {
+        fixtures: dict[str, p.Entry | list[p.Entry]] = {
             "simple_entry": simple_entry,
             "entry_with_operational_attrs": entry_with_operational_attrs,
             "entries_batch": entries_batch,
@@ -697,7 +695,7 @@ class TestsFlextLdifEntries(s):
         fixture_data = fixtures[fixture_name]
 
         if is_selective and fixture_name == "simple_entry":
-            assert isinstance(fixture_data, m.Ldif.Entry)
+            assert isinstance(fixture_data, p.Entry)
             result_list = tm.ok(
                 FlextLdifEntries()
                 .with_entries([fixture_data])
@@ -737,7 +735,7 @@ class TestsFlextLdifEntries(s):
                 if attrs_to_check:
                     tm.entry(entry, not_has_attr=attrs_to_check)
         else:
-            assert isinstance(fixture_data, m.Ldif.Entry)
+            assert isinstance(fixture_data, p.Entry)
             result_list = tm.ok(
                 FlextLdifEntries()
                 .with_entries([fixture_data])
@@ -981,12 +979,14 @@ class TestsFlextLdifEntries(s):
             tm.ok(service.validate_dn_component("2invalid", "value"), eq=False)
 
         elif test_type == "validate_attr_names_batch":
-            validated = service.validate_attribute_names([
-                c.Names.CN,
-                c.Names.MAIL,
-                "2invalid",
-                c.Names.OBJECTCLASS,
-            ]).unwrap()
+            validated = service.validate_attribute_names(
+                [
+                    c.Names.CN,
+                    c.Names.MAIL,
+                    "2invalid",
+                    c.Names.OBJECTCLASS,
+                ]
+            ).unwrap()
             assert validated[c.Names.CN] is True
             assert validated["2invalid"] is False
 
@@ -1076,7 +1076,7 @@ class TestsFlextLdifEntries(s):
 
     def test_clean_dn_with_real_oid_entries(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test DN cleaning with real OID LDIF entries."""
         assert len(oid_entries) > 0, "OID fixture should have entries"
@@ -1090,7 +1090,7 @@ class TestsFlextLdifEntries(s):
 
     def test_remove_operational_attributes_from_real_oid_entry(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test removing operational attributes from real OID LDIF entry."""
         assert len(oid_entries) > 0
@@ -1110,7 +1110,7 @@ class TestsFlextLdifEntries(s):
 
     def test_remove_operational_attributes_batch_real_oid(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test batch operational attribute removal with real OID LDIF entries."""
         assert len(oid_entries) > 0
@@ -1131,7 +1131,7 @@ class TestsFlextLdifEntries(s):
 
     def test_execute_remove_operational_attributes_with_real_data(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test execute() pattern for operational attribute removal with real data."""
         assert len(oid_entries) > 0
@@ -1147,7 +1147,7 @@ class TestsFlextLdifEntries(s):
 
     def test_builder_with_oid_entries(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test fluent builder with real OID LDIF entries."""
         assert len(oid_entries) > 0
@@ -1163,9 +1163,9 @@ class TestsFlextLdifEntries(s):
 
     def test_unified_cleaning_all_servers(
         self,
-        oid_entries: list[m.Ldif.Entry],
-        oud_entries: list[m.Ldif.Entry],
-        openldap2_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
+        oud_entries: list[p.Entry],
+        openldap2_entries: list[p.Entry],
     ) -> None:
         """Test that cleaning works uniformly across all server types."""
         servers_data = [
@@ -1253,9 +1253,9 @@ class TestsFlextLdifEntries(s):
             service = TestsFlextLdifEntries.Factories.create_service()
 
             if test_name == "no_attributes":
-                dn = m.Ldif.DistinguishedName(value=c.DNs.TEST_USER)
-                attrs = m.Ldif.LdifAttributes.create({}).unwrap()
-                entry = m.Ldif.Entry(dn=dn, attributes=attrs)
+                dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+                attrs = m.LdifAttributes.create({}).unwrap()
+                entry = p.Entry(dn=dn, attributes=attrs)
             else:
                 entry = TestsFlextLdifEntries.Factories.create_simple_user_entry()
 

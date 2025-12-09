@@ -220,7 +220,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         try:
             # Normalize server_type to ServerTypeLiteral
             normalized_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
-                c.normalize_server_type(server_type)
+                u.Ldif.Server.normalize_server_type(server_type)
             )
             syntax = m.Ldif.LdifResults.Syntax.resolve_syntax_oid(
                 oid=oid,

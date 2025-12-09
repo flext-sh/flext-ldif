@@ -23,7 +23,7 @@ import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
+from flext_ldif.protocols import p
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -176,12 +176,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, m.Ldif.Entry):
+            if isinstance(unwrapped_entry, p.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
+                facade_entry = p.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)
@@ -263,12 +263,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, m.Ldif.Entry):
+            if isinstance(unwrapped_entry, p.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
+                facade_entry = p.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)

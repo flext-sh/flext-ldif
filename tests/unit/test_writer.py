@@ -13,7 +13,8 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdifWriter
-from tests import m, s
+from flext_ldif.protocols import p
+from tests import s
 
 
 class WriterOutputType(StrEnum):
@@ -35,7 +36,7 @@ def writer() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def simple_entry() -> m.Ldif.Entry:
+def simple_entry() -> p.Entry:
     """Create a simple RFC-compliant entry using factory."""
     return s().create_entry(
         dn="cn=testuser,ou=users,dc=example,dc=com",
@@ -72,7 +73,7 @@ class TestFlextLdifWriterRfc(s):
         output_type: WriterOutputType,
         expected_content: str,
         writer: FlextLdifWriter,
-        simple_entry: m.Ldif.Entry,
+        simple_entry: p.Entry,
     ) -> None:
         """Parametrized test for writer output generation."""
         # FlextLdifWriter.write() returns string when output_path is not provided

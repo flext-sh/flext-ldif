@@ -11,10 +11,8 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from tests import TestDeduplicationHelpers, s
+from tests import TestDeduplicationHelpers, c, m, p, s
 
-from flext_ldif.constants import c as lib_c
-from flext_ldif.models import m
 from flext_ldif.servers.apache import FlextLdifServersApache
 
 
@@ -262,9 +260,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(attr_data, m.Ldif.SchemaAttribute)
+        assert isinstance(attr_data, p.Ldif.SchemaAttribute)
         assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
         assert attr_data.name == "ads-enabled"
         assert attr_data.desc == "Enable flag"
@@ -280,9 +278,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(attr_data, m.Ldif.SchemaAttribute)
+        assert isinstance(attr_data, p.Ldif.SchemaAttribute)
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
         assert attr_data.length == 256
 
@@ -322,9 +320,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
         assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
         assert oc_data.name == "ads-directoryService"
         assert oc_data.kind == "STRUCTURAL"
@@ -346,9 +344,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
         assert oc_data.kind == "AUXILIARY"
 
     def test_schema_objectclass_parse_abstract(self) -> None:
@@ -360,9 +358,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
@@ -381,7 +379,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing attribute to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        attr_data = m.Ldif.SchemaAttribute(
+        attr_data = p.Ldif.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
             name="ads-enabled",
             desc="Enable flag",
@@ -403,7 +401,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing objectClass to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        oc_data = m.Ldif.SchemaObjectClass(
+        oc_data = p.Ldif.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
             name="ads-directoryService",
             kind="STRUCTURAL",
@@ -432,9 +430,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=m.Ldif.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -451,9 +449,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=m.Ldif.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -470,9 +468,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=m.Ldif.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -509,12 +507,12 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=m.Ldif.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_data, m.Ldif.Acl)
-        assert acl_data.get_acl_format() == lib_c.Ldif.AclFormats.ACI
+        assert isinstance(acl_data, m.Acl)
+        assert acl_data.get_acl_format() == c.AclFormats.ACI
         assert acl_data.raw_acl == acl_line
-        assert acl_data.server_type == lib_c.Ldif.LdapServers.APACHE_DIRECTORY
+        assert acl_data.server_type == c.LdapServers.APACHE_DIRECTORY
 
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""
@@ -525,15 +523,15 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=m.Ldif.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_data, m.Ldif.Acl)
+        assert isinstance(acl_data, m.Acl)
 
     def test_acl_write_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Acl(
+        acl_model = m.Acl(
             name="ads-aci",
             target=m.AclTarget(target_dn="", attributes=[]),
             subject=m.AclSubject(subject_type="all", subject_value=""),
@@ -552,7 +550,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing ACL with clauses only to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Acl(
+        acl_model = m.Acl(
             name="aci",
             target=m.AclTarget(target_dn="", attributes=[]),
             subject=m.AclSubject(subject_type="all", subject_value=""),
@@ -571,7 +569,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing empty ACL to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Acl(
+        acl_model = m.Acl(
             name="ads-aci",
             target=m.AclTarget(target_dn="", attributes=[]),
             subject=m.AclSubject(subject_type="all", subject_value=""),

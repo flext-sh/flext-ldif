@@ -13,16 +13,15 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
+from flext_ldif.protocols import p
 from tests import c, m, s
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 class TestsFlextLdifWriterLineFoldingDebug(s):
     """Debug line folding behavior in Writer."""
 
     writer: ClassVar[FlextLdifWriter]  # pytest fixture
-    long_value_entry: ClassVar[m.Ldif.Entry]  # pytest fixture
+    long_value_entry: ClassVar[p.Entry]  # pytest fixture
 
     @pytest.fixture
     def writer(self) -> FlextLdifWriter:
@@ -30,12 +29,12 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         return FlextLdifWriter()
 
     @pytest.fixture
-    def long_value_entry(self) -> m.Ldif.Entry:
+    def long_value_entry(self) -> p.Entry:
         """Create entry with long attribute value that needs folding."""
         long_value = "A" * 100  # 100 character value
-        return m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value=c.DNs.TEST_USER),
-            attributes=m.Ldif.LdifAttributes(
+        return p.Entry(
+            dn=m.DistinguishedName(value=c.DNs.TEST_USER),
+            attributes=m.LdifAttributes(
                 attributes={
                     "cn": ["test"],
                     "description": [long_value],  # Very long
@@ -47,14 +46,14 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_enabled_explicit(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Ldif.Entry,
+        long_value_entry: p.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=True explicitly."""
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,  # RFC 2849 recommendation
             ),
@@ -81,14 +80,14 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_disabled_explicit(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Ldif.Entry,
+        long_value_entry: p.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=False explicitly."""
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 fold_long_lines=False,
                 line_width=76,
             ),
@@ -107,14 +106,14 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_override(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Ldif.Entry,
+        long_value_entry: p.Entry,
     ) -> None:
         """Test fold_long_lines=False to disable line folding."""
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 fold_long_lines=False,  # Disable line folding
                 line_width=76,
             ),
@@ -133,14 +132,14 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_check_actual_line_lengths(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Ldif.Entry,
+        long_value_entry: p.Entry,
     ) -> None:
         """Check actual line lengths when folding should occur."""
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,
             ),

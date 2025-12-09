@@ -18,14 +18,14 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from pydantic import ConfigDict, Field
 
-from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif._models.shared import FlextLdifModelsBase
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-# REMOVED: Aliases for nested objects - use p.Ldif.* directly (no redundant aliases for nested objects)
-# _Entry = p.Ldif.Models.EntryProtocol  # Use p.Ldif.Models.EntryProtocol directly
-# _SchemaObjectClass = p.Ldif.Models.SchemaObjectClassProtocol  # Use p.Ldif.Models.SchemaObjectClassProtocol directly
-# _Acl = p.Ldif.Models.AclProtocol  # Use p.Ldif.Models.AclProtocol directly
+# REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
+# _Entry = p.Ldif.EntryProtocol  # Use p.Ldif.EntryProtocol directly
+# _SchemaObjectClass = p.Ldif.SchemaObjectClassProtocol  # Use p.Ldif.SchemaObjectClassProtocol directly
+# _Acl = p.Ldif.AclProtocol  # Use p.Ldif.AclProtocol directly
 _QuirkMetadata = (
     core_t.Metadata
 )  # Use Metadata type from flext-core (this is from flext-core, not nested)
@@ -788,7 +788,7 @@ class FlextLdifModelsConfig:
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, Any] with type-safe Pydantic model.
+        Replaces dict[str, object] with type-safe Pydantic model.
         """
 
         user_dn_patterns: list[str] = Field(
@@ -946,7 +946,7 @@ class FlextLdifModelsConfig:
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, Any] with type-safe Pydantic model.
+        Replaces dict[str, object] with type-safe Pydantic model.
         """
 
         blocked_objectclasses: list[str] = Field(
@@ -1024,7 +1024,7 @@ class FlextLdifModelsConfig:
         track_modifications: bool
         track_conversions: bool
 
-    class WriteFormatOptions(FlextLdifModelsBase):
+    class WriteFormatOptions(FlextModelsBase.ArbitraryTypesModel):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -1297,7 +1297,7 @@ class FlextLdifModelsConfig:
             ),
         )
 
-    class WriteOutputOptions(FlextLdifModelsBase):
+    class WriteOutputOptions(FlextModelsBase.ArbitraryTypesModel):
         """Output visibility options for attributes based on their marker status.
 
         This class controls how attributes are rendered in LDIF output based on
@@ -1721,13 +1721,17 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform attrs before parsing",
         )
         post_parse_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+            Callable[
+                [p.Ldif.EntryProtocol],
+                p.Ldif.EntryProtocol,
+            ]
+            | None
         ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol, str, str], None] | None
+            Callable[[p.Ldif.EntryProtocol, str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1779,13 +1783,17 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform attrs before parsing",
         )
         post_parse_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+            Callable[
+                [p.Ldif.EntryProtocol],
+                p.Ldif.EntryProtocol,
+            ]
+            | None
         ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol, str, str], None] | None
+            Callable[[p.Ldif.EntryProtocol, str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1829,7 +1837,7 @@ class FlextLdifModelsConfig:
             description="Optional SUP transformation",
         )
         enrich_metadata_hook: (
-            Callable[[p.Ldif.Models.SchemaObjectClassProtocol], None] | None
+            Callable[[p.Ldif.SchemaObjectClassProtocol], None] | None
         ) = Field(
             default=None,
             description="Optional metadata enrichment",
@@ -1902,7 +1910,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entry: p.Ldif.Models.EntryProtocol = Field(
+        entry: p.Ldif.EntryProtocol = Field(
             ...,
             description="Entry model to write",
         )
@@ -1910,20 +1918,24 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[
-            [p.Ldif.Models.EntryProtocol, list[str]], None
-        ] = Field(
-            ...,
-            description="Core attributes writing",
+        write_attributes_hook: Callable[[p.Ldif.EntryProtocol, list[str]], None] = (
+            Field(
+                ...,
+                description="Core attributes writing",
+            )
         )
         write_comments_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol, list[str]], None] | None
+            Callable[[p.Ldif.EntryProtocol, list[str]], None] | None
         ) = Field(
             default=None,
             description="Optional comments writing",
         )
         transform_entry_hook: (
-            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+            Callable[
+                [p.Ldif.EntryProtocol],
+                p.Ldif.EntryProtocol,
+            ]
+            | None
         ) = Field(
             default=None,
             description="Optional entry transformation",
@@ -1950,7 +1962,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entries: list[p.Ldif.Models.EntryProtocol] = Field(
+        entries: list[p.Ldif.EntryProtocol] = Field(
             ...,
             description="List of entries to write",
         )
@@ -1958,7 +1970,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[p.Ldif.Models.EntryProtocol], r[str]] = Field(
+        write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -1993,11 +2005,11 @@ class FlextLdifModelsConfig:
             description="List of entries to sort",
         )
         target: str = Field(
-            default=c.Ldif.SortTarget.ENTRIES.value,
+            default="entries",
             description="Sort target (entries, attributes, acl)",
         )
-        by: str | c.Ldif.SortStrategy = Field(
-            default=c.Ldif.SortStrategy.HIERARCHY,
+        by: str = Field(
+            default="hierarchy",
             description="Sort strategy",
         )
         traversal: str = Field(
@@ -2073,11 +2085,11 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        original_acl: p.Ldif.Models.AclProtocol = Field(
+        original_acl: p.Ldif.AclProtocol = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: p.Ldif.Models.AclProtocol = Field(
+        converted_acl: p.Ldif.AclProtocol = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2100,6 +2112,6 @@ class FlextLdifModelsConfig:
 
 
 # Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
-# Nested objects use full namespace (p.Ldif.Models.EntryProtocol, not aliases)
+# Nested objects use full namespace (p.Ldif.EntryProtocol, not aliases)
 # No string-quoted forward references - models work without rebuilding
 # No model_rebuild() calls needed - architectural requirement

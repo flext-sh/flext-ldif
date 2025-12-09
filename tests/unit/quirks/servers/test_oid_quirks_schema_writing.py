@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from tests import m, s
+from tests import p, s
 from tests.conftest import FlextLdifFixtures
 from tests.helpers.compat import TestDeduplicationHelpers
 
@@ -241,10 +241,10 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             definition,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(parsed_attr_result, m.Ldif.SchemaAttribute)
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        assert isinstance(parsed_attr_result, p.Ldif.SchemaAttribute)
+        parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -275,9 +275,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -345,10 +345,10 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(parsed_oc_result, m.Ldif.SchemaObjectClass)
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        assert isinstance(parsed_oc_result, p.Ldif.SchemaObjectClass)
+        parsed_oc = cast("p.Ldif.SchemaObjectClass", parsed_oc_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -378,9 +378,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        parsed_oc = cast("p.Ldif.SchemaObjectClass", parsed_oc_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -409,9 +409,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -473,9 +473,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -534,9 +534,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -566,9 +566,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             original,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed1 = cast("m.Ldif.SchemaAttribute", parsed1_result)
+        parsed1 = cast("p.Ldif.SchemaAttribute", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -582,9 +582,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             written,
             parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
+            expected_type=p.Ldif.SchemaAttribute,
         )
-        parsed2 = cast("m.Ldif.SchemaAttribute", parsed2_result)
+        parsed2 = cast("p.Ldif.SchemaAttribute", parsed2_result)
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -604,9 +604,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             original,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        parsed1 = cast("m.Ldif.SchemaObjectClass", parsed1_result)
+        parsed1 = cast("p.Ldif.SchemaObjectClass", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -620,9 +620,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             written,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        parsed2 = cast("m.Ldif.SchemaObjectClass", parsed2_result)
+        parsed2 = cast("p.Ldif.SchemaObjectClass", parsed2_result)
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -653,9 +653,9 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             oid_schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
+            expected_type=p.Ldif.SchemaObjectClass,
         )
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        parsed_oc = cast("p.Ldif.SchemaObjectClass", parsed_oc_result)
 
         assert parsed_oc.kind == kind
 

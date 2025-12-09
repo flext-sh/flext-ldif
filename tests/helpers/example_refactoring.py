@@ -141,7 +141,7 @@ def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> Non
 # ❌ ANTES:
 """
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = m.Ldif.Entry.create(
+    entry = p.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
     ).unwrap()
@@ -156,7 +156,7 @@ def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
 from .test_operations import TestOperations
 
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = m.Ldif.Entry.create(
+    entry = p.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
     ).unwrap()

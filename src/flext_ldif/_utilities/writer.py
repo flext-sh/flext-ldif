@@ -9,7 +9,6 @@ from __future__ import annotations
 import base64
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -20,14 +19,15 @@ from flext_core import (
 )
 from jinja2 import Environment
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
 # REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
-# REMOVED: Type aliases para objetos nested - use m.Ldif.* ou FlextLdifModelsDomains.* diretamente
-# SchemaAttribute: TypeAlias = m.Ldif.SchemaAttribute  # Use m.Ldif.SchemaAttribute or m.Ldif.SchemaAttribute directly
-# SchemaObjectClass: TypeAlias = m.Ldif.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or m.Ldif.SchemaObjectClass directly
+# REMOVED: Type aliases para objetos nested - use m.* ou FlextLdifModelsDomains.* diretamente
+# SchemaAttribute: TypeAlias = p.Ldif.SchemaAttributeProtocol  # Use p.Ldif.SchemaAttributeProtocol or p.Ldif.SchemaAttributeProtocol directly
+# SchemaObjectClass: TypeAlias = p.Ldif.SchemaObjectClassProtocol  # Use p.Ldif.SchemaObjectClassProtocol or p.Ldif.SchemaObjectClassProtocol directly
 # QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata  # Use m.Ldif.QuirkMetadata or FlextLdifModelsDomains.QuirkMetadata directly
 
 # Aliases for simplified usage - after all imports
@@ -212,7 +212,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def render_template(
         template_str: str,
-        context: t.Ldif.MetadataDictMutable,
+        context: dict[str, object],
     ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
@@ -247,7 +247,7 @@ class FlextLdifUtilitiesWriter:
         content: str,
         file_path: Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[t.Ldif.MetadataDictMutable]:
+    ) -> FlextResult[dict[str, str | int]]:
         """Write content to file (pure I/O operation).
 
         Args:
@@ -269,24 +269,24 @@ class FlextLdifUtilitiesWriter:
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding=encoding)
-            stats: t.Ldif.MetadataDictMutable = {
+            stats: dict[str, str | int] = {
                 "bytes_written": len(content.encode(encoding)),
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[t.Ldif.MetadataDictMutable].ok(stats)
+            return FlextResult[dict[str, str | int]].ok(stats)
         except Exception as e:
             logger.exception(
                 "File write failed",
                 file_path=str(file_path),
             )
-            return FlextResult[t.Ldif.MetadataDictMutable].fail(
+            return FlextResult[dict[str, str | int]].fail(
                 f"File write failed: {e}",
             )
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
@@ -299,7 +299,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add syntax and length to attribute parts list.
@@ -318,7 +318,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add flags to attribute parts list."""
@@ -333,7 +333,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_attribute_parts(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str]:
         """Build RFC attribute definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -372,7 +372,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_attribute(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute data to RFC 4512 format."""
         try:
@@ -400,10 +400,7 @@ class FlextLdifUtilitiesWriter:
         if not attr_list:
             return
 
-        if isinstance(attr_list, (list, tuple)):
-            if not isinstance(attr_list, list):
-                msg = f"Expected list, got {type(attr_list)}"
-                raise TypeError(msg)
+        if isinstance(attr_list, list):
             attr_list_str: list[str] = [str(item) for item in attr_list]
             if len(attr_list_str) == 1:
                 parts.append(f"{keyword} {attr_list_str[0]}")
@@ -411,11 +408,12 @@ class FlextLdifUtilitiesWriter:
                 attrs_str = " $ ".join(attr_list_str)
                 parts.append(f"{keyword} ( {attrs_str} )")
         else:
+            # attr_list is str
             parts.append(f"{keyword} {attr_list}")
 
     @staticmethod
     def _build_objectclass_parts(
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -433,16 +431,13 @@ class FlextLdifUtilitiesWriter:
 
         if oc_data.sup:
             # Handle SUP as string or list
-            if isinstance(oc_data.sup, (list, tuple)):
+            if isinstance(oc_data.sup, list):
                 # Multiple SUP values: format as ( value1 $ value2 $ ... )
-                if not isinstance(oc_data.sup, list):
-                    msg = f"Expected list, got {type(oc_data.sup)}"
-                    raise TypeError(msg)
                 sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 sup_str = " $ ".join(sup_list_str)
                 parts.append(f"SUP ( {sup_str} )")
             else:
-                # Single SUP value
+                # Single SUP value (str)
                 parts.append(f"SUP {oc_data.sup}")
 
         # Use full path to avoid type resolution issues
@@ -467,7 +462,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_objectclass(
-        objectclass: m.Ldif.SchemaObjectClass,
+        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
@@ -562,11 +557,11 @@ class FlextLdifUtilitiesWriter:
                 else:
                     attr_order = None
 
-        if attr_order is None or not FlextRuntime.is_list_like(attr_order):
+        if attr_order is None:
             return None
 
-        # Type narrowing: ensure attr_order is iterable (list, tuple, or sequence)
-        if not isinstance(attr_order, (list, tuple)):
+        # Type narrowing: ensure attr_order is list for iteration
+        if not isinstance(attr_order, list):
             return None
 
         # Build ordered list from attr_order
@@ -579,11 +574,11 @@ class FlextLdifUtilitiesWriter:
 
         # Type narrowing: ensure tuple elements are (str, GeneralValueType) for return type
         result: list[tuple[str, FlextTypes.GeneralValueType]] = []
-        for key in attr_order:
+        attr_order_list: list[object] = attr_order
+        for key in attr_order_list:
+            if not isinstance(key, str):
+                continue  # Skip non-string keys
             if key in entry_data and key not in skip_keys:
-                if not isinstance(key, str):
-                    msg = f"Expected str key, got {type(key)}"
-                    raise TypeError(msg)
                 result.append((key, entry_data[key]))
         return result
 
@@ -604,14 +599,10 @@ class FlextLdifUtilitiesWriter:
             return set()
 
         base64_data = entry_data["_base64_attrs"]
-        if isinstance(base64_data, set):
-            return base64_data  # Type narrowing: set is already set[str] if it contains strings
-        if FlextRuntime.is_list_like(base64_data):
-            if not isinstance(base64_data, list):
-                msg = f"Expected list, got {type(base64_data)}"
-                raise TypeError(msg)
-            base64_list_str: list[str] = [str(item) for item in base64_data]
-            return set(base64_list_str)
+        # GeneralValueType only includes Sequence, not set
+        # Convert list/tuple to set[str]
+        if isinstance(base64_data, (list, tuple)):
+            return {str(item) for item in base64_data}
 
         return set()
 
@@ -999,12 +990,25 @@ class FlextLdifUtilitiesWriter:
             "hidden",
             "renamed",
         }
+        status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral
         if isinstance(status_raw, str) and status_raw in valid_statuses:
             # Use namespace completo para objetos nested (sem alias redundante)
-            status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral = cast(
-                "c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral",
-                status_raw,
-            )
+            # Type narrowing: status_raw is in valid_statuses, so it's the literal type
+            # Explicit assignment with known literal value
+            if status_raw == "normal":
+                status = "normal"
+            elif status_raw == "marked_for_removal":
+                status = "marked_for_removal"
+            elif status_raw == "filtered":
+                status = "filtered"
+            elif status_raw == "operational":
+                status = "operational"
+            elif status_raw == "hidden":
+                status = "hidden"
+            elif status_raw == "renamed":
+                status = "renamed"
+            else:
+                status = "normal"
         else:
             # Business Rule: Use literal "normal" to satisfy AttributeMarkerStatusLiteral
             status = "normal"
@@ -1244,7 +1248,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_modify_attributes(
-        attributes: t.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.AttributesDict,
         hidden: set[str],
         modify_operation: str,
         *,
@@ -1288,7 +1292,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_add_attributes(
-        attributes: t.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.AttributesDict,
         hidden: set[str],
         *,
         fold_long_lines: bool,
@@ -1357,7 +1361,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def build_entry_lines(
         dn_value: str,
-        attributes: t.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.AttributesDict,
         *,
         format_config: dict[str, object] | None = None,
         **kwargs: object,
