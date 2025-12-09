@@ -20,7 +20,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -222,7 +222,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

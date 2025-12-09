@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextRuntime, FlextUtilities as u
+from flext_core import FlextResult, FlextUtilities as u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -194,7 +194,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""

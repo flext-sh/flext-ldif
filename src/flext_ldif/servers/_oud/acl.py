@@ -431,7 +431,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _parse_aci_format(
         self, acl_line: str
-    ) -> FlextResult[m.Ldif.Acl]:
+    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific config.
 
         RFC vs OUD Behavior Differences
@@ -555,9 +555,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
         # Use dict[str, Any] for model_copy update to avoid type checker strictness
         update_dict: dict[str, Any] = {"metadata": new_metadata}
-        acl = acl.model_copy(update=update_dict)
+        acl_updated = acl.model_copy(update=update_dict)
+        # Type narrowing: m.Ldif.Acl inherits from FlextLdifModelsDomains.Acl
+        # model_copy preserves the type, so acl_updated is still compatible
+        acl_result: FlextLdifModelsDomains.Acl = acl_updated
 
-        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
+        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_result)
 
     def _parse_ds_privilege_name(
         self,
@@ -631,7 +634,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         **MetadataKeys** (stored in ``metadata.extensions``):
 
-        - Uses OUD-specific Constants keys (not generic c.MetadataKeys)
+        - Uses OUD-specific Constants keys (not generic c.Ldif.MetadataKeys)
 
         **Model Factory**:
 

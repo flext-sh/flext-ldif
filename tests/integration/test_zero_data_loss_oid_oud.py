@@ -263,7 +263,7 @@ class TestZeroDataLossOidOud:
         write_oid = api.write(
             oud_entries,
             server_type="oid",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )
@@ -442,7 +442,7 @@ class TestZeroDataLossOidOud:
         write_result = api.write(
             entries,
             server_type="oid",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )

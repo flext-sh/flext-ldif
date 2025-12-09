@@ -94,7 +94,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
         )
         return attr_result.unwrap() if attr_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         cast("list[dict[str, str | int | float | bool | list[str]]]", attribute_types),
         create_attr_entry,
         on_error="skip",
@@ -154,7 +154,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
         return oc_result.unwrap() if oc_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         cast("list[dict[str, str | list[str] | object]]", object_classes),
         create_oc_entry,
         on_error="skip",
@@ -344,7 +344,7 @@ mail: modern@example.com
         i, entry = item
         (source_dir / f"legacy_{i}.ldif").write_text(entry)
 
-    _ = u.process(
+    _ = u.Ldif.process(
         list(enumerate(legacy_entries)),
         write_legacy_file,
         on_error="skip",
@@ -358,7 +358,7 @@ mail: modern@example.com
         parse_result = api.parse(ldif_file)
         return parse_result.unwrap() if parse_result.is_success else []
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         list(source_dir.glob("*.ldif")),
         parse_file,
         on_error="skip",
@@ -416,7 +416,7 @@ mail: modern@example.com
         )
         return migrate_result.unwrap() if migrate_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         all_entries,
         migrate_entry,
         on_error="skip",
@@ -481,7 +481,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
         )
         return attr_result.unwrap() if attr_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         core_attribute_definitions,
         create_core_attr,
         on_error="skip",
@@ -536,7 +536,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
         oc_result = api.create_entry(dn=f"cn={name},cn=schema", attributes=attrs)
         return oc_result.unwrap() if oc_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         oc_definitions,
         create_oc_def,
         on_error="skip",
@@ -637,7 +637,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
 
         return entry_result.unwrap() if entry_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         list(range(10)),
         create_test_entry,
         on_error="skip",

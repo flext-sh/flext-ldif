@@ -25,11 +25,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+import warnings
 from collections.abc import Callable, Sequence
 from enum import StrEnum
 from typing import Literal, TypeVar
 
-from flext_core import FlextModels, FlextResult, FlextTypes, u as u_core
+from flext_core import FlextModels, FlextResult, FlextTypes
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from pydantic import Field
@@ -69,9 +70,10 @@ class FlextLdifModels(FlextModels):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextLdifModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
-        u_core.Deprecation.warn_once(
-            f"subclass:{cls.__name__}",
+        warnings.warn(
             "Subclassing FlextLdifModels is deprecated. Use FlextModels.Ldif instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     class Ldif:
@@ -489,6 +491,19 @@ class FlextLdifModels(FlextModels):
                 )
 
             """
+
+        # Server validation rule models - exposed for test access
+        class ServerValidationRules(FlextLdifModelsConfig.ServerValidationRules):
+            """Server-specific validation rules."""
+
+        class EncodingRules(FlextLdifModelsConfig.EncodingRules):
+            """Encoding rules for LDIF processing."""
+
+        class DnCaseRules(FlextLdifModelsConfig.DnCaseRules):
+            """DN case handling rules."""
+
+        class AclFormatRules(FlextLdifModelsConfig.AclFormatRules):
+            """ACL format rules."""
 
         class FormatDetails(FlextLdifModelsDomains.FormatDetails):
             r"""Original formatting details for round-trip preservation.

@@ -607,7 +607,7 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: dict[str, object] | None = None,
+        extensions: dict[str, FlextTypes.MetadataAttributeValue] | None = None,
     ) -> FlextLdifModelsDomains.QuirkMetadata:
         """Create ACL quirk metadata.
 
@@ -622,7 +622,7 @@ class FlextLdifServersBaseSchemaAcl(
             QuirkMetadata with quirk_type and extensions.
 
         """
-        all_extensions: dict[str, object] = {
+        all_extensions: dict[str, FlextTypes.MetadataAttributeValue] = {
             "original_format": original_format,
         }
         if extensions:

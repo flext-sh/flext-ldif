@@ -321,7 +321,7 @@ def schema_driven_workflow() -> None:
 
         return person_result.unwrap() if person_result.is_success else None
 
-    batch_result = u.process(
+    batch_result = u.Ldif.process(
         list(range(5)),
         create_user_entry,
         on_error="skip",
@@ -368,8 +368,8 @@ sn: Test
             # Cast to expected type since models are compatible at runtime
             acls_list = acl_response.acls if hasattr(acl_response, "acls") else []
             # Type cast needed because domain and public Acl models are structurally compatible
-            # Use m.Acl for type hint
-            public_acls = cast("list[m.Acl]", acls_list)
+            # Use m.Ldif.Acl for type hint
+            public_acls = cast("list[m.Ldif.Acl]", acls_list)
 
             if public_acls:
                 # Evaluate ACL rules using direct API method
@@ -379,7 +379,7 @@ sn: Test
                     return eval_result.unwrap()
         return None
 
-    _ = u.process(
+    _ = u.Ldif.process(
         entries,
         process_entry_acl,
         on_error="skip",
@@ -518,7 +518,7 @@ cn: test
                 ):
                     entry.attributes.add_attribute("sn", "recovered")
 
-        _ = u.process(
+        _ = u.Ldif.process(
             entries,
             fix_entry,
             on_error="skip",

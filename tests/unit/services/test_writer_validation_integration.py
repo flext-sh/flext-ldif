@@ -161,7 +161,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 include_version_header=True,
                 fold_long_lines=False,
             ),
@@ -185,7 +185,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 base64_encode_binary=True,
                 fold_long_lines=False,
             ),
@@ -224,7 +224,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=entries,
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.Ldif.WriteFormatOptions(fold_long_lines=False),
         )
 
         unwrapped = self.assert_success(result, "Write should succeed")

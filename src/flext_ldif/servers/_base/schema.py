@@ -654,7 +654,7 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Validate OID and track result in metadata extensions.
 
-        Uses c.MetadataKeys for standardized metadata keys.
+        Uses c.Ldif.MetadataKeys for standardized metadata keys.
 
         Args:
             metadata_extensions: Metadata extensions dict to update

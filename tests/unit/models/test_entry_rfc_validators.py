@@ -223,11 +223,11 @@ class TestsFlextLdifEntryRfcValidators(s):
         )
         # Convert str to DistinguishedName and dict to LdifAttributes using constructors
         # DistinguishedName and LdifAttributes accept str/dict directly via Pydantic validators
-        dn_model: m.DistinguishedName | None = None
+        dn_model: m.Ldif.DistinguishedName | None = None
         if dn is not None:
-            dn_model = m.DistinguishedName(value=dn)
+            dn_model = m.Ldif.DistinguishedName(value=dn)
 
-        attrs_model: m.LdifAttributes | None = None
+        attrs_model: m.Ldif.LdifAttributes | None = None
         if attributes is not None:
             # Normalize attributes: convert str values to list[str]
             normalized_attrs: dict[str, list[str]] = {}
@@ -238,7 +238,7 @@ class TestsFlextLdifEntryRfcValidators(s):
                     normalized_attrs[key] = value
                 else:
                     normalized_attrs[key] = [str(value)]
-            attrs_model = m.LdifAttributes(attributes=normalized_attrs)
+            attrs_model = m.Ldif.LdifAttributes(attributes=normalized_attrs)
 
         # For None cases, directly instantiate Entry with Pydantic __init__
         # which triggers both field validators and model_validator

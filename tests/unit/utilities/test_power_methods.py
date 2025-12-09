@@ -57,11 +57,11 @@ def sample_entry() -> m.Ldif.Entry:
     # Note: Use DNs without spaces in values (spaces need escaping per RFC 4514)
     return m.Ldif.Entry(
         dn=cast(
-            "m.DistinguishedName | None",
+            "m.Ldif.DistinguishedName | None",
             "CN=TestUser,OU=Users,DC=Example,DC=Com",
         ),
         attributes=cast(
-            "m.LdifAttributes | None",
+            "m.Ldif.LdifAttributes | None",
             {
                 "objectClass": ["top", "person", "inetOrgPerson"],
                 "cn": ["TestUser"],
@@ -82,11 +82,11 @@ def sample_entries() -> list[m.Ldif.Entry]:
     return [
         m.Ldif.Entry(
             dn=cast(
-                "m.DistinguishedName | None",
+                "m.Ldif.DistinguishedName | None",
                 "cn=user1,ou=users,dc=example,dc=com",
             ),
             attributes=cast(
-                "m.LdifAttributes | None",
+                "m.Ldif.LdifAttributes | None",
                 {
                     "objectClass": ["person", "inetOrgPerson"],
                     "cn": ["user1"],
@@ -96,11 +96,11 @@ def sample_entries() -> list[m.Ldif.Entry]:
         ),
         m.Ldif.Entry(
             dn=cast(
-                "m.DistinguishedName | None",
+                "m.Ldif.DistinguishedName | None",
                 "cn=user2,ou=users,dc=example,dc=com",
             ),
             attributes=cast(
-                "m.LdifAttributes | None",
+                "m.Ldif.LdifAttributes | None",
                 {
                     "objectClass": ["person", "organizationalPerson"],
                     "cn": ["user2"],
@@ -110,11 +110,11 @@ def sample_entries() -> list[m.Ldif.Entry]:
         ),
         m.Ldif.Entry(
             dn=cast(
-                "m.DistinguishedName | None",
+                "m.Ldif.DistinguishedName | None",
                 "cn=schema,cn=configuration,dc=example,dc=com",
             ),
             attributes=cast(
-                "m.LdifAttributes | None",
+                "m.Ldif.LdifAttributes | None",
                 {
                     "objectClass": ["subSchema"],
                     "attributeTypes": ["( 1.2.3.4 NAME 'testAttr' )"],

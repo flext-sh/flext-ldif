@@ -115,7 +115,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

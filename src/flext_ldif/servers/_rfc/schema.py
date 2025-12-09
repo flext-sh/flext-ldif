@@ -28,7 +28,6 @@ from typing import Self, cast, overload
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextRuntime,
     FlextTypes,
 )
 

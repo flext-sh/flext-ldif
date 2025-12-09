@@ -364,7 +364,16 @@ class FlextLdifUtilitiesDetection:
             prefixes = getattr(constants, "DETECTION_ATTRIBUTE_PREFIXES", None)
             if not prefixes:
                 return True  # No prefixes = match all
-            return self.can_handle_prefix(attr_definition, prefixes)
+            # Type narrowing: SchemaAttribute structurally implements SchemaAttributeProtocol
+            # Extract name for prefix matching
+            if isinstance(attr_definition, str):
+                attr_name = attr_definition
+            else:
+                # SchemaAttribute has .name attribute matching protocol
+                attr_name = attr_definition.name
+            # Check prefix match directly
+            attr_name_lower = attr_name.lower()
+            return any(attr_name_lower.startswith(prefix.lower()) for prefix in prefixes)
 
     class ObjectClassDetectionMixin(PatternDetectionMixin):
         """Mixin for objectClass name-based detection in Entry.

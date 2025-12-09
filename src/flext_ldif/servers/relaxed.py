@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from typing import Any, ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -97,7 +97,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from c directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -1025,7 +1025,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
                 # Convert attributes dict to LdifAttributes if needed
-                if isinstance(entry_attrs, m.LdifAttributes):
+                if isinstance(entry_attrs, m.Ldif.LdifAttributes):
                     ldif_attrs = entry_attrs
                 else:
                     # Create LdifAttributes from dict - convert values to lists if needed

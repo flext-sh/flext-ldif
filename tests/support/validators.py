@@ -72,7 +72,7 @@ class TestValidators:
         dn_value = entry.dn.value if entry.dn is not None else ""
         # entry.attributes is LdifAttributes, need to access .attributes dict
         if entry.attributes is not None:
-            if isinstance(entry.attributes, m.LdifAttributes):
+            if isinstance(entry.attributes, m.Ldif.LdifAttributes):
                 attributes_dict: dict[str, list[str]] = entry.attributes.attributes
             else:
                 attributes_dict = {}

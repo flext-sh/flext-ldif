@@ -25,7 +25,7 @@ import base64
 import re
 from typing import Any, ClassVar, cast
 
-from flext_core import FlextResult, FlextRuntime, FlextUtilities as u_core
+from flext_core import FlextResult, FlextUtilities as u_core
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -114,7 +114,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             ],
         )
 
-        # Novell ACL parsing indices (migrated from c.Acl)
+        # Novell ACL parsing indices (migrated from c.Ldif.Acl)
         # Format: scope#trustee#rights
         # Example: "[Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         # Index 0 = scope, Index 1 = trustee, Index 2 = rights
@@ -178,7 +178,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
         # Note: Novell-specific permissions (object_rights, attr_rights) should be
         # added to c.AclPermission if needed across the codebase
 

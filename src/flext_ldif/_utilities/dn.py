@@ -91,7 +91,7 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - m.DistinguishedName (DN model)
+    - m.Ldif.DistinguishedName (DN model)
     - str (DN string value)
 
     """

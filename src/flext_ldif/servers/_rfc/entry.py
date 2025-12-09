@@ -118,7 +118,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             if line.startswith(" ") and attrs:
                 last_key = list(attrs.keys())[-1]
                 if attrs[last_key]:
-                    attrs[last_key][-1] = attrs[last_key][-1] + line[1:]
+                    attrs[last_key][-1] += line[1:]
                 continue
 
             if ":" not in line:

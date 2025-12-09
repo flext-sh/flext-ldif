@@ -401,8 +401,8 @@ class TestsTestFlextLdifConversionService(s):
     ) -> None:
         """Test converting Entry with invalid DN."""
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="invalid-dn-format"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="invalid-dn-format"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
         )
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
@@ -489,8 +489,8 @@ class TestsTestFlextLdifConversionService(s):
                 {"cn": ["valid"], "objectClass": ["person"]},
             ),
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="invalid-dn"),
-                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+                dn=m.Ldif.DistinguishedName(value="invalid-dn"),
+                attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             ),
         ]
         # Cast list[Entry] to Sequence[ConvertibleModel] for type checker

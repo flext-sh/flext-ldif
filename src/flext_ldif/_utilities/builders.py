@@ -30,9 +30,7 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Self, cast
-
-from pydantic import BaseModel
+from typing import Literal, Self
 
 from flext_ldif.models import m
 
@@ -129,18 +127,15 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        config = m.Ldif.Config.DnNormalizationConfig()
-        config_base = cast("BaseModel", config)
-        self._dn_config = cast(
-            "m.Ldif.Config.DnNormalizationConfig",
-            config_base.model_copy(
-                update={
-                    "case_fold": case,
-                    "space_handling": spaces,
-                    "escape_handling": escapes,
-                },
-            ),
-        )
+        # Pydantic 2: Create config and update attributes directly
+        # FlextModels.Config doesn't have model_copy, so we update attributes
+        self._dn_config = m.Ldif.Config.DnNormalizationConfig()
+        if case is not None:
+            self._dn_config.case_fold = str(case)  # Convert StrEnum to str for Literal compatibility
+        if spaces is not None:
+            self._dn_config.space_handling = str(spaces)  # Convert StrEnum to str for Literal compatibility
+        if escapes is not None:
+            self._dn_config.escape_handling = str(escapes)  # Convert StrEnum to str for Literal compatibility
         return self
 
     def normalize_attrs(
@@ -161,18 +156,12 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        config = m.Ldif.Config.AttrNormalizationConfig()
-        config_base = cast("BaseModel", config)
-        self._attr_config = cast(
-            "m.Ldif.Config.AttrNormalizationConfig",
-            config_base.model_copy(
-                update={
-                    "sort_attributes": sort_attributes,
-                    "sort_values": sort_values,
-                    "normalize_whitespace": normalize_whitespace,
-                },
-            ),
-        )
+        # Pydantic 2: Create config and update attributes directly
+        self._attr_config = m.Ldif.Config.AttrNormalizationConfig()
+        if sort_attributes is not None:
+            self._attr_config.sort_attributes = sort_attributes
+        self._attr_config.sort_values = sort_values
+        self._attr_config.normalize_whitespace = normalize_whitespace
         return self
 
     def acl_conversion(
@@ -193,18 +182,11 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        config = m.Ldif.Config.AclConversionConfig()
-        config_base = cast("BaseModel", config)
-        self._acl_config = cast(
-            "m.Ldif.Config.AclConversionConfig",
-            config_base.model_copy(
-                update={
-                    "convert_aci": convert_aci,
-                    "preserve_original_aci": preserve_original_aci,
-                    "map_server_specific": map_server_specific,
-                },
-            ),
-        )
+        # Pydantic 2: Create config and update attributes directly
+        self._acl_config = m.Ldif.Config.AclConversionConfig()
+        self._acl_config.convert_aci = convert_aci
+        self._acl_config.preserve_original_aci = preserve_original_aci
+        self._acl_config.map_server_specific = map_server_specific
         return self
 
     def validation(
@@ -225,18 +207,11 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        config = m.Ldif.Config.ValidationConfig()
-        config_base = cast("BaseModel", config)
-        self._validation_config = cast(
-            "m.Ldif.Config.ValidationConfig",
-            config_base.model_copy(
-                update={
-                    "strict_rfc": strict_rfc,
-                    "allow_server_quirks": allow_server_quirks,
-                    "validate_dn_format": validate_dn_format,
-                },
-            ),
-        )
+        # Pydantic 2: Create config and update attributes directly
+        self._validation_config = m.Ldif.Config.ValidationConfig()
+        self._validation_config.strict_rfc = strict_rfc
+        self._validation_config.allow_server_quirks = allow_server_quirks
+        self._validation_config.validate_dn_format = validate_dn_format
         return self
 
     def preserve_metadata(
@@ -257,18 +232,11 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        config = m.Ldif.Config.MetadataConfig()
-        config_base = cast("BaseModel", config)
-        self._metadata_config = cast(
-            "m.Ldif.Config.MetadataConfig",
-            config_base.model_copy(
-                update={
-                    "preserve_original": preserve_original,
-                    "preserve_tracking": preserve_tracking,
-                    "preserve_validation": preserve_validation,
-                },
-            ),
-        )
+        # Pydantic 2: Create config and update attributes directly
+        self._metadata_config = m.Ldif.Config.MetadataConfig()
+        self._metadata_config.preserve_original = preserve_original
+        self._metadata_config.preserve_tracking = preserve_tracking
+        self._metadata_config.preserve_validation = preserve_validation
         return self
 
     def enable_dn_normalization(self, *, enabled: bool = True) -> Self:
@@ -317,29 +285,16 @@ class ProcessConfigBuilder:
             Configured ProcessConfig instance
 
         """
+        # Pydantic 2: Create config and update attributes directly
         config = m.Ldif.Config.ProcessConfig()
-        updates: dict[str, object] = {}
-        if self._source_server is not None:
-            updates["source_server"] = self._source_server
-        if self._target_server is not None:
-            updates["target_server"] = self._target_server
-        else:
-            updates["target_server"] = "rfc"
-        if self._dn_config is not None:
-            updates["dn_config"] = self._dn_config
-        if self._attr_config is not None:
-            updates["attr_config"] = self._attr_config
-        if self._acl_config is not None:
-            updates["acl_config"] = self._acl_config
-        if self._validation_config is not None:
-            updates["validation_config"] = self._validation_config
-        if self._metadata_config is not None:
-            updates["metadata_config"] = self._metadata_config
-        config_base = cast("BaseModel", config)
-        return cast(
-            "m.Ldif.Config.ProcessConfig",
-            config_base.model_copy(update=updates),
-        )
+        config.source_server = self._source_server
+        config.target_server = self._target_server or "rfc"
+        config.dn_config = self._dn_config
+        config.attr_config = self._attr_config
+        config.acl_config = self._acl_config
+        config.validation_config = self._validation_config
+        config.metadata_config = self._metadata_config
+        return config
 
 
 # =========================================================================
@@ -415,18 +370,12 @@ class TransformConfigBuilder:
             Configured TransformConfig instance
 
         """
+        # Pydantic 2: Create config and update attributes directly
         config = m.Ldif.Config.TransformConfig()
-        config_base = cast("BaseModel", config)
-        return cast(
-            "m.Ldif.Config.TransformConfig",
-            config_base.model_copy(
-                update={
-                    "fail_fast": self._fail_fast,
-                    "preserve_order": self._preserve_order,
-                    "track_changes": self._track_changes,
-                },
-            ),
-        )
+        config.fail_fast = self._fail_fast
+        config.preserve_order = self._preserve_order
+        config.track_changes = self._track_changes
+        return config
 
 
 # =========================================================================
@@ -496,18 +445,12 @@ class FilterConfigBuilder:
             Configured FilterConfig instance
 
         """
+        # Pydantic 2: Create config and update attributes directly
         config = m.Ldif.Config.FilterConfig()
-        config_base = cast("BaseModel", config)
-        return cast(
-            "m.Ldif.Config.FilterConfig",
-            config_base.model_copy(
-                update={
-                    "mode": self._mode,
-                    "case_sensitive": self._case_sensitive,
-                    "include_metadata_matches": self._include_metadata_matches,
-                },
-            ),
-        )
+        config.mode = self._mode
+        config.case_sensitive = self._case_sensitive
+        config.include_metadata_matches = self._include_metadata_matches
+        return config
 
 
 # =========================================================================
@@ -663,23 +606,17 @@ class WriteConfigBuilder:
             Configured WriteConfig instance
 
         """
+        # Pydantic 2: Create config and update attributes directly
         config = m.Ldif.Config.WriteConfig()
-        config_base = cast("BaseModel", config)
-        return cast(
-            "m.Ldif.Config.WriteConfig",
-            config_base.model_copy(
-                update={
-                    "format": self._format,  # format is alias for output_format
-                    "line_width": self._line_width,
-                    "fold_lines": self._fold_lines,
-                    "base64_attrs": self._base64_attrs,
-                    "sort_by": self._sort_by,
-                    "attr_order": self._attr_order,
-                    "include_metadata": self._include_metadata,
-                    "server": self._server,
-                },
-            ),
-        )
+        config.format = self._format  # format is alias for output_format
+        config.line_width = self._line_width
+        config.fold_lines = self._fold_lines
+        config.base64_attrs = self._base64_attrs
+        config.sort_by = self._sort_by
+        config.attr_order = self._attr_order
+        config.include_metadata = self._include_metadata
+        config.server = self._server
+        return config
 
 
 __all__ = [

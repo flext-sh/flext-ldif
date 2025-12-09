@@ -175,9 +175,9 @@ def sample_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_write_options() -> m.WriteFormatOptions:
+def sample_write_options() -> m.Ldif.WriteFormatOptions:
     """Provides sample WriteFormatOptions for tests."""
-    return m.WriteFormatOptions()
+    return m.Ldif.WriteFormatOptions()
 
 
 class WriteOptionsWithAllowedOids:
@@ -189,7 +189,7 @@ class WriteOptionsWithAllowedOids:
 
     def __init__(self) -> None:
         """Initialize with real WriteFormatOptions and allowed_schema_oids."""
-        self._options = m.WriteFormatOptions()
+        self._options = m.Ldif.WriteFormatOptions()
         self.allowed_schema_oids = frozenset(["1.2.3.4"])
 
     def __getattr__(self, name: str) -> object:
@@ -239,7 +239,7 @@ def sample_entry_with_metadata() -> m.Ldif.Entry:
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
         entry_metadata=m.EntryMetadata(
-            write_options=m.WriteFormatOptions(),
+            write_options=m.Ldif.WriteFormatOptions(),
         ),
     )
     entry_domain = result.unwrap()

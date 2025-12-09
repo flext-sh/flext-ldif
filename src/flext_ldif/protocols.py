@@ -127,8 +127,12 @@ class FlextLdifProtocols(FlextProtocols):
                     ...
 
                 @property
-                def metadata(self) -> t.Metadata | None:
-                    """Optional metadata for processing context."""
+                def metadata(self) -> t.Metadata | object | None:
+                    """Optional metadata for processing context.
+                    
+                    Accepts t.Metadata (Mapping) or domain-specific metadata models
+                    like QuirkMetadata (Pydantic models) that satisfy the protocol structurally.
+                    """
                     ...
 
                 def get_objectclass_names(self) -> Sequence[str]:
