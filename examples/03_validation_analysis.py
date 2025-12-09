@@ -132,13 +132,11 @@ class DRYValidationAnalysis:
         valid_entries = total_entries if valid_result else 0
         invalid_entries = total_entries - valid_entries
 
-        return r[dict[str, int | float]].ok(
-            {
-                "total_entries": total_entries,
-                "valid_entries": valid_entries,
-                "invalid_entries": invalid_entries,
-                "error_rate": float(invalid_entries) / float(total_entries)
-                if total_entries > 0
-                else 0.0,
-            }
-        )
+        return r[dict[str, int | float]].ok({
+            "total_entries": total_entries,
+            "valid_entries": valid_entries,
+            "invalid_entries": invalid_entries,
+            "error_rate": float(invalid_entries) / float(total_entries)
+            if total_entries > 0
+            else 0.0,
+        })

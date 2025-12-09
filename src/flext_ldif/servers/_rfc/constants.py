@@ -42,24 +42,18 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
 
     CANONICAL_NAME: ClassVar[str] = "rfc"
-    ALIASES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "rfc",
-            "generic",
-        ]
-    )
+    ALIASES: ClassVar[frozenset[str]] = frozenset([
+        "rfc",
+        "generic",
+    ])
 
     # Conversion capabilities
-    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(
-        [
-            "rfc",
-        ]
-    )
-    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
-        [
-            "rfc",
-        ]
-    )
+    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
+        "rfc",
+    ])
+    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
+        "rfc",
+    ])
 
     # ACL configuration
     ACL_FORMAT: ClassVar[str] = "rfc_generic"

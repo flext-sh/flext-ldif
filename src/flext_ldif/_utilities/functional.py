@@ -463,9 +463,9 @@ class FlextFunctional:
                 if isinstance(processed, (list, tuple)):
                     # Type narrowing: processed is Sequence[U] after isinstance check
                     # isinstance narrows to list | tuple, both are Sequence[U]
-                    result.extend(
-                        [sub_item for sub_item in processed if predicate(sub_item)]
-                    )
+                    result.extend([
+                        sub_item for sub_item in processed if predicate(sub_item)
+                    ])
                 # Single value (not list/tuple), predicate checks it
                 # Type narrowing: isinstance(processed, (list, tuple)) is False
                 # so processed is U in this branch

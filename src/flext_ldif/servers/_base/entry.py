@@ -476,12 +476,10 @@ class FlextLdifServersBaseEntry(
             lines.append("version: 1")
         if write_options.include_timestamps:
             timestamp = datetime.now(UTC).isoformat()
-            lines.extend(
-                (
-                    f"# Generated on: {timestamp}",
-                    f"# Total entries: {entry_count}",
-                )
-            )
+            lines.extend((
+                f"# Generated on: {timestamp}",
+                f"# Total entries: {entry_count}",
+            ))
         return lines
 
     def _resolve_write_options_for_header(

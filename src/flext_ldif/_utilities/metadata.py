@@ -1542,9 +1542,9 @@ class FlextLdifUtilitiesMetadata:
             "source_server": quirk_type,
         }
         # Add any extra string/int/bool params using dict update
-        result.update(
-            {k: v for k, v in _extra.items() if isinstance(v, str | int | bool)}
-        )
+        result.update({
+            k: v for k, v in _extra.items() if isinstance(v, str | int | bool)
+        })
         return result
 
     @staticmethod

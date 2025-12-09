@@ -261,18 +261,16 @@ OID_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 """
 
-LARGE_ENTRIES_CONTENT = "\n\n".join(
-    [
-        f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
+LARGE_ENTRIES_CONTENT = "\n\n".join([
+    f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 # Another comment
 objectClass: {c.Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
-        for i in range(5)
-    ]
-)
+    for i in range(5)
+])
 
 MULTIPLE_VALUES_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}

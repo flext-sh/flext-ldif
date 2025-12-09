@@ -171,15 +171,13 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
                 f"Migration to RFC failed: {migration_result.error}",
             )
 
-        return r.ok(
-            {
-                "detected_server": detected_server,
-                "confidence": detection.confidence,
-                "patterns_found": detection.patterns_found,
-                "total_entries": len(entries),
-                "migration_success": True,
-            }
-        )
+        return r.ok({
+            "detected_server": detected_server,
+            "confidence": detection.confidence,
+            "patterns_found": detection.patterns_found,
+            "total_entries": len(entries),
+            "migration_success": True,
+        })
 
     @staticmethod
     def batch_server_comparison() -> r[dict[str, object]]:
@@ -247,16 +245,14 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         )
         total_servers = len(servers)
 
-        return r.ok(
-            {
-                "servers_tested": total_servers,
-                "successful_parses": successful_parses,
-                "success_rate": successful_parses / total_servers
-                if total_servers > 0
-                else 0,
-                "server_results": comparison_results,
-            }
-        )
+        return r.ok({
+            "servers_tested": total_servers,
+            "successful_parses": successful_parses,
+            "success_rate": successful_parses / total_servers
+            if total_servers > 0
+            else 0,
+            "server_results": comparison_results,
+        })
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:

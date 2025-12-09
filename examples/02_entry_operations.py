@@ -29,33 +29,31 @@ class DRYEntryOperations:
         api = FlextLdif.get_instance()
 
         # DRY: Single list comprehension creates all entries
-        return r.ok(
-            [
-                api.create_entry(
-                    dn=f"cn={name},ou=People,dc=example,dc=com",
-                    attributes={
-                        "cn": name,
-                        "sn": surname,
-                        "mail": email,
-                        "telephoneNumber": phone,
-                    },
-                ).unwrap()
-                for name, surname, email, phone in [
-                    ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
-                    ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
-                    ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
-                ]
-                if api.create_entry(
-                    dn=f"cn={name},ou=People,dc=example,dc=com",
-                    attributes={
-                        "cn": name,
-                        "sn": surname,
-                        "mail": email,
-                        "telephoneNumber": phone,
-                    },
-                ).is_success
+        return r.ok([
+            api.create_entry(
+                dn=f"cn={name},ou=People,dc=example,dc=com",
+                attributes={
+                    "cn": name,
+                    "sn": surname,
+                    "mail": email,
+                    "telephoneNumber": phone,
+                },
+            ).unwrap()
+            for name, surname, email, phone in [
+                ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
+                ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
+                ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
             ]
-        )
+            if api.create_entry(
+                dn=f"cn={name},ou=People,dc=example,dc=com",
+                attributes={
+                    "cn": name,
+                    "sn": surname,
+                    "mail": email,
+                    "telephoneNumber": phone,
+                },
+            ).is_success
+        ])
 
     @staticmethod
     def advanced_filtering() -> r[list[p.Entry]]:

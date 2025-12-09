@@ -842,12 +842,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
             _ = self.writer
             _ = self.detector
             # Use domain model directly
-            health_entry = m.Ldif.Entry.model_validate(
-                {
-                    "dn": "cn=health-check",
-                    "attributes": {"cn": ["health-check"]},
-                }
-            )
+            health_entry = m.Ldif.Entry.model_validate({
+                "dn": "cn=health-check",
+                "attributes": {"cn": ["health-check"]},
+            })
             return r[object].ok(health_entry)
         except Exception as e:
             return r[object].fail(f"Health check failed: {e}")
