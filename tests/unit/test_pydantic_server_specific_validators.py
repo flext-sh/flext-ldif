@@ -12,7 +12,7 @@ from tests import m, s
 
 def get_validation_metadata(
     entry: object,
-) -> m.ValidationMetadata | None:
+) -> m.Ldif.ValidationMetadata | None:
     """Helper to get validation_metadata from entry.metadata.validation_results."""
     if not hasattr(entry, "metadata"):
         return None
@@ -20,7 +20,7 @@ def get_validation_metadata(
     if not metadata or not hasattr(metadata, "validation_results"):
         return None
     result = getattr(metadata, "validation_results", None)
-    if isinstance(result, m.ValidationMetadata):
+    if isinstance(result, m.Ldif.ValidationMetadata):
         return result
     return None
 
@@ -30,15 +30,15 @@ def get_validation_metadata(
 # =============================================================================
 
 
-def inject_oud_validation_rules() -> m.ServerValidationRules:
+def inject_oud_validation_rules() -> m.Ldif.ServerValidationRules:
     """Create OUD validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return m.Ldif.ServerValidationRules(
         requires_objectclass=True,
         requires_naming_attr=True,
         requires_binary_option=True,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=m.Ldif.EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=m.Ldif.DnCaseRules(preserve_case=True),
+        acl_format_rules=m.Ldif.AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -50,15 +50,15 @@ def inject_oud_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_oid_validation_rules() -> m.ServerValidationRules:
+def inject_oid_validation_rules() -> m.Ldif.ServerValidationRules:
     """Create OID validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return m.Ldif.ServerValidationRules(
         requires_objectclass=False,  # OID is lenient
         requires_naming_attr=False,  # OID allows missing naming attr
         requires_binary_option=False,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=m.Ldif.EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=m.Ldif.DnCaseRules(preserve_case=True),
+        acl_format_rules=m.Ldif.AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -70,15 +70,15 @@ def inject_oid_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_openldap_validation_rules() -> m.ServerValidationRules:
+def inject_openldap_validation_rules() -> m.Ldif.ServerValidationRules:
     """Create OpenLDAP validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return m.Ldif.ServerValidationRules(
         requires_objectclass=False,  # OpenLDAP flexible schema
         requires_naming_attr=False,
         requires_binary_option=True,  # But strict on ;binary
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=m.Ldif.EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=m.Ldif.DnCaseRules(preserve_case=True),
+        acl_format_rules=m.Ldif.AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -90,15 +90,15 @@ def inject_openldap_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_ad_validation_rules() -> m.ServerValidationRules:
+def inject_ad_validation_rules() -> m.Ldif.ServerValidationRules:
     """Create Active Directory validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return m.Ldif.ServerValidationRules(
         requires_objectclass=True,  # AD is STRICT on objectClass
         requires_naming_attr=True,  # AD is STRICT - REQUIRES naming attr in entry
         requires_binary_option=False,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=m.Ldif.EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=m.Ldif.DnCaseRules(preserve_case=True),
+        acl_format_rules=m.Ldif.AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -118,7 +118,7 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         # Create OID entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(quirk_type="oid"),
         )
 
@@ -144,7 +144,7 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         # Create OID entry with missing naming attribute
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -171,7 +171,7 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         # Create OID entry with binary data without ;binary option
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -200,10 +200,10 @@ class TestOudServerSpecificValidation:
         # Create OUD entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),
@@ -222,7 +222,7 @@ class TestOudServerSpecificValidation:
         # Create OUD entry with missing naming attribute
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -230,7 +230,7 @@ class TestOudServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),
@@ -249,7 +249,7 @@ class TestOudServerSpecificValidation:
         # Create OUD entry with binary data without ;binary option
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -258,7 +258,7 @@ class TestOudServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),
@@ -277,7 +277,7 @@ class TestOudServerSpecificValidation:
         # Create fully compliant OUD entry
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -286,7 +286,7 @@ class TestOudServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),
@@ -309,10 +309,10 @@ class TestOpenLdapServerSpecificValidation:
         # Create OpenLDAP entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="openldap",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_openldap_validation_rules().model_dump(),
                 ),
             ),
@@ -333,7 +333,7 @@ class TestOpenLdapServerSpecificValidation:
         # Create OpenLDAP entry with binary data without ;binary option
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -342,7 +342,7 @@ class TestOpenLdapServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="openldap",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_openldap_validation_rules().model_dump(),
                 ),
             ),
@@ -361,14 +361,14 @@ class TestOpenLdapServerSpecificValidation:
         # Create OpenLDAP schema entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=subschema"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "attributeTypes": ["( 1.2.3.4 NAME 'test' )"],
                 },
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="openldap",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_openldap_validation_rules().model_dump(),
                 ),
             ),
@@ -391,10 +391,10 @@ class TestActiveDirectoryServerSpecificValidation:
         # Create AD entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="ad",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_ad_validation_rules().model_dump(),
                 ),
             ),
@@ -413,7 +413,7 @@ class TestActiveDirectoryServerSpecificValidation:
         # Create AD entry with missing naming attribute
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["user"],
                     # Missing 'cn' attribute
@@ -421,7 +421,7 @@ class TestActiveDirectoryServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="ad",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_ad_validation_rules().model_dump(),
                 ),
             ),
@@ -440,7 +440,7 @@ class TestActiveDirectoryServerSpecificValidation:
         # Create AD entry with objectGUID without ;binary option
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["user"],
                     "cn": ["test"],
@@ -449,7 +449,7 @@ class TestActiveDirectoryServerSpecificValidation:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="ad",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_ad_validation_rules().model_dump(),
                 ),
             ),
@@ -474,7 +474,7 @@ class TestRfcBaselineValidation:
         # Create RFC entry without objectClass
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(quirk_type="rfc"),
         )
 
@@ -496,7 +496,7 @@ class TestRfcBaselineValidation:
         # Create RFC entry with missing naming attribute
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -526,7 +526,7 @@ class TestRfcBaselineValidation:
         # Create RFC entry with binary data without ;binary option
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -554,7 +554,7 @@ class TestRfcBaselineValidation:
         # Create fully compliant RFC entry
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -581,7 +581,7 @@ class TestMetadataCapture:
         # Create entry with server type
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -589,7 +589,7 @@ class TestMetadataCapture:
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),
@@ -606,7 +606,7 @@ class TestMetadataCapture:
         # Create entry with RFC violations
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={},
             ),  # Missing objectClass and cn
             metadata=m.Ldif.QuirkMetadata(quirk_type="rfc"),
@@ -627,12 +627,12 @@ class TestMetadataCapture:
         # Create OUD entry with violations
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={},
             ),  # Missing objectClass and cn
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
-                extensions=m.DynamicMetadata(
+                extensions=m.Ldif.DynamicMetadata(
                     validation_rules=inject_oud_validation_rules().model_dump(),
                 ),
             ),

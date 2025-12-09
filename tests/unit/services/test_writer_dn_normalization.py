@@ -149,7 +149,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         # Create entry with normalized DN
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value=normalized_dn),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "cn": ["John Doe"],
                     "objectClass": ["person"],

@@ -248,7 +248,7 @@ class TestsFlextLdifEntries(s):
                 return result.unwrap()
             return m.Ldif.Entry.model_construct(
                 dn=m.Ldif.DistinguishedName(value=dn),
-                attributes=m.Ldif.LdifAttributes.(attributes=attrs),
+                attributes=m.Ldif.LdifAttributes(attributes=attrs),
             )
 
         @staticmethod

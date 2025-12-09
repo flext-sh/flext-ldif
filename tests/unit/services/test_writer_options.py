@@ -248,7 +248,7 @@ class TestsFlextLdifWriterFormatOptions(s):
     ) -> m.Ldif.Entry:
         """Factory method to create Entry with reduced boilerplate."""
         dn_obj = m.Ldif.DistinguishedName(value=dn)
-        attrs_obj = m.Ldif.LdifAttributes.(attributes=attributes)
+        attrs_obj = m.Ldif.LdifAttributes(attributes=attributes)
         if metadata is not None:
             return m.Ldif.Entry(
                 dn=dn_obj,

@@ -252,7 +252,7 @@ class TestRfcExceptionHandlingRealScenarios:
             # Create test entry
             test_entry = m.Ldif.Entry(
                 dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+                attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
             # quirk_registry is already a FlextLdifServer instance

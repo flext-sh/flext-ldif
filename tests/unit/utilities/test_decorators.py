@@ -60,7 +60,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _get_server_type_from_class with Entry model."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes..create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         server_type = FlextLdifUtilitiesDecorators._get_server_type_from_class(entry)
@@ -72,7 +72,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _attach_metadata_if_present attaches metadata to Entry."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes..create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         # Entry has metadata by default (created automatically)
@@ -202,7 +202,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             ) -> FlextResult[m.Ldif.Entry]:
                 entry = m.Ldif.Entry(
                     dn=m.Ldif.DistinguishedName(value=dn),
-                    attributes=m.Ldif.LdifAttributes..create(attrs).unwrap(),
+                    attributes=m.Ldif.LdifAttributes.create(attrs).unwrap(),
                 )
                 return FlextResult.ok(entry)
 
@@ -373,7 +373,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _attach_metadata_if_present handles None server_type."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes..create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
