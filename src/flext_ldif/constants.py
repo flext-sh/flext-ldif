@@ -45,8 +45,8 @@ class FlextLdifConstants(FlextConstants):
 
     Architecture:
     - All LDIF constants are organized in the .Ldif namespace
-    - Direct access via c.Ldif.*
-    - No aliases - use namespaces directly following FLEXT architecture patterns
+    - Direct access via c.Ldif.* (ALWAYS use namespace completo)
+    - Root aliases are PROIBIDOS - always use c.Ldif.* following FLEXT architecture patterns
     """
 
     # =========================================================================
@@ -63,19 +63,6 @@ class FlextLdifConstants(FlextConstants):
         # =========================================================================
         # BASE STRING CONSTANTS (Single Source of Truth - DRY)
         # =========================================================================
-        # Define strings once as class attributes, reuse everywhere to avoid duplication
-        # Must be defined BEFORE StrEnum classes that use them
-
-        # Operation values (reused across multiple enums)
-        _OP_ADD: Final[str] = "add"
-        _OP_DELETE: Final[str] = "delete"
-        _OP_MODIFY: Final[str] = "modify"
-        _OP_REPLACE: Final[str] = "replace"
-
-        # Attribute names
-        _ATTR_DN: Final[str] = "dn"
-        _ATTR_CHANGETYPE: Final[str] = "changetype"
-
         # FORMAT CONSTANTS
         # =============================================================================
 
@@ -217,19 +204,20 @@ class FlextLdifConstants(FlextConstants):
             CP1252 = "cp1252"
             ISO8859_1 = "iso-8859-1"
 
-        # Encoding constants (referenced by tests and code)
+        # Encoding constants - derived from Encoding StrEnum (lines 199-218)
         # Reuse DEFAULT_ENCODING from flext-core (no duplication)
         DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
+        # Supported encodings - derived from Encoding StrEnum for DRY principle
         SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset(
             {
-                "utf-8",
-                "utf-16-le",
-                "utf-16",
-                "utf-32",
-                "ascii",
-                "latin-1",
-                "cp1252",
-                "iso-8859-1",
+                Encoding.UTF8.value,
+                Encoding.UTF16LE.value,
+                Encoding.UTF16.value,
+                Encoding.UTF32.value,
+                Encoding.ASCII.value,
+                Encoding.LATIN1.value,
+                Encoding.CP1252.value,
+                Encoding.ISO8859_1.value,
             },
         )
 
@@ -255,17 +243,13 @@ class FlextLdifConstants(FlextConstants):
             BASE64 = "::"
             URL = ":<"
 
-        # LDIF format detection constants
-        LDIF_BASE64_INDICATOR: Final[str] = "::"
-        LDIF_REGULAR_INDICATOR: Final[str] = ":"
-        LDIF_URL_INDICATOR: Final[str] = ":<"
-        LDIF_DEFAULT_ENCODING: Final[str] = "utf-8"
-
-        # ===== TUPLE LENGTH VALIDATION CONSTANTS =====
-        # Used for type-safe tuple unpacking in migration and parsing operations
-        TUPLE_LEN_2: Final[int] = 2  # (dn, attrs) tuples, (options, config) pairs
-        TUPLE_LEN_3: Final[int] = 3  # (options, config, rules) triples
-        TUPLE_LEN_4: Final[int] = 4  # (options, config, rules, whitelist) quadruples
+        # LDIF format detection constants - derived from LdifFormat StrEnum (lines 237-256)
+        # Values match LdifFormat enum members for DRY principle
+        LDIF_BASE64_INDICATOR: Final[str] = LdifFormat.BASE64.value
+        LDIF_REGULAR_INDICATOR: Final[str] = LdifFormat.REGULAR.value
+        LDIF_URL_INDICATOR: Final[str] = LdifFormat.URL.value
+        # Default encoding - reuse from flext-core (no duplication)
+        LDIF_DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
         # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
         class AclSubjectType(StrEnum):
@@ -1738,21 +1722,21 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             MODRDN = "modrdn"
 
-            class AttributeMarkerStatus(StrEnum):
-                """Marker status for attribute processing in metadata.
+        class AttributeMarkerStatus(StrEnum):
+            """Marker status for attribute processing in metadata.
 
-                Used by filters/entry services to mark attributes without removing them.
-                Writer services use this status to determine output behavior.
+            Used by filters/entry services to mark attributes without removing them.
+            Writer services use this status to determine output behavior.
 
-                SRP Architecture:
-                    - filters.py: MARKS attributes with this status (never removes)
-                    - entry.py: REMOVES attributes based on this status
-                    - writer.py: Uses status + WriteOutputOptions for output
+            SRP Architecture:
+                - filters.py: MARKS attributes with this status (never removes)
+                - entry.py: REMOVES attributes based on this status
+                - writer.py: Uses status + WriteOutputOptions for output
 
-                DRY Pattern:
-                    StrEnum is the single source of truth. Use AttributeMarkerStatus.NORMAL.value
-                    or AttributeMarkerStatus.NORMAL directly - no base strings needed.
-                """
+            DRY Pattern:
+                StrEnum is the single source of truth. Use AttributeMarkerStatus.NORMAL.value
+                or AttributeMarkerStatus.NORMAL directly - no base strings needed.
+            """
 
             NORMAL = "normal"
             """Attribute is in normal state, no special handling."""
@@ -1804,8 +1788,6 @@ class FlextLdifConstants(FlextConstants):
             NOVELL = "novell"
             IBM_TIVOLI = "ibm_tivoli"
             GENERIC = "generic"
-
-            # All functions removed - use utilities instead
 
         # =============================================================================
         # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
@@ -2059,7 +2041,7 @@ class FlextLdifConstants(FlextConstants):
             ]
             """Marker status for attribute processing metadata.
 
-            NOTE: Matches ErrorCategory.AttributeMarkerStatus StrEnum values exactly.
+            NOTE: Matches AttributeMarkerStatus StrEnum values exactly.
             Cannot reference directly due to Python class scoping rules.
             """
 
@@ -2102,7 +2084,11 @@ class FlextLdifConstants(FlextConstants):
             """Category literals derived from Categories StrEnum."""
 
             type ChangeTypeLiteral = Literal[
-                "add", "delete", "modify", "modrdn", "moddn"
+                "add",
+                "delete",
+                "modify",
+                "modrdn",
+                "moddn",
             ]
             """Change type literals derived from RFC constants."""
 
@@ -4854,10 +4840,80 @@ class FlextLdifConstants(FlextConstants):
     # Use c.Ldif.* for all LDIF domain constants
     # No aliases - use namespaces directly following FLEXT architecture patterns
 
+    @staticmethod
+    def normalize_server_type(
+        server_type: str,
+    ) -> str:
+        """Normalize server type string to canonical ServerTypes enum value.
 
+        Converts aliases and variations to canonical short form:
+        - "active_directory", "ad", "ActiveDirectory" → "ad"
+        - "oracle_oid", "oid", "OID" → "oid"
+        - etc.
+
+        Returns canonical ServerTypes enum value (short identifier).
+        Raises ValueError if server_type is not recognized.
+
+        Note: Return value is guaranteed to be a valid ServerTypeLiteral string,
+        but returned as `str` for type compatibility. All returned values are
+        validated against ServerTypes enum members.
+        """
+        server_type_lower = server_type.lower().strip()
+        # Map aliases to canonical forms
+        # Use full path to ServerTypes to avoid name resolution issues
+        alias_map: dict[str, str] = {
+            "active_directory": FlextLdifConstants.Ldif.ServerTypes.AD.value,
+            "activedirectory": FlextLdifConstants.Ldif.ServerTypes.AD.value,
+            "oracle_oid": FlextLdifConstants.Ldif.ServerTypes.OID.value,
+            "oracleoid": FlextLdifConstants.Ldif.ServerTypes.OID.value,
+            "oracle_oud": FlextLdifConstants.Ldif.ServerTypes.OUD.value,
+            "oracleoud": FlextLdifConstants.Ldif.ServerTypes.OUD.value,
+            "openldap1": FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1.value,
+            "openldap2": FlextLdifConstants.Ldif.ServerTypes.OPENLDAP2.value,
+            "ibm_tivoli": FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI.value,
+            "ibmtivoli": FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI.value,
+            "tivoli": FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI.value,
+        }
+        # Check alias map first
+        if server_type_lower in alias_map:
+            # alias_map values are guaranteed valid ServerTypeLiterals
+            return alias_map[server_type_lower]
+        # Check if it's already a canonical value
+        # ServerTypes is a StrEnum, iterate over enum members
+        for server_enum in FlextLdifConstants.Ldif.ServerTypes.__members__.values():
+            if server_enum.value == server_type_lower:
+                return server_enum.value
+        # Not found
+        # ServerTypes is a StrEnum, iterate over enum members
+        valid_types = [
+            s.value for s in FlextLdifConstants.Ldif.ServerTypes.__members__.values()
+        ]
+        msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
+        raise ValueError(msg)
+
+
+# Runtime alias for basic class (objetos nested sem aliases redundantes)
+# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 c = FlextLdifConstants
+
+
+# Module-level function for backward compatibility (delegates to class method)
+def normalize_server_type(
+    server_type: str,
+) -> str:
+    """Normalize server type string to canonical ServerTypes enum value.
+
+    This is a module-level wrapper that delegates to FlextLdifConstants.normalize_server_type()
+    for backward compatibility. Use c.normalize_server_type() for new code.
+
+    Returns a canonical server type string value (guaranteed to be a valid ServerTypeLiteral,
+    but typed as `str` for compatibility).
+    """
+    return c.normalize_server_type(server_type)
+
 
 __all__ = [
     "FlextLdifConstants",
     "c",
+    "normalize_server_type",
 ]

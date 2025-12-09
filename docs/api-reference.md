@@ -1315,3 +1315,19 @@ server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
 ---
 
 This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY quirk_registry, generic migration pipeline, and comprehensive quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
+
+## Related Documentation
+
+**Within Project**:
+- [Getting Started](getting-started.md) - Installation and basic usage
+- [Architecture](architecture.md) - Architecture and design patterns
+- [Examples](../examples/) - Practical usage patterns
+
+**Across Projects**:
+- [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
+- [flext-ldap Operations](https://github.com/organization/flext/tree/main/flext-ldap/docs/api-reference.md) - LDAP operations API
+- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/CLAUDE.md) - Data integration and ELT orchestration
+
+**External Resources**:
+- [RFC 2849 - The LDAP Data Interchange Format (LDIF)](https://www.rfc-editor.org/rfc/rfc2849.html)
+- [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)

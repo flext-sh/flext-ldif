@@ -20,8 +20,11 @@ from typing import cast
 
 from flext_core import FlextUtilities
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
-from flext_ldif.models import m
+
+# Import FlextLdifModelsDomains for type annotations
+# Models import moved to runtime to avoid circular import
 
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
@@ -226,7 +229,11 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        value: (
+            str
+            | FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
+        ),
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -269,7 +276,10 @@ class FlextLdifUtilitiesServer:
             return bool(name and name.lower() in detection_names)
 
         def check_model_patterns(
-            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            model: (
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ),
         ) -> bool:
             """Check patterns for model types."""
             if check_oid_pattern(model.oid) or check_name_in_set(model.name):
@@ -292,6 +302,9 @@ class FlextLdifUtilitiesServer:
                 use_prefix_match=use_prefix_match,
             )
 
+        # Import here to avoid circular import - only needed at runtime for isinstance checks
+        from flext_ldif.models import m  # noqa: PLC0415
+
         if isinstance(value, m.Ldif.SchemaAttribute):
             return check_model_patterns(value)
 
@@ -299,3 +312,203 @@ class FlextLdifUtilitiesServer:
             return check_model_patterns(value)
 
         return False
+
+    @staticmethod
+    def normalize_server_type(
+        server_type: str,
+    ) -> str:
+        """Normalize server type string to canonical ServerTypes enum value.
+
+        Converts aliases and variations to canonical short form:
+        - "active_directory", "ad", "ActiveDirectory" → "ad"
+        - "oracle_oid", "oid", "OID" → "oid"
+        - etc.
+
+        Returns canonical ServerTypes enum value (short identifier).
+        Raises ValueError if server_type is not recognized.
+
+        Note: Return value is guaranteed to be a valid ServerTypeLiteral string,
+        but returned as `str` for type compatibility. All returned values are
+        validated against ServerTypes enum members.
+        """
+        server_type_lower = server_type.lower().strip()
+        # Map aliases to canonical forms
+        # Use full path to ServerTypes to avoid name resolution issues
+        alias_map: dict[str, str] = {
+            "active_directory": c.Ldif.ServerTypes.AD.value,
+            "activedirectory": c.Ldif.ServerTypes.AD.value,
+            "oracle_oid": c.Ldif.ServerTypes.OID.value,
+            "oracleoid": c.Ldif.ServerTypes.OID.value,
+            "oracle_oud": c.Ldif.ServerTypes.OUD.value,
+            "oracleoud": c.Ldif.ServerTypes.OUD.value,
+            "openldap1": c.Ldif.ServerTypes.OPENLDAP1.value,
+            "openldap2": c.Ldif.ServerTypes.OPENLDAP2.value,
+            "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
+            "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
+            "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
+        }
+        # Check alias map first
+        if server_type_lower in alias_map:
+            # alias_map values are guaranteed valid ServerTypeLiterals
+            return alias_map[server_type_lower]  # Returns str value from enum
+        # Check if it's already a canonical value
+        # ServerTypes is a StrEnum, iterate over enum members
+        for server_enum in c.Ldif.ServerTypes.__members__.values():
+            if server_enum.value == server_type_lower:
+                return server_enum.value  # StrEnum.value is a valid ServerTypeLiteral
+        # Not found
+        # ServerTypes is a StrEnum, iterate over enum members
+        valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
+        msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
+        raise ValueError(msg)
+
+    @staticmethod
+    def get_all_server_types() -> list[str]:
+        """Get all supported server type values.
+
+        Returns:
+            List of all server type string values (e.g., ["oid", "oud", "rfc", ...])
+
+        """
+        return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
+
+    @staticmethod
+    def get_server_type_value(server_type: str) -> str:
+        """Get server type enum value by name.
+
+        Args:
+            server_type: Server type name (e.g., "OID", "OUD", "RFC")
+
+        Returns:
+            Server type value string
+
+        Raises:
+            AttributeError: If server type not found
+
+        """
+        server_enum = getattr(c.Ldif.ServerTypes, server_type.upper(), None)
+        if server_enum is None:
+            error_msg = f"Server type {server_type} not found"
+            raise AttributeError(error_msg)
+        return server_enum.value
+
+    @staticmethod
+    def get_server_detection_default_max_lines() -> int:
+        """Get default max lines for server detection.
+
+        Returns:
+            Default max lines constant value
+
+        """
+        return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
+
+    @staticmethod
+    def get_server_detection_confidence_threshold() -> float:
+        """Get confidence threshold for server detection.
+
+        Returns:
+            Confidence threshold constant value
+
+        """
+        return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
+
+    @staticmethod
+    def get_server_detection_attribute_match_score() -> int:
+        """Get attribute match score for server detection.
+
+        Returns:
+            Attribute match score constant value
+
+        """
+        return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
+
+    @staticmethod
+    def get_default_acl_attributes() -> list[str]:
+        """Get default ACL attributes list.
+
+        Returns:
+            Default ACL attributes constant value
+
+        """
+        return list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
+
+    @staticmethod
+    def get_sort_target_values() -> list[str]:
+        """Get all valid sort target values.
+
+        Returns:
+            List of all sort target string values
+
+        """
+        return [t.value for t in c.Ldif.SortTarget.__members__.values()]
+
+    @staticmethod
+    def get_sort_strategy_values() -> list[str]:
+        """Get all valid sort strategy values.
+
+        Returns:
+            List of all sort strategy string values
+
+        """
+        return [s.value for s in c.Ldif.SortStrategy.__members__.values()]
+
+    @staticmethod
+    def get_sort_target_value(name: str) -> str:
+        """Get sort target enum value by name.
+
+        Args:
+            name: Sort target name (e.g., "ENTRIES", "ATTRIBUTES")
+
+        Returns:
+            Sort target value string
+
+        Raises:
+            AttributeError: If sort target not found
+
+        """
+        sort_target_enum = getattr(c.Ldif.SortTarget, name.upper(), None)
+        if sort_target_enum is None:
+            error_msg = f"Sort target {name} not found"
+            raise AttributeError(error_msg)
+        return sort_target_enum.value
+
+    @staticmethod
+    def get_sort_strategy_value(name: str) -> str:
+        """Get sort strategy enum value by name.
+
+        Args:
+            name: Sort strategy name (e.g., "HIERARCHY", "DN")
+
+        Returns:
+            Sort strategy value string
+
+        Raises:
+            AttributeError: If sort strategy not found
+
+        """
+        sort_strategy_enum = getattr(c.Ldif.SortStrategy, name.upper(), None)
+        if sort_strategy_enum is None:
+            error_msg = f"Sort strategy {name} not found"
+            raise AttributeError(error_msg)
+        return sort_strategy_enum.value
+
+    @staticmethod
+    def matches(server_type: str, *allowed_types: str) -> bool:
+        """Check if a server type matches any of the allowed types.
+
+        Args:
+            server_type: Server type to check (e.g., "oid", "oud")
+            *allowed_types: Allowed server types to match against
+
+        Returns:
+            True if server_type matches any allowed type, False otherwise
+
+        Example:
+            >>> FlextLdifUtilitiesServer.matches("oid", "oid", "oud")
+            True
+            >>> FlextLdifUtilitiesServer.matches("ad", "oid", "oud")
+            False
+
+        """
+        normalized = server_type.lower().strip()
+        return normalized in [t.lower().strip() for t in allowed_types]

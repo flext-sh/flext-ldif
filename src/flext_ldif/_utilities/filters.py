@@ -34,9 +34,8 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from re import Pattern
-from typing import Literal, cast
+from typing import Literal
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import m
 
@@ -225,7 +224,7 @@ class NotFilter[T](EntryFilter[T]):
 # =========================================================================
 
 
-class ByDnFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries by DN pattern.
 
     Matches entries whose DN matches the given regex pattern.
@@ -253,7 +252,7 @@ class ByDnFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
             self._pattern = pattern
         self._case_insensitive = case_insensitive
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN matches pattern.
 
         Args:
@@ -270,7 +269,7 @@ class ByDnFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         return bool(self._pattern.search(dn_str))
 
 
-class ByDnUnderBaseFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries by base DN.
 
     Matches entries whose DN is under the specified base DN.
@@ -294,7 +293,7 @@ class ByDnUnderBaseFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         self._base_dn = base_dn.lower() if case_insensitive else base_dn
         self._case_insensitive = case_insensitive
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN is under base DN.
 
         Args:
@@ -319,7 +318,7 @@ class ByDnUnderBaseFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
 # =========================================================================
 
 
-class ByObjectClassFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries by objectClass.
 
     Matches entries that have any or all of the specified objectClasses.
@@ -347,7 +346,7 @@ class ByObjectClassFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         )
         self._mode = mode
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching objectClasses.
 
         Args:
@@ -387,7 +386,7 @@ class ByObjectClassFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
 # =========================================================================
 
 
-class ByAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries by attribute presence.
 
     Matches entries that have any or all of the specified attributes.
@@ -413,7 +412,7 @@ class ByAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
         self._mode = mode
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching attributes.
 
         Args:
@@ -439,7 +438,7 @@ class ByAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         return self._attrs <= entry_attrs
 
 
-class ByAttrValueFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries by attribute value.
 
     Matches entries where a specific attribute has a matching value.
@@ -470,7 +469,7 @@ class ByAttrValueFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
             self._pattern = pattern
         self._case_insensitive = case_insensitive
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has attribute with matching value.
 
         Args:
@@ -496,7 +495,7 @@ class ByAttrValueFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         return False
 
 
-class ExcludeAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter entries that do NOT have specific attributes.
 
     Matches entries that are missing any of the specified attributes.
@@ -519,7 +518,7 @@ class ExcludeAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is missing any of the specified attributes.
 
         Args:
@@ -547,7 +546,7 @@ class ExcludeAttrsFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
 # =========================================================================
 
 
-class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class IsSchemaEntryFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter for schema entries.
 
     Matches entries that are schema entries (contain schema definitions).
@@ -564,7 +563,7 @@ class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         """
         self._is_schema = is_schema
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry.
 
         Args:
@@ -574,14 +573,13 @@ class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
             True if schema status matches expected value
 
         """
-        # Convert FlextLdifModelsDomains.Entry to m.Ldif.Entry for is_schema_entry
-        # m.Ldif.Entry is the facade that extends FlextLdifModelsDomains.Entry
-        entry_facade: m.Ldif.Entry = cast("m.Ldif.Entry", item)
+        # Use facade Entry type directly
+        entry_facade: m.Ldif.Entry = item
         result = FlextLdifUtilitiesEntry.is_schema_entry(entry_facade)
         return result == self._is_schema
 
 
-class CustomFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
+class CustomFilter(EntryFilter["m.Ldif.Entry"]):
     """Filter using a custom predicate function.
 
     Allows arbitrary filtering via a callable.
@@ -591,7 +589,7 @@ class CustomFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
 
     def __init__(
         self,
-        predicate: Callable[[FlextLdifModelsDomains.Entry], bool],
+        predicate: Callable[[m.Ldif.Entry], bool],
     ) -> None:
         """Initialize custom filter.
 
@@ -601,7 +599,7 @@ class CustomFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
         """
         self._predicate = predicate
 
-    def matches(self, item: FlextLdifModelsDomains.Entry) -> bool:
+    def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry matches custom predicate.
 
         Args:
@@ -775,7 +773,7 @@ class Filter:
 
     @staticmethod
     def custom(
-        predicate: Callable[[FlextLdifModelsDomains.Entry], bool],
+        predicate: Callable[[m.Ldif.Entry], bool],
     ) -> CustomFilter:
         """Create a custom filter from a predicate function.
 

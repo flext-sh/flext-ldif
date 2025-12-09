@@ -16,10 +16,9 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import u
-
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.utilities import u
 
 
 def extract_acls_from_entry() -> None:
@@ -101,10 +100,18 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
         "permissions": {"read": True, "write": True},
     }
 
-    # Cast acls to FlextLdifModels.Acl for API compatibility
-    acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
-    eval_context_typed = cast("FlextLdifTypes.Acl.EvaluationContextDict", eval_context)
-    evaluation_result = api.evaluate_acl_rules(acls_typed, eval_context_typed)
+    # acls is already list[FlextLdifModelsDomains.Acl] from AclResponse.acls
+    # Extract permissions from context dict directly
+    required_perms: dict[str, bool] = {}
+    if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
+        required_perms = cast("dict[str, bool]", eval_context["permissions"])
+    # Type cast needed for type checker - acls is already correct type at runtime
+    acls_for_eval: list[FlextLdifModelsDomains.Acl] = cast(
+        "list[FlextLdifModelsDomains.Acl]", acls
+    )
+    evaluation_result = api.acl_service.evaluate_acl_context(
+        acls_for_eval, required_perms
+    )
 
     if evaluation_result.is_success:
         allowed = evaluation_result.unwrap()
@@ -236,10 +243,15 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
         "permissions": {"read": True},
     }
 
-    # Cast acls to FlextLdifModels.Acl for API compatibility
-    acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
-    eval_context_typed = cast("FlextLdifTypes.Acl.EvaluationContextDict", eval_context)
-    eval_result = api.evaluate_acl_rules(acls_typed, eval_context_typed)
+    # Cast acls to domain Acl type for API compatibility
+    acls_typed: list[FlextLdifModelsDomains.Acl] = [
+        cast("FlextLdifModelsDomains.Acl", acl) for acl in acls
+    ]
+    # Extract permissions from context dict directly
+    required_perms: dict[str, bool] = {}
+    if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
+        required_perms = cast("dict[str, bool]", eval_context["permissions"])
+    eval_result = api.acl_service.evaluate_acl_context(acls_typed, required_perms)
 
     if eval_result.is_success:
         # Validate entry

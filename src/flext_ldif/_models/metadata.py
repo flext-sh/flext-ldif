@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator, ItemsView, KeysView, ValuesView
-from typing import overload
+from typing import ClassVar, overload
 
 from flext_core import t
 from flext_core._models.base import FlextModelsBase
@@ -232,6 +232,35 @@ class FlextLdifModelsMetadata:
                     return value
                 return str(value) if value is not None else None
             return default
+
+    class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):
+        """Transformation step information stored in metadata.
+
+        Replaces TypedDict with Pydantic model for better validation and type safety.
+        Used to track transformation steps during LDIF processing.
+
+        Example:
+            info = TransformationInfo(
+                step="attribute_conversion",
+                server="oud",
+                changes=["cn converted", "sn normalized"]
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        step: str | None = None
+        """Transformation step identifier."""
+
+        server: str | None = None
+        """Server type where transformation occurred."""
+
+        changes: ClassVar[list[str]] = []
+        """List of changes made during transformation."""
 
 
 __all__ = ["FlextLdifModelsMetadata"]

@@ -307,7 +307,7 @@ def _check_unused_definition_v2(
     file_path: Path,
     lineno: int,
     server_classes: set[str],
-    all_refs: list[str],
+    all_refs: set[str],
     all_import_froms: dict[str, set[str]],
 ) -> tuple[str, Path, int] | None:
     """Check if a definition is unused. Returns tuple if unused, None otherwise."""
@@ -315,7 +315,7 @@ def _check_unused_definition_v2(
     if def_type == "class" and full_name in server_classes:
         is_used = check_server_class_usage(full_name, all_import_froms)
     else:
-        is_used = check_api_usage(full_name, all_refs, all_import_froms)
+        is_used = check_api_usage(full_name, set(all_refs), all_import_froms)
 
     if is_used:
         return None

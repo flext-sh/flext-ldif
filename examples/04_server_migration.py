@@ -19,10 +19,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import r, u
+from flext_core import r
 
 from flext_ldif import FlextLdif, m
 from flext_ldif.constants import c
+from flext_ldif.utilities import u
 
 
 class ExampleServerMigration:
@@ -36,7 +37,7 @@ class ExampleServerMigration:
     """
 
     @staticmethod
-    def parallel_server_migration() -> r[m.EntryResult]:
+    def parallel_server_migration() -> r[m.Ldif.EntryResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
 
@@ -264,7 +265,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
             """Setup directory."""
             dir_path.mkdir(exist_ok=True, parents=True)
 
-        _ = u.process(
+        _ = u.Ldif.process(
             [source_dir, intermediate_dir, final_dir],
             setup_dir,
             on_error="skip",
@@ -304,23 +305,23 @@ orclguid: user{i}guid456
 aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
 
-        batch_result = u.process(
+        batch_result = u.Ldif.process(
             list(range(20)),
             create_entry_data,
             on_error="skip",
         )
-        source_data = (
-            cast("list[str]", batch_result.value["results"])
-            if batch_result.is_success
-            else []
-        )
+        source_data: list[str] = []
+        if batch_result.is_success:
+            value = batch_result.unwrap()
+            if isinstance(value, list):
+                source_data = cast("list[str]", value)
 
         def write_file(item: tuple[int, str]) -> None:
             """Write entry to file."""
             i, entry = item
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
 
-        _ = u.process(
+        _ = u.Ldif.process(
             list(enumerate(source_data)),
             write_file,
             on_error="skip",
@@ -333,7 +334,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
     ) -> tuple[str, dict[str, object]]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
-        detect_result = api.detect_server_type(ldif_path=sample_file)
+        detect_result = api.detect_server_type(ldif_content=sample_file)
         detection_data: dict[str, object] = {}
         if detect_result.is_success:
             detection = detect_result.unwrap()

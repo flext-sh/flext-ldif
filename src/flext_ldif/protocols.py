@@ -21,7 +21,9 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, t
+from flext_core import FlextProtocols, FlextResult
+
+from flext_ldif.typings import t
 
 # =========================================================================
 # PROTOCOL DESIGN NOTES
@@ -321,7 +323,7 @@ class FlextLdifProtocols(FlextProtocols):
                     ldif_input: str | Path,
                     server_type: str | None = None,
                 ) -> FlextProtocols.Result[
-                    Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+                    Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
                 ]:
                     """Parse LDIF content."""
                     ...
@@ -332,8 +334,8 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def write(
                     self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
-                    | FlextLdifProtocols.Ldif.Models.EntryProtocol,
+                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+                    | FlextLdifProtocols.Ldif.EntryProtocol,
                 ) -> FlextProtocols.Result[str]:
                     """Write entries to LDIF."""
                     ...
@@ -344,7 +346,7 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def write(
                     self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol],
+                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
                 ) -> FlextProtocols.Result[str]:
                     """Write entries to LDIF."""
                     ...
@@ -359,7 +361,7 @@ class FlextLdifProtocols(FlextProtocols):
                 @property
                 def entries(
                     self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]:
+                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Get list of entries."""
                     ...
 
@@ -377,10 +379,10 @@ class FlextLdifProtocols(FlextProtocols):
                 def entries(
                     self,
                 ) -> Sequence[
-                    FlextLdifProtocols.Ldif.Models.EntryProtocol
-                    | FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
-                    | FlextLdifProtocols.Ldif.Models.AclProtocol
+                    FlextLdifProtocols.Ldif.EntryProtocol
+                    | FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                    | FlextLdifProtocols.Ldif.AclProtocol
                 ]:
                     """Get all entries (works for any result type)."""
                     ...
@@ -420,16 +422,16 @@ class FlextLdifProtocols(FlextProtocols):
                 def __getitem__(
                     self,
                     key: str,
-                ) -> Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]:
+                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Get entries for a category by key."""
                     ...
 
                 def get(
                     self,
                     key: str,
-                    default: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+                    default: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
                     | None = None,
-                ) -> Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol] | None:
+                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None:
                     """Get entries for a category with fallback."""
                     ...
 
@@ -439,14 +441,14 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def values(
                     self,
-                ) -> Sequence[Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]]:
+                ) -> Sequence[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
                     """Get all category entry lists."""
                     ...
 
                 def items(
                     self,
                 ) -> Sequence[
-                    tuple[str, Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]]
+                    tuple[str, Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]
                 ]:
                     """Get all category key-value pairs."""
                     ...
@@ -472,7 +474,7 @@ class FlextLdifProtocols(FlextProtocols):
                 @property
                 def entries(
                     self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]:
+                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Get all entries from all categories combined.
 
                     Returns:
@@ -484,7 +486,7 @@ class FlextLdifProtocols(FlextProtocols):
                 @property
                 def content(
                     self,
-                ) -> Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]:
+                ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Alias for entries property for backward compatibility.
 
                     Returns:
@@ -506,7 +508,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ) -> FlextProtocols.Result[
                     FlextLdifProtocols.Ldif.Services.UnifiedParseResultProtocol
                     | FlextLdifProtocols.Ldif.Services.HasEntriesProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
                     | str
                 ]:
                     """Execute filtering based on configured criteria."""
@@ -515,7 +517,7 @@ class FlextLdifProtocols(FlextProtocols):
                 @classmethod
                 def filter(
                     cls,
-                    entries: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol],
+                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
                     *,
                     criteria: str = "dn",
                     pattern: str | None = None,
@@ -529,7 +531,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ) -> FlextProtocols.Result[
                     FlextLdifProtocols.Ldif.Services.UnifiedParseResultProtocol
                     | FlextLdifProtocols.Ldif.Services.HasEntriesProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
                     | str
                 ]:
                     """Quick filter with FlextResult for composable operations."""
@@ -555,16 +557,16 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def validate_dns(
                     self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol],
+                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
                 ) -> FlextProtocols.Result[
-                    Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+                    Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
                 ]:
                     """Validate entry DNs according to RFC 4514."""
                     ...
 
                 def categorize_entries(
                     self,
-                    entries: Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol],
+                    entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
                 ) -> FlextProtocols.Result[
                     FlextLdifProtocols.Ldif.Services.FlexibleCategoriesProtocol
                 ]:
@@ -573,9 +575,9 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def categorize_entry(
                     self,
-                    entry: FlextLdifProtocols.Ldif.Models.EntryProtocol,
+                    entry: FlextLdifProtocols.Ldif.EntryProtocol,
                     rules: (
-                        FlextLdifProtocols.Ldif.Models.CategoryRulesProtocol
+                        FlextLdifProtocols.Ldif.CategoryRulesProtocol
                         | Mapping[str, Sequence[str]]
                         | None
                     ) = None,
@@ -630,16 +632,16 @@ class FlextLdifProtocols(FlextProtocols):
                     self,
                     attr_definition: str,
                 ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
+                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
                 ]:
                     """Parse schema definition."""
                     ...
 
                 def write(
                     self,
-                    model: FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol,
+                    model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
                 ) -> FlextProtocols.Result[str]:
                     """Write schema definition."""
                     ...
@@ -651,13 +653,13 @@ class FlextLdifProtocols(FlextProtocols):
                 def parse(
                     self,
                     acl_line: str,
-                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.Models.AclProtocol]:
+                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.AclProtocol]:
                     """Parse ACL definition."""
                     ...
 
                 def write(
                     self,
-                    acl_data: FlextLdifProtocols.Ldif.Models.AclProtocol,
+                    acl_data: FlextLdifProtocols.Ldif.AclProtocol,
                 ) -> FlextProtocols.Result[str]:
                     """Write ACL definition."""
                     ...
@@ -669,9 +671,7 @@ class FlextLdifProtocols(FlextProtocols):
                 def parse(
                     self,
                     entry_lines: Sequence[str],
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Models.EntryProtocol
-                ]:
+                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Parse entry definition."""
                     ...
 
@@ -679,17 +679,15 @@ class FlextLdifProtocols(FlextProtocols):
                     self,
                     entry_dn: str,
                     entry_attrs: Mapping[str, Sequence[str]],
-                ) -> FlextProtocols.Result[
-                    FlextLdifProtocols.Ldif.Models.EntryProtocol
-                ]:
+                ) -> FlextProtocols.Result[FlextLdifProtocols.Ldif.EntryProtocol]:
                     """Parse single entry from DN and attributes."""
                     ...
 
                 def write(
                     self,
-                    entries: FlextLdifProtocols.Ldif.Models.EntryProtocol
-                    | Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol],
-                    format_options: FlextLdifProtocols.Ldif.Models.WriteFormatOptionsProtocol
+                    entries: FlextLdifProtocols.Ldif.EntryProtocol
+                    | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
+                    format_options: FlextLdifProtocols.Ldif.WriteFormatOptionsProtocol
                     | None = None,
                 ) -> FlextProtocols.Result[str]:
                     """Write entries to LDIF."""
@@ -704,10 +702,10 @@ class FlextLdifProtocols(FlextProtocols):
 
                 def execute(
                     self,
-                    model: FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
-                    | FlextLdifProtocols.Ldif.Models.AclProtocol
-                    | FlextLdifProtocols.Ldif.Models.EntryProtocol
+                    model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                    | FlextLdifProtocols.Ldif.AclProtocol
+                    | FlextLdifProtocols.Ldif.EntryProtocol
                     | str,
                 ) -> FlextProtocols.Result[str]:
                     """Execute quirk operation on any model type."""
@@ -760,8 +758,341 @@ class FlextLdifProtocols(FlextProtocols):
 
                 validation_metadata: t.Metadata | None
 
+        class Utilities:
+            """Utility protocols for LDIF power methods and pipelines.
 
-# Runtime alias for simplified usage
+            These protocols support fluent DSL operations, transformations, filtering,
+            validation, and pipeline orchestration for LDIF processing.
+            """
+
+            # =================================================================
+            # TRANSFORMER PROTOCOLS - For entry transformations
+            # =================================================================
+
+            @runtime_checkable
+            class TransformerProtocol[T](Protocol):
+                """Protocol for transformers that can be used in pipelines.
+
+                Transformers are applied via the `|` (pipe) operator on FlextLdifResult:
+
+                    result = FlextLdifResult.ok(entries) | MyTransformer()
+
+                The apply method receives the value and returns a FlextResult containing
+                the transformed value or an error.
+
+                Type Parameters:
+                    T: The type being transformed (typically Entry or list[Entry])
+                """
+
+                def apply(self, item: T) -> FlextResult[T]:
+                    """Apply the transformation to an item.
+
+                    Args:
+                        item: The item to transform
+
+                    Returns:
+                        FlextResult containing transformed item or error
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class BatchTransformerProtocol[T](Protocol):
+                """Protocol for transformers that operate on sequences.
+
+                Batch transformers process multiple items at once, which can be
+                more efficient than transforming items one by one.
+
+                Type Parameters:
+                    T: The type of items in the sequence (typically Entry)
+                """
+
+                def apply_batch(self, items: Sequence[T]) -> FlextResult[list[T]]:
+                    """Apply the transformation to a batch of items.
+
+                    Args:
+                        items: Sequence of items to transform
+
+                    Returns:
+                        FlextResult containing list of transformed items or error
+
+                    """
+                    ...
+
+            # =================================================================
+            # FILTER PROTOCOLS - For entry filtering
+            # =================================================================
+
+            @runtime_checkable
+            class FilterProtocol[T](Protocol):
+                """Protocol for filters that can be used in pipelines.
+
+                Filters are used to select entries matching certain criteria.
+                They support operator composition:
+
+                    - filter1 & filter2 - AND combination
+                    - filter1 | filter2 - OR combination
+                    - ~filter - NOT (negation)
+
+                Type Parameters:
+                    T: The type being filtered (typically Entry)
+                """
+
+                def matches(self, item: T) -> bool:
+                    """Check if an item matches the filter criteria.
+
+                    Args:
+                        item: The item to check
+
+                    Returns:
+                        True if the item matches, False otherwise
+
+                    """
+                    ...
+
+                def __and__(
+                    self,
+                    other: FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T],
+                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
+                    """AND combination: filter1 & filter2."""
+                    ...
+
+                def __or__(
+                    self,
+                    other: FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T],
+                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
+                    """OR combination: filter1 | filter2."""
+                    ...
+
+                def __invert__(
+                    self,
+                ) -> FlextLdifProtocols.Ldif.Utilities.FilterProtocol[T]:
+                    """NOT negation: ~filter."""
+                    ...
+
+            # =================================================================
+            # VALIDATOR PROTOCOLS - For validation rules
+            # =================================================================
+
+            @runtime_checkable
+            class ValidationReportProtocol(Protocol):
+                """Protocol for validation reports returned by validators."""
+
+                @property
+                def is_valid(self) -> bool:
+                    """Check if validation passed."""
+                    ...
+
+                @property
+                def errors(self) -> list[str]:
+                    """Get list of error messages."""
+                    ...
+
+                @property
+                def warnings(self) -> list[str]:
+                    """Get list of warning messages."""
+                    ...
+
+            @runtime_checkable
+            class ValidatorProtocol[T](Protocol):
+                """Protocol for validators that check entries or schemas.
+
+                Validators are used in the validate() power method to check
+                entries against rules (RFC compliance, schema, custom).
+
+                Type Parameters:
+                    T: The type being validated (Entry, SchemaAttribute, etc.)
+                """
+
+                def validate(
+                    self,
+                    item: T,
+                ) -> FlextResult[
+                    FlextLdifProtocols.Ldif.Utilities.ValidationReportProtocol
+                ]:
+                    """Validate an item.
+
+                    Args:
+                        item: The item to validate
+
+                    Returns:
+                        FlextResult containing ValidationReport or error
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class ValidationRuleProtocol[T](Protocol):
+                """Protocol for individual validation rules.
+
+                Rules are composable units that check specific aspects of an item.
+                Multiple rules can be combined into a validator.
+
+                Type Parameters:
+                    T: The type being validated
+                """
+
+                @property
+                def name(self) -> str:
+                    """Get the rule name for error messages."""
+                    ...
+
+                def check(self, item: T) -> tuple[bool, str | None]:
+                    """Check an item against this rule.
+
+                    Args:
+                        item: The item to check
+
+                    Returns:
+                        Tuple of (passed, error_message). error_message is None if passed.
+
+                    """
+                    ...
+
+            # =================================================================
+            # PIPELINE PROTOCOLS - For pipeline orchestration
+            # =================================================================
+
+            @runtime_checkable
+            class PipelineStepProtocol[TIn, TOut](Protocol):
+                """Protocol for pipeline steps that transform data.
+
+                Pipeline steps are the building blocks of the process() and
+                transform() power methods. Each step receives input and produces
+                output, which becomes the input for the next step.
+
+                Type Parameters:
+                    TIn: Input type for this step
+                    TOut: Output type for this step
+                """
+
+                @property
+                def name(self) -> str:
+                    """Get step name for logging/debugging."""
+                    ...
+
+                def execute(self, input_data: TIn) -> FlextResult[TOut]:
+                    """Execute this pipeline step.
+
+                    Args:
+                        input_data: Input data from previous step
+
+                    Returns:
+                        FlextResult containing output data or error
+
+                    """
+                    ...
+
+            # =================================================================
+            # BUILDER PROTOCOLS - For builder patterns
+            # =================================================================
+
+            @runtime_checkable
+            class FluentBuilderProtocol[TConfig](Protocol):
+                """Protocol for fluent builders that construct configuration objects.
+
+                Builders provide a fluent interface for constructing complex
+                configuration objects with method chaining.
+
+                Type Parameters:
+                    TConfig: The configuration type being built
+                """
+
+                def build(self) -> TConfig:
+                    """Build the final configuration object.
+
+                    Returns:
+                        The constructed configuration object
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class FluentOpsProtocol[T](Protocol):
+                """Protocol for fluent operation chains (DnOps, EntryOps).
+
+                Fluent ops provide method chaining for common operations,
+                with a terminal build() method that returns the result.
+
+                Type Parameters:
+                    T: The type being operated on (str for DN, Entry for entries)
+                """
+
+                def build(self) -> FlextResult[T]:
+                    """Build/finalize and return the result.
+
+                    Returns:
+                        FlextResult containing the final value or error
+
+                    """
+                    ...
+
+            # =================================================================
+            # IO PROTOCOLS - For data sources and targets
+            # =================================================================
+
+            @runtime_checkable
+            class LoadableProtocol[T](Protocol):
+                """Protocol for loadable data sources.
+
+                Represents anything that can be loaded as LDIF data:
+                - File paths (str, Path)
+                - Raw LDIF content (bytes)
+                - Pre-parsed entries (Sequence[Entry])
+                """
+
+                def load(self) -> FlextResult[T]:
+                    """Load and return the data.
+
+                    Returns:
+                        FlextResult containing loaded data or error
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class WritableProtocol(Protocol):
+                """Protocol for writable output targets.
+
+                Represents anything that can receive LDIF output:
+                - File paths
+                - File-like objects
+                - String builders
+                """
+
+                def write(self, content: str) -> FlextResult[str]:
+                    """Write content to the target.
+
+                    Args:
+                        content: The content to write
+
+                    Returns:
+                        FlextResult containing written content or error
+
+                    """
+                    ...
+
+        # ====================================================================
+        # PROTOCOL ALIASES - Expose protocols at Ldif level for convenience
+        # ====================================================================
+        # These aliases expose Models protocols at the Ldif namespace level
+        # to enable references like p.Ldif.Models.EntryProtocol instead of
+        # p.Ldif.Models.EntryProtocol, matching the pattern used throughout
+        # the codebase (config.py, services, etc.)
+
+        EntryProtocol = Models.EntryProtocol
+        EntryWithDnProtocol = Models.EntryWithDnProtocol
+        AttributeValueProtocol = Models.AttributeValueProtocol
+        AclProtocol = Models.AclProtocol
+        SchemaAttributeProtocol = Models.SchemaAttributeProtocol
+        SchemaObjectClassProtocol = Models.SchemaObjectClassProtocol
+        WriteFormatOptionsProtocol = Models.WriteFormatOptionsProtocol
+        AclWriteMetadataProtocol = Models.AclWriteMetadataProtocol
+        CategoryRulesProtocol = Models.CategoryRulesProtocol
+
+
+# Runtime alias for basic class (objetos nested sem aliases redundantes)
+# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 p = FlextLdifProtocols
 
 __all__ = [

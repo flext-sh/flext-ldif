@@ -35,11 +35,13 @@ from typing import Self
 
 from flext_core import r
 
-from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize
 from flext_ldif.models import m
+
+# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
 
 
 # Sentinel for filtered out entries (since r.ok(None) is not allowed)
@@ -382,14 +384,14 @@ class ProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: TransformConfig | None = None) -> None:
+    def __init__(self, config: m.Ldif.Config.TransformConfig | None = None) -> None:
         """Initialize processing pipeline.
 
         Args:
             config: Processing configuration (uses defaults if None)
 
         """
-        self._config = config or TransformConfig()
+        self._config = config or m.Ldif.Config.TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
@@ -403,10 +405,17 @@ class ProcessingPipeline:
 
         # Add DN normalization if enabled
         if self._config.normalize_dns:
+            # Convert Literal to StrEnum for type compatibility
+            case_fold_value = self._config.process_config.dn_config.case_fold
+            space_handling_value = self._config.process_config.dn_config.space_handling
+
+            case_enum = m.Ldif.Config.CaseFoldOption(case_fold_value)
+            spaces_enum = m.Ldif.Config.SpaceHandlingOption(space_handling_value)
+
             pipeline.add(
                 Normalize.dn(
-                    case=self._config.process_config.dn_config.case_fold,
-                    spaces=self._config.process_config.dn_config.space_handling,
+                    case=case_enum,
+                    spaces=spaces_enum,
                     validate=self._config.process_config.dn_config.validate_before,
                 ),
                 name="normalize_dn",
@@ -441,7 +450,7 @@ class ProcessingPipeline:
         return self._pipeline.execute(entries)
 
     @property
-    def config(self) -> TransformConfig:
+    def config(self) -> m.Ldif.Config.TransformConfig:
         """Get the processing configuration."""
         return self._config
 

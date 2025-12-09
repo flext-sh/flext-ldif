@@ -176,12 +176,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, m.Entry):
+            if isinstance(unwrapped_entry, m.Ldif.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)
@@ -263,12 +263,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, m.Entry):
+            if isinstance(unwrapped_entry, m.Ldif.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)

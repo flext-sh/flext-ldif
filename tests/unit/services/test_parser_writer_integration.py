@@ -17,7 +17,7 @@ import pytest
 from flext_tests import tm, tt, u
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
-from tests import c, m
+from tests import OIDs, Syntax, c, m
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
@@ -121,9 +121,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, f"Failed to parse content for {scenario}"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Entry] for write method
-        entries: list[m.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Entry)
+        # Convert to list[m.Ldif.Entry] for write method
+        entries: list[m.Ldif.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
 
         # Verify we got entries
@@ -193,9 +193,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, "Failed to parse from file"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Entry] for write method
-        entries: list[m.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Entry)
+        # Convert to list[m.Ldif.Entry] for write method
+        entries: list[m.Ldif.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
         tm.assert_length_equals(
             entries,
@@ -299,9 +299,9 @@ class FlextLdifParserWriterIntegrationTests(tt):
         assert parse_result.is_success, f"Failed to parse {entry_count} entries"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[m.Entry] for write method
-        entries: list[m.Entry] = [
-            entry for entry in entries_list if isinstance(entry, m.Entry)
+        # Convert to list[m.Ldif.Entry] for write method
+        entries: list[m.Ldif.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
         assert len(entries) == entry_count, (
             f"Expected {entry_count} entries, got {len(entries)}"

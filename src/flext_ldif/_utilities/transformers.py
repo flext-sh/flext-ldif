@@ -28,25 +28,26 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import Literal, cast
 
-from flext_core import FlextUtilities, r
+from flext_core import FlextUtilities as u, r
 
-from flext_ldif._utilities.configs import CaseFoldOption, SpaceHandlingOption
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import m
 
-# Aliases for simplified usage - after all imports
-# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
-u = FlextUtilities  # Use base class to avoid circular dependency
-# r is already imported from flext_core
+# Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
+
+# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
+# DistinguishedName: TypeAlias = m.Ldif.DistinguishedName  # Use m.Ldif.DistinguishedName directly
+# LdifAttributes: TypeAlias = m.Ldif.LdifAttributes  # Use m.Ldif.LdifAttributes directly
 
 # =========================================================================
 # TYPE ALIASES
 # =========================================================================
 
-type BooleanFormat = Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"]
+# Type alias moved to m.Ldif.Types
+# BooleanFormat = m.Ldif.Types.BooleanFormat
 """Boolean format options for attribute value conversion."""
 
 
@@ -96,7 +97,6 @@ class EntryTransformer[T](ABC):
             r containing list of transformed items or error
 
         """
-        results: list[T] = []
         # Use u.batch for unified batch processing (DSL pattern)
         items_list = list(items)
         # Type narrowing: create wrapper to ensure correct type inference
@@ -106,17 +106,36 @@ class EntryTransformer[T](ABC):
             """Wrapper for apply method to ensure correct type inference."""
             return self.apply(item)
 
-        # Type narrowing: cast to correct type for batch operation
-        # mypy has trouble inferring the generic type, so we cast explicitly
-        batch_operation = cast("Callable[[T], T | r[T]]", apply_wrapper)
+        # Use apply_wrapper directly - proper type inference
         batch_result = u.Collection.batch(
             items_list,
-            batch_operation,
+            apply_wrapper,
             on_error="fail",
         )
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Batch transform failed")
-        results = cast("list[T]", batch_result.value["results"])
+        # Type narrowing via isinstance check instead of cast
+        batch_value = batch_result.value
+        if batch_value is None:
+            return r.fail("Batch result has no value")
+        results_raw = batch_value.get("results", [])
+        if not isinstance(results_raw, list):
+            return r.fail("Batch results is not a list")
+        # Type narrowing: u.Collection.batch returns results with correct types
+        # when mapper returns T | r[T]. Since apply_wrapper returns T | r[T],
+        # batch results are guaranteed to be list[T] after unwrapping r[T] values.
+        # Mypy doesn't understand this, so we assert the type is correct.
+        # Business Rule: batch() with on_error="fail" ensures all results are T
+        # (failed items would cause batch_result.is_failure to be True)
+        if not results_raw:
+            return r.ok([])
+        # Type narrowing: u.Collection.batch returns results with correct types
+        # when mapper returns T | r[T]. Since apply_wrapper returns T | r[T],
+        # batch results are guaranteed to be list[T] after unwrapping r[T] values.
+        # Pattern from services/sorting.py:619 - direct assignment works for mypy
+        # Business Rule: batch() with on_error="fail" ensures all results are T
+        # (failed items would cause batch_result.is_failure to be True)
+        results: list[T] = results_raw
         return r.ok(results)
 
 
@@ -125,7 +144,7 @@ class EntryTransformer[T](ABC):
 # =========================================================================
 
 
-class NormalizeDnTransformer(EntryTransformer["m.Ldif.Entry"]):
+class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for DN normalization.
 
     Normalizes Distinguished Names according to specified options.
@@ -142,8 +161,8 @@ class NormalizeDnTransformer(EntryTransformer["m.Ldif.Entry"]):
     def __init__(
         self,
         *,
-        case: CaseFoldOption = CaseFoldOption.LOWER,
-        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
+        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
+        spaces: m.Ldif.Config.SpaceHandlingOption = m.Ldif.Config.SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> None:
         """Initialize DN normalization transformer.
@@ -228,14 +247,14 @@ class NormalizeDnTransformer(EntryTransformer["m.Ldif.Entry"]):
 
         # Update entry DN (create new DistinguishedName)
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_dn = m.DistinguishedName(value=normalized_dn)
+        new_dn = m.Ldif.DistinguishedName(value=normalized_dn)
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class NormalizeAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
+class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for attribute normalization.
 
     Normalizes attribute names and optionally values.
@@ -318,7 +337,7 @@ class NormalizeAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
         # Update entry with processed attributes if anything changed
         if needs_update:
             # Use dict[str, object] for model_copy update (Pydantic accepts object)
-            new_attributes = m.LdifAttributes(attributes=new_attrs)
+            new_attributes = m.Ldif.LdifAttributes(attributes=new_attrs)
             update_dict: dict[str, object] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
 
@@ -342,8 +361,8 @@ class Normalize:
     @staticmethod
     def dn(
         *,
-        case: CaseFoldOption = CaseFoldOption.LOWER,
-        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
+        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
+        spaces: m.Ldif.Config.SpaceHandlingOption = m.Ldif.Config.SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> NormalizeDnTransformer:
         """Create a DN normalization transformer.
@@ -389,7 +408,7 @@ class Normalize:
 # =========================================================================
 
 
-class ReplaceBaseDnTransformer(EntryTransformer["m.Ldif.Entry"]):
+class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for replacing base DN in entries.
 
     Replaces the base DN suffix with a new one.
@@ -444,14 +463,14 @@ class ReplaceBaseDnTransformer(EntryTransformer["m.Ldif.Entry"]):
 
         # Create new DN and update entry
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_dn = m.DistinguishedName(value=new_dn_str)
+        new_dn = m.Ldif.DistinguishedName(value=new_dn_str)
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class ConvertBooleansTransformer(EntryTransformer["m.Ldif.Entry"]):
+class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for converting boolean attribute values.
 
     Converts boolean values between different formats.
@@ -461,7 +480,7 @@ class ConvertBooleansTransformer(EntryTransformer["m.Ldif.Entry"]):
 
     def __init__(
         self,
-        boolean_format: BooleanFormat = "TRUE/FALSE",
+        boolean_format: m.Ldif.Types.BooleanFormat = "TRUE/FALSE",
         *,
         attributes: Sequence[str] | None = None,
     ) -> None:
@@ -521,14 +540,14 @@ class ConvertBooleansTransformer(EntryTransformer["m.Ldif.Entry"]):
 
         # Create new entry with converted attributes
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.LdifAttributes(attributes=converted_attrs)
+        new_attributes = m.Ldif.LdifAttributes(attributes=converted_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class FilterAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
+class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for filtering entry attributes.
 
     Includes or excludes specific attributes from entries.
@@ -608,14 +627,14 @@ class FilterAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
 
         # Update entry with filtered attributes
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.LdifAttributes(attributes=attrs)
+        new_attributes = m.Ldif.LdifAttributes(attributes=attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class RemoveAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
+class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for removing specific attributes from entries."""
 
     __slots__ = ("_attributes",)
@@ -640,16 +659,19 @@ class RemoveAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
 
         """
         # Business Rule: Remove specified attributes from entry for data sanitization
-        # remove_attributes expects entry and attributes list (positional args)
+        # remove_attributes expects m.Ldif.Entry, but item is Entry (m.Ldif.Entry alias)
+        # Since m.Ldif.Entry inherits from FlextLdifModelsDomains.Entry, we can use
+        # model_validate to convert if needed, but Entry is already m.Ldif.Entry
+        # Type narrowing: Entry is m.Ldif.Entry, which is compatible
         updated_entry = FlextLdifUtilitiesEntry.remove_attributes(
-            item,
+            item,  # item is Entry (m.Ldif.Entry), which is what remove_attributes expects
             list(self._attributes),
         )
 
         return r.ok(updated_entry)
 
 
-class CustomTransformer(EntryTransformer["m.Ldif.Entry"]):
+class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer using a custom function.
 
     Allows arbitrary transformations via a callable.
@@ -728,7 +750,7 @@ class Transform:
 
     @staticmethod
     def convert_booleans(
-        boolean_format: BooleanFormat = "TRUE/FALSE",
+        boolean_format: m.Ldif.Types.BooleanFormat = "TRUE/FALSE",
         *,
         attributes: Sequence[str] | None = None,
     ) -> ConvertBooleansTransformer:
@@ -796,7 +818,7 @@ class Transform:
 
 __all__ = [
     # Type aliases
-    "BooleanFormat",
+    # "BooleanFormat",  # Moved to m.Ldif.Types
     "ConvertBooleansTransformer",
     "CustomTransformer",
     # Base class

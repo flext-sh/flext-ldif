@@ -53,24 +53,24 @@ class TestsFlextLdifDnService(s):
 
     PARSING_DATA: ClassVar[tuple[tuple[str, bool, int], ...]] = (
         (c.DNs.TEST_USER, True, 3),
-        (f"cn=Smith\\, {c.Values.TEST},{c.DNs.EXAMPLE}", True, -1),  # -1 means >= 2
+        (f"cn=Smith\\, test,{c.DNs.EXAMPLE}", True, -1),  # -1 means >= 2
         ("", False, -1),
         ("invalid dn without equals", False, -1),
     )
 
     VALIDATION_DATA: ClassVar[tuple[tuple[str, bool], ...]] = (
         (c.DNs.TEST_USER, True),
-        (f"cn={c.Values.TEST},ou=People,o=Company,c=US,{c.DNs.EXAMPLE}", True),
+        (f"cn=test,ou=People,o=Company,c=US,{c.DNs.EXAMPLE}", True),
         ("", False),
         ("not a valid dn", False),
         (f"cn=,{c.DNs.EXAMPLE}", False),  # Empty values are invalid
     )
 
     NORMALIZATION_DATA: ClassVar[tuple[tuple[str, bool | None], ...]] = (
-        (f"CN={c.Values.ADMIN},DC=Example,DC=Com", True),
-        (f"cn={c.Values.TEST},{c.DNs.EXAMPLE}".upper(), True),
+        ("CN=REDACTED_LDAP_BIND_PASSWORD,DC=Example,DC=Com", True),
+        (f"cn=test,{c.DNs.EXAMPLE}".upper(), True),
         (
-            f"CN = {c.Values.ADMIN} , DC = Example , DC = Com",
+            "CN = REDACTED_LDAP_BIND_PASSWORD , DC = Example , DC = Com",
             None,
         ),  # Either success or failure
         ("invalid dn", False),
@@ -143,9 +143,9 @@ class TestsFlextLdifDnService(s):
         )
 
     @classmethod
-    def create_registry_with_dns(cls, *dns: str) -> m.DnRegistry:
+    def create_registry_with_dns(cls, *dns: str) -> m.Ldif.DnRegistry:
         """Factory method to create registry with multiple c.DNs."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         for dn in dns:
             registry.register_dn(dn)
         return registry
@@ -336,13 +336,13 @@ class TestsFlextLdifDnService(s):
 
     def test_register_dn(self) -> None:
         """Register DN and get canonical case."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         canonical = registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         assert canonical == f"CN={c.Values.ADMIN},DC=Example,DC=Com"
 
     def test_get_canonical_dn(self) -> None:
         """Get canonical DN for variant case."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         canonical = registry.get_canonical_dn(
             f"cn={c.Values.ADMIN.lower()},dc=example,dc=com",
@@ -351,14 +351,14 @@ class TestsFlextLdifDnService(s):
 
     def test_registry_has_dn(self) -> None:
         """Check if DN is registered."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         assert registry.has_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
         assert not registry.has_dn(f"cn=unknown,{c.DNs.EXAMPLE}")
 
     def test_registry_case_variants(self) -> None:
         """Get all case variants for DN."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         registry.register_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
         registry.register_dn(f"cn={c.Values.ADMIN.upper()},dc=EXAMPLE,dc=COM")
@@ -376,7 +376,7 @@ class TestsFlextLdifDnService(s):
         assert is_consistent
 
         # Test 2: Same DN registered with multiple case variants - inconsistent (False)
-        registry2 = m.DnRegistry()
+        registry2 = m.Ldif.DnRegistry()
         registry2.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         # Register the SAME DN with different case
         registry2.register_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
@@ -462,7 +462,7 @@ class TestsFlextLdifDnService(s):
             f"cn={c.Values.ADMIN.upper()},{c.DNs.EXAMPLE}",
         ]
 
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         for dn in source_dns:
             registry.register_dn(dn)
 

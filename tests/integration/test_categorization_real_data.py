@@ -16,13 +16,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdif, FlextLdifConstants
+from flext_ldif import FlextLdif
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 
 
 def _write_entry_to_file(
-    entry: m.Entry,
+    entry: m.Ldif.Entry,
     f: TextIO,
     output_content_lines: list[str],
     *,
@@ -66,12 +67,12 @@ def _write_categories_to_file(
 ) -> None:
     """Write categories to file."""
     categories = [
-        FlextLdifConstants.Categories.SCHEMA,
-        FlextLdifConstants.Categories.HIERARCHY,
-        FlextLdifConstants.Categories.USERS,
-        FlextLdifConstants.Categories.GROUPS,
-        FlextLdifConstants.Categories.ACL,
-        FlextLdifConstants.Categories.REJECTED,
+        c.Ldif.Categories.SCHEMA,
+        c.Ldif.Categories.HIERARCHY,
+        c.Ldif.Categories.USERS,
+        c.Ldif.Categories.GROUPS,
+        c.Ldif.Categories.ACL,
+        c.Ldif.Categories.REJECTED,
     ]
 
     for category in categories:
@@ -125,27 +126,27 @@ class TestCategorizationRealData:
 
         # Create entries that could cause false positives with substring matching
         entries = [
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="dc=example"),
                 attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
             ),
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="ou=users,dc=example"),
                 attributes=m.LdifAttributes(
                     attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="cn=user1,ou=users,dc=example"),
                 attributes=m.LdifAttributes(attributes={"objectClass": ["person"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="dc=example2"),
                 attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="ou=test,dc=example2"),
                 attributes=m.LdifAttributes(
                     attributes={"objectClass": ["organizationalUnit"]},
@@ -194,9 +195,9 @@ class TestCategorizationRealData:
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
 
         # Validate: Entries under base DN should be in correct categories
-        hierarchy = filtered.get_entries(FlextLdifConstants.Categories.HIERARCHY)
-        users = filtered.get_entries(FlextLdifConstants.Categories.USERS)
-        rejected = filtered.get_entries(FlextLdifConstants.Categories.REJECTED)
+        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get_entries(c.Ldif.Categories.USERS)
+        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
 
         # dc=example should be in hierarchy (not rejected)
         example_dns = [
@@ -253,27 +254,27 @@ class TestCategorizationRealData:
 
         # Create ACL entries that could cause false positives
         acl_entries = [
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="dc=example"),
                 attributes=m.LdifAttributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="ou=users,dc=example"),
                 attributes=m.LdifAttributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="dc=example2"),
                 attributes=m.LdifAttributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # System ACL (no base DN)
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value="cn=config"),
                 attributes=m.LdifAttributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
@@ -291,16 +292,16 @@ class TestCategorizationRealData:
         assert categories_result.is_success
 
         categories = categories_result.unwrap()
-        acl_category = categories.get_entries(FlextLdifConstants.Categories.ACL)
+        acl_category = categories.get_entries(c.Ldif.Categories.ACL)
 
         # Filter ACLs by base DN (simulating client-a-oud-mig logic)
-        acls_with_basedn: list[m.Entry] = []
-        acls_without_basedn: list[m.Entry] = []
+        acls_with_basedn: list[m.Ldif.Entry] = []
+        acls_without_basedn: list[m.Ldif.Entry] = []
 
         for entry in acl_category:
             dn_str = entry.dn.value if entry.dn else None
             # Use is_under_base for correct hierarchical check
-            if dn_str and FlextLdifUtilities.DN.is_under_base(dn_str, base_dn):
+            if dn_str and FlextLdifUtilities.Ldif.DN.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)
             else:
                 acls_without_basedn.append(entry)
@@ -457,9 +458,9 @@ ou: test
         )
 
         # Validate results
-        hierarchy = filtered.get_entries(FlextLdifConstants.Categories.HIERARCHY)
-        users = filtered.get_entries(FlextLdifConstants.Categories.USERS)
-        rejected = filtered.get_entries(FlextLdifConstants.Categories.REJECTED)
+        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get_entries(c.Ldif.Categories.USERS)
+        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
 
         # Entries under base DN should be categorized correctly
         assert len(hierarchy) >= 2, "Should have hierarchy entries under base DN"

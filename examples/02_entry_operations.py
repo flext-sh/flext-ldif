@@ -24,7 +24,7 @@ class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def intelligent_builders() -> r[list[m.Entry]]:
+    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
 
@@ -56,7 +56,7 @@ class DRYEntryOperations:
         ])
 
     @staticmethod
-    def advanced_filtering() -> r[list[m.Entry]]:
+    def advanced_filtering() -> r[list[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
 
@@ -68,18 +68,18 @@ class DRYEntryOperations:
         entries = entries_result.unwrap()
 
         # DRY filtering: department IT + valid email in one pipeline
-        filtered_it = api.filter(
+        filtered_it = api.filter_entries(
             entries,
-            custom_filter=lambda x: (
+            filter_func=lambda x: (
                 x.attributes is not None
                 and "IT" in x.attributes.get("departmentNumber", [])
             ),
         )
         if filtered_it.is_failure:
             return filtered_it
-        return api.filter(
+        return api.filter_entries(
             filtered_it.value,
-            custom_filter=lambda x: (
+            filter_func=lambda x: (
                 x.attributes is not None
                 and "@example.com"
                 in (

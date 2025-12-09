@@ -87,11 +87,11 @@ class TestsTestFlextLdifSorting(s):
         __test__ = False
 
         @staticmethod
-        def sort_predicate(entry: m.Entry) -> str:
+        def sort_predicate(entry: m.Ldif.Entry) -> str:
             """Extract DN value for sorting predicate."""
             return entry.dn.value if entry.dn else ""
 
-        def hierarchy_entries(self) -> list[m.Entry]:
+        def hierarchy_entries(self) -> list[m.Ldif.Entry]:
             """Create hierarchy test entries using factories and constants."""
             return [
                 self.create_entry(
@@ -125,7 +125,7 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
-        def schema_entries(self) -> list[m.Entry]:
+        def schema_entries(self) -> list[m.Ldif.Entry]:
             """Create schema test entries using factories."""
             return [
                 self.create_entry(
@@ -149,12 +149,12 @@ class TestsTestFlextLdifSorting(s):
         def execute_sort_operation(
             self,
             test_case: TestsTestFlextLdifSorting.TestCase,
-            entries: list[m.Entry],
-        ) -> FlextResult[list[m.Entry]]:
+            entries: list[m.Ldif.Entry],
+        ) -> FlextResult[list[m.Ldif.Entry]]:
             """Execute sort operation based on test case type using mapping."""
             operation_map: dict[
                 TestsTestFlextLdifSorting.TestType,
-                Callable[[], FlextResult[list[m.Entry]]],
+                Callable[[], FlextResult[list[m.Ldif.Entry]]],
             ] = {
                 TestsTestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
                     entries,
@@ -205,7 +205,7 @@ class TestsTestFlextLdifSorting(s):
         def verify_sort_behavior(
             self,
             test_case: TestsTestFlextLdifSorting.TestCase,
-            sorted_entries: list[m.Entry],
+            sorted_entries: list[m.Ldif.Entry],
         ) -> None:
             """Verify sort behavior based on test case type."""
             if (

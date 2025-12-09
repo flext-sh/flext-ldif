@@ -7,15 +7,20 @@ escaped characters and complex DN structures during write operations.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.services.dn import FlextLdifDn
-from tests import m
+from tests import m, s
 
 
 class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
     """Test Writer integration with DnService for DN normalization."""
+
+    writer: ClassVar[FlextLdifWriter]  # pytest fixture
+    dn_service: ClassVar[FlextLdifDn]  # pytest fixture
 
     @pytest.fixture
     def writer(self) -> FlextLdifWriter:
@@ -142,7 +147,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         normalized_dn = normalize_result.unwrap()
 
         # Create entry with normalized DN
-        entry = m.Entry(
+        entry = m.Ldif.Entry(
             dn=m.DistinguishedName(value=normalized_dn),
             attributes=m.LdifAttributes(
                 attributes={

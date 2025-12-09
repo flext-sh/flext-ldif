@@ -8,18 +8,43 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, TypedDict, cast
 
 import pytest
+from tests import c, s
 
-from flext_ldif import FlextLdif, FlextLdifConstants
+from flext_ldif import FlextLdif
+from flext_ldif.constants import c as lib_c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import s
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
-from .fixtures.general_constants import TestGeneralConstants
-from .fixtures.rfc_constants import TestsRfcConstants
+
+
+class SchemaAttributeDict(TypedDict):
+    """TypedDict for schema attribute test data."""
+
+    oid: str
+    name: str
+    desc: str | None
+    syntax: str | None
+    single_value: bool | None
+
+
+class ObjectClassDict(TypedDict):
+    """TypedDict for object class test data."""
+
+    oid: str
+    name: str
+    must_contain: list[str] | None
+    may_contain: list[str] | None
+
+
+class EntryDataDict(TypedDict):
+    """TypedDict for entry test data."""
+
+    dn: str
+    attributes: dict[str, list[str]]
 
 
 class FixtureType(StrEnum):
@@ -46,8 +71,15 @@ class TestsFlextLdifRfcQuirks(s):
     - Fixture parsing and roundtrip validation
     - Schema/ACL/Entry quirk method testing
     - Constants validation
-    - Coverage for edge cases
     """
+
+    # Pytest fixtures with ClassVar annotations
+    api: ClassVar[FlextLdif]  # pytest fixture
+    rfc_quirk: ClassVar[FlextLdifServersRfc]  # pytest fixture
+    schema_quirk: ClassVar[FlextLdifServersRfc.Schema]  # pytest fixture
+    acl_quirk: ClassVar[FlextLdifServersRfc.Acl]  # pytest fixture
+    entry_quirk: ClassVar[FlextLdifServersRfc.Entry]  # pytest fixture
+    # Coverage for edge cases
 
     # =========================================================================
     # TEST DATA - ClassVars for parametrized tests
@@ -62,7 +94,7 @@ class TestsFlextLdifRfcQuirks(s):
 
     # Constants validation data: (attr_name, expected_value)
     CONSTANTS_DATA: ClassVar[dict[str, tuple[str, object]]] = {
-        "server_type": ("SERVER_TYPE", FlextLdifConstants.ServerTypes.RFC),
+        "server_type": ("SERVER_TYPE", lib_c.Ldif.ServerTypes.RFC),
         "priority": ("PRIORITY", 100),
         "canonical_name": ("CANONICAL_NAME", "rfc"),
         "default_port": ("DEFAULT_PORT", 389),
@@ -70,23 +102,23 @@ class TestsFlextLdifRfcQuirks(s):
         "default_page_size": ("DEFAULT_PAGE_SIZE", 1000),
         "acl_format": ("ACL_FORMAT", "rfc_generic"),
         "acl_attribute": ("ACL_ATTRIBUTE_NAME", "aci"),
-        "schema_dn": ("SCHEMA_DN", TestsRfcConstants.SCHEMA_DN_SCHEMA),
+        "schema_dn": ("SCHEMA_DN", c.Rfc.SCHEMA_DN_SCHEMA),
         "sup_separator": ("SCHEMA_SUP_SEPARATOR", "$"),
     }
 
     # Schema attribute test data for write operations
     SCHEMA_WRITE_SCENARIOS: ClassVar[dict[str, SchemaAttributeDict]] = {
         "basic": {
-            "oid": TestsRfcConstants.ATTR_OID_CN,
-            "name": TestsRfcConstants.ATTR_NAME_CN,
+            "oid": c.Rfc.ATTR_OID_CN,
+            "name": c.Rfc.ATTR_NAME_CN,
             "must_contain": [
-                TestsRfcConstants.ATTR_OID_CN,
-                TestsRfcConstants.ATTR_NAME_CN,
+                c.Rfc.ATTR_OID_CN,
+                c.Rfc.ATTR_NAME_CN,
             ],
         },
         "with_flags": {
-            "oid": TestsRfcConstants.ATTR_OID_CN,
-            "name": TestsRfcConstants.ATTR_NAME_CN,
+            "oid": c.Rfc.ATTR_OID_CN,
+            "name": c.Rfc.ATTR_NAME_CN,
             "single_value": True,
             "must_contain": ["SINGLE-VALUE"],
         },
@@ -95,11 +127,11 @@ class TestsFlextLdifRfcQuirks(s):
     # ObjectClass write test data
     OBJECTCLASS_WRITE_SCENARIOS: ClassVar[dict[str, ObjectClassDict]] = {
         "basic": {
-            "oid": TestsRfcConstants.OC_OID_PERSON,
-            "name": TestsRfcConstants.OC_NAME_PERSON,
+            "oid": c.Rfc.OC_OID_PERSON,
+            "name": c.Rfc.OC_NAME_PERSON,
             "must_contain": [
-                TestsRfcConstants.OC_OID_PERSON,
-                TestsRfcConstants.OC_NAME_PERSON,
+                c.Rfc.OC_OID_PERSON,
+                c.Rfc.OC_NAME_PERSON,
             ],
         },
     }
@@ -178,9 +210,9 @@ class TestsFlextLdifRfcQuirks(s):
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Create Entry model from dict."""
-        result = m.Entry.create(dn=dn, attributes=attributes)
+        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
         return result.unwrap()
 
     # =========================================================================
@@ -298,16 +330,16 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_attribute with string."""
-        assert schema_quirk.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN) is True
+        assert schema_quirk.can_handle_attribute(c.Rfc.ATTR_DEF_CN) is True
 
     def test_schema_can_handle_attribute_model(
         self,
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_attribute with model."""
-        attr = m.SchemaAttribute(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+        attr = m.Ldif.SchemaAttribute(
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
         assert schema_quirk.can_handle_attribute(attr) is True
 
@@ -316,18 +348,16 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_objectclass with string."""
-        assert (
-            schema_quirk.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON) is True
-        )
+        assert schema_quirk.can_handle_objectclass(c.Rfc.OC_DEF_PERSON) is True
 
     def test_schema_can_handle_objectclass_model(
         self,
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_objectclass with model."""
-        oc = m.SchemaObjectClass(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+        oc = m.Ldif.SchemaObjectClass(
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
         assert schema_quirk.can_handle_objectclass(oc) is True
 
@@ -337,12 +367,12 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._parse_attribute."""
-        result = schema_quirk._parse_attribute(TestsRfcConstants.ATTR_DEF_CN_COMPLETE)
+        result = schema_quirk._parse_attribute(c.Rfc.ATTR_DEF_CN_COMPLETE)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, m.SchemaAttribute)
-        assert attr.oid == TestsRfcConstants.ATTR_OID_CN
-        assert attr.name == TestsRfcConstants.ATTR_NAME_CN
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
+        assert attr.oid == c.Rfc.ATTR_OID_CN
+        assert attr.name == c.Rfc.ATTR_NAME_CN
 
     @pytest.mark.timeout(5)
     def test_schema_parse_objectclass(
@@ -350,12 +380,12 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._parse_objectclass."""
-        result = schema_quirk._parse_objectclass(TestsRfcConstants.OC_DEF_PERSON_FULL)
+        result = schema_quirk._parse_objectclass(c.Rfc.OC_DEF_PERSON_FULL)
         assert result.is_success
         oc = result.unwrap()
-        assert isinstance(oc, m.SchemaObjectClass)
-        assert oc.oid == TestsRfcConstants.OC_OID_PERSON
-        assert oc.name == TestsRfcConstants.OC_NAME_PERSON
+        assert isinstance(oc, m.Ldif.SchemaObjectClass)
+        assert oc.oid == c.Rfc.OC_OID_PERSON
+        assert oc.name == c.Rfc.OC_NAME_PERSON
 
     @pytest.mark.timeout(5)
     @pytest.mark.parametrize(
@@ -370,7 +400,7 @@ class TestsFlextLdifRfcQuirks(s):
         data: SchemaAttributeDict,
     ) -> None:
         """Parametrized test for Schema._write_attribute."""
-        attr = m.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=str(data["oid"]),
             name=str(data["name"]),
             single_value=bool(data.get("single_value")),
@@ -396,7 +426,7 @@ class TestsFlextLdifRfcQuirks(s):
         data: ObjectClassDict,
     ) -> None:
         """Parametrized test for Schema._write_objectclass."""
-        oc = m.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=str(data["oid"]),
             name=str(data["name"]),
         )
@@ -413,9 +443,9 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.should_filter_out_attribute returns bool."""
-        attr = m.SchemaAttribute(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+        attr = m.Ldif.SchemaAttribute(
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
         result = schema_quirk.should_filter_out_attribute(attr)
         assert isinstance(result, bool)
@@ -425,9 +455,9 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.should_filter_out_objectclass returns bool."""
-        oc = m.SchemaObjectClass(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+        oc = m.Ldif.SchemaObjectClass(
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
         result = schema_quirk.should_filter_out_objectclass(oc)
         assert isinstance(result, bool)
@@ -448,7 +478,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.can_handle_acl with model."""
-        acl = m.Acl(raw_acl="test: acl", server_type="rfc")
+        acl = m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
         assert acl_quirk.can_handle_acl(acl) is True
 
     @pytest.mark.timeout(5)
@@ -518,10 +548,10 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Entry.can_handle."""
         assert (
             entry_quirk.can_handle(
-                TestGeneralConstants.SAMPLE_DN,
+                c.General.SAMPLE_DN,
                 {
-                    TestGeneralConstants.ATTR_NAME_CN: [
-                        TestGeneralConstants.ATTR_VALUE_TEST,
+                    c.General.ATTR_NAME_CN: [
+                        c.General.ATTR_VALUE_TEST,
                     ],
                 },
             )
@@ -587,7 +617,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Entry.can_handle_entry with empty dn returns False (RFC requires DN)."""
         # RFC baseline requires valid DN for entries
-        entry = m.Entry.create(
+        entry = m.Ldif.Entry.create(
             dn="",
             attributes={"objectClass": ["person"], "cn": ["test"]},
         ).unwrap()
@@ -628,7 +658,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._write_attribute with invalid type returns failure."""
         # Pass invalid type directly - test expects failure (runtime validation)
         # Cast used because we're testing runtime type validation intentionally
-        invalid_attr = cast("m.SchemaAttribute", "not an attribute")
+        invalid_attr = cast("m.Ldif.SchemaAttribute", "not an attribute")
         result = schema_quirk._write_attribute(invalid_attr)
         assert result.is_failure
 
@@ -638,7 +668,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema._write_objectclass with invalid type returns failure."""
         # Cast used because we're testing runtime type validation intentionally
-        invalid_oc = cast("m.SchemaObjectClass", "not an objectclass")
+        invalid_oc = cast("m.Ldif.SchemaObjectClass", "not an objectclass")
         result = schema_quirk._write_objectclass(invalid_oc)
         assert result.is_failure
 
@@ -656,10 +686,10 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with X-ORIGIN in metadata."""
-        attr = m.SchemaAttribute(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
-            metadata=m.QuirkMetadata(
+        attr = m.Ldif.SchemaAttribute(
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
+            metadata=m.Ldif.QuirkMetadata(
                 quirk_type="rfc",
                 extensions={"x_origin": "test-origin"},
             ),
@@ -675,10 +705,10 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_objectclass with X-ORIGIN in metadata."""
-        oc = m.SchemaObjectClass(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
-            metadata=m.QuirkMetadata(
+        oc = m.Ldif.SchemaObjectClass(
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
+            metadata=m.Ldif.QuirkMetadata(
                 quirk_type="rfc",
                 extensions={"x_origin": "test-origin"},
             ),
@@ -694,7 +724,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._write_acl with raw_acl."""
-        acl = m.Acl(raw_acl="aci: test acl value", server_type="rfc")
+        acl = m.Ldif.Acl(raw_acl="aci: test acl value", server_type="rfc")
         result = acl_quirk._write_acl(acl)
         assert result.is_success
         written = result.unwrap()
@@ -737,10 +767,10 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema auto-execute for attribute parsing."""
         # Test parse_attribute public method
-        result = schema_quirk.parse_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
         attr = result.unwrap()
-        assert attr.name == TestsRfcConstants.ATTR_NAME_CN
+        assert attr.name == c.Rfc.ATTR_NAME_CN
 
     def test_schema_auto_execute_objectclass(
         self,
@@ -748,7 +778,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema auto-execute for objectClass parsing."""
         # Test parse_objectclass public method
-        result = schema_quirk.parse_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema_quirk.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
         oc = result.unwrap()
-        assert oc.name == TestsRfcConstants.OC_NAME_PERSON
+        assert oc.name == c.Rfc.OC_NAME_PERSON

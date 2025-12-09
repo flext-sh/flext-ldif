@@ -15,16 +15,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from itertools import starmap
-from typing import TYPE_CHECKING
 
 from flext_tests import s as flext_tests_s
 
 from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class FlextLdifTestsServiceBase(flext_tests_s):
@@ -54,7 +51,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
@@ -62,7 +59,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
             attributes: Dictionary of attribute names to values
 
         Returns:
-            m.Entry: Real Entry instance
+            m.Ldif.Entry: Real Entry instance
 
         Raises:
             AssertionError: If entry creation fails
@@ -78,14 +75,14 @@ class FlextLdifTestsServiceBase(flext_tests_s):
     def create_entries(
         self,
         entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:
             entries_data: Sequence of (dn, attributes) tuples
 
         Returns:
-            list[m.Entry]: List of real Entry instances
+            list[m.Ldif.Entry]: List of real Entry instances
 
         """
         return list(starmap(self.create_entry, entries_data))

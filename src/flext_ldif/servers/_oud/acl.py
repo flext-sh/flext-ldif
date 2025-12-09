@@ -10,35 +10,19 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.constants import c
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-
-# Lazy import to avoid circular dependency - use _get_utilities() function
-
-
-def _get_utilities() -> type[object]:
-    """Lazy import of FlextLdifUtilities to avoid circular dependency.
-
-    Returns:
-        FlextLdifUtilities class type
-
-    """
-    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
-
-    return FlextLdifUtilities
-
-
-if TYPE_CHECKING:
-    from flext_ldif.services.acl import FlextLdifAcl
 
 logger = FlextLogger(__name__)
 
@@ -198,14 +182,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def __init__(
         self,
-        acl_service: FlextLdifAcl | None = None,
-        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        acl_service: object | None = None,
+        _parent_quirk: object | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk.
 
         Args:
-            acl_service: Injected FlextLdifAcl service (optional)
+            acl_service: Injected ACL service (optional, must satisfy HasParseMethodProtocol)
             _parent_quirk: Reference to parent quirk (optional, must satisfy ParentQuirkProtocol)
             **kwargs: Additional arguments passed to parent
 
@@ -221,17 +205,15 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         }
         # Business Rule: Acl.__init__ accepts acl_service and _parent_quirk
         # Cast acl_service to HasParseMethodProtocol for type compatibility
-        acl_service_typed: p.Ldif.Services.HasParseMethodProtocol | None = (
-            cast("p.Ldif.Services.HasParseMethodProtocol", acl_service)
-            if acl_service is not None
-            else None
+
+        acl_service_typed: object | None = (
+            acl_service if acl_service is not None else None
         )
         # Call base class __init__ directly to avoid mypy inference issues through nested class
         # Business Rule: _parent_quirk must satisfy ParentQuirkProtocol
-        parent_quirk_typed: p.Ldif.Quirks.ParentQuirkProtocol | None = (
-            cast("p.Ldif.Quirks.ParentQuirkProtocol", _parent_quirk)
-            if _parent_quirk is not None
-            else None
+
+        parent_quirk_typed: object | None = (
+            _parent_quirk if _parent_quirk is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
             self,
@@ -246,7 +228,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     # AclConverter was moved to services/acl.py as FlextLdifAcl
     # Use FlextLdifAcl for ACL format conversions (RFC → server-specific format)
 
-    def can_handle(self, acl_line: t.AclOrString) -> bool:
+    def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
         """Check if this is an Oracle OUD ACL (public method).
 
         Args:
@@ -256,11 +238,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             True if this is Oracle OUD ACL format
 
         """
-        # Type narrowing: t.AclOrString is str | m.Ldif.Acl, compatible with can_handle_acl signature
+        # Type narrowing: t.Ldif.AclOrString is str | FlextLdifModelsDomains.Acl, compatible with can_handle_acl signature
         # Use cast to ensure type checker knows it's compatible
-        return self.can_handle_acl(cast("str | m.Ldif.Acl", acl_line))
+        return self.can_handle_acl(cast("str | FlextLdifModelsDomains.Acl", acl_line))
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
 
         RFC vs OUD Behavior Differences
@@ -300,8 +282,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """
         # Handle Acl model: check metadata quirk type or attribute name
         if not isinstance(acl_line, str):
-            # Type narrowing: acl_line is m.Ldif.Acl
-            if isinstance(acl_line, m.Ldif.Acl):
+            # Type narrowing: acl_line is FlextLdifModelsDomains.Acl
+            if isinstance(acl_line, FlextLdifModelsDomains.Acl):
                 # Check metadata quirk type
                 if (
                     acl_line.metadata
@@ -311,9 +293,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     return str(acl_line.metadata.quirk_type) == self._get_server_type()
                 # Check name attribute
                 if hasattr(acl_line, "name") and acl_line.name:
-                    return u.Schema.normalize_attribute_name(
+                    return FlextLdifUtilitiesSchema.normalize_attribute_name(
                         acl_line.name,
-                    ) == u.Schema.normalize_attribute_name(
+                    ) == FlextLdifUtilitiesSchema.normalize_attribute_name(
                         FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
                     )
             return False
@@ -344,7 +326,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             pattern in normalized_lower for pattern in ["access to", "(", ")", "=", ":"]
         )
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model.
 
         RFC vs OUD Behavior Differences
@@ -421,7 +403,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """
         # Type guard: ensure acl_line is a string
         if not isinstance(acl_line, str):
-            return FlextResult[m.Ldif.Acl].fail(
+            return FlextResult[FlextLdifModelsDomains.Acl].fail(
                 f"ACL line must be a string, got {type(acl_line).__name__}",
             )
         normalized = acl_line.strip()
@@ -447,7 +429,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         # OUD-specific simple privilege names (config-read, password-reset, etc.)
         return self._parse_ds_privilege_name(normalized)
 
-    def _parse_aci_format(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def _parse_aci_format(
+        self, acl_line: str
+    ) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific config.
 
         RFC vs OUD Behavior Differences
@@ -498,12 +482,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         **MetadataKeys** (stored in ``metadata.extensions``):
 
-        - Extensions follow ``c.Ldif.MetadataKeys.ACL_*`` pattern
+        - Extensions follow direct string key pattern (e.g., "acl_bind_timeofday")
         - OUD-specific: bind_timeofday, ssf, bind_ip, bind_dns, bind_dayofweek
 
         **Utilities Used**:
 
-        - ``u.ACL.parse_aci()`` - Core ACI parsing
+        - ``FlextLdifUtilitiesACL.parse_aci()`` - Core ACI parsing
         - ``FlextLdifServersOudConstants.get_parser_config()`` - OUD parser config
 
         **RFC Override**: This method extends RFC behavior (RFC has no ACI parser).
@@ -522,10 +506,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         config_raw = FlextLdifServersOudConstants.get_parser_config()
         # Ensure config is m.AciParserConfig (public facade)
         # Business Rule: get_parser_config returns FlextLdifModelsConfig.AciParserConfig
-        # but parse_aci expects m.AciParserConfig
+        # but parse_aci expects m.Ldif.AciParserConfig
         config_dict = config_raw.model_dump()
-        config = m.AciParserConfig.model_validate(config_dict)
-        result = u.ACL.parse_aci(acl_line, config)
+        config = m.Ldif.AciParserConfig.model_validate(config_dict)
+        result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
 
         if not result.is_success:
             return result
@@ -547,27 +531,25 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             aci_content,
         )
         if timeofday_match:
-            extensions[c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY] = (
+            extensions["acl_bind_timeofday"] = (
                 f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
             )
 
         # Handle SSF (captures operator + value)
-        # Uses c.Ldif.MetadataKeys.ACL_SSF for consistency
+        # Use direct string key for SSF
         ssf_match = re.search(
             FlextLdifServersOudConstants.ACL_SSF_PATTERN,
             aci_content,
         )
         if ssf_match:
-            extensions[c.Ldif.MetadataKeys.ACL_SSF] = (
-                f"{ssf_match.group(1)}{ssf_match.group(2)}"
-            )
+            extensions["acl_ssf"] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
 
         # Always update metadata to ensure extensions are preserved
         # (even if timeofday/ssf weren't found, we need to preserve parse_aci extensions)
         # Business Rule: config.server_type must be valid ServerTypeLiteral
         # Implication: Type narrowing required - config is AciParserConfig with server_type field
         server_type_value = config.server_type if config else "oud"
-        new_metadata = m.QuirkMetadata.create_for(
+        new_metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             server_type_value,
             extensions=extensions,
         )
@@ -575,12 +557,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         update_dict: dict[str, Any] = {"metadata": new_metadata}
         acl = acl.model_copy(update=update_dict)
 
-        return FlextResult[m.Ldif.Acl].ok(acl)
+        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
 
     def _parse_ds_privilege_name(
         self,
         privilege_name: str,
-    ) -> FlextResult[m.Ldif.Acl]:
+    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names).
 
         RFC vs OUD Behavior Differences
@@ -653,8 +635,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         **Model Factory**:
 
-        - Uses ``m.Ldif.Acl()`` directly with minimal fields
-        - Uses ``m.QuirkMetadata()`` for server-specific metadata
+        - Uses ``FlextLdifModelsDomains.Acl()`` directly with minimal fields
+        - Uses ``FlextLdifModelsDomains.QuirkMetadata()`` for server-specific metadata
 
         **RFC Override**: This is OUD-only (RFC has no ds-privilege-name concept).
 
@@ -671,7 +653,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         try:
             # Build minimal ACL model for ds-privilege-name
             # This format doesn't have traditional target/subject/permissions
-            acl_model = m.Ldif.Acl(
+            acl_model = FlextLdifModelsDomains.Acl(
                 name=privilege_name,  # Use privilege name as ACL name
                 target=None,  # No target in ds-privilege-name format
                 subject=None,  # No subject in ds-privilege-name format
@@ -680,9 +662,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 raw_line=privilege_name,  # Original line
                 raw_acl=privilege_name,  # Raw ACL string
                 validation_violations=[],  # No validation issues
-                metadata=m.QuirkMetadata(
+                metadata=FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=FlextLdifServersOudConstants.SERVER_TYPE,  # OUD quirk type from Constants
-                    extensions=m.DynamicMetadata(**{
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**{
                         # Use Constants for metadata keys instead of hardcoded strings
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
                         FlextLdifServersOudConstants.FORMAT_TYPE_KEY: (
@@ -692,17 +674,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 ),
             )
 
-            return FlextResult[m.Ldif.Acl].ok(acl_model)
+            return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_model)
 
         except Exception as e:
             logger.exception(
                 "Failed to parse OUD ds-privilege-name",
             )
-            return FlextResult[m.Ldif.Acl].fail(
+            return FlextResult[FlextLdifModelsDomains.Acl].fail(
                 f"Failed to parse OUD ds-privilege-name: {e}",
             )
 
-    def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
+    def _should_use_raw_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
         Args:
@@ -723,7 +705,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudConstants.ACL_ACI_PREFIX,
         )
 
-    def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_target(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI target clause from ACL model.
 
         RFC vs OUD Behavior Differences
@@ -760,11 +742,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         """
         # Extract target from model or metadata
-        # Type narrowing: acl_data is m.Ldif.Acl
+        # Type narrowing: acl_data is FlextLdifModelsDomains.Acl
         target = acl_data.target
         if not target and acl_data.metadata:
-            # Type narrowing: acl_data.metadata is m.QuirkMetadata
-            # Business Rule: extensions is m.DynamicMetadata which has dict-like interface
+            # Type narrowing: acl_data.metadata is FlextLdifModelsDomains.QuirkMetadata
+            # Business Rule: extensions is FlextLdifModelsMetadata.DynamicMetadata which has dict-like interface
             extensions = acl_data.metadata.extensions
             target_dict = (
                 extensions.get("acl_target_target")
@@ -800,13 +782,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     else []
                 )
                 dn: str = str(dn_raw) if isinstance(dn_raw, str) else "*"
-                target = m.AclTarget(
+                target = m.Ldif.AclTarget(
                     target_dn=dn,
                     attributes=attrs,
                 )
 
         # CONSOLIDATED: Use utility for formatting
-        return u.ACL.build_aci_target_clause(
+        return FlextLdifUtilitiesACL.build_aci_target_clause(
             target_attributes=target.attributes if target else None,
             target_dn=target.target_dn if target else None,
             separator=" || ",
@@ -814,7 +796,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _build_aci_permissions(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: FlextLdifModelsDomains.Acl,
     ) -> FlextResult[str]:
         """Build ACI permissions clause from ACL model.
 
@@ -873,7 +855,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not perms and acl_data.metadata:
             # Reconstruct permissions from ACL_TARGET_PERMISSIONS metadata
             # This is set during conversion from source server (e.g., OID→OUD)
-            # Type narrowing: acl_data.metadata is m.QuirkMetadata
+            # Type narrowing: acl_data.metadata is FlextLdifModelsDomains.QuirkMetadata
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
                 extensions.get("acl_target_permissions")
@@ -896,7 +878,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 # Filter to only MetadataAttributeValue-compatible types
 
                 perms_data = cast(
-                    "t.MetadataDictMutable",
+                    "t.Ldif.MetadataDictMutable",
                     {
                         k: v
                         for k, v in (
@@ -912,7 +894,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 perms_data = {}
             # Extract boolean fields with type guards - only use fields that exist in AclPermissions
             if perms_data:
-                perms = m.Ldif.AclPermissions(
+                perms = FlextLdifModelsDomains.AclPermissions(
                     read=bool(perms_data.get("read")),
                     write=bool(perms_data.get("write")),
                     add=bool(perms_data.get("add")),
@@ -953,13 +935,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         normalized_ops = [permission_normalization.get(op, op) for op in ops]
 
         # Filter to only OUD-supported rights using utility
-        filtered_ops = u.ACL.filter_supported_permissions(
+        filtered_ops = FlextLdifUtilitiesACL.filter_supported_permissions(
             normalized_ops,
             FlextLdifServersOudConstants.SUPPORTED_PERMISSIONS,
         )
 
         # Check metadata bridge for self_write promotion
-        # Type narrowing: acl_data.metadata is m.QuirkMetadata | None
+        # Type narrowing: acl_data.metadata is FlextLdifModelsDomains.QuirkMetadata | None
         extensions = acl_data.metadata.extensions if acl_data.metadata else None
         if (
             extensions
@@ -982,7 +964,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _extract_and_resolve_acl_subject(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: FlextLdifModelsDomains.Acl,
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass.
 
@@ -991,23 +973,19 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         """
         # Extract metadata with type guards in compact form
-        # Type narrowing: acl_data is m.Ldif.Acl
+        # Type narrowing: acl_data is FlextLdifModelsDomains.Acl
         ext = acl_data.metadata.extensions if acl_data.metadata else None
-        base_dn = (
-            (
-                base_dn_val
-                if isinstance(base_dn_val := ext.get("base_dn"), str)
-                else None
-            )
-            if ext
-            else None
-        )
+        if ext:
+            base_dn_raw = ext.get("base_dn")
+            base_dn = base_dn_raw if isinstance(base_dn_raw, str) else None
+        else:
+            base_dn = None
         source_subject_type = (
             (
                 sst
                 if isinstance(
                     sst := ext.get(
-                        c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE,
+                        "acl_source_subject_type",
                     ),
                     str,
                 )
@@ -1051,7 +1029,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if ext
             and isinstance(
                 sv := ext.get(
-                    c.Ldif.MetadataKeys.ACL_ORIGINAL_SUBJECT_VALUE,
+                    "acl_original_subject_value",
                 ),
                 str,
             )
@@ -1066,7 +1044,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
         return base_dn, subject_type, subject_value
 
-    def _build_aci_subject(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_subject(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI bind rules (subject) clause from ACL model.
 
         RFC vs OUD Behavior Differences
@@ -1165,13 +1143,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             subject_type,
             "userdn",
         )
-        return u.ACL.format_aci_subject(
+        return FlextLdifUtilitiesACL.format_aci_subject(
             subject_type,
             filtered_value,
             bind_operator,
         )
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method).
 
         This is the server-specific ACL serialization implementation for Oracle Unified Directory (OUD).
@@ -1244,11 +1222,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextResult with OUD ACI formatted string including conversion comments
 
         Example:
-            >>> acl = m.Ldif.Acl(
+            >>> acl = FlextLdifModelsDomains.Acl(
             ...     name="Allow Self Read",
-            ...     target=m.AclTarget(attributes=["cn", "sn"]),
-            ...     permissions=m.Ldif.AclPermissions(read=True, search=True),
-            ...     subject=m.AclSubject(subject_type="self"),
+            ...     target=m.Ldif.AclTarget(attributes=["cn", "sn"]),
+            ...     permissions=FlextLdifModelsDomains.AclPermissions(
+            ...         read=True, search=True
+            ...     ),
+            ...     subject=m.Ldif.AclSubject(subject_type="self"),
             ... )
             >>> result = oud_acl._write_acl(acl)
             >>> # Output: 'aci: (targetattr="cn || sn")(version 3.0; acl "Allow Self Read"; allow (read,search) userdn="ldap:///self";)'
@@ -1268,11 +1248,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             )
 
             # CONSOLIDATED: Conversion comments via utility (DRY)
-            # Use c.MetadataKeys for standardized key names (from flext_ldif.constants)
-            aci_output_lines = u.ACL.format_conversion_comments(
+            # Use direct string keys for standardized metadata
+            aci_output_lines = FlextLdifUtilitiesACL.format_conversion_comments(
                 extensions,
-                c.Ldif.MetadataKeys.CONVERTED_FROM_SERVER,
-                c.Ldif.MetadataKeys.CONVERSION_COMMENTS,
+                "converted_from_server",
+                "conversion_comments",
             )
 
             # Check if we should use raw_acl as-is
@@ -1285,7 +1265,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
             # CONSOLIDATED: Target extensions via utility (DRY)
             aci_parts.extend(
-                u.ACL.extract_target_extensions(
+                FlextLdifUtilitiesACL.extract_target_extensions(
                     extensions,
                     sc.ACL_TARGET_EXTENSIONS_CONFIG,
                 ),
@@ -1306,7 +1286,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 return FlextResult[str].fail("ACL subject DN was filtered out")
 
             # CONSOLIDATED: Bind rules via utility (DRY)
-            bind_rules = u.ACL.extract_bind_rules_from_extensions(
+            bind_rules = FlextLdifUtilitiesACL.extract_bind_rules_from_extensions(
                 extensions,
                 sc.ACL_BIND_RULES_CONFIG,
                 tuple_length=sc.ACL_BIND_RULE_TUPLE_LENGTH,
@@ -1364,7 +1344,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _finalize_aci(
         self,
         current_aci: list[str],
-        acls: list[m.Ldif.Acl],
+        acls: list[FlextLdifModelsDomains.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list.
 

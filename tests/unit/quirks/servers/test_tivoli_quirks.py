@@ -10,11 +10,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import s
 
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-from tests import s
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EXTERNAL ENUMS (outside class)
@@ -430,7 +430,7 @@ class TestsTestFlextLdifTivoliQuirks(s):
         """Test Tivoli entry detection by various patterns."""
         # Reconstruct with proper typing for Entry.create
         typed_attributes: dict[str, str | list[str]] = dict(attributes.items())
-        entry_result = m.Entry.create(
+        entry_result = m.Ldif.Entry.create(
             dn=dn,
             attributes=typed_attributes,
         )

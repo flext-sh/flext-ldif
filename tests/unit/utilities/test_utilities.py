@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 from enum import StrEnum
+from typing import ClassVar
 
 import pytest
 from tests import s
@@ -24,6 +25,9 @@ class TestsTestFlextLdifServiceAPIs(s):
     Tests service instantiation and import availability using parametrized tests
     and nested class organization for better code organization.
     """
+
+    dn_service: ClassVar[FlextLdifDn]  # pytest fixture
+    statistics_service: ClassVar[FlextLdifStatistics]  # pytest fixture
 
     class ServiceType(StrEnum):
         """Service instantiation test scenarios organized as nested enum."""
@@ -53,48 +57,48 @@ class TestsTestFlextLdifServiceAPIs(s):
 
         @staticmethod
         def get_service(
-            service_type: TestFlextLdifServiceAPIs.ServiceType,
+            service_type: TestsTestFlextLdifServiceAPIs.ServiceType,
             dn_service: FlextLdifDn,
             statistics_service: FlextLdifStatistics,
         ) -> FlextLdifDn | FlextLdifStatistics:
             """Get service instance based on type."""
-            if service_type == TestFlextLdifServiceAPIs.ServiceType.DN_SERVICE:
+            if service_type == TestsTestFlextLdifServiceAPIs.ServiceType.DN_SERVICE:
                 return dn_service
             return statistics_service
 
         @staticmethod
         def verify_import(
-            check_type: TestFlextLdifServiceAPIs.ImportCheck,
+            check_type: TestsTestFlextLdifServiceAPIs.ImportCheck,
             check_target: str,
         ) -> None:
             """Verify import availability based on check type."""
             match check_type:
-                case TestFlextLdifServiceAPIs.ImportCheck.MODELS:
+                case TestsTestFlextLdifServiceAPIs.ImportCheck.MODELS:
                     assert FlextLdifModels is not None, (
                         "FlextLdifModels should be available"
                     )
-                case TestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
+                case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
                     assert hasattr(
                         FlextLdifConstants,
                         check_target,
                     ), f"FlextLdifConstants should have {check_target}"
-                case TestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
+                case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     assert spec is not None, f"Module {check_target} should exist"
-                case TestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
+                case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
                     assert hasattr(
                         services,
-                        TestFlextLdifServiceAPIs.Constants.SERVICE_DN,
+                        TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN,
                     ), (
-                        f"services should have {TestFlextLdifServiceAPIs.Constants.SERVICE_DN}"
+                        f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN}"
                     )
                     assert hasattr(
                         services,
-                        TestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS,
+                        TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS,
                     ), (
-                        f"services should have {TestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS}"
+                        f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS}"
                     )
-                case TestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
+                case TestsTestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
                     config = FlextLdifConfig()
                     assert config is not None, "FlextLdifConfig should instantiate"
 

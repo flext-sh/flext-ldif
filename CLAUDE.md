@@ -1,6 +1,75 @@
-# FLEXT-LDIF Project Guidelines
+# flext-ldif - FLEXT LDIF Processing
 
-**Reference**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and general rules.
+**Hierarchy**: PROJECT
+**Parent**: [../CLAUDE.md](../CLAUDE.md) - Workspace standards
+**Last Update**: 2025-12-08
+
+---
+
+## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
+
+### Module Import Hierarchy (MANDATORY)
+
+**ABSOLUTELY FORBIDDEN IMPORT PATTERNS**:
+
+```
+NEVER IMPORT (regardless of method - direct, lazy, function-local, proxy):
+
+Foundation Modules (_models/*.py, _utilities/*.py, models.py, protocols.py, utilities.py, typings.py, constants.py):
+  ❌ NEVER import services/*.py
+  ❌ NEVER import servers/*.py
+  ❌ NEVER import api.py
+
+Infrastructure Modules (servers/*.py):
+  ❌ NEVER import services/*.py
+  ❌ NEVER import api.py
+```
+
+**CORRECT ARCHITECTURE LAYERING**:
+
+```
+Tier 0 - Foundation (ZERO internal dependencies):
+  ├── constants.py    # FlextLdifConstants
+  ├── typings.py      # FlextLdifTypes
+  └── protocols.py    # FlextLdifProtocols
+
+Tier 1 - Domain Foundation:
+  ├── _models/*.py    # Internal domain models
+  ├── models.py       # FlextLdifModels facade → _models/*, constants, typings, protocols
+  ├── _utilities/*.py # Internal utilities
+  └── utilities.py    # FlextLdifUtilities facade → _utilities/*, models, constants
+
+Tier 2 - Infrastructure:
+  └── servers/*.py    # Server implementations → Tier 0, Tier 1 only
+                      # NEVER import services/, api.py
+
+Tier 3 - Application (Top Layer):
+  ├── services/*.py   # Business logic → All lower tiers
+  └── api.py          # FlextLdif facade → All lower tiers
+```
+
+**WHY THIS MATTERS**:
+- Circular imports cause runtime failures
+- Lazy imports are a band-aid, not a solution
+- Proper layering ensures testability and maintainability
+- Each tier only depends on lower tiers, NEVER on higher tiers
+
+---
+
+### Architecture Violation Quick Check
+
+**Run before committing:**
+```bash
+# Quick check for this project
+grep -rEn "(from flext_.*\.(services|api) import)" \
+  src/*/models.py src/*/protocols.py src/*/utilities.py \
+  src/*/constants.py src/*/typings.py src/*/servers/*.py 2>/dev/null
+
+# Expected: ZERO results
+# If violations found: Do NOT commit, fix architecture first
+```
+
+**See [Ecosystem Standards](../CLAUDE.md) for complete prohibited patterns and remediation examples.**
 
 ---
 
@@ -26,6 +95,122 @@
 - ✅ **RFC Stub Servers** (Detection + RFC Baseline): Apache, 389DS, Novell, Tivoli, AD - **174 tests passing**
 - ✅ **Real Implementations**: OpenLDAP 2.x (olc* format), OpenLDAP 1.x, OID, OUD
 - ✅ **Tests**: All stub servers 100% passing. OpenLDAP fixture tests blocked by RFC refactoring (other agents)
+
+---
+
+## Regras Unificadas do Ecossistema FLEXT
+
+### Zero Tolerância (Proibido Completamente)
+
+1. **TYPE_CHECKING**: ❌ PROIBIDO - Mover código que causa dependência circular para módulo apropriado
+2. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções
+3. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - Todas as metaclasses são proibidas (incluindo `__getattr__`)
+4. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry)
+5. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo
+6. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código
+
+### Minimização Obrigatória
+
+7. **cast()**: ⚠️ SUBSTITUIR TODAS - Substituir todas as ocorrências por Models/Protocols/TypeGuards imediatamente
+8. **Any**: ❌ PROIBIDO - Substituir todas as ocorrências por tipos específicos, incluindo docstrings/comentários
+
+### Exemplos de Correções
+
+#### TYPE_CHECKING
+
+```python
+# ❌ PROIBIDO
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import ClassVar as TypeClassVar
+else:
+    TypeClassVar = type
+
+# ✅ CORRETO - Mover para módulo apropriado
+# _utilities/type_helpers.py
+from typing import ClassVar
+TypeClassVar = ClassVar
+```
+
+#### # type: ignore
+
+```python
+# ❌ PROIBIDO
+Field(default="lower")  # type: ignore[assignment]
+
+# ✅ CORRETO - Usar model_config ou type hints adequados
+from pydantic import ConfigDict
+model_config = ConfigDict(...)
+```
+
+#### Metaclasses
+
+```python
+# ❌ PROIBIDO
+class _FlextLdifConstantsMeta(type):
+    def __getattr__(cls, name: str) -> object:
+        if name == "LiteralTypes":
+            return cls.Ldif.LiteralTypes
+        ...
+
+class FlextLdifConstants(metaclass=_FlextLdifConstantsMeta):
+    ...
+
+# ✅ CORRETO - Sempre usar namespace completo
+c.Ldif.LiteralTypes  # Não c.LiteralTypes
+```
+
+#### Atribuições Dinâmicas
+
+```python
+# ❌ PROIBIDO
+FlextLdifModels.Entry = FlextLdifModels.Ldif.Entry
+
+# ✅ CORRETO - Sempre usar namespace completo
+m.Ldif.Entry  # Não m.Entry
+```
+
+#### Functions em constants.py
+
+```python
+# ❌ PROIBIDO - constants.py
+class FlextLdifConstants:
+    @staticmethod
+    def normalize_server_type(server_type: str) -> str:
+        ...
+
+# ✅ CORRETO - Mover para utilities.py ou _utilities/server.py
+# utilities.py ou _utilities/server.py
+def normalize_server_type(server_type: str) -> str:
+    ...
+```
+
+#### cast()
+
+```python
+# ❌ PROIBIDO - Uso excessivo de cast()
+value = cast(MyModel, data)
+
+# ✅ CORRETO - Usar Models/Protocols/TypeGuards
+if isinstance(data, MyModel):
+    value = data
+# ou
+def is_my_model(obj: object) -> TypeGuard[MyModel]:
+    return isinstance(obj, MyModel)
+```
+
+#### Any
+
+```python
+# ❌ PROIBIDO
+def process(data: Any) -> Any:
+    """Process any data."""
+
+# ✅ CORRETO - Usar tipos específicos
+from flext_core import FlextTypes
+def process(data: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+    """Process general value type data."""
+```
 
 ---
 
@@ -123,6 +308,243 @@ src/flext_ldif/
 - **auto** (default): Automatic detection from LDIF content
 - **manual**: Uses specified `quirks_server_type` from config, skips auto-detection
 - **disabled**: Uses only RFC 2849/4512, no server-specific quirks
+
+---
+
+## 📦 Import and Namespace Guidelines (Critical Architecture)
+
+This section defines **mandatory patterns** for imports, namespaces, and module aggregation. These rules prevent circular imports and ensure maintainability.
+
+### 1. Runtime Import Access (Short Aliases)
+
+**MANDATORY**: Use short aliases at runtime for type annotations and class instantiation:
+
+```python
+# ✅ CORRECT - Runtime short aliases (src/ and tests/)
+from flext_ldif.typings import t      # FlextLdifTypes
+from flext_ldif.constants import c    # FlextLdifConstants
+from flext_ldif.models import m       # FlextLdifModels
+from flext_ldif.protocols import p    # FlextLdifProtocols
+from flext_ldif.utilities import u    # FlextLdifUtilities
+
+# flext_core aliases (also available)
+from flext_core.result import r      # FlextResult
+from flext_core.exceptions import e  # FlextExceptions
+from flext_core.decorators import d  # FlextDecorators
+from flext_core.mixins import mx     # FlextMixins
+
+# Usage with full namespace (MANDATORY)
+result: r[str] = r[str].ok("value")
+config: t.Types.ConfigurationDict = {}
+server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
+entry: m.Ldif.Entry = m.Ldif.Entry(dn="cn=test")
+service: p.Ldif.Service[str] = my_service
+
+# ❌ FORBIDDEN - Root aliases
+server: c.ServerTypes    # WRONG - must use c.Ldif.ServerTypes
+entry: m.Entry           # WRONG - must use m.Ldif.Entry
+```
+
+### 2. Module Aggregation Rules (Facades)
+
+**Facade modules** (models.py, utilities.py, protocols.py) aggregate internal submodules:
+
+```python
+# =========================================================
+# models.py (Facade) - Aggregates _models/*.py
+# =========================================================
+from flext_ldif._models.entry import LdifEntry
+from flext_ldif._models.config import ProcessConfig
+
+class FlextLdifModels:
+    """Facade aggregating all model classes."""
+
+    class Ldif:
+        Entry = LdifEntry
+
+        class Config:
+            ProcessConfig = ProcessConfig
+            # ... other config models
+
+# Short alias for runtime access
+m = FlextLdifModels
+
+# =========================================================
+# IMPORT RULES FOR AGGREGATION
+# =========================================================
+
+# ✅ CORRECT - Internal modules (_models/) can import from:
+#   - Other _models/* modules
+#   - Tier 0 modules (constants, typings, protocols)
+#   - NOT from services/, servers/, api.py
+
+# ✅ CORRECT - Facade (models.py) imports from:
+#   - All internal _models/* modules
+#   - Tier 0 modules
+
+# ❌ FORBIDDEN - Internal modules importing from higher tiers
+# _models/base.py importing services/api.py = ARCHITECTURE VIOLATION
+```
+
+### 3. Circular Import Avoidance Strategies
+
+**Strategy 1: Forward References with `from __future__ import annotations`**
+```python
+from __future__ import annotations
+from typing import Self
+
+class QuirkBase:
+    def clone(self) -> Self:
+        """Self reference works with forward annotations."""
+        return type(self)()
+```
+
+**Strategy 2: Protocol-Based Decoupling**
+```python
+# protocols.py (Tier 0 - no internal imports except flext_core)
+from flext_core.protocols import FlextProtocols
+
+class FlextLdifProtocols(FlextProtocols):
+    class Ldif:
+        class Parser(Protocol):
+            def parse(self, content: str) -> list[Entry]: ...
+
+# services/parser.py (Tier 3 - can import protocols)
+from flext_ldif.protocols import p
+
+class ParserService:
+    def process(self, parser: p.Ldif.Parser) -> r[list[Entry]]:
+        """Use protocol types to avoid importing concrete classes."""
+        pass
+```
+
+**Strategy 3: Dependency Injection**
+```python
+# Instead of importing services directly, inject them
+from flext_core import FlextContainer
+
+class MigrationHandler:
+    def __init__(self, container: FlextContainer) -> None:
+        self._container = container
+
+    def process(self) -> None:
+        # Get service at runtime instead of importing
+        parser_result = self._container.get("ldif_parser")
+        if parser_result.is_success:
+            parser_result.value.parse(content)
+```
+
+### 4. When Modules Can Import Submodules Directly
+
+**ALLOWED**: Internal modules importing from other internal modules at same tier:
+
+```python
+# =========================================================
+# EXCEPTION: _utilities/builders.py importing from models
+# =========================================================
+
+# _utilities/builders.py
+from flext_ldif.models import FlextLdifModels  # ✅ ALLOWED
+m = FlextLdifModels
+
+# WHY: _utilities (Tier 1) can import from models (Tier 1)
+# Both are below services/ and api.py
+# No circular dependency created
+
+# =========================================================
+# EXCEPTION: quirks/servers/*.py importing from quirks/base.py
+# =========================================================
+
+# quirks/servers/oid_quirks.py
+from flext_ldif.quirks.base import QuirkBase  # ✅ ALLOWED
+
+# WHY: Same tier, both quirks modules
+```
+
+**FORBIDDEN**: Higher tier importing lower tier that imports back:
+
+```python
+# ❌ FORBIDDEN PATTERN - Creates circular import
+# api.py
+from flext_ldif.services.parser import ParserService
+
+# services/parser.py
+from flext_ldif.api import FlextLdif  # CIRCULAR!
+
+# ✅ CORRECT - Services use protocols, not concrete api.py
+# services/parser.py
+from flext_ldif.protocols import p
+# No import of api.py
+```
+
+### 5. Test Import Patterns
+
+```python
+# tests/unit/test_my_module.py
+
+# ✅ CORRECT - Import from package root
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from flext_ldif.constants import c
+
+# ✅ CORRECT - Import test helpers
+from tests import tm, tf  # TestsFlextLdifMatchers, TestsFlextLdifFixtures
+
+# ✅ ALLOWED - Tests can import internal modules for testing
+from flext_ldif._utilities.builders import ProcessConfigBuilder
+
+# ✅ CORRECT - Use pytest fixtures
+@pytest.fixture
+def ldif_client() -> FlextLdif:
+    return FlextLdif()
+
+# ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:  # FORBIDDEN even in tests
+    from flext_ldif import FlextLdif
+```
+
+### 6. Complete Import Hierarchy Reference
+
+```
+Tier 0 - Foundation (ZERO internal imports except flext_core):
+├── constants.py    → imports: FlextConstants from flext_core
+├── typings.py      → imports: FlextTypes from flext_core
+└── protocols.py    → imports: FlextProtocols from flext_core, constants, typings
+
+Tier 1 - Domain Foundation:
+├── _models/*.py    → imports: Tier 0, other _models/*
+├── models.py       → imports: _models/*, Tier 0
+├── _utilities/*.py → imports: _models/*, models, Tier 0
+└── utilities.py    → imports: _utilities/*, models, Tier 0
+
+Tier 2 - Infrastructure:
+├── servers/*.py    → imports: Tier 0, Tier 1
+├── quirks/*.py     → imports: Tier 0, Tier 1
+└── rfc/*.py        → imports: Tier 0, Tier 1
+                    → NEVER: services/, api.py
+
+Tier 3 - Application:
+├── services/*.py   → imports: ALL lower tiers
+└── api.py          → imports: ALL lower tiers (Facade for external use)
+```
+
+### 7. Module-Specific Import Rules
+
+| Source Module | Can Import From | Cannot Import From |
+|---------------|-----------------|-------------------|
+| constants.py | flext_core.constants | everything else |
+| typings.py | flext_core.typings | everything else |
+| protocols.py | flext_core.protocols, constants, typings | everything else |
+| _models/*.py | Tier 0, other _models/* | _utilities/*, services/, servers/, api.py |
+| models.py | _models/*, Tier 0 | services/, servers/, api.py |
+| _utilities/*.py | _models/*, Tier 0, models | services/, servers/, api.py |
+| utilities.py | _utilities/*, models, Tier 0 | services/, servers/, api.py |
+| servers/*.py | Tier 0, Tier 1 | services/, api.py |
+| quirks/*.py | Tier 0, Tier 1 | services/, api.py |
+| rfc/*.py | Tier 0, Tier 1 | services/, api.py |
+| services/*.py | ALL lower tiers | api.py |
+| api.py | ALL lower tiers | NOTHING prohibited |
 
 ---
 
@@ -250,21 +672,27 @@ else:
 ### Domain Model Usage
 
 ```python
-from flext_ldif import FlextLdifModels
+from flext_core import FlextModels
 
-# Use unified Models namespace
-entry = FlextLdifModels.Entry(
+# Use unified Models namespace (ALWAYS use namespace completo)
+entry = FlextModels.Ldif.Entry(
     dn="cn=test,dc=example,dc=com",
     attributes={"cn": ["test"], "objectClass": ["person"]}
 )
+
+# Or use short alias with namespace completo
+from flext_core import m
+entry = m.Ldif.Entry(...)  # ✅ CORRETO
+# entry = m.Entry(...)  # ❌ PROIBIDO - root alias
 
 # Access configuration
 from flext_ldif import FlextLdifConfig
 config = FlextLdifConfig()
 
-# Access constants
-from flext_ldif import FlextLdifConstants
-server_types = FlextLdifConstants.SUPPORTED_SERVERS
+# Access constants (ALWAYS use namespace completo)
+from flext_core import c
+server_types = c.Ldif.ServerTypes  # ✅ CORRETO
+# server_types = c.ServerTypes  # ❌ PROIBIDO - root alias
 ```
 
 ### Generic Schema Parsing with Quirks
@@ -366,4 +794,7 @@ if FlextRuntime.is_list_like(values):
 
 ---
 
-**Additional Resources**: [../CLAUDE.md](../CLAUDE.md) (workspace), [README.md](README.md) (overview)
+**See Also**:
+- [Workspace Standards](../CLAUDE.md)
+- [flext-core Patterns](../flext-core/CLAUDE.md)
+- [flext-ldap Patterns](../flext-ldap/CLAUDE.md)

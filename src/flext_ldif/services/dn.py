@@ -21,9 +21,10 @@ from typing import Self, override
 from flext_core import r
 from pydantic import Field, PrivateAttr, field_validator
 
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-from flext_ldif.utilities import u
 
 # Semantic type for Distinguished Name operations
 type DN = str
@@ -91,7 +92,7 @@ class FlextLdifDn(
 
     # Private attributes (Pydantic v2 PrivateAttr for internal state)
     # Note: Using object.__setattr__ for frozen models
-    _last_event: m.DnEvent | None = PrivateAttr(default=None)
+    _last_event: m.Ldif.LdifResults.DnEvent | None = PrivateAttr(default=None)
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
@@ -188,7 +189,7 @@ class FlextLdifDn(
                     parse_components = parse_result.unwrap()
 
             # Create DN event config
-            dn_config = m.DnEventConfig(
+            dn_config = m.Ldif.LdifResults.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
                 output_dn=result.unwrap() if result.is_success else None,
@@ -198,7 +199,7 @@ class FlextLdifDn(
                 else None,
                 parse_components=parse_components,
             )
-            event = u.Events.log_and_emit_dn_event(
+            event = FlextLdifUtilitiesEvents.log_and_emit_dn_event(
                 logger=self.logger,
                 config=dn_config,
                 log_level="info" if result.is_success else "error",
@@ -210,7 +211,7 @@ class FlextLdifDn(
 
         return result
 
-    def get_last_event(self) -> m.DnEvent | None:
+    def get_last_event(self) -> m.Ldif.LdifResults.DnEvent | None:
         """Retrieve last emitted DnEvent.
 
         Returns:
@@ -471,23 +472,23 @@ class FlextLdifDn(
         @staticmethod
         def parse_components(dn: str) -> r[list[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
-            return u.DN.parse(dn)
+            return FlextLdifUtilitiesDN.parse(dn)
 
         @staticmethod
         def validate_format(dn: str) -> r[bool]:
             """Validate DN format against RFC 4514."""
-            is_valid = u.DN.validate(dn)
+            is_valid = FlextLdifUtilitiesDN.validate(dn)
             return r[bool].ok(is_valid)
 
         @staticmethod
         def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
             """Parse a single RDN component."""
-            return u.DN.parse_rdn(rdn)
+            return FlextLdifUtilitiesDN.parse_rdn(rdn)
 
         @staticmethod
         def compare_dns(dn1: str, dn2: str) -> r[int]:
             """Compare two DNs per RFC 4514 (case-insensitive)."""
-            return u.DN.compare_dns(dn1, dn2)
+            return FlextLdifUtilitiesDN.compare_dns(dn1, dn2)
 
         @staticmethod
         def parse_operation(dn: str) -> r[str]:
@@ -544,22 +545,22 @@ class FlextLdifDn(
         @staticmethod
         def normalize(dn: str) -> r[str]:
             """Normalize DN per RFC 4514."""
-            return u.DN.norm(dn)
+            return FlextLdifUtilitiesDN.norm(dn)
 
         @staticmethod
         def clean_dn(dn: str) -> str:
             """Clean DN string to fix spacing and escaping issues."""
-            return u.DN.clean_dn(dn)
+            return FlextLdifUtilitiesDN.clean_dn(dn)
 
         @staticmethod
         def escape_dn_value(value: str) -> str:
             """Escape special characters in DN value per RFC 4514."""
-            return u.DN.esc(value)
+            return FlextLdifUtilitiesDN.esc(value)
 
         @staticmethod
         def unescape_dn_value(value: str) -> str:
             """Unescape special characters in DN value per RFC 4514."""
-            return u.DN.unesc(value)
+            return FlextLdifUtilitiesDN.unesc(value)
 
         @staticmethod
         def hex_escape(value: str) -> str:

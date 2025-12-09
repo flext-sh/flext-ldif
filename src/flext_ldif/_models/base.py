@@ -14,10 +14,7 @@ from __future__ import annotations
 from flext_core._models.base import FlextModelsBase
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif.constants import FlextLdifConstants
-
-# Alias for simplified usage
-c = FlextLdifConstants
+from flext_ldif.constants import c, normalize_server_type
 
 
 class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):
@@ -82,11 +79,12 @@ class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
         return metadata is not None
 
     @computed_field
-    def server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+    def server_type(self) -> str:
         """Get server type from metadata, default to RFC.
 
         Returns:
             Server type string (oid, oud, openldap, etc.) or "rfc" if no metadata
+            (guaranteed to be a valid ServerTypeLiteral value)
 
         """
         metadata = getattr(self, "metadata", None)
@@ -99,7 +97,7 @@ class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
                 try:
                     # normalize_server_type returns ServerTypeLiteral
                     # (validated by TypeGuard)
-                    return c.Ldif.normalize_server_type(quirk_type)
+                    return normalize_server_type(quirk_type)
                 except ValueError:
                     # Invalid server type, default to RFC
                     pass

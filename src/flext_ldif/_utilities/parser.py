@@ -16,10 +16,15 @@ from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
+
+# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
+# QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata  # Use m.Ldif.QuirkMetadata directly
 
 logger = FlextLogger(__name__)
 
@@ -39,21 +44,8 @@ class MetadataDict(TypedDict, total=False):
     # Other metadata fields
 
 
-type EntryAttributesDict = dict[str, list[str]]
-"""Type alias for LDIF entry attributes.
-
-Maps attribute names to lists of values (RFC 2849 format).
-Includes dynamic LDAP attribute names (cn, sn, mail, etc.) and
-internal metadata fields (_original_dn_line, _original_lines, _base64_dn).
-"""
-
-# Type for raw entry dictionaries during parsing (before model conversion)
-type RawEntryDict = dict[str, str | list[str] | set[str]]
-"""Type alias for raw entry dictionaries during LDIF parsing.
-
-Used internally during parsing before conversion to Entry models.
-Values can be strings (single-valued), lists (multi-valued), or sets (base64 tracking).
-"""
+# Type aliases moved to m.Ldif.Types
+# Use m.Ldif.Types.EntryAttributesDict and m.Ldif.Types.RawEntryDict
 
 
 # Type aliases removed - use types directly from FlextLdifTypes
@@ -247,9 +239,9 @@ class FlextLdifUtilitiesParser:
     def _process_ldif_line(
         line: str,
         current_dn: str | None,
-        current_attrs: EntryAttributesDict,
-        entries: list[tuple[str, EntryAttributesDict]],
-    ) -> tuple[str | None, EntryAttributesDict]:
+        current_attrs: m.Ldif.Types.EntryAttributesDict,
+        entries: list[tuple[str, m.Ldif.Types.EntryAttributesDict]],
+    ) -> tuple[str | None, m.Ldif.Types.EntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection.
 
         Root Cause Fix: Correctly handle :: (base64) vs : (regular) indicators.
@@ -319,7 +311,7 @@ class FlextLdifUtilitiesParser:
                 entries.append((current_dn, current_attrs))
 
             # Track if DN was base64-encoded (for metadata preservation)
-            new_attrs: EntryAttributesDict = {}
+            new_attrs: m.Ldif.Types.EntryAttributesDict = {}
             if is_base64:
                 # Store metadata flag for server layer to preserve
                 new_attrs["_base64_dn"] = ["true"]
@@ -341,7 +333,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_lines(
         ldif_content: str,
-    ) -> list[tuple[str, EntryAttributesDict]]:
+    ) -> list[tuple[str, m.Ldif.Types.EntryAttributesDict]]:
         """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant.
 
         Returns list of (dn, {attr: [values...]}) tuples where:
@@ -356,9 +348,9 @@ class FlextLdifUtilitiesParser:
         if not ldif_content or not isinstance(ldif_content, str):
             return []
 
-        entries: list[tuple[str, EntryAttributesDict]] = []
+        entries: list[tuple[str, m.Ldif.Types.EntryAttributesDict]] = []
         current_dn: str | None = None
-        current_attrs: EntryAttributesDict = {}
+        current_attrs: m.Ldif.Types.EntryAttributesDict = {}
         unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
 
         for raw_line in unfolded_lines:
@@ -404,7 +396,7 @@ class FlextLdifUtilitiesParser:
     def finalize_pending_attribute(
         current_attr: str | None,
         current_values: list[str],
-        entry_dict: RawEntryDict,
+        entry_dict: m.Ldif.Types.RawEntryDict,
     ) -> None:
         """Finalize and save pending attribute to entry dictionary.
 
@@ -430,7 +422,7 @@ class FlextLdifUtilitiesParser:
     def handle_multivalued_attribute(
         attr_name: str,
         attr_value: str,
-        entry_dict: RawEntryDict,
+        entry_dict: m.Ldif.Types.RawEntryDict,
     ) -> bool:
         """Handle multi-valued attribute accumulation.
 
@@ -467,7 +459,7 @@ class FlextLdifUtilitiesParser:
                 list(existing) if not isinstance(existing, list) else existing
             )
             existing_list.append(attr_value)
-            # Type narrowing: convert to list[str] for RawEntryDict
+            # Type narrowing: convert to list[str] for m.Ldif.Types.RawEntryDict
             entry_dict[attr_name] = [
                 str(item) if not isinstance(item, str) else item
                 for item in existing_list
@@ -478,7 +470,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def track_base64_attribute(
         attr_name: str,
-        entry_dict: RawEntryDict,
+        entry_dict: m.Ldif.Types.RawEntryDict,
     ) -> None:
         """Track attribute that uses base64 encoding.
 
@@ -498,7 +490,7 @@ class FlextLdifUtilitiesParser:
         line: str,
         current_attr: str | None,
         current_values: list[str],
-        entry_dict: RawEntryDict,
+        entry_dict: m.Ldif.Types.RawEntryDict,
     ) -> tuple[str | None, list[str]]:
         """Process LDIF attribute line and update entry state.
 
@@ -552,14 +544,14 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif(
         ldif_lines: list[str],
-    ) -> list[RawEntryDict]:
+    ) -> list[m.Ldif.Types.RawEntryDict]:
         """Parse list of LDIF lines into entries (simple version).
 
         # LEGACY: Original simple parser (kept for backward compat if needed)
         # Use: FlextLdifParser for full parsing with quirks
         """
-        entries: list[RawEntryDict] = []
-        current_entry: RawEntryDict = {}
+        entries: list[m.Ldif.Types.RawEntryDict] = []
+        current_entry: m.Ldif.Types.RawEntryDict = {}
 
         for line in ldif_lines:
             if not line.strip():
@@ -712,7 +704,7 @@ class FlextLdifUtilitiesParser:
         syntax: str | None,
         syntax_validation_error: str | None,
         server_type: str | None = None,
-    ) -> m.QuirkMetadata | None:
+    ) -> m.Ldif.QuirkMetadata | None:
         """Build metadata for attribute including extensions.
 
         Args:
@@ -725,13 +717,39 @@ class FlextLdifUtilitiesParser:
             QuirkMetadata or None
 
         """
-        # Use build_attribute_metadata from base.py which handles server_type correctly
-        return FlextLdifServersBase.Schema.build_attribute_metadata(
-            attr_definition=attr_definition,
-            syntax=syntax,
-            syntax_validation_error=syntax_validation_error,
-            server_type=server_type,
+        # Extract extensions from definition
+        metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
+            attr_definition
         )
+
+        # Track syntax OID validation
+        if syntax:
+            metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
+            if syntax_validation_error:
+                metadata_extensions["syntax_validation_error"] = syntax_validation_error
+
+        # Preserve original format
+        metadata_extensions["original_format"] = attr_definition.strip()
+        metadata_extensions["schema_original_string_complete"] = attr_definition
+
+        # Resolve quirk type (default to "rfc" if not specified)
+        # Use FlextLdifUtilitiesServer.normalize_server_type to ensure consistent format
+        quirk_type = (
+            FlextLdifUtilitiesServer.normalize_server_type(server_type)
+            if server_type
+            else FlextLdifUtilitiesServer.normalize_server_type("rfc")
+        )
+
+        # Create metadata
+        if metadata_extensions:
+            return m.Ldif.QuirkMetadata(
+                quirk_type=quirk_type,
+                extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    **metadata_extensions
+                ),
+            )
+
+        return None
 
     @staticmethod
     def parse_rfc_attribute(
@@ -910,7 +928,9 @@ class FlextLdifUtilitiesParser:
                 re.IGNORECASE,
             )
             kind = (
-                kind_match.group(1).upper() if kind_match else c.Ldif.Schema.STRUCTURAL
+                kind_match.group(1).upper()
+                if kind_match
+                else c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
             )
 
             must = None
@@ -948,7 +968,7 @@ class FlextLdifUtilitiesParser:
             )
 
             metadata = (
-                m.QuirkMetadata(
+                m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
                         **metadata_extensions,

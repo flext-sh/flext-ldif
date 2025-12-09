@@ -33,7 +33,8 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-from flext_ldif.typings import FlextLdifTypes
+
+# Removed: from flext_ldif.typings import FlextLdifTypes (use direct types)
 
 # Compatibility alias - FlextLdifServer is base class for all server quirks
 FlextLdifServer = FlextLdifServersBase
@@ -53,5 +54,4 @@ __all__ = [
     "FlextLdifServersRelaxed",
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
-    "FlextLdifTypes",
 ]

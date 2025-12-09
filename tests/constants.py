@@ -21,11 +21,11 @@ from typing import Final
 
 from flext_tests.constants import FlextTestsConstants
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
-    """Test-specific constants extending FlextTestsConstants and FlextLdifConstants.
+class TestsFlextLdifConstants(FlextTestsConstants):
+    """Test-specific constants extending FlextTestsConstants and c.Ldif.
 
     Provides test-specific constants without duplicating parent functionality.
     All parent constants are accessible via inheritance hierarchy.
@@ -33,6 +33,27 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
     Short name 'c' for convenient access in tests.
     """
+
+    # =========================================================================
+    # PROJECT CONSTANTS (from flext_ldif.constants)
+    # =========================================================================
+
+    # Expose main project constants for convenient access in tests
+    # Usage: c.Ldif.ServerTypes.OID, c.Ldif.RfcSyntaxOids, etc.
+    Ldif = c.Ldif
+
+    # =========================================================================
+    # FIXTURE DIRECTORY CONSTANTS
+    # =========================================================================
+
+    class Fixtures:
+        """Test fixture directory names used in tests/fixtures/."""
+
+        OID: Final[str] = "oid"
+        OUD: Final[str] = "oud"
+        OPENLDAP: Final[str] = "openldap"
+        OPENLDAP2: Final[str] = "openldap2"
+        RFC: Final[str] = "rfc"
 
     # =========================================================================
     # RFC TEST CONSTANTS
@@ -199,7 +220,9 @@ uid: testuser
         MAIL: Final[str] = "mail"
         OBJECTCLASS: Final[str] = "objectClass"
         PERSON: Final[str] = "person"
-        INETORGPERSON: Final[str] = "inetOrgPerson"
+        TOP: Final[str] = "top"
+        INETORGPERSON: Final[str] = "inetOrgPerson"  # Alias for backward compatibility
+        INET_ORG_PERSON: Final[str] = "inetOrgPerson"  # Matches source constants naming
 
     class General:
         """General test constants (from fixtures/general_constants.py)."""
@@ -463,7 +486,12 @@ photo:: UGhvdG8gZGF0YQ==
 
         TEST: Final[str] = "test"
         USER: Final[str] = "user"
+        USER1: Final[str] = "user1"
+        USER2: Final[str] = "user2"
+        ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
         EXAMPLE: Final[str] = "example"
+        USER1_EMAIL: Final[str] = "user1@example.com"
+        USER2_EMAIL: Final[str] = "user2@example.com"
 
         # Sample OUD attribute definitions
         ATTRIBUTE_ORCLGUID: Final[str] = (
@@ -628,13 +656,36 @@ class Filters:
     """Test filter constants and server types for categorization tests."""
 
     # Server types
-    SERVER_RFC: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.RFC.value
-    SERVER_OID: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.OID.value
-    SERVER_OUD: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.OUD.value
+    SERVER_RFC: Final[str] = c.Ldif.ServerTypes.RFC.value
+    SERVER_OID: Final[str] = c.Ldif.ServerTypes.OID.value
+    SERVER_OUD: Final[str] = c.Ldif.ServerTypes.OUD.value
 
     # Test DNs
     DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
+    DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
+    DN_USER_ADMIN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
     DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
+    DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
+    DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
+    DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
+
+    # DN Patterns
+    DN_PATTERN_USERS: Final[str] = "ou=users,*"
+    DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
+    DN_PATTERN_OU: Final[str] = "ou=*,*"
+
+    # ObjectClasses
+    OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
+    OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
+    OC_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+    OC_PERSON: Final[str] = "person"
+    OC_DOMAIN: Final[str] = "domain"
+
+    # Attributes
+    ATTR_MAIL: Final[str] = "mail"
+    ATTR_SN: Final[str] = "sn"
+    ATTR_CN: Final[str] = "cn"
+    ATTR_OBJECTCLASS: Final[str] = "objectClass"
 
     # =========================================================================
     # DN CONSTANTS (For backward compatibility - used in tests)
@@ -658,11 +709,10 @@ class Filters:
 
         TEST: Final[str] = "test"
         USER: Final[str] = "user"
+        USER1: Final[str] = "user1"
+        USER2: Final[str] = "user2"
+        ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
         EXAMPLE: Final[str] = "example"
-
-    # ObjectClasses
-    OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
-    OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
 
 
 class OIDs:

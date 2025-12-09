@@ -22,15 +22,12 @@ from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 
-# Alias for simplified usage
-c = FlextLdifConstants
-
-# NOTE: This module uses FlextLdifModelsDomains.* internally to avoid circular imports.
-# The public facade models (m.*) are defined in models.py which imports this module.
-# When types from this module are exposed via FlextLdifModelsResults in models.py,
-# they are wrapped with public facade classes (FlextLdifModelsDomains.Entry, FlextLdifModelsDomains.SchemaAttribute, etc.)
+# NOTE: Use FlextLdifModelsDomains.* for all types in this module
+# This avoids circular imports while maintaining type safety
+# In models.py facade, these are exposed as m.Ldif.* for external use
+# m.Ldif.* and FlextLdifModelsDomains.* are the same classes (public facade vs internal)
 
 # Use type directly from FlextLdifTypes.Schema.SchemaElement (no local alias)
 # Import will be done where needed to avoid circular imports
@@ -229,6 +226,8 @@ class _SchemaAttributeMap(_SchemaElementMap):
         for key in self.keys():
             attr = self.get_attribute(key)
             if attr is not None:
+                # Type narrowing: attr is FlextLdifModelsDomains.SchemaAttribute
+                # m.Ldif.SchemaAttribute is the same class (public facade)
                 attrs.append(attr)
         return attrs
 
@@ -266,6 +265,8 @@ class _SchemaObjectClassMap(_SchemaElementMap):
         for key in self.keys():
             oc = self.get_object_class(key)
             if oc is not None:
+                # Type narrowing: oc is FlextLdifModelsDomains.SchemaObjectClass
+                # Both m.Ldif.SchemaObjectClass and FlextLdifModelsDomains.SchemaObjectClass are the same class
                 ocs.append(oc)
         return ocs
 
@@ -413,6 +414,8 @@ class _FlexibleCategories(
     Supports arbitrary category names (schema, hierarchy, users, groups, acl, rejected, etc.)
 
     Defined at module level to avoid forward reference issues in default_factory.
+
+    Exposes dict-like interface for backward compatibility.
     """
 
     model_config = ConfigDict(extra="allow", frozen=False)
@@ -433,6 +436,34 @@ class _FlexibleCategories(
         if isinstance(other, dict):
             return self.categories == other
         return NotImplemented
+
+    def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
+        """Return iterator over (category, entries) pairs (dict-like interface)."""
+        return iter(self.categories.items())
+
+    def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
+        """Return iterator over entries lists (dict-like interface)."""
+        return iter(self.categories.values())
+
+    def keys(self) -> Iterator[str]:
+        """Return iterator over category names (dict-like interface)."""
+        return iter(self.categories.keys())
+
+    def __contains__(self, category: str) -> bool:
+        """Check if category exists (dict-like interface: 'category' in obj)."""
+        return category in self.categories
+
+    def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
+        """Get entries for a category (dict-like interface: obj[category])."""
+        return self.categories[category]
+
+    def __setitem__(
+        self,
+        category: str,
+        entries: list[FlextLdifModelsDomains.Entry],
+    ) -> None:
+        """Set entries for a category (dict-like interface: obj[category] = entries)."""
+        self.categories[category] = entries
 
 
 # Type alias for dict input to _FlexibleCategories validator
@@ -718,8 +749,9 @@ class FlextLdifModelsResults:
                 return value
             if isinstance(value, FlextModelsCollections.Categories):
                 # Convert from base Categories to _FlexibleCategories
+                # Categories class has categories attribute (dict), access it directly
                 result = _FlexibleCategories()
-                for cat, entries in value.items():
+                for cat, entries in value.categories.items():
                     result.add_entries(cat, list(entries))
                 return result
             if isinstance(value, dict):
@@ -1572,7 +1604,7 @@ class FlextLdifModelsResults:
             default_factory=_SchemaContent,
             description="Migrated schema data",
         )
-        entries: list[FlextLdifModelsDomains.Entry] = Field(
+        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(
             default_factory=list,
             description="List of migrated directory entries",
         )

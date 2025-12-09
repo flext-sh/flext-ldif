@@ -10,9 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
-from flext_ldif import FlextLdifConstants
+from tests import c, s
 
 # =============================================================================
 # TEST SCENARIO ENUMS
@@ -180,7 +178,7 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         forbidden_attrs: list[str],
     ) -> None:
         """Parametrized test for get_acl_attributes."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+        attrs = c.Ldif.AclAttributeRegistry.get_acl_attributes(
             param_server_type,
         )
         for required in required_attrs:
@@ -208,7 +206,7 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         expected_result: bool,
     ) -> None:
         """Parametrized test for is_acl_attribute."""
-        registry = FlextLdifConstants.AclAttributeRegistry
+        registry = c.Ldif.AclAttributeRegistry
         if server_type is not None:
             result = registry.is_acl_attribute(attr_name, server_type)
         else:
@@ -221,8 +219,8 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
-        attrs1 = list(FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid"))
-        attrs2 = list(FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid"))
+        attrs1 = list(c.Ldif.AclAttributeRegistry.get_acl_attributes("oid"))
+        attrs2 = list(c.Ldif.AclAttributeRegistry.get_acl_attributes("oid"))
         # Should be equal but not the same object
         assert attrs1 == attrs2
         assert attrs1 is not attrs2

@@ -20,25 +20,31 @@ Architecture:
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from typing import TypeAlias
+import sys
+from collections.abc import Callable, Sequence
+from enum import StrEnum
+from typing import Literal, TypeVar
 
-from flext_core import FlextModels
+from flext_core import FlextModels, FlextResult, FlextTypes, u as u_core
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.utilities import u
+from pydantic import Field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult as ProcessingResultModel
-
-# Import for type compatibility
 from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.protocols import FlextLdifProtocols as p
+
+# ARCHITECTURE NOTE: models.py (Tier 1) imports from Tier 0 modules to define composite types
+# that combine protocols and type aliases (following user architecture rules)
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifModels(FlextModels):
@@ -63,7 +69,7 @@ class FlextLdifModels(FlextModels):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextLdifModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
-        u.Deprecation.warn_once(
+        u_core.Deprecation.warn_once(
             f"subclass:{cls.__name__}",
             "Subclassing FlextLdifModels is deprecated. Use FlextModels.Ldif instead.",
         )
@@ -72,13 +78,6 @@ class FlextLdifModels(FlextModels):
         """LDIF namespace for cross-project access."""
 
         # =========================================================================
-        # BASE TYPE ALIASES - For type compatibility with internal domain models
-        # =========================================================================
-
-        # Base Entry type for type compatibility with internal domain models
-        # Use this in type unions where internal ParseResponse.entries returns domain Entry
-        BaseEntry = FlextLdifModelsDomains.Entry
-
         # =========================================================================
         # DOMAIN MODELS - Core business entities
         # =========================================================================
@@ -90,29 +89,51 @@ class FlextLdifModels(FlextModels):
             Records complete transformation history for LDIF attribute conversions.
             """
 
-        # Public metadata types - runtime assignments with TypeAlias for type checking
-        DynamicMetadata: TypeAlias = FlextLdifModelsMetadata.DynamicMetadata
-        EntryMetadata: TypeAlias = FlextLdifModelsMetadata.EntryMetadata
+        # Metadata models - real inheritance classes
+        class DynamicMetadata(FlextLdifModelsMetadata.DynamicMetadata):
+            """Model with extra="allow" for dynamic field storage.
 
-        # AclMetadataConfig moved to _models/config.py
+            Replaces ALL dict[str, ...] patterns with proper Pydantic model.
+            Extra fields stored in __pydantic_extra__ via Pydantic v2.
+            """
 
-        # LogContextExtras moved to _models/config.py
-        LogContextExtras = FlextLdifModelsConfig.LogContextExtras
+        class EntryMetadata(FlextLdifModelsMetadata.EntryMetadata):
+            """Model for entry processing metadata."""
 
-        # DnEventConfig moved to _models/events.py
-        DnEventConfig = FlextLdifModelsEvents.DnEventConfig
-        DnEvent = FlextLdifModelsEvents.DnEvent
+        # Configuration models - real inheritance classes
+        class LogContextExtras(FlextLdifModelsConfig.LogContextExtras):
+            """Log context extras configuration."""
 
-        # MigrationEventConfig moved to _models/events.py
-        MigrationEventConfig = FlextLdifModelsEvents.MigrationEventConfig
-        MigrationEvent = FlextLdifModelsEvents.MigrationEvent
+        class AclMetadataConfig(FlextLdifModelsConfig.AclMetadataConfig):
+            """Configuration for ACL metadata extensions."""
 
-        # CategoryEvent moved to _models/events.py
-        CategoryEvent = FlextLdifModelsEvents.CategoryEvent
+        class AciParserConfig(FlextLdifModelsConfig.AciParserConfig):
+            """ACI parser configuration."""
 
-        # ConversionEventConfig moved to _models/events.py
-        ConversionEventConfig = FlextLdifModelsEvents.ConversionEventConfig
-        ConversionEvent = FlextLdifModelsEvents.ConversionEvent
+        class AciWriterConfig(FlextLdifModelsConfig.AciWriterConfig):
+            """ACI writer configuration."""
+
+        # Event models - real inheritance classes
+        class DnEventConfig(FlextLdifModelsEvents.DnEventConfig):
+            """DN event configuration."""
+
+        class DnEvent(FlextLdifModelsEvents.DnEvent):
+            """DN event model."""
+
+        class MigrationEventConfig(FlextLdifModelsEvents.MigrationEventConfig):
+            """Migration event configuration."""
+
+        class MigrationEvent(FlextLdifModelsEvents.MigrationEvent):
+            """Migration event model."""
+
+        class CategoryEvent(FlextLdifModelsEvents.CategoryEvent):
+            """Category event model."""
+
+        class ConversionEventConfig(FlextLdifModelsEvents.ConversionEventConfig):
+            """Conversion event configuration."""
+
+        class ConversionEvent(FlextLdifModelsEvents.ConversionEvent):
+            """Conversion event model."""
 
         class SchemaEventConfig(FlextLdifModelsEvents.SchemaEventConfig):
             """Configuration for schema event creation.
@@ -129,49 +150,53 @@ class FlextLdifModels(FlextModels):
                     operation_duration_ms=125.3,
                     server_type=c.ServerType.OUD,
                 )
-                event = FlextLdifUtilities.Events.create_schema_event(config)
+                event = FlextLdifUtilitiesEvents.create_schema_event(config)
 
             """
 
-        SchemaEvent = FlextLdifModelsEvents.SchemaEvent
+        class SchemaEvent(FlextLdifModelsEvents.SchemaEvent):
+            """Schema event model."""
 
-        # EntryStatistics from domain models
-        EntryStatistics = FlextLdifModelsDomains.EntryStatistics
+        # Statistics and domain models - real inheritance classes
+        class EntryStatistics(FlextLdifModelsDomains.EntryStatistics):
+            """Entry statistics model."""
 
-        # =========================================================================
-        # DOMAIN EVENTS - Processing events
-        # =========================================================================
+        class DNStatistics(FlextLdifModelsDomains.DNStatistics):
+            """DN statistics model."""
 
-        # =========================================================================
-        # CONFIGURATION AND OPTIONS
-        # =========================================================================
+        class TransformationFlags(FlextLdifModelsDomains.DNStatisticsFlags):
+            """Type for DN transformation flags.
 
-        # ACL configuration models
-        AclMetadataConfig = FlextLdifModelsConfig.AclMetadataConfig
-        AciParserConfig = FlextLdifModelsConfig.AciParserConfig
-        AciWriterConfig = FlextLdifModelsConfig.AciWriterConfig
+            Public type for tracking DN transformation state during cleaning operations.
+            Used internally by FlextLdifUtilitiesDN for collecting transformation metadata.
+            """
 
-        # Metadata models - runtime assignments with TypeAlias for type checking
-        QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata
+        class WriteOptions(FlextLdifModelsDomains.WriteOptions):
+            """Write options model."""
 
-        # DN and statistics models - runtime assignments with TypeAlias for type checking
-        DistinguishedName: TypeAlias = FlextLdifModelsDomains.DistinguishedName
-        DNStatistics = FlextLdifModelsDomains.DNStatistics
+        class Syntax(FlextLdifModelsDomains.Syntax):
+            """Syntax model."""
 
-        # Transformation flags type alias
-        TransformationFlags = FlextLdifModelsDomains.DNStatisticsFlags
-        """Type alias for DN transformation flags.
+        # Metadata models - real inheritance classes
+        class QuirkMetadata(FlextLdifModelsDomains.QuirkMetadata):
+            """Quirk metadata model for server-specific extensions."""
 
-        Public type for tracking DN transformation state during cleaning operations.
-        Used internally by FlextLdifUtilitiesDN for collecting transformation metadata.
-        """
+        # DN models - real inheritance classes
+        class DistinguishedName(FlextLdifModelsDomains.DistinguishedName):
+            """Distinguished Name model."""
 
-        # Processing and writer models - runtime assignments with TypeAlias for type checking
-        ProcessingResult: TypeAlias = ProcessingResultModel
-        ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
-        WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
-        WriteOptions = FlextLdifModelsDomains.WriteOptions
-        Syntax = FlextLdifModelsDomains.Syntax
+        class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
+            """Error detail information for failed operations."""
+
+        # Processing result models - real inheritance classes
+        class ProcessingResult(ProcessingResultModel):
+            """Processing result model."""
+
+        class ParseResponse(FlextLdifModelsResults.ParseResponse):
+            """Parse response model."""
+
+        class WriteResponse(FlextLdifModelsResults.WriteResponse):
+            """Write response model."""
 
         # =========================================================================
         # DTO MODELS - Data transfer objects
@@ -405,16 +430,28 @@ class FlextLdifModels(FlextModels):
             FlextLdifModels.Ldif.Entry
         ]
 
-        # Schema models - runtime assignments with TypeAlias for type checking
-        SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute
-        SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass
+        # Schema models - real inheritance classes
+        class SchemaAttribute(FlextLdifModelsDomains.SchemaAttribute):
+            """Schema attribute model."""
 
-        # ACL models - runtime assignments with TypeAlias for type checking
-        Acl: TypeAlias = FlextLdifModelsDomains.Acl
-        AclTarget: TypeAlias = FlextLdifModelsDomains.AclTarget
-        AclSubject: TypeAlias = FlextLdifModelsDomains.AclSubject
-        AclPermissions: TypeAlias = FlextLdifModelsDomains.AclPermissions
-        DnRegistry: TypeAlias = FlextLdifModelsDomains.DnRegistry
+        class SchemaObjectClass(FlextLdifModelsDomains.SchemaObjectClass):
+            """Schema objectClass model."""
+
+        # ACL models - real inheritance classes
+        class Acl(FlextLdifModelsDomains.Acl):
+            """ACL (Access Control List) model."""
+
+        class AclTarget(FlextLdifModelsDomains.AclTarget):
+            """ACL target model."""
+
+        class AclSubject(FlextLdifModelsDomains.AclSubject):
+            """ACL subject model."""
+
+        class AclPermissions(FlextLdifModelsDomains.AclPermissions):
+            """ACL permissions model."""
+
+        class DnRegistry(FlextLdifModelsDomains.DnRegistry):
+            """DN registry model."""
 
         class Entry(FlextLdifModelsDomains.Entry):
             """LDIF entry with DN and attributes.
@@ -676,6 +713,9 @@ class FlextLdifModels(FlextModels):
             Reduces migrate() signature from 16 parameters to 5 parameters.
             """
 
+        class SortConfig(FlextLdifModelsConfig.SortConfig):
+            """Configuration for entry sorting operations."""
+
         class MigrationConfig(FlextLdifModelsConfig.MigrationConfig):
             """Configuration for migration operations.
 
@@ -797,48 +837,733 @@ class FlextLdifModels(FlextModels):
         # directly for LDIF ACL extraction operations.
 
         # ═══════════════════════════════════════════════════════════════════════════
+        # PROCESSING CONFIGURATION MODELS - Moved from _utilities/configs.py
+        # ═══════════════════════════════════════════════════════════════════════════
+
+        class Config:
+            """Processing configuration models namespace.
+
+            Contains configuration models for LDIF processing operations:
+            - DN normalization, attribute normalization, ACL conversion
+            - Validation, filtering, transformation, writing, loading
+            """
+
+            # Enums - moved from _utilities/configs.py
+            class ServerType(StrEnum):
+                """LDAP server type enumeration."""
+
+                AUTO = "auto"
+                OID = "oid"
+                OUD = "oud"
+                OPENLDAP = "openldap"
+                OPENLDAP1 = "openldap1"
+                AD = "ad"
+                DS389 = "ds389"
+                NOVELL = "novell"
+                TIVOLI = "tivoli"
+                RELAXED = "relaxed"
+                RFC = "rfc"
+
+            class OutputFormat(StrEnum):
+                """Output format enumeration."""
+
+                LDIF = "ldif"
+                JSON = "json"
+                CSV = "csv"
+                YAML = "yaml"
+
+            class CaseFoldOption(StrEnum):
+                """Case folding options for DN normalization."""
+
+                NONE = "none"
+                LOWER = "lower"
+                UPPER = "upper"
+
+            class SpaceHandlingOption(StrEnum):
+                """Space handling options for DN normalization."""
+
+                PRESERVE = "preserve"
+                TRIM = "trim"
+                NORMALIZE = "normalize"
+
+            class EscapeHandlingOption(StrEnum):
+                """Escape sequence handling options."""
+
+                PRESERVE = "preserve"
+                UNESCAPE = "unescape"
+                NORMALIZE = "normalize"
+
+            class SortOption(StrEnum):
+                """Attribute sorting options."""
+
+                NONE = "none"
+                ALPHABETICAL = "alphabetical"
+                HIERARCHICAL = "hierarchical"
+
+            # Configuration models - inherit from FlextModels base classes
+            class DnNormalizationConfig(FlextModels.Config):
+                """DN (Distinguished Name) normalization configuration."""
+
+                case_fold: Literal["none", "lower", "upper"] = Field(
+                    default="lower",
+                )
+                space_handling: Literal["preserve", "trim", "normalize"] = Field(
+                    default="trim",
+                )
+                escape_handling: Literal["preserve", "unescape", "normalize"] = Field(
+                    default="preserve",
+                )
+                validate_before: bool = Field(
+                    default=True,
+                    description="Validate DN before normalization",
+                )
+
+            class AttrNormalizationConfig(FlextModels.Config):
+                """Attribute normalization configuration."""
+
+                sort_attributes: Literal["none", "alphabetical", "hierarchical"] = (
+                    Field(
+                        default="alphabetical",
+                    )
+                )
+                sort_values: bool = Field(default=True)
+                normalize_whitespace: bool = Field(default=True)
+                case_fold_names: bool = Field(
+                    default=True,
+                    description="Lowercase attribute names",
+                )
+                trim_values: bool = Field(
+                    default=True,
+                    description="Trim whitespace from values",
+                )
+                remove_empty: bool = Field(
+                    default=False,
+                    description="Remove empty attribute values",
+                )
+
+            class AclConversionConfig(FlextModels.Config):
+                """ACL (Access Control List) conversion configuration."""
+
+                convert_aci: bool = Field(default=True)
+                preserve_original_aci: bool = Field(default=False)
+                map_server_specific: bool = Field(default=True)
+
+            class MetadataConfig(FlextModels.Config):
+                """Metadata preservation configuration."""
+
+                preserve_original: bool = Field(default=True)
+                preserve_tracking: bool = Field(default=True)
+                preserve_validation: bool = Field(default=False)
+
+            class ValidationConfig(FlextModels.Config):
+                """Validation configuration."""
+
+                strict_rfc: bool = Field(default=False)
+                allow_server_quirks: bool = Field(default=True)
+                validate_dn_format: bool = Field(default=True)
+
+            class FilterConfig(FlextModels.Config):
+                """Entry filtering configuration."""
+
+                filter_expression: str | None = Field(default=None)
+                exclude_filter: str | None = Field(default=None)
+                include_operational: bool = Field(default=False)
+                mode: Literal["all", "any"] = Field(
+                    default="all",
+                    description="Filter combination mode (all=AND, any=OR)",
+                )
+                case_sensitive: bool = Field(
+                    default=False,
+                    description="Case-sensitive matching",
+                )
+                include_metadata_matches: bool = Field(
+                    default=False,
+                    description="Match against metadata fields",
+                )
+
+            class ProcessConfig(FlextModels.Config):
+                """Main process configuration."""
+
+                @staticmethod
+                def _default_server_type() -> FlextLdifModels.Ldif.Config.ServerType:
+                    """Default server type factory function."""
+                    # Use forward reference to avoid unbound name error
+                    return FlextLdifModels.Ldif.Config.ServerType.RFC
+
+                @staticmethod
+                def _default_dn_config() -> (
+                    FlextLdifModels.Ldif.Config.DnNormalizationConfig
+                ):
+                    """Default DN config factory function."""
+                    # Use forward reference to avoid unbound name error
+                    return FlextLdifModels.Ldif.Config.DnNormalizationConfig()
+
+                @staticmethod
+                def _default_attr_config() -> (
+                    FlextLdifModels.Ldif.Config.AttrNormalizationConfig
+                ):
+                    """Default attribute config factory function."""
+                    # Use forward reference to avoid unbound name error
+                    return FlextLdifModels.Ldif.Config.AttrNormalizationConfig()
+
+                @staticmethod
+                def _default_acl_config() -> (
+                    FlextLdifModels.Ldif.Config.AclConversionConfig
+                ):
+                    """Default ACL config factory function."""
+                    # Access FlextLdifModels from module namespace after class definition
+                    current_module = sys.modules[__name__]
+                    models_class = current_module.FlextLdifModels
+                    return models_class.Ldif.Config.AclConversionConfig()
+
+                @staticmethod
+                def _default_validation_config() -> (
+                    FlextLdifModels.Ldif.Config.ValidationConfig
+                ):
+                    """Default validation config factory function."""
+                    # Access FlextLdifModels from module namespace after class definition
+                    current_module = sys.modules[__name__]
+                    models_class = current_module.FlextLdifModels
+                    return models_class.Ldif.Config.ValidationConfig()
+
+                @staticmethod
+                def _default_metadata_config() -> (
+                    FlextLdifModels.Ldif.Config.MetadataConfig
+                ):
+                    """Default metadata config factory function."""
+                    # Access FlextLdifModels from module namespace after class definition
+                    current_module = sys.modules[__name__]
+                    models_class = current_module.FlextLdifModels
+                    return models_class.Ldif.Config.MetadataConfig()
+
+                source_server: FlextLdifModels.Ldif.Config.ServerType = Field(
+                    default_factory=_default_server_type,
+                )
+                target_server: FlextLdifModels.Ldif.Config.ServerType = Field(
+                    default_factory=_default_server_type,
+                )
+                dn_config: FlextLdifModels.Ldif.Config.DnNormalizationConfig = Field(
+                    default_factory=_default_dn_config,
+                )
+                attr_config: FlextLdifModels.Ldif.Config.AttrNormalizationConfig = (
+                    Field(
+                        default_factory=_default_attr_config,
+                    )
+                )
+                acl_config: FlextLdifModels.Ldif.Config.AclConversionConfig = Field(
+                    default_factory=_default_acl_config,
+                )
+                validation_config: FlextLdifModels.Ldif.Config.ValidationConfig = Field(
+                    default_factory=_default_validation_config,
+                )
+                metadata_config: FlextLdifModels.Ldif.Config.MetadataConfig = Field(
+                    default_factory=_default_metadata_config,
+                )
+
+            class TransformConfig(FlextModels.Config):
+                """Transformation pipeline configuration."""
+
+                @staticmethod
+                def _default_process_config() -> (
+                    FlextLdifModels.Ldif.Config.ProcessConfig
+                ):
+                    """Default process config factory function."""
+                    return FlextLdifModels.Ldif.Config.ProcessConfig()
+
+                @staticmethod
+                def _default_filter_config() -> (
+                    FlextLdifModels.Ldif.Config.FilterConfig
+                ):
+                    """Default filter config factory function."""
+                    return FlextLdifModels.Ldif.Config.FilterConfig()
+
+                process_config: FlextLdifModels.Ldif.Config.ProcessConfig = Field(
+                    default_factory=_default_process_config,
+                )
+                filter_config: FlextLdifModels.Ldif.Config.FilterConfig = Field(
+                    default_factory=_default_filter_config,
+                )
+                normalize_dns: bool = Field(default=True)
+                normalize_attrs: bool = Field(default=True)
+                convert_acls: bool = Field(default=True)
+                fail_fast: bool = Field(default=True, description="Stop on first error")
+                preserve_order: bool = Field(
+                    default=True,
+                    description="Preserve entry order",
+                )
+                track_changes: bool = Field(
+                    default=True,
+                    description="Track changes in metadata",
+                )
+
+            class WriteConfig(FlextModels.Config):
+                """LDIF output/write configuration."""
+
+                @staticmethod
+                def _default_output_format() -> (
+                    FlextLdifModels.Ldif.Config.OutputFormat
+                ):
+                    """Default output format factory function."""
+                    return FlextLdifModels.Ldif.Config.OutputFormat.LDIF
+
+                @staticmethod
+                def _default_sort_option() -> FlextLdifModels.Ldif.Config.SortOption:
+                    """Default sort option factory function."""
+                    return FlextLdifModels.Ldif.Config.SortOption.ALPHABETICAL
+
+                output_format: FlextLdifModels.Ldif.Config.OutputFormat = Field(
+                    default_factory=_default_output_format,
+                )
+                version: int = Field(default=1, ge=1)
+                wrap_lines: bool = Field(default=True)
+                line_length: int = Field(default=76, ge=10)
+                format: FlextLdifModels.Ldif.Config.OutputFormat = Field(
+                    default_factory=_default_output_format,
+                    description="Alias for output_format",
+                )
+                line_width: int = Field(
+                    default=76,
+                    ge=10,
+                    description="Alias for line_length",
+                )
+                fold_lines: bool = Field(
+                    default=True,
+                    description="Alias for wrap_lines",
+                )
+                base64_attrs: Sequence[str] | Literal["auto"] = Field(
+                    default="auto",
+                    description="Attributes to encode in base64",
+                )
+                sort_by: FlextLdifModels.Ldif.Config.SortOption = Field(
+                    default_factory=_default_sort_option,
+                    description="Sort entries by field",
+                )
+                attr_order: Sequence[str] | None = Field(
+                    default=None,
+                    description="Preferred attribute order",
+                )
+                include_metadata: bool = Field(
+                    default=False,
+                    description="Include metadata in output",
+                )
+                server: FlextLdifModels.Ldif.Config.ServerType | None = Field(
+                    default=None,
+                    description="Target server type for formatting",
+                )
+
+            class LoadConfig(FlextModels.Config):
+                """LDIF file loading configuration."""
+
+                file_path: str = Field(default="")
+                encoding: str = Field(default="utf-8")
+                ignore_errors: bool = Field(default=False)
+                skip_comments: bool = Field(default=False)
+
+            class SchemaParseConfig(FlextModels.Config):
+                """Schema parsing configuration."""
+
+                parse_attributes: bool = Field(default=True)
+                parse_objectclasses: bool = Field(default=True)
+                parse_matching_rules: bool = Field(default=False)
+                parse_syntaxes: bool = Field(default=False)
+
+            class ValidationRuleSet(FlextModels.Config):
+                """Validation rule set configuration."""
+
+                name: str = Field(default="default")
+                strict_mode: bool = Field(default=False)
+                allow_undefined_attrs: bool = Field(default=True)
+                allow_undefined_ocs: bool = Field(default=True)
+
+        # ═══════════════════════════════════════════════════════════════════════════
         # LDIF RESULTS AGGREGATE - Unified namespace for all result types
         # ═══════════════════════════════════════════════════════════════════════════
 
         class LdifResults:
             """Aggregates all LDIF-specific result types for convenient access."""
 
-            # ACL-related results
-            AclResponse = FlextLdifModelsResults.AclResponse
-            AclEvaluationResult = FlextLdifModelsResults.AclEvaluationResult
+            # ACL-related results - real inheritance classes
+            class AclResponse(FlextLdifModelsResults.AclResponse):
+                """ACL response model."""
 
-            # Statistics results
-            Statistics = FlextLdifModelsResults.Statistics
-            StatisticsResult = FlextLdifModelsResults.StatisticsResult
-            StatisticsSummary = FlextLdifModelsResults.StatisticsSummary
-            EntriesStatistics = FlextLdifModelsResults.EntriesStatistics
-            StatisticsServiceStatus = FlextLdifModelsResults.StatisticsServiceStatus
+            class AclEvaluationResult(FlextLdifModelsResults.AclEvaluationResult):
+                """ACL evaluation result model."""
 
-            # Parsing and writing results
-            ParseResponse = FlextLdifModelsResults.ParseResponse
-            WriteResponse = FlextLdifModelsResults.WriteResponse
+            # Statistics results - real inheritance classes
+            class Statistics(FlextLdifModelsResults.Statistics):
+                """Statistics model."""
 
-            # Schema discovery
-            SchemaDiscoveryResult = FlextLdifModelsResults.SchemaDiscoveryResult
-            SchemaBuilderResult = FlextLdifModelsResults.SchemaBuilderResult
-            SyntaxLookupResult = FlextLdifModelsResults.SyntaxLookupResult
+            class StatisticsResult(FlextLdifModelsResults.StatisticsResult):
+                """Statistics result model."""
 
-            # Migration results
-            MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
-            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+            class StatisticsSummary(FlextLdifModelsResults.StatisticsSummary):
+                """Statistics summary model."""
 
-            # Validation results
-            ValidationResult = FlextLdifModelsResults.ValidationResult
-            ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
-            LdifValidationResult = FlextLdifModelsResults.LdifValidationResult
+            class EntriesStatistics(FlextLdifModelsResults.EntriesStatistics):
+                """Entries statistics model."""
 
-            # Analysis and detection results
-            ServerDetectionResult = FlextLdifModelsResults.ServerDetectionResult
-            AnalysisResult = FlextLdifModelsResults.AnalysisResult
-            EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
-            EntryResult = FlextLdifModelsResults.EntryResult
+            class StatisticsServiceStatus(
+                FlextLdifModelsResults.StatisticsServiceStatus,
+            ):
+                """Statistics service status model."""
+
+            class SchemaServiceStatus(FlextLdifModelsResults.SchemaServiceStatus):
+                """Schema service status model."""
+
+            class SyntaxServiceStatus(FlextLdifModelsResults.SyntaxServiceStatus):
+                """Syntax service status model."""
+
+            class ValidationServiceStatus(
+                FlextLdifModelsResults.ValidationServiceStatus,
+            ):
+                """Validation service status model."""
+
+            # Parsing and writing results - real inheritance classes
+            class ParseResponse(FlextLdifModelsResults.ParseResponse):
+                """Parse response model."""
+
+            class WriteResponse(FlextLdifModelsResults.WriteResponse):
+                """Write response model."""
+
+            # Schema discovery - real inheritance classes
+            class SchemaDiscoveryResult(FlextLdifModelsResults.SchemaDiscoveryResult):
+                """Schema discovery result model."""
+
+            class SchemaBuilderResult(FlextLdifModelsResults.SchemaBuilderResult):
+                """Schema builder result model."""
+
+            class SyntaxLookupResult(FlextLdifModelsResults.SyntaxLookupResult):
+                """Syntax lookup result model."""
+
+            # Migration results - real inheritance classes
+            class MigrationEntriesResult(FlextLdifModelsResults.MigrationEntriesResult):
+                """Migration entries result model."""
+
+            class MigrationPipelineResult(
+                FlextLdifModelsResults.MigrationPipelineResult,
+            ):
+                """Migration pipeline result model."""
+
+            # Validation results - real inheritance classes
+            class ValidationResult(FlextLdifModelsResults.ValidationResult):
+                """Validation result model."""
+
+            class ValidationBatchResult(FlextLdifModelsResults.ValidationBatchResult):
+                """Validation batch result model."""
+
+            class LdifValidationResult(FlextLdifModelsResults.LdifValidationResult):
+                """LDIF validation result model."""
+
+            # Analysis and detection results - real inheritance classes
+            class ServerDetectionResult(FlextLdifModelsResults.ServerDetectionResult):
+                """Server detection result model."""
+
+            class AnalysisResult(FlextLdifModelsResults.AnalysisResult):
+                """Analysis result model."""
+
+            class EntryAnalysisResult(FlextLdifModelsResults.EntryAnalysisResult):
+                """Entry analysis result model."""
+
+            class EntryResult(FlextLdifModelsResults.EntryResult):
+                """Entry result model."""
+
+            # Dynamic counts model - used by analysis and detection services
+            class DynamicCounts(FlextLdifModelsResults.DynamicCounts):
+                """Dynamic counts model for object class distribution, rejection reasons, etc."""
+
+            # Domain models exposed in results namespace for unified access
+            # These are referenced by services and should be accessible via m.Ldif.LdifResults.*
+            class Entry(FlextLdifModelsDomains.Entry):
+                """Entry model - exposed in results namespace for unified service access."""
+
+            class WriteOptions(FlextLdifModelsDomains.WriteOptions):
+                """Write options model - exposed in results namespace for unified service access."""
+
+            class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
+                """Write format options model - exposed in results namespace for unified service access."""
+
+            # Additional domain and config models exposed for service access
+            class Syntax(FlextLdifModelsDomains.Syntax):
+                """Syntax model - exposed in results namespace for unified service access."""
+
+            class SortConfig(FlextLdifModelsConfig.SortConfig):
+                """Sort configuration model - exposed in results namespace for unified service access."""
+
+            class DnEvent(FlextLdifModelsEvents.DnEvent):
+                """DN event model - exposed in results namespace for unified service access."""
+
+            class DnEventConfig(FlextLdifModelsEvents.DnEventConfig):
+                """DN event configuration model - exposed in results namespace for unified service access."""
+
+            class CategoryRules(FlextLdifModelsConfig.CategoryRules):
+                """Category rules model - exposed in results namespace for unified service access."""
+
+            class WhitelistRules(FlextLdifModelsConfig.WhitelistRules):
+                """Whitelist rules model - exposed in results namespace for unified service access."""
+
+            class AclPermissions(FlextLdifModelsDomains.AclPermissions):
+                """ACL permissions model - exposed in results namespace for unified service access."""
+
+            class FlexibleCategories(FlextLdifModelsResults.FlexibleCategories):
+                """Flexible categories model - exposed in results namespace for unified service access."""
+
+        # ═══════════════════════════════════════════════════════════════════════════
+        # TYPEDICT MODELS - Moved from typings.py as Pydantic models
+        # ═══════════════════════════════════════════════════════════════════════════
+
+        class Types:
+            """Type models namespace - moved from typings.py TypedDict to Pydantic models."""
+
+            class SchemaDict(FlextModelsBase.ArbitraryTypesModel):
+                """Schema extraction result dictionary model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                Contains ATTRIBUTES and OBJECTCLASS keys from extract_schemas_from_ldif().
+                """
+
+                ATTRIBUTES: list[FlextLdifModels.Ldif.SchemaAttribute] = Field(
+                    default_factory=list,
+                )
+                OBJECTCLASS: list[FlextLdifModels.Ldif.SchemaObjectClass] = Field(
+                    default_factory=list,
+                )
+
+            class PermissionsDict(FlextModelsBase.ArbitraryTypesModel):
+                """ACL permissions dictionary model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                All fields are optional to match TypedDict total=False behavior.
+                """
+
+                read: bool | None = Field(default=None)
+                write: bool | None = Field(default=None)
+                add: bool | None = Field(default=None)
+                delete: bool | None = Field(default=None)
+                search: bool | None = Field(default=None)
+                compare: bool | None = Field(default=None)
+                self_write: bool | None = Field(default=None)
+                proxy: bool | None = Field(default=None)
+                browse: bool | None = Field(default=None)
+                auth: bool | None = Field(default=None)
+                all: bool | None = Field(default=None)
+
+            class EvaluationContextDict(FlextModelsBase.ArbitraryTypesModel):
+                """ACL evaluation context dictionary model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                All fields are optional to match TypedDict total=False behavior.
+                """
+
+                subject_dn: str | None = Field(default=None)
+                target_dn: str | None = Field(default=None)
+                operation: str | None = Field(default=None)
+                attributes: list[str] | None = Field(default=None)
+
+            class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):
+                """Transformation step information model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                Stored in metadata for transformation tracking.
+                All fields are optional to match TypedDict total=False behavior.
+                """
+
+                step: str | None = Field(default=None)
+                server: str | None = Field(default=None)
+                changes: list[str] | None = Field(default=None)
+
+            class QuirksByServerDict(FlextModelsBase.ArbitraryTypesModel):
+                """Quirks by server dictionary model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                All fields are optional to match TypedDict total=False behavior.
+                """
+
+                schema_type: str | None = Field(
+                    default=None,
+                    alias="schema",
+                    description="Schema quirk type",
+                )
+                acl_type: str | None = Field(
+                    default=None,
+                    alias="acl",
+                    description="ACL quirk type",
+                )
+                entry_type: str | None = Field(
+                    default=None,
+                    alias="entry",
+                    description="Entry quirk type",
+                )
+
+            class RegistryStatsDict(FlextModelsBase.ArbitraryTypesModel):
+                """Registry statistics dictionary model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                Replaces dict[str, object] with specific structure.
+                """
+
+                total_servers: int = Field(default=0)
+                quirks_by_server: dict[
+                    str,
+                    FlextLdifModels.Ldif.Types.QuirksByServerDict,
+                ] = Field(default_factory=dict)
+                server_priorities: dict[str, int] = Field(default_factory=dict)
+
+            class EntryParsingContext(FlextModelsBase.ArbitraryTypesModel):
+                """Entry parsing context model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                All fields are optional to match TypedDict total=False behavior.
+                Used in parsing/writing operations for context tracking.
+                """
+
+                original_entry_dn: str | None = Field(default=None)
+                cleaned_dn: str | None = Field(default=None)
+                original_dn_line: str | None = Field(default=None)
+                original_attr_lines: list[str] | None = Field(default=None)
+                dn_was_base64: bool | None = Field(default=None)
+                original_attribute_case: dict[str, str] | None = Field(default=None)
+                dn_differences: (
+                    dict[str, FlextTypes.MetadataAttributeValue]
+                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                    | None
+                ) = Field(default=None)
+                attribute_differences: (
+                    dict[str, FlextTypes.MetadataAttributeValue]
+                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                    | None
+                ) = Field(default=None)
+                original_attributes_complete: (
+                    dict[str, FlextTypes.MetadataAttributeValue] | None
+                ) = Field(default=None)
+
+            class AttributeWriteContext(FlextModelsBase.ArbitraryTypesModel):
+                """Attribute write context model.
+
+                Replaces TypedDict from typings.py with Pydantic model.
+                All fields are optional to match TypedDict total=False behavior.
+                Used in writing operations for context tracking.
+                """
+
+                attr_name: str | None = Field(default=None)
+                attr_values: FlextTypes.GeneralValueType | None = Field(default=None)
+                minimal_differences_attrs: dict[
+                    str,
+                    FlextTypes.MetadataAttributeValue,
+                ] = Field(default_factory=dict)
+                hidden_attrs: set[str] = Field(default_factory=set)
+                # Note: write_options uses protocol type - keep as protocol reference
+                # write_options: p.Ldif.Models.WriteFormatOptionsProtocol
+
+            # Type aliases for inline complex types - moved from various modules
+            # Type alias for LDIF entry attributes.
+            # Maps attribute names to lists of values (RFC 2849 format).
+            # Includes dynamic LDAP attribute names (cn, sn, mail, etc.) and
+            # internal metadata fields (_original_dn_line, _original_lines, _base64_dn).
+            type EntryAttributesDict = dict[str, list[str]]
+
+            # Type alias for raw entry dictionaries during LDIF parsing.
+            # Used internally during parsing before conversion to Entry models.
+            # Supports flexible value types during parsing phase.
+            type RawEntryDict = dict[str, str | list[str] | set[str]]
+
+            # Type alias for boolean format literals.
+            # Used in transformers for boolean value conversion between formats.
+            type BooleanFormat = Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"]
+
+            # Type alias for attribute name -> metadata dict mapping.
+            # Maps attribute names to their metadata dictionaries.
+            # Used in metadata utilities for per-attribute tracking.
+            type AttributeMetadataMap = dict[str, dict[str, str | list[str]]]
+
+        # =====================================================================
+        # PROTOCOL-BASED TYPE ALIASES (Tier 1 - combine typings + protocols)
+        # =====================================================================
+        # These types combine Tier 0 typings and protocols (which Tier 0 cannot do)
+
+        # TypeVar with protocol bounds (must be here, not in Tier 0)
+        FlextLdifModelT = TypeVar(
+            "FlextLdifModelT",
+            bound="p.Ldif.Constants.ModelWithValidationMetadata",
+        )
+        """TypeVar for models with validation metadata."""
+
+        # Protocol-based type aliases moved from typings.py
+        type QuirksPort = p.Ldif.Quirks.QuirksPort
+        """Type alias for the complete quirks port interface."""
+
+        class Decorators:
+            """Decorator-related type aliases combining protocol and type info."""
+
+            type ProtocolType = (
+                p.Ldif.Quirks.SchemaProtocol
+                | p.Ldif.Quirks.AclProtocol
+                | p.Ldif.Quirks.EntryProtocol
+            )
+            """Union type for quirk protocol types used in decorators."""
+
+            type WriteMethodArg = (
+                p.Ldif.Models.SchemaAttributeProtocol
+                | p.Ldif.Models.SchemaObjectClassProtocol
+                | p.Ldif.Models.AclProtocol
+                | p.Ldif.Models.EntryProtocol
+                | Sequence[p.Ldif.Models.EntryProtocol]
+                | str
+            )
+            """Type alias for write method arguments using protocols."""
+
+            type WriteMethod = Callable[
+                [ProtocolType, t.Ldif.Decorators.WriteMethodArg], FlextResult[object]
+            ]
+            """Type alias for write methods that work with protocol types."""
+
+            type SafeMethod = Callable[
+                [ProtocolType, t.Ldif.Decorators.ParseMethodArg], FlextResult[object]
+            ]
+            """Type alias for safe parse methods using protocol types."""
+
+            type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
+            """Type alias for decorators that wrap write methods."""
+
+            type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
+            """Type alias for decorators that wrap safe methods."""
+
+        class Schema:
+            """Schema element type with protocol references."""
+
+            type SchemaElement = (
+                p.Ldif.Models.SchemaAttributeProtocol
+                | p.Ldif.Models.SchemaObjectClassProtocol
+                | str
+                | int
+                | float
+                | bool
+                | None
+            )
+            """Type alias for schema elements that can be stored in schema maps."""
+
+        class Registry:
+            """Registry-related type aliases using protocols."""
+
+            type QuirksDict = dict[
+                str,
+                p.Ldif.Quirks.SchemaProtocol
+                | p.Ldif.Quirks.AclProtocol
+                | p.Ldif.Quirks.EntryProtocol
+                | None,
+            ]
+            """Type alias for quirks dictionary returned by get_all_quirks."""
 
 
+# Root aliases are PROIBIDOS - always use m.Ldif.* namespace completo
+# Removed: FlextLdifModels.Entry, FlextLdifModels.MigrateOptions, FlextLdifModels.WriteFormatOptions
+# Use: m.Ldif.Entry, m.Ldif.MigrateOptions, m.Ldif.WriteFormatOptions
+
+# Runtime alias for basic class (objetos nested sem aliases redundantes)
+# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 m = FlextLdifModels
 
-__all__ = ["FlextLdifModels", "m"]
+# Module-level export for TypeVar (allows import from models.py directly)
+# This TypeVar has protocol bound so it must be defined in Tier 1 (models.py)
+FlextLdifModelT = FlextLdifModels.Ldif.FlextLdifModelT
+
+__all__ = ["FlextLdifModelT", "FlextLdifModels", "m"]

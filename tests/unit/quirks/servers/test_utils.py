@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif import FlextLdif
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 from flext_ldif.models import FlextLdifModels
 
 # Use direct import to avoid circular dependency
@@ -21,7 +21,7 @@ class FlextLdifTestUtils:
 
     @staticmethod
     def get_fixture_path(
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
     ) -> Path:
         """Get the path to a fixture file.
@@ -61,9 +61,9 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture(
         ldif_api: FlextLdif,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load a fixture LDIF file and return parsed entries.
 
         Args:
@@ -103,10 +103,10 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture_entries(
         ldif_api: FlextLdif,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         expected_min_count: int | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture LDIF file and return parsed entries with validation.
 
         Args:
@@ -143,13 +143,13 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture_and_validate_structure(
         ldif_api: FlextLdif,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         *,
         expected_has_dn: bool = True,
         expected_has_attributes: bool = True,
         expected_has_objectclass: bool | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture and validate entry structure.
 
         Args:
@@ -194,12 +194,12 @@ class FlextLdifTestUtils:
     @staticmethod
     def run_fixture_roundtrip(
         ldif_api: FlextLdif,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path,
         *,
         validate_identical: bool = True,
-    ) -> tuple[list[m.Entry], list[m.Entry], bool]:
+    ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry], bool]:
         """Run roundtrip test on fixture.
 
         Args:
@@ -268,10 +268,10 @@ class FlextLdifTestUtils:
     @staticmethod
     def run_roundtrip_test(
         ldif_api: FlextLdif,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path | None = None,
-    ) -> tuple[list[m.Entry], list[m.Entry], bool]:
+    ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry], bool]:
         """Run a roundtrip test on a fixture.
 
         Parse -> Write -> Parse and compare original vs roundtrip entries.
@@ -330,8 +330,8 @@ class FlextLdifTestUtils:
 
     @staticmethod
     def compare_entries(
-        original_entries: list[m.Entry],
-        roundtrip_entries: list[m.Entry],
+        original_entries: list[m.Ldif.Entry],
+        roundtrip_entries: list[m.Ldif.Entry],
     ) -> tuple[bool, list[str]]:
         """Compare two lists of entries for differences.
 

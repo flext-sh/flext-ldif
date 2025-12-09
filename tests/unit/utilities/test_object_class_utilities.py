@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from tests import m, s
+from tests import c, m, s
 
-from flext_ldif import FlextLdifConstants
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 
 
@@ -38,9 +37,9 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         name: str,
         kind: str | None = None,
         sup: str | None = None,
-    ) -> m.SchemaObjectClass:
+    ) -> m.Ldif.SchemaObjectClass:
         """Factory to create SchemaObjectClass for testing."""
-        return m.SchemaObjectClass(
+        return m.Ldif.SchemaObjectClass(
             oid="1.2.3.4.5",
             name=name,
             kind=kind,
@@ -51,7 +50,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_missing_sup fixes AUXILIARY without SUP."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -63,7 +62,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_missing_sup does not modify AUXILIARY with SUP."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="someSuperior",
         )
 
@@ -76,7 +75,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_missing_sup does not modify STRUCTURAL."""
         oc = self.create_objectclass(
             "testStructural",
-            kind=FlextLdifConstants.Schema.STRUCTURAL,
+            kind=c.Ldif.Schema.STRUCTURAL,
             sup=None,
         )
 
@@ -95,7 +94,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         for class_name in known_classes:
             oc = self.create_objectclass(
                 class_name,
-                kind=FlextLdifConstants.Schema.AUXILIARY,
+                kind=c.Ldif.Schema.AUXILIARY,
                 sup=None,
             )
 
@@ -107,7 +106,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_missing_sup delegates to ensure_sup_for_auxiliary for unknown."""
         oc = self.create_objectclass(
             "unknownAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -119,7 +118,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_kind_mismatch does nothing without SUP."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -156,13 +155,13 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         for sup_name in structural_superiors:
             oc = self.create_objectclass(
                 "test",
-                kind=FlextLdifConstants.Schema.AUXILIARY,
+                kind=c.Ldif.Schema.AUXILIARY,
                 sup=sup_name,
             )
 
             FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc)
 
-            assert oc.kind == FlextLdifConstants.Schema.STRUCTURAL
+            assert oc.kind == c.Ldif.Schema.STRUCTURAL
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fix_kind_mismatch fixes STRUCTURAL with AUXILIARY superior."""
@@ -177,12 +176,12 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         for sup_name in auxiliary_superiors:
             oc = self.create_objectclass(
                 "test",
-                kind=FlextLdifConstants.Schema.STRUCTURAL,
+                kind=c.Ldif.Schema.STRUCTURAL,
                 sup=sup_name,
             )
 
             # Verify initial state
-            assert oc.kind == FlextLdifConstants.Schema.STRUCTURAL
+            assert oc.kind == c.Ldif.Schema.STRUCTURAL
             assert oc.sup == sup_name
 
             # The method converts sup to lowercase for comparison
@@ -190,7 +189,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
             FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc)
 
             # Should change STRUCTURAL to AUXILIARY when superior is in auxiliary_superiors
-            assert oc.kind == FlextLdifConstants.Schema.AUXILIARY, (
+            assert oc.kind == c.Ldif.Schema.AUXILIARY, (
                 f"Expected AUXILIARY but got {oc.kind} for sup={sup_name}"
             )
 
@@ -198,7 +197,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_kind_mismatch does nothing when no mismatch."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.STRUCTURAL,
+            kind=c.Ldif.Schema.STRUCTURAL,
             sup="top",
         )
 
@@ -211,7 +210,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test ensure_sup_for_auxiliary adds SUP for AUXILIARY."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -223,7 +222,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test ensure_sup_for_auxiliary does not modify existing SUP."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="existingSuperior",
         )
 
@@ -236,7 +235,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test ensure_sup_for_auxiliary uses custom default SUP."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -251,7 +250,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test ensure_sup_for_auxiliary does not modify STRUCTURAL."""
         oc = self.create_objectclass(
             "testStructural",
-            kind=FlextLdifConstants.Schema.STRUCTURAL,
+            kind=c.Ldif.Schema.STRUCTURAL,
             sup=None,
         )
 
@@ -263,14 +262,14 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test align_kind_with_superior does nothing without SUP."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
         original_kind = oc.kind
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
             oc,
-            FlextLdifConstants.Schema.STRUCTURAL,
+            c.Ldif.Schema.STRUCTURAL,
         )
 
         assert oc.kind == original_kind
@@ -289,7 +288,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         original_kind = oc.kind
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
             oc,
-            FlextLdifConstants.Schema.STRUCTURAL,
+            c.Ldif.Schema.STRUCTURAL,
         )
 
         assert oc.kind == original_kind
@@ -298,7 +297,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test align_kind_with_superior does nothing without superior_kind."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="someSuperior",
         )
 
@@ -311,44 +310,44 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test align_kind_with_superior changes AUXILIARY to STRUCTURAL."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="structuralSuperior",
         )
 
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
             oc,
-            FlextLdifConstants.Schema.STRUCTURAL,
+            c.Ldif.Schema.STRUCTURAL,
         )
 
-        assert oc.kind == FlextLdifConstants.Schema.STRUCTURAL
+        assert oc.kind == c.Ldif.Schema.STRUCTURAL
 
     def test_align_kind_with_superior_structural_to_auxiliary(self) -> None:
         """Test align_kind_with_superior changes STRUCTURAL to AUXILIARY."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.STRUCTURAL,
+            kind=c.Ldif.Schema.STRUCTURAL,
             sup="auxiliarySuperior",
         )
 
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
             oc,
-            FlextLdifConstants.Schema.AUXILIARY,
+            c.Ldif.Schema.AUXILIARY,
         )
 
-        assert oc.kind == FlextLdifConstants.Schema.AUXILIARY
+        assert oc.kind == c.Ldif.Schema.AUXILIARY
 
     def test_align_kind_with_superior_no_mismatch(self) -> None:
         """Test align_kind_with_superior does nothing when kinds match."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.STRUCTURAL,
+            kind=c.Ldif.Schema.STRUCTURAL,
             sup="structuralSuperior",
         )
 
         original_kind = oc.kind
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
             oc,
-            FlextLdifConstants.Schema.STRUCTURAL,
+            c.Ldif.Schema.STRUCTURAL,
         )
 
         assert oc.kind == original_kind
@@ -358,7 +357,7 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_missing_sup handles case-insensitive class names."""
         oc = self.create_objectclass(
             "ORCLDASATTRCATEGORY",  # Uppercase
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup=None,
         )
 
@@ -370,19 +369,19 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         """Test fix_kind_mismatch handles case-insensitive superior names."""
         oc = self.create_objectclass(
             "test",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="ORCLPWDVERIFIERPROFILE",  # Uppercase
         )
 
         FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc)
 
-        assert oc.kind == FlextLdifConstants.Schema.STRUCTURAL
+        assert oc.kind == c.Ldif.Schema.STRUCTURAL
 
     def test_ensure_sup_for_auxiliary_empty_string_sup(self) -> None:
         """Test ensure_sup_for_auxiliary handles empty string SUP."""
         oc = self.create_objectclass(
             "testAuxiliary",
-            kind=FlextLdifConstants.Schema.AUXILIARY,
+            kind=c.Ldif.Schema.AUXILIARY,
             sup="",  # Empty string, not None
         )
 

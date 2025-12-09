@@ -30,25 +30,11 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
-from flext_ldif._utilities.configs import (
-    AclConversionConfig,
-    AttrNormalizationConfig,
-    CaseFoldOption,
-    DnNormalizationConfig,
-    EscapeHandlingOption,
-    FilterConfig,
-    MetadataConfig,
-    OutputFormat,
-    ProcessConfig,
-    ServerType,
-    SortOption,
-    SpaceHandlingOption,
-    TransformConfig,
-    ValidationConfig,
-    WriteConfig,
-)
+from pydantic import BaseModel
+
+from flext_ldif.models import m
 
 # =========================================================================
 # PROCESS CONFIG BUILDER
@@ -91,15 +77,15 @@ class ProcessConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._source_server: ServerType = ServerType.AUTO
-        self._target_server: ServerType | None = None
-        self._dn_config: DnNormalizationConfig | None = None
-        self._attr_config: AttrNormalizationConfig | None = None
-        self._acl_config: AclConversionConfig | None = None
-        self._validation_config: ValidationConfig | None = None
-        self._metadata_config: MetadataConfig | None = None
+        self._source_server: m.Ldif.Config.ServerType = m.Ldif.Config.ServerType.AUTO
+        self._target_server: m.Ldif.Config.ServerType | None = None
+        self._dn_config: m.Ldif.Config.DnNormalizationConfig | None = None
+        self._attr_config: m.Ldif.Config.AttrNormalizationConfig | None = None
+        self._acl_config: m.Ldif.Config.AclConversionConfig | None = None
+        self._validation_config: m.Ldif.Config.ValidationConfig | None = None
+        self._metadata_config: m.Ldif.Config.MetadataConfig | None = None
 
-    def source(self, server: ServerType) -> Self:
+    def source(self, server: m.Ldif.Config.ServerType) -> Self:
         """Set the source server type.
 
         Args:
@@ -112,7 +98,7 @@ class ProcessConfigBuilder:
         self._source_server = server
         return self
 
-    def target(self, server: ServerType) -> Self:
+    def target(self, server: m.Ldif.Config.ServerType) -> Self:
         """Set the target server type.
 
         Args:
@@ -128,9 +114,9 @@ class ProcessConfigBuilder:
     def normalize_dn(
         self,
         *,
-        case: CaseFoldOption = CaseFoldOption.LOWER,
-        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
-        escapes: EscapeHandlingOption = EscapeHandlingOption.PRESERVE,
+        case: m.Ldif.Config.CaseFoldOption | None = None,
+        spaces: m.Ldif.Config.SpaceHandlingOption | None = None,
+        escapes: m.Ldif.Config.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization.
 
@@ -143,17 +129,24 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        self._dn_config = DnNormalizationConfig(
-            case_fold=case,
-            space_handling=spaces,
-            escape_handling=escapes,
+        config = m.Ldif.Config.DnNormalizationConfig()
+        config_base = cast("BaseModel", config)
+        self._dn_config = cast(
+            "m.Ldif.Config.DnNormalizationConfig",
+            config_base.model_copy(
+                update={
+                    "case_fold": case,
+                    "space_handling": spaces,
+                    "escape_handling": escapes,
+                },
+            ),
         )
         return self
 
     def normalize_attrs(
         self,
         *,
-        sort_attributes: SortOption = SortOption.ALPHABETICAL,
+        sort_attributes: m.Ldif.Config.SortOption | None = None,
         sort_values: bool = True,
         normalize_whitespace: bool = True,
     ) -> Self:
@@ -168,10 +161,17 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        self._attr_config = AttrNormalizationConfig(
-            sort_attributes=sort_attributes,
-            sort_values=sort_values,
-            normalize_whitespace=normalize_whitespace,
+        config = m.Ldif.Config.AttrNormalizationConfig()
+        config_base = cast("BaseModel", config)
+        self._attr_config = cast(
+            "m.Ldif.Config.AttrNormalizationConfig",
+            config_base.model_copy(
+                update={
+                    "sort_attributes": sort_attributes,
+                    "sort_values": sort_values,
+                    "normalize_whitespace": normalize_whitespace,
+                },
+            ),
         )
         return self
 
@@ -193,10 +193,17 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        self._acl_config = AclConversionConfig(
-            convert_aci=convert_aci,
-            preserve_original_aci=preserve_original_aci,
-            map_server_specific=map_server_specific,
+        config = m.Ldif.Config.AclConversionConfig()
+        config_base = cast("BaseModel", config)
+        self._acl_config = cast(
+            "m.Ldif.Config.AclConversionConfig",
+            config_base.model_copy(
+                update={
+                    "convert_aci": convert_aci,
+                    "preserve_original_aci": preserve_original_aci,
+                    "map_server_specific": map_server_specific,
+                },
+            ),
         )
         return self
 
@@ -218,10 +225,17 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        self._validation_config = ValidationConfig(
-            strict_rfc=strict_rfc,
-            allow_server_quirks=allow_server_quirks,
-            validate_dn_format=validate_dn_format,
+        config = m.Ldif.Config.ValidationConfig()
+        config_base = cast("BaseModel", config)
+        self._validation_config = cast(
+            "m.Ldif.Config.ValidationConfig",
+            config_base.model_copy(
+                update={
+                    "strict_rfc": strict_rfc,
+                    "allow_server_quirks": allow_server_quirks,
+                    "validate_dn_format": validate_dn_format,
+                },
+            ),
         )
         return self
 
@@ -243,10 +257,17 @@ class ProcessConfigBuilder:
             Self for method chaining
 
         """
-        self._metadata_config = MetadataConfig(
-            preserve_original=preserve_original,
-            preserve_tracking=preserve_tracking,
-            preserve_validation=preserve_validation,
+        config = m.Ldif.Config.MetadataConfig()
+        config_base = cast("BaseModel", config)
+        self._metadata_config = cast(
+            "m.Ldif.Config.MetadataConfig",
+            config_base.model_copy(
+                update={
+                    "preserve_original": preserve_original,
+                    "preserve_tracking": preserve_tracking,
+                    "preserve_validation": preserve_validation,
+                },
+            ),
         )
         return self
 
@@ -289,21 +310,35 @@ class ProcessConfigBuilder:
         self._convert_acls = enabled
         return self
 
-    def build(self) -> ProcessConfig:
+    def build(self) -> m.Ldif.Config.ProcessConfig:
         """Build the ProcessConfig.
 
         Returns:
             Configured ProcessConfig instance
 
         """
-        return ProcessConfig(
-            source_server=self._source_server,
-            target_server=self._target_server or ServerType.RFC,
-            dn_config=self._dn_config or DnNormalizationConfig(),
-            attr_config=self._attr_config or AttrNormalizationConfig(),
-            acl_config=self._acl_config or AclConversionConfig(),
-            validation_config=self._validation_config or ValidationConfig(),
-            metadata_config=self._metadata_config or MetadataConfig(),
+        config = m.Ldif.Config.ProcessConfig()
+        updates: dict[str, object] = {}
+        if self._source_server is not None:
+            updates["source_server"] = self._source_server
+        if self._target_server is not None:
+            updates["target_server"] = self._target_server
+        else:
+            updates["target_server"] = "rfc"
+        if self._dn_config is not None:
+            updates["dn_config"] = self._dn_config
+        if self._attr_config is not None:
+            updates["attr_config"] = self._attr_config
+        if self._acl_config is not None:
+            updates["acl_config"] = self._acl_config
+        if self._validation_config is not None:
+            updates["validation_config"] = self._validation_config
+        if self._metadata_config is not None:
+            updates["metadata_config"] = self._metadata_config
+        config_base = cast("BaseModel", config)
+        return cast(
+            "m.Ldif.Config.ProcessConfig",
+            config_base.model_copy(update=updates),
         )
 
 
@@ -373,17 +408,24 @@ class TransformConfigBuilder:
         self._track_changes = enabled
         return self
 
-    def build(self) -> TransformConfig:
+    def build(self) -> m.Ldif.Config.TransformConfig:
         """Build the TransformConfig.
 
         Returns:
             Configured TransformConfig instance
 
         """
-        return TransformConfig(
-            fail_fast=self._fail_fast,
-            preserve_order=self._preserve_order,
-            track_changes=self._track_changes,
+        config = m.Ldif.Config.TransformConfig()
+        config_base = cast("BaseModel", config)
+        return cast(
+            "m.Ldif.Config.TransformConfig",
+            config_base.model_copy(
+                update={
+                    "fail_fast": self._fail_fast,
+                    "preserve_order": self._preserve_order,
+                    "track_changes": self._track_changes,
+                },
+            ),
         )
 
 
@@ -447,17 +489,24 @@ class FilterConfigBuilder:
         self._include_metadata_matches = enabled
         return self
 
-    def build(self) -> FilterConfig:
+    def build(self) -> m.Ldif.Config.FilterConfig:
         """Build the FilterConfig.
 
         Returns:
             Configured FilterConfig instance
 
         """
-        return FilterConfig(
-            mode=self._mode,
-            case_sensitive=self._case_sensitive,
-            include_metadata_matches=self._include_metadata_matches,
+        config = m.Ldif.Config.FilterConfig()
+        config_base = cast("BaseModel", config)
+        return cast(
+            "m.Ldif.Config.FilterConfig",
+            config_base.model_copy(
+                update={
+                    "mode": self._mode,
+                    "case_sensitive": self._case_sensitive,
+                    "include_metadata_matches": self._include_metadata_matches,
+                },
+            ),
         )
 
 
@@ -494,16 +543,16 @@ class WriteConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._format: OutputFormat = OutputFormat.LDIF
+        self._format: m.Ldif.Config.OutputFormat = m.Ldif.Config.OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True
         self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
-        self._sort_by: SortOption = SortOption.ALPHABETICAL
+        self._sort_by: m.Ldif.Config.SortOption = m.Ldif.Config.SortOption.ALPHABETICAL
         self._attr_order: Sequence[str] | None = None
         self._include_metadata: bool = False
-        self._server: ServerType | None = None
+        self._server: m.Ldif.Config.ServerType | None = None
 
-    def format(self, fmt: OutputFormat) -> Self:
+    def format(self, fmt: m.Ldif.Config.OutputFormat) -> Self:
         """Set output format.
 
         Args:
@@ -555,7 +604,7 @@ class WriteConfigBuilder:
         self._base64_attrs = attrs
         return self
 
-    def sort_by(self, field: SortOption) -> Self:
+    def sort_by(self, field: m.Ldif.Config.SortOption) -> Self:
         """Set sorting field.
 
         Args:
@@ -594,7 +643,7 @@ class WriteConfigBuilder:
         self._include_metadata = enabled
         return self
 
-    def server(self, server: ServerType) -> Self:
+    def server(self, server: m.Ldif.Config.ServerType) -> Self:
         """Set target server for formatting.
 
         Args:
@@ -607,22 +656,29 @@ class WriteConfigBuilder:
         self._server = server
         return self
 
-    def build(self) -> WriteConfig:
+    def build(self) -> m.Ldif.Config.WriteConfig:
         """Build the WriteConfig.
 
         Returns:
             Configured WriteConfig instance
 
         """
-        return WriteConfig(
-            format=self._format,
-            line_width=self._line_width,
-            fold_lines=self._fold_lines,
-            base64_attrs=self._base64_attrs,
-            sort_by=self._sort_by,
-            attr_order=self._attr_order,
-            include_metadata=self._include_metadata,
-            server=self._server,
+        config = m.Ldif.Config.WriteConfig()
+        config_base = cast("BaseModel", config)
+        return cast(
+            "m.Ldif.Config.WriteConfig",
+            config_base.model_copy(
+                update={
+                    "format": self._format,  # format is alias for output_format
+                    "line_width": self._line_width,
+                    "fold_lines": self._fold_lines,
+                    "base64_attrs": self._base64_attrs,
+                    "sort_by": self._sort_by,
+                    "attr_order": self._attr_order,
+                    "include_metadata": self._include_metadata,
+                    "server": self._server,
+                },
+            ),
         )
 
 

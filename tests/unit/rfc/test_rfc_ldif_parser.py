@@ -10,15 +10,30 @@ from __future__ import annotations
 import base64
 from enum import StrEnum
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 
 import pytest
 from flext_tests import tf
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests import (
+    RfcTestHelpers,
+    TestDeduplicationHelpers,
+    TestsFlextLdifConstants,
+    c,
+    m,
+    s,
+)
+
+
+class ParseTestCaseDict(TypedDict):
+    """TypedDict for parse test case data."""
+
+    ldif_content: str
+    expected_entries: int
+    expected_dn: str | None
+    expected_attributes: dict[str, list[str]] | None
 
 
 class TestsTestFlextLdifRfcLdifParser(s):
@@ -138,11 +153,11 @@ class TestsTestFlextLdifRfcLdifParser(s):
         """Test parsing basic LDIF entry."""
         _ = RfcTestHelpers.test_parse_and_assert_entry_structure(
             real_parser_service,
-            TestsRfcConstants.SAMPLE_LDIF_BASIC + "\n",
-            expected_dn=TestsRfcConstants.SAMPLE_DN,
+            c.Rfc.SAMPLE_LDIF_BASIC + "\n",
+            expected_dn=c.Rfc.SAMPLE_DN,
             expected_attributes=[
-                TestsRfcConstants.SAMPLE_ATTRIBUTE_CN,
-                TestsRfcConstants.SAMPLE_ATTRIBUTE_SN,
+                c.Rfc.SAMPLE_ATTRIBUTE_CN,
+                c.Rfc.SAMPLE_ATTRIBUTE_SN,
             ],
             expected_count=1,
         )
@@ -153,7 +168,7 @@ class TestsTestFlextLdifRfcLdifParser(s):
         real_parser_service: FlextLdifParser,
     ) -> None:
         """Test parsing invalid DN."""
-        ldif_content = f"""dn: {TestsRfcConstants.INVALID_DN}
+        ldif_content = f"""dn: {c.Rfc.INVALID_DN}
 objectClass: person
 
 """
@@ -172,10 +187,10 @@ objectClass: person
         """Test parsing multiple entries."""
         _ = RfcTestHelpers.test_parse_and_assert_multiple_entries(
             real_parser_service,
-            TestsRfcConstants.SAMPLE_LDIF_MULTIPLE,
+            c.Rfc.SAMPLE_LDIF_MULTIPLE,
             expected_dns=[
-                TestsRfcConstants.SAMPLE_DN_USER1,
-                TestsRfcConstants.SAMPLE_DN_USER2,
+                c.Rfc.SAMPLE_DN_USER1,
+                c.Rfc.SAMPLE_DN_USER2,
             ],
             expected_count=2,
         )
@@ -188,8 +203,8 @@ objectClass: person
         """Test parsing entry with binary data."""
         _ = RfcTestHelpers.test_parse_and_assert_entry_structure(
             real_parser_service,
-            TestsRfcConstants.SAMPLE_LDIF_BINARY,
-            expected_dn=TestsRfcConstants.SAMPLE_DN,
+            c.Rfc.SAMPLE_LDIF_BINARY,
+            expected_dn=c.Rfc.SAMPLE_DN,
             expected_attributes=["photo"],
             expected_count=1,
         )
@@ -596,8 +611,8 @@ description: {large_value}
     def test_write_entries_variations(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entry: m.Entry,
-        sample_entries: list[m.Entry],
+        sample_entry: m.Ldif.Entry,
+        sample_entries: list[m.Ldif.Entry],
     ) -> None:
         """Test writing various entry configurations."""
         _ = RfcTestHelpers.test_write_entries_to_string(
@@ -665,7 +680,7 @@ description: {large_value}
     def test_write_comprehensive_to_file(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[m.Entry],
+        sample_entries: list[m.Ldif.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing entries to file."""
@@ -680,7 +695,7 @@ description: {large_value}
     def test_write_to_nonexistent_directory(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[m.Entry],
+        sample_entries: list[m.Ldif.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing to file in non-existent directory."""
@@ -898,8 +913,8 @@ objectClass: person
     def test_entry_quirk_can_handle_methods(
         self,
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
-        sample_schema_attribute: m.SchemaAttribute,
-        sample_schema_objectclass: m.SchemaObjectClass,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Entry quirk can_handle methods."""
         assert (
@@ -920,9 +935,9 @@ objectClass: person
     def test_acl_quirk_can_handle_methods(
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
-        sample_acl: m.Acl,
-        sample_schema_attribute: m.SchemaAttribute,
-        sample_schema_objectclass: m.SchemaObjectClass,
+        sample_acl: m.Ldif.Acl,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test ACL quirk can_handle methods."""
         assert rfc_acl_quirk.can_handle_acl("access to entry by * (browse)") is True
@@ -952,7 +967,7 @@ objectClass: person
             expected_content=acl_line,
         )
 
-        name_only_acl = m.Acl(name="test_acl", server_type="rfc")
+        name_only_acl = m.Ldif.Acl(name="test_acl", server_type="rfc")
         _ = RfcTestHelpers.test_acl_quirk_write_and_verify(
             rfc_acl_quirk,
             name_only_acl,
@@ -960,7 +975,7 @@ objectClass: person
         )
 
         # Test empty ACL through public write() method
-        empty_acl = m.Acl(server_type="rfc")
+        empty_acl = m.Ldif.Acl(server_type="rfc")
         result = rfc_acl_quirk.write(empty_acl)
         assert result.is_failure
         assert result.error is not None
@@ -1000,15 +1015,16 @@ objectClass: person
     @pytest.mark.timeout(5)
     def test_constants_accessible(self) -> None:
         """Test that RFC Constants are accessible."""
-        # Test that TestsRfcConstants class is accessible and has expected attributes
-        assert hasattr(TestsRfcConstants, "ATTR_OID_CN")
-        assert hasattr(TestsRfcConstants, "ATTR_NAME_CN")
-        assert hasattr(TestsRfcConstants, "OC_DEF_PERSON")
-        assert hasattr(TestsRfcConstants, "SCHEMA_DN_SCHEMA")
-        assert TestsRfcConstants.ATTR_OID_CN == "2.5.4.3"
-        assert TestsRfcConstants.ATTR_NAME_CN == "cn"
-        assert TestsRfcConstants.OC_OID_PERSON == "2.5.6.6"
-        assert TestsRfcConstants.SCHEMA_DN_SCHEMA == "cn=schema"
+        # Test that TestsFlextLdifConstants class is accessible and has expected attributes
+        assert hasattr(TestsFlextLdifConstants, "Rfc")
+        assert hasattr(TestsFlextLdifConstants.Rfc, "ATTR_OID_CN")
+        assert hasattr(TestsFlextLdifConstants.Rfc, "ATTR_NAME_CN")
+        assert hasattr(TestsFlextLdifConstants.Rfc, "OC_DEF_PERSON")
+        assert hasattr(TestsFlextLdifConstants.Rfc, "SCHEMA_DN_SCHEMA")
+        assert c.Rfc.ATTR_OID_CN == "2.5.4.3"
+        assert c.Rfc.ATTR_NAME_CN == "cn"
+        assert c.Rfc.OC_OID_PERSON == "2.5.6.6"
+        assert c.Rfc.SCHEMA_DN_SCHEMA == "cn=schema"
 
 
 __all__ = [

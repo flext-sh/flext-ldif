@@ -20,24 +20,27 @@ Refactored to use:
 - Specific types instead of `object` violations
 
 **Usage Pattern:**
-    from flext_ldif import FlextLdifTypes
-    from flext_ldif.protocols import FlextLdifProtocols
-    def process(data: p.Ldif.Quirks.EntryProtocol) -> None: ...
+    from flext_ldif.typings import FlextLdifTypes, t
+    from flext_ldif.models import m  # Protocol types defined in models.py (Tier 1)
+    # def process(data: m.Ldif.EntryProtocol) -> None: ...
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import ClassVar, TypedDict, TypeVar
+from typing import TypedDict
 
 from flext_core import FlextTypes, r
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-
 # Use FlextTypes internally to reference base types from flext-core
 # This is redefined at end of file as t = FlextLdifTypes for exports
+#
+# ARCHITECTURE NOTE: typings.py is Tier 0 (foundation) and cannot import from
+# protocols.py (Tier 0) to avoid circular dependency. Instead:
+# - typings.py defines base type aliases using strings (forward references)
+# - protocols.py imports typings.py and defines protocol-based types
+# - models.py (Tier 1) imports both typings.py and protocols.py and combines them
 
 # Model type aliases moved to nested classes to follow FLEXT standards
 
@@ -45,15 +48,8 @@ from flext_ldif.protocols import p
 # MODEL TYPEVARS - For models with validation metadata (module-level)
 # =========================================================================
 # TypeVars must be at module level (not inside class) for proper generic usage
-
-FlextLdifModelT = TypeVar(
-    "FlextLdifModelT", bound=p.Ldif.Constants.ModelWithValidationMetadata
-)
-"""TypeVar for models that have validation_metadata attribute.
-
-Bound to ModelWithValidationMetadata protocol from protocols.py.
-Used in metadata utilities for type-safe model operations.
-"""
+# NOTE: TypeVar with protocol bounds is defined in models.py (Tier 1)
+# because protocols.py is Tier 0 and cannot be imported here without circular deps
 
 
 class FlextLdifTypes(FlextTypes):
@@ -83,12 +79,12 @@ class FlextLdifTypes(FlextTypes):
 
     Usage Pattern:
         from flext_ldif.typings import t
-        from flext_ldif.protocols import FlextLdifProtocols
-        # Access types directly via protocols for quirks
-        def process(data: p.Ldif.Quirks.EntryProtocol) -> None: ...
+        from flext_ldif.models import m  # Protocol types defined in models.py (Tier 1)
+        # Access types from models for quirks (protocols defined there)
+        # def process(data: m.Ldif.EntryProtocol) -> None: ...
         def parse(metadata: t.MetadataAttributeValue) -> None: ...
         # Compose with t.GeneralValueType when needed
-                from flext_core import FlextTypes as core_t
+        from flext_core import FlextTypes as core_t
         def generic(value: core_t.GeneralValueType) -> None: ...
     """
 
@@ -96,125 +92,21 @@ class FlextLdifTypes(FlextTypes):
         """LDIF types namespace for cross-project access.
 
         Provides organized access to all LDIF types for other FLEXT projects.
-        Usage: Other projects can reference `t.Ldif.Models.Entry`, `t.Ldif.Entry.EntryAttrs`, etc.
+        Usage: Other projects can reference `t.Ldif.Entry`, `t.Ldif.Entry.EntryAttrs`, etc.
         This enables consistent namespace patterns for cross-project type access.
 
         Examples:
             from flext_ldap.typings import t
-            entry_type: t.Ldif.Models.Entry = ...
+            entry_type: t.Ldif.Entry = ...
             attrs: t.Ldif.Entry.EntryAttrs = ...
 
         """
 
-        class Models:
-            """Model type aliases using protocols to avoid circular imports.
-
-            These aliases provide structural typing interfaces for domain models
-            without depending on concrete model implementations.
-
-            For concrete model classes (LdifAttributes, DistinguishedName, etc.),
-            use the aliases below which reference FlextLdifModels.
-            These are assigned at module level after class definition to avoid
-            circular imports.
-            """
-
-            # Protocol-based model aliases (avoid circular imports)
-            type Entry = p.Ldif.Models.EntryProtocol
-            """Entry model protocol for structural typing."""
-
-            type Acl = p.Ldif.Models.AclProtocol
-            """ACL model protocol for structural typing."""
-
-            type SchemaAttribute = p.Ldif.Models.SchemaAttributeProtocol
-            """Schema attribute model protocol for structural typing."""
-
-            type SchemaObjectClass = p.Ldif.Models.SchemaObjectClassProtocol
-            """Schema object class model protocol for structural typing."""
-
-            type ServiceResponseTypes = (
-                p.Ldif.Services.UnifiedParseResultProtocol
-                | p.Ldif.Services.UnifiedWriteResultProtocol
-                | p.Ldif.Services.EntryResultProtocol
-                | p.Ldif.Services.HasEntriesProtocol
-                | list[p.Ldif.Models.EntryProtocol]
-                | str
-            )
-            """Type alias for service response types.
-
-            Business Rule: ServiceResponseTypes is a union type representing all valid
-            response types from LDIF services. It includes:
-            - UnifiedParseResultProtocol: Parse operations returning entries
-            - UnifiedWriteResultProtocol: Write operations returning content string
-            - EntryResultProtocol: Categorized entry results with statistics
-            - HasEntriesProtocol: Simple entry containers
-            - list[EntryProtocol]: Raw entry lists
-            - str: Simple string responses
-
-            Implication: Services should use this type for return values to ensure
-            type-safe composition. EntryResult satisfies EntryResultProtocol through
-            structural typing (duck typing).
-            """
-
-            # Concrete model type aliases (assigned at module level after class definition)
-            # These reference FlextLdifModels to avoid circular imports
-            LdifAttributes: ClassVar[type]
-            """LDIF attribute collection model."""
-
-            DistinguishedName: ClassVar[type]
-            """Distinguished name model."""
-
-            QuirkMetadata: ClassVar[type]
-            """Quirk metadata model."""
-
-            ParseResponse: ClassVar[type]
-            """Parse response model."""
-
         # =========================================================================
         # QUIRK INSTANCE TYPES - Union type for DI flexibility
         # =========================================================================
-
-        type QuirkInstanceType = (
-            p.Ldif.Quirks.SchemaProtocol
-            | p.Ldif.Quirks.AclProtocol
-            | p.Ldif.Quirks.EntryProtocol
-        )
-        """Union type for quirk instances enabling Dependency Injection.
-
-        Uses Protocols instead of concrete classes to enable Dependency Injection:
-        - Protocol-compliant implementations can be injected
-        - Enables testing with mocks and stubs
-        - Allows runtime substitution of implementations
-        - Follows SOLID principles (Dependency Inversion)
-
-        For specific quirk types, use the protocols directly:
-        - p.Ldif.Quirks.SchemaProtocol
-        - p.Ldif.Quirks.AclProtocol
-        - p.Ldif.Quirks.EntryProtocol
-
-        Usage in DI:
-            def process(quirk: FlextLdifTypes.QuirkInstanceType) -> None:
-                # Works with any quirk implementation (RFC, OID, OUD, etc.)
-                result = quirk.parse(...)
-        """
-
-        # Convenience type aliases for specific quirk protocols (used in services and tests)
-        type SchemaQuirk = p.Ldif.Quirks.SchemaProtocol
-        """Type alias for schema quirk protocol.
-
-        Use this type for schema quirk instances.
-        """
-
-        type AclQuirk = p.Ldif.Quirks.AclProtocol
-        """Type alias for ACL quirk protocol.
-
-        Use this type for ACL quirk instances.
-        """
-
-        type EntryQuirk = p.Ldif.Quirks.EntryProtocol
-        """Type alias for entry quirk protocol.
-
-        Use this type for entry quirk instances.
-        """
+        # NOTE: Protocol-based quirk types are defined in models.py (Tier 1)
+        # because typings.py (Tier 0) cannot import protocols.py
 
         # =========================================================================
         # FLEXIBLE INPUT/OUTPUT TYPES - For API flexibility
@@ -230,7 +122,7 @@ class FlextLdifTypes(FlextTypes):
         """
 
         type FlexibleWriteInput = (
-            list[FlextLdifTypes.Ldif.Models.Entry] | "FlextLdifTypes.Ldif.Models.Entry"
+            list[FlextLdifTypes.Ldif.Entry] | "FlextLdifTypes.Ldif.Entry"
         )
         """Type alias for write operation inputs - concrete Entry models.
 
@@ -238,66 +130,53 @@ class FlextLdifTypes(FlextTypes):
         Uses protocol-based Entry model for flexibility.
         """
 
-        type FlexibleParseOutput = list[FlextLdifTypes.Ldif.Models.Entry]
+        type FlexibleParseOutput = list[FlextLdifTypes.Ldif.Entry]
         """Type alias for parse operation outputs - concrete Entry models.
 
         Business context: LDIF parsing results (list of entries).
         """
 
         # FlexibleWriteOutput removed - use str directly per rule 12 (no simple aliases)
+        # AclOrString moved to models.py (Tier 1) to use protocol types
 
-        type AclOrString = str | p.Ldif.Models.AclProtocol
-        """Type alias for ACL inputs that can be string or Acl model.
-
-        Business context: ACL processing (parse from string or use Acl model).
-        Uses AclProtocol to avoid circular imports with models.py.
-        """
-
-        type EntryOrString = FlextLdifTypes.Ldif.Models.Entry | str
+        type EntryOrString = FlextLdifTypes.Ldif.Entry | str
         """Type alias for entry or string - concrete Entry model.
 
         Business context: Entry processing (parse from string or use Entry model).
+        """
+
+        type AclOrString = object | str
+        """Type alias for ACL or string - Acl model or raw ACL string.
+
+        Business context: ACL processing (parse from string or use Acl model).
+        NOTE: Uses object instead of concrete Acl type to avoid circular import.
+        Concrete type alias available in models.py (Tier 1).
         """
 
         # =========================================================================
         # RESULT TYPE ALIASES - For common FlextResult return types
         # =========================================================================
 
-        type ParseResult = r[
-            "FlextLdifTypes.Ldif.Models.Entry"
-            | list[FlextLdifTypes.Ldif.Models.Entry]
-            | "p.Ldif.Services.HasEntriesProtocol"
-            | str
-        ]
-        """Type alias for parse operation results."""
-
-        type WriteResult = r[str | p.Ldif.Services.HasContentProtocol]
-        """Type alias for write operation results."""
-
-        type UnifiedParseResult = r[p.Ldif.Services.UnifiedParseResultProtocol]
-        """Type alias for unified parse results that support get_entries()."""
-
-        type UnifiedWriteResult = r[p.Ldif.Services.UnifiedWriteResultProtocol]
-        """Type alias for unified write results that support get_content()."""
+        # Result types with protocol references moved to models.py (Tier 1)
 
         # =========================================================================
         # OPERATION RESULT TYPES - For operation unwrapping
         # =========================================================================
 
         type OperationUnwrappedResult = (
-            FlextLdifTypes.Ldif.Models.SchemaAttribute
-            | FlextLdifTypes.Ldif.Models.SchemaObjectClass
-            | FlextLdifTypes.Ldif.Models.Acl
-            | list[FlextLdifTypes.Ldif.Models.Entry]
+            FlextLdifTypes.Ldif.SchemaAttribute
+            | FlextLdifTypes.Ldif.SchemaObjectClass
+            | FlextLdifTypes.Ldif.Acl
+            | list[FlextLdifTypes.Ldif.Entry]
             | str
         )
         """Type alias for unwrapped operation results."""
 
         type ConversionUnwrappedResult = (
-            FlextLdifTypes.Ldif.Models.SchemaAttribute
-            | FlextLdifTypes.Ldif.Models.SchemaObjectClass
-            | FlextLdifTypes.Ldif.Models.Acl
-            | FlextLdifTypes.Ldif.Models.Entry
+            FlextLdifTypes.Ldif.SchemaAttribute
+            | FlextLdifTypes.Ldif.SchemaObjectClass
+            | FlextLdifTypes.Ldif.Acl
+            | FlextLdifTypes.Ldif.Entry
             | str
         )
         """Type alias for unwrapped conversion results."""
@@ -307,8 +186,7 @@ class FlextLdifTypes(FlextTypes):
         # =========================================================================
 
         type SchemaModel = (
-            FlextLdifTypes.Ldif.Models.SchemaAttribute
-            | FlextLdifTypes.Ldif.Models.SchemaObjectClass
+            FlextLdifTypes.Ldif.SchemaAttribute | FlextLdifTypes.Ldif.SchemaObjectClass
         )
         """Type alias for schema models (attribute or objectClass)."""
 
@@ -318,18 +196,17 @@ class FlextLdifTypes(FlextTypes):
         """Type alias for schema model or string."""
 
         type ConvertibleModel = (
-            FlextLdifTypes.Ldif.Models.Entry
-            | FlextLdifTypes.Ldif.Models.SchemaAttribute
-            | FlextLdifTypes.Ldif.Models.SchemaObjectClass
-            | FlextLdifTypes.Ldif.Models.Acl
+            FlextLdifTypes.Ldif.Entry
+            | FlextLdifTypes.Ldif.SchemaAttribute
+            | FlextLdifTypes.Ldif.SchemaObjectClass
+            | FlextLdifTypes.Ldif.Acl
         )
         """Type alias for models that can be converted between servers."""
 
         # DN.DnInput removed - use str directly per rule 12 (no simple aliases)
 
-        # QuirksPort kept - domain-specific protocol interface
-        type QuirksPort = p.Ldif.Quirks.QuirksPort
-        """Type alias for the complete quirks port interface."""
+        # QuirksPort type moved to models.py (Tier 1) - uses protocol references
+        # per rule: Tier 0 cannot import protocols
 
         # ServiceTypes class removed - use Models.ServiceResponseTypes directly
         # per rule 12 (no duplicates)
@@ -342,8 +219,7 @@ class FlextLdifTypes(FlextTypes):
             """Entry-related type aliases."""
 
             type EntryOrList = (
-                "FlextLdifTypes.Ldif.Models.Entry"
-                | list[FlextLdifTypes.Ldif.Models.Entry]
+                "FlextLdifTypes.Ldif.Entry" | list[FlextLdifTypes.Ldif.Entry]
             )
             """Type alias for entry or list of entries."""
 
@@ -372,29 +248,12 @@ class FlextLdifTypes(FlextTypes):
         class Schema:
             """Schema-related type aliases."""
 
-            type SchemaElement = (
-                p.Ldif.Models.SchemaAttributeProtocol
-                | p.Ldif.Models.SchemaObjectClassProtocol
-                | str
-                | int
-                | float
-                | bool
-                | None
-            )
-            """Type alias for schema elements that can be stored in schema maps.
+            # SchemaElement type moved to models.py (Tier 1)
+            # Uses protocol-based types defined there (to avoid circular imports)
+            # Previously: SchemaAttributeProtocol | SchemaObjectClassProtocol | str | int | float | bool | None
 
-            Uses protocol-based types to avoid circular imports with models.py.
-            """
-
-            class SchemaDict(TypedDict):
-                """Type for schema extraction result dictionary.
-
-                Replaces dict[str, object] with specific structure.
-                Contains ATTRIBUTES and OBJECTCLASS keys from extract_schemas_from_ldif().
-                """
-
-                ATTRIBUTES: list[p.Ldif.Models.SchemaAttributeProtocol]
-                OBJECTCLASS: list[p.Ldif.Models.SchemaObjectClassProtocol]
+            # SchemaDict moved to FlextLdifModels.Ldif.Types.SchemaDict (Pydantic model)
+            # Use m.Ldif.Types.SchemaDict instead
 
         # =========================================================================
         # COMMON DICT TYPES - For LDAP attribute dictionaries
@@ -458,28 +317,11 @@ class FlextLdifTypes(FlextTypes):
         class Acl:
             """ACL-related type aliases."""
 
-            class PermissionsDict(TypedDict, total=False):
-                """ACL permissions dictionary type."""
+            # PermissionsDict moved to FlextLdifModels.Ldif.Types.PermissionsDict (Pydantic model)
+            # Use m.Ldif.Types.PermissionsDict instead
 
-                read: bool
-                write: bool
-                add: bool
-                delete: bool
-                search: bool
-                compare: bool
-                self_write: bool
-                proxy: bool
-                browse: bool
-                auth: bool
-                all: bool
-
-            class EvaluationContextDict(TypedDict, total=False):
-                """ACL evaluation context dictionary type."""
-
-                subject_dn: str
-                target_dn: str
-                operation: str
-                attributes: list[str]
+            # EvaluationContextDict moved to FlextLdifModels.Ldif.Types.EvaluationContextDict (Pydantic model)
+            # Use m.Ldif.Types.EvaluationContextDict instead
 
         # =========================================================================
         # METADATA TYPES - For model metadata
@@ -546,8 +388,7 @@ class FlextLdifTypes(FlextTypes):
         type AttributeMetadataDict = dict[str, str | list[str]]
         """Type alias for per-attribute metadata (status, deleted_at, etc.)."""
 
-        type AttributeMetadataMap = dict[str, dict[str, str | list[str]]]
-        """Type alias for attribute name -> metadata dict mapping."""
+        # AttributeMetadataMap moved to m.Ldif.Types.AttributeMetadataMap
 
         type ConversionHistory = dict[str, FlextTypes.ScalarValue | list[str]]
         """Type alias for conversion history.
@@ -573,38 +414,20 @@ class FlextLdifTypes(FlextTypes):
         class Registry:
             """Nested class for registry-related type aliases."""
 
-            type QuirksDict = dict[
-                str,
-                p.Ldif.Quirks.SchemaProtocol
-                | p.Ldif.Quirks.AclProtocol
-                | p.Ldif.Quirks.EntryProtocol
-                | None,
-            ]
-            """Type alias for quirks dictionary returned by get_all_quirks."""
+            # QuirksDict type moved to models.py (Tier 1)
+            # Previously: dict[str, SchemaProtocol | AclProtocol | EntryProtocol | None]
 
-            class QuirksByServerDict(TypedDict, total=False):
-                """Type for quirks_by_server dictionary in registry stats."""
+            # QuirksByServerDict moved to FlextLdifModels.Ldif.Types.QuirksByServerDict (Pydantic model)
+            # Use m.Ldif.Types.QuirksByServerDict instead
 
-                schema: str | None
-                acl: str | None
-                entry: str | None
+            # RegistryStatsDict moved to FlextLdifModels.Ldif.Types.RegistryStatsDict (Pydantic model)
+            # Use m.Ldif.Types.RegistryStatsDict instead
 
-            class RegistryStatsDict(TypedDict):
-                """Type for registry statistics dictionary.
-
-                Replaces dict[str, object] with specific structure.
-                """
-
-                total_servers: int
-                quirks_by_server: dict[
-                    str, FlextLdifTypes.Ldif.Registry.QuirksByServerDict
-                ]
-                server_priorities: dict[str, int]
-
-        # Services class removed - use p.Ldif.Services.* protocols directly per rule 12:
-        # - p.Ldif.Services.HasParseMethodProtocol for schema/entry/acl services
-        # - p.Ldif.Services.FilterServiceProtocol for filter services
-        # - p.Ldif.Services.CategorizationServiceProtocol for categorization services
+        # Services protocol types are defined in models.py (Tier 1):
+        # - HasParseMethodProtocol for schema/entry/acl services
+        # - FilterServiceProtocol for filter services
+        # - CategorizationServiceProtocol for categorization services
+        # See m.Ldif.Services in models.py for protocol type aliases
 
         # =========================================================================
         # DN VALUE TYPES - For DN extraction and handling
@@ -624,7 +447,8 @@ class FlextLdifTypes(FlextTypes):
         """
 
         type FlexibleKwargsMutable = dict[
-            str, str | int | float | bool | list[str] | None
+            str,
+            str | int | float | bool | list[str] | None,
         ]
         """Type alias for mutable flexible keyword arguments (dict).
 
@@ -639,45 +463,11 @@ class FlextLdifTypes(FlextTypes):
         class ModelMetadata:
             """Nested class for model metadata type aliases used in parsing/writing."""
 
-            class EntryParsingContext(TypedDict, total=False):
-                """TypedDict for entry parsing context with specific fields.
+            # EntryParsingContext moved to FlextLdifModels.Ldif.Types.EntryParsingContext (Pydantic model)
+            # Use m.Ldif.Types.EntryParsingContext instead
 
-                Uses TypedDict for type safety while maintaining dict flexibility.
-                All fields are optional (total=False) to support incremental building.
-                """
-
-                original_entry_dn: str
-                cleaned_dn: str
-                original_dn_line: str | None
-                original_attr_lines: list[str] | None
-                dn_was_base64: bool
-                original_attribute_case: dict[str, str] | None
-                dn_differences: (
-                    dict[str, FlextTypes.MetadataAttributeValue]
-                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
-                    | None
-                )
-                attribute_differences: (
-                    dict[str, FlextTypes.MetadataAttributeValue]
-                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
-                    | None
-                )
-                original_attributes_complete: (
-                    dict[str, FlextTypes.MetadataAttributeValue] | None
-                )
-
-            class AttributeWriteContext(TypedDict, total=False):
-                """TypedDict for attribute write context with specific fields.
-
-                Uses TypedDict for type safety while maintaining dict flexibility.
-                All fields are optional (total=False) to support incremental building.
-                """
-
-                attr_name: str
-                attr_values: FlextTypes.GeneralValueType
-                minimal_differences_attrs: dict[str, FlextTypes.MetadataAttributeValue]
-                hidden_attrs: set[str]
-                write_options: p.Ldif.Models.WriteFormatOptionsProtocol
+            # AttributeWriteContext moved to FlextLdifModels.Ldif.Types.AttributeWriteContext (Pydantic model)
+            # Use m.Ldif.Types.AttributeWriteContext instead
 
             type AclParseContext = dict[str, FlextTypes.ScalarValue | list[str]]
             """Type alias for ACL parsing context dictionaries.
@@ -813,6 +603,82 @@ class FlextLdifTypes(FlextTypes):
             Replaces dict[str, object] with specific structure.
             """
 
+            type ServerQuirkOrType = str
+            """Type alias for server quirk instance or server type string.
+
+            Business Rule: ServerQuirkOrType allows either a server quirk instance or a server type string.
+            Implication: This enables flexible conversion APIs that accept both runtime instances
+            and type identifiers. Use isinstance checks for type narrowing.
+            Note: Using str only to avoid circular import with FlextLdifServersBase.
+            """
+
+            type ConvertibleModelUnion = (
+                FlextLdifTypes.Ldif.Entry
+                | FlextLdifTypes.Ldif.SchemaAttribute
+                | FlextLdifTypes.Ldif.SchemaObjectClass
+                | FlextLdifTypes.Ldif.Acl
+            )
+            """Type alias for convertible model union.
+
+            Used in return types for conversion operations.
+            Uses actual types from domain models for proper type checking.
+            """
+
+        class Utilities:
+            """Utility-related type aliases for internal utilities."""
+
+            type AclComponent = dict[str, str | FlextTypes.MetadataAttributeValue]
+            """Type alias for parsed ACL components.
+
+            Used in ACL parsing utilities for representing parsed ACL component structures.
+            Uses t.MetadataAttributeValue for nested structures.
+            """
+
+        class Decorators:
+            """Decorator-related type aliases for quirk metadata decorators."""
+
+            # Protocol types for decorators moved to models.py (Tier 1)
+            # Previously: ProtocolType = SchemaProtocol | AclProtocol | EntryProtocol
+            # WriteMethodArg references protocol types that will be resolved at runtime from models
+
+            # Method argument types for parse methods
+            type ParseMethodArg = str | float | bool | None
+            """Type alias for parse method arguments."""
+
+            # Write method argument type - references protocol types from models.py runtime
+            # Used by WriteMethod decorator type to specify argument types
+            type WriteMethodArg = object
+            """Type alias for write method arguments.
+
+            At runtime, this resolves to protocol types from models.py.
+            Used in decorator type signatures for write methods.
+            """
+
+            # Method types - using Callable directly (cannot use generics in nested type aliases)
+            # Note: For generic method types, use Callable[..., r[T]] directly in code
+            # These are non-generic aliases for documentation purposes
+            type ParseMethod = Callable[..., r[object]]
+            """Type alias for parse methods with variable arguments.
+
+            Supports both single-arg (parse_attribute) and multi-arg (parse_entry) methods.
+            For generic usage, use Callable[..., r[T]] directly in code.
+            Usage: t.Ldif.Decorators.ParseMethod (non-generic)
+            """
+
+            # WriteMethod and SafeMethod moved to models.py (Tier 1) - use protocol types
+            # Note: For generic method types, use Callable[..., r[T]] directly in code
+
+            # Decorator types - decorators that return decorators (complex Callable types)
+            type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
+            """Type alias for decorators that wrap parse methods.
+
+            Generic type using TypeVar T from flext-core.
+            Usage: t.Ldif.Decorators.ParseMethodDecorator (generic with T)
+            """
+
+            # WriteMethodDecorator and SafeMethodDecorator moved to models.py (Tier 1)
+            # (they reference WriteMethod and SafeMethod which use protocol types)
+
         # =========================================================================
         # LITERAL TYPES - Reusing constants from c.LiteralTypes
         # =========================================================================
@@ -820,30 +686,32 @@ class FlextLdifTypes(FlextTypes):
         # All Literal types are derived from StrEnum values in constants.py
         # This ensures single source of truth and avoids duplication
 
-        class LiteralTypes(c.Ldif.LiteralTypes):
+        class LiteralTypes:
             """Literal type aliases reusing constants from c.Ldif.LiteralTypes.
 
             Business Rule: All Literal types MUST be derived from StrEnum values
-            defined in c. This ensures:
+            defined in constants.py. This ensures:
             - Single source of truth (constants.py)
             - Type safety through Literal types
             - Consistency across the codebase
             - Proper domain specialization (LDIF-specific types)
 
-            Architecture: Inheritance pattern
-            - Inherits all Literal types from c.LiteralTypes
-            - No redeclaration - all types available through inheritance
+            Architecture: Namespace class (no inheritance due to Tier 0 rule)
+            - References all Literal types from c.Ldif.LiteralTypes conceptually
+            - No runtime inheritance to maintain Tier 0 isolation (zero internal imports)
             - Extends only if needed for domain-specific Literal types
             - Maintains proper domain boundaries (no duplication)
 
             Usage Pattern:
                 from flext_ldif.typings import t
-                def process(server_type: t.LiteralTypes.ServerTypeLiteral) -> None: ...
-                def validate(level: t.LiteralTypes.ValidationLevelLiteral) -> None: ...
+                from flext_ldif.constants import c
+                # Use constants directly for Literal types
+                def process(server_type: c.Ldif.LiteralTypes.ServerTypeLiteral) -> None: ...
+                def validate(level: c.Ldif.LiteralTypes.ValidationLevelLiteral) -> None: ...
             """
 
-            # All Literal types are inherited from c.LiteralTypes
-            # No need to redeclare - they are all available through inheritance
+            # All Literal types are available from c.Ldif.LiteralTypes (constants module)
+            # No need to redeclare - import c separately when Literal types are needed
             # Only add new Literal types here if they are LDIF-specific and not in constants
 
         # =========================================================================
@@ -853,7 +721,77 @@ class FlextLdifTypes(FlextTypes):
         # Similar pattern to flext-core's .Core. namespace
         # This enables consistent namespace patterns (e.g., .Ldif., .Ldap., .Core.)
 
+    # =========================================================================
+    # COMMON DICT TYPES - Root-level access (mirrors t.Ldif.CommonDict)
+    # =========================================================================
+    # Provides direct access to common dictionary types for simpler namespace
+    # These types are also available as t.Ldif.CommonDict.* for nested access
 
+    class CommonDict:
+        """Common dictionary type aliases accessible at root level.
+
+        Mirrors t.Ldif.CommonDict for simplified access patterns.
+        All types are also available as t.Ldif.CommonDict.AttributeDict, etc.
+
+        Business context: LDAP attribute and distribution data structures used
+        throughout LDIF processing. Reuses t.Types patterns for consistency.
+
+        Uses collections.ABC types (Mapping, Sequence) for read-only semantics
+        where appropriate (Python 3.13+ PEP 695 best practices).
+        """
+
+        # Re-export type aliases from Ldif.CommonDict for root-level access
+        type AttributeDict = dict[str, list[str]]
+        """LDAP attribute dictionaries (mutable for compatibility).
+
+        Business context: Core LDAP entry attribute structure used in parsing/writing.
+        Format: {attribute_name: [value1, value2, ...]}
+        """
+
+        type AttributeDictReadOnly = Mapping[str, Sequence[str]]
+        """Read-only attribute dictionary (Python 3.13+ collections.ABC).
+
+        Business context: Function parameters that should not modify attributes.
+        Reuses t.Types pattern (Mapping for read-only).
+        Format: {attribute_name: [value1, value2, ...]}
+        """
+
+        type AttributeDictGeneric = Mapping[
+            str,
+            FlextTypes.ScalarValue
+            | Sequence[str]
+            | Sequence[FlextTypes.ScalarValue]
+            | dict[str, FlextTypes.ScalarValue | Sequence[str]],
+        ]
+        """Generic read-only attribute dictionary for flexible attribute containers.
+
+        Business context: Function parameters that accept various attribute formats
+        (from LdifAttributes.attributes, dict-like containers, etc.).
+        Replaces Mapping[str, object] with specific structure.
+        Format: {attribute_name: value | [values] | {nested: values}}
+        """
+
+        type DistributionDict = dict[str, int]
+        """Distribution dictionaries (e.g., objectClass counts).
+
+        Business context: Statistical distributions used in LDIF analytics.
+        Format: {category: count}
+        """
+
+        type DistributionDictReadOnly = Mapping[str, int]
+        """Read-only distribution dictionary (Python 3.13+ collections.ABC).
+
+        Business context: Function parameters that should not modify distributions.
+        Reuses t.Types pattern (Mapping for read-only).
+        Format: {category: count}
+        """
+
+
+# Runtime alias for basic class (objetos nested sem aliases redundantes)
+# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 t = FlextLdifTypes
 
-__all__ = ["FlextLdifModelT", "FlextLdifTypes", "t"]
+# REMOVED: ServerInitKwargs alias - use t.Ldif.Server.ServerInitKwargs directly (no redundant aliases for nested objects)
+# ServerInitKwargs = t.Ldif.Server.ServerInitKwargs
+
+__all__ = ["FlextLdifTypes", "t"]

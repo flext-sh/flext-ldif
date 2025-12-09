@@ -19,7 +19,10 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping, Sequence
+from inspect import Parameter, signature
 from typing import Literal, TypeVar, cast
+
+from flext_core import FlextUtilities as u_core
 
 # TypeVars for generic methods
 T = TypeVar("T")
@@ -249,7 +252,9 @@ class FlextFunctional:
                     result[new_key] = processor(key, value)
                 else:
                     # When processor is None, T must be compatible with U
-                    # Use cast to help mypy understand this relationship
+                    # Type narrowing: value is U when processor is None
+                    # Runtime check ensures type compatibility
+                    # For generic types, we rely on runtime validation
                     result[new_key] = cast("U", value)
         return result
 
@@ -366,7 +371,9 @@ class FlextFunctional:
         if not isinstance(items, (list, tuple)):
             return initial
         result = initial
-        for item in items:
+        # Type narrowing: items is Sequence[T] after isinstance check
+        items_typed: Sequence[T] = cast("Sequence[T]", items)
+        for item in items_typed:
             result = folder(result, item)
         return result
 
@@ -398,12 +405,14 @@ class FlextFunctional:
         if not isinstance(items, (list, tuple)):
             return []
         result: list[U] = []
-        for item in items:
+        # Type narrowing: items is Sequence[T] after isinstance check
+        items_typed: Sequence[T] = cast("Sequence[T]", items)
+        for item in items_typed:
             if mapper is not None:
                 mapped: U = mapper(item)
             else:
                 # When no mapper provided, T becomes U with identity mapper
-                mapped = item
+                mapped = cast("U", item)
             if predicate(mapped):
                 result.append(mapped)
         return result
@@ -440,20 +449,23 @@ class FlextFunctional:
         if not isinstance(items, (list, tuple)):
             return []
         result: list[U] = []
-        for item in items:
+        # Type narrowing: items is Sequence[T] after isinstance check
+        items_typed: Sequence[T] = cast("Sequence[T]", items)
+        for item in items_typed:
             try:
                 processed = processor(item)
                 if isinstance(processed, (list, tuple)):
+                    # Type narrowing: sub_item is U after predicate check
+                    processed_seq: Sequence[U] = cast("Sequence[U]", processed)
                     result.extend([
-                        cast("U", sub_item)
-                        for sub_item in processed
-                        if predicate(sub_item)
+                        sub_item for sub_item in processed_seq if predicate(sub_item)
                     ])
                 # Single value (not list/tuple), predicate checks it
                 # Type narrowing: isinstance(processed, (list, tuple)) is False
                 # so processed is U in this branch
                 elif predicate(processed):
                     # processed is U when not a sequence
+                    # Runtime check ensures type compatibility
                     result.append(cast("U", processed))
             except Exception:
                 if on_error == "stop":
@@ -524,26 +536,57 @@ class FlextFunctional:
         """
         default_list = default if default is not None else []
 
-        # Use or_ DSL for None handling
-        extracted = cls.or_(value, default=default_list)
-
-        # Ensure list
-        if isinstance(extracted, (list, tuple)):
-            items = list(extracted)
-        elif extracted is None:
-            items = []
+        # Normalize value to Sequence[T] | None for or_
+        if isinstance(value, (list, tuple)):
+            value_seq: Sequence[T] | None = cast("Sequence[T]", value)
+        elif value is None:
+            value_seq = None
         else:
-            items = [extracted]
+            value_seq = cast("Sequence[T]", [value])
+
+        # Use or_ DSL for None handling
+        extracted = cls.or_(value_seq, default=default_list)
+
+        # Ensure list - extracted is always Sequence[T] from or_
+        if isinstance(extracted, (list, tuple)):
+            items_raw: list[T] = list(extracted)
+        elif extracted is None:
+            items_raw = []
+        else:
+            # extracted is Sequence[T] (e.g., from default), convert to list
+            items_raw = list(extracted)
 
         # Apply mapper if provided
+        items_result: list[T] | list[U]
         if mapper is not None:
-            items = [mapper(item) for item in items]
+            # Type narrowing: items is list[T] after normalization
+            items_mapped: list[U] = [mapper(item) for item in items_raw]
+            # After mapper, items becomes list[U], but return type is list[T] | list[U]
+            items_result = items_mapped
+        else:
+            # Without mapper, items remains list[T]
+            items_result = items_raw
 
         # Apply predicate if provided
         if predicate is not None:
-            items = [item for item in items if predicate(item)]
+            # Type narrowing: items is list[T] or list[U] after mapper
+            # Filter items and maintain type
+            if mapper is not None:
+                # items_result is list[U] after mapper
+                items_result = [
+                    cast("U", item)
+                    for item in items_result
+                    if predicate(cast("U", item))
+                ]
+            else:
+                # items_result is list[T] without mapper
+                items_result = [
+                    cast("T", item)
+                    for item in items_result
+                    if predicate(cast("T", item))
+                ]
 
-        return items
+        return items_result
 
     nl = normalize_list
 
@@ -575,7 +618,7 @@ class FlextFunctional:
 
         """
         if isinstance(data, dict):
-            return data.get(key, default)
+            return u_core.mapper().get(data, key, default=default)
         return default
 
     gt = get
@@ -671,9 +714,11 @@ class FlextFunctional:
         if condition:
             # If then is callable, call it to get the value
             if callable(then):
-                return then()
-            return then
-        return else_
+                result = then()
+                # Type narrowing: callable returns T, cast to T | U | None
+                return cast("T | U | None", result)
+            return cast("T | U | None", then)
+        return cast("T | U | None", else_)
 
     wh = when
 
@@ -715,53 +760,61 @@ class FlextFunctional:
 
         """
 
-        def evaluator(value: T | None = None) -> U | None:
-            for condition_fn, result_fn in cases:
-                # Dynamic callable inspection - mypy can't verify signature at compile time
-                # Use cast to help mypy understand the dynamic nature
-                condition_result: bool
-                try:
-                    sig = inspect.signature(condition_fn)
-                    if len(sig.parameters) == 0:
-                        condition_result = cast("Callable[[], bool]", condition_fn)()
-                    else:
-                        condition_result = (
-                            cast("Callable[[T], bool]", condition_fn)(value)
-                            if value is not None
-                            else False
-                        )
-                except (TypeError, ValueError):
-                    # Fallback: try with value, then without
+        def _call_condition_fn(
+            condition_fn: Callable[..., object], value: T | None
+        ) -> bool:
+            """Call condition function with appropriate signature."""
+            try:
+                sig = inspect.signature(condition_fn)
+                param_count = len(sig.parameters)
+                if param_count == 0:
+                    result = condition_fn()
+                    return bool(result) if isinstance(result, bool) else False
+                if value is not None:
+                    result = condition_fn(value)
+                    return bool(result) if isinstance(result, bool) else False
+            except (TypeError, ValueError):
+                if value is not None:
                     try:
-                        condition_result = (
-                            cast("Callable[[T], bool]", condition_fn)(value)
-                            if value is not None
-                            else False
-                        )
-                    except TypeError:
-                        condition_result = cast("Callable[[], bool]", condition_fn)()
-
-                if condition_result:
-                    # Dynamic result callable - same pattern
-                    try:
-                        sig = inspect.signature(result_fn)
-                        if len(sig.parameters) == 0:
-                            return cast("Callable[[], U]", result_fn)()
-                        return (
-                            cast("Callable[[T], U]", result_fn)(value)
-                            if value is not None
-                            else default
-                        )
+                        result = condition_fn(value)
+                        return bool(result) if isinstance(result, bool) else False
                     except (TypeError, ValueError):
                         try:
-                            return (
-                                cast("Callable[[T], U]", result_fn)(value)
-                                if value is not None
-                                else default
-                            )
-                        except TypeError:
-                            return cast("Callable[[], U]", result_fn)()
+                            result = condition_fn()
+                            return bool(result) if isinstance(result, bool) else False
+                        except (TypeError, ValueError):
+                            pass
+            return False
 
+        def _call_result_fn(
+            result_fn: Callable[..., U | None], value: T | None
+        ) -> U | None:
+            """Call result function with appropriate signature."""
+            try:
+                sig = inspect.signature(result_fn)
+                param_count = len(sig.parameters)
+                if param_count == 0:
+                    return result_fn()
+                if value is not None:
+                    return result_fn(value)
+            except (TypeError, ValueError):
+                if value is not None:
+                    try:
+                        return result_fn(value)
+                    except (TypeError, ValueError):
+                        try:
+                            return result_fn()
+                        except (TypeError, ValueError):
+                            pass
+            return None
+
+        def evaluator(value: T | None = None) -> U | None:
+            for condition_fn, result_fn in cases:
+                condition_result = _call_condition_fn(condition_fn, value)
+                if condition_result:
+                    result = _call_result_fn(result_fn, value)
+                    if result is not None:
+                        return result
             return default
 
         return evaluator
@@ -888,6 +941,7 @@ class FlextFunctional:
         result = cases.get(value, default)
         # If result is callable, call it with value
         if callable(result):
+            # Type narrowing: callable returns U or None
             return result(value)
         return result
 
@@ -930,11 +984,17 @@ class FlextFunctional:
             "set": set,
         }
         for t_val in types:
-            resolved_type: type[object] | None = (
-                type_map.get(t_val)
-                if isinstance(t_val, str)
-                else (t_val if isinstance(t_val, type) else None)
-            )
+            # Resolve type: if string, look up in map; if type, use directly
+            if isinstance(t_val, str):
+                map_result = u_core.mapper().get(type_map, t_val)
+                # Ensure map_result is a type, not a string
+                resolved_type: type[object] | None = (
+                    map_result if isinstance(map_result, type) else None
+                )
+            elif isinstance(t_val, type):
+                resolved_type = t_val
+            else:
+                resolved_type = None
             if resolved_type is not None and isinstance(value, resolved_type):
                 return True
         return False
@@ -978,11 +1038,16 @@ class FlextFunctional:
         }
 
         # Resolve target type
-        target_type: type[object] | None = (
-            type_map.get(target)
-            if isinstance(target, str)
-            else (target if isinstance(target, type) else None)
-        )
+        if isinstance(target, str):
+            map_result = u_core.mapper().get(type_map, target)
+            # Ensure map_result is a type, not a string
+            target_type: type[object] | None = (
+                map_result if isinstance(map_result, type) else None
+            )
+        elif isinstance(target, type):
+            target_type = target
+        else:
+            target_type = None
 
         if target_type is None:
             return default
@@ -990,71 +1055,196 @@ class FlextFunctional:
         # Already the right type
         if isinstance(value, target_type):
             # Value is T, but isinstance proves it matches target_type (which is U)
-            # Use cast to help mypy understand this relationship
+            # Type narrowing: value is U after isinstance check
+            # Return directly - isinstance check ensures type compatibility
             return cast("U", value)
 
         # Try to cast - each branch returns U | None where U is the target type
         # mypy can't verify this at compile time since U is a generic type parameter
-        try:
+
+        try:  # noqa: PLR1702
             if target_type is str:
+                # Type narrowing: str(value) returns str, which is U when target_type is str
                 return cast("U", str(value))
             if target_type is int:
                 # int() requires value to be convertible to int
                 if isinstance(value, (str, bytes, bytearray)):
+                    # Type narrowing: int(value) returns int, which is U when target_type is int
                     return cast("U", int(value))
-                # For objects with __int__ or __index__, use cast to help mypy
+                # For objects with __int__ or __index__
                 # Runtime will raise TypeError if conversion fails
                 try:
                     if hasattr(value, "__int__"):
-                        return cast("U", int(value))
+                        # Type narrowing: value has __int__, int() will work
+                        int_value = int(value)
+                        return cast("U", int_value)
                     if hasattr(value, "__index__"):
-                        return cast("U", int(value))
+                        # Type narrowing: value has __index__, int() will work
+                        int_value = int(value)
+                        return cast("U", int_value)
                 except (TypeError, ValueError):
                     pass
                 return default
             if target_type is float:
                 # float() requires value to be convertible to float
                 if isinstance(value, (str, bytes, bytearray)):
+                    # Type narrowing: float(value) returns float, which is U when target_type is float
                     return cast("U", float(value))
-                # For objects with __float__ or __index__, use cast to help mypy
+                # For objects with __float__ or __index__
                 # Runtime will raise TypeError if conversion fails
                 try:
                     if hasattr(value, "__float__"):
-                        return cast("U", float(value))
+                        # Type narrowing: value has __float__, float() will work
+                        float_value = float(value)
+                        return cast("U", float_value)
                     if hasattr(value, "__index__"):
-                        return cast("U", float(value))
+                        # Type narrowing: value has __index__, float() will work
+                        float_value = float(value)
+                        return cast("U", float_value)
                 except (TypeError, ValueError):
                     pass
                 return default
             if target_type is bool:
                 if isinstance(value, str):
+                    # Type narrowing: bool expression returns bool, which is U when target_type is bool
                     return cast("U", value.lower() in {"true", "1", "yes", "on"})
                 return cast("U", bool(value))
             if target_type is list:
                 if isinstance(value, (list, tuple, set)):
+                    # Type narrowing: list(value) returns list, which is U when target_type is list
                     return cast("U", list(value))
                 return cast("U", [value])
             if target_type is tuple:
                 if isinstance(value, (list, tuple, set)):
+                    # Type narrowing: tuple(value) returns tuple, which is U when target_type is tuple
                     return cast("U", tuple(value))
                 return cast("U", (value,))
             if target_type is set:
                 if isinstance(value, (list, tuple, set)):
+                    # Type narrowing: set(value) returns set, which is U when target_type is set
                     return cast("U", set(value))
                 return cast("U", {value})
             if target_type is dict:
                 if isinstance(value, dict):
+                    # Type narrowing: value is dict, which is U when target_type is dict
                     return cast("U", value)
                 return default
             # Generic type cast attempt - only if target_type is callable
             # object() doesn't accept arguments, so check if it's a proper type constructor
-            # Use cast to help mypy understand that target_type is callable
-            if target_type is not object:
+            if target_type is not object and callable(target_type):
                 try:
-                    # Cast target_type to Callable to help mypy
-                    constructor = cast("Callable[[object], object]", target_type)
-                    return cast("U", constructor(value))
-                except (TypeError, ValueError):
+                    # target_type is a callable constructor
+                    constructor = target_type
+                    # Constructor returns object, but we know it's U when target_type is U
+                    # Skip object() as it doesn't accept arguments
+                    if constructor is object:
+                        return default
+                    # Type check: ensure constructor can be called with value
+                    if not callable(constructor):
+                        return default
+                    # Type assertion: constructor is callable, but object.__init__ takes no args
+                    # Skip if constructor is object class itself
+                    if constructor is type(object):
+                        return default
+                    try:
+                        # Type narrowing: constructor is callable, try calling with value
+                        # Check if constructor accepts arguments by trying to call it
+                        # Some types like object() don't accept arguments
+                        # Type narrowing: constructor is a type but not object
+                        # Use explicit check to help type checker
+                        if isinstance(constructor, type):
+                            # Skip object() as it doesn't accept arguments
+                            if constructor is object:
+                                return default
+                            # Try to instantiate with value if possible
+                            try:
+                                # Type narrowing: constructor is a type but not object
+                                # Use cast to help type checker understand constructor accepts arguments
+                                # Skip if constructor is type(object) as well
+                                if constructor is type(object):
+                                    return default
+                                # Type narrowing: constructor is a type that accepts arguments
+                                # Use cast to help type checker, but verify it's not object first
+                                # Additional runtime check: object() doesn't accept arguments
+                                # Mypy limitation: type[U] can be type[object], so we need explicit check
+                                # Skip object() completely - it never accepts arguments
+                                if constructor is object or constructor is type(object):
+                                    return default
+                                # Type narrowing: constructor is not object, safe to call with value
+                                # Use cast to help mypy, but we've already verified it's not object
+                                # Additional check: use inspect to verify constructor accepts arguments
+                                try:
+                                    sig = signature(constructor)
+                                    # Check if constructor accepts at least one positional argument
+                                    params = list(sig.parameters.values())
+                                    if params and params[0].kind in {
+                                        Parameter.POSITIONAL_ONLY,
+                                        Parameter.POSITIONAL_OR_KEYWORD,
+                                    }:
+                                        constructor_type = cast("type[U]", constructor)
+                                        # Additional runtime check: ensure constructor_type is not object
+                                        # We've already checked constructor is not object above, but mypy needs this
+                                        if (
+                                            constructor_type is not object
+                                            and constructor_type is not type(object)
+                                        ):
+                                            # Type narrowing: constructor_type is not object, safe to call
+                                            constructor_callable = cast(
+                                                "Callable[[object], U]",
+                                                constructor_type,
+                                            )
+                                            converted_result: U = constructor_callable(
+                                                value
+                                            )
+                                            if isinstance(
+                                                converted_result, target_type
+                                            ):
+                                                return converted_result
+                                            return default
+                                        return default
+                                    return default
+                                except (ValueError, TypeError):
+                                    # Constructor doesn't have inspectable signature, try calling it
+                                    # We've already verified it's not object above, so it should be safe
+                                    constructor_type = cast("type[U]", constructor)
+                                    # Additional runtime check: ensure constructor_type is not object
+                                    if (
+                                        constructor_type is not object
+                                        and constructor_type is not type(object)
+                                    ):
+                                        # Type narrowing: constructor_type is not object, safe to call
+                                        constructor_callable = cast(
+                                            "Callable[[object], U]", constructor_type
+                                        )
+                                        fallback_result: U = constructor_callable(value)
+                                        if isinstance(fallback_result, target_type):
+                                            return fallback_result
+                                        return default
+                                    return default
+                            except TypeError:
+                                # Constructor doesn't accept value argument
+                                return default
+                        elif constructor is object:
+                            # object() doesn't accept arguments, return value as-is
+                            return cast("U", value)
+                        else:
+                            # Not a type, treat as callable
+                            # Type narrowing: constructor is not object (already checked above)
+                            # Use cast to help type checker understand constructor is not object
+                            constructor_callable = cast(
+                                "Callable[[object], object]", constructor
+                            )
+                            result_raw = constructor_callable(value)
+                            callable_result = cast("U", result_raw)
+                            if isinstance(callable_result, target_type):
+                                return cast("U", callable_result)
+                            return default
+                    except TypeError:
+                        # Constructor doesn't accept value argument
+                        return default
+                    # If we reach here, all paths should have returned
+                    return default
+                except (TypeError, ValueError, AttributeError):
                     return default
             return default
         except (TypeError, ValueError):
@@ -1089,13 +1279,11 @@ class FlextFunctional:
         def getter(obj: T) -> T | None:
             """Get value from object by key."""
             if isinstance(obj, Mapping):
-                # Mapping.get returns Any, need to cast
-                result = obj.get(key)
-                return cast("T | None", result)
+                # Type narrowing: Mapping.get returns object, but we know it's T | None
+                return obj.get(key)
             if hasattr(obj, key):
-                # getattr returns Any, need to cast
-                result = getattr(obj, key)
-                return cast("T | None", result)
+                # Type narrowing: getattr returns object, but we know it's T | None
+                return getattr(obj, key)
             return None
 
         return getter
@@ -1103,10 +1291,10 @@ class FlextFunctional:
     prop_get = prop
 
     @classmethod
-    def props[T](
+    def props(
         cls,
         *keys: str,
-    ) -> Callable[[T], dict[str, T | None]]:
+    ) -> Callable[[object], dict[str, object]]:
         """Multiple property accessor (mnemonic: ps).
 
         Args:
@@ -1122,14 +1310,17 @@ class FlextFunctional:
 
         """
 
-        def accessor(obj: T) -> dict[str, T | None]:
+        def accessor(obj: object) -> dict[str, object]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, T | None] = {}
+            result_dict: dict[str, object] = {}
             for k in keys:
                 if isinstance(obj, Mapping):
-                    result_dict[k] = obj.get(k)
+                    # Type assertion: obj is Mapping, get() returns value or None
+                    value: object = u_core.mapper().get(obj, k)
+                    result_dict[k] = value
                 elif hasattr(obj, k):
-                    result_dict[k] = getattr(obj, k, None)
+                    attr_value: object = getattr(obj, k, None)
+                    result_dict[k] = attr_value
                 else:
                     result_dict[k] = None
             return result_dict
@@ -1142,7 +1333,7 @@ class FlextFunctional:
     def path[T](
         cls,
         *keys: str,
-    ) -> Callable[[T], T | None]:
+    ) -> Callable[[T], object]:
         """Path accessor using chain() DSL (mnemonic: ph).
 
         Creates a getter that traverses a nested path.
@@ -1160,15 +1351,20 @@ class FlextFunctional:
 
         """
 
-        def make_getter(key: str) -> Callable[[T], T | None]:
+        def make_getter(key: str) -> Callable[[object], object]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: T) -> T | None:
+            def getter_fn(obj: object) -> object:
                 """Get value from object by key."""
                 if obj is None:
                     return None
                 if isinstance(obj, Mapping):
-                    return obj.get(key)
+                    # mapper().get() returns the value or None
+                    map_result = u_core.mapper().get(obj, key)
+                    # If result is the key itself (string), it means key not found, return None
+                    if map_result == key and isinstance(key, str):
+                        return None
+                    return map_result
                 if hasattr(obj, key):
                     return getattr(obj, key, None)
                 return None
@@ -1176,14 +1372,14 @@ class FlextFunctional:
             return getter_fn
 
         # Create getters for each key in path
-        getters: list[Callable[[T], T | None]] = [make_getter(k) for k in keys]
+        getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
 
-        def path_getter(obj: T) -> T | None:
+        def path_getter(obj: T) -> object:
             """Get value at path."""
             if obj is None:
                 return None
             # Chain through all getters
-            result: T | None = obj
+            result: object = obj
             for getter in getters:
                 if result is None:
                     return None

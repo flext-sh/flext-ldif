@@ -85,7 +85,8 @@ mail: jane.smith@example.com
         if not sample_file.exists():
             return r.fail("Sample file not found")
 
-        detect_result = api.detect_server_type(ldif_path=sample_file)
+        ldif_content = sample_file.read_text(encoding="utf-8")
+        detect_result = api.detect_server_type(ldif_content=ldif_content)
         if detect_result.is_failure:
             return detect_result
 
@@ -100,7 +101,7 @@ mail: jane.smith@example.com
         if validate_result.is_failure:
             return validate_result
 
-        write_result = api.write(
+        write_result = api.write_file(
             parse_result.unwrap(),
             Path("examples/output_dry.ldif"),
         )

@@ -49,8 +49,8 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import FlextRuntime
 
+from flext_ldif.models import m
 from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesDetection:
@@ -217,12 +217,7 @@ class FlextLdifUtilitiesDetection:
 
         @staticmethod
         def can_handle_in_set(
-            data: (
-                str
-                | t.Ldif.Models.SchemaAttribute
-                | t.Ldif.Models.SchemaObjectClass
-                | None
-            ),
+            data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
             items: frozenset[str],
         ) -> bool:
             """Check if data is in set (case-insensitive).
@@ -276,9 +271,7 @@ class FlextLdifUtilitiesDetection:
         def _can_handle_schema_item_by_pattern(
             self,
             schema_item: (
-                str
-                | p.Ldif.Models.SchemaAttributeProtocol
-                | p.Ldif.Models.SchemaObjectClassProtocol
+                str | p.Ldif.Models.SchemaAttributeProtocol | p.Ldif.Models.SchemaObjectClassProtocol
             ),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
@@ -351,7 +344,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | t.Ldif.Models.SchemaAttribute,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -391,7 +384,7 @@ class FlextLdifUtilitiesDetection:
             attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | t.Ldif.Models.Entry
+                | m.Ldif.Entry
             ),
         ) -> bool:
             """Check if entry objectClasses match detection list.
@@ -462,7 +455,7 @@ class FlextLdifUtilitiesDetection:
             _attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | t.Ldif.Models.Entry
+                | m.Ldif.Entry
                 | None
             ),
         ) -> bool:

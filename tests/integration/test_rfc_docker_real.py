@@ -217,7 +217,7 @@ class TestRfcDockerRealData:
         try:
             output_file = readonly_dir / "test.ldif"
             # Create test entry
-            test_entry = m.Entry(
+            test_entry = m.Ldif.Entry(
                 dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
                 attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             )
@@ -345,7 +345,7 @@ class TestRfcIntegrationRealWorld:
         # Create 100 test entries
         # Create Entry models directly (writer expects Entry objects, not dicts)
         entry_models = [
-            m.Entry(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(
                     value=f"cn=user{i},ou=people,dc=example,dc=com",
                 ),

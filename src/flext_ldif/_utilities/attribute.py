@@ -12,10 +12,7 @@ from __future__ import annotations
 import re
 from typing import Final
 
-from flext_ldif.constants import FlextLdifConstants
-
-# Alias for simplified usage
-c = FlextLdifConstants
+from flext_ldif.constants import c
 
 
 class FlextLdifUtilitiesAttribute:

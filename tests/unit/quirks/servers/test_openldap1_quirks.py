@@ -6,9 +6,10 @@ attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
+
 from flext_ldif.models import m
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
-from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 
 class TestsTestFlextLdifOpenldap1Quirks(s):
@@ -139,7 +140,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format with attributetype prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
-        attr_data = m.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             desc="Test attribute",
@@ -165,7 +166,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format with objectclass prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
-        oc_data = m.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="testClass",
             desc="Test class",
@@ -218,7 +219,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_data = result.unwrap()
-        assert isinstance(acl_data, m.Acl)
+        assert isinstance(acl_data, m.Ldif.Acl)
         assert acl_data.target is not None
         assert acl_data.target.attributes == ["userPassword"]
         assert acl_data.subject is not None
@@ -244,7 +245,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         attributes = m.LdifAttributes(
             attributes={"cn": ["test"], "objectclass": ["person"]},
         )
-        m.Entry(dn=dn, attributes=attributes)
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
 
     def test_entry_rejects_config_dn(self) -> None:
@@ -253,7 +254,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         entry = openldap1_server.Entry()
         dn = m.DistinguishedName(value="cn=config")
         attributes = m.LdifAttributes(attributes={"cn": ["config"]})
-        m.Entry(dn=dn, attributes=attributes)
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False
 
     def test_entry_rejects_olc_attributes(self) -> None:
@@ -264,5 +265,5 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         attributes = m.LdifAttributes(
             attributes={"olcDatabase": ["{1}mdb"]},
         )
-        m.Entry(dn=dn, attributes=attributes)
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False

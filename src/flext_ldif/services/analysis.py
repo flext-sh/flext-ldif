@@ -18,15 +18,14 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif._models.results import _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.utilities import u
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[m.EntryAnalysisResult],
+    FlextLdifServiceBase[m.Ldif.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -64,7 +63,7 @@ class FlextLdifAnalysis(
     @override
     def execute(
         self,
-    ) -> r[m.EntryAnalysisResult]:
+    ) -> r[m.Ldif.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class.
 
         Business Rule: Analysis service does not support generic execute() operation.
@@ -79,14 +78,14 @@ class FlextLdifAnalysis(
             r.fail() with error message directing to correct usage
 
         """
-        return r[m.EntryAnalysisResult].fail(
+        return r[m.Ldif.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
     @staticmethod
     def analyze(
         entries: list[m.Ldif.Entry],
-    ) -> r[m.EntryAnalysisResult]:
+    ) -> r[m.Ldif.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
         Business Rule: Entry analysis generates comprehensive statistics including
@@ -139,10 +138,12 @@ class FlextLdifAnalysis(
             with contextlib.suppress(Exception):  # Skip errors like on_error="skip"
                 process_entry(entry)
 
-        return r[m.EntryAnalysisResult].ok(
-            m.EntryAnalysisResult(
+        return r[m.Ldif.EntryAnalysisResult].ok(
+            m.Ldif.EntryAnalysisResult(
                 total_entries=total_entries,
-                objectclass_distribution=_DynamicCounts(**objectclass_distribution),
+                objectclass_distribution=m.Ldif.LdifResults.DynamicCounts(
+                    **objectclass_distribution
+                ),
                 patterns_detected=sorted(patterns_detected),
             ),
         )
@@ -151,7 +152,7 @@ class FlextLdifAnalysis(
     def validate_entries(
         entries: list[m.Ldif.Entry],
         validation_service: FlextLdifValidation,
-    ) -> r[m.ValidationResult]:
+    ) -> r[m.Ldif.LdifResults.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
 
         Business Rule: Entry validation delegates to FlextLdifValidation service
@@ -210,8 +211,8 @@ class FlextLdifAnalysis(
         total_entries = u.Collection.count(entries)
         invalid_count = total_entries - valid_count
 
-        return r[m.ValidationResult].ok(
-            m.ValidationResult(
+        return r[m.Ldif.LdifResults.ValidationResult].ok(
+            m.Ldif.LdifResults.ValidationResult(
                 is_valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,
@@ -222,7 +223,9 @@ class FlextLdifAnalysis(
 
     @staticmethod
     @staticmethod
-    def _validate_entry_dn(entry: m.Ldif.Entry) -> tuple[bool, str, list[str]]:
+    def _validate_entry_dn(
+        entry: m.Ldif.Entry,
+    ) -> tuple[bool, str, list[str]]:
         """Validate entry DN.
 
         Returns:
@@ -279,7 +282,7 @@ class FlextLdifAnalysis(
         """
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: object = u.Mapper.get(
+        oc_values_raw: object = u.mapper().get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],

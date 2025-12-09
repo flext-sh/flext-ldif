@@ -11,13 +11,13 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
-
-from flext_ldif import FlextLdifConstants
-from flext_ldif.models import m
-from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from tests import s
 
-meta_keys = FlextLdifConstants.MetadataKeys
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+
+meta_keys = c.Ldif.MetadataKeys
 
 
 class ParseScenario(StrEnum):
@@ -51,6 +51,12 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     - Entry quirks (lenient DN/attribute handling)
     - Error recovery and edge cases
     """
+
+    # Pytest fixtures with ClassVar annotations
+    schema_quirk: ClassVar[FlextLdifServersRelaxed.Schema]  # pytest fixture
+    acl_quirk: ClassVar[FlextLdifServersRelaxed.Acl]  # pytest fixture
+    entry_quirk: ClassVar[FlextLdifServersRelaxed.Entry]  # pytest fixture
+    relaxed_instance: ClassVar[FlextLdifServersRelaxed]  # pytest fixture
 
     # ========== Test Data ==========
 
@@ -216,7 +222,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
-        attr_data = m.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             desc="Test attribute",
@@ -275,7 +281,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
-        acl_data = m.Acl(
+        acl_data = m.Ldif.Acl(
             name="test_acl",
             target=m.AclTarget(target_dn="*", attributes=[]),
             subject=m.AclSubject(subject_type="all", subject_value="*"),
@@ -321,7 +327,9 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
+        result: (
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
+        )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(bad_input)
         else:
@@ -352,7 +360,9 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         input_without_oid: str,
     ) -> None:
         """Test parsing fails without OID even in relaxed mode."""
-        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
+        result: (
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
+        )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_without_oid)
         else:
@@ -374,7 +384,9 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         input_with_oid: str,
     ) -> None:
         """Test parsing succeeds with OID even with binary data."""
-        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
+        result: (
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
+        )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_with_oid)
         else:
@@ -452,7 +464,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
-        attr_data = m.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             desc="Oracle GUID",
@@ -480,7 +492,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
-        oc_data = m.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="2.16.840.1.113894.1.2.1",
             name="orclContext",
             desc="Oracle Context",

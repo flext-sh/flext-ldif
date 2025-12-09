@@ -74,7 +74,7 @@ class TestsTestFlextLdifAnalysis(s):
             service = FlextLdifAnalysis()
             entries_service = FlextLdifEntries()
 
-            entries: list[m.Entry] = []
+            entries: list[m.Ldif.Entry] = []
             for i in range(3):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=user{i},ou=users,dc=example,dc=com",
@@ -139,7 +139,7 @@ class TestsTestFlextLdifAnalysis(s):
             validation_service = FlextLdifValidation()
             entries_service = FlextLdifEntries()
 
-            entries: list[m.Entry] = []
+            entries: list[m.Ldif.Entry] = []
             for i in range(2):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=user{i},dc=example,dc=com",
@@ -257,7 +257,7 @@ class TestsTestFlextLdifAnalysis(s):
             validation_service = FlextLdifValidation()
             entries_service = FlextLdifEntries()
 
-            entries: list[m.Entry] = []
+            entries: list[m.Ldif.Entry] = []
             for i in range(150):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=test{i},dc=example,dc=com",

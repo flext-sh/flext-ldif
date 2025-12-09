@@ -15,28 +15,28 @@ from __future__ import annotations
 # ❌ ANTES - Cada teste repete o mesmo padrão:
 """
 def test_schema_parse_attribute(self, rfc_schema_quirk) -> None:
-    attr_def = TestsRfcConstants.ATTR_DEF_CN_COMPLETE
+    attr_def = c.Rfc.ATTR_DEF_CN_COMPLETE
     result = rfc_schema_quirk._parse_attribute(attr_def)
     assert result.is_success
     attr = result.unwrap()
-    assert attr.oid == TestsRfcConstants.ATTR_OID_CN
-    assert attr.name == TestsRfcConstants.ATTR_NAME_CN
+    assert attr.oid == c.Rfc.ATTR_OID_CN
+    assert attr.name == c.Rfc.ATTR_NAME_CN
 
 def test_schema_parse_another_attribute(self, rfc_schema_quirk) -> None:
-    attr_def = TestsRfcConstants.ATTR_DEF_SN
+    attr_def = c.Rfc.ATTR_DEF_SN
     result = rfc_schema_quirk._parse_attribute(attr_def)
     assert result.is_success
     attr = result.unwrap()
-    assert attr.oid == TestsRfcConstants.ATTR_OID_SN
-    assert attr.name == TestsRfcConstants.ATTR_NAME_SN
+    assert attr.oid == c.Rfc.ATTR_OID_SN
+    assert attr.name == c.Rfc.ATTR_NAME_SN
 
 def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
-    oc_def = TestsRfcConstants.OC_DEF_PERSON_FULL
+    oc_def = c.Rfc.OC_DEF_PERSON_FULL
     result = rfc_schema_quirk._parse_objectclass(oc_def)
     assert result.is_success
     oc = result.unwrap()
-    assert oc.oid == TestsRfcConstants.OC_OID_PERSON
-    assert oc.name == TestsRfcConstants.OC_NAME_PERSON
+    assert oc.oid == c.Rfc.OC_OID_PERSON
+    assert oc.name == c.Rfc.OC_NAME_PERSON
 """
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -46,30 +46,29 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 # ✅ DEPOIS - Testes concisos usando helpers:
 """
 from .test_operations import TestOperations
-from ..unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 def test_schema_parse_attribute(self, rfc_schema_quirk) -> None:
     TestOperations.parse_attribute_and_validate(
         rfc_schema_quirk,
-        TestsRfcConstants.ATTR_DEF_CN_COMPLETE,
-        expected_oid=TestsRfcConstants.ATTR_OID_CN,
-        expected_name=TestsRfcConstants.ATTR_NAME_CN,
+        c.Rfc.ATTR_DEF_CN_COMPLETE,
+        expected_oid=c.Rfc.ATTR_OID_CN,
+        expected_name=c.Rfc.ATTR_NAME_CN,
     )
 
 def test_schema_parse_another_attribute(self, rfc_schema_quirk) -> None:
     TestOperations.parse_attribute_and_validate(
         rfc_schema_quirk,
-        TestsRfcConstants.ATTR_DEF_SN,
-        expected_oid=TestsRfcConstants.ATTR_OID_SN,
-        expected_name=TestsRfcConstants.ATTR_NAME_SN,
+        c.Rfc.ATTR_DEF_SN,
+        expected_oid=c.Rfc.ATTR_OID_SN,
+        expected_name=c.Rfc.ATTR_NAME_SN,
     )
 
 def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
     TestOperations.parse_objectclass_and_validate(
         rfc_schema_quirk,
-        TestsRfcConstants.OC_DEF_PERSON_FULL,
-        expected_oid=TestsRfcConstants.OC_OID_PERSON,
-        expected_name=TestsRfcConstants.OC_NAME_PERSON,
+        c.Rfc.OC_DEF_PERSON_FULL,
+        expected_oid=c.Rfc.OC_OID_PERSON,
+        expected_name=c.Rfc.OC_NAME_PERSON,
     )
 """
 
@@ -81,12 +80,11 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 """
 import pytest
 from .test_operations import TestOperations
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 @pytest.mark.parametrize("attr_def,expected_oid,expected_name", [
-    (TestsRfcConstants.ATTR_DEF_CN_COMPLETE, TestsRfcConstants.ATTR_OID_CN, TestsRfcConstants.ATTR_NAME_CN),
-    (TestsRfcConstants.ATTR_DEF_SN, TestsRfcConstants.ATTR_OID_SN, TestsRfcConstants.ATTR_NAME_SN),
-    (TestsRfcConstants.ATTR_DEF_ST, TestsRfcConstants.ATTR_OID_ST, TestsRfcConstants.ATTR_NAME_ST),
+    (c.Rfc.ATTR_DEF_CN_COMPLETE, c.Rfc.ATTR_OID_CN, c.Rfc.ATTR_NAME_CN),
+    (c.Rfc.ATTR_DEF_SN, c.Rfc.ATTR_OID_SN, c.Rfc.ATTR_NAME_SN),
+    (c.Rfc.ATTR_DEF_ST, c.Rfc.ATTR_OID_ST, c.Rfc.ATTR_NAME_ST),
 ])
 def test_schema_parse_multiple_attributes(
     rfc_schema_quirk,
@@ -143,7 +141,7 @@ def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> Non
 # ❌ ANTES:
 """
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = m.Entry.create(
+    entry = m.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
     ).unwrap()
@@ -158,7 +156,7 @@ def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
 from .test_operations import TestOperations
 
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = m.Entry.create(
+    entry = m.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
     ).unwrap()

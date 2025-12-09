@@ -14,7 +14,6 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif._models.results import _FlexibleCategories
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
 from tests import c, m, s
@@ -40,14 +39,14 @@ class TestsTestFlextLdifStatistics(s):
         @staticmethod
         def create_entry_from_dict(
             entry_dict: dict[str, object],
-        ) -> m.Entry:
+        ) -> m.Ldif.Entry:
             """Create Entry model from dictionary for testing.
 
             Args:
                 entry_dict: Dictionary with 'dn' and optionally 'attributes' keys
 
             Returns:
-                m.Entry instance
+                m.Ldif.Entry instance
 
             """
             dn = str(entry_dict.get("dn", ""))
@@ -105,7 +104,7 @@ class TestsTestFlextLdifStatistics(s):
             for category, entries_value in categorized_dict.items():
                 if not isinstance(entries_value, list):
                     continue
-                entries: list[m.Entry] = []
+                entries: list[m.Ldif.Entry] = []
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
                         entry_obj: dict[str, object] = dict(entry_value)
@@ -527,7 +526,7 @@ class TestsTestFlextLdifStatistics(s):
                     {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
                     for i in range(100)
                 ],
-                FlextLdifConstants.Categories.REJECTED: [
+                c.Ldif.Categories.REJECTED: [
                     {
                         "dn": f"cn=invalid{i},dc=example,dc=com",
                         "attributes": {"rejectionReason": f"Reason {i % 5}"},
@@ -544,7 +543,7 @@ class TestsTestFlextLdifStatistics(s):
                 categorized=categories,
                 written_counts={
                     "valid": 100,
-                    FlextLdifConstants.Categories.REJECTED: 0,
+                    c.Ldif.Categories.REJECTED: 0,
                 },
                 output_dir=Path("/tmp"),
                 output_files={},
@@ -582,7 +581,7 @@ class TestsTestFlextLdifStatistics(s):
         def test_statistics_all_rejected_entries(self) -> None:
             """Test statistics when all entries are rejected."""
             categorized_dict: dict[str, list[dict[str, object]]] = {
-                FlextLdifConstants.Categories.REJECTED.value: [
+                c.Ldif.Categories.REJECTED.value: [
                     {
                         "dn": f"cn=invalid{i},dc=example,dc=com",
                         "attributes": {"rejectionReason": "Invalid format"},
@@ -597,7 +596,7 @@ class TestsTestFlextLdifStatistics(s):
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
-                written_counts={FlextLdifConstants.Categories.REJECTED: 0},
+                written_counts={c.Ldif.Categories.REJECTED: 0},
                 output_dir=Path("/tmp"),
                 output_files={},
             )

@@ -11,6 +11,34 @@ from flext_core import FlextLogger
 from flext_ldif.constants import c
 from flext_ldif.models import m
 
+# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
+
+
+class _SchemaConstants:
+    """Schema constants container for type safety."""
+
+    AUXILIARY: str
+    STRUCTURAL: str
+
+    def __init__(self) -> None:
+        """Initialize schema constants from Format constants."""
+        # Constants are at Format level, not Format.Rfc level
+        # Access directly without type: ignore (prohibited)
+        self.AUXILIARY = c.Ldif.Format.SCHEMA_KIND_AUXILIARY
+        self.STRUCTURAL = c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+
+
+# Cache schema constants to avoid repeated getattr calls
+# Access at runtime to avoid circular import issues
+def _get_schema_constants() -> _SchemaConstants:
+    """Get schema constants, accessing at runtime to avoid circular imports."""
+    # Use _SchemaConstants class for type safety
+    return _SchemaConstants()
+
+
+_schema_constants = _get_schema_constants
+
 logger = FlextLogger(__name__)
 
 
@@ -18,50 +46,60 @@ class FlextLdifUtilitiesObjectClass:
     """RFC 4512 ObjectClass Validation and Correction Utilities.
 
     Pure static methods for validating and fixing ObjectClass definitions
-    according to RFC 4512. These methods modify SchemaObjectClass models in-place.
+    according to RFC 4512. These methods modify m.Ldif.SchemaObjectClass models in-place.
 
-    Used by server quirks during normalization/denormalization to fix common
-    ObjectClass issues that violate RFC 4512 compliance.
+    All methods are static to enable use without instantiation and to avoid
+    circular dependencies. Methods are organized by validation/correction type.
 
-    ═══════════════════════════════════════════════════════════════════════
-    RFC 4512 ObjectClass Requirements
+    Business Rules:
+        - All fixes are applied in-place (modify input model)
+        - Fixes preserve existing valid data (no overwrites)
+        - Server-specific fixes are clearly marked
+        - All fixes are idempotent (safe to call multiple times)
 
-    - AUXILIARY classes MUST have explicit SUP clause
-    - ObjectClass kind must match superior class kind (STRUCTURAL vs AUXILIARY)
-    - Abstract classes must have SUP (except root abstract classes like "top")
+    Architecture:
+        - Pure functions (no state, no side effects except model modification)
+        - Static methods for easy import and use
+        - Type-safe with m.Ldif.SchemaObjectClass
+        - Server-agnostic where possible, server-specific where necessary
 
-    ═══════════════════════════════════════════════════════════════════════
-    Usage Pattern
-
-    These methods are called by server quirks during schema normalization:
-
-        from flext_ldif.utilities import FlextLdifUtilities
-
-        FlextLdifUtilitiesObjectClass.fix_missing_sup(
-            schema_oc, _server_type="oid"
-        )
-        FlextLdifUtilitiesObjectClass.fix_kind_mismatch(
-            schema_oc, _server_type="oid"
-        )
-        FlextLdifUtilitiesObjectClass.ensure_sup_for_auxiliary(schema_oc)
-        FlextLdifUtilitiesObjectClass.align_kind_with_superior(
-            schema_oc, superior_kind
-        )
-
+    Usage:
+        >>> from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+        >>> oc = m.Ldif.SchemaObjectClass(name="test", kind="structural")
+        >>> FlextLdifUtilitiesObjectClass.fix_missing_sup(oc)
+        >>> assert oc.sup == "top"
     """
 
     @staticmethod
-    def fix_missing_sup(
-        schema_oc: m.Ldif.SchemaObjectClass,
-        _server_type: str = "oid",
-    ) -> None:
-        """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
+    def fix_missing_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+        """Fix ObjectClass missing SUP (superior) attribute.
 
-        RFC 4512 requires AUXILIARY classes to have explicit SUP clause.
-        This method fixes known AUXILIARY classes that are missing SUP,
-        using server-specific knowledge.
+        RFC 4512 requires all ObjectClasses to have a SUP (superior) except
+        for the root "top" class. This method adds "top" as SUP for classes
+        that are missing it.
 
-        For general fixes, use ensure_sup_for_auxiliary() instead.
+        Args:
+            schema_oc: ObjectClass model to potentially fix (modified in-place)
+
+        Returns:
+            None - modifies schema_oc in-place
+
+        Business Rules:
+            - Only fixes if SUP is missing (None or empty)
+            - Sets SUP to "top" (RFC 4512 root class)
+            - Idempotent (safe to call multiple times)
+
+        """
+        if not schema_oc.sup:
+            schema_oc.sup = "top"
+
+    @staticmethod
+    def fix_auxiliary_without_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+        """Fix AUXILIARY ObjectClass missing SUP (server-specific fix).
+
+        Some servers (OID/OUD) have AUXILIARY classes without SUP. This method
+        fixes known problematic classes and delegates to ensure_sup_for_auxiliary()
+        for general cases.
 
         Args:
             schema_oc: ObjectClass model to potentially fix (modified in-place)
@@ -70,13 +108,14 @@ class FlextLdifUtilitiesObjectClass:
             None - modifies schema_oc in-place
 
         Note:
-            Only fixes AUXILIARY classes without SUP. Known problematic
-            classes from OID/OUD are fixed automatically. For general cases,
+            Only fixes AUXILIARY classes. Known problematic classes from OID/OUD
+            are fixed automatically. For general cases,
             delegates to ensure_sup_for_auxiliary().
 
         """
         # Only fix AUXILIARY classes without SUP
-        if schema_oc.sup or schema_oc.kind != c.Ldif.Schema.AUXILIARY:
+        schema_constants = _schema_constants()
+        if schema_oc.sup or schema_oc.kind != schema_constants.AUXILIARY:
             return
 
         # Known AUXILIARY classes from OID that are missing SUP top
@@ -135,78 +174,66 @@ class FlextLdifUtilitiesObjectClass:
 
         sup_lower = str(schema_oc.sup).lower() if isinstance(schema_oc.sup, str) else ""
 
+        schema_constants = _schema_constants()
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
         if (
             sup_lower in structural_superiors
-            and schema_oc.kind == c.Ldif.Schema.AUXILIARY
+            and schema_oc.kind == schema_constants.AUXILIARY
         ):
-            schema_oc.kind = c.Ldif.Schema.STRUCTURAL
+            schema_oc.kind = schema_constants.STRUCTURAL
 
         # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
         elif (
             sup_lower in auxiliary_superiors
-            and schema_oc.kind == c.Ldif.Schema.STRUCTURAL
+            and schema_oc.kind == schema_constants.STRUCTURAL
         ):
-            schema_oc.kind = c.Ldif.Schema.AUXILIARY
+            schema_oc.kind = schema_constants.AUXILIARY
 
     @staticmethod
-    def ensure_sup_for_auxiliary(
-        schema_oc: m.Ldif.SchemaObjectClass,
-        default_sup: str = "top",
-    ) -> None:
-        """Ensure AUXILIARY objectClasses have a SUP clause.
+    def ensure_sup_for_auxiliary(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+        """Ensure AUXILIARY ObjectClass has SUP attribute.
 
-        RFC 4512 requires AUXILIARY classes to have explicit SUP.
-        If missing, adds the specified default SUP value.
-
-        This is a general method that can be used by all quirks.
-        For server-specific fixes, use fix_missing_sup() instead.
+        RFC 4512 requires all ObjectClasses (including AUXILIARY) to have a SUP.
+        This method adds "top" as SUP for AUXILIARY classes missing it.
 
         Args:
             schema_oc: ObjectClass model to potentially fix (modified in-place)
-            default_sup: Default SUP value to add if missing (default: "top")
 
         Returns:
             None - modifies schema_oc in-place
 
+        Business Rules:
+            - Only fixes AUXILIARY classes
+            - Sets SUP to "top" if missing
+            - Idempotent (safe to call multiple times)
+
         """
-        if not schema_oc.sup and schema_oc.kind == c.Ldif.Schema.AUXILIARY:
-            schema_oc.sup = default_sup
+        schema_constants = _schema_constants()
+        if schema_oc.kind == schema_constants.AUXILIARY and not schema_oc.sup:
+            schema_oc.sup = "top"
 
     @staticmethod
     def align_kind_with_superior(
         schema_oc: m.Ldif.SchemaObjectClass,
-        superior_kind: str | None,
+        superior_kind: str,
     ) -> None:
         """Align ObjectClass kind with its superior class kind.
 
-        General method that aligns ObjectClass kind with superior class kind
-        for RFC 4512 compliance. This is called by fix_kind_mismatch() for
-        known problematic cases, but can also be used directly.
+        Some ObjectClasses have kind mismatches with their superior classes.
+        This method aligns the kind to match the superior when provided.
 
         Args:
             schema_oc: ObjectClass model to potentially fix (modified in-place)
-            superior_kind: Kind of the superior ObjectClass
+            superior_kind: Kind of the superior class (e.g., "structural", "auxiliary")
 
         Returns:
             None - modifies schema_oc in-place
 
+        Business Rules:
+            - Only aligns if superior_kind is provided
+            - Sets kind to match superior_kind
+            - Idempotent (safe to call multiple times)
+
         """
-        if not schema_oc.sup or not schema_oc.kind or not superior_kind:
-            return
-
-        if (
-            superior_kind == c.Ldif.Schema.STRUCTURAL
-            and schema_oc.kind == c.Ldif.Schema.AUXILIARY
-        ):
-            schema_oc.kind = c.Ldif.Schema.STRUCTURAL
-        elif (
-            superior_kind == c.Ldif.Schema.AUXILIARY
-            and schema_oc.kind == c.Ldif.Schema.STRUCTURAL
-        ):
-            schema_oc.kind = c.Ldif.Schema.AUXILIARY
-
-
-__all__ = [
-    "FlextLdifUtilitiesObjectClass",
-]
+        if superior_kind and schema_oc.kind != superior_kind:
+            schema_oc.kind = superior_kind

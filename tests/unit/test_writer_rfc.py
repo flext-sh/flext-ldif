@@ -118,9 +118,9 @@ class WriterTestFactory:
         return m.WriteFormatOptions(base64_encode_binary=base64_encode)
 
     @classmethod
-    def create_simple_entry(cls) -> m.Entry:
+    def create_simple_entry(cls) -> m.Ldif.Entry:
         """Create a simple RFC-compliant entry."""
-        return m.Entry(
+        return m.Ldif.Entry(
             dn="cn=testuser,ou=people,dc=example,dc=com",
             attributes={
                 "cn": ["testuser"],
@@ -131,9 +131,9 @@ class WriterTestFactory:
         )
 
     @classmethod
-    def create_multivalue_entry(cls) -> m.Entry:
+    def create_multivalue_entry(cls) -> m.Ldif.Entry:
         """Create entry with multiple values for same attribute."""
-        return m.Entry(
+        return m.Ldif.Entry(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             attributes={
                 "cn": ["testgroup"],
@@ -147,9 +147,9 @@ class WriterTestFactory:
         )
 
     @classmethod
-    def create_second_entry(cls) -> m.Entry:
+    def create_second_entry(cls) -> m.Ldif.Entry:
         """Create a second RFC-compliant entry."""
-        return m.Entry(
+        return m.Ldif.Entry(
             dn="cn=test2,dc=example,dc=com",
             attributes={
                 "cn": ["test2"],

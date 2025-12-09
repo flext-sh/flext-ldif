@@ -273,6 +273,8 @@ class TestsTestFlextLdifProtocols(s):
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
         assert isinstance(oc_result, bool)
 
+    registry: ClassVar[FlextLdifServer]  # pytest fixture
+
     @pytest.fixture
     def registry(self) -> FlextLdifServer:
         """Create quirk registry instance."""

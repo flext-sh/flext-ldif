@@ -593,7 +593,7 @@ class TestSchemaDeviationsUtilities:
             "SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
         )
 
-        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
 
         # Verify all expected fields are captured
         assert details.original_string_complete is not None, (
@@ -645,7 +645,7 @@ class TestSchemaDeviationsUtilities:
             "X-ORIGIN 'RFC 4519' )"
         )
 
-        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
 
         # Verify OUD-specific fields
         extensions_dict = details.extensions.model_dump()
@@ -726,7 +726,7 @@ class TestSchemaDeviationsAttributeKeyCasing:
             "SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         )
 
-        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
 
         extensions_dict = details.extensions.model_dump()
         assert extensions_dict.get("attribute_case") == "attributetypes", (
@@ -746,7 +746,7 @@ class TestSchemaDeviationsAttributeKeyCasing:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         )
 
-        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
 
         extensions_dict = details.extensions.model_dump()
         assert extensions_dict.get("attribute_case") == "attributeTypes", (

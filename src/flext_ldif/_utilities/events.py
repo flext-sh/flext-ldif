@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextTypes, t
+from flext_core import FlextTypes, t
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.protocols import p
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif.models import m
 
 
 class FlextLdifUtilitiesEvents:
@@ -37,7 +37,7 @@ class FlextLdifUtilitiesEvents:
             Configured DnEvent instance
 
         Example:
-            config = m.DnEventConfig(
+            config = FlextLdifModelsEvents.DnEventConfig(
                 dn_operation="normalize",
                 input_dn="CN=Admin,DC=Example",
                 output_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
@@ -69,7 +69,7 @@ class FlextLdifUtilitiesEvents:
             Configured MigrationEvent instance
 
         Example:
-            config = m.MigrationEventConfig(
+            config = FlextLdifModelsEvents.MigrationEventConfig(
                 migration_operation="full_migration",
                 source_server="oid",
                 target_server="oud",
@@ -86,7 +86,7 @@ class FlextLdifUtilitiesEvents:
         error_details_list: list[str] = []
         if config.error_details is not None:
             error_details_list = [str(detail) for detail in config.error_details]
-        return m.MigrationEvent(
+        return FlextLdifModelsEvents.MigrationEvent(
             event_type="ldif.migration",
             aggregate_id=aggregate_id,  # Unique identifier for this migration
             migration_operation=config.migration_operation,
@@ -111,7 +111,7 @@ class FlextLdifUtilitiesEvents:
             Configured ConversionEvent instance
 
         Example:
-            config = m.ConversionEventConfig(
+            config = FlextLdifModelsEvents.ConversionEventConfig(
                 conversion_operation="acl_transform",
                 source_format="orclaci",
                 target_format="olcAccess",
@@ -153,7 +153,7 @@ class FlextLdifUtilitiesEvents:
             Configured SchemaEvent instance
 
         Example:
-            config = m.SchemaEventConfig(
+            config = FlextLdifModelsEvents.SchemaEventConfig(
                 schema_operation="parse_attribute",
                 items_processed=50,
                 items_succeeded=48,
@@ -309,7 +309,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_dn_event(
-        logger: FlextLogger,
+        logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
@@ -328,13 +328,13 @@ class FlextLdifUtilitiesEvents:
             Created DnEvent instance
 
         Example:
-            config = m.DnEventConfig(
+            config = FlextLdifModelsEvents.DnEventConfig(
                 dn_operation="normalize",
                 input_dn="CN=Admin,DC=Example",
                 output_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
                 operation_duration_ms=1.2,
             )
-            extras = m.LogContextExtras(user_id="REDACTED_LDAP_BIND_PASSWORD")
+            extras = FlextLdifModelsConfig.LogContextExtras(user_id="REDACTED_LDAP_BIND_PASSWORD")
             event = FlextLdifUtilities.Events.log_and_emit_dn_event(
                 logger=logger,
                 config=config,
@@ -370,7 +370,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _log_and_emit_generic_event(
-        logger: FlextLogger,
+        logger: p.Log.StructlogLogger,
         log_context: dict[str, t.ScalarValue],
         log_message: str,
         log_level: str = "info",
@@ -405,7 +405,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_migration_event(
-        logger: FlextLogger,
+        logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.MigrationEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
@@ -424,7 +424,7 @@ class FlextLdifUtilitiesEvents:
             Created MigrationEvent instance
 
         Example:
-            config = m.MigrationEventConfig(
+            config = FlextLdifModelsEvents.MigrationEventConfig(
                 migration_operation="full_migration",
                 source_server="oid",
                 target_server="oud",
@@ -472,7 +472,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_conversion_event(
-        logger: FlextLogger,
+        logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
@@ -491,7 +491,7 @@ class FlextLdifUtilitiesEvents:
             Created ConversionEvent instance
 
         Example:
-            config = m.ConversionEventConfig(
+            config = FlextLdifModelsEvents.ConversionEventConfig(
                 conversion_operation="acl_transform",
                 source_format="orclaci",
                 target_format="olcAccess",
@@ -539,7 +539,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_schema_event(
-        logger: FlextLogger,
+        logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.SchemaEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
@@ -558,7 +558,7 @@ class FlextLdifUtilitiesEvents:
             Created SchemaEvent instance
 
         Example:
-            config = m.SchemaEventConfig(
+            config = FlextLdifModelsEvents.SchemaEventConfig(
                 schema_operation="parse_attribute",
                 items_processed=50,
                 items_succeeded=48,

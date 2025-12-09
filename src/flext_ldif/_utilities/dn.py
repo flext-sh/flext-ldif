@@ -14,14 +14,16 @@ from typing import Literal, cast, overload
 
 from flext_core import (
     FlextTypes,
+    FlextUtilities as u,
     r,
-    u,
 )
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
+
+# Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 
 # Type alias for DNStatistics to use in type annotations
 # m.DNStatistics is a variable assignment, not a type alias
@@ -122,8 +124,10 @@ class FlextLdifUtilitiesDN:
             return False
         code = ord(char)
         # Must be in ASCII range 0x01-0x7F and not in exclusion set
-        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
-        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
+        # Use getattr to help type checker understand nested class access
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
         return code not in c.Ldif.Format.DN_LUTF1_EXCLUDE
@@ -147,8 +151,10 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
-        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
+        # Use getattr to help type checker understand nested class access
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
         return code not in c.Ldif.Format.DN_TUTF1_EXCLUDE
@@ -172,8 +178,10 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
-        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
+        # Use getattr to help type checker understand nested class access
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
         return code not in c.Ldif.Format.DN_SUTF1_EXCLUDE
@@ -415,7 +423,7 @@ class FlextLdifUtilitiesDN:
         return all(check() for check in checks)
 
     @staticmethod
-    def validate(dn: str | m.DistinguishedName) -> bool:
+    def validate(dn: str | m.Ldif.DistinguishedName) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -518,12 +526,12 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def parse(
-        dn: m.DistinguishedName,
+        dn: m.Ldif.DistinguishedName,
     ) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
     def parse(
-        dn: str | m.DistinguishedName | None,
+        dn: str | m.Ldif.DistinguishedName | None,
     ) -> r[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
@@ -591,11 +599,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: m.DistinguishedName) -> r[str]: ...
+    def norm(dn: m.Ldif.DistinguishedName) -> r[str]: ...
 
     @staticmethod
     def norm(
-        dn: str | m.DistinguishedName | None,
+        dn: str | m.Ldif.DistinguishedName | None,
     ) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
@@ -714,10 +722,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: m.DistinguishedName) -> str: ...
+    def clean_dn(dn: m.Ldif.DistinguishedName) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | m.DistinguishedName) -> str:
+    def clean_dn(dn: str | m.Ldif.DistinguishedName) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
@@ -1451,14 +1459,14 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: m.DistinguishedName,
+        value: m.Ldif.DistinguishedName,
         source_dn: str,
         target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | m.DistinguishedName,
+        value: str | m.Ldif.DistinguishedName,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -1523,7 +1531,7 @@ class FlextLdifUtilitiesDN:
         entries: list[m.Ldif.Entry],
         source_dn: str,
         target_dn: str,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Replace base DN in all entries and DN-valued attributes.
 
         Transforms:
@@ -1608,11 +1616,7 @@ class FlextLdifUtilitiesDN:
         # Type narrowing: batch_data["results"] is object, check if list
         results_raw = batch_data.get("results", [])
         if isinstance(results_raw, list):
-            return [
-                cast("m.Entry", item)
-                for item in results_raw
-                if isinstance(item, m.Entry)
-            ]
+            return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
         return entries
 
     @staticmethod
@@ -1787,10 +1791,10 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_dn_with_metadata(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         source_dn: str,
         target_dn: str,
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Transform DN and DN-valued attributes with metadata tracking.
 
         RFC Compliant: Tracks all transformations in QuirkMetadata for round-trip support.
@@ -1805,7 +1809,7 @@ class FlextLdifUtilitiesDN:
             New Entry with transformed DN, attributes, and metadata tracking
 
         Example:
-            >>> entry = m.Entry(
+            >>> entry = m.Ldif.Entry(
             ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
             ...     attributes={"member": ["cn=user,dc=example"]},
             ... )
@@ -1862,15 +1866,15 @@ class FlextLdifUtilitiesDN:
             dn_attributes,
         )
 
-        # Ensure metadata is always m.QuirkMetadata (public facade)
+        # Ensure metadata is always m.Ldif.QuirkMetadata (public facade)
         # Business Rule: entry.metadata can be domain or facade, but we need facade
         if entry.metadata:
             # Create new facade instance from domain metadata to ensure type compatibility
             # Use model_validate to convert domain to facade if needed
             metadata_dict = entry.metadata.model_dump()
-            metadata = m.QuirkMetadata.model_validate(metadata_dict)
+            metadata = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
         else:
-            metadata = m.QuirkMetadata.create_for()
+            metadata = m.Ldif.QuirkMetadata.create_for()
 
         transform_config = FlextLdifModelsConfig.MetadataTransformationConfig(
             original_dn=original_dn_str,
@@ -1898,7 +1902,7 @@ class FlextLdifUtilitiesDN:
         entries: list[m.Ldif.Entry],
         source_dn: str,
         target_dn: str,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Replace base DN in all entries with metadata tracking.
 
         RFC Compliant: Tracks all transformations for audit trail and round-trip support.
@@ -1921,7 +1925,7 @@ class FlextLdifUtilitiesDN:
         if not entries or not source_dn or not target_dn:
             return entries
 
-        def transform_entry(entry: m.Entry) -> m.Entry:
+        def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Transform single entry."""
             return FlextLdifUtilitiesDN.transform_dn_with_metadata(
                 entry,
@@ -1939,11 +1943,7 @@ class FlextLdifUtilitiesDN:
             # Type narrowing: batch_data["results"] is object, check if list
             results_raw = batch_data.get("results", [])
             if isinstance(results_raw, list):
-                return [
-                    cast("m.Entry", item)
-                    for item in results_raw
-                    if isinstance(item, m.Entry)
-                ]
+                return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
         return entries
 
     # =========================================================================
@@ -1959,15 +1959,11 @@ class FlextLdifUtilitiesDN:
         r"""Normalize DN or return fallback if normalization fails.
 
         Replaces the common 3-line pattern:
-            # Lazy import to avoid circular dependency
-            from flext_ldif.utilities import u as u_ldif
-            norm_result = u_ldif.DN.norm(dn)
+            norm_result = FlextLdifUtilitiesDN.norm(dn)
             normalized = norm_result.unwrap() if norm_result.is_success else dn.lower()
 
         With a single call:
-            # Lazy import to avoid circular dependency
-            from flext_ldif.utilities import u as u_ldif
-            normalized = u_ldif.DN.norm_or_fallback(dn)
+            normalized = FlextLdifUtilitiesDN.norm_or_fallback(dn)
 
         Args:
             dn: DN string to normalize (or None)

@@ -14,6 +14,10 @@ from flext_core import FlextLogger, FlextResult, FlextUtilities
 
 from flext_ldif.models import m
 
+# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
+
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
 u = FlextUtilities  # Use base class to avoid circular dependency

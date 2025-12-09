@@ -10,10 +10,10 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
+from tests import TestDeduplicationHelpers, m, s
 
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests import TestDeduplicationHelpers, m, s
 
 
 class TestsTestFlextLdifOidSyntaxTransformations(s):
@@ -22,6 +22,8 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
     Replaces 5 original test classes with parametrized tests using StrEnum
     scenarios and ClassVar test data for maximum code reuse.
     """
+
+    oid_schema: ClassVar[FlextLdifServersBaseSchema]  # pytest fixture
 
     # ═════════════════════════════════════════════════════════════════════════════
     # TEST SCENARIO ENUMS
@@ -168,10 +170,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.syntax == syntax_oid or syntax_oid in (attr.syntax or "")
 
     def test_syntax_transformation_comprehensive(
@@ -242,10 +244,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         # caseIgnoreSubstringsMatch is moved to SUBSTR field by OID quirk
         if "Substrings" in rule_name:
             assert attr.substr == rule_expected or rule_expected in (attr.substr or "")
@@ -271,10 +273,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.equality or attr.substr or attr.ordering
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -296,10 +298,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == "orclOudCompat"
 
     @pytest.mark.parametrize(
@@ -404,10 +406,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == "orclComplex"
         assert attr.syntax
 
@@ -484,10 +486,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def_with_typo,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         # After transformation: typo corrected and moved to SUBSTR
         assert attr.substr == "caseIgnoreSubstringsMatch", (
             f"Expected corrected substr 'caseIgnoreSubstringsMatch', got {attr.substr}"
@@ -519,9 +521,9 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=m.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.syntax
         assert attr.equality

@@ -10,14 +10,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
-from tests import c, s
+from tests import OIDs, Syntax, c, s
+from tests.helpers.compat import OptimizedLdifTestHelpers
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
@@ -28,6 +29,8 @@ class TestsFlextLdifParserFormatOptions(s):
     Uses advanced Python 3.13 features, factories, and parametrization
     to reduce code while maintaining 100% coverage and testing all edge cases.
     """
+
+    parser_service: ClassVar[FlextLdifParser]  # pytest fixture
 
     class InputSource(Enum):
         """Input source types for parser testing."""
@@ -244,7 +247,7 @@ sn:"""
                     source=parse_source,
                     server_type=server_type,
                 )
-            response_obj = self.assert_success(result, "Parse should succeed")
+            response_obj = s().assert_success(result, "Parse should succeed")
             assert isinstance(response_obj, m.ParseResponse)
             return response_obj
 
@@ -258,7 +261,7 @@ sn:"""
             schema_entries = [
                 e for e in response.entries if "schema" in str(e.dn).lower()
             ]
-            FlextTestsMatchers.assert_length_non_zero(
+            tm.assert_length_non_zero(
                 schema_entries,
                 "Should have at least one schema entry",
             )
@@ -266,7 +269,7 @@ sn:"""
             data_entries = [
                 e for e in response.entries if "schema" not in str(e.dn).lower()
             ]
-            FlextTestsMatchers.assert_length_non_zero(
+            tm.assert_length_non_zero(
                 data_entries,
                 "Should have at least one data entry",
             )
@@ -278,7 +281,7 @@ sn:"""
             [e for e in response.entries if "schema" in str(e.dn).lower()]
             # When auto_parse_schema=False, schema entries may still be parsed but not categorized
             # So we just verify entries were parsed successfully
-            FlextTestsMatchers.assert_length_non_zero(
+            tm.assert_length_non_zero(
                 response.entries,
                 "Should have parsed entries",
             )
@@ -298,7 +301,7 @@ sn:"""
                     )
                 )
             ]
-            FlextTestsMatchers.assert_length_non_zero(acl_entries)
+            tm.assert_length_non_zero(acl_entries)
 
         @staticmethod
         def attribute_order_preserved(
@@ -310,7 +313,7 @@ sn:"""
                     attribute_order = entry.metadata.extensions.get("attribute_order")
                     if attribute_order:
                         assert isinstance(attribute_order, list)
-                        FlextTestsMatchers.assert_length_non_zero(attribute_order)
+                        tm.assert_length_non_zero(attribute_order)
 
         @staticmethod
         def attribute_order_not_preserved(
@@ -385,7 +388,7 @@ sn:"""
         elif not enabled and validator_disabled_name:
             validator_disabled = getattr(self.Validators, validator_disabled_name)
             validator_disabled(response_obj)
-        FlextTestsMatchers.assert_length_non_zero(response_obj.entries)
+        tm.assert_length_non_zero(response_obj.entries)
 
     @pytest.mark.parametrize(
         ("strict", "expected_errors"),
@@ -412,7 +415,7 @@ sn:"""
         if result.is_success:
             response = result.unwrap()
             # Parser may succeed but filter out invalid entries
-            FlextTestsMatchers.assert_length_greater_or_equal(response.entries, 0)
+            tm.assert_length_greater_or_equal(response.entries, 0)
         else:
             error_msg = result.error or ""
             assert "validation" in error_msg.lower() or "error" in error_msg.lower()
@@ -442,7 +445,7 @@ sn:"""
         if result.is_success:
             response = result.unwrap()
             # Parser may succeed but filter out invalid entries
-            FlextTestsMatchers.assert_length_greater_or_equal(response.entries, 0)
+            tm.assert_length_greater_or_equal(response.entries, 0)
 
     def test_combined_options(
         self,
@@ -471,7 +474,7 @@ sn:"""
             format_options=options,
         )
         # Verify entries were parsed successfully
-        FlextTestsMatchers.assert_length_non_zero(response_obj.entries)
+        tm.assert_length_non_zero(response_obj.entries)
         # Check for schema entries directly in entries (more reliable than statistics)
         schema_entries = [
             e for e in response_obj.entries if "schema" in str(e.dn).lower()
@@ -545,7 +548,7 @@ sn:"""
         ("content", "expected_entries", "expected_errors"),
         [
             (
-                lambda: TestParserFormatOptions.c.Fixtures.basic_entry(
+                lambda: TestsFlextLdifParserFormatOptions.Fixtures.basic_entry(
                     "cn=default-test,dc=example,dc=com",
                 ),
                 1,

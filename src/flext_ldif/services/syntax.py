@@ -16,22 +16,20 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from flext_core import d, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
-# Type alias for Syntax to use in type annotations
-# m.Syntax is a variable assignment, not a type alias
-SyntaxType = FlextLdifModelsDomains.Syntax
+# Services CAN import constants, models, protocols, types, utilities
+# Services CANNOT import other services, servers, or api
 
 
-class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Business Rule: Syntax service validates and resolves LDAP attribute syntax OIDs
@@ -64,22 +62,25 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         """Initialize Syntax service."""
         super().__init__()
         # Convert Mapping to dict for mutability
-        oid_to_name_mapping = c.RfcSyntaxOids.OID_TO_NAME
-        name_to_oid_mapping = c.RfcSyntaxOids.NAME_TO_OID
+        # Use c.Ldif.RfcSyntaxOids.OID_TO_NAME and c.Ldif.RfcSyntaxOids.NAME_TO_OID directly
         self._oid_to_name = (
-            dict(oid_to_name_mapping) if hasattr(oid_to_name_mapping, "items") else {}
+            dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
+            if hasattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items")
+            else {}
         )
         self._name_to_oid = (
-            dict(name_to_oid_mapping) if hasattr(name_to_oid_mapping, "items") else {}
+            dict(c.Ldif.RfcSyntaxOids.NAME_TO_OID)
+            if hasattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items")
+            else {}
         )
-        self._common_syntaxes = c.RfcSyntaxOids.COMMON_SYNTAXES
+        self._common_syntaxes = c.Ldif.RfcSyntaxOids.COMMON_SYNTAXES
 
     @override
     @d.log_operation("syntax_service_check")
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.SyntaxServiceStatus]:
+    ) -> r[m.Ldif.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -93,8 +94,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
             FlextResult with SyntaxServiceStatus containing service metadata and syntax counts
 
         """
-        return r[m.SyntaxServiceStatus].ok(
-            m.SyntaxServiceStatus(
+        return r[m.Ldif.SyntaxServiceStatus].ok(
+            m.Ldif.SyntaxServiceStatus(
                 service="SyntaxService",
                 status="operational",
                 rfc_compliance="RFC 4517",
@@ -160,7 +161,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
             return r[str].fail("OID cannot be empty")
 
         try:
-            name_raw = u.get(self._oid_to_name, oid, default=None)
+            name_raw = u.mapper().get(self._oid_to_name, oid, default=None)
             # Type narrowing: name_raw is str | None, check if str
             if name_raw is not None and isinstance(name_raw, str):
                 return r[str].ok(name_raw)
@@ -182,7 +183,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
             return r[str].fail("Syntax name cannot be empty")
 
         try:
-            oid_raw = u.get(self._name_to_oid, name, default=None)
+            oid_raw = u.mapper().get(self._name_to_oid, name, default=None)
             # Type narrowing: oid_raw is str | None, check if str
             if oid_raw is not None and isinstance(oid_raw, str):
                 return r[str].ok(oid_raw)
@@ -196,8 +197,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
-    ) -> r[SyntaxType]:
+        server_type: str = "rfc",
+    ) -> r[m.Ldif.LdifResults.Syntax]:
         """Resolve OID to complete Syntax model with validation.
 
         Args:
@@ -212,21 +213,25 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         """
         oid_valid = self.validate_oid(oid)
         if oid_valid.is_failure:
-            return r[SyntaxType].fail(
+            return r[m.Ldif.LdifResults.Syntax].fail(
                 f"Invalid OID format: {oid}",
             )
 
         try:
-            syntax = m.Syntax.resolve_syntax_oid(
+            # Normalize server_type to ServerTypeLiteral
+            normalized_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+                c.normalize_server_type(server_type)
+            )
+            syntax = m.Ldif.LdifResults.Syntax.resolve_syntax_oid(
                 oid=oid,
-                server_type=server_type,
+                server_type=normalized_server_type,
             )
             if syntax is None:
-                return r[SyntaxType].fail(
+                return r[m.Ldif.LdifResults.Syntax].fail(
                     f"Failed to resolve syntax OID: {oid}",
                 )
         except Exception as e:
-            return r[SyntaxType].fail(
+            return r[m.Ldif.LdifResults.Syntax].fail(
                 f"Failed to create syntax: {oid} - {e}",
             )
 
@@ -235,14 +240,14 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        return r[SyntaxType].ok(syntax)
+        return r[m.Ldif.LdifResults.Syntax].ok(syntax)
 
     @d.track_performance()
     def validate_value(
         self,
         value: str,
         syntax_oid: str,
-        _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
+        _server_type: str = "rfc",
     ) -> r[bool]:
         """Validate a value against its syntax type.
 
@@ -257,7 +262,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         if not value or not syntax_oid:
             return r[bool].ok(True)
 
-        if syntax_oid not in c.RfcSyntaxOids.OID_TO_NAME:
+        if syntax_oid not in c.Ldif.RfcSyntaxOids.OID_TO_NAME:
             return r[bool].fail(
                 f"Cannot validate - unknown syntax OID: {syntax_oid}",
             )
@@ -269,14 +274,15 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
             )
 
         type_category = resolve_result.unwrap().type_category
-        validator_raw = u.Mapper.get(
+        validator_raw = u.mapper().get(
             self._VALIDATOR_MAP,
             type_category,
             default=lambda _: r[bool].ok(True),
         )
         # Type narrowing: validator_raw is object, check if callable
         if callable(validator_raw):
-            validator = cast("Callable[[str], r[bool]]", validator_raw)
+            # Type narrowing: validator_raw is Callable[[str], r[bool]] after callable check
+            validator: Callable[[str], r[bool]] = validator_raw
             return validator(value)
         # Fallback validator
         return r[bool].ok(True)
