@@ -16,9 +16,7 @@ from flext_tests import tt
 
 from flext_ldif import FlextLdif
 from flext_ldif.services.filters import FlextLdifFilters
-from tests import Filters, TestDeduplicationHelpers, c, m
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from tests import Filters, TestDeduplicationHelpers, c, p
 
 
 class FilterScenarios(StrEnum):
@@ -145,7 +143,7 @@ BUILDER_TESTS: Final[list[BuilderTestCase]] = [
 ]
 
 
-def load_real_ldif_entries(fixture_path: str) -> list[m.Ldif.Entry]:
+def load_real_ldif_entries(fixture_path: str) -> list[p.Entry]:
     """Load REAL LDIF entries from fixture file (no mocks)."""
     fixture_file = Path(__file__).parent.parent.parent / "fixtures" / fixture_path
     if not fixture_file.exists():
@@ -161,19 +159,19 @@ def load_real_ldif_entries(fixture_path: str) -> list[m.Ldif.Entry]:
 
 
 @pytest.fixture
-def oid_entries() -> list[m.Ldif.Entry]:
+def oid_entries() -> list[p.Entry]:
     """Load real OID LDIF entries."""
     return load_real_ldif_entries("oid/oid_entries_fixtures.ldif")
 
 
 @pytest.fixture
-def oid_schema_entries() -> list[m.Ldif.Entry]:
+def oid_schema_entries() -> list[p.Entry]:
     """Load real OID schema entries."""
     return load_real_ldif_entries("oid/oid_schema_fixtures.ldif")
 
 
 @pytest.fixture
-def oid_acl_entries() -> list[m.Ldif.Entry]:
+def oid_acl_entries() -> list[p.Entry]:
     """Load real OID ACL entries."""
     return load_real_ldif_entries("oid/oid_acl_fixtures.ldif")
 
@@ -189,7 +187,7 @@ class TestFlextLdifFilterService(tt):
     def test_dn_pattern_filtering(
         self,
         test_case: DnPatternTestCase,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test DN pattern filtering for all patterns."""
         filtered = TestDeduplicationHelpers.filter_by_dn_and_unwrap(
@@ -202,7 +200,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_dn_filter_excludes_non_matching(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test that non-matching entries are excluded."""
         filtered = TestDeduplicationHelpers.filter_by_dn_and_unwrap(
@@ -216,7 +214,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_dn_filter_with_mark_excluded(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test mark_excluded=True returns all entries with metadata."""
         original_count = len(oid_entries)
@@ -236,7 +234,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_dn_filter_exclude_mode(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test exclude mode removes matching entries."""
         original_count = len(oid_entries)
@@ -255,7 +253,7 @@ class TestFlextLdifFilterService(tt):
     def test_objectclass_filtering(
         self,
         test_case: ObjectClassTestCase,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test objectClass filtering for all objectClasses."""
         filtered = TestDeduplicationHelpers.filter_by_objectclass_and_unwrap(
@@ -275,7 +273,7 @@ class TestFlextLdifFilterService(tt):
     def test_attribute_filtering(
         self,
         test_case: AttributeFilterTestCase,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test attribute filtering for various combinations."""
         filtered = TestDeduplicationHelpers.filter_by_attributes_and_unwrap(
@@ -301,7 +299,7 @@ class TestFlextLdifFilterService(tt):
     def test_base_dn_filtering(
         self,
         test_case: BaseDnTestCase,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test base DN filtering for hierarchy levels."""
         included, _excluded = FlextLdifFilters.by_base_dn(
@@ -319,7 +317,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_schema_detection(
         self,
-        oid_schema_entries: list[m.Ldif.Entry],
+        oid_schema_entries: list[p.Entry],
     ) -> None:
         """Test schema entry detection with real schema data."""
         schema_entries = [
@@ -334,7 +332,7 @@ class TestFlextLdifFilterService(tt):
             )
             assert has_schema_attr, "Schema entry should have schema attributes"
 
-    def test_acl_extraction(self, oid_acl_entries: list[m.Ldif.Entry]) -> None:
+    def test_acl_extraction(self, oid_acl_entries: list[p.Entry]) -> None:
         """Test ACL entry extraction with real ACL data."""
         oid_acl_attributes = ["orclaci", "orclentrylevelaci"]
         result = FlextLdifFilters.extract_acl_entries(
@@ -352,7 +350,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_entry_categorization(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test entry categorization with real data."""
         sample_entries = oid_entries[:3]
@@ -362,7 +360,7 @@ class TestFlextLdifFilterService(tt):
             assert isinstance(category, str), "Category should be a string"
             assert len(category) > 0, "Category should not be empty"
 
-    def test_attribute_removal(self, oid_entries: list[m.Ldif.Entry]) -> None:
+    def test_attribute_removal(self, oid_entries: list[p.Entry]) -> None:
         """Test attribute removal from real entries."""
         test_entry = next(
             (
@@ -381,7 +379,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_objectclass_removal(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test objectClass removal from real entries."""
         test_entry = next(
@@ -407,7 +405,7 @@ class TestFlextLdifFilterService(tt):
     def test_fluent_builder(
         self,
         test_case: BuilderTestCase,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test fluent builder patterns."""
         builder = FlextLdifFilters.builder().with_entries(oid_entries)
@@ -433,7 +431,7 @@ class TestFlextLdifFilterService(tt):
 
     def test_multi_stage_filtering(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test complex multi-stage filtering pipeline."""
         stage1_entries = TestDeduplicationHelpers.filter_by_dn_and_unwrap(

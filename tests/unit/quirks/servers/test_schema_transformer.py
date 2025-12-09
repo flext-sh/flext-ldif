@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core import FlextResult
-from tests import s, t
+from tests import p, s, t
 
-from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -149,7 +148,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
     def test_apply_all_transformations(self) -> None:
         """Test applying all three transformations to an attribute."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="2.5.4.3",
             name="cn;binary",
             equality="caseIgnoreSubstringsMatch",
@@ -231,7 +230,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
-        assert isinstance(transformed, m.Ldif.SchemaAttribute)
+        assert isinstance(transformed, p.Ldif.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
         assert transformed.substr == "caseIgnoreSubstringsMatch"
@@ -239,7 +238,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
     def test_partial_transformations(self) -> None:
         """Test applying only some transformations."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="2.5.4.3",
             name="cn;binary",
             equality="caseIgnoreMatch",
@@ -276,7 +275,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
-        assert isinstance(transformed, m.Ldif.SchemaAttribute)
+        assert isinstance(transformed, p.Ldif.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
 
@@ -286,7 +285,7 @@ class TestSchemaTransformerApplyObjectClassTransformations:
 
     def test_apply_objectclass_transformations(self) -> None:
         """Test transforming an objectClass."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="2.5.6.0",
             name="top",
         )

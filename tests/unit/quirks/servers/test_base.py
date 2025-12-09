@@ -102,13 +102,13 @@ class TestFlextLdifServersBaseExecute:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         execute_result2 = rfc.execute(entries=[entry])
         written_result = RfcTestHelpers.test_result_success_and_unwrap(
             execute_result2,
-            expected_type=m.Ldif.Entry,
+            expected_type=p.Entry,
         )
-        written_entry: m.Ldif.Entry = written_result
+        written_entry: p.Entry = written_result
         assert written_entry.dn == entry.dn
 
         _ = RfcTestHelpers.test_result_success_and_unwrap(
@@ -122,7 +122,7 @@ class TestFlextLdifServersBaseExecute:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         result = rfc.execute(ldif_text=None, entries=[entry], _operation="write")
         _ = RfcTestHelpers.test_result_success_and_unwrap(result)
 
@@ -136,7 +136,7 @@ class TestFlextLdifServersBaseExecute:
             dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         result = rfc.execute(ldif_text=None, entries=[entry], _operation="parse")
         # The code ignores operation="parse" when entries are provided
         # It auto-detects to write operation and succeeds
@@ -189,11 +189,11 @@ class TestFlextLdifServersBaseCall:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         # __call__ returns Entry | str depending on operation
         result = rfc(ldif_text=None, entries=[entry], operation="write")
         # When write operation with entries, may return Entry or str
-        assert isinstance(result, (str, m.Ldif.Entry))
+        assert isinstance(result, (str, p.Entry))
 
     def test_call_with_operation(self) -> None:
         """Test __call__ with operation parameter."""
@@ -336,7 +336,7 @@ class TestFlextLdifServersBaseWrite:
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(
             rfc.write([entry]),
             expected_type=str,
@@ -352,7 +352,7 @@ class TestFlextLdifServersBaseWrite:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         result = rfc.write([entry])
         _ = self.assert_failure(result)
         assert "Entry quirk not available" in (result.error or "")
@@ -364,12 +364,12 @@ class TestFlextLdifServersBaseWrite:
             "cn=test1,dc=example,dc=com",
             {"cn": ["test1"]},
         )
-        entry1: m.Ldif.Entry = entry1_raw
+        entry1: p.Entry = entry1_raw
         entry2_raw = RfcTestHelpers.test_entry_create_and_unwrap(
             "cn=test2,dc=example,dc=com",
             {"cn": ["test2"]},
         )
-        entry2: m.Ldif.Entry = entry2_raw
+        entry2: p.Entry = entry2_raw
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(
             rfc.write([entry1, entry2]),
             expected_type=str,
@@ -386,7 +386,7 @@ class TestFlextLdifServersBaseWrite:
             dn="",  # Empty DN should cause failure
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         result = rfc.write([entry])
         # This should fail because DN is empty
         assert result.is_failure
@@ -702,7 +702,7 @@ class TestFlextLdifServersBaseNestedAcl:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl_model = m.Ldif.Acl()
+        acl_model = m.Acl()
         result = acl_concrete._hook_post_parse_acl(acl_model)
         assert result.is_success
         assert result.unwrap() == acl_model
@@ -792,7 +792,7 @@ class TestFlextLdifServersBaseNestedEntry:
             dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry_model: m.Ldif.Entry = entry_model_raw
+        entry_model: p.Entry = entry_model_raw
         result = entry_concrete._hook_post_parse_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
@@ -806,7 +806,7 @@ class TestFlextLdifServersBaseNestedEntry:
             dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry_model: m.Ldif.Entry = entry_model_raw
+        entry_model: p.Entry = entry_model_raw
         result = entry_concrete._hook_pre_write_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
@@ -854,7 +854,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn="",
             attributes={"cn": ["test"]},
         )
-        entry: m.Ldif.Entry = entry_raw
+        entry: p.Entry = entry_raw
         result = rfc.execute(entries=[entry])
         # Write may succeed or fail depending on implementation
         # The important thing is it doesn't crash
@@ -884,7 +884,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # So this succeeds and parses the LDIF
         assert result.is_success
         entry = result.unwrap()
-        assert isinstance(entry, m.Ldif.Entry)
+        assert isinstance(entry, p.Entry)
 
     def test_execute_no_operation_fallback(self) -> None:
         """Test execute fallback when no operation matches."""
@@ -1011,7 +1011,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # When entries is provided, execute() returns the first entry regardless of operation
         assert result.is_success
         unwrapped_entry = result.unwrap()
-        assert isinstance(unwrapped_entry, m.Ldif.Entry)
+        assert isinstance(unwrapped_entry, p.Entry)
 
     def test_execute_write_operation_requires_entries(self) -> None:
         """Test execute write operation requires entries."""
@@ -1145,7 +1145,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl = m.Ldif.Acl()
+        acl = m.Acl()
         result = acl_concrete._hook_post_parse_acl(acl)
         assert result.is_success
         assert result.unwrap() == acl
@@ -1215,12 +1215,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn="cn=test1,dc=example,dc=com",
             attributes={"cn": ["test1"]},
         )
-        entry1: m.Ldif.Entry = entry1_raw
+        entry1: p.Entry = entry1_raw
         entry2_raw = RfcTestHelpers.test_create_entry_and_unwrap(
             dn="cn=test2,dc=example,dc=com",
             attributes={"cn": ["test2"]},
         )
-        entry2: m.Ldif.Entry = entry2_raw
+        entry2: p.Entry = entry2_raw
         result = rfc.write([entry1, entry2])
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(result)
         assert "cn=test1" in ldif_text
@@ -1492,7 +1492,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -1508,7 +1508,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1525,7 +1525,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1542,7 +1542,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1560,7 +1560,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1578,7 +1578,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1602,7 +1602,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1752,7 +1752,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -1767,7 +1767,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1783,7 +1783,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1800,7 +1800,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1822,7 +1822,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1844,12 +1844,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
-        acl_model = m.Ldif.Acl()
+        acl_model = m.Acl()
         # Base implementation should return fail
         result = acl._write_acl(acl_model)
         assert result.is_failure
@@ -1863,7 +1863,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()
@@ -1878,7 +1878,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1894,7 +1894,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1911,7 +1911,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1933,7 +1933,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1955,12 +1955,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
-        entry_model_raw = m.Ldif.Entry.create(
+        entry_model_raw = p.Entry.create(
             dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         ).unwrap()
@@ -1979,7 +1979,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Ldif.Entry]]:
+                ) -> FlextResult[list[p.Entry]]:
                     return FlextResult.fail("Custom parse failure")
 
         server = FailingParseServer()
@@ -1995,8 +1995,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             class Entry(FlextLdifServersRfc.Entry):
                 def write(
                     self,
-                    entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
-                    write_options: m.Ldif.WriteFormatOptions | None = None,
+                    entry_data: p.Entry | list[p.Entry],
+                    write_options: m.WriteFormatOptions | None = None,
                 ) -> FlextResult[str]:
                     return FlextResult.fail("Custom write failure")
 
@@ -2018,7 +2018,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Ldif.Entry]]:
+                ) -> FlextResult[list[p.Entry]]:
                     return FlextResult.fail("Entry parsing failed")
 
         server = FailingEntryParseServer()
@@ -2034,8 +2034,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         class CustomEntry(FlextLdifServersRfc.Entry):
             def write(
                 self,
-                entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
-                write_options: m.Ldif.WriteFormatOptions | None = None,
+                entry_data: p.Entry | list[p.Entry],
+                write_options: m.WriteFormatOptions | None = None,
             ) -> FlextResult[str]:
                 # Write entry without trailing newline to test line 606
                 result = super().write(entry_data, write_options)
@@ -2069,7 +2069,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -2085,7 +2085,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -2101,7 +2101,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()
@@ -2285,32 +2285,32 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult[
-                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                    p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
                 ].ok("")
 
             def _parse_attribute(
                 self,
                 attr_definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 return FlextResult.fail("Not implemented")
 
             def _parse_objectclass(
                 self,
                 oc_definition: str,
-            ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+            ) -> FlextResult[p.Ldif.SchemaObjectClass]:
                 return FlextResult.fail("Not implemented")
 
             def _write_attribute(
                 self,
-                attr_data: m.Ldif.SchemaAttribute,
+                attr_data: p.Ldif.SchemaAttribute,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
             def _write_objectclass(
                 self,
-                oc_data: m.Ldif.SchemaObjectClass,
+                oc_data: p.Ldif.SchemaObjectClass,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
@@ -2409,7 +2409,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Ldif.Entry]]:
+                ) -> FlextResult[list[p.Entry]]:
                     return FlextResult.fail("Custom parse failure")
 
         server = FailingParseServer()
@@ -2446,7 +2446,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -2464,7 +2464,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Acl | str]:
+            ) -> FlextResult[m.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -2481,7 +2481,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Ldif.Entry | str]:
+            ) -> FlextResult[p.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()

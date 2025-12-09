@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from tests import GenericFieldsDict, s
+from tests import GenericFieldsDict, p, s
 
 from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
@@ -34,7 +34,7 @@ def parse_entry_and_unwrap(
     entry_quirk: FlextLdifServersBaseEntry,
     dn: str,
     attrs: Mapping[str, object],
-) -> m.Ldif.Entry:
+) -> p.Entry:
     """Parse entry using public API and unwrap result."""
     ldif_text = build_ldif_text(dn, attrs)
     result = entry_quirk.parse(ldif_text)
@@ -407,7 +407,7 @@ class TestsTestFlextLdifOidMetadata(s):
         assert metadata.quirk_type == "oid"
         assert isinstance(
             metadata.extensions,
-            m.DynamicMetadata,
+            m.Ldif.DynamicMetadata,
         )
         assert "key1" in metadata.extensions
         assert "key2" in metadata.extensions
@@ -422,7 +422,7 @@ class TestsTestFlextLdifOidMetadata(s):
         assert metadata.quirk_type == "oid"
         assert isinstance(
             metadata.extensions,
-            m.DynamicMetadata,
+            m.Ldif.DynamicMetadata,
         )
         assert len(metadata.extensions) == 0
 

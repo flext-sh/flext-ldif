@@ -215,7 +215,7 @@ class TestsFlextLdifEntryRfcValidators(s):
     def create_entry_with_handling(
         dn: str | None,
         attributes: dict[str, str | list[str]] | None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Entry:
         """Create entry handling None values specially for edge case testing."""
         # Create metadata for RFC validation capture
         metadata = m.Ldif.QuirkMetadata(
@@ -223,11 +223,11 @@ class TestsFlextLdifEntryRfcValidators(s):
         )
         # Convert str to DistinguishedName and dict to LdifAttributes using constructors
         # DistinguishedName and LdifAttributes accept str/dict directly via Pydantic validators
-        dn_model: m.Ldif.DistinguishedName | None = None
+        dn_model: m.DistinguishedName | None = None
         if dn is not None:
-            dn_model = m.Ldif.DistinguishedName(value=dn)
+            dn_model = m.DistinguishedName(value=dn)
 
-        attrs_model: m.Ldif.LdifAttributes | None = None
+        attrs_model: m.LdifAttributes | None = None
         if attributes is not None:
             # Normalize attributes: convert str values to list[str]
             normalized_attrs: dict[str, list[str]] = {}
@@ -238,11 +238,11 @@ class TestsFlextLdifEntryRfcValidators(s):
                     normalized_attrs[key] = value
                 else:
                     normalized_attrs[key] = [str(value)]
-            attrs_model = m.Ldif.LdifAttributes(attributes=normalized_attrs)
+            attrs_model = m.LdifAttributes(attributes=normalized_attrs)
 
         # For None cases, directly instantiate Entry with Pydantic __init__
         # which triggers both field validators and model_validator
-        return m.Ldif.Entry(
+        return p.Entry(
             dn=dn_model,
             attributes=attrs_model,
             metadata=metadata,
@@ -278,7 +278,7 @@ class TestsFlextLdifEntryRfcValidators(s):
         if dn is None or attributes is None:
             entry = self.create_entry_with_handling(dn, attributes)
         else:
-            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+            result = p.Entry.create(dn=dn, attributes=attributes)
             assert result.is_success, f"Entry creation failed for {test_case}"
             entry = result.unwrap()
 
@@ -318,7 +318,7 @@ class TestsFlextLdifEntryRfcValidators(s):
         should_be_valid: bool,
     ) -> None:
         """Parametrized test for RFC 4512 § 2.5 attribute name validation."""
-        entry_result = m.Ldif.Entry.create(
+        entry_result = p.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
@@ -354,7 +354,7 @@ class TestsFlextLdifEntryRfcValidators(s):
 
     def test_validation_metadata_structure(self) -> None:
         """Test that validation context metadata is properly structured."""
-        result = m.Ldif.Entry.create(dn="", attributes={})
+        result = p.Entry.create(dn="", attributes={})
         assert result.is_success
         entry = result.unwrap()
 
@@ -368,7 +368,7 @@ class TestsFlextLdifEntryRfcValidators(s):
 
     def test_entry_data_preservation_with_violations(self) -> None:
         """Test that invalid entries preserve data while capturing violations."""
-        result = m.Ldif.Entry.create(
+        result = p.Entry.create(
             dn="invalid dn",
             attributes={"1invalid": ["value"], "cn": ["test"]},
         )

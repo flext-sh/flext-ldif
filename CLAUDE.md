@@ -2,7 +2,8 @@
 
 **Hierarchy**: PROJECT
 **Parent**: [../CLAUDE.md](../CLAUDE.md) - Workspace standards
-**Last Update**: 2025-12-08
+**Last Update**: 2025-12-09
+**Architecture Refactoring**: Applied strict layering rules - removed prohibited imports, enforced namespace consistency
 
 ---
 
@@ -15,10 +16,12 @@
 ```
 NEVER IMPORT (regardless of method - direct, lazy, function-local, proxy):
 
-Foundation Modules (_models/*.py, _utilities/*.py, models.py, protocols.py, utilities.py, typings.py, constants.py):
+Foundation Modules (constants.py, typings.py, protocols.py, models.py, utilities.py):
   ❌ NEVER import services/*.py
   ❌ NEVER import servers/*.py
   ❌ NEVER import api.py
+  ❌ NEVER import _models/*.py (EXCEPTION: models.py can import _models/*.py)
+  ❌ NEVER import _utilities/*.py (EXCEPTION: utilities.py can import _utilities/*.py)
 
 Infrastructure Modules (servers/*.py):
   ❌ NEVER import services/*.py
@@ -28,16 +31,14 @@ Infrastructure Modules (servers/*.py):
 **CORRECT ARCHITECTURE LAYERING**:
 
 ```
-Tier 0 - Foundation (ZERO internal dependencies):
-  ├── constants.py    # FlextLdifConstants
-  ├── typings.py      # FlextLdifTypes
-  └── protocols.py    # FlextLdifProtocols
+Tier 0 - Foundation (ZERO cross-tier dependencies):
+  ├── constants.py    # FlextLdifConstants - only StrEnum, Final, Literal
+  ├── typings.py      # FlextLdifTypes - only TypeAlias, TypeVar, complex types
+  └── protocols.py    # FlextLdifProtocols - only Protocol definitions
 
 Tier 1 - Domain Foundation:
-  ├── _models/*.py    # Internal domain models
-  ├── models.py       # FlextLdifModels facade → _models/*, constants, typings, protocols
-  ├── _utilities/*.py # Internal utilities
-  └── utilities.py    # FlextLdifUtilities facade → _utilities/*, models, constants
+  ├── models.py       # FlextLdifModels facade → constants, typings, protocols
+  └── utilities.py    # FlextLdifUtilities facade → constants, typings, protocols, models
 
 Tier 2 - Infrastructure:
   └── servers/*.py    # Server implementations → Tier 0, Tier 1 only
@@ -548,6 +549,12 @@ Tier 3 - Application:
 | rfc/*.py | Tier 0, Tier 1 | services/, api.py |
 | services/*.py | ALL lower tiers | api.py |
 | api.py | ALL lower tiers | NOTHING prohibited |
+
+---
+
+## Automated Fix Scripts
+
+For batch corrections (missing imports, undefined names), use `/tmp/fix_*.sh` scripts with 4 modes: `dry-run`, `backup`, `exec`, `rollback`. **See [../CLAUDE.md](../CLAUDE.md#automated-fix-scripts-batch-corrections)** for template and rules.
 
 ---
 

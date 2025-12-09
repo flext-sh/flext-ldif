@@ -17,46 +17,48 @@ from __future__ import annotations
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, p
 
 
 class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
+    def intelligent_builders() -> r[list[p.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
 
         # DRY: Single list comprehension creates all entries
-        return r.ok([
-            api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).unwrap()
-            for name, surname, email, phone in [
-                ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
-                ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
-                ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
+        return r.ok(
+            [
+                api.create_entry(
+                    dn=f"cn={name},ou=People,dc=example,dc=com",
+                    attributes={
+                        "cn": name,
+                        "sn": surname,
+                        "mail": email,
+                        "telephoneNumber": phone,
+                    },
+                ).unwrap()
+                for name, surname, email, phone in [
+                    ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
+                    ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
+                    ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
+                ]
+                if api.create_entry(
+                    dn=f"cn={name},ou=People,dc=example,dc=com",
+                    attributes={
+                        "cn": name,
+                        "sn": surname,
+                        "mail": email,
+                        "telephoneNumber": phone,
+                    },
+                ).is_success
             ]
-            if api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).is_success
-        ])
+        )
 
     @staticmethod
-    def advanced_filtering() -> r[list[m.Ldif.Entry]]:
+    def advanced_filtering() -> r[list[p.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
 

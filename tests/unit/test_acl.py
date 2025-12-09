@@ -138,21 +138,21 @@ COMPONENTS_TESTS: Final[list[AclComponentsTestCase]] = [
 UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
     UnifiedAclTestCase(
         AclTestType.UNIFIED_BASIC,
-        lib_c.Ldif.LdapServers.OPENLDAP,
+        lib_c.LdapServers.OPENLDAP,
         acl_name="openldap_acl",
         raw_acl="to * by * read",
         description="Create ACL for OpenLDAP",
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_BASIC,
-        lib_c.Ldif.LdapServers.OPENLDAP_2,
+        lib_c.LdapServers.OPENLDAP_2,
         acl_name="openldap2_acl",
         raw_acl="olcAccess: {0}to * by * read",
         description="Create ACL for OpenLDAP 2.x",
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_BASIC,
-        lib_c.Ldif.LdapServers.OPENLDAP_1,
+        lib_c.LdapServers.OPENLDAP_1,
         acl_name="openldap1_acl",
         raw_acl="access to * by * read",
         description="Create ACL for OpenLDAP 1.x",
@@ -185,7 +185,7 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_PROPERTY_PRESERVATION,
-        lib_c.Ldif.LdapServers.OPENLDAP,
+        lib_c.LdapServers.OPENLDAP,
         target_dn="cn=test,dc=example,dc=com",
         subject_type="group",
         subject_value="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
@@ -203,12 +203,12 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_INSTANCE_TYPE,
-        lib_c.Ldif.LdapServers.OPENLDAP,
-        description="Verify ACL is m.Ldif.Acl instance",
+        lib_c.LdapServers.OPENLDAP,
+        description="Verify ACL is m.Acl instance",
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_EXCEPTION_HANDLING,
-        lib_c.Ldif.LdapServers.OPENLDAP,
+        lib_c.LdapServers.OPENLDAP,
         description="Test exception handling in ACL creation",
     ),
     UnifiedAclTestCase(
@@ -234,31 +234,31 @@ PARSER_TESTS: Final[list[AclParserTestCase]] = [
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_OPENLDAP,
-        server_type=lib_c.Ldif.ServerTypes.OPENLDAP,
+        server_type=lib_c.ServerTypes.OPENLDAP,
         acl_line=f'access to * by dn.exact="{c.DNs.TEST_USER}" write',
         description="Parse OpenLDAP ACL format",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_OID,
-        server_type=lib_c.Ldif.ServerTypes.OID,
+        server_type=lib_c.ServerTypes.OID,
         acl_line=f'orclaci: access to entry by dn="{c.DNs.TEST_USER}" (read)',
         description="Parse Oracle OID ACL format",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_OUD,
-        server_type=lib_c.Ldif.ServerTypes.OUD,
+        server_type=lib_c.ServerTypes.OUD,
         acl_line=f'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///{c.DNs.TEST_USER}";)',
         description="Parse Oracle OUD ACI format",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_REAL_OID_EXAMPLE,
-        server_type=lib_c.Ldif.ServerTypes.OID,
+        server_type=lib_c.ServerTypes.OID,
         acl_line="orclaci: access to entry by * (browse,read) bindmode=(Simple)",
         description="Parse real OID ACL example with bindmode",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_REAL_OUD_EXAMPLE,
-        server_type=lib_c.Ldif.ServerTypes.OUD,
+        server_type=lib_c.ServerTypes.OUD,
         acl_line='aci: (targetattr="*")(version 3.0; acl "Anonymous read"; allow (read,search) userdn="ldap:///anyone";)',
         description="Parse real OUD ACI example with anonymous access",
     ),
@@ -303,15 +303,15 @@ def create_acl_components_helper() -> FlextResult[
 
     """
     target = m.AclTarget(
-        target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
+        target_dn=lib_c.ServerDetection.ACL_WILDCARD_DN,
     )
     subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
         "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-        lib_c.Ldif.ServerDetection.ACL_WILDCARD_TYPE,
+        lib_c.ServerDetection.ACL_WILDCARD_TYPE,
     )
     subject = m.AclSubject(
         subject_type=subject_type_literal,
-        subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_VALUE,
+        subject_value=lib_c.ServerDetection.ACL_WILDCARD_VALUE,
     )
     permissions = m.AclPermissions(read=True)
 
@@ -331,7 +331,7 @@ def create_unified_acl_helper(
     permissions: m.AclPermissions,
     server_type: str,
     raw_acl: str,
-) -> FlextResult[m.Ldif.Acl]:
+) -> FlextResult[m.Acl]:
     """Create unified ACL with proper validation using railway pattern.
 
     Args:
@@ -348,18 +348,18 @@ def create_unified_acl_helper(
     """
     try:
         supported_servers = {
-            lib_c.Ldif.LdapServers.OPENLDAP,
-            lib_c.Ldif.LdapServers.OPENLDAP_2,
-            lib_c.Ldif.LdapServers.OPENLDAP_1,
-            lib_c.Ldif.LdapServers.ORACLE_OID,
-            lib_c.Ldif.LdapServers.ORACLE_OUD,
-            lib_c.Ldif.LdapServers.DS_389,
+            lib_c.LdapServers.OPENLDAP,
+            lib_c.LdapServers.OPENLDAP_2,
+            lib_c.LdapServers.OPENLDAP_1,
+            lib_c.LdapServers.ORACLE_OID,
+            lib_c.LdapServers.ORACLE_OUD,
+            lib_c.LdapServers.DS_389,
         }
 
         effective_server_type_raw = (
             server_type
             if server_type in supported_servers
-            else lib_c.Ldif.LdapServers.OPENLDAP
+            else lib_c.LdapServers.OPENLDAP
         )
 
         # Cast server_type to Literal type
@@ -368,7 +368,7 @@ def create_unified_acl_helper(
             effective_server_type_raw,
         )
 
-        unified_acl = m.Ldif.Acl(
+        unified_acl = m.Acl(
             name=name,
             target=target,
             subject=subject,
@@ -377,9 +377,9 @@ def create_unified_acl_helper(
             raw_acl=raw_acl,
         )
 
-        return FlextResult[m.Ldif.Acl].ok(unified_acl)
+        return FlextResult[m.Acl].ok(unified_acl)
     except (ValueError, TypeError, AttributeError) as e:
-        return FlextResult[m.Ldif.Acl].fail(f"Failed to create ACL: {e}")
+        return FlextResult[m.Acl].fail(f"Failed to create ACL: {e}")
 
 
 # =============================================================================
@@ -417,73 +417,73 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         OUD_MALFORMED = "oud_malformed"
         OID_MISSING_ATTRS = "oid_missing_attrs"
 
-    ACL_INDICATORS: ClassVar[dict[lib_c.Ldif.ServerTypes, list[str]]] = {
-        lib_c.Ldif.ServerTypes.OID: ["orclaci:", "aci:"],
-        lib_c.Ldif.ServerTypes.OUD: ["aci:"],
+    ACL_INDICATORS: ClassVar[dict[lib_c.ServerTypes, list[str]]] = {
+        lib_c.ServerTypes.OID: ["orclaci:", "aci:"],
+        lib_c.ServerTypes.OUD: ["aci:"],
     }
 
-    ACL_REQUIRED_ATTRS: ClassVar[dict[lib_c.Ldif.ServerTypes, list[str]]] = {
-        lib_c.Ldif.ServerTypes.OID: ["orclaci:"],
-        lib_c.Ldif.ServerTypes.OUD: ["aci:"],
+    ACL_REQUIRED_ATTRS: ClassVar[dict[lib_c.ServerTypes, list[str]]] = {
+        lib_c.ServerTypes.OID: ["orclaci:"],
+        lib_c.ServerTypes.OUD: ["aci:"],
     }
 
-    ACL_MIN_LINES: ClassVar[dict[lib_c.Ldif.ServerTypes, int]] = {
-        lib_c.Ldif.ServerTypes.OID: 5,
-        lib_c.Ldif.ServerTypes.OUD: 5,
+    ACL_MIN_LINES: ClassVar[dict[lib_c.ServerTypes, int]] = {
+        lib_c.ServerTypes.OID: 5,
+        lib_c.ServerTypes.OUD: 5,
     }
 
     BASIC_CHECK_DATA: ClassVar[
-        dict[str, tuple[lib_c.Ldif.ServerTypes, ValidationCheckType]]
+        dict[str, tuple[lib_c.ServerTypes, ValidationCheckType]]
     ] = {
         CheckScenario.OID_FIXTURE_ACCESS: (
-            lib_c.Ldif.ServerTypes.OID,
+            lib_c.ServerTypes.OID,
             ValidationCheckType.FIXTURE_ACCESS,
         ),
         CheckScenario.OID_ACL_PRESENCE: (
-            lib_c.Ldif.ServerTypes.OID,
+            lib_c.ServerTypes.OID,
             ValidationCheckType.ACL_PRESENCE,
         ),
         CheckScenario.OUD_FIXTURE_ACCESS: (
-            lib_c.Ldif.ServerTypes.OUD,
+            lib_c.ServerTypes.OUD,
             ValidationCheckType.FIXTURE_ACCESS,
         ),
         CheckScenario.OUD_ACL_PRESENCE: (
-            lib_c.Ldif.ServerTypes.OUD,
+            lib_c.ServerTypes.OUD,
             ValidationCheckType.ACL_PRESENCE,
         ),
     }
 
-    ENCODING_CHECK_DATA: ClassVar[dict[str, lib_c.Ldif.ServerTypes]] = {
-        EncodingScenario.OID_ENCODING: lib_c.Ldif.ServerTypes.OID,
-        EncodingScenario.OUD_ENCODING: lib_c.Ldif.ServerTypes.OUD,
+    ENCODING_CHECK_DATA: ClassVar[dict[str, lib_c.ServerTypes]] = {
+        EncodingScenario.OID_ENCODING: lib_c.ServerTypes.OID,
+        EncodingScenario.OUD_ENCODING: lib_c.ServerTypes.OUD,
     }
 
-    STRUCTURE_CHECK_DATA: ClassVar[dict[str, lib_c.Ldif.ServerTypes]] = {
-        StructureScenario.OID_STRUCTURE: lib_c.Ldif.ServerTypes.OID,
-        StructureScenario.OUD_STRUCTURE: lib_c.Ldif.ServerTypes.OUD,
+    STRUCTURE_CHECK_DATA: ClassVar[dict[str, lib_c.ServerTypes]] = {
+        StructureScenario.OID_STRUCTURE: lib_c.ServerTypes.OID,
+        StructureScenario.OUD_STRUCTURE: lib_c.ServerTypes.OUD,
     }
 
-    EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseType, lib_c.Ldif.ServerTypes]]] = {
+    EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseType, lib_c.ServerTypes]]] = {
         EdgeCaseScenario.OID_EMPTY: (
             EdgeCaseType.EMPTY_ACL,
-            lib_c.Ldif.ServerTypes.OID,
+            lib_c.ServerTypes.OID,
         ),
         EdgeCaseScenario.OUD_MALFORMED: (
             EdgeCaseType.MALFORMED_ACL,
-            lib_c.Ldif.ServerTypes.OUD,
+            lib_c.ServerTypes.OUD,
         ),
         EdgeCaseScenario.OID_MISSING_ATTRS: (
             EdgeCaseType.MISSING_ATTRIBUTES,
-            lib_c.Ldif.ServerTypes.OID,
+            lib_c.ServerTypes.OID,
         ),
     }
 
     @staticmethod
-    def _get_fixture_path(server_type: lib_c.Ldif.ServerTypes) -> Path:
+    def _get_fixture_path(server_type: lib_c.ServerTypes) -> Path:
         """Get fixture path for server type."""
         fixture_map = {
-            lib_c.Ldif.ServerTypes.OID: "acl/oid_acl_fixture.ldif",
-            lib_c.Ldif.ServerTypes.OUD: "acl/oud_acl_fixture.ldif",
+            lib_c.ServerTypes.OID: "acl/oid_acl_fixture.ldif",
+            lib_c.ServerTypes.OUD: "acl/oud_acl_fixture.ldif",
         }
         fixture_rel_path = fixture_map[server_type]
         return Path(__file__).parent.parent / "fixtures" / fixture_rel_path
@@ -492,9 +492,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         """Get non-empty lines from content."""
         return [line for line in content.split("\n") if line.strip()]
 
-    def _get_acl_lines(
-        self, content: str, server_type: lib_c.Ldif.ServerTypes
-    ) -> list[str]:
+    def _get_acl_lines(self, content: str, server_type: lib_c.ServerTypes) -> list[str]:
         """Get ACL lines from content."""
         indicators = self.ACL_INDICATORS[server_type]
         return [
@@ -508,7 +506,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         return [e for e in content.split("dn:") if e.strip()]
 
     def _check_fixture_access(
-        self, content: str, server_type: lib_c.Ldif.ServerTypes
+        self, content: str, server_type: lib_c.ServerTypes
     ) -> bool:
         """Check if fixture has accessible content with minimum lines."""
         if not content or len(content) == 0:
@@ -516,9 +514,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         lines = self._get_content_lines(content)
         return len(lines) >= self.ACL_MIN_LINES[server_type]
 
-    def _check_acl_presence(
-        self, content: str, server_type: lib_c.Ldif.ServerTypes
-    ) -> bool:
+    def _check_acl_presence(self, content: str, server_type: lib_c.ServerTypes) -> bool:
         """Check if content has ACL indicators."""
         acl_lines = self._get_acl_lines(content, server_type)
         return len(acl_lines) > 0
@@ -540,10 +536,10 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
     def _validate_server_specific_acls(
         self,
         content: str,
-        server_type: lib_c.Ldif.ServerTypes,
+        server_type: lib_c.ServerTypes,
     ) -> None:
         """Validate server-specific ACL attributes."""
-        if server_type == lib_c.Ldif.ServerTypes.OID:
+        if server_type == lib_c.ServerTypes.OID:
             assert "orclaci:" in content, "OID fixture should have orclaci attributes"
             assert "aci:" in content, "OID fixture should have aci attributes"
         else:  # OUD
@@ -556,7 +552,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
     def test_acl_basic_validation(
         self,
         scenario: str,
-        server_type: lib_c.Ldif.ServerTypes,
+        server_type: lib_c.ServerTypes,
         check_type: ValidationCheckType,
     ) -> None:
         """Test ACL basic validation with parametrized checks."""
@@ -582,7 +578,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
     def test_acl_structure_validation(
         self,
         scenario: str,
-        server_type: lib_c.Ldif.ServerTypes,
+        server_type: lib_c.ServerTypes,
     ) -> None:
         """Test ACL fixture structure with comprehensive validation."""
         fixture_path = self._get_fixture_path(server_type)
@@ -625,7 +621,7 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
     def test_acl_encoding_validation(
         self,
         scenario: str,
-        server_type: lib_c.Ldif.ServerTypes,
+        server_type: lib_c.ServerTypes,
     ) -> None:
         """Test that ACL fixtures have valid UTF-8 encoding."""
         fixture_path = self._get_fixture_path(server_type)
@@ -648,11 +644,11 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         self,
         scenario: str,
         case_type: EdgeCaseType,
-        server_type: lib_c.Ldif.ServerTypes,
+        server_type: lib_c.ServerTypes,
     ) -> None:
         """Test ACL service edge cases dynamically."""
         assert case_type in EdgeCaseType
-        assert server_type in lib_c.Ldif.ServerTypes
+        assert server_type in lib_c.ServerTypes
 
     def test_acl_service_initialization(self) -> None:
         """Test ACL service can be initialized."""
@@ -678,11 +674,11 @@ class TestFlextLdifAclComponents(s):
         ]:
             """Create ACL components with proper validation using railway pattern."""
             target = m.AclTarget(
-                target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
+                target_dn=lib_c.ServerDetection.ACL_WILDCARD_DN,
             )
             subject = m.AclSubject(
                 subject_type="all",
-                subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_VALUE,
+                subject_value=lib_c.ServerDetection.ACL_WILDCARD_VALUE,
             )
             permissions = m.AclPermissions(read=True)
 
@@ -702,22 +698,22 @@ class TestFlextLdifAclComponents(s):
             permissions: m.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextResult[m.Ldif.Acl]:
+        ) -> FlextResult[m.Acl]:
             """Create unified ACL with proper validation using railway pattern."""
             try:
                 supported_servers = {
-                    lib_c.Ldif.LdapServers.OPENLDAP,
-                    lib_c.Ldif.LdapServers.OPENLDAP_2,
-                    lib_c.Ldif.LdapServers.OPENLDAP_1,
-                    lib_c.Ldif.LdapServers.ORACLE_OID,
-                    lib_c.Ldif.LdapServers.ORACLE_OUD,
-                    lib_c.Ldif.LdapServers.DS_389,
+                    lib_c.LdapServers.OPENLDAP,
+                    lib_c.LdapServers.OPENLDAP_2,
+                    lib_c.LdapServers.OPENLDAP_1,
+                    lib_c.LdapServers.ORACLE_OID,
+                    lib_c.LdapServers.ORACLE_OUD,
+                    lib_c.LdapServers.DS_389,
                 }
 
                 effective_server_type = (
                     server_type
                     if server_type in supported_servers
-                    else lib_c.Ldif.LdapServers.OPENLDAP
+                    else lib_c.LdapServers.OPENLDAP
                 )
 
                 server_type_literal: lib_c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
@@ -725,7 +721,7 @@ class TestFlextLdifAclComponents(s):
                     effective_server_type,
                 )
 
-                unified_acl = m.Ldif.Acl(
+                unified_acl = m.Acl(
                     name=name,
                     target=target,
                     subject=subject,
@@ -734,9 +730,9 @@ class TestFlextLdifAclComponents(s):
                     raw_acl=raw_acl,
                 )
 
-                return FlextResult[m.Ldif.Acl].ok(unified_acl)
+                return FlextResult[m.Acl].ok(unified_acl)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[m.Ldif.Acl].fail(
+                return FlextResult[m.Acl].fail(
                     f"Failed to create ACL: {e}",
                 )
 
@@ -795,7 +791,7 @@ class TestFlextLdifAclComponents(s):
             case AclTestType.UNIFIED_BASIC:
                 assert result.is_success, f"Failed to create ACL: {result.error}"
                 acl = result.unwrap()
-                assert isinstance(acl, m.Ldif.Acl)
+                assert isinstance(acl, m.Acl)
                 assert acl.name == test_case.acl_name
 
             case AclTestType.UNIFIED_PROPERTY_PRESERVATION:
@@ -810,7 +806,7 @@ class TestFlextLdifAclComponents(s):
             case AclTestType.UNIFIED_INSTANCE_TYPE:
                 assert result.is_success
                 acl = result.unwrap()
-                assert isinstance(acl, m.Ldif.Acl)
+                assert isinstance(acl, m.Acl)
 
             case AclTestType.UNIFIED_EXCEPTION_HANDLING:
                 assert result.is_success
@@ -818,7 +814,7 @@ class TestFlextLdifAclComponents(s):
             case AclTestType.UNIFIED_INVALID_SERVER_TYPE:
                 assert result.is_success
                 acl = result.unwrap()
-                assert acl.server_type == lib_c.Ldif.LdapServers.OPENLDAP
+                assert acl.server_type == lib_c.LdapServers.OPENLDAP
 
 
 class AclParserTestFactory:
@@ -839,9 +835,9 @@ class AclParserTestFactory:
         read: bool = False,
         write: bool = False,
         delete: bool = False,
-        server_type: str = lib_c.Ldif.ServerTypes.OPENLDAP,
+        server_type: str = lib_c.ServerTypes.OPENLDAP,
         raw_acl: str = c.Rfc.ACL_SAMPLE_READ,
-    ) -> m.Ldif.Acl:
+    ) -> m.Acl:
         """Create test ACL model."""
         subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
             "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", subject_type
@@ -850,7 +846,7 @@ class AclParserTestFactory:
             "lib_c.Ldif.LiteralTypes.ServerTypeLiteral", server_type
         )
 
-        return m.Ldif.Acl(
+        return m.Acl(
             name=name,
             target=m.AclTarget(target_dn=target_dn),
             subject=m.AclSubject(
@@ -915,12 +911,12 @@ class TestsTestFlextLdifAclParser(s):
                 result = acl_service.execute()
                 assert result.is_success
                 acl_response = result.unwrap()
-                assert isinstance(acl_response, m.LdifResults.AclResponse)
+                assert isinstance(acl_response, m.Ldif.LdifResults.AclResponse)
                 assert len(acl_response.acls) == 0
                 assert isinstance(acl_response.acls, list)
 
             case AclParserTestType.PARSE_OPENLDAP:
-                parse_result_openldap: FlextResult[m.Ldif.Acl] = (
+                parse_result_openldap: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line, test_case.server_type
                     )
@@ -930,41 +926,37 @@ class TestsTestFlextLdifAclParser(s):
                     f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_openldap.unwrap()
-                assert isinstance(parsed_acl, m.Ldif.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OID:
-                parse_result_oid: FlextResult[m.Ldif.Acl] = (
-                    acl_service.parse_acl_string(
-                        test_case.acl_line,
-                        test_case.server_type,
-                    )
+                parse_result_oid: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                    test_case.acl_line,
+                    test_case.server_type,
                 )
                 assert isinstance(parse_result_oid, FlextResult)
                 assert parse_result_oid.is_success, (
                     f"OID ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oid.unwrap()
-                assert isinstance(parsed_acl, m.Ldif.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OUD:
-                parse_result_oud: FlextResult[m.Ldif.Acl] = (
-                    acl_service.parse_acl_string(
-                        test_case.acl_line,
-                        test_case.server_type,
-                    )
+                parse_result_oud: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                    test_case.acl_line,
+                    test_case.server_type,
                 )
                 assert isinstance(parse_result_oud, FlextResult)
                 assert parse_result_oud.is_success, (
                     f"OUD ACI parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oud.unwrap()
-                assert isinstance(parsed_acl, m.Ldif.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_REAL_OID_EXAMPLE:
-                parse_result_real_oid: FlextResult[m.Ldif.Acl] = (
+                parse_result_real_oid: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -973,13 +965,13 @@ class TestsTestFlextLdifAclParser(s):
                 assert isinstance(parse_result_real_oid, FlextResult)
                 if parse_result_real_oid.is_success:
                     parsed_acl = parse_result_real_oid.unwrap()
-                    assert isinstance(parsed_acl, m.Ldif.Acl)
+                    assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
                     assert "No ACL quirk available" in str(parse_result_real_oid.error)
 
             case AclParserTestType.PARSE_REAL_OUD_EXAMPLE:
-                parse_result_real_oud: FlextResult[m.Ldif.Acl] = (
+                parse_result_real_oud: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -988,13 +980,13 @@ class TestsTestFlextLdifAclParser(s):
                 assert isinstance(parse_result_real_oud, FlextResult)
                 if parse_result_real_oud.is_success:
                     parsed_acl = parse_result_real_oud.unwrap()
-                    assert isinstance(parsed_acl, m.Ldif.Acl)
+                    assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
                     assert "No ACL quirk available" in str(parse_result_real_oud.error)
 
             case AclParserTestType.PARSE_UNSUPPORTED:
-                parse_result_unsupported: FlextResult[m.Ldif.Acl] = (
+                parse_result_unsupported: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         acl_string=test_case.acl_line,
                         server_type=test_case.server_type,
@@ -1107,16 +1099,16 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP,
+            server_type=lib_c.LdapServers.OPENLDAP,
             raw_acl="to * by * read",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
         assert acl.name == "openldap_acl"
         assert acl.server_type in {
-            lib_c.Ldif.LdapServers.OPENLDAP,
+            lib_c.LdapServers.OPENLDAP,
             "openldap2",
         }
 
@@ -1134,13 +1126,13 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP_2,
+            server_type=lib_c.LdapServers.OPENLDAP_2,
             raw_acl="olcAccess: {0}to * by * read",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
@@ -1156,13 +1148,13 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP_1,
+            server_type=lib_c.LdapServers.OPENLDAP_1,
             raw_acl="access to * by * read",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
@@ -1178,13 +1170,13 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.ORACLE_OID,
+            server_type=lib_c.LdapServers.ORACLE_OID,
             raw_acl="orclaci: (target=...)(version 3.0)",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
@@ -1200,13 +1192,13 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.ORACLE_OUD,
+            server_type=lib_c.LdapServers.ORACLE_OUD,
             raw_acl="aci: (target=...)(version 3.0)",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
@@ -1222,13 +1214,13 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.DS_389,
+            server_type=lib_c.LdapServers.DS_389,
             raw_acl="aci: (target=...)(version 3.0)",
         )
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
@@ -1273,7 +1265,7 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP,
+            server_type=lib_c.LdapServers.OPENLDAP,
             raw_acl="original acl string",
         )
 
@@ -1285,7 +1277,7 @@ class TestsFlextLdifComponentFactory(s):
         assert acl.raw_acl == "original acl string"
 
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
-        """Test that created ACL is an m.Ldif.Acl instance."""
+        """Test that created ACL is an m.Acl instance."""
         target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
             "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
@@ -1298,12 +1290,12 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP,
+            server_type=lib_c.LdapServers.OPENLDAP,
             raw_acl="test",
         )
 
         acl = result.unwrap()
-        assert isinstance(acl, m.Ldif.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl."""
@@ -1319,7 +1311,7 @@ class TestsFlextLdifComponentFactory(s):
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=lib_c.Ldif.LdapServers.OPENLDAP,
+            server_type=lib_c.LdapServers.OPENLDAP,
             raw_acl="test",
         )
 
@@ -1346,6 +1338,6 @@ class TestsFlextLdifComponentFactory(s):
         assert result.is_success
         acl = result.unwrap()
         assert acl.server_type in {
-            lib_c.Ldif.LdapServers.OPENLDAP,
+            lib_c.LdapServers.OPENLDAP,
             "openldap2",
         }

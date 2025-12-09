@@ -19,10 +19,10 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.constants import c
-from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
-# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# REMOVED: Type aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use FlextLdifModelsDomains.SchemaAttribute directly
 # SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use FlextLdifModelsDomains.SchemaObjectClass directly
 
@@ -1408,7 +1408,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> list[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -1443,7 +1443,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute | FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol
+        | FlextLdifModelsDomains.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> list[str]:

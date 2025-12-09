@@ -18,11 +18,7 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.typings import t
-from tests import GenericFieldsDict, TestDeduplicationHelpers, m, s
-
-# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
-# Real test quirks for error path testing
+from tests import GenericFieldsDict, TestDeduplicationHelpers, m, p, s, t
 
 
 class ConversionTestConstants:
@@ -79,14 +75,14 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -98,84 +94,84 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         return FlextResult.fail(self.error_msg)
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         return FlextResult.fail(self.error_msg)
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
     def parse(
         self,
         definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse schema definition - always fails for testing."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -187,14 +183,14 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
             # Cast to match expected union return type
             parse_oc_result = self._parse_objectclass(definition)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
                 parse_oc_result,
             )
         # _parse_attribute returns FlextResult[SchemaAttribute]
         # Cast to match expected union return type
         parse_attr_result = self._parse_attribute(definition)
         return cast(
-            "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+            "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
             parse_attr_result,
         )
 
@@ -228,14 +224,14 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -247,48 +243,48 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
@@ -296,10 +292,10 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4.5",
                 name="test",
                 desc="",
@@ -321,10 +317,10 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.4.6",
                 name="test",
                 desc="",
@@ -334,7 +330,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         # Generate valid LDAP attribute definition with OID
         oid = attr_data.oid or "1.2.3.4.5"
@@ -343,7 +339,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         # Generate valid LDAP objectClass definition with OID
         oid = oc_data.oid or "1.2.3.4.6"
@@ -353,7 +349,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -364,13 +360,13 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
             # Cast union return type to match expected type
             parse_oc_result = self._parse_objectclass(definition)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
                 parse_oc_result,
             )
         # Cast union return type to match expected type
         parse_attr_result = self._parse_attribute(definition)
         return cast(
-            "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+            "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
             parse_attr_result,
         )
 
@@ -412,14 +408,14 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -431,63 +427,63 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -508,7 +504,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
@@ -517,10 +513,10 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -530,7 +526,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
@@ -539,7 +535,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -550,13 +546,13 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
             # Cast union return type to match expected type
             parse_oc_result = self._parse_objectclass(definition)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
                 parse_oc_result,
             )
         # Cast union return type to match expected type
         parse_attr_result = self._parse_attribute(definition)
         return cast(
-            "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]",
+            "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]",
             parse_attr_result,
         )
 
@@ -591,53 +587,53 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - always throws exception for testing."""
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
@@ -645,7 +641,7 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse schema definition - always throws exception for testing."""
         msg = "unexpected error"
         raise RuntimeError(msg)
@@ -680,14 +676,14 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -699,81 +695,81 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Does NOT handle objectClass - that's the point of this test."""
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         """Dummy implementation."""
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(oid="1.2.3.4", name="test"),
+            p.Ldif.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         """Should never be called since can_handle_objectclass returns False."""
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -807,14 +803,14 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -826,60 +822,60 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return True
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -901,10 +897,10 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -914,13 +910,13 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -954,14 +950,14 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -973,78 +969,78 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return False
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
         return FlextResult.ok("test")
 
 
@@ -1077,14 +1073,14 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1096,74 +1092,74 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return False
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
@@ -1199,7 +1195,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         # Create a minimal entry quirk for testing
 
         class MinimalEntryQuirk:
-            def parse(self, ldif_text: str) -> FlextResult[list[m.Ldif.Entry]]:
+            def parse(self, ldif_text: str) -> FlextResult[list[p.Entry]]:
                 return FlextResult.ok([])
 
         object.__setattr__(self, "_entry_quirk", MinimalEntryQuirk())
@@ -1207,14 +1203,14 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1226,51 +1222,51 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return True  # Supports attribute parsing
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -1291,17 +1287,17 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -1311,13 +1307,13 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -1352,14 +1348,14 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1371,51 +1367,51 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -1436,17 +1432,17 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -1456,13 +1452,13 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -1497,14 +1493,14 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1516,51 +1512,51 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return True
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -1581,25 +1577,25 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         return FlextResult.fail("Not supported")
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not supported")
 
@@ -1611,17 +1607,17 @@ class TestsFlextLdifAclQuirk(s):
     from FlextLdifServersBase.Acl to avoid pytest collection warnings.
     """
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         return True
 
-    def parse(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def parse(self, acl_line: str) -> FlextResult[m.Acl]:
         """Parse ACL definition."""
-        return FlextResult.ok(m.Ldif.Acl(raw_acl=acl_line))
+        return FlextResult.ok(m.Acl(raw_acl=acl_line))
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
-        return FlextResult.ok(m.Ldif.Acl(raw_acl=acl_line))
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Acl]:
+        return FlextResult.ok(m.Acl(raw_acl=acl_line))
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
         return FlextResult.ok(acl_data.raw_acl)
 
 
@@ -1658,14 +1654,14 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1677,51 +1673,51 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -1742,20 +1738,20 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
         return True  # Only ACL support
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -1765,13 +1761,13 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -1808,7 +1804,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         # Create a minimal entry quirk for testing
 
         class MinimalEntryQuirk:
-            def parse(self, ldif_text: str) -> FlextResult[list[m.Ldif.Entry]]:
+            def parse(self, ldif_text: str) -> FlextResult[list[p.Entry]]:
                 return FlextResult.ok([])
 
         object.__setattr__(self, "_entry_quirk", MinimalEntryQuirk())
@@ -1816,14 +1812,14 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
     def execute(
         self,
         **kwargs: object,
-    ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
         data = kwargs.get("data")
         operation = kwargs.get("operation")
 
         if data is None:
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].ok("")
 
         # Auto-detect operation
@@ -1835,51 +1831,51 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
                 # Cast return type to match expected return type
                 result = self.parse_attribute(data)
                 return cast(
-                    "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                    "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                     result,
                 )
             return FlextResult[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
             ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, m.Ldif.SchemaObjectClass):
+        if isinstance(data, p.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
             return cast(
-                "FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]",
+                "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_oc_result,
             )
         return FlextResult[
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
         ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> FlextResult[p.Ldif.SchemaAttribute]:
         # Create SchemaAttribute with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaAttribute(
+            p.Ldif.SchemaAttribute(
                 oid="1.2.3.4",
                 name="test",
                 desc="",
@@ -1900,17 +1896,17 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> FlextResult[p.Ldif.SchemaObjectClass]:
         # Create SchemaObjectClass with all required fields
         return FlextResult.ok(
-            m.Ldif.SchemaObjectClass(
+            p.Ldif.SchemaObjectClass(
                 oid="1.2.3.5",
                 name="test",
                 desc="",
@@ -1920,13 +1916,13 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -2081,7 +2077,7 @@ class TestBatchConversion:
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test batch conversions."""
-        items: list[str | GenericFieldsDict | m.Ldif.Entry]
+        items: list[str | GenericFieldsDict | p.Entry]
         if model_type == "attribute":
             items = [
                 conversion_constants.OID_ATTRIBUTE_ORCLGUID,
@@ -2125,9 +2121,9 @@ class TestErrorHandling:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test error handling."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes(attributes={}),
+        entry = p.Entry(
+            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.LdifAttributes(attributes={}),
         )
         # Cast Entry to ConvertibleModel for type checker
         convertible_entry = cast("t.ConvertibleModel", entry)

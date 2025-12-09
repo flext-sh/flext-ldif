@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 from typing import Literal, cast, overload
 
@@ -22,12 +22,6 @@ from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
-
-# Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
-
-# Type alias for DNStatistics to use in type annotations
-# m.DNStatistics is a variable assignment, not a type alias
-DNStatisticsType = FlextLdifModelsDomains.DNStatistics
 
 
 class FlextLdifUtilitiesDN:
@@ -60,7 +54,7 @@ class FlextLdifUtilitiesDN:
     hexstring = SHARP 1*hexpair
     hexpair = HEX HEX
 
-    Character Classes (c.Rfc):
+    Character Classes (c.Ldif.Rfc):
     ============================================
     LUTF1  = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
              ; Rfc.DN_LUTF1_EXCLUDE
@@ -75,13 +69,13 @@ class FlextLdifUtilitiesDN:
     SHARP  = %x23  ; '#'
     ESC    = %x5C  ; '\'
 
-    Escaping Rules (c.Rfc):
+    Escaping Rules (c.Ldif.Rfc):
     ========================================
     - Characters always requiring escaping: Rfc.DN_ESCAPE_CHARS
     - Characters requiring escaping at start: Rfc.DN_ESCAPE_AT_START
     - Characters requiring escaping at end: Rfc.DN_ESCAPE_AT_END
 
-    Metadata Keys (c.Rfc):
+    Metadata Keys (c.Ldif.Rfc):
     =======================================
     - META_DN_ORIGINAL: Original DN before normalization
     - META_DN_WAS_BASE64: DN was base64 encoded
@@ -97,7 +91,7 @@ class FlextLdifUtilitiesDN:
     """
 
     # Minimum length for valid DN strings (to check trailing escape)
-    # Use constant from c.Rfc
+    # Use constant from c.Ldif.Rfc
     MIN_DN_LENGTH: int = c.Ldif.Format.MIN_DN_LENGTH
 
     # ==========================================================================
@@ -670,7 +664,7 @@ class FlextLdifUtilitiesDN:
     def norm_with_statistics(
         dn: str,
         original_dn: str | None = None,
-    ) -> r[tuple[str, DNStatisticsType]]:
+    ) -> r[tuple[str, FlextLdifModelsDomains.DNStatistics]]:
         """Normalize DN with statistics tracking.
 
         Args:
@@ -702,7 +696,7 @@ class FlextLdifUtilitiesDN:
             transformations.append(c.Ldif.TransformationType.DN_NORMALIZED)
 
         # Create statistics
-        stats = m.Ldif.DNStatistics.create_with_transformation(
+        stats = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=orig,
             cleaned_dn=dn_str,
             normalized_dn=normalized,
@@ -777,7 +771,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def clean_dn_with_statistics(
         dn: str,
-    ) -> tuple[str, DNStatisticsType]:
+    ) -> tuple[str, FlextLdifModelsDomains.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -801,10 +795,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = m.Ldif.DNStatistics.create_minimal(
+            stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
                 original_dn,
             )
-            stats = m.Ldif.DNStatistics.model_validate(
+            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return original_dn, stats
@@ -829,7 +823,7 @@ class FlextLdifUtilitiesDN:
             validation_errors_raw if isinstance(validation_errors_raw, list) else []
         )
 
-        stats_domain = m.Ldif.DNStatistics.create_with_transformation(
+        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
@@ -1052,10 +1046,12 @@ class FlextLdifUtilitiesDN:
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
 
-        return r.ok((
-            norm1_result.unwrap().lower(),
-            norm2_result.unwrap().lower(),
-        ))
+        return r.ok(
+            (
+                norm1_result.unwrap().lower(),
+                norm2_result.unwrap().lower(),
+            )
+        )
 
     @staticmethod
     def compare_dns(
@@ -1593,7 +1589,9 @@ class FlextLdifUtilitiesDN:
                 target_dn,
             )
             transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-                dict(entry.attributes.items()),
+                dict(entry.attributes.items())
+                if hasattr(entry.attributes, "items")
+                else {},
                 dn_attributes,
                 source_dn,
                 target_dn,
@@ -1700,11 +1698,13 @@ class FlextLdifUtilitiesDN:
                     failed_count += 1
                     continue
 
-            return r.ok({
-                "transformed_count": transformed_count,
-                "failed_count": failed_count,
-                "total_count": transformed_count + failed_count,
-            })
+            return r.ok(
+                {
+                    "transformed_count": transformed_count,
+                    "failed_count": failed_count,
+                    "total_count": transformed_count + failed_count,
+                }
+            )
 
         except Exception as e:
             return r.fail(f"LDIF directory transformation failed: {e}")
@@ -1849,11 +1849,15 @@ class FlextLdifUtilitiesDN:
             target_dn,
         )
         # Convert LdifAttributes to dict for processing
-        attrs_dict = (
-            entry.attributes.attributes
-            if hasattr(entry.attributes, "attributes")
-            else dict(entry.attributes)
-        )
+        if hasattr(entry.attributes, "attributes"):
+            attrs_dict = entry.attributes.attributes
+        elif isinstance(entry.attributes, Mapping):
+            attrs_dict = dict(entry.attributes)
+        else:
+            # Fallback for unknown attribute types
+            attrs_dict = (
+                dict(entry.attributes) if hasattr(entry.attributes, "items") else {}
+            )
         transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
             attrs_dict,
             dn_attributes,
@@ -1925,7 +1929,9 @@ class FlextLdifUtilitiesDN:
         if not entries or not source_dn or not target_dn:
             return entries
 
-        def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
+        def transform_entry(
+            entry: m.Ldif.Entry,
+        ) -> m.Ldif.Entry:
             """Transform single entry."""
             return FlextLdifUtilitiesDN.transform_dn_with_metadata(
                 entry,
@@ -2060,9 +2066,9 @@ class FlextLdifUtilitiesDN:
             if batch_result.is_failure:
                 return r.fail(batch_result.error or "Normalization failed")
             batch_data = batch_result.value
-            return r.ok([
-                item for item in batch_data["results"] if isinstance(item, str)
-            ])
+            return r.ok(
+                [item for item in batch_data["results"] if isinstance(item, str)]
+            )
 
         batch_result = u.Collection.batch(
             list(dns),

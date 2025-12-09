@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.models import m
+from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -84,7 +84,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"  ; Rfc.SCHEMA_KIND_*
 
-    ABNF Syntax (c.Rfc):
+    ABNF Syntax (c.Ldif.Rfc):
     =====================================
     WSP    = 0*SPACE                       ; Rfc.SCHEMA_WSP
     SP     = 1*SPACE
@@ -99,8 +99,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     RFC 2849 - LDIF Format:
         - Line folding at 76 bytes (Rfc.LINE_FOLD_WIDTH)
         - Base64 encoding for non-safe characters (Rfc.BASE64_CHARS)
-        - Change types: Rfc.CHANGETYPES (add, delete, modify, modrdn/moddn)
-        - Modify ops: Rfc.MODIFY_OPERATIONS (add, delete, replace)
+        - Change types: c.Ldif.ChangeType enum (add, delete, modify, modrdn, moddn)
+        - Modify ops: c.Ldif.ModifyOperation enum (add, delete, replace)
 
     RFC 4512 - Schema:
         - Schema keywords: Rfc.SCHEMA_KW_*
@@ -112,7 +112,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         - Character classes: Rfc.DN_LUTF1_EXCLUDE, DN_TUTF1_EXCLUDE, DN_SUTF1_EXCLUDE
         - Separators: Rfc.DN_RDN_SEPARATOR, DN_MULTIVALUE_SEPARATOR
 
-    Metadata Keys (c.Rfc):
+    Metadata Keys (c.Ldif.Rfc):
     =======================================
     - META_RFC_*: Entry/LDIF metadata
     - META_SCHEMA_*: Schema parsing metadata

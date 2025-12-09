@@ -209,7 +209,7 @@ class TestsTestFlextLdifConfigValidators(s):
             )
             # The validator normalizes aliases to canonical form
             # So we should expect the normalized value, not the original
-            expected_server_type = lib_c.Ldif.normalize_server_type(server_type)
+            expected_server_type = lib_c.normalize_server_type(server_type)
             assert config.server_type == expected_server_type
         else:
             with pytest.raises(ValidationError) as exc_info:

@@ -303,15 +303,13 @@ class FlextLdifUtilitiesServer:
             )
 
         # Import here to avoid circular import - only needed at runtime for isinstance checks
-        from flext_ldif.models import m  # noqa: PLC0415
 
-        if isinstance(value, m.Ldif.SchemaAttribute):
+        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
             return check_model_patterns(value)
 
-        if isinstance(value, m.Ldif.SchemaObjectClass):
-            return check_model_patterns(value)
-
-        return False
+        # value must be SchemaObjectClass since type is union of 3 types
+        # and str and SchemaAttribute were already handled
+        return check_model_patterns(value)
 
     @staticmethod
     def normalize_server_type(
@@ -390,7 +388,7 @@ class FlextLdifUtilitiesServer:
         if server_enum is None:
             error_msg = f"Server type {server_type} not found"
             raise AttributeError(error_msg)
-        return server_enum.value
+        return str(server_enum.value)
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
@@ -470,7 +468,7 @@ class FlextLdifUtilitiesServer:
         if sort_target_enum is None:
             error_msg = f"Sort target {name} not found"
             raise AttributeError(error_msg)
-        return sort_target_enum.value
+        return str(sort_target_enum.value)
 
     @staticmethod
     def get_sort_strategy_value(name: str) -> str:
@@ -490,7 +488,7 @@ class FlextLdifUtilitiesServer:
         if sort_strategy_enum is None:
             error_msg = f"Sort strategy {name} not found"
             raise AttributeError(error_msg)
-        return sort_strategy_enum.value
+        return str(sort_strategy_enum.value)
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:

@@ -147,6 +147,7 @@ new behaviours can be added without widening the public API beyond the
 ## Related Documentation
 
 **Within Project**:
+
 - [Getting Started](getting-started.md) - Installation and basic usage
 - [API Reference](api-reference.md) - Complete API documentation
 - [Configuration](configuration.md) - Settings and environment management
@@ -154,9 +155,11 @@ new behaviours can be added without widening the public API beyond the
 - [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
 
 **Across Projects**:
+
 - [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/architecture/overview.md) - Clean architecture and CQRS patterns
 - [flext-ldap Architecture](https://github.com/organization/flext/tree/main/flext-ldap/docs/architecture/README.md) - Universal LDAP interface architecture
 
 **External Resources**:
+
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

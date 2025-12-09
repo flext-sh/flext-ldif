@@ -19,13 +19,6 @@ from flext_core import FlextResult, r
 
 from flext_ldif.models import m
 
-# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
-# Entry: TypeAlias = FlextLdifModelsDomains.Entry  # Use m.Ldif.Entry directly
-# DistinguishedName: TypeAlias = FlextLdifModelsDomains.DistinguishedName  # Use m.Ldif.DistinguishedName directly
-# LdifAttributes: TypeAlias = FlextLdifModelsDomains.LdifAttributes  # Use m.Ldif.LdifAttributes directly
-# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
-# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
-
 logger = structlog.get_logger(__name__)
 
 
@@ -230,7 +223,7 @@ class FlextLdifUtilitiesParsers:
                 parse_oid_hook: Optional OID parsing
 
             Returns:
-                FlextResult with SchemaAttribute
+                FlextResult with m.Ldif.SchemaAttribute
 
             """
             try:
@@ -320,7 +313,7 @@ class FlextLdifUtilitiesParsers:
                 transform_hook: Optional objectClass transformation
 
             Returns:
-                FlextResult with SchemaObjectClass
+                FlextResult with m.Ldif.SchemaObjectClass
 
             """
             try:

@@ -25,7 +25,7 @@ from flext_ldif.constants import c
 
 
 class TestsFlextLdifConstants(FlextTestsConstants):
-    """Test-specific constants extending FlextTestsConstants and c.Ldif.
+    """Test-specific constants extending FlextTestsConstants and c.
 
     Provides test-specific constants without duplicating parent functionality.
     All parent constants are accessible via inheritance hierarchy.
@@ -39,7 +39,7 @@ class TestsFlextLdifConstants(FlextTestsConstants):
     # =========================================================================
 
     # Expose main project constants for convenient access in tests
-    # Usage: c.Ldif.ServerTypes.OID, c.Ldif.RfcSyntaxOids, etc.
+    # Usage: c.Ldif.ServerTypes.OID, c.RfcSyntaxOids, etc.
     Ldif = c.Ldif
 
     # =========================================================================

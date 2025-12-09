@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
@@ -42,9 +42,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Initialize RFC LDIF Entry processor."""
         super().__init__()
 
-    def _parse_content(
-        self, ldif_content: str
-    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+    def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal).
 
         PRIMARY parsing entry point - implements base class abstract method.
@@ -57,10 +55,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
         """
         if not ldif_content or not ldif_content.strip():
-            return FlextResult[list[FlextLdifModelsDomains.Entry]].ok([])
+            return FlextResult[list[m.Ldif.Entry]].ok([])
 
         try:
-            entries: list[FlextLdifModelsDomains.Entry] = []
+            entries: list[m.Ldif.Entry] = []
 
             # Split by empty lines to get entry blocks
             raw_entries = ldif_content.strip().split("\n\n")
@@ -86,17 +84,13 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                         error=result.error,
                     )
 
-            return FlextResult[list[FlextLdifModelsDomains.Entry]].ok(entries)
+            return FlextResult[list[m.Ldif.Entry]].ok(entries)
 
         except Exception as e:
             logger.exception("Failed to parse LDIF content")
-            return FlextResult[list[FlextLdifModelsDomains.Entry]].fail(
-                f"Processing failed: {e}"
-            )
+            return FlextResult[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
 
-    def _parse_entry_from_lines(
-        self, lines: list[str]
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
         """Parse entry from LDIF lines.
 
         Args:
@@ -136,15 +130,13 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 attrs[key].append(value)
 
         if not dn:
-            return FlextResult[FlextLdifModelsDomains.Entry].fail(
-                "No DN found in entry"
-            )
+            return FlextResult[m.Ldif.Entry].fail("No DN found in entry")
 
         return self._create_entry(dn, attrs)
 
     def _create_entry(
         self, dn: str, attributes: dict[str, list[str]]
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes.
 
         Args:
@@ -161,16 +153,12 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r.fail(f"Invalid attributes: {attributes}")
 
         try:
-            entry = FlextLdifModelsDomains.Entry(
-                dn=dn.strip(), attributes=attributes or {}
-            )
+            entry = m.Ldif.Entry(dn=dn.strip(), attributes=attributes or {})
             return r.ok(entry)
         except Exception as e:
             return r.fail(f"Failed to create entry {dn}: {e}")
 
-    def validate(
-        self, entry: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def validate(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance.
 
         Args:
@@ -180,7 +168,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             FlextResult containing validated Entry or error
 
         """
-        if not entry or not isinstance(entry, FlextLdifModelsDomains.Entry):
+        if not entry or not isinstance(entry, m.Ldif.Entry):
             return r.fail(f"Invalid entry: {entry}")
         # Entry.dn is DistinguishedName, not str - check .value
         if not entry.dn or not hasattr(entry.dn, "value"):

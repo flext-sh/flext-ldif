@@ -12,7 +12,7 @@ Works with ANY data type sent to detection methods:
 - Model objects (Pydantic models)
 - List/set/tuple of objectClasses
 - Raw ACL lines
-- Any nested structure
+- Complex nested structures
 
 Usage in Schema:
     class CustomSchema(FlextLdifServersRfc.Schema, FlextLdifUtilities.Detection.OidPatternMixin):
@@ -24,7 +24,7 @@ Usage in Schema:
             )
 
 Usage in ACL:
-    class CustomAcl(FlextLdifServersRfc.Acl, FlextLdifUtilities.Detection.AclDetectionMixin):
+    class CustomAcl(FlextLdifServersRfcAcl, FlextLdifUtilities.Detection.AclDetectionMixin):
         def can_handle_acl(self, acl_line):
             # Handles: str | Acl
             return self.can_handle_acl_attribute(
@@ -49,7 +49,6 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import FlextRuntime
 
-from flext_ldif.models import m
 from flext_ldif.protocols import p
 
 
@@ -65,7 +64,7 @@ class FlextLdifUtilitiesDetection:
         def _get_constants(
             self,
             required_attr: str | None = None,
-        ) -> type[p.Ldif.Constants.ServerConstantsProtocol] | None:
+        ) -> type[p.Ldif.ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
             Args:
@@ -120,10 +119,10 @@ class FlextLdifUtilitiesDetection:
             *,
             data: (
                 str
-                | p.Ldif.Models.SchemaAttributeProtocol
-                | p.Ldif.Models.SchemaObjectClassProtocol
-                | p.Ldif.Models.EntryProtocol
-                | p.Ldif.Models.AclProtocol
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.EntryProtocol
+                | p.Ldif.AclProtocol
                 | None
             ),
         ) -> bool:
@@ -170,10 +169,10 @@ class FlextLdifUtilitiesDetection:
         def can_handle_prefix(
             data: (
                 str
-                | p.Ldif.Models.SchemaAttributeProtocol
-                | p.Ldif.Models.SchemaObjectClassProtocol
-                | p.Ldif.Models.EntryProtocol
-                | p.Ldif.Models.AclProtocol
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.EntryProtocol
+                | p.Ldif.AclProtocol
                 | None
             ),
             prefixes: frozenset[str],
@@ -184,7 +183,7 @@ class FlextLdifUtilitiesDetection:
             - str: Direct prefix match
             - obj with .name: Match against name field
             - obj with .oid: Extract name from OID definition
-            - Any other type: Convert to string
+            - Other types: Convert to string
 
             Args:
                 data: Data to check
@@ -217,7 +216,12 @@ class FlextLdifUtilitiesDetection:
 
         @staticmethod
         def can_handle_in_set(
-            data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
+            data: (
+                str
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | None
+            ),
             items: frozenset[str],
         ) -> bool:
             """Check if data is in set (case-insensitive).
@@ -225,7 +229,7 @@ class FlextLdifUtilitiesDetection:
             Handles:
             - str: Direct set membership
             - obj with .name: Check name in set
-            - Any other type: Convert to string
+            - Other types: Convert to string
 
             Args:
                 data: Data to check
@@ -265,13 +269,13 @@ class FlextLdifUtilitiesDetection:
         Works with:
         - Raw attribute/objectClass definition strings
         - SchemaAttribute/SchemaObjectClass models
-        - Any data type sent to detection methods
+        - Various data types sent to detection methods
         """
 
         def _can_handle_schema_item_by_pattern(
             self,
             schema_item: (
-                str | p.Ldif.Models.SchemaAttributeProtocol | p.Ldif.Models.SchemaObjectClassProtocol
+                str | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
             ),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
@@ -298,7 +302,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.Models.SchemaAttributeProtocol,
+            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -315,7 +319,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.Models.SchemaObjectClassProtocol,
+            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -339,12 +343,12 @@ class FlextLdifUtilitiesDetection:
         Works with:
         - Raw attribute definition strings
         - SchemaAttribute models
-        - Any data type sent to detection methods
+        - Various data types sent to detection methods
         """
 
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -373,7 +377,9 @@ class FlextLdifUtilitiesDetection:
                 attr_name = attr_definition.name
             # Check prefix match directly
             attr_name_lower = attr_name.lower()
-            return any(attr_name_lower.startswith(prefix.lower()) for prefix in prefixes)
+            return any(
+                attr_name_lower.startswith(prefix.lower()) for prefix in prefixes
+            )
 
     class ObjectClassDetectionMixin(PatternDetectionMixin):
         """Mixin for objectClass name-based detection in Entry.
@@ -384,7 +390,7 @@ class FlextLdifUtilitiesDetection:
         Works with:
         - Entry DN (string)
         - Entry attributes (dict with objectClass key)
-        - Any combination of attribute values
+        - Various combinations of attribute values
         """
 
         def can_handle(
@@ -393,7 +399,7 @@ class FlextLdifUtilitiesDetection:
             attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | m.Ldif.Entry
+                | p.Ldif.EntryProtocol
             ),
         ) -> bool:
             """Check if entry objectClasses match detection list.
@@ -422,7 +428,7 @@ class FlextLdifUtilitiesDetection:
             # Get objectClass from attributes
             objectclasses: Sequence[str] | str | None = None
             # Check for EntryProtocol first (has get_objectclass_names method)
-            if isinstance(attributes, p.Ldif.Models.EntryProtocol):
+            if isinstance(attributes, p.Ldif.EntryProtocol):
                 # Entry protocol has get_objectclass_names method
                 objectclasses = list(attributes.get_objectclass_names())
             elif isinstance(attributes, Mapping):
@@ -464,7 +470,7 @@ class FlextLdifUtilitiesDetection:
             _attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | m.Ldif.Entry
+                | p.Ldif.EntryProtocol
                 | None
             ),
         ) -> bool:
@@ -503,12 +509,12 @@ class FlextLdifUtilitiesDetection:
         Works with:
         - Raw ACL lines (strings)
         - ACL models
-        - Any data type sent to detection methods
+        - Various data types sent to detection methods
         """
 
         def can_handle_acl(
             self,
-            acl_line: str | p.Ldif.Models.AclProtocol,
+            acl_line: str | p.Ldif.AclProtocol,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 

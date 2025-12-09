@@ -28,8 +28,6 @@ from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
-
-# FlextLdifTestFactories removed - use s.create_entry from tests.base instead
 from tests import TestDeduplicationHelpers, c, s
 from tests.constants import Filters, OIDs
 

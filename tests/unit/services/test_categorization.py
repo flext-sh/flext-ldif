@@ -14,9 +14,7 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.server import FlextLdifServer
-from tests import Filters, OIDs, TestCategorization, c, m, s
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from tests import Filters, OIDs, TestCategorization, c, m, p, s
 
 
 class TestsFlextLdifCategorization(s):
@@ -62,7 +60,7 @@ class TestsFlextLdifCategorization(s):
         def create_user_entry(
             dn: str = Filters.DN_USER_JOHN,
             **overrides: str | list[str],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create user entry for testing."""
             attrs: dict[str, str | list[str]] = {
                 c.Names.OBJECTCLASS: [
@@ -81,7 +79,7 @@ class TestsFlextLdifCategorization(s):
         def create_group_entry(
             dn: str = c.DNs.TEST_GROUP,
             **overrides: str | list[str],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create group entry for testing."""
             attrs: dict[str, str | list[str]] = {
                 c.Names.OBJECTCLASS: [Filters.OC_GROUP_OF_NAMES, c.Names.TOP],
@@ -95,7 +93,7 @@ class TestsFlextLdifCategorization(s):
         def create_hierarchy_entry(
             dn: str = Filters.DN_OU_USERS,
             **overrides: str | list[str],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create hierarchy entry for testing."""
             attrs: dict[str, str | list[str]] = {
                 c.Names.OBJECTCLASS: [
@@ -111,7 +109,7 @@ class TestsFlextLdifCategorization(s):
         def create_schema_entry(
             dn: str = c.DNs.SCHEMA,
             **overrides: str | list[str],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create schema entry for testing."""
             attrs: dict[str, str | list[str]] = {
                 c.Names.OBJECTCLASS: [c.Names.TOP, "subschema"],
@@ -126,7 +124,7 @@ class TestsFlextLdifCategorization(s):
         def create_acl_entry(
             dn: str = "cn=acl,dc=example,dc=com",
             **overrides: str | list[str],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create ACL entry for testing."""
             attrs: dict[str, str | list[str]] = {
                 c.Names.OBJECTCLASS: [c.Names.TOP],
@@ -197,7 +195,7 @@ class TestsFlextLdifCategorization(s):
             assert rejected.metadata.processing_stats.was_rejected
             assert (
                 rejected.metadata.processing_stats.rejection_category
-                == lib_c.Ldif.RejectionCategory.INVALID_DN
+                == lib_c.RejectionCategory.INVALID_DN
             )
 
     class TestSchemaDetection:
@@ -435,7 +433,7 @@ class TestsFlextLdifCategorization(s):
             assert rejected.metadata.processing_stats.was_rejected
             assert (
                 rejected.metadata.processing_stats.rejection_category
-                == lib_c.Ldif.RejectionCategory.NO_CATEGORY_MATCH
+                == lib_c.RejectionCategory.NO_CATEGORY_MATCH
             )
 
     class TestBaseDNFiltering:
@@ -455,7 +453,7 @@ class TestsFlextLdifCategorization(s):
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 2
@@ -474,7 +472,7 @@ class TestsFlextLdifCategorization(s):
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 1
@@ -495,7 +493,7 @@ class TestsFlextLdifCategorization(s):
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = [entry_with_stats]
             filtered = service.filter_by_base_dn(categories)
             filtered_entry = filtered[TestCategorization.Constants.CATEGORY_USERS][0]
@@ -503,7 +501,7 @@ class TestsFlextLdifCategorization(s):
             assert filtered_entry.metadata.processing_stats is not None
             assert filtered_entry.metadata.processing_stats.was_filtered
             assert (
-                lib_c.Ldif.FilterType.BASE_DN_FILTER
+                lib_c.FilterType.BASE_DN_FILTER
                 in filtered_entry.metadata.processing_stats.filters_applied
             )
 
@@ -518,7 +516,7 @@ class TestsFlextLdifCategorization(s):
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_SCHEMA] = [schema_entry]
             categories[TestCategorization.Constants.CATEGORY_REJECTED] = [
                 rejected_entry,
@@ -532,7 +530,7 @@ class TestsFlextLdifCategorization(s):
             entries = [TestCategorization.Factories.create_user_entry()]
             service = FlextLdifCategorization()
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 1
@@ -586,7 +584,7 @@ class TestsFlextLdifCategorization(s):
                 ),
             ]
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = FlextLdifCategorization.filter_categories_by_base_dn(
                 categories,
@@ -682,7 +680,7 @@ class TestsFlextLdifCategorization(s):
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[m.Ldif.Entry]()
+            categories = FlextModelsCollections.Categories[p.Entry]()
             filtered = service.filter_by_base_dn(categories)
             # Check all predefined categories are empty
             assert len(filtered[lib_c.Ldif.Categories.SCHEMA]) == 0

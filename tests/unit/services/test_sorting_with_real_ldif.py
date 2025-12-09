@@ -17,7 +17,7 @@ from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
 from flext_ldif.services.sorting import FlextLdifSorting
-from tests import RfcTestHelpers, m, s
+from tests import RfcTestHelpers, p, s
 
 
 class TestsTestFlextLdifSortingWithRealLDIF(s):
@@ -28,11 +28,11 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
     Uses FlextLdifFixtures for loading real LDIF data.
     """
 
-    oid_entries: ClassVar[list[m.Ldif.Entry]]  # pytest fixture
-    oid_schema: ClassVar[list[m.Ldif.Entry]]  # pytest fixture
-    oid_acl: ClassVar[list[m.Ldif.Entry]]  # pytest fixture
-    oid_schema: ClassVar[list[m.Ldif.Entry]]  # pytest fixture
-    oid_acl: ClassVar[list[m.Ldif.Entry]]  # pytest fixture
+    oid_entries: ClassVar[list[p.Entry]]  # pytest fixture
+    oid_schema: ClassVar[list[p.Entry]]  # pytest fixture
+    oid_acl: ClassVar[list[p.Entry]]  # pytest fixture
+    oid_schema: ClassVar[list[p.Entry]]  # pytest fixture
+    oid_acl: ClassVar[list[p.Entry]]  # pytest fixture
 
     class Fixtures:
         """Fixture loading helpers organized as nested class."""
@@ -45,7 +45,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             return Path(__file__).parent.parent.parent / "fixtures"
 
         @staticmethod
-        def load_oid_entries() -> list[m.Ldif.Entry]:
+        def load_oid_entries() -> list[p.Entry]:
             """Load real OID entries from fixture."""
             fixture_path = (
                 TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
@@ -62,7 +62,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             return result.unwrap()
 
         @staticmethod
-        def load_oid_schema() -> list[m.Ldif.Entry]:
+        def load_oid_schema() -> list[p.Entry]:
             """Load real OID schema from fixture."""
             fixture_path = (
                 TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
@@ -79,7 +79,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             return result.unwrap()
 
         @staticmethod
-        def load_oid_acl() -> list[m.Ldif.Entry]:
+        def load_oid_acl() -> list[p.Entry]:
             """Load real OID ACL from fixture."""
             fixture_path = (
                 TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
@@ -139,13 +139,13 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         @staticmethod
         def execute_sort_operation(
             test_type: TestsTestFlextLdifSortingWithRealLDIF.TestType,
-            entries: list[m.Ldif.Entry],
+            entries: list[p.Entry],
             **kwargs: object,
-        ) -> FlextResult[list[m.Ldif.Entry]]:
+        ) -> FlextResult[list[p.Entry]]:
             """Execute sort operation based on test type using mapping."""
             operation_map: dict[
                 TestsTestFlextLdifSortingWithRealLDIF.TestType,
-                Callable[[], FlextResult[list[m.Ldif.Entry]]],
+                Callable[[], FlextResult[list[p.Entry]]],
             ] = {
                 TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
                     entries,
@@ -186,13 +186,13 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
                 return operation_map[test_type]()
 
             # Special cases handled separately
-            return FlextResult[list[m.Ldif.Entry]].fail(
+            return FlextResult[list[p.Entry]].fail(
                 f"Unknown test type: {test_type}",
             )
 
         @staticmethod
         def verify_hierarchy_sorting(
-            sorted_entries: list[m.Ldif.Entry],
+            sorted_entries: list[p.Entry],
         ) -> None:
             """Verify entries are sorted by hierarchy (depth-first)."""
             depths = [e.dn.value.count(",") if e.dn else 0 for e in sorted_entries]
@@ -206,7 +206,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         @staticmethod
         def verify_alphabetical_sorting(
-            sorted_entries: list[m.Ldif.Entry],
+            sorted_entries: list[p.Entry],
         ) -> None:
             """Verify entries are sorted alphabetically by DN."""
             dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
@@ -214,7 +214,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         @staticmethod
         def verify_attributes_sorted(
-            entry: m.Ldif.Entry,
+            entry: p.Entry,
         ) -> None:
             """Verify entry attributes are sorted alphabetically."""
             assert entry.attributes is not None
@@ -224,8 +224,8 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         @staticmethod
         def verify_data_integrity(
-            original: list[m.Ldif.Entry],
-            sorted_entries: list[m.Ldif.Entry],
+            original: list[p.Entry],
+            sorted_entries: list[p.Entry],
         ) -> None:
             """Verify sorting preserves all data."""
             original_dns = {e.dn.value for e in original if e.dn}
@@ -260,17 +260,17 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
     ]
 
     @pytest.fixture
-    def oid_entries(self) -> list[m.Ldif.Entry]:
+    def oid_entries(self) -> list[p.Entry]:
         """Load real OID entries from fixture."""
         return self.c.Fixtures.load_oid_entries()
 
     @pytest.fixture
-    def oid_schema(self) -> list[m.Ldif.Entry]:
+    def oid_schema(self) -> list[p.Entry]:
         """Load real OID schema from fixture."""
         return self.c.Fixtures.load_oid_schema()
 
     @pytest.fixture
-    def oid_acl(self) -> list[m.Ldif.Entry]:
+    def oid_acl(self) -> list[p.Entry]:
         """Load real OID ACL from fixture."""
         return self.c.Fixtures.load_oid_acl()
 
@@ -282,9 +282,9 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         self,
         test_type: TestType,
         fixture_type: str,
-        oid_entries: list[m.Ldif.Entry],
-        oid_schema: list[m.Ldif.Entry],
-        oid_acl: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
+        oid_schema: list[p.Entry],
+        oid_acl: list[p.Entry],
     ) -> None:
         """Test sorting operations with real LDIF data - consolidated parametrized test."""
         if fixture_type == "schema":
@@ -315,7 +315,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_execute_attributes_sorting_real_ldif(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test attributes sorting on real LDIF data."""
         if not oid_entries:
@@ -336,7 +336,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_pipeline_hierarchy_then_attributes(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test realistic pipeline: sort by hierarchy then sort attributes."""
         if not oid_entries:
@@ -369,12 +369,12 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         __test__ = False
 
         @staticmethod
-        def dn_length(entry: m.Ldif.Entry) -> int:
+        def dn_length(entry: p.Entry) -> int:
             """Get DN length for sorting."""
             return len(entry.dn.value) if entry.dn else 0
 
         @staticmethod
-        def dn_depth(entry: m.Ldif.Entry) -> int:
+        def dn_depth(entry: p.Entry) -> int:
             """Get DN depth (comma count) for sorting."""
             return entry.dn.value.count(",") if entry.dn else 0
 
@@ -388,8 +388,8 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
     def test_custom_sorting_with_real_ldif(
         self,
         predicate_name: str,
-        predicate_func: Callable[[m.Ldif.Entry], int],
-        oid_entries: list[m.Ldif.Entry],
+        predicate_func: Callable[[p.Entry], int],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test custom sorting with real LDIF data using dynamic parametrization."""
         if not oid_entries:
@@ -407,21 +407,21 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_multiple_custom_sorts_via_classmethod(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test multiple sorting strategies via classmethod."""
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        def length_key(e: m.Ldif.Entry) -> int:
+        def length_key(e: p.Entry) -> int:
             return len(e.dn.value) if e.dn else 0
 
         strategies: list[
             tuple[
                 str,
                 Callable[
-                    [list[m.Ldif.Entry]],
-                    FlextResult[list[m.Ldif.Entry]],
+                    [list[p.Entry]],
+                    FlextResult[list[p.Entry]],
                 ],
             ]
         ] = [
@@ -437,7 +437,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_sorting_preserves_data_integrity(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Verify sorting doesn't lose or corrupt data."""
         if not oid_entries:
@@ -452,7 +452,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_sorting_large_entry_set(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test sorting performance with real large LDIF datasets."""
         if len(oid_entries) < self.Constants.MIN_ENTRIES_FOR_PERFORMANCE:
@@ -473,7 +473,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_sorting_with_special_characters_in_dn(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test sorting handles special characters in DNs correctly."""
         if not oid_entries:
@@ -488,7 +488,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_all_entry_sorting_methods(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test all entry sorting classmethods."""
         if not oid_entries:
@@ -507,7 +507,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_all_sort_targets_via_execute(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test all sort targets via execute() method."""
         if not oid_entries:
@@ -534,7 +534,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_builder_pattern_with_real_data(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test fluent builder pattern with real data."""
         if not oid_entries:
@@ -556,7 +556,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
     def test_classmethod_sort_with_real_data(
         self,
-        oid_entries: list[m.Ldif.Entry],
+        oid_entries: list[p.Entry],
     ) -> None:
         """Test classmethod sort() with real data."""
         if not oid_entries:

@@ -14,7 +14,7 @@ import pytest
 from flext_tests import tf
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import c, m, s
+from tests import c, p, s
 
 
 class TestsTestFlextLdifMigrationPipeline(s):
@@ -246,7 +246,7 @@ sn: test
 
         # Create test entries
         entries = [
-            m.Ldif.Entry(
+            p.Entry(
                 dn="cn=test,dc=example,dc=com",
                 attributes={"cn": ["test"], "objectClass": ["person"]},
             ),

@@ -19,14 +19,14 @@ from flext_ldif import (
     FlextLdifConfig,
 )
 from flext_ldif.constants import FlextLdifConstants, c as lib_c
-from flext_ldif.models import FlextLdifModels, m
-from tests import TestDeduplicationHelpers, c, s
+from flext_ldif.models import FlextLdifModels
+from tests import TestDeduplicationHelpers, c, p, s
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
 
 @pytest.fixture
-def sample_entries() -> list[m.Ldif.Entry]:
+def sample_entries() -> list[p.Entry]:
     """Create sample entries for testing."""
     return [
         s.create_entry(
@@ -41,7 +41,7 @@ def sample_entries() -> list[m.Ldif.Entry]:
 
 
 @pytest.fixture
-def entry_with_acl() -> m.Ldif.Entry:
+def entry_with_acl() -> p.Entry:
     """Create an entry with ACL attributes."""
     return s.create_entry(
         dn=f"cn={c.Values.TEST} ACL, {c.DNs.EXAMPLE}",
@@ -261,16 +261,18 @@ OID_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 """
 
-LARGE_ENTRIES_CONTENT = "\n\n".join([
-    f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
+LARGE_ENTRIES_CONTENT = "\n\n".join(
+    [
+        f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 # Another comment
 objectClass: {c.Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
-    for i in range(5)
-])
+        for i in range(5)
+    ]
+)
 
 MULTIPLE_VALUES_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
@@ -334,7 +336,7 @@ def simple_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_entry() -> m.Ldif.Entry:
+def sample_entry() -> p.Entry:
     """Create a sample entry for testing."""
     return s.create_entry(
         dn=f"cn={c.Values.TEST} {c.Values.USER}, {c.DNs.EXAMPLE}",
@@ -457,7 +459,7 @@ class TestAPIWritingOperations:
     """Test FlextLdif.write() with consolidated scenarios."""
 
     @pytest.fixture
-    def sample_write_entries(self) -> list[m.Ldif.Entry]:
+    def sample_write_entries(self) -> list[p.Entry]:
         """Create sample entries for writing tests."""
         entries_data: list[dict[str, str | list[str] | dict[str, str | list[str]]]] = [
             {
@@ -498,7 +500,7 @@ class TestAPIWritingOperations:
         self,
         scenario: WritingScenario,
         api: FlextLdif,
-        sample_write_entries: list[m.Ldif.Entry],
+        sample_write_entries: list[p.Entry],
         tmp_path: Path,
     ) -> None:
         """Test write() with various scenarios."""
@@ -595,7 +597,7 @@ class TestAPIEntryManipulation:
         if build_case.should_succeed:
             assert result.is_success
             entry = result.unwrap()
-            assert isinstance(entry, m.Ldif.Entry)
+            assert isinstance(entry, p.Entry)
             assert entry.dn is not None
             assert entry.dn.value == build_case.dn
 
@@ -614,7 +616,7 @@ class TestAPIEntryManipulation:
         self,
         scenario: EntryManipulationScenario,
         api: FlextLdif,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Entry,
     ) -> None:
         """Test entry manipulation operations with parametrized scenarios."""
         if scenario == EntryManipulationScenario.GET_DN:
@@ -650,11 +652,11 @@ class TestAPIValidationAndFiltering:
     """Test validation, filtering, and ACL operations."""
 
     @pytest.fixture
-    def validation_entries(self) -> list[m.Ldif.Entry]:
+    def validation_entries(self) -> list[p.Entry]:
         """Create sample entries for validation testing."""
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Entry] = []
         for _i, name in enumerate(["Valid User", "Test User"]):
-            entry_result = m.Ldif.Entry.create(
+            entry_result = p.Entry.create(
                 dn=f"cn={name},ou=People,{c.DNs.EXAMPLE}",
                 attributes={
                     c.Names.CN: [name],
@@ -666,7 +668,7 @@ class TestAPIValidationAndFiltering:
                 entry = entry_result.unwrap()
                 entries.append(entry)
 
-        return [m.Ldif.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
+        return [p.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
 
     VALIDATION_SCENARIOS: ClassVar[set[ValidationScenario]] = {
         ValidationScenario.VALID_ENTRIES,
@@ -685,9 +687,9 @@ class TestAPIValidationAndFiltering:
         self,
         scenario: ValidationScenario,
         api: FlextLdif,
-        validation_entries: list[m.Ldif.Entry],
-        sample_entries: list[m.Ldif.Entry],
-        entry_with_acl: m.Ldif.Entry,
+        validation_entries: list[p.Entry],
+        sample_entries: list[p.Entry],
+        entry_with_acl: p.Entry,
     ) -> None:
         """Test validation and filtering with parametrized scenarios."""
         if scenario == ValidationScenario.VALID_ENTRIES:
@@ -734,7 +736,7 @@ class TestAPIConversionAndMigration:
     """Test migration operations with parametrized scenarios."""
 
     @pytest.fixture
-    def migration_entries(self) -> list[m.Ldif.Entry]:
+    def migration_entries(self) -> list[p.Entry]:
         """Create sample entries for migration testing."""
         return [
             s.create_entry(
@@ -763,7 +765,7 @@ class TestAPIConversionAndMigration:
         self,
         scenario: MigrationScenario,
         api: FlextLdif,
-        migration_entries: list[m.Ldif.Entry],
+        migration_entries: list[p.Entry],
         tmp_path: Path,
     ) -> None:
         """Test migration operations with parametrized scenarios."""
@@ -800,7 +802,7 @@ class TestAPIConversionAndMigration:
     def test_conversion_operations(
         self,
         api: FlextLdif,
-        migration_entries: list[m.Ldif.Entry],
+        migration_entries: list[p.Entry],
     ) -> None:
         """Test conversion and attribute operations."""
         # Test get_entry_attributes
@@ -936,7 +938,7 @@ class TestAPIProcessing:
         scenario: ProcessingScenario,
         test_case: ProcessingTestCase,
         api: FlextLdif,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Entry,
         tmp_path: Path,
     ) -> None:
         """Test processing operations with parametrized scenarios."""

@@ -30,7 +30,7 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
 from flext_ldif.models import m
 
@@ -75,15 +75,15 @@ class ProcessConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._source_server: m.Ldif.Config.ServerType = m.Ldif.Config.ServerType.AUTO
-        self._target_server: m.Ldif.Config.ServerType | None = None
-        self._dn_config: m.Ldif.Config.DnNormalizationConfig | None = None
-        self._attr_config: m.Ldif.Config.AttrNormalizationConfig | None = None
-        self._acl_config: m.Ldif.Config.AclConversionConfig | None = None
-        self._validation_config: m.Ldif.Config.ValidationConfig | None = None
-        self._metadata_config: m.Ldif.Config.MetadataConfig | None = None
+        self._source_server: m.Ldif.ServerType = m.Ldif.ServerType.RFC
+        self._target_server: m.Ldif.ServerType | None = None
+        self._dn_config: object | None = None
+        self._attr_config: object | None = None
+        self._acl_config: object | None = None
+        self._validation_config: object | None = None
+        self._metadata_config: object | None = None
 
-    def source(self, server: m.Ldif.Config.ServerType) -> Self:
+    def source(self, server: m.Ldif.ServerType) -> Self:
         """Set the source server type.
 
         Args:
@@ -96,7 +96,7 @@ class ProcessConfigBuilder:
         self._source_server = server
         return self
 
-    def target(self, server: m.Ldif.Config.ServerType) -> Self:
+    def target(self, server: m.Ldif.ServerType) -> Self:
         """Set the target server type.
 
         Args:
@@ -112,9 +112,9 @@ class ProcessConfigBuilder:
     def normalize_dn(
         self,
         *,
-        case: m.Ldif.Config.CaseFoldOption | None = None,
-        spaces: m.Ldif.Config.SpaceHandlingOption | None = None,
-        escapes: m.Ldif.Config.EscapeHandlingOption | None = None,
+        case: object | None = None,
+        spaces: m.Ldif.SpaceHandlingOption | None = None,
+        escapes: m.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization.
 
@@ -129,19 +129,25 @@ class ProcessConfigBuilder:
         """
         # Pydantic 2: Create config and update attributes directly
         # FlextModels.Config doesn't have model_copy, so we update attributes
-        self._dn_config = m.Ldif.Config.DnNormalizationConfig()
+        self._dn_config = m.Ldif.DnNormalizationConfig()
         if case is not None:
-            self._dn_config.case_fold = str(case)  # Convert StrEnum to str for Literal compatibility
+            self._dn_config.case_fold = cast(
+                "Literal['none', 'lower', 'upper']", case.value
+            )
         if spaces is not None:
-            self._dn_config.space_handling = str(spaces)  # Convert StrEnum to str for Literal compatibility
+            self._dn_config.space_handling = cast(
+                "Literal['preserve', 'trim', 'normalize']", spaces.value
+            )
         if escapes is not None:
-            self._dn_config.escape_handling = str(escapes)  # Convert StrEnum to str for Literal compatibility
+            self._dn_config.escape_handling = cast(
+                "Literal['preserve', 'unescape', 'normalize']", escapes.value
+            )
         return self
 
     def normalize_attrs(
         self,
         *,
-        sort_attributes: m.Ldif.Config.SortOption | None = None,
+        sort_attributes: m.Ldif.SortOption | None = None,
         sort_values: bool = True,
         normalize_whitespace: bool = True,
     ) -> Self:
@@ -157,9 +163,11 @@ class ProcessConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        self._attr_config = m.Ldif.Config.AttrNormalizationConfig()
+        self._attr_config = m.Ldif.AttrNormalizationConfig()
         if sort_attributes is not None:
-            self._attr_config.sort_attributes = sort_attributes
+            self._attr_config.sort_attributes = cast(
+                "Literal['none', 'alphabetical', 'hierarchical']", sort_attributes.value
+            )
         self._attr_config.sort_values = sort_values
         self._attr_config.normalize_whitespace = normalize_whitespace
         return self
@@ -183,7 +191,7 @@ class ProcessConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        self._acl_config = m.Ldif.Config.AclConversionConfig()
+        self._acl_config = m.Ldif.AclConversionConfig()
         self._acl_config.convert_aci = convert_aci
         self._acl_config.preserve_original_aci = preserve_original_aci
         self._acl_config.map_server_specific = map_server_specific
@@ -208,7 +216,7 @@ class ProcessConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        self._validation_config = m.Ldif.Config.ValidationConfig()
+        self._validation_config = m.Ldif.ValidationConfig()
         self._validation_config.strict_rfc = strict_rfc
         self._validation_config.allow_server_quirks = allow_server_quirks
         self._validation_config.validate_dn_format = validate_dn_format
@@ -233,7 +241,7 @@ class ProcessConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        self._metadata_config = m.Ldif.Config.MetadataConfig()
+        self._metadata_config = m.Ldif.MetadataConfig()
         self._metadata_config.preserve_original = preserve_original
         self._metadata_config.preserve_tracking = preserve_tracking
         self._metadata_config.preserve_validation = preserve_validation
@@ -278,7 +286,7 @@ class ProcessConfigBuilder:
         self._convert_acls = enabled
         return self
 
-    def build(self) -> m.Ldif.Config.ProcessConfig:
+    def build(self) -> m.Ldif.ProcessConfig:
         """Build the ProcessConfig.
 
         Returns:
@@ -286,14 +294,16 @@ class ProcessConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        config = m.Ldif.Config.ProcessConfig()
+        config = m.Ldif.ProcessConfig()
         config.source_server = self._source_server
-        config.target_server = self._target_server or "rfc"
-        config.dn_config = self._dn_config
-        config.attr_config = self._attr_config
-        config.acl_config = self._acl_config
-        config.validation_config = self._validation_config
-        config.metadata_config = self._metadata_config
+        config.target_server = self._target_server or cast(
+            "m.Ldif.ServerType", m.Ldif.ServerType.RFC
+        )
+        config.dn_config = self._dn_config or m.Ldif.DnNormalizationConfig()
+        config.attr_config = self._attr_config or m.Ldif.AttrNormalizationConfig()
+        config.acl_config = self._acl_config or m.Ldif.AclConversionConfig()
+        config.validation_config = self._validation_config or m.Ldif.ValidationConfig()
+        config.metadata_config = self._metadata_config or m.Ldif.MetadataConfig()
         return config
 
 
@@ -363,7 +373,7 @@ class TransformConfigBuilder:
         self._track_changes = enabled
         return self
 
-    def build(self) -> m.Ldif.Config.TransformConfig:
+    def build(self) -> m.Ldif.TransformConfig:
         """Build the TransformConfig.
 
         Returns:
@@ -371,7 +381,7 @@ class TransformConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        config = m.Ldif.Config.TransformConfig()
+        config = m.Ldif.TransformConfig()
         config.fail_fast = self._fail_fast
         config.preserve_order = self._preserve_order
         config.track_changes = self._track_changes
@@ -438,7 +448,7 @@ class FilterConfigBuilder:
         self._include_metadata_matches = enabled
         return self
 
-    def build(self) -> m.Ldif.Config.FilterConfig:
+    def build(self) -> m.Ldif.FilterConfig:
         """Build the FilterConfig.
 
         Returns:
@@ -446,7 +456,7 @@ class FilterConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        config = m.Ldif.Config.FilterConfig()
+        config = m.Ldif.FilterConfig()
         config.mode = self._mode
         config.case_sensitive = self._case_sensitive
         config.include_metadata_matches = self._include_metadata_matches
@@ -486,16 +496,16 @@ class WriteConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._format: m.Ldif.Config.OutputFormat = m.Ldif.Config.OutputFormat.LDIF
+        self._format: m.Ldif.OutputFormat = m.Ldif.OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True
         self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
-        self._sort_by: m.Ldif.Config.SortOption = m.Ldif.Config.SortOption.ALPHABETICAL
+        self._sort_by: m.Ldif.SortOption = m.Ldif.SortOption.ALPHABETICAL
         self._attr_order: Sequence[str] | None = None
         self._include_metadata: bool = False
-        self._server: m.Ldif.Config.ServerType | None = None
+        self._server: m.Ldif.ServerType | None = None
 
-    def format(self, fmt: m.Ldif.Config.OutputFormat) -> Self:
+    def format(self, fmt: m.Ldif.OutputFormat) -> Self:
         """Set output format.
 
         Args:
@@ -547,7 +557,7 @@ class WriteConfigBuilder:
         self._base64_attrs = attrs
         return self
 
-    def sort_by(self, field: m.Ldif.Config.SortOption) -> Self:
+    def sort_by(self, field: m.Ldif.SortOption) -> Self:
         """Set sorting field.
 
         Args:
@@ -586,7 +596,7 @@ class WriteConfigBuilder:
         self._include_metadata = enabled
         return self
 
-    def server(self, server: m.Ldif.Config.ServerType) -> Self:
+    def server(self, server: m.Ldif.ServerType) -> Self:
         """Set target server for formatting.
 
         Args:
@@ -599,7 +609,7 @@ class WriteConfigBuilder:
         self._server = server
         return self
 
-    def build(self) -> m.Ldif.Config.WriteConfig:
+    def build(self) -> m.Ldif.WriteConfig:
         """Build the WriteConfig.
 
         Returns:
@@ -607,7 +617,7 @@ class WriteConfigBuilder:
 
         """
         # Pydantic 2: Create config and update attributes directly
-        config = m.Ldif.Config.WriteConfig()
+        config = m.Ldif.WriteConfig()
         config.format = self._format  # format is alias for output_format
         config.line_width = self._line_width
         config.fold_lines = self._fold_lines

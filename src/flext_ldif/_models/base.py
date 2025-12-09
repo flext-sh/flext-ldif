@@ -14,7 +14,8 @@ from __future__ import annotations
 from flext_core._models.base import FlextModelsBase
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif.constants import c, normalize_server_type
+from flext_ldif._shared import normalize_server_type
+from flext_ldif.constants import c
 
 
 class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):

@@ -380,9 +380,9 @@ class FlextLdifAcl(FlextLdifServiceBase[m.Ldif.LdifResults.AclResponse]):
                 ),
             )
 
-        # Build list of required permission names using u.Ldif.filter
+        # Build list of required permission names using u.filter
         perm_names = ["read", "write", "delete", "add", "search", "compare"]
-        filtered = u.Ldif.filter(
+        filtered = u.filter(
             perm_names,
             predicate=lambda p: getattr(required, p, False),
         )
@@ -404,7 +404,7 @@ class FlextLdifAcl(FlextLdifServiceBase[m.Ldif.LdifResults.AclResponse]):
             return all(getattr(acl.permissions, p, False) for p in required_perms)
 
         # find() returns T | None for list input (no tuple since return_key=False default)
-        found = u.Ldif.find(acls, predicate=acl_grants_all)
+        found = u.find(acls, predicate=acl_grants_all)
 
         if found is not None:
             return r.ok(

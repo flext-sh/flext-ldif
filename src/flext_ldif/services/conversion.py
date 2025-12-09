@@ -33,7 +33,6 @@ from pydantic import Field
 from flext_ldif.base import FlextLdifServiceBase
 
 # Services CAN import models/types/constants (but not the reverse)
-from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -45,8 +44,8 @@ from flext_ldif.utilities import FlextLdifUtilities as u
 TUPLE_LENGTH_PAIR = 2
 
 # Type aliases moved to t.Ldif - use those instead
-# str | FlextLdifServersBase = t.Ldif.Conversion.str | FlextLdifServersBase
-# m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl = t.Ldif.Conversion.m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+# str | FlextLdifServersBase = t.Conversion.str | FlextLdifServersBase
+# m.Ldif.Entry | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | m.Ldif.Acl = t.Conversion.m.Ldif.Entry | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | m.Ldif.Acl
 
 # Module-level logger
 logger = FlextLogger(__name__)
@@ -54,7 +53,7 @@ logger = FlextLogger(__name__)
 
 def _get_schema_quirk(
     quirk: FlextLdifServersBase,
-) -> p.Ldif.Servers.SchemaProtocol:
+) -> p.Ldif.SchemaQuirkProtocol:
     """Get schema quirk from base quirk with proper type narrowing.
 
     Args:
@@ -89,7 +88,7 @@ def _validate_schema_quirk(
 
 def _get_schema_from_attribute(
     quirk: FlextLdifServersBase,
-) -> p.Ldif.Servers.SchemaProtocol:
+) -> p.Ldif.SchemaQuirkProtocol:
     """Get schema quirk from schema_quirk attribute."""
     if hasattr(quirk, "schema_quirk"):
         schema = quirk.schema_quirk
@@ -108,7 +107,10 @@ def _get_schema_from_attribute(
 
 class FlextLdifConversion(
     FlextLdifServiceBase[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ],
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion.
@@ -132,7 +134,7 @@ class FlextLdifConversion(
     2.  `target.denormalize_from_rfc(RFC Model)` -> Target Model
 
     s V2 Integration:
-    - Inherits from s[t.ConvertibleModel]
+    - Inherits from s[t.Ldif.ConvertibleModel]
     - Implements execute() method for health checks
     - Provides stateless conversion operations
     """
@@ -199,7 +201,10 @@ class FlextLdifConversion(
     def execute(
         self,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Execute conversion service health check.
 
@@ -225,15 +230,15 @@ class FlextLdifConversion(
             )
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].ok(empty_entry)
         except Exception as e:
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"Conversion service health check failed: {e}",
@@ -245,12 +250,15 @@ class FlextLdifConversion(
         target: str | FlextLdifServersBase,
         model_instance: (
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
         ),
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert a model from a source server format to a target server format.
 
@@ -279,17 +287,17 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Determine conversion type and get source/target format names
-        source_format_raw = u.Ldif.match(
+        source_format_raw = u.match(
             source,
             (str, lambda s: s),
             default=lambda src: getattr(src, "server_name", "unknown"),
         )
-        target_format_raw = u.Ldif.match(
+        target_format_raw = u.match(
             target,
             (str, lambda t: t),
             default=lambda tgt: getattr(tgt, "server_name", "unknown"),
         )
-        # Type narrowing: u.Ldif.match with (str, lambda) returns str (lambda returns str)
+        # Type narrowing: u.match with (str, lambda) returns str (lambda returns str)
         # Runtime validation ensures correctness, type narrowing based on match pattern
         if isinstance(source_format_raw, str):
             source_format = source_format_raw
@@ -323,7 +331,7 @@ class FlextLdifConversion(
         items_failed = 0 if result.is_success else 1
 
         # Create conversion event config using full namespace
-        conversion_config = m.Ldif.ConversionEventConfig(
+        conversion_config = m.ConversionEventConfig(
             conversion_operation=conversion_operation,
             source_format=source_format,
             target_format=target_format,
@@ -341,7 +349,7 @@ class FlextLdifConversion(
             if result.is_failure
             else [],
         )
-        _ = u.Ldif.Events.log_and_emit_conversion_event(
+        _ = u.Events.log_and_emit_conversion_event(
             logger=logger,
             config=conversion_config,
             log_level="info" if result.is_success else "error",
@@ -355,12 +363,15 @@ class FlextLdifConversion(
         target: str | FlextLdifServersBase,
         model_instance: (
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
         ),
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert model between source and target server formats via write->parse pipeline.
 
@@ -387,15 +398,15 @@ class FlextLdifConversion(
 
             # Route to appropriate conversion handler based on model type
             # Each branch returns a specific subtype of ConvertibleModel Union
-            # Type narrowing: all branches return r[m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
+            # Type narrowing: all branches return r[m.Ldif.Entry | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | m.Ldif.Acl]
             # Use explicit type narrowing instead of cast
             if isinstance(model_instance, m.Ldif.Entry):
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
-            if isinstance(model_instance, m.Ldif.SchemaAttribute):
+            if isinstance(model_instance, p.Ldif.SchemaAttributeProtocol):
                 return FlextLdifConversion._convert_schema_attribute(
                     source_quirk, target_quirk, model_instance
                 )
-            if isinstance(model_instance, m.Ldif.SchemaObjectClass):
+            if isinstance(model_instance, p.Ldif.SchemaObjectClassProtocol):
                 return FlextLdifConversion._convert_schema_objectclass(
                     source_quirk, target_quirk, model_instance
                 )
@@ -404,8 +415,8 @@ class FlextLdifConversion(
             # Fallback: unsupported type
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"Unsupported model type for conversion: {type(model_instance).__name__}",
@@ -477,10 +488,10 @@ class FlextLdifConversion(
             )
 
         # Convert dict to list of pairs for batch processing
-        # Type narrowing: u.Ldif.pairs expects dict[str, object], but boolean_conv_typed is dict[str, GeneralValueType]
+        # Type narrowing: u.pairs expects dict[str, object], but boolean_conv_typed is dict[str, GeneralValueType]
         # GeneralValueType is compatible with object, so direct call is safe
         if isinstance(boolean_conv_typed, dict):
-            pairs_list: list[tuple[str, object]] = u.Ldif.pairs(boolean_conv_typed)
+            pairs_list: list[tuple[str, object]] = u.pairs(boolean_conv_typed)
         else:
             pairs_list = []
 
@@ -506,7 +517,7 @@ class FlextLdifConversion(
         # Filter and reduce to dict
         # Type narrowing: process_conversion now always returns tuple[str, dict[str, str]]
         # Filter to ensure valid tuples (batch may include errors)
-        filtered_results = u.Ldif.map_filter(
+        filtered_results = u.map_filter(
             results_list,
             predicate=lambda item: (
                 isinstance(item, tuple)
@@ -517,12 +528,12 @@ class FlextLdifConversion(
         )
 
         # reduce_dict returns dict[str, object], need to cast to expected type
-        reduced_raw = u.Ldif.reduce_dict(filtered_results)
+        reduced_raw = u.reduce_dict(filtered_results)
         # evolve expects dict[str, object], so cast both analysis and reduced_raw
         # Type narrowing: analysis is dict[str, object]
         analysis_obj: dict[str, object] = analysis
         # Type narrowing: evolved_raw is dict[str, dict[str, str]]
-        return u.Ldif.evolve(analysis_obj, reduced_raw)
+        return u.evolve(analysis_obj, reduced_raw)
 
     @staticmethod
     def _analyze_attribute_case(
@@ -622,9 +633,9 @@ class FlextLdifConversion(
         )
 
         # Apply boolean analysis
-        acc_typed = u.Ldif.evolve(
+        acc_typed = u.evolve(
             acc_typed,
-            u.Ldif.map_dict(
+            u.map_dict(
                 boolean_analysis_typed,
                 mapper=lambda k, v: (
                     k,
@@ -642,7 +653,7 @@ class FlextLdifConversion(
         attr_case_typed: dict[str, object] = (
             attr_case_analysis if isinstance(attr_case_analysis, dict) else {}
         )
-        acc_typed = u.Ldif.evolve(acc_typed, attr_case_typed)
+        acc_typed = u.evolve(acc_typed, attr_case_typed)
 
         # Apply DN format analysis
         dn_format_analysis = FlextLdifConversion._analyze_dn_format(
@@ -653,7 +664,7 @@ class FlextLdifConversion(
         dn_format_typed: dict[str, object] = (
             dn_format_analysis if isinstance(dn_format_analysis, dict) else {}
         )
-        acc_typed = u.Ldif.evolve(acc_typed, dn_format_typed)
+        acc_typed = u.evolve(acc_typed, dn_format_typed)
 
         # Type narrowing: final result is dict[str, str | dict[str, str | t.MetadataAttributeValue]]
         # acc_typed is dict[str, object] which is compatible with the return type
@@ -733,7 +744,10 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         entry: m.Ldif.Entry,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert Entry model directly without serialization.
 
@@ -744,13 +758,13 @@ class FlextLdifConversion(
         Architecture: Entry RFC Model -> Target.write() -> Target LDIF format
         """
         try:
-            # Validate entry DN using u.DN before conversion
+            # Validate entry DN using u.Ldif.DN before conversion
             entry_dn = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
             if not u.Ldif.DN.validate(entry_dn):
                 return r[
                     m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
+                    | p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | m.Ldif.Acl
                 ].fail(
                     f"Entry DN failed RFC 4514 validation: {entry_dn}",
@@ -771,19 +785,19 @@ class FlextLdifConversion(
 
             # Normalize server type using constants (handles aliases and canonicalization)
             # Business Rule: normalize_server_type handles validation and returns ServerTypeLiteral
-            # Type narrowing: target_server_type_raw is object from u.maybe, ensure it's str
+            # Type narrowing: target_server_type_raw is object from u.Ldif.maybe, ensure it's str
             if (
                 isinstance(target_server_type_raw, str)
                 and target_server_type_raw != "unknown"
             ):
-                normalized = c.normalize_server_type(target_server_type_raw)
+                normalized = u.Ldif.Server.normalize_server_type(target_server_type_raw)
                 # normalize_server_type returns ServerTypeLiteral (validated at runtime)
                 target_server_type_str: str = normalized
             else:
                 # RFC.value is ServerTypeLiteral
                 target_server_type_str = "rfc"
             # normalize_server_type returns canonical ServerTypeLiteral value (validated at runtime)
-            validated_quirk_type = c.normalize_server_type(
+            validated_quirk_type = u.Ldif.Server.normalize_server_type(
                 str(target_server_type_str),
             )
 
@@ -822,8 +836,8 @@ class FlextLdifConversion(
             # Return RFC model - consumer will call target.write() to serialize
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].ok(converted_entry)
 
@@ -834,8 +848,8 @@ class FlextLdifConversion(
             )
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"Entry conversion failed: {e}",
@@ -845,7 +859,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_safe(
         quirk: FlextLdifServersBase,
         quirk_type: str,
-    ) -> r[p.Ldif.Servers.SchemaProtocol]:
+    ) -> r[p.Ldif.SchemaQuirkProtocol]:
         """Get schema quirk safely with error handling."""
         # DSL: Use u.try_ for safe execution
         result = u.try_(
@@ -853,11 +867,11 @@ class FlextLdifConversion(
             default=None,
         )
         if result is None:
-            return r[p.Ldif.Servers.SchemaProtocol].fail(
+            return r[p.Ldif.SchemaQuirkProtocol].fail(
                 f"{quirk_type} quirk error: Schema not available",
             )
 
-        return r[p.Ldif.Servers.SchemaProtocol].ok(result)
+        return r[p.Ldif.SchemaQuirkProtocol].ok(result)
 
     @staticmethod
     def _validate_ldif_string(ldif_string: str, operation: str) -> r[str]:
@@ -869,9 +883,12 @@ class FlextLdifConversion(
 
     @staticmethod
     def _process_schema_conversion_pipeline(
-        config: m.Ldif.Config.SchemaConversionPipelineConfig,
+        config: m.Ldif.SchemaConversionPipelineConfig,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Process schema conversion pipeline (write->parse)."""
         write_result = config.write_method(config.source_schema)
@@ -901,8 +918,8 @@ class FlextLdifConversion(
         # Type narrowing: parsed_value is already ConvertibleModelUnion
         return r[
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
         ].ok(parsed_value)
 
@@ -910,9 +927,12 @@ class FlextLdifConversion(
     def _convert_schema_attribute(
         source_quirk: FlextLdifServersBase,
         target_quirk: FlextLdifServersBase,
-        attribute: m.Ldif.SchemaAttribute,
+        attribute: p.Ldif.SchemaAttributeProtocol,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert SchemaAttribute model via write_attribute->parse_attribute pipeline."""
         try:
@@ -939,14 +959,14 @@ class FlextLdifConversion(
                 # Return error with correct type - target_schema_result.error contains the error message
                 return r[
                     m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
+                    | p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | m.Ldif.Acl
                 ].fail(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available",
                 )
-            config = m.Ldif.Config.SchemaConversionPipelineConfig(
+            config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: source_schema.write_attribute(attribute),
@@ -958,8 +978,8 @@ class FlextLdifConversion(
         except Exception as e:
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"SchemaAttribute conversion failed: {e}",
@@ -969,9 +989,12 @@ class FlextLdifConversion(
     def _convert_schema_objectclass(
         source_quirk: FlextLdifServersBase,
         target_quirk: FlextLdifServersBase,
-        objectclass: m.Ldif.SchemaObjectClass,
+        objectclass: p.Ldif.SchemaObjectClassProtocol,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert SchemaObjectClass model via write_objectclass->parse_objectclass pipeline."""
         try:
@@ -997,7 +1020,7 @@ class FlextLdifConversion(
             if target_schema is None:
                 # target_schema_result already has the correct type, no cast needed
                 return target_schema_result
-            config = m.Ldif.Config.SchemaConversionPipelineConfig(
+            config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: source_schema.write_objectclass(objectclass),
@@ -1009,8 +1032,8 @@ class FlextLdifConversion(
         except Exception as e:
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"SchemaObjectClass conversion failed: {e}",
@@ -1184,7 +1207,7 @@ class FlextLdifConversion(
             "auth": "auth",
             "all": "all",
         }
-        map_result = u.Ldif.map_dict(
+        map_result = u.map_dict(
             key_mapping,
             mapper=lambda _key, mapped_key: u.Ldif.take(
                 mapped_perms,
@@ -1205,7 +1228,7 @@ class FlextLdifConversion(
         """Apply OID to OUD permission mapping."""
         # map_dict expects dict[str, object], orig_perms_dict is dict[str, bool] which is compatible
         orig_perms_dict_typed: dict[str, object] = orig_perms_dict
-        normalized_orig_perms_raw = u.Ldif.map_dict(
+        normalized_orig_perms_raw = u.map_dict(
             orig_perms_dict_typed,
             mapper=lambda k, v: (
                 FlextLdifConversion._normalize_permission_key(k),
@@ -1220,7 +1243,7 @@ class FlextLdifConversion(
             }
         else:
             normalized_orig_perms = {}
-        mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(
+        mapped_perms = u.ACL.map_oid_to_oud_permissions(
             normalized_orig_perms,
         )
         oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1238,7 +1261,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[dict[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
-        mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
+        mapped_perms = u.ACL.map_oud_to_oid_permissions(
             orig_perms_dict,
         )
         oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1251,7 +1274,7 @@ class FlextLdifConversion(
 
     def _apply_permission_mapping(
         self,
-        config: m.Ldif.Config.PermissionMappingConfig | None = None,
+        config: m.Ldif.PermissionMappingConfig | None = None,
         *,
         original_acl: m.Ldif.Acl | None = None,
         converted_acl: m.Ldif.Acl | None = None,
@@ -1274,7 +1297,7 @@ class FlextLdifConversion(
         """
         if config is None:
             # Build config from keyword arguments with proper types
-            config = m.Ldif.Config.PermissionMappingConfig(
+            config = m.Ldif.PermissionMappingConfig(
                 original_acl=original_acl,
                 converted_acl=converted_acl,
                 orig_perms_dict=orig_perms_dict or {},
@@ -1287,7 +1310,7 @@ class FlextLdifConversion(
         def normalize_server_type_wrapper(value: object) -> object:
             """Wrapper for normalize_server_type to match maybe signature."""
             if isinstance(value, str):
-                return c.normalize_server_type(value)
+                return u.Ldif.Server.normalize_server_type(value)
             return value
 
         normalized_source = u.Ldif.maybe(
@@ -1299,7 +1322,7 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        mapping_type = u.Ldif.match(
+        mapping_type = u.match(
             (normalized_source, normalized_target),
             (
                 lambda pair: pair == ("oid", "oud"),
@@ -1473,8 +1496,8 @@ class FlextLdifConversion(
         Args:
             original_acl: The original ACL before conversion
             converted_acl: The converted ACL (modified in-place)
-            source_server_type: Server type of the source ACL (use c.ServerTypes)
-            target_server_type: Server type of the target ACL (use c.ServerTypes)
+            source_server_type: Server type of the source ACL (use c.Ldif.ServerTypes)
+            target_server_type: Server type of the target ACL (use c.Ldif.ServerTypes)
 
         """
         # Preserve permissions
@@ -1562,7 +1585,10 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         acl: m.Ldif.Acl,
     ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+        m.Ldif.Entry
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | m.Ldif.Acl
     ]:
         """Convert Acl model via Entry RFC + Metadata pipeline.
 
@@ -1589,15 +1615,13 @@ class FlextLdifConversion(
             # Use normalize_server_type directly - it handles aliases and validation
             # Type narrowing: u.try_ with default=None returns str | None when lambda returns str | None
             # normalize_server_type returns str, so source_server_type is str | None
-            source_server_type: str | None = (
-                u.try_(
-                    lambda: (
-                        c.normalize_server_type(str(server_type_attr))
-                        if isinstance(server_type_attr, str)
-                        else None
-                    ),
-                    default=None,
-                )
+            source_server_type: str | None = u.try_(
+                lambda: (
+                    u.Ldif.Server.normalize_server_type(str(server_type_attr))
+                    if isinstance(server_type_attr, str)
+                    else None
+                ),
+                default=None,
             )
 
             entry_metadata = m.Ldif.QuirkMetadata.create_for(
@@ -1640,7 +1664,9 @@ class FlextLdifConversion(
             converted_metadata: m.Ldif.QuirkMetadata | None = converted_metadata_raw
             # get_acls returns list[m.Ldif.Acl] | None from metadata.acls property
             # QuirkMetadata.acls is list[m.Ldif.Acl] | None (typed property)
-            acls: list[m.Ldif.Acl] | None = get_acls(converted_metadata) if converted_metadata else None
+            acls: list[m.Ldif.Acl] | None = (
+                get_acls(converted_metadata) if converted_metadata else None
+            )
 
             if not acls:
                 return FlextResult.fail(
@@ -1653,7 +1679,7 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
             # Convert domain Acl to public Acl model
-            match_result = u.Ldif.match(
+            match_result = u.match(
                 domain_acl,
                 (
                     m.Ldif.Acl,
@@ -1663,7 +1689,7 @@ class FlextLdifConversion(
                     acl.model_dump(),
                 ),
             )
-            # Type narrowing: match_result is m.Ldif.Acl from u.Ldif.match with m.Ldif.Acl pattern
+            # Type narrowing: match_result is m.Ldif.Acl from u.match with m.Ldif.Acl pattern
             if not isinstance(match_result, m.Ldif.Acl):
                 return FlextResult.fail("Failed to match ACL model")
             converted_acl: m.Ldif.Acl = match_result
@@ -1676,16 +1702,14 @@ class FlextLdifConversion(
             )
             # Use normalize_server_type directly - it handles aliases and validation
             # Type narrowing: u.try_ with default=None returns str | None when lambda returns str | None
-            target_server_type: str | None = (
-                u.try_(
-                    lambda: (
-                        c.normalize_server_type(target_server_type_raw)
-                        if isinstance(target_server_type_raw, str)
-                        and target_server_type_raw != "unknown"
-                        else None
-                    ),
-                    default=None,
-                )
+            target_server_type: str | None = u.try_(
+                lambda: (
+                    u.Ldif.Server.normalize_server_type(target_server_type_raw)
+                    if isinstance(target_server_type_raw, str)
+                    and target_server_type_raw != "unknown"
+                    else None
+                ),
+                default=None,
             )
 
             # Preserve permissions and metadata from original ACL
@@ -1715,8 +1739,8 @@ class FlextLdifConversion(
             )
             return r[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ].fail(
                 f"Acl conversion failed: {e}",
@@ -1754,7 +1778,7 @@ class FlextLdifConversion(
 
             # Plain DN (not in LDAP URL format)
             elif "=" in subject_value or "," in subject_value:
-                # Validate DN using u.DN before registering
+                # Validate DN using u.Ldif.DN before registering
                 if u.Ldif.DN.validate(subject_value):
                     _ = self.dn_registry.register_dn(subject_value)
 
@@ -1782,10 +1806,24 @@ class FlextLdifConversion(
     @staticmethod
     def _try_write_schema_item(
         source_quirk: FlextLdifServersBase,
-        schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        write_method: Callable[[p.Ldif.Servers.SchemaProtocol, m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass], r[str]],
-        fallback: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue,
-    ) -> r[str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue]:
+        schema_item: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        write_method: Callable[
+            [
+                p.Ldif.SchemaQuirkProtocol,
+                p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+            ],
+            r[str],
+        ],
+        fallback: str
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | t.MetadataAttributeValue,
+    ) -> r[
+        str
+        | p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | t.MetadataAttributeValue
+    ]:
         """Try writing schema item, return fallback on error."""
         try:
             # Type narrowing: source_quirk is FlextLdifServersBase, get schema quirk
@@ -1804,16 +1842,16 @@ class FlextLdifConversion(
     def _write_attribute_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_attr: m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str,
-    ) -> r[str | m.Ldif.SchemaAttribute | t.MetadataAttributeValue]:
+        source_attr: p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue | str,
+    ) -> r[str | p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
             return r.ok(source_attr)
-        if not isinstance(source_attr, m.Ldif.SchemaAttribute):
+        if not isinstance(source_attr, p.Ldif.SchemaAttributeProtocol):
             return r.ok(source_attr)
 
         source_quirk = self._resolve_quirk(source)
-        # Type narrowing: source_quirk is FlextLdifServersBase, source_attr is m.Ldif.SchemaAttribute
+        # Type narrowing: source_quirk is FlextLdifServersBase, source_attr is p.Ldif.SchemaAttributeProtocol
         return FlextLdifConversion._try_write_schema_item(
             source_quirk,
             source_attr,
@@ -1826,7 +1864,7 @@ class FlextLdifConversion(
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
         data: str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue]:
+    ) -> r[p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue]:
         """Convert attribute from source to target quirk via write->parse pipeline.
 
         Pipeline: parse source -> write as string -> parse target
@@ -1839,7 +1877,9 @@ class FlextLdifConversion(
             parse_result = self._parse_source_attribute(source, data)
             parsed_attr = parse_result.value if parse_result.is_success else None
             if parsed_attr is None:
-                return r[m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str].fail(
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue | str
+                ].fail(
                     u.err(parse_result),
                 )
 
@@ -1847,8 +1887,8 @@ class FlextLdifConversion(
             rfc_result = self._write_attribute_to_rfc(source, parsed_attr)
             rfc_value = rfc_result.value if rfc_result.is_success else None
             if rfc_value is None:
-                # Type narrowing: rfc_result is r[str | m.Ldif.SchemaAttribute | t.MetadataAttributeValue]
-                # which is compatible with return type r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue]
+                # Type narrowing: rfc_result is r[str | p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue]
+                # which is compatible with return type r[p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue]
                 return rfc_result
 
             # Use u.when() for conditional type check (DSL pattern)
@@ -1860,17 +1900,19 @@ class FlextLdifConversion(
             # Type narrowing: mapper returns r, but u.map expects direct value
             # Use flat_map or handle result manually
             if target_parse_result.is_failure:
-                # Type narrowing: target_parse_result is r[m.Ldif.SchemaAttribute]
-                # which is compatible with return type r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue]
+                # Type narrowing: target_parse_result is r[p.Ldif.SchemaAttributeProtocol]
+                # which is compatible with return type r[p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue]
                 return target_parse_result
-            # Type narrowing: when is_failure is False, value is guaranteed to be m.Ldif.SchemaAttribute
-            parsed_value: m.Ldif.SchemaAttribute = target_parse_result.value
-            # Type narrowing: write_result is r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue]
+            # Type narrowing: when is_failure is False, value is guaranteed to be p.Ldif.SchemaAttributeProtocol
+            parsed_value: p.Ldif.SchemaAttributeProtocol = target_parse_result.value
+            # Type narrowing: write_result is r[p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue]
             # which matches the return type exactly
             return self._write_target_attribute(parsed_value)
 
         except Exception as e:
-            return r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue].fail(
+            return r[
+                p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue
+            ].fail(
                 f"Attribute conversion failed: {e}",
             )
 
@@ -1878,7 +1920,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         data: str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> r[p.Ldif.SchemaAttributeProtocol]:
         """Parse source attribute."""
         source_quirk = self._resolve_quirk(source)
 
@@ -1892,11 +1934,11 @@ class FlextLdifConversion(
         if isinstance(data, str):
             parse_method = source_schema.parse_attribute
             parse_result = parse_method(data)
-            # parse_result already has correct type r[m.Ldif.SchemaAttribute]
+            # parse_result already has correct type r[p.Ldif.SchemaAttributeProtocol]
             if parse_result.is_success:
                 attr_domain = parse_result.unwrap()
-                # attr_domain is already m.Ldif.SchemaAttribute (domain model compatible with facade)
-                return r[m.Ldif.SchemaAttribute].ok(attr_domain)
+                # attr_domain is already p.Ldif.SchemaAttributeProtocol (domain model compatible with facade)
+                return r[p.Ldif.SchemaAttributeProtocol].ok(attr_domain)
             # parse_result already has correct type
             return parse_result
         return r.fail("parse_attribute requires string data")
@@ -1905,7 +1947,7 @@ class FlextLdifConversion(
         self,
         target: str | FlextLdifServersBase,
         rfc_value: str,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> r[p.Ldif.SchemaAttributeProtocol]:
         """Parse target attribute from RFC string."""
         target_quirk = self._resolve_quirk(target)
 
@@ -1917,28 +1959,32 @@ class FlextLdifConversion(
 
         parse_method = target_schema.parse_attribute
         parse_result = parse_method(rfc_value)
-        # parse_result already has correct type r[m.Ldif.SchemaAttribute]
+        # parse_result already has correct type r[p.Ldif.SchemaAttributeProtocol]
         if parse_result.is_success:
             attr_domain = parse_result.unwrap()
-            # attr_domain is already m.Ldif.SchemaAttribute (domain model compatible with facade)
-            return r[m.Ldif.SchemaAttribute].ok(attr_domain)
+            # attr_domain is already p.Ldif.SchemaAttributeProtocol (domain model compatible with facade)
+            return r[p.Ldif.SchemaAttributeProtocol].ok(attr_domain)
         # parse_result already has correct type
         return parse_result
 
     def _write_target_attribute(
         self,
-        parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue]:
+        parsed_attr: p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue,
+    ) -> r[p.Ldif.SchemaAttributeProtocol | str | t.MetadataAttributeValue]:
         """Write target attribute to final format."""
         # Type narrowing: write_attribute requires SchemaAttribute
-        if not isinstance(parsed_attr, m.Ldif.SchemaAttribute):
+        if not isinstance(parsed_attr, p.Ldif.SchemaAttributeProtocol):
             # Return as-is if not SchemaAttribute - type narrowing for union type
             if isinstance(parsed_attr, dict):
-                return r[m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str].ok(
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue | str
+                ].ok(
                     parsed_attr,
                 )
             if isinstance(parsed_attr, str):
-                return r[m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str].ok(
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue | str
+                ].ok(
                     parsed_attr,
                 )
             msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
@@ -1946,31 +1992,35 @@ class FlextLdifConversion(
 
         # Model-based conversion - return parsed attribute as-is
         # Schema quirks write via model conversion, not string-based
-        return r[m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str].ok(
+        return r[p.Ldif.SchemaAttributeProtocol | t.MetadataAttributeValue | str].ok(
             parsed_attr,
         )
 
     def _write_objectclass_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_oc: m.Ldif.SchemaObjectClass | t.MetadataAttributeValue | str,
-    ) -> r[str | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue]:
+        source_oc: p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue | str,
+    ) -> r[str | p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue]:
         """Write objectClass to RFC string representation."""
         if isinstance(source_oc, str):
-            return r[str | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue].ok(
+            return r[
+                str | p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue
+            ].ok(
                 source_oc,
             )
 
-        if not isinstance(source_oc, m.Ldif.SchemaObjectClass):
+        if not isinstance(source_oc, p.Ldif.SchemaObjectClassProtocol):
             if isinstance(source_oc, dict):
-                return r[str | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue].ok(
+                return r[
+                    str | p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue
+                ].ok(
                     source_oc,
                 )
             msg = f"Expected SchemaObjectClass | str | dict, got {type(source_oc)}"
             raise TypeError(msg)
 
         source_quirk = self._resolve_quirk(source)
-        # Type narrowing: source_quirk is FlextLdifServersBase, source_oc is m.Ldif.SchemaObjectClass
+        # Type narrowing: source_quirk is FlextLdifServersBase, source_oc is p.Ldif.SchemaObjectClassProtocol
         write_result = FlextLdifConversion._try_write_schema_item(
             source_quirk,
             source_oc,
@@ -1980,7 +2030,9 @@ class FlextLdifConversion(
         # Extract value from result: r.value if r.is_success else None
         write_value = write_result.value if write_result.is_success else None
         if write_value is not None and isinstance(write_value, str):
-            return r[str | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue].ok(
+            return r[
+                str | p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue
+            ].ok(
                 write_value,
             )
         # write_result already has correct type
@@ -1991,7 +2043,7 @@ class FlextLdifConversion(
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
         data: str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]:
+    ) -> r[p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue]:
         """Convert objectClass from source to target quirk via write->parse pipeline.
 
         Pipeline: parse source -> write as string -> parse target
@@ -2005,7 +2057,7 @@ class FlextLdifConversion(
             parsed_oc = parse_result.value if parse_result.is_success else None
             if parsed_oc is None:
                 return r[
-                    m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+                    p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
                 ].fail(
                     u.err(parse_result) or "Failed to parse source objectClass",
                 )
@@ -2013,18 +2065,20 @@ class FlextLdifConversion(
             write_result = self._write_objectclass_to_rfc(source, parsed_oc)
             rfc_value = write_result.value if write_result.is_success else None
             if rfc_value is None:
-                # Type narrowing: write_result is r[str | m.Ldif.SchemaObjectClass | t.MetadataAttributeValue]
-                # which is compatible with return type r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]
+                # Type narrowing: write_result is r[str | p.Ldif.SchemaObjectClassProtocol | t.MetadataAttributeValue]
+                # which is compatible with return type r[p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue]
                 return write_result
             if not isinstance(rfc_value, str):
-                if isinstance(rfc_value, (m.Ldif.SchemaObjectClass, dict)):
+                if isinstance(rfc_value, (p.Ldif.SchemaObjectClassProtocol, dict)):
                     return r[
-                        m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+                        p.Ldif.SchemaObjectClassProtocol
+                        | str
+                        | t.MetadataAttributeValue
                     ].ok(
                         rfc_value,
                     )
                 return r[
-                    m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+                    p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
                 ].fail(
                     f"Expected SchemaObjectClass | str | dict, got {type(rfc_value)}",
                 )
@@ -2034,16 +2088,18 @@ class FlextLdifConversion(
             # Type narrowing: mapper returns r, but u.map expects direct value
             # Handle result manually
             if target_result.is_failure:
-                # Type narrowing: target_result is r[m.Ldif.SchemaObjectClass]
-                # which is compatible with return type r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]
+                # Type narrowing: target_result is r[p.Ldif.SchemaObjectClassProtocol]
+                # which is compatible with return type r[p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue]
                 return target_result
             parsed_value = target_result.value
-            # Type narrowing: write_result is r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]
+            # Type narrowing: write_result is r[p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue]
             # which matches the return type exactly
             return self._write_target_objectclass(target, parsed_value)
 
         except Exception as e:
-            return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].fail(
+            return r[
+                p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+            ].fail(
                 f"ObjectClass conversion failed: {e}",
             )
 
@@ -2051,7 +2107,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         data: str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
         """Parse source objectClass."""
         source_quirk = self._resolve_quirk(source)
 
@@ -2065,11 +2121,11 @@ class FlextLdifConversion(
         if isinstance(data, str):
             parse_method = source_schema.parse_objectclass
             parse_result = parse_method(data)
-            # parse_result already has correct type r[m.Ldif.SchemaObjectClass]
+            # parse_result already has correct type r[p.Ldif.SchemaObjectClassProtocol]
             if parse_result.is_success:
                 oc_domain = parse_result.unwrap()
-                # oc_domain is already m.Ldif.SchemaObjectClass (domain model compatible with facade)
-                return r[m.Ldif.SchemaObjectClass].ok(oc_domain)
+                # oc_domain is already p.Ldif.SchemaObjectClassProtocol (domain model compatible with facade)
+                return r[p.Ldif.SchemaObjectClassProtocol].ok(oc_domain)
             # parse_result already has correct type
             return parse_result
         return r.fail("parse_objectclass requires string data")
@@ -2078,7 +2134,7 @@ class FlextLdifConversion(
         self,
         target: str | FlextLdifServersBase,
         rfc_value: str,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
         """Parse target objectClass from RFC string."""
         target_quirk = self._resolve_quirk(target)
 
@@ -2090,29 +2146,33 @@ class FlextLdifConversion(
 
         parse_method = target_schema.parse_objectclass
         parse_result = parse_method(rfc_value)
-        # parse_result already has correct type r[m.Ldif.SchemaObjectClass]
+        # parse_result already has correct type r[p.Ldif.SchemaObjectClassProtocol]
         if parse_result.is_success:
             oc_domain = parse_result.unwrap()
-            # oc_domain is already m.Ldif.SchemaObjectClass (domain model compatible with facade)
-            return r[m.Ldif.SchemaObjectClass].ok(oc_domain)
+            # oc_domain is already p.Ldif.SchemaObjectClassProtocol (domain model compatible with facade)
+            return r[p.Ldif.SchemaObjectClassProtocol].ok(oc_domain)
         # parse_result already has correct type
         return parse_result
 
     def _write_target_objectclass(
         self,
         target: str | FlextLdifServersBase,
-        parsed_oc: m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue,
-    ) -> r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]:
+        parsed_oc: p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue,
+    ) -> r[p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue]:
         """Write target objectClass to final format."""
         # Type narrowing: write_objectclass requires SchemaObjectClass
-        if not isinstance(parsed_oc, m.Ldif.SchemaObjectClass):
+        if not isinstance(parsed_oc, p.Ldif.SchemaObjectClassProtocol):
             # Return as-is if not SchemaObjectClass - type narrowing for union type
             if isinstance(parsed_oc, str):
-                return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].ok(
+                return r[
+                    p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+                ].ok(
                     parsed_oc,
                 )
             if isinstance(parsed_oc, dict):
-                return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].ok(
+                return r[
+                    p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+                ].ok(
                     parsed_oc,
                 )
             msg = f"Expected SchemaObjectClass | str | dict, got {type(parsed_oc)}"
@@ -2125,7 +2185,9 @@ class FlextLdifConversion(
             schema_quirk = _get_schema_quirk(target_quirk)
         except TypeError:
             # Return as-is if no writer available
-            return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].ok(
+            return r[
+                p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+            ].ok(
                 parsed_oc,
             )
 
@@ -2137,12 +2199,16 @@ class FlextLdifConversion(
         if written_str is not None:
             # Type narrowing: write_objectclass returns str | SchemaObjectClass | MetadataAttributeValue
             # After None check, written_str is guaranteed to be one of these types
-            return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].ok(
+            return r[
+                p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+            ].ok(
                 written_str,
             )
         # Use u.err() for unified error extraction (DSL pattern)
         error_msg = u.err(write_result) or "Failed to write objectClass"
-        return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].fail(
+        return r[
+            p.Ldif.SchemaObjectClassProtocol | str | t.MetadataAttributeValue
+        ].fail(
             error_msg,
         )
 
@@ -2150,12 +2216,12 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        model_list: Sequence[t.ConvertibleModel],
+        model_list: Sequence[t.Ldif.ConvertibleModel],
     ) -> r[
         list[
             m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
+            | p.Ldif.SchemaAttributeProtocol
+            | p.Ldif.SchemaObjectClassProtocol
             | m.Ldif.Acl
         ]
     ]:
@@ -2185,7 +2251,7 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Get source/target format names
-        source_format_raw = u.Ldif.match(
+        source_format_raw = u.match(
             source,
             (str, lambda s: s),
             default=lambda src: u.Ldif.maybe(
@@ -2193,7 +2259,7 @@ class FlextLdifConversion(
                 default="unknown",
             ),
         )
-        target_format_raw = u.Ldif.match(
+        target_format_raw = u.match(
             target,
             (str, lambda t: t),
             default=lambda tgt: u.Ldif.maybe(
@@ -2203,8 +2269,16 @@ class FlextLdifConversion(
         )
         # Type narrowing: match returns object, but we know it's str
         # Type narrowing: source_format_raw and target_format_raw are already str after isinstance checks
-        source_format: str = source_format_raw if isinstance(source_format_raw, str) else str(source_format_raw)
-        target_format: str = target_format_raw if isinstance(target_format_raw, str) else str(target_format_raw)
+        source_format: str = (
+            source_format_raw
+            if isinstance(source_format_raw, str)
+            else str(source_format_raw)
+        )
+        target_format: str = (
+            target_format_raw
+            if isinstance(target_format_raw, str)
+            else str(target_format_raw)
+        )
 
         # Handle empty list case - succeed with empty result
         # No event emission for empty batches (no work done)
@@ -2212,8 +2286,8 @@ class FlextLdifConversion(
             return r[
                 list[
                     m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
+                    | p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | m.Ldif.Acl
                 ]
             ].ok([])
@@ -2225,12 +2299,12 @@ class FlextLdifConversion(
             # Collect converted models (concrete types from convert method)
             converted: list[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ] = []
             errors: list[str] = []
-            error_details: list[m.ErrorDetail] = []
+            error_details: list[m.Ldif.ErrorDetail] = []
 
             for idx, model_item in enumerate(model_list):
                 result = self.convert(source, target, model_item)
@@ -2244,7 +2318,7 @@ class FlextLdifConversion(
                     error_msg = u.err(result) or "Unknown error"
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(
-                        m.ErrorDetail(
+                        m.Ldif.ErrorDetail(
                             item=f"batch_item_{idx}",
                             error=error_msg,
                         ),
@@ -2293,8 +2367,8 @@ class FlextLdifConversion(
                 return r[
                     list[
                         m.Ldif.Entry
-                        | m.Ldif.SchemaAttribute
-                        | m.Ldif.SchemaObjectClass
+                        | p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
                         | m.Ldif.Acl
                     ]
                 ].fail(
@@ -2305,8 +2379,8 @@ class FlextLdifConversion(
             return r[
                 list[
                     m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
+                    | p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | m.Ldif.Acl
                 ]
             ].ok(converted)
@@ -2321,8 +2395,8 @@ class FlextLdifConversion(
             # model_list is already list[ConvertibleModel] compatible
             model_list_typed_exception: list[
                 m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                | p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
                 | m.Ldif.Acl
             ] = model_list if isinstance(model_list, list) else []
             conversion_config = m.Ldif.LdifResults.Events.ConversionEventConfig(
@@ -2334,7 +2408,7 @@ class FlextLdifConversion(
                 items_failed=u.Collection.count(model_list_typed_exception),
                 conversion_duration_ms=duration_ms,
                 error_details=[
-                    m.ErrorDetail(
+                    m.Ldif.ErrorDetail(
                         item="batch_conversion",
                         error=f"Batch conversion failed: {e}",
                     ),
@@ -2349,8 +2423,8 @@ class FlextLdifConversion(
             return r[
                 list[
                     m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
+                    | p.Ldif.SchemaAttributeProtocol
+                    | p.Ldif.SchemaObjectClassProtocol
                     | m.Ldif.Acl
                 ]
             ].fail(
@@ -2410,7 +2484,7 @@ class FlextLdifConversion(
             {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
 
         """
-        support: t.CommonDict.DistributionDict = {
+        support: t.Ldif.CommonDict.DistributionDict = {
             "attribute": 0,
             "objectclass": 0,
             "acl": 0,
@@ -2480,7 +2554,7 @@ class FlextLdifConversion(
                 and callable(getattr(schema_quirk_raw, method))
                 for method in required_methods
             ):
-                # schema_quirk_raw satisfies p.Ldif.Servers.SchemaProtocol via structural typing
+                # schema_quirk_raw satisfies p.Ldif.SchemaQuirkProtocol via structural typing
                 return schema_quirk_raw
             return None
         return None
@@ -2489,8 +2563,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: object,
         test_attr_def: str,
-        support: t.CommonDict.DistributionDict,
-    ) -> t.CommonDict.DistributionDict:
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
         """Check attribute support for schema quirk.
 
         Args:
@@ -2529,8 +2603,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: object,
         test_oc_def: str,
-        support: t.CommonDict.DistributionDict,
-    ) -> t.CommonDict.DistributionDict:
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
         """Check objectClass support for schema quirk.
 
         Args:
@@ -2570,8 +2644,8 @@ class FlextLdifConversion(
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.CommonDict.DistributionDict,
-    ) -> t.CommonDict.DistributionDict:
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
         """Check schema (attribute and objectClass) support."""
         quirk_schema = self._get_schema_quirk_for_support_check(quirk)
         if quirk_schema is None:
@@ -2592,8 +2666,8 @@ class FlextLdifConversion(
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.CommonDict.DistributionDict,
-    ) -> t.CommonDict.DistributionDict:
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
         """Check ACL support."""
         # No fallback - check both attributes explicitly
         acl = getattr(quirk, "acl_quirk", None)
@@ -2610,8 +2684,8 @@ class FlextLdifConversion(
     def _check_entry_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.CommonDict.DistributionDict,
-    ) -> t.CommonDict.DistributionDict:
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
         """Check Entry support."""
         # No fallback - check both attributes explicitly
         entry = getattr(quirk, "entry_quirk", None)

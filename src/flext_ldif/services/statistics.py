@@ -20,7 +20,7 @@ from typing import override
 
 from flext_core import d, r
 
-# Removed: from flext_ldif._models.domain import FlextLdifModelsDomains (use m.Ldif.* instead)
+# Removed: # Import removed - use m.* facade (use m.* instead)
 from flext_ldif._models.results import (
     FlextLdifModelsResults,
     _CategoryPaths,
@@ -149,7 +149,7 @@ class FlextLdifStatistics(
         )
 
         # Access rejected entries directly from categorized dict
-        # u.take() doesn't work correctly with _FlexibleCategories Pydantic models
+        # u.Ldif.take() doesn't work correctly with _FlexibleCategories Pydantic models
         rejected_key = "rejected"
         # Type narrowing: categorized.get returns list[m.Ldif.Entry]
         rejected_entries_raw: list[m.Ldif.Entry] = (
@@ -185,7 +185,7 @@ class FlextLdifStatistics(
         # Build output files paths as _CategoryPaths model
         output_files_model = _CategoryPaths()
         for category in written_counts:
-            # Type narrowing: u.take returns str when default is str
+            # Type narrowing: u.Ldif.take returns str when default is str
             path_str = str(
                 output_dir
                 / u.Ldif.take(output_files, category, default=f"{category}.ldif"),

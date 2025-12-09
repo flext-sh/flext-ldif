@@ -9,9 +9,8 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, cast
 
-from tests import RfcTestHelpers, TestDeduplicationHelpers, s
+from tests import RfcTestHelpers, TestDeduplicationHelpers, m, p, s
 
-from flext_ldif.models import m
 from flext_ldif.servers import FlextLdifServersAd
 
 
@@ -106,7 +105,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         # Validate the parsed attribute output
         attr = result.unwrap()
-        assert isinstance(attr, m.Ldif.SchemaAttribute)
+        assert isinstance(attr, p.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.840.113556.1.4.221", f"OID mismatch: {attr.oid}"
         assert attr.name == "sAMAccountName", f"NAME mismatch: {attr.name}"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15", (
@@ -128,7 +127,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         # Validate the parsed attribute output
         attr = result.unwrap()
-        assert isinstance(attr, m.Ldif.SchemaAttribute)
+        assert isinstance(attr, p.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.3.4", f"OID mismatch: {attr.oid}"
         assert attr.name == "objectGUID", f"NAME mismatch: {attr.name}"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.40", (
@@ -267,7 +266,7 @@ class TestsTestFlextLdifAdQuirks(s):
             "FlextLdifServersAd.Schema",
             server.schema_quirk,
         )
-        attr_model = m.Ldif.SchemaAttribute(
+        attr_model = p.Ldif.SchemaAttribute(
             oid="1.2.840.113556.1.4.221",
             name="sAMAccountName",
             desc="SAM Account Name",
@@ -289,7 +288,7 @@ class TestsTestFlextLdifAdQuirks(s):
             "FlextLdifServersAd.Schema",
             server.schema_quirk,
         )
-        oc_model = m.Ldif.SchemaObjectClass(
+        oc_model = p.Ldif.SchemaObjectClass(
             oid="1.2.840.113556.1.5.9",
             name="user",
             desc="User object",
@@ -321,7 +320,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
 
     def test_parse_acl_with_sddl_prefix(self) -> None:
         """Test ACL parsing with SDDL prefix (O:, G:, D:, S:)."""
@@ -329,7 +328,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "O:BAG:BAD:S:"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
 
     def test_parse_acl_with_base64_value(self) -> None:
         """Test parsing ACL with base64-encoded nTSecurityDescriptor."""
@@ -339,7 +338,7 @@ class TestsTestFlextLdifAdQuirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_model = result.unwrap()
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.raw_acl == acl_line
         assert acl_model.subject is not None
@@ -353,7 +352,7 @@ class TestsTestFlextLdifAdQuirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_model = result.unwrap()
-        assert isinstance(acl_model, m.Ldif.Acl)
+        assert isinstance(acl_model, m.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.subject is not None
         assert acl_model.subject.subject_value == "O:BAG:BAD:S:"
@@ -371,7 +370,7 @@ class TestsTestFlextLdifAdQuirks(s):
         """Test writing ACL to RFC string format."""
         server = FlextLdifServersAd()
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
-        acl_model = m.Ldif.Acl(
+        acl_model = m.Acl(
             name="nTSecurityDescriptor",
             target=m.AclTarget(target_dn="*", attributes=[]),
             subject=m.AclSubject(

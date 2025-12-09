@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
+from flext_ldif.protocols import p
 
 
 class TestOidSchemaIntegration:
@@ -327,7 +327,7 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs in original
         def get_attribute_values_count(
-            entry: m.Ldif.Entry,
+            entry: p.Entry,
             attr_name: str,
         ) -> int:
             attr_values = entry.attributes.attributes.get(attr_name)

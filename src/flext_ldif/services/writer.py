@@ -84,7 +84,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
-        result_raw = u.Ldif.match(
+        result_raw = u.match(
             format_options,
             (type(None), lambda _: m.Ldif.LdifResults.WriteFormatOptions()),
             (type, lambda t: t()),

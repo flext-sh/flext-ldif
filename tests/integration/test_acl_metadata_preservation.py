@@ -47,7 +47,7 @@ cn: test
 
         # Check BINDMODE in extensions
         # extensions can be DynamicMetadata (Pydantic model) or dict
-        bindmode_key = c.Ldif.MetadataKeys.ACL_BINDMODE
+        bindmode_key = c.MetadataKeys.ACL_BINDMODE
         if isinstance(entry.metadata.extensions, dict):
             bindmode = entry.metadata.extensions.get(bindmode_key)
         else:
@@ -81,7 +81,7 @@ cn: test
 
         # Check DenyGroupOverride in extensions
         deny_override = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+            c.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
         )
         assert deny_override is True, "DenyGroupOverride not preserved"
 
@@ -100,7 +100,7 @@ cn: test
 
         # Check AppendToAll in extensions
         append_to_all = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL,
+            c.MetadataKeys.ACL_APPEND_TO_ALL,
         )
         assert append_to_all is True, "AppendToAll not preserved"
 
@@ -119,7 +119,7 @@ cn: test
 
         # Check BINDIPFILTER in extensions
         bind_ip_filter = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER,
+            c.MetadataKeys.ACL_BIND_IP_FILTER,
         )
         assert bind_ip_filter == "orclipaddress=192.168.1.*", (
             "BINDIPFILTER not preserved"
@@ -140,7 +140,7 @@ cn: test
 
         # Check constraintonaddedobject in extensions
         constrain = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
+            c.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
         assert constrain == "objectclass=person", (
             "constraintonaddedobject not preserved"
@@ -160,30 +160,28 @@ cn: test
         entry = entries[0]
 
         # Verify all extensions present
-        assert (
-            entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_BINDMODE) == "Simple"
-        )
+        assert entry.metadata.extensions.get(c.MetadataKeys.ACL_BINDMODE) == "Simple"
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+                c.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
             )
             is True
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL,
+                c.MetadataKeys.ACL_APPEND_TO_ALL,
             )
             is True
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER,
+                c.MetadataKeys.ACL_BIND_IP_FILTER,
             )
             == "orclipaddress=192.168.1.*"
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
+                c.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
             )
             == "objectclass=person"
         )
@@ -216,7 +214,7 @@ cn: test
 
         # Check targattrfilters in extensions
         targattrfilters = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_TARGETATTR_FILTERS,
+            c.MetadataKeys.ACL_TARGETATTR_FILTERS,
         )
         assert targattrfilters == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)", "targattrfilters not preserved"
 
@@ -235,7 +233,7 @@ cn: test
 
         # Check targetcontrol in extensions
         targetcontrol = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_TARGET_CONTROL,
+            c.MetadataKeys.ACL_TARGET_CONTROL,
         )
         assert targetcontrol == "1.3.6.1.4.1.42.2.27.9.5.2", (
             "targetcontrol not preserved"
@@ -255,7 +253,7 @@ cn: test
         entry = entries[0]
 
         # Check extop in extensions
-        extop = entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_EXTOP)
+        extop = entry.metadata.extensions.get(c.MetadataKeys.ACL_EXTOP)
         assert extop == "1.3.6.1.4.1.26027.1.6.1", "extop not preserved"
 
     def test_oud_bind_ip_preservation(self, api: FlextLdif) -> None:
@@ -273,7 +271,7 @@ cn: test
 
         # Check ip bind rule in extensions
         bind_ip = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_BIND_IP,
+            c.MetadataKeys.ACL_BIND_IP,
         )
         assert bind_ip == "192.168.1.0/24", "bind_ip not preserved"
 
@@ -292,7 +290,7 @@ cn: test
 
         # Check dns bind rule in extensions
         bind_dns = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_BIND_DNS,
+            c.MetadataKeys.ACL_BIND_DNS,
         )
         assert bind_dns == "*.example.com", "bind_dns not preserved"
 
@@ -311,7 +309,7 @@ cn: test
 
         # Check dayofweek bind rule in extensions
         bind_dayofweek = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_BIND_DAYOFWEEK,
+            c.MetadataKeys.ACL_BIND_DAYOFWEEK,
         )
         assert bind_dayofweek == "Mon,Tue,Wed", "bind_dayofweek not preserved"
 
@@ -330,7 +328,7 @@ cn: test
 
         # Check timeofday bind rule in extensions (stored as tuple)
         bind_timeofday = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY,
+            c.MetadataKeys.ACL_BIND_TIMEOFDAY,
         )
         assert bind_timeofday is not None, "bind_timeofday not preserved"
         # Should be tuple (operator, value) or string
@@ -351,7 +349,7 @@ cn: test
 
         # Check authmethod bind rule in extensions
         authmethod = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_AUTHMETHOD,
+            c.MetadataKeys.ACL_AUTHMETHOD,
         )
         assert authmethod == "ssl", "authmethod not preserved"
 
@@ -369,7 +367,7 @@ cn: test
         entry = entries[0]
 
         # Check ssf bind rule in extensions (stored as tuple)
-        ssf = entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_SSF)
+        ssf = entry.metadata.extensions.get(c.MetadataKeys.ACL_SSF)
         assert ssf is not None, "ssf not preserved"
         # Should be tuple (operator, value) or string
         assert isinstance(ssf, (tuple, str))
@@ -390,49 +388,49 @@ cn: test
         # Verify target extensions
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_TARGETATTR_FILTERS,
+                c.MetadataKeys.ACL_TARGETATTR_FILTERS,
             )
             == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_TARGET_CONTROL,
+                c.MetadataKeys.ACL_TARGET_CONTROL,
             )
             == "1.3.6.1.4.1.42.2.27.9.5.2"
         )
         assert (
-            entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_EXTOP)
+            entry.metadata.extensions.get(c.MetadataKeys.ACL_EXTOP)
             == "1.3.6.1.4.1.26027.1.6.1"
         )
 
         # Verify bind rules
         assert (
-            entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_BIND_IP)
+            entry.metadata.extensions.get(c.MetadataKeys.ACL_BIND_IP)
             == "192.168.1.0/24"
         )
         assert (
-            entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_BIND_DNS)
+            entry.metadata.extensions.get(c.MetadataKeys.ACL_BIND_DNS)
             == "*.example.com"
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_BIND_DAYOFWEEK,
+                c.MetadataKeys.ACL_BIND_DAYOFWEEK,
             )
             == "Mon,Tue,Wed"
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY,
+                c.MetadataKeys.ACL_BIND_TIMEOFDAY,
             )
             is not None
         )
         assert (
             entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_AUTHMETHOD,
+                c.MetadataKeys.ACL_AUTHMETHOD,
             )
             == "ssl"
         )
-        assert entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_SSF) is not None
+        assert entry.metadata.extensions.get(c.MetadataKeys.ACL_SSF) is not None
 
 
 class TestAclRoundTripPreservation:
@@ -473,13 +471,13 @@ cn: test
         # Verify metadata preserved
         assert (
             reparsed_entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_BINDMODE,
+                c.MetadataKeys.ACL_BINDMODE,
             )
             == "Simple"
         )
         assert (
             reparsed_entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+                c.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
             )
             is True
         )
@@ -514,13 +512,13 @@ cn: test
         # Verify metadata preserved
         assert (
             reparsed_entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_TARGETATTR_FILTERS,
+                c.MetadataKeys.ACL_TARGETATTR_FILTERS,
             )
             == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
         )
         assert (
             reparsed_entry.metadata.extensions.get(
-                c.Ldif.MetadataKeys.ACL_BIND_IP,
+                c.MetadataKeys.ACL_BIND_IP,
             )
             == "192.168.1.0/24"
         )

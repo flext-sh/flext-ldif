@@ -17,8 +17,6 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests import c, s
 
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-
 
 @pytest.mark.unit
 class TestsFlextLdifQuirksStandardizedConstants(s):

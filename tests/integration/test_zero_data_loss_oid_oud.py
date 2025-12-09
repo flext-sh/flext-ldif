@@ -16,11 +16,12 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif
+from flext_ldif.protocols import p
 from tests import m
 from tests.conftest import FlextLdifFixtures
 
 
-def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
+def _verify_soft_deleted_attributes(entry: p.Entry) -> None:
     """Verify soft-deleted attributes are preserved in removed_attributes."""
     if not entry.metadata:
         return
@@ -211,8 +212,8 @@ class TestZeroDataLossOidOud:
             # Verify no data loss - compare attributes between original and converted
             # Helper function to check for data loss
             def check_no_data_loss(
-                original: m.Ldif.Entry,
-                converted: m.Ldif.Entry,
+                original: p.Entry,
+                converted: p.Entry,
             ) -> tuple[bool, list[str]]:
                 """Check for data loss between original and converted entries."""
                 lost_attrs: list[str] = []
@@ -263,7 +264,7 @@ class TestZeroDataLossOidOud:
         write_oid = api.write(
             oud_entries,
             server_type="oid",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )
@@ -442,7 +443,7 @@ class TestZeroDataLossOidOud:
         write_result = api.write(
             entries,
             server_type="oid",
-            format_options=m.Ldif.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )

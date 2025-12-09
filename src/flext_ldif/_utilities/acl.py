@@ -22,7 +22,7 @@ from flext_ldif.typings import t
 
 # Aliases for simplified usage - after all imports
 # u_core is imported from flext_core for core utilities (normalize, Collection, batch)
-# Use FlextLdifUtilitiesACL directly instead of u.Ldif.ACL to avoid circular import
+# Use FlextLdifUtilitiesACL directly instead of u.ACL to avoid circular import
 f = FlextFunctional  # Pure functional utilities (no circular import)
 # t is imported from flext_ldif.typings (FlextLdifTypes)
 # r is already imported from flext_core
@@ -59,12 +59,12 @@ class FlextLdifUtilitiesACL:
 
         """
         # Start with RFC foundation
-        attrs = list(c.Ldif.AclAttributeRegistry.RFC_FOUNDATION)
+        attrs = list(c.AclAttributeRegistry.RFC_FOUNDATION)
 
         # Add server-specific quirks if server type provided
         if server_type:
             server_key = server_type.lower()
-            server_quirks = c.Ldif.AclAttributeRegistry.SERVER_QUIRKS.get(
+            server_quirks = c.AclAttributeRegistry.SERVER_QUIRKS.get(
                 server_key,
                 [],
             )
@@ -219,9 +219,9 @@ class FlextLdifUtilitiesACL:
         all_bind_rules: list[dict[str, str]] = []
         for bind_type, pattern in u_core.mapper().to_dict(patterns).items():
             matches = re.findall(pattern, content, re.IGNORECASE)
-            all_bind_rules.extend([
-                {"type": bind_type, "value": match} for match in matches
-            ])
+            all_bind_rules.extend(
+                [{"type": bind_type, "value": match} for match in matches]
+            )
         return all_bind_rules
 
     @staticmethod
@@ -1011,10 +1011,12 @@ class FlextLdifUtilitiesACL:
                 target_dn=target_dn,
                 attributes=target_attributes,
             ),
-            subject=m.Ldif.AclSubject.model_validate({
-                "subject_type": subject_type,
-                "subject_value": subject_value,
-            }),
+            subject=m.Ldif.AclSubject.model_validate(
+                {
+                    "subject_type": subject_type,
+                    "subject_value": subject_value,
+                }
+            ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=config.server_type,
             raw_acl=acl_line,
@@ -1584,9 +1586,9 @@ class FlextLdifUtilitiesACL:
         results_typed: list[m.Ldif.Acl] = []
         raw_results = batch_data.get("results")
         if isinstance(raw_results, list):
-            results_typed.extend([
-                item for item in raw_results if isinstance(item, m.Ldif.Acl)
-            ])
+            results_typed.extend(
+                [item for item in raw_results if isinstance(item, m.Ldif.Acl)]
+            )
 
         # Native Python: extract error_count safely
         raw_error_count = batch_data.get("error_count", 0)
@@ -1597,11 +1599,13 @@ class FlextLdifUtilitiesACL:
             raw_errors = batch_data.get("errors")
             errors_typed: list[tuple[int, str]] = []
             if isinstance(raw_errors, list):
-                errors_typed.extend([
-                    cast("tuple[int, str]", err)
-                    for err in raw_errors
-                    if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR
-                ])
+                errors_typed.extend(
+                    [
+                        cast("tuple[int, str]", err)
+                        for err in raw_errors
+                        if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR
+                    ]
+                )
             if errors_typed:
                 error_msgs = FlextLdifUtilitiesACL._format_batch_errors(
                     errors_typed,

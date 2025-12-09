@@ -37,7 +37,7 @@ class ExampleServerMigration:
     """
 
     @staticmethod
-    def parallel_server_migration() -> r[m.Ldif.EntryResult]:
+    def parallel_server_migration() -> r[m.EntryResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
 
@@ -87,9 +87,9 @@ member: cn=OUD User,ou=People,dc=example,dc=com
             output_dir=output_dir,
             source_server="oid",  # Source server with specific quirks
             target_server="oud",  # Target server with different quirks
-            options=m.Ldif.MigrateOptions(
+            options=m.MigrateOptions(
                 # Enable parallel processing for large datasets
-                write_options=m.Ldif.WriteFormatOptions(
+                write_options=m.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -171,13 +171,15 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
                 f"Migration to RFC failed: {migration_result.error}",
             )
 
-        return r.ok({
-            "detected_server": detected_server,
-            "confidence": detection.confidence,
-            "patterns_found": detection.patterns_found,
-            "total_entries": len(entries),
-            "migration_success": True,
-        })
+        return r.ok(
+            {
+                "detected_server": detected_server,
+                "confidence": detection.confidence,
+                "patterns_found": detection.patterns_found,
+                "total_entries": len(entries),
+                "migration_success": True,
+            }
+        )
 
     @staticmethod
     def batch_server_comparison() -> r[dict[str, object]]:
@@ -245,14 +247,16 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         )
         total_servers = len(servers)
 
-        return r.ok({
-            "servers_tested": total_servers,
-            "successful_parses": successful_parses,
-            "success_rate": successful_parses / total_servers
-            if total_servers > 0
-            else 0,
-            "server_results": comparison_results,
-        })
+        return r.ok(
+            {
+                "servers_tested": total_servers,
+                "successful_parses": successful_parses,
+                "success_rate": successful_parses / total_servers
+                if total_servers > 0
+                else 0,
+                "server_results": comparison_results,
+            }
+        )
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
@@ -265,7 +269,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
             """Setup directory."""
             dir_path.mkdir(exist_ok=True, parents=True)
 
-        _ = u.Ldif.process(
+        _ = u.process(
             [source_dir, intermediate_dir, final_dir],
             setup_dir,
             on_error="skip",
@@ -305,7 +309,7 @@ orclguid: user{i}guid456
 aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
 
-        batch_result = u.Ldif.process(
+        batch_result = u.process(
             list(range(20)),
             create_entry_data,
             on_error="skip",
@@ -321,7 +325,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             i, entry = item
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
 
-        _ = u.Ldif.process(
+        _ = u.process(
             list(enumerate(source_data)),
             write_file,
             on_error="skip",
@@ -366,14 +370,16 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
 
         # Step 2: Migrate OID → Intermediate (OUD format)
-        source_server_typed = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source_server)
+        source_server_typed = cast(
+            "c.Ldif.LiteralTypes.ServerTypeLiteral", source_server
+        )
         intermediate_migration = api.migrate(
             input_dir=source_dir,
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.WriteFormatOptions(
+            options=m.MigrateOptions(
+                write_options=m.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),

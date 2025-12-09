@@ -9,27 +9,20 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Callable
 from enum import IntEnum
-from typing import TypeVar
 
 import pytest
 from flext_core import FlextResult
 
-# tf and TypedDicts are available from conftest.py (pytest auto-imports)
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests import c, s, tf
+from tests import T, c, p, s, tf
 
-# Alias functions for backward compatibility
 extract_oid = FlextLdifUtilitiesParser.extract_oid
 extract_attributes = FlextLdifUtilitiesSchema.extract_attributes_from_lines
 extract_objectclasses = FlextLdifUtilitiesSchema.extract_objectclasses_from_lines
-
-# Type variables for generic validators
-T = TypeVar("T")
 
 
 # Test scenario enums
@@ -115,7 +108,7 @@ class SchemaValidator:
     @staticmethod
     def validate_oid_preservation(
         original_def: str,
-        parsed_model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        parsed_model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> None:
         """Validate OID is preserved in parsed model."""
         original_oid = extract_oid(original_def)
@@ -160,8 +153,8 @@ class SchemaValidator:
 
     @staticmethod
     def validate_roundtrip_preservation(
-        original_model: m.Ldif.SchemaAttribute,
-        final_model: m.Ldif.SchemaAttribute,
+        original_model: p.Ldif.SchemaAttribute,
+        final_model: p.Ldif.SchemaAttribute,
         attributes_to_check: list[str],
     ) -> None:
         """Validate that specified attributes are preserved in roundtrip."""
@@ -252,7 +245,7 @@ class TestsFlextLdifOperationalSchemaAttributeParsing(s):
         result = oid_server.schema_quirk.parse(attr_def)
         parsed = SchemaValidator.validate_parse_result(
             result,
-            m.Ldif.SchemaAttribute,
+            p.Ldif.SchemaAttribute,
             f"attribute[{attr_index}]",
         )
 
@@ -293,7 +286,7 @@ class TestOperationalSchemaObjectClassParsing:
         result = oid_server.schema_quirk.parse(oc_def)
         SchemaValidator.validate_parse_result(
             result,
-            m.Ldif.SchemaObjectClass,
+            p.Ldif.SchemaObjectClass,
             f"objectClass[{oc_index}]",
         )
 
@@ -342,7 +335,7 @@ class TestOperationalServerConversion:
                 parse_result = oid_server.schema_quirk.parse(attr_def)
                 parsed_model = SchemaValidator.validate_parse_result(
                     parse_result,
-                    m.Ldif.SchemaAttribute,
+                    p.Ldif.SchemaAttribute,
                     f"attribute[{i}]",
                 )
 
@@ -353,7 +346,7 @@ class TestOperationalServerConversion:
                 )
                 converted_model = SchemaValidator.validate_conversion_result(
                     conv_result,
-                    m.Ldif.SchemaAttribute,
+                    p.Ldif.SchemaAttribute,
                     f"conversion[{i}]",
                 )
 
@@ -398,7 +391,7 @@ class TestOperationalServerRoundtrip:
         parse_result = oid_server.schema_quirk.parse(original_attr)
         original_model = SchemaValidator.validate_parse_result(
             parse_result,
-            m.Ldif.SchemaAttribute,
+            p.Ldif.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] original",
         )
 
@@ -410,7 +403,7 @@ class TestOperationalServerRoundtrip:
         )
         forward_model = SchemaValidator.validate_conversion_result(
             forward_result,
-            m.Ldif.SchemaAttribute,
+            p.Ldif.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] forward",
         )
 
@@ -422,14 +415,14 @@ class TestOperationalServerRoundtrip:
         )
         final_model = SchemaValidator.validate_conversion_result(
             backward_result,
-            m.Ldif.SchemaAttribute,
+            p.Ldif.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] backward",
         )
 
         # Validate roundtrip preservation
         # Type narrowing: original_model and final_model are guaranteed to be SchemaAttribute
-        assert isinstance(original_model, m.Ldif.SchemaAttribute)
-        assert isinstance(final_model, m.Ldif.SchemaAttribute)
+        assert isinstance(original_model, p.Ldif.SchemaAttribute)
+        assert isinstance(final_model, p.Ldif.SchemaAttribute)
         SchemaValidator.validate_roundtrip_preservation(
             original_model,
             final_model,

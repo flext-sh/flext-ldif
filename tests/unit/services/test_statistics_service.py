@@ -14,11 +14,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif._models.results import _FlexibleCategories
+from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
 from tests import c, m, s
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 class TestsTestFlextLdifStatistics(s):
@@ -39,14 +38,14 @@ class TestsTestFlextLdifStatistics(s):
         @staticmethod
         def create_entry_from_dict(
             entry_dict: dict[str, object],
-        ) -> m.Ldif.Entry:
+        ) -> p.Entry:
             """Create Entry model from dictionary for testing.
 
             Args:
                 entry_dict: Dictionary with 'dn' and optionally 'attributes' keys
 
             Returns:
-                m.Ldif.Entry instance
+                p.Entry instance
 
             """
             dn = str(entry_dict.get("dn", ""))
@@ -104,7 +103,7 @@ class TestsTestFlextLdifStatistics(s):
             for category, entries_value in categorized_dict.items():
                 if not isinstance(entries_value, list):
                     continue
-                entries: list[m.Ldif.Entry] = []
+                entries: list[p.Entry] = []
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
                         entry_obj: dict[str, object] = dict(entry_value)
@@ -621,18 +620,24 @@ class TestsTestFlextLdifStatistics(s):
         def test_calculate_for_entries_with_objectclasses(self) -> None:
             """Test calculate_for_entries counts objectclass distribution."""
             entries = [
-                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                    "dn": "cn=user1,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person", "inetOrgPerson"]},
-                }),
-                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                    "dn": "cn=user2,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"]},
-                }),
-                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                    "dn": "cn=group1,dc=example,dc=com",
-                    "attributes": {"objectClass": ["groupOfNames"]},
-                }),
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                    {
+                        "dn": "cn=user1,dc=example,dc=com",
+                        "attributes": {"objectClass": ["person", "inetOrgPerson"]},
+                    }
+                ),
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                    {
+                        "dn": "cn=user2,dc=example,dc=com",
+                        "attributes": {"objectClass": ["person"]},
+                    }
+                ),
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                    {
+                        "dn": "cn=group1,dc=example,dc=com",
+                        "attributes": {"objectClass": ["groupOfNames"]},
+                    }
+                ),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
             self.assert_success(result)
@@ -644,15 +649,17 @@ class TestsTestFlextLdifStatistics(s):
 
         def test_calculate_for_entries_with_server_type(self) -> None:
             """Test calculate_for_entries tracks server_type from metadata."""
-            entry1 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                "dn": "cn=entry1,dc=example,dc=com",
-                "attributes": {"objectClass": ["top"]},
-            })
+            entry1 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                {
+                    "dn": "cn=entry1,dc=example,dc=com",
+                    "attributes": {"objectClass": ["top"]},
+                }
+            )
             if entry1.metadata:
                 new_extensions = (
                     entry1.metadata.extensions.model_copy(update={"server_type": "oid"})
                     if entry1.metadata.extensions
-                    else m.DynamicMetadata.model_validate({"server_type": "oid"})
+                    else m.Ldif.DynamicMetadata.model_validate({"server_type": "oid"})
                 )
                 entry1 = entry1.model_copy(
                     update={
@@ -661,15 +668,17 @@ class TestsTestFlextLdifStatistics(s):
                         ),
                     },
                 )
-            entry2 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                "dn": "cn=entry2,dc=example,dc=com",
-                "attributes": {"objectClass": ["top"]},
-            })
+            entry2 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                {
+                    "dn": "cn=entry2,dc=example,dc=com",
+                    "attributes": {"objectClass": ["top"]},
+                }
+            )
             if entry2.metadata:
                 new_extensions = (
                     entry2.metadata.extensions.model_copy(update={"server_type": "oud"})
                     if entry2.metadata.extensions
-                    else m.DynamicMetadata.model_validate({"server_type": "oud"})
+                    else m.Ldif.DynamicMetadata.model_validate({"server_type": "oud"})
                 )
                 entry2 = entry2.model_copy(
                     update={
@@ -678,15 +687,17 @@ class TestsTestFlextLdifStatistics(s):
                         ),
                     },
                 )
-            entry3 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                "dn": "cn=entry3,dc=example,dc=com",
-                "attributes": {"objectClass": ["top"]},
-            })
+            entry3 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                {
+                    "dn": "cn=entry3,dc=example,dc=com",
+                    "attributes": {"objectClass": ["top"]},
+                }
+            )
             if entry3.metadata:
                 new_extensions = (
                     entry3.metadata.extensions.model_copy(update={"server_type": "oid"})
                     if entry3.metadata.extensions
-                    else m.DynamicMetadata.model_validate({"server_type": "oid"})
+                    else m.Ldif.DynamicMetadata.model_validate({"server_type": "oid"})
                 )
                 entry3 = entry3.model_copy(
                     update={
@@ -696,11 +707,13 @@ class TestsTestFlextLdifStatistics(s):
                     },
                 )
 
-            result = FlextLdifStatistics().calculate_for_entries([
-                entry1,
-                entry2,
-                entry3,
-            ])
+            result = FlextLdifStatistics().calculate_for_entries(
+                [
+                    entry1,
+                    entry2,
+                    entry3,
+                ]
+            )
             self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 3
@@ -710,14 +723,18 @@ class TestsTestFlextLdifStatistics(s):
         def test_calculate_for_entries_without_metadata(self) -> None:
             """Test calculate_for_entries handles entries without metadata."""
             entries = [
-                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                    "dn": "cn=entry1,dc=example,dc=com",
-                    "attributes": {"objectClass": ["top"]},
-                }),
-                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
-                    "dn": "cn=entry2,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"]},
-                }),
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                    {
+                        "dn": "cn=entry1,dc=example,dc=com",
+                        "attributes": {"objectClass": ["top"]},
+                    }
+                ),
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                    {
+                        "dn": "cn=entry2,dc=example,dc=com",
+                        "attributes": {"objectClass": ["person"]},
+                    }
+                ),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
             self.assert_success(result)

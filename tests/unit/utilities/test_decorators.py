@@ -11,6 +11,7 @@ from flext_core import FlextResult
 from tests import m, s
 
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
+from flext_ldif.protocols import p
 
 
 class MockSchemaQuirk:
@@ -58,9 +59,9 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
     def test_get_server_type_from_class_entry(self) -> None:
         """Test _get_server_type_from_class with Entry model."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
+        entry = p.Entry(
+            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         server_type = FlextLdifUtilitiesDecorators._get_server_type_from_class(entry)
@@ -70,9 +71,9 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
     def test_attach_metadata_if_present_with_entry(self) -> None:
         """Test _attach_metadata_if_present attaches metadata to Entry."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
+        entry = p.Entry(
+            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         # Entry has metadata by default (created automatically)
@@ -91,7 +92,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
     def test_attach_metadata_if_present_with_schema_attribute(self) -> None:
         """Test _attach_metadata_if_present attaches metadata to SchemaAttribute."""
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4.5",
             name="testAttr",
         )
@@ -110,7 +111,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
     def test_attach_metadata_if_present_with_schema_objectclass(self) -> None:
         """Test _attach_metadata_if_present attaches metadata to SchemaObjectClass."""
-        oc = m.Ldif.SchemaObjectClass(
+        oc = p.Ldif.SchemaObjectClass(
             oid="1.2.3.4.5",
             name="testOC",
         )
@@ -158,8 +159,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
-                attr = m.Ldif.SchemaAttribute(
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+                attr = p.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
                 )
@@ -181,7 +182,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 return FlextResult.fail("Parse failed")
 
         quirk = TestQuirk()
@@ -199,10 +200,10 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
                 self,
                 dn: str,
                 attrs: dict[str, list[str]],
-            ) -> FlextResult[m.Ldif.Entry]:
-                entry = m.Ldif.Entry(
-                    dn=m.Ldif.DistinguishedName(value=dn),
-                    attributes=m.Ldif.LdifAttributes.create(attrs).unwrap(),
+            ) -> FlextResult[p.Entry]:
+                entry = p.Entry(
+                    dn=m.DistinguishedName(value=dn),
+                    attributes=m.LdifAttributes.create(attrs).unwrap(),
                 )
                 return FlextResult.ok(entry)
 
@@ -237,11 +238,11 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.attach_write_metadata("test_quirk")
-            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
                 return FlextResult.ok("( 1.2.3.4.5 NAME 'testAttr' )")
 
         quirk = TestQuirk()
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4.5",
             name="testAttr",
         )
@@ -258,8 +259,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
-                attr = m.Ldif.SchemaAttribute(
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+                attr = p.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
                 )
@@ -279,7 +280,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 msg = "Test error"
                 raise ValueError(msg)
 
@@ -295,11 +296,11 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
                 return FlextResult.ok("( 1.2.3.4.5 NAME 'testAttr' )")
 
         quirk = TestQuirk()
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4.5",
             name="testAttr",
         )
@@ -313,12 +314,12 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
                 msg = "Test error"
                 raise ValueError(msg)
 
         quirk = TestQuirk()
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4.5",
             name="testAttr",
         )
@@ -336,9 +337,9 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 """Test parse method."""
-                attr = m.Ldif.SchemaAttribute(
+                attr = p.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
                 )
@@ -356,9 +357,9 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 """Test parse method."""
-                attr = m.Ldif.SchemaAttribute(
+                attr = p.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
                 )
@@ -371,9 +372,9 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
     # Edge cases
     def test_attach_metadata_if_present_with_none_server_type(self) -> None:
         """Test _attach_metadata_if_present handles None server_type."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.create({"cn": ["test"]}).unwrap(),
+        entry = p.Entry(
+            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.LdifAttributes.create({"cn": ["test"]}).unwrap(),
         )
 
         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
@@ -393,8 +394,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.attach_parse_metadata("oud")
-            def parse_acl(self, acl_str: str) -> FlextResult[m.Ldif.Acl]:
-                acl = m.Ldif.Acl(
+            def parse_acl(self, acl_str: str) -> FlextResult[m.Acl]:
+                acl = m.Acl(
                     raw_acl=acl_str,
                 )
                 return FlextResult.ok(acl)
@@ -418,7 +419,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[m.Ldif.SchemaAttribute]:
+            ) -> FlextResult[p.Ldif.SchemaAttribute]:
                 msg = "User cancelled"
                 raise KeyboardInterrupt(msg)
 
@@ -433,12 +434,12 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
                 msg = "Invalid type"
                 raise TypeError(msg)
 
         quirk = TestQuirk()
-        attr = m.Ldif.SchemaAttribute(
+        attr = p.Ldif.SchemaAttribute(
             oid="1.2.3.4.5",
             name="testAttr",
         )

@@ -19,16 +19,15 @@ from typing import Final
 
 import pytest
 
-from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests import tf, tm
+from tests import m, p, tf, tm
 
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
 def create_test_entry(
     dn: str,
     attributes: dict[str, str | list[str]],
-) -> m.Ldif.Entry:
+) -> p.Entry:
     """Create test entry using test fixtures."""
     # Convert attributes dict to kwargs format for tf.create_entry
     attrs_kwargs: dict[str, str | list[str]] = {}

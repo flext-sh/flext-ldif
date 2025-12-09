@@ -19,17 +19,12 @@ import re
 from pathlib import Path
 from typing import Protocol, override
 
-# Removed: from flext_ldif.utilities import u (prohibited in services/)
-# Use FlextLdifUtilitiesServer helpers or flext-core FlextUtilities
 from flext_core import r
 
 from flext_ldif._models.results import (
     FlextLdifModelsResults,
     _ConfigSettings,
 )
-
-# Note: _DynamicCounts is accessed via facade (m.Ldif.LdifResults.DynamicCounts)
-# to maintain architecture layering
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
@@ -78,7 +73,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
     5. Return RFC if detection confidence is below threshold
 
     DN Handling Integration:
-    - Returns detected server type compatible with u.DN operations
+    - Returns detected server type compatible with u.Ldif.DN operations
     - Detected server type can be used for server-specific DN normalization/validation
     - Use result with FlextLdifUtilities for RFC 4514 compliant DN processing
     - Supports migration workflows via conversion matrix with detected server type

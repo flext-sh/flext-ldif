@@ -8,7 +8,7 @@ tests and DRY helper patterns.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 
@@ -230,12 +230,9 @@ class TestsFlextLdifSyntaxModel(s):
         """Test creating Syntax with quirk metadata."""
         metadata = m.Ldif.QuirkMetadata(
             quirk_type="oid",
-            extensions=cast(
-                "m.DynamicMetadata",
-                {
-                    "priority": 50,
-                    "description": "OID-specific syntax handling",
-                },
+            extensions=m.Ldif.DynamicMetadata(
+                priority=50,
+                description="OID-specific syntax handling",
             ),
         )
         syntax = m.Syntax(

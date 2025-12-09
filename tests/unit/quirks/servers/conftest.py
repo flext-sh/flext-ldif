@@ -7,17 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests import c
+from tests import c, m, p, t
 from tests.conftest import FlextLdifFixtures
 
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
-    FlextLdifProtocols,
     FlextLdifWriter,
 )
-from flext_ldif.constants import c as lib_c
-from flext_ldif.models import m
 from flext_ldif.servers import (
     FlextLdifServersOid,
     FlextLdifServersOud,
@@ -26,7 +23,6 @@ from flext_ldif.servers import (
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.typings import t
 
 
 @pytest.fixture
@@ -73,7 +69,7 @@ def rfc_quirk() -> FlextLdifServersBase:
 @pytest.fixture
 def rfc_schema_quirk(
     rfc_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+) -> p.Quirks.SchemaProtocol:
     """Provides RFC Schema quirk instance for tests."""
     return rfc_quirk.schema_quirk
 
@@ -81,21 +77,21 @@ def rfc_schema_quirk(
 @pytest.fixture
 def rfc_entry_quirk(
     rfc_quirk: FlextLdifServersBase,
-) -> t.Ldif.EntryQuirk:
+) -> t.EntryQuirk:
     """Provides RFC Entry quirk instance for tests."""
     return rfc_quirk.entry_quirk
 
 
 @pytest.fixture
-def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> t.Ldif.AclQuirk:
+def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> t.AclQuirk:
     """Provides RFC ACL quirk instance for tests."""
     return rfc_quirk.acl_quirk
 
 
 @pytest.fixture
-def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
+def sample_schema_attribute() -> p.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return m.Ldif.SchemaAttribute(
+    return p.Ldif.SchemaAttribute(
         oid=c.RFC.ATTR_OID_CN,
         name=c.RFC.ATTR_NAME_CN,
         desc=None,
@@ -115,9 +111,9 @@ def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
 
 
 @pytest.fixture
-def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
+def sample_schema_objectclass() -> p.Ldif.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return m.Ldif.SchemaObjectClass(
+    return p.Ldif.SchemaObjectClass(
         oid=c.RFC.OC_OID_PERSON,
         name=c.RFC.OC_NAME_PERSON,
         desc=None,
@@ -126,20 +122,20 @@ def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
 
 
 @pytest.fixture
-def sample_entry() -> m.Ldif.Entry:
+def sample_entry() -> p.Entry:
     """Provides a sample Entry for tests."""
-    result = m.Ldif.Entry.create(
+    result = p.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
-            lib_c.Ldif.DictKeys.OBJECTCLASS: [
+            c.DictKeys.OBJECTCLASS: [
                 c.General.OC_NAME_PERSON,
             ],
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
     )
     entry_domain = result.unwrap()
-    # Create new instance using m.Ldif.Entry to ensure correct type
-    return m.Ldif.Entry(
+    # Create new instance using p.Entry to ensure correct type
+    return p.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,
@@ -147,9 +143,9 @@ def sample_entry() -> m.Ldif.Entry:
 
 
 @pytest.fixture
-def sample_acl() -> m.Ldif.Acl:
+def sample_acl() -> m.Acl:
     """Provides a sample Acl for tests."""
-    return m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
+    return m.Acl(raw_acl="test: acl", server_type="rfc")
 
 
 @pytest.fixture
@@ -175,9 +171,9 @@ def sample_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_write_options() -> m.Ldif.WriteFormatOptions:
+def sample_write_options() -> m.WriteFormatOptions:
     """Provides sample WriteFormatOptions for tests."""
-    return m.Ldif.WriteFormatOptions()
+    return m.WriteFormatOptions()
 
 
 class WriteOptionsWithAllowedOids:
@@ -189,7 +185,7 @@ class WriteOptionsWithAllowedOids:
 
     def __init__(self) -> None:
         """Initialize with real WriteFormatOptions and allowed_schema_oids."""
-        self._options = m.Ldif.WriteFormatOptions()
+        self._options = m.WriteFormatOptions()
         self.allowed_schema_oids = frozenset(["1.2.3.4"])
 
     def __getattr__(self, name: str) -> object:
@@ -228,23 +224,23 @@ invalidAttribute: value without proper formatting
 
 
 @pytest.fixture
-def sample_entry_with_metadata() -> m.Ldif.Entry:
+def sample_entry_with_metadata() -> p.Entry:
     """Provides a sample Entry with metadata for tests."""
-    result = m.Ldif.Entry.create(
+    result = p.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
-            lib_c.Ldif.DictKeys.OBJECTCLASS: [
+            c.DictKeys.OBJECTCLASS: [
                 c.General.OC_NAME_PERSON,
             ],
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
         entry_metadata=m.EntryMetadata(
-            write_options=m.Ldif.WriteFormatOptions(),
+            write_options=m.WriteFormatOptions(),
         ),
     )
     entry_domain = result.unwrap()
-    # Create new instance using m.Ldif.Entry to ensure correct type
-    return m.Ldif.Entry(
+    # Create new instance using p.Entry to ensure correct type
+    return p.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,
@@ -273,7 +269,7 @@ def oud_quirk() -> FlextLdifServersBase:
 @pytest.fixture
 def oid_schema_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+) -> p.Quirks.SchemaProtocol:
     """Provides OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
@@ -281,7 +277,7 @@ def oid_schema_quirk(
 @pytest.fixture
 def oid_acl_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> t.Ldif.AclQuirk:
+) -> t.AclQuirk:
     """Provides OID ACL quirk instance for tests."""
     return oid_quirk.acl_quirk
 
@@ -289,7 +285,7 @@ def oid_acl_quirk(
 @pytest.fixture
 def oid_entry_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> t.Ldif.EntryQuirk:
+) -> t.EntryQuirk:
     """Provides OID Entry quirk instance for tests."""
     return oid_quirk.entry_quirk
 
@@ -307,7 +303,7 @@ def oid_fixtures() -> object:
 @pytest.fixture
 def oud_schema_quirk(
     oud_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+) -> p.Quirks.SchemaProtocol:
     """Provides OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 

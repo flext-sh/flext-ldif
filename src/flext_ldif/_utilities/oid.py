@@ -9,14 +9,13 @@ from __future__ import annotations
 import operator
 import re
 
-# Use flext-core utilities directly to avoid circular dependency
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
-from flext_ldif.models import m
+from flext_ldif._models.domain import FlextLdifModelsDomains
 
-# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
-# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
-# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
+# REMOVED: Type aliases redundantes - use m.* diretamente (já importado com runtime alias)
+# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use p.Ldif.SchemaAttributeProtocol directly
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use p.Ldif.SchemaObjectClassProtocol directly
 
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
@@ -76,7 +75,8 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def extract_from_schema_object(
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str | None:
         """Extract OID from schema object metadata or model.
 

@@ -14,10 +14,8 @@ from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
 )
-from flext_ldif.constants import c as lib_c
-from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import c
+from tests import c, m, p
 
 
 @pytest.fixture(autouse=True)
@@ -56,9 +54,9 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
 
 
 @pytest.fixture
-def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
+def sample_schema_attribute() -> p.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return m.Ldif.SchemaAttribute(
+    return p.Ldif.SchemaAttribute(
         oid=c.RFC.ATTR_OID_CN,
         name=c.RFC.ATTR_NAME_CN,
         desc=None,
@@ -78,9 +76,9 @@ def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
 
 
 @pytest.fixture
-def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
+def sample_schema_objectclass() -> p.Ldif.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return m.Ldif.SchemaObjectClass(
+    return p.Ldif.SchemaObjectClass(
         oid=c.RFC.OC_OID_PERSON,
         name=c.RFC.OC_NAME_PERSON,
         desc=None,
@@ -89,9 +87,9 @@ def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
 
 
 @pytest.fixture
-def sample_acl() -> m.Ldif.Acl:
+def sample_acl() -> m.Acl:
     """Provides a sample Acl for tests."""
-    return m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
+    return m.Acl(raw_acl="test: acl", server_type="rfc")
 
 
 @pytest.fixture
@@ -107,34 +105,34 @@ def real_writer_service() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def sample_entry() -> m.Ldif.Entry:
+def sample_entry() -> p.Entry:
     """Provides a sample Entry for RFC tests."""
-    result = m.Ldif.Entry.create(
+    result = p.Entry.create(
         dn="cn=Test User,dc=example,dc=com",
         attributes={
             "cn": ["Test User"],
             "sn": ["User"],
-            lib_c.Ldif.DictKeys.OBJECTCLASS: [
+            c.DictKeys.OBJECTCLASS: [
                 "person",
                 "organizationalPerson",
             ],
             "mail": ["test@example.com"],
         },
     )
-    return cast("m.Ldif.Entry", result.unwrap())
+    return cast("p.Entry", result.unwrap())
 
 
 @pytest.fixture
 def sample_entries(
-    sample_entry: m.Ldif.Entry,
-) -> list[m.Ldif.Entry]:
+    sample_entry: p.Entry,
+) -> list[p.Entry]:
     """Provides multiple sample entries for RFC tests."""
-    entry2_result = m.Ldif.Entry.create(
+    entry2_result = p.Entry.create(
         dn="cn=Another User,dc=example,dc=com",
         attributes={
             "cn": ["Another User"],
             "sn": ["User"],
-            lib_c.Ldif.DictKeys.OBJECTCLASS: ["person"],
+            c.DictKeys.OBJECTCLASS: ["person"],
         },
     )
-    return [sample_entry, cast("m.Ldif.Entry", entry2_result.unwrap())]
+    return [sample_entry, cast("p.Entry", entry2_result.unwrap())]

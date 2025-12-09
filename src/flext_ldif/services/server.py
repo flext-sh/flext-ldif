@@ -8,14 +8,13 @@ from flext_core import FlextLogger, r
 
 import flext_ldif.servers as servers_package
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.protocols import FlextLdifProtocols as p
+from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
-# Local type alias for quirks dict using structural typing
-# Use object type with comments for protocol types
+
 type _QuirksDict = dict[
     str,
     object | None,
@@ -368,7 +367,7 @@ class FlextLdifServer:
         }
         return r[_QuirksDict].ok(quirks_dict)
 
-    def schema(self, server_type: str) -> p.Ldif.Quirks.SchemaProtocol | None:
+    def schema(self, server_type: str) -> p.Ldif.SchemaQuirkProtocol | None:
         """Get schema quirk for a server type.
 
         Args:
@@ -385,11 +384,11 @@ class FlextLdifServer:
         if quirk_raw is None:
             return None
         # Verify quirk_raw satisfies SchemaProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.Quirks.SchemaProtocol):
+        if isinstance(quirk_raw, p.Ldif.SchemaQuirkProtocol):
             return quirk_raw
         return None
 
-    def acl(self, server_type: str) -> p.Ldif.Quirks.AclProtocol | None:
+    def acl(self, server_type: str) -> p.Ldif.AclProtocol | None:
         """Get ACL quirk for a server type.
 
         Args:
@@ -406,11 +405,11 @@ class FlextLdifServer:
         if quirk_raw is None:
             return None
         # Verify quirk_raw satisfies AclProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.Quirks.AclProtocol):
+        if isinstance(quirk_raw, p.Ldif.AclProtocol):
             return quirk_raw
         return None
 
-    def entry(self, server_type: str) -> p.Ldif.Quirks.EntryProtocol | None:
+    def entry(self, server_type: str) -> p.Ldif.EntryProtocol | None:
         """Get entry quirk for a server type.
 
         Args:
@@ -427,7 +426,7 @@ class FlextLdifServer:
         if quirk_raw is None:
             return None
         # Verify quirk_raw satisfies EntryProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.Quirks.EntryProtocol):
+        if isinstance(quirk_raw, p.Ldif.EntryProtocol):
             return quirk_raw
         return None
 

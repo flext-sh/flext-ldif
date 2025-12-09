@@ -10,6 +10,7 @@ from typing import Any
 from flext_core import FlextResult, u
 
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from tests import GenericFieldsDict
 
 
@@ -59,7 +60,7 @@ class TestValidators:
     Validation = u
 
     @staticmethod
-    def validate_ldif_entry(entry: m.Ldif.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: p.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object.
 
         Args:
@@ -72,7 +73,7 @@ class TestValidators:
         dn_value = entry.dn.value if entry.dn is not None else ""
         # entry.attributes is LdifAttributes, need to access .attributes dict
         if entry.attributes is not None:
-            if isinstance(entry.attributes, m.Ldif.LdifAttributes):
+            if isinstance(entry.attributes, m.LdifAttributes):
                 attributes_dict: dict[str, list[str]] = entry.attributes.attributes
             else:
                 attributes_dict = {}

@@ -11,10 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
-from flext_ldif.models import m
-from flext_ldif.utilities import FlextLdifUtilities
+from tests import m, s, u
 
 
 class TestsTestFlextLdifUtilitiesOid(s):
@@ -119,13 +116,13 @@ class TestsTestFlextLdifUtilitiesOid(s):
         dict[
             str,
             tuple[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+                m.SchemaAttribute | m.SchemaObjectClass,
                 str,
             ],
         ]
     ] = {
         ExtractOidScenario.FROM_ORIGINAL_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.16.840.1.113894.1.1.1",
                 name="orclGUID",
                 metadata=m.Ldif.QuirkMetadata(
@@ -138,14 +135,14 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.16.840.1.113894.1.1.1",
         ),
         ExtractOidScenario.FALLBACK_TO_MODEL_OID: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
             "2.5.4.3",
         ),
         ExtractOidScenario.FROM_OBJECTCLASS: (
-            m.Ldif.SchemaObjectClass(
+            m.SchemaObjectClass(
                 oid="2.16.840.1.113894.1.1.5",
                 name="orcldASObject",
                 metadata=m.Ldif.QuirkMetadata(
@@ -158,7 +155,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.16.840.1.113894.1.1.5",
         ),
         ExtractOidScenario.WHITESPACE_IN_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.6.0",
                 name="top",
                 metadata=m.Ldif.QuirkMetadata(
@@ -171,7 +168,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.6.0",
         ),
         ExtractOidScenario.NON_STRING_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -184,7 +181,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.DICT_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -197,7 +194,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.NONE_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -210,7 +207,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.EMPTY_STRING_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -223,7 +220,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.METADATA_NO_EXTENSIONS: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -234,7 +231,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.OBJECTCLASS_NON_STRING: (
-            m.Ldif.SchemaObjectClass(
+            m.SchemaObjectClass(
                 oid="2.5.6.0",
                 name="top",
                 metadata=m.Ldif.QuirkMetadata(
@@ -247,7 +244,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.6.0",
         ),
         ExtractOidScenario.MALFORMED_FORMAT: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -260,7 +257,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.ORIGINAL_FORMAT_MISSING_OID: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -273,7 +270,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.NO_METADATA: (
-            m.Ldif.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
@@ -426,11 +423,11 @@ class TestsTestFlextLdifUtilitiesOid(s):
     def test_extract_oid_from_schema_object(
         self,
         scenario: str,
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_obj: m.SchemaAttribute | m.SchemaObjectClass,
         expected_oid: str,
     ) -> None:
         """Test extracting OID from schema objects with parametrized scenarios."""
-        result = FlextLdifUtilities.OID.extract_from_schema_object(schema_obj)
+        result = u.OID.extract_from_schema_object(schema_obj)
         assert result == expected_oid, (
             f"Failed for scenario {scenario}: expected {expected_oid}, got {result}"
         )
@@ -449,7 +446,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
         expected_oid: str | None,
     ) -> None:
         """Test extracting OID from definition strings with parametrized scenarios."""
-        result = FlextLdifUtilities.OID.extract_from_definition(definition)
+        result = u.OID.extract_from_definition(definition)
         assert result == expected_oid, (
             f"Failed for scenario {scenario}: expected {expected_oid}, got {result}"
         )
@@ -465,7 +462,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
         is_valid: bool,
     ) -> None:
         """Test OID format validation with parametrized scenarios."""
-        result = FlextLdifUtilities.OID.validate_format(oid)
+        result = u.OID.validate_format(oid)
         assert result.is_success, f"Validation failed for {scenario}"
         assert result.unwrap() is is_valid, (
             f"Format validation failed for {scenario}: expected {is_valid}, got {result.unwrap()}"
@@ -487,7 +484,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
     ) -> None:
         """Test OID pattern matching with parametrized scenarios."""
         pattern = re.compile(pattern_str)
-        result = FlextLdifUtilities.OID.matches_pattern(definition, pattern)
+        result = u.OID.matches_pattern(definition, pattern)
         assert result is should_match, (
             f"Pattern match failed for {scenario}: expected {should_match}, got {result}"
         )
@@ -506,7 +503,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
         expected_server_type: str | None,
     ) -> None:
         """Test server type detection with parametrized scenarios."""
-        result = FlextLdifUtilities.OID.get_server_type_from_oid(input_value)
+        result = u.OID.get_server_type_from_oid(input_value)
         assert result == expected_server_type, (
             f"Server type detection failed for {scenario}: expected {expected_server_type}, got {result}"
         )
@@ -527,11 +524,11 @@ class TestsTestFlextLdifUtilitiesOid(s):
     ) -> None:
         """Test server type OID checking with parametrized scenarios."""
         if server_type == "oracle":
-            result = FlextLdifUtilities.OID.is_oracle_oid(input_value)
+            result = u.OID.is_oracle_oid(input_value)
         elif server_type == "microsoft_ad":
-            result = FlextLdifUtilities.OID.is_microsoft_ad_oid(input_value)
+            result = u.OID.is_microsoft_ad_oid(input_value)
         elif server_type == "openldap":
-            result = FlextLdifUtilities.OID.is_openldap_oid(input_value)
+            result = u.OID.is_openldap_oid(input_value)
         else:
             msg = f"Unknown server type: {server_type}"
             raise ValueError(msg)

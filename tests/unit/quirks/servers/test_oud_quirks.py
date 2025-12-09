@@ -10,11 +10,10 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from tests import s, tf, tm
+from tests import p, s, tf, tm
 from tests.conftest import FlextLdifFixtures
 
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
 
@@ -46,7 +45,7 @@ class OudTestHelpers:
     """
 
     @staticmethod
-    def validate_entry_basic_structure(entry: m.Ldif.Entry) -> None:
+    def validate_entry_basic_structure(entry: p.Entry) -> None:
         """Validate basic entry structure - replaces 4-5 lines per test."""
         assert entry.dn is not None
         assert entry.dn.value
@@ -55,17 +54,17 @@ class OudTestHelpers:
 
     @staticmethod
     def find_entries_by_dn_pattern(
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Entry],
         pattern: str,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Find entries matching DN pattern - replaces 5-8 lines per test."""
         return [e for e in entries if e.dn is not None and pattern in e.dn.value]
 
     @staticmethod
     def find_entries_with_attribute(
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Entry],
         attr_name: str,
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Entry]:
         """Find entries containing specific attribute - replaces 8-12 lines per test."""
         result = []
         for entry in entries:
@@ -79,7 +78,7 @@ class OudTestHelpers:
 
     @staticmethod
     def get_attribute_values(
-        entry: m.Ldif.Entry,
+        entry: p.Entry,
         attr_name: str,
     ) -> list[str]:
         """Extract attribute values handling all formats - replaces 6-10 lines per test."""
@@ -104,7 +103,7 @@ class OudTestHelpers:
 
     @staticmethod
     def has_objectclass_containing(
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Entry],
         pattern: str,
     ) -> bool:
         """Check if any entry has objectClass containing pattern - replaces 15-20 lines per test."""
@@ -118,7 +117,7 @@ class OudTestHelpers:
 
     @staticmethod
     def has_attribute_value_containing(
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Entry],
         attr_name: str,
         pattern: str,
     ) -> bool:
@@ -134,7 +133,7 @@ class OudTestHelpers:
     @staticmethod
     def validate_entries_write_success(
         quirk: FlextLdifServersBase,
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Entry],
         operation: str = "write",
     ) -> None:
         """Validate all entries can be written successfully - replaces 8-12 lines per test."""

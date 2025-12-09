@@ -37,23 +37,17 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-
-# Removed: from flext_ldif.protocols import p (use string literals or hasattr checks)
+from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
-
-# Removed: from flext_ldif.typings import dict[str, object] (use dict[str, object])
-
-# Removed: from flext_ldif.utilities import u (not used - removed to break circular import)
 
 logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(
     QuirkMethodsMixin,
-    FlextService[FlextLdifModelsDomains.Acl | str],
+    FlextService[m.Ldif.Acl | str],
 ):
     """Base class for ACL quirks - satisfies AclProtocol (structural typing).
 
@@ -193,12 +187,12 @@ class FlextLdifServersBaseSchemaAcl(
     # =====================================================================
     # _route_parse, _route_write, _handle_parse_acl, _handle_write_acl,
     # execute, __call__, __new__ are now concrete implementations in
-    # FlextLdifServersRfc.Acl
+    # FlextLdifServersRfcAcl
 
     def _hook_post_parse_acl(
         self,
-        acl: FlextLdifModelsDomains.Acl,
-    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
+        acl: m.Ldif.Acl,
+    ) -> FlextResult[m.Ldif.Acl]:
         """Hook called after parsing an ACL line.
 
         Override in subclasses for server-specific post-processing of parsed ACLs.
@@ -227,7 +221,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return FlextResult.ok(acl)
 
-    def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this quirk can handle the ACL definition.
 
         Called BEFORE parsing to detect if this quirk should process the ACL line.
@@ -245,7 +239,7 @@ class FlextLdifServersBaseSchemaAcl(
             False  # Must be implemented by subclass  # Must be implemented by subclass
         )
 
-    def can_handle(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
+    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this ACL can be handled after parsing.
 
         Generic implementation that assumes any ACL that has been successfully
@@ -304,10 +298,10 @@ class FlextLdifServersBaseSchemaAcl(
     # Public Interface Methods - Moved to rfc.py.Acl
     # =====================================================================
     # parse, can_handle, write are now concrete implementations in
-    # FlextLdifServersRfc.Acl. Subclasses should override _parse_acl,
+    # FlextLdifServersRfcAcl. Subclasses should override _parse_acl,
     # _write_acl, and can_handle_acl for server-specific logic.
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         r"""REQUIRED: Parse server-specific ACL definition (internal).
 
         Parses an ACL (Access Control List) definition line into Acl model.
@@ -350,7 +344,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def can_handle_attribute(
         self,
-        attribute: FlextLdifModelsDomains.SchemaAttribute,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if this ACL quirk should be aware of a specific attribute definition.
 
@@ -372,7 +366,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def can_handle_objectclass(
         self,
-        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if this ACL quirk should be aware of a specific objectClass definition.
 
@@ -390,7 +384,7 @@ class FlextLdifServersBaseSchemaAcl(
             False  # Must be implemented by subclass  # Must be implemented by subclass
         )
 
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format (internal).
 
         Base class stub - must be implemented by subclass.
@@ -405,7 +399,7 @@ class FlextLdifServersBaseSchemaAcl(
         _ = acl_data
         return FlextResult[str].fail("Must be implemented by subclass")
 
-    def parse(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
+    def parse(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse ACL line to Acl model.
 
         This satisfies AclProtocol (structural typing via hasattr checks).
@@ -419,7 +413,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return self._parse_acl(acl_line)
 
-    def write(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+    def write(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write Acl model to string format.
 
         This satisfies AclProtocol (structural typing via hasattr checks).
@@ -446,7 +440,7 @@ class FlextLdifServersBaseSchemaAcl(
             | None,
         ],
     ) -> tuple[
-        str | FlextLdifModelsDomains.Acl | None,
+        str | m.Ldif.Acl | None,
         str | None,
     ]:
         """Extract and validate ACL operation parameters from kwargs.
@@ -460,10 +454,8 @@ class FlextLdifServersBaseSchemaAcl(
         """
         # Extract data parameter
         data_raw = kwargs.get("data")
-        data: str | FlextLdifModelsDomains.Acl | None = (
-            data_raw
-            if isinstance(data_raw, (str, FlextLdifModelsDomains.Acl, type(None)))
-            else None
+        data: str | m.Ldif.Acl | None = (
+            data_raw if isinstance(data_raw, (str, m.Ldif.Acl, type(None))) else None
         )
 
         # Extract operation parameter with type narrowing
@@ -481,7 +473,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _execute_acl_parse(
         self,
         data: str,
-    ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL parse operation.
 
         Args:
@@ -493,17 +485,15 @@ class FlextLdifServersBaseSchemaAcl(
         """
         parse_result = self.parse(data)
         if parse_result.is_success:
-            return FlextResult[FlextLdifModelsDomains.Acl | str].ok(
-                parse_result.unwrap()
-            )
-        return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
+            return FlextResult[m.Ldif.Acl | str].ok(parse_result.unwrap())
+        return FlextResult[m.Ldif.Acl | str].fail(
             parse_result.error or "Parse failed",
         )
 
     def _execute_acl_write(
         self,
-        data: FlextLdifModelsDomains.Acl,
-    ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
+        data: m.Ldif.Acl,
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL write operation.
 
         Args:
@@ -515,23 +505,21 @@ class FlextLdifServersBaseSchemaAcl(
         """
         write_result = self.write(data)
         if write_result.is_success:
-            return FlextResult[FlextLdifModelsDomains.Acl | str].ok(
-                write_result.unwrap()
-            )
-        return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
+            return FlextResult[m.Ldif.Acl | str].ok(write_result.unwrap())
+        return FlextResult[m.Ldif.Acl | str].fail(
             write_result.error or "Write failed",
         )
 
     def _resolve_data(
         self,
-        data: str | FlextLdifModelsDomains.Acl | None,
+        data: str | m.Ldif.Acl | None,
         kwargs: dict[str, dict[str, object]],
-    ) -> str | FlextLdifModelsDomains.Acl | None:
+    ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
             return data
         data_raw = kwargs.get("data")
-        if isinstance(data_raw, (str, FlextLdifModelsDomains.Acl)):
+        if isinstance(data_raw, (str, m.Ldif.Acl)):
             return data_raw
         return None
 
@@ -551,7 +539,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _detect_operation(
         self,
         operation: str | None,
-        data: str | FlextLdifModelsDomains.Acl,
+        data: str | m.Ldif.Acl,
     ) -> str:
         """Detect operation type from explicit param or data type."""
         if operation is not None and operation in {"parse", "write"}:
@@ -562,10 +550,10 @@ class FlextLdifServersBaseSchemaAcl(
     def execute(
         self,
         *,
-        data: str | FlextLdifModelsDomains.Acl | None = None,
+        data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: dict[str, object],
-    ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write.
 
         Business Rule: Auto-detects operation from data type unless explicitly
@@ -585,21 +573,19 @@ class FlextLdifServersBaseSchemaAcl(
         operation = self._resolve_operation(operation, kwargs_dict)
 
         if data is None:
-            return FlextResult[FlextLdifModelsDomains.Acl | str].ok(
-                FlextLdifModelsDomains.Acl()
-            )
+            return FlextResult[m.Ldif.Acl | str].ok(m.Ldif.Acl())
 
         detected_op = self._detect_operation(operation, data)
 
         if detected_op == "parse":
             if not isinstance(data, str):
-                return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
+                return FlextResult[m.Ldif.Acl | str].fail(
                     f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
 
-        if not isinstance(data, FlextLdifModelsDomains.Acl):
-            return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
+        if not isinstance(data, m.Ldif.Acl):
+            return FlextResult[m.Ldif.Acl | str].fail(
                 f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(data)
@@ -608,7 +594,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         original_format: str,
         extensions: dict[str, FlextTypes.MetadataAttributeValue] | None = None,
-    ) -> FlextLdifModelsDomains.QuirkMetadata:
+    ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata.
 
         Generic implementation that creates QuirkMetadata with quirk_type
@@ -629,7 +615,7 @@ class FlextLdifServersBaseSchemaAcl(
             all_extensions.update(extensions)
         # Convert dict to DynamicMetadata for QuirkMetadata
         extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**all_extensions)
-        return FlextLdifModelsDomains.QuirkMetadata(
+        return m.Ldif.QuirkMetadata(
             quirk_type=self._get_server_type(),
             extensions=extensions_model,
         )
@@ -637,7 +623,7 @@ class FlextLdifServersBaseSchemaAcl(
     def format_acl_value(
         self,
         acl_value: str,
-        acl_metadata: FlextLdifModelsDomains.AclWriteMetadata,
+        acl_metadata: m.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
     ) -> FlextResult[str]:
@@ -725,10 +711,12 @@ class FlextLdifServersBaseSchemaAcl(
         # RFC ACI format: acl "name"
         pattern = re.compile(r'acl\s+"[^"]*"')
         replacement_template = 'acl "{0}"'
-        return FlextResult[tuple[re.Pattern[str], str]].ok((
-            pattern,
-            replacement_template,
-        ))
+        return FlextResult[tuple[re.Pattern[str], str]].ok(
+            (
+                pattern,
+                replacement_template,
+            )
+        )
 
     def convert_rfc_acl_to_aci(
         self,

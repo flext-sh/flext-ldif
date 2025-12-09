@@ -85,23 +85,23 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_skip_comments: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_SKIP_COMMENTS,
+        default=True,
         description="Skip comment lines during parsing",
     )
 
     ldif_validate_dn_format: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
+        default=True,
         description="Validate DN format during parsing",
     )
 
     ldif_strict_validation: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_STRICT_VALIDATION,
+        default=True,
         description="Enable strict LDIF validation",
     )
 
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_MAX_ENTRIES,
+        default=10000,
         ge=c.Performance.BatchProcessing.DEFAULT_SIZE,
         le=c.Ldif.LdifProcessing.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",
@@ -127,7 +127,7 @@ class FlextLdifConfig(FlextConfig):
 
     # Analytics Configuration
     ldif_enable_analytics: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
+        default=False,
         description="Enable LDIF analytics collection",
     )
 
@@ -145,12 +145,12 @@ class FlextLdifConfig(FlextConfig):
 
     # Additional LDIF processing configuration
     ldif_line_separator: str = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_LINE_SEPARATOR,
+        default="\n",
         description="Line separator for LDIF output",
     )
 
     ldif_version_string: str = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_VERSION_STRING,
+        default="1",
         description="LDIF version string",
     )
 
@@ -162,19 +162,19 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_fail_on_warnings: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
+        default=False,
         description="Fail processing on warnings",
     )
 
     ldif_analytics_sample_rate: float = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
+        default=0.1,
         ge=c.Ldif.LdifProcessing.MIN_SAMPLE_RATE,
         le=c.Ldif.LdifProcessing.MAX_SAMPLE_RATE,
         description="Analytics sampling rate (0.0 to 1.0)",
     )
 
     ldif_analytics_max_entries: int = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
+        default=1000,
         ge=1,
         le=c.Ldif.LdifProcessing.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
         description="Maximum entries for analytics processing",
@@ -186,7 +186,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_server_specifics: bool = Field(
-        default=c.Ldif.ConfigDefaults.LDIF_SERVER_SPECIFICS,
+        default=True,
         description="Enable server-specific quirk handling",
     )
 
@@ -216,7 +216,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     strict_rfc_compliance: bool = Field(
-        default=c.Ldif.ConfigDefaults.STRICT_RFC_COMPLIANCE,
+        default=True,
         description="Enable strict RFC 2849 compliance",
     )
 
@@ -554,7 +554,10 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.normalize_server_type(v)
+        # Import here to avoid circular import
+        from flext_ldif.utilities import u  # noqa: PLC0415
+
+        normalized = u.Ldif.Server.normalize_server_type(v)
 
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
@@ -582,7 +585,7 @@ class FlextLdifConfig(FlextConfig):
                 c.Ldif.ServerTypes.OPENLDAP,
             ]
             msg = (
-                f"Invalid server_type '{v}' in field '{info.field_name}'.\n"
+                f"Invalid server_type '{v}' in field '{info.field_name or 'unknown'}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
                 f"Common choices: {', '.join(common_servers)}"
             )
@@ -710,7 +713,10 @@ class FlextLdifConfig(FlextConfig):
             return v
 
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.normalize_server_type(v)
+        # Import here to avoid circular import
+        from flext_ldif.utilities import u  # noqa: PLC0415
+
+        normalized = u.Ldif.Server.normalize_server_type(v)
 
         # Use same validation logic as server_type field
         valid_servers = [
@@ -736,7 +742,7 @@ class FlextLdifConfig(FlextConfig):
                 c.Ldif.ServerTypes.OPENLDAP,
             ]
             msg = (
-                f"Invalid quirks_server_type '{v}' in field '{info.field_name}'.\n"
+                f"Invalid quirks_server_type '{v}' in field '{info.field_name or 'unknown'}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
                 f"Common choices: {', '.join(common_servers)}"
             )
@@ -808,7 +814,7 @@ class FlextLdifConfig(FlextConfig):
         if (
             self.ldif_enable_analytics
             and self.ldif_analytics_cache_size
-            <= c.Ldif.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
+            <= c.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
         ):
             msg = "Analytics cache size must be positive when analytics is enabled"
             raise ValueError(msg)

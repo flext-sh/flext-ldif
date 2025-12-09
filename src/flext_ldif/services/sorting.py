@@ -63,7 +63,7 @@ class FlextLdifSorting(
     attribute_order: list[str] | None = Field(default=None)
     sort_acl: bool = Field(default=False)
     acl_attributes: list[str] = Field(
-        default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES),
+        default_factory=lambda: list(c.AclAttributes.DEFAULT_ACL_ATTRIBUTES),
     )
     traversal: str = Field(default="depth-first")
 
@@ -276,7 +276,7 @@ class FlextLdifSorting(
         """
         default_target = c.Ldif.SortTarget.ENTRIES.value
         default_by = c.Ldif.SortStrategy.HIERARCHY.value
-        default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
+        default_acl_attrs = list(c.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
 
         if config is not None:
             # Use config model - extract values with proper type narrowing
@@ -523,7 +523,7 @@ class FlextLdifSorting(
         sorted_entries_raw = result.value if result.is_success else None
         if sorted_entries_raw is None:
             return r[list[m.Ldif.Entry]].fail(u.err(result, default="Sort failed"))
-        # Type narrowing: u.Ldif.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
+        # Type narrowing: u.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
         sorted_entries: list[m.Ldif.Entry] = sorted_entries_raw
 
         # Step 2: Sort attributes if configured
@@ -538,7 +538,7 @@ class FlextLdifSorting(
                 return r[list[m.Ldif.Entry]].fail(
                     u.err(result, default="Attribute sort failed"),
                 )
-            # Type narrowing: u.Ldif.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
+            # Type narrowing: u.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
             sorted_entries = sorted_entries_attr_raw
 
         # Step 3: Sort ACL if configured
@@ -552,7 +552,7 @@ class FlextLdifSorting(
                 return r[list[m.Ldif.Entry]].fail(
                     u.err(result, default="ACL sort failed"),
                 )
-            # Type narrowing: u.Ldif.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
+            # Type narrowing: u.unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
             # Reassign to existing variable instead of redefining
             sorted_entries = sorted_entries_raw
 
@@ -600,7 +600,7 @@ class FlextLdifSorting(
                 error_msg = u.err(result, default="Unknown error")
                 error_text = f"Attribute sort failed: {error_msg}"
                 raise ValueError(error_text)
-            # Type narrowing: u.Ldif.unwrap_or(, default=None) on r[Entry] returns Entry
+            # Type narrowing: u.unwrap_or(, default=None) on r[Entry] returns Entry
             # Return entry with sorted attributes directly
             return sorted_entry_raw
 
@@ -768,7 +768,7 @@ class FlextLdifSorting(
             norm_result = u.Ldif.DN.norm(dn_value)
             # Type narrowing: norm_result.value is str when is_success
             normalized_dn = norm_result.value if norm_result.is_success else None
-            normalized_result = u.Ldif.normalize_ldif(
+            normalized_result = u.normalize_ldif(
                 normalized_dn or dn_value,
                 case="lower",
             )
@@ -791,7 +791,7 @@ class FlextLdifSorting(
                 # Use u.val for unified result unwrapping (DSL pattern)
                 # Type narrowing: unwrap_or returns str | None
                 parent_normalized = (
-                    u.Ldif.unwrap_or(parent_norm_result, default=None)
+                    u.unwrap_or(parent_norm_result, default=None)
                     if parent_norm_result.is_success
                     else None
                 )
@@ -897,7 +897,7 @@ class FlextLdifSorting(
                 # Use u.val for unified result unwrapping (DSL pattern)
                 # Type narrowing: unwrap_or returns str | None
                 parent_normalized = (
-                    u.Ldif.unwrap_or(parent_norm_result, default=None)
+                    u.unwrap_or(parent_norm_result, default=None)
                     if parent_norm_result.is_success
                     else None
                 )
@@ -944,7 +944,7 @@ class FlextLdifSorting(
             # Type narrowing: norm_result.value is str when is_success
             normalized = norm_result.value if norm_result.is_success else None
             # Type narrowing: when passing str and no `other`, normalize_ldif returns str
-            sort_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
+            sort_result = u.normalize_ldif(normalized or dn_value, case="lower")
             sort_dn: str = (
                 sort_result if isinstance(sort_result, str) else str(sort_result)
             )
@@ -1005,7 +1005,7 @@ class FlextLdifSorting(
                     normalized = (
                         norm_result.unwrap() if norm_result.is_success else None
                     )
-                    normalized_result = u.Ldif.normalize_ldif(
+                    normalized_result = u.normalize_ldif(
                         normalized or dn_value,
                         case="lower",
                     )
@@ -1060,7 +1060,7 @@ class FlextLdifSorting(
             # Type narrowing: norm_result.value is str when is_success
             normalized = norm_result.value if norm_result.is_success else None
             # Type narrowing: when passing str and no `other`, normalize_ldif returns str
-            result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
+            result = u.normalize_ldif(normalized or dn_value, case="lower")
             return result if isinstance(result, str) else str(result)
 
         sorted_entries = sorted(self.entries, key=dn_sort_key)
@@ -1087,11 +1087,11 @@ class FlextLdifSorting(
             else:
                 return (3, u.Ldif.DN.get_dn_value(entry.dn).lower())
 
-            # Extract OID using u.Ldif.OID for consistency
+            # Extract OID using u.OID for consistency
             first_val = str(
                 oid_values[0] if isinstance(oid_values, (list, tuple)) else oid_values,
             )
-            oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
+            oid = u.OID.extract_from_definition(first_val) or first_val
 
             return (priority, oid)
 

@@ -17,9 +17,7 @@ from flext_core import FlextResult
 from pydantic import ValidationError
 
 from flext_ldif.services.sorting import FlextLdifSorting
-from tests import RfcTestHelpers, c, m, s
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from tests import RfcTestHelpers, c, p, s
 
 
 class TestsTestFlextLdifSorting(s):
@@ -87,11 +85,11 @@ class TestsTestFlextLdifSorting(s):
         __test__ = False
 
         @staticmethod
-        def sort_predicate(entry: m.Ldif.Entry) -> str:
+        def sort_predicate(entry: p.Entry) -> str:
             """Extract DN value for sorting predicate."""
             return entry.dn.value if entry.dn else ""
 
-        def hierarchy_entries(self) -> list[m.Ldif.Entry]:
+        def hierarchy_entries(self) -> list[p.Entry]:
             """Create hierarchy test entries using factories and constants."""
             return [
                 self.create_entry(
@@ -125,7 +123,7 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
-        def schema_entries(self) -> list[m.Ldif.Entry]:
+        def schema_entries(self) -> list[p.Entry]:
             """Create schema test entries using factories."""
             return [
                 self.create_entry(
@@ -149,12 +147,12 @@ class TestsTestFlextLdifSorting(s):
         def execute_sort_operation(
             self,
             test_case: TestsTestFlextLdifSorting.TestCase,
-            entries: list[m.Ldif.Entry],
-        ) -> FlextResult[list[m.Ldif.Entry]]:
+            entries: list[p.Entry],
+        ) -> FlextResult[list[p.Entry]]:
             """Execute sort operation based on test case type using mapping."""
             operation_map: dict[
                 TestsTestFlextLdifSorting.TestType,
-                Callable[[], FlextResult[list[m.Ldif.Entry]]],
+                Callable[[], FlextResult[list[p.Entry]]],
             ] = {
                 TestsTestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
                     entries,
@@ -205,7 +203,7 @@ class TestsTestFlextLdifSorting(s):
         def verify_sort_behavior(
             self,
             test_case: TestsTestFlextLdifSorting.TestCase,
-            sorted_entries: list[m.Ldif.Entry],
+            sorted_entries: list[p.Entry],
         ) -> None:
             """Verify sort behavior based on test case type."""
             if (

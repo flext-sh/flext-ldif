@@ -20,6 +20,7 @@ from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 
 # Removed: from flext_ldif.constants import c (prohibited in services/)
 # Use FlextLdifUtilitiesServer helpers or direct string literals
@@ -216,7 +217,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
         attr_definition: str,
         *,
         server_type: str | None = None,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> r[p.Ldif.SchemaAttributeProtocol]:
         """Parse attribute type definition.
 
         Uses u.Parser for RFC parsing and FlextLdifServer
@@ -244,7 +245,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
             parsed_dict.pop("syntax_validation", None)
 
             # Build SchemaAttribute from parsed dict (without metadata_extensions)
-            attr_domain = m.Ldif.SchemaAttribute.model_validate(parsed_dict)
+            attr_domain = p.Ldif.SchemaAttributeProtocol.model_validate(parsed_dict)
 
             # Build metadata from extensions if present
             if metadata_extensions and isinstance(metadata_extensions, dict):
@@ -262,8 +263,8 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
                     if server_result.is_success:
                         attr_domain = server_result.unwrap()
 
-            # Type narrowing: attr_domain is already m.Ldif.SchemaAttribute
-            attr: m.Ldif.SchemaAttribute = attr_domain
+            # Type narrowing: attr_domain is already p.Ldif.SchemaAttributeProtocol
+            attr: p.Ldif.SchemaAttributeProtocol = attr_domain
 
             # Metadata is already built by u.Parser
             # No additional metadata building needed here
@@ -283,7 +284,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
         oc_definition: str,
         *,
         server_type: str | None = None,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
         """Parse objectClass definition.
 
         Uses u.Parser for RFC parsing and FlextLdifServer
@@ -310,7 +311,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
 
             # Build SchemaObjectClass from parsed dict
-            oc_domain = m.Ldif.SchemaObjectClass(
+            oc_domain = p.Ldif.SchemaObjectClassProtocol(
                 oid=parsed_dict["oid"],
                 name=parsed_dict.get("name") or parsed_dict["oid"],
                 desc=parsed_dict.get("desc"),
@@ -335,8 +336,8 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
                     if server_result.is_success:
                         oc_domain = server_result.unwrap()
 
-            # Type narrowing: oc_domain is already m.Ldif.SchemaObjectClass
-            oc: m.Ldif.SchemaObjectClass = oc_domain
+            # Type narrowing: oc_domain is already p.Ldif.SchemaObjectClassProtocol
+            oc: p.Ldif.SchemaObjectClassProtocol = oc_domain
 
             # Metadata is already built by u.Parser
             # No additional metadata building needed here
@@ -357,7 +358,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def validate_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttributeProtocol,
     ) -> r[bool]:
         """Validate attribute model syntax and constraints.
 
@@ -402,7 +403,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def validate_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClassProtocol,
     ) -> r[bool]:
         """Validate objectClass model syntax and constraints.
 
@@ -459,7 +460,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def write_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttributeProtocol,
     ) -> r[str]:
         """Convert attribute model to LDIF format.
 
@@ -491,7 +492,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def write_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClassProtocol,
     ) -> r[str]:
         """Convert objectClass model to LDIF format.
 
