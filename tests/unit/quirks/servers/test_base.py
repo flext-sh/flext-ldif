@@ -1996,7 +1996,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def write(
                     self,
                     entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
-                    write_options: m.WriteFormatOptions | None = None,
+                    write_options: m.Ldif.WriteFormatOptions | None = None,
                 ) -> FlextResult[str]:
                     return FlextResult.fail("Custom write failure")
 
@@ -2035,7 +2035,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def write(
                 self,
                 entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
-                write_options: m.WriteFormatOptions | None = None,
+                write_options: m.Ldif.WriteFormatOptions | None = None,
             ) -> FlextResult[str]:
                 # Write entry without trailing newline to test line 606
                 result = super().write(entry_data, write_options)

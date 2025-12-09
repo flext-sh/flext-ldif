@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 
@@ -71,7 +72,9 @@ class FlextLdifUtilitiesObjectClass:
     """
 
     @staticmethod
-    def fix_missing_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+    def fix_missing_sup(
+        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+    ) -> None:
         """Fix ObjectClass missing SUP (superior) attribute.
 
         RFC 4512 requires all ObjectClasses to have a SUP (superior) except
@@ -94,7 +97,9 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.sup = "top"
 
     @staticmethod
-    def fix_auxiliary_without_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+    def fix_auxiliary_without_sup(
+        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+    ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (server-specific fix).
 
         Some servers (OID/OUD) have AUXILIARY classes without SUP. This method
@@ -134,7 +139,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.Ldif.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
@@ -190,7 +195,9 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.kind = schema_constants.AUXILIARY
 
     @staticmethod
-    def ensure_sup_for_auxiliary(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+    def ensure_sup_for_auxiliary(
+        schema_oc: m.Ldif.SchemaObjectClass | FlextLdifModelsDomains.SchemaObjectClass,
+    ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute.
 
         RFC 4512 requires all ObjectClasses (including AUXILIARY) to have a SUP.

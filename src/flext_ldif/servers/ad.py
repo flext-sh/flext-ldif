@@ -21,7 +21,7 @@ import re
 from contextlib import suppress
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextRuntime, FlextUtilities as u
+from flext_core import FlextResult, FlextUtilities as u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -226,7 +226,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
         # No duplicate nested StrEnums - use c.AclPermission,
-        # c.AclAction, and c.Encoding directly
+        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

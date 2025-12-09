@@ -89,8 +89,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=cast("c.LiteralTypes.ServerTypeLiteral", source),
-            target_server_type=cast("c.LiteralTypes.ServerTypeLiteral", target),
+            source_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source),
+            target_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", target),
         )
 
         assert pipeline is not None
@@ -318,8 +318,8 @@ cn: test
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=cast("c.LiteralTypes.ServerTypeLiteral", source),
-            target_server_type=cast("c.LiteralTypes.ServerTypeLiteral", target),
+            source_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source),
+            target_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", target),
         )
 
         result = pipeline.execute()

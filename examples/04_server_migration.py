@@ -87,9 +87,9 @@ member: cn=OUD User,ou=People,dc=example,dc=com
             output_dir=output_dir,
             source_server="oid",  # Source server with specific quirks
             target_server="oud",  # Target server with different quirks
-            options=m.MigrateOptions(
+            options=m.Ldif.MigrateOptions(
                 # Enable parallel processing for large datasets
-                write_options=m.WriteFormatOptions(
+                write_options=m.Ldif.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -207,7 +207,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         # Parallel parsing comparison
         for server in servers:
             # Cast to Literal type for server_type parameter
-            server_type = cast("c.LiteralTypes.ServerTypeLiteral", server)
+            server_type = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", server)
             parse_result = api.parse(test_ldif, server_type=server_type)
             if parse_result.is_success:
                 entries = parse_result.unwrap()
@@ -366,14 +366,14 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
 
         # Step 2: Migrate OID → Intermediate (OUD format)
-        source_server_typed = cast("c.LiteralTypes.ServerTypeLiteral", source_server)
+        source_server_typed = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source_server)
         intermediate_migration = api.migrate(
             input_dir=source_dir,
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=m.MigrateOptions(
-                write_options=m.WriteFormatOptions(
+            options=m.Ldif.MigrateOptions(
+                write_options=m.Ldif.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),

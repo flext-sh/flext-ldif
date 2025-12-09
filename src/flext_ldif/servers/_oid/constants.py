@@ -211,7 +211,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_FORMAT: ClassVar[str] = "orclaci"  # OID ACL format
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"  # ACL attribute name
 
-    # NOTE: ACL metadata keys removed - use c.MetadataKeys
+    # NOTE: ACL metadata keys removed - use c.Ldif.MetadataKeys
     # Servers communicate via GENERIC metadata keys (not server-specific)
 
     # Matching rule normalizations (OID proprietary → RFC 4517 standard)
@@ -413,14 +413,14 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
 
     # All OID metadata keys
     # NOTE: Entry metadata keys (CONVERTED_ATTRIBUTES, ORIGINAL_ATTRIBUTES_COMPLETE, etc.)
-    # are defined in c.MetadataKeys and should be used directly.
+    # are defined in c.Ldif.MetadataKeys and should be used directly.
     ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset(
         [
             OID_SPECIFIC_RIGHTS,
             RFC_NORMALIZED,
             ORIGINAL_OID_PERMS,
             OID_ACL_SOURCE_TARGET,
-            # Entry metadata keys from c.MetadataKeys:
+            # Entry metadata keys from c.Ldif.MetadataKeys:
             # CONVERTED_ATTRIBUTES, ORIGINAL_ATTRIBUTES_COMPLETE, etc.
         ],
     )
@@ -766,4 +766,4 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
 
     # NOTE: AclPermission and AclAction StrEnums REMOVED - unused dead code
     # Use SUPPORTED_PERMISSIONS frozenset and ACL_PERMISSION_MAPPING dict instead
-    # NOTE: Encoding enum removed - use c.Encoding instead
+    # NOTE: Encoding enum removed - use c.Ldif.Encoding instead

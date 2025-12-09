@@ -127,28 +127,28 @@ class TestCategorizationRealData:
         # Create entries that could cause false positives with substring matching
         entries = [
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="dc=example"),
-                attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
+                dn=m.Ldif.DistinguishedName(value="dc=example"),
+                attributes=m.Ldif.LdifAttributes.(attributes={"objectClass": ["domain"]}),
             ),
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="ou=users,dc=example"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="ou=users,dc=example"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="cn=user1,ou=users,dc=example"),
-                attributes=m.LdifAttributes(attributes={"objectClass": ["person"]}),
+                dn=m.Ldif.DistinguishedName(value="cn=user1,ou=users,dc=example"),
+                attributes=m.Ldif.LdifAttributes.(attributes={"objectClass": ["person"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="dc=example2"),
-                attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
+                dn=m.Ldif.DistinguishedName(value="dc=example2"),
+                attributes=m.Ldif.LdifAttributes.(attributes={"objectClass": ["domain"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="ou=test,dc=example2"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="ou=test,dc=example2"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
@@ -255,28 +255,28 @@ class TestCategorizationRealData:
         # Create ACL entries that could cause false positives
         acl_entries = [
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="dc=example"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="dc=example"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="ou=users,dc=example"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="ou=users,dc=example"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # This should NOT match base DN (false positive with substring matching)
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="dc=example2"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="dc=example2"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # System ACL (no base DN)
             m.Ldif.Entry(
-                dn=m.DistinguishedName(value="cn=config"),
-                attributes=m.LdifAttributes(
+                dn=m.Ldif.DistinguishedName(value="cn=config"),
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),

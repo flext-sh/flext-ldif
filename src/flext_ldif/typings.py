@@ -680,7 +680,7 @@ class FlextLdifTypes(FlextTypes):
             # (they reference WriteMethod and SafeMethod which use protocol types)
 
         # =========================================================================
-        # LITERAL TYPES - Reusing constants from c.LiteralTypes
+        # LITERAL TYPES - Reusing constants from c.Ldif.LiteralTypes
         # =========================================================================
         # Centralized reuse of Literal types from constants.py
         # All Literal types are derived from StrEnum values in constants.py

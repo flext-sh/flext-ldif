@@ -16,9 +16,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Self, cast
+from typing import Self
 
-from flext_core import FlextTypes, r
+from flext_core import FlextTypes, r, t as core_t
 
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.functional import FlextFunctional
@@ -215,9 +215,10 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data = batch_result.unwrap()
-        # batch() returns BatchResultDict with results: list[R] where R = Entry (extracted from r[Entry].value)
-        results = cast("list[m.Ldif.Entry]", batch_data["results"])
+        batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
+        # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
+        # operation_fn returns r[Entry], so batch extracts .value and R = Entry
+        results: list[m.Ldif.Entry] = batch_data["results"]  # type: ignore[assignment]  # BatchResultDict.results is list[object] but we know it's list[Entry]
         return r.ok(results)
 
     def remove_attributes_batch(
@@ -263,17 +264,19 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data = batch_result.unwrap()
-        results = cast("list[m.Ldif.Entry]", batch_data["results"])
+        batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
+        # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
+        results: list[m.Ldif.Entry] = batch_data["results"]  # type: ignore[assignment]  # BatchResultDict.results is list[object] but we know it's list[Entry]
         return r.ok(results)
 
     @staticmethod
     def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> r[str]:
         """Extract DN from dict entry."""
-        dn_value_raw: object = getattr(entry, "dn", None)
-        dn_value: str | list[str] | None = cast("str | list[str] | None", dn_value_raw)
+        # Type narrowing: dict entry has 'dn' key with str | list[str] value
+        dn_value = entry.get("dn")
         if dn_value is None:
             return r.fail("Dict entry missing 'dn' key")
+        # Type narrowing: dn_value is str | list[str] after None check
         return r.ok(str(dn_value))
 
     @staticmethod
@@ -296,14 +299,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             first_dn = value_list[0] if value_list else ""
             return r.ok(str(first_dn))
 
-        match_result = FlextFunctional.match(
+        # Type narrowing: match always returns r[str] because default is not None
+        match_result: r[str] = FlextFunctional.match(
             dn_value_raw,
             (type(None), handle_none),
             (str, handle_str),
             (list, handle_list),
             default=r.fail("DN value has unexpected type"),
         )
-        return cast("r[str]", match_result)
+        return match_result
 
     @staticmethod
     def _extract_dn_from_object(dn_val_raw: object) -> r[str]:
@@ -311,12 +315,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if dn_val_raw is None:
             return r.fail("Entry missing DN (dn is None)")
         if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
+            # Type narrowing: object with 'value' attribute, extract it
             dn_value_raw_obj = u.mapper().get(dn_val_raw, "value")
-            dn_value_raw: str | list[str] | None = cast(
-                "str | list[str] | None",
-                dn_value_raw_obj,
-            )
-            return FlextLdifEntries._extract_dn_from_value(dn_value_raw)
+            # Type narrowing: value attribute is str | list[str] | None
+            if isinstance(dn_value_raw_obj, (str, list)):
+                dn_value_extracted: str | list[str] = dn_value_raw_obj
+            else:
+                dn_value_extracted: str | list[str] | None = None
+            return FlextLdifEntries._extract_dn_from_value(dn_value_extracted)
         if isinstance(dn_val_raw, str):
             return r.ok(dn_val_raw)
         # Use try/except instead of u.try_
@@ -470,23 +476,24 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             list(attributes.items()),
             predicate=match_objectclass,
         )
-        objectclasses: str | list[str] | None = (
-            cast("str | list[str]", found_kv[1]) if found_kv else None
-        )
-
-        if objectclasses is None:
+        # Type narrowing: found_kv is tuple[str, str | list[str]] | None
+        if not found_kv:
             return r.fail("Entry is missing objectClass attribute")
+        
+        # Type narrowing: found_kv[1] is str | list[str] (attribute value)
+        objectclasses: str | list[str] = found_kv[1]
 
         # Business Rule: Normalize single string values to list format
         # This ensures consistent return type (always list[str]) regardless of input format
         # Implication: Single-value objectClass attributes are wrapped in list for consistency
-        match_result = FlextFunctional.match(
+        # Type narrowing: match always returns r[list[str]] because default is not None
+        match_result: r[list[str]] = FlextFunctional.match(
             objectclasses,
             (str, lambda s: r.ok([s])),
             (list, lambda lst: r.ok(list(lst))),
             default=r.fail(f"Invalid objectclasses type: {type(objectclasses)}"),
         )
-        return cast("r[list[str]]", match_result)
+        return match_result
 
     @staticmethod
     def create_entry(
@@ -668,16 +675,21 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if value_raw is None:
             return r.fail(f"Attribute '{attribute_name}' not found")
 
-        value: str | list[str] = cast("str | list[str]", value_raw)
+        # Type narrowing: attribute values are str | list[str]
+        if isinstance(value_raw, (str, list)):
+            value: str | list[str] = value_raw
+        else:
+            # Fallback: convert to string
+            value: str | list[str] = str(value_raw)
 
-        # Use FlextFunctional.match() for pattern matching - match returns object, need to cast
-        match_result = FlextFunctional.match(
+        # Type narrowing: match always returns r[list[str]] because default is not None
+        match_result: r[list[str]] = FlextFunctional.match(
             value,
             (str, lambda s: r.ok([s])),
             (list, lambda v: r.ok(list(v))),
             default=r.ok([str(value)]),
         )
-        return cast("r[list[str]]", match_result)
+        return match_result
 
     @staticmethod
     def _normalize_string_value(value: str) -> r[str]:
@@ -693,14 +705,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not value or (isinstance(value, (list, dict, str)) and len(value) == 0):
             return r.fail("Cannot normalize empty list")
         first = value[0]
-        match_result = FlextFunctional.match(
+        # Type narrowing: match always returns r[str] because default is not None
+        match_result: r[str] = FlextFunctional.match(
             first,
             (str, FlextLdifEntries._normalize_string_value),
             default=lambda f: r.ok(str(f))
             if f is not None
             else r.fail("Cannot normalize empty list"),
         )
-        return cast("r[str]", match_result)
+        return match_result
 
     @staticmethod
     def normalize_attribute_value(
@@ -717,13 +730,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """
         if value is None:
             return r.fail("Cannot normalize None value")
-        match_result = FlextFunctional.match(
+        # Type narrowing: match always returns r[str] because default is not None
+        match_result: r[str] = FlextFunctional.match(
             value,
             (str, FlextLdifEntries._normalize_string_value),
             (list, FlextLdifEntries._normalize_list_value),
             default=r.fail(f"Cannot normalize value of type {type(value)}"),
         )
-        return cast("r[str]", match_result)
+        return match_result
 
     def get_normalized_attribute(
         self,
@@ -753,7 +767,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     ) -> r[m.Ldif.Entry]:
         """Remove operational attributes from entry.
 
-        Business Rule: Operational attributes removal uses u.Entry
+        Business Rule: Operational attributes removal uses u.Ldif.Entry
         for RFC 4512 compliant detection. Operation is immutable - returns new entry
         instance with operational attributes removed. Entry metadata is preserved.
 

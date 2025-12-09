@@ -117,8 +117,8 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         """Validate OID allows entries without objectClass (lenient mode)."""
         # Create OID entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(quirk_type="oid"),
         )
 
@@ -143,8 +143,8 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         """Validate OID allows missing naming attribute from RDN (lenient)."""
         # Create OID entry with missing naming attribute
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -170,8 +170,8 @@ class TestsFlextLdifOidServerSpecificValidation(s):
         """Validate OID allows binary attributes without ;binary (auto-detect)."""
         # Create OID entry with binary data without ;binary option
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -199,8 +199,8 @@ class TestOudServerSpecificValidation:
         """Validate OUD requires objectClass attribute (stricter than RFC)."""
         # Create OUD entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oud",
                 extensions=m.DynamicMetadata(
@@ -221,8 +221,8 @@ class TestOudServerSpecificValidation:
         """Validate OUD requires naming attribute from RDN (stricter than RFC)."""
         # Create OUD entry with missing naming attribute
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -248,8 +248,8 @@ class TestOudServerSpecificValidation:
         """Validate OUD requires ;binary option for binary attributes."""
         # Create OUD entry with binary data without ;binary option
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -276,8 +276,8 @@ class TestOudServerSpecificValidation:
         """Validate OUD accepts fully compliant entry."""
         # Create fully compliant OUD entry
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -308,8 +308,8 @@ class TestOpenLdapServerSpecificValidation:
         """Validate OpenLDAP allows entries without objectClass (flexible)."""
         # Create OpenLDAP entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="openldap",
                 extensions=m.DynamicMetadata(
@@ -332,8 +332,8 @@ class TestOpenLdapServerSpecificValidation:
         """Validate OpenLDAP 2.x requires ;binary option for binary attributes."""
         # Create OpenLDAP entry with binary data without ;binary option
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -360,8 +360,8 @@ class TestOpenLdapServerSpecificValidation:
         """Validate OpenLDAP schema entry detection (cn=schema, cn=subschema)."""
         # Create OpenLDAP schema entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=subschema"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=subschema"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "attributeTypes": ["( 1.2.3.4 NAME 'test' )"],
                 },
@@ -390,8 +390,8 @@ class TestActiveDirectoryServerSpecificValidation:
         """Validate AD requires objectClass attribute (strict mode)."""
         # Create AD entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="ad",
                 extensions=m.DynamicMetadata(
@@ -412,8 +412,8 @@ class TestActiveDirectoryServerSpecificValidation:
         """Validate AD requires naming attribute from RDN."""
         # Create AD entry with missing naming attribute
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["user"],
                     # Missing 'cn' attribute
@@ -439,8 +439,8 @@ class TestActiveDirectoryServerSpecificValidation:
         """Validate AD allows binary attributes without ;binary (auto-detect)."""
         # Create AD entry with objectGUID without ;binary option
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["user"],
                     "cn": ["test"],
@@ -473,8 +473,8 @@ class TestRfcBaselineValidation:
         """Validate RFC baseline: objectClass SHOULD be present (warning)."""
         # Create RFC entry without objectClass
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             metadata=m.Ldif.QuirkMetadata(quirk_type="rfc"),
         )
 
@@ -495,8 +495,8 @@ class TestRfcBaselineValidation:
         """Validate RFC baseline: naming attribute SHOULD be present (warning)."""
         # Create RFC entry with missing naming attribute
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
@@ -525,8 +525,8 @@ class TestRfcBaselineValidation:
         """Validate RFC baseline: binary attributes MAY need ;binary (warning)."""
         # Create RFC entry with binary data without ;binary option
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -553,8 +553,8 @@ class TestRfcBaselineValidation:
         """Validate RFC accepts fully compliant entry with no violations."""
         # Create fully compliant RFC entry
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -580,8 +580,8 @@ class TestMetadataCapture:
         """Validate server_type is captured in metadata.extensions."""
         # Create entry with server type
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
@@ -605,8 +605,8 @@ class TestMetadataCapture:
         """Validate RFC violations are preserved in metadata.extensions."""
         # Create entry with RFC violations
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={},
             ),  # Missing objectClass and cn
             metadata=m.Ldif.QuirkMetadata(quirk_type="rfc"),
@@ -626,8 +626,8 @@ class TestMetadataCapture:
         """Validate server-specific violations are preserved in metadata.extensions."""
         # Create OUD entry with violations
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={},
             ),  # Missing objectClass and cn
             metadata=m.Ldif.QuirkMetadata(

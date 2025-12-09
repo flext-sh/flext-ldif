@@ -16,7 +16,6 @@ from typing import Any, cast
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextRuntime,
     FlextTypes,
 )
 
@@ -249,7 +248,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         **Utilities Used**:
 
-        - ``u.Entry.matches_server_patterns()`` - Pattern matching
+        - ``u.Ldif.Entry.matches_server_patterns()`` - Pattern matching
 
         **RFC Override**: Extends RFC (RFC returns True for all entries as fallback).
 
@@ -284,7 +283,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     # ===== _parse_entry - SIMPLIFIED VIA HOOK-BASED ARCHITECTURE =====
     # NOTE: _process_oud_attributes REMOVED - RFC base + hooks handles this
     # NOTE: _build_and_populate_roundtrip_metadata REMOVED - RFC base handles this
-    # NOTE: _analyze_oud_entry_differences REMOVED - use u.Entry.analyze_differences
+    # NOTE: _analyze_oud_entry_differences REMOVED - use u.Ldif.Entry.analyze_differences
     # NOTE: _store_oud_minimal_differences REMOVED - use FlextLdifUtilitiesMetadata.store_minimal_differences
     # NOTE: parse_entry now calls RFC base + populates OUD metadata (2025-01)
 
@@ -1582,8 +1581,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_parsed_acl_extensions(
         self,
-        acl_extensions: dict[str, object],
-        current_extensions: dict[str, object],
+        acl_extensions: dict[str, t.MetadataAttributeValue],
+        current_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1655,7 +1654,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         aci_values: list[str] | str,
         acl_quirk: FlextLdifServersOudAcl,
-        current_extensions: dict[str, object],
+        current_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Process list of ACI values and extract metadata."""
         aci_list = (
@@ -1680,7 +1679,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         else dict(acl_model.metadata.extensions)
                     )
                     # Type narrow for proper type checking
-                    acl_extensions: dict[str, object] = dict(acl_ext_raw)
+                    acl_extensions: dict[str, t.MetadataAttributeValue] = dict(acl_ext_raw)
                     self._process_parsed_acl_extensions(
                         acl_extensions,
                         current_extensions,
@@ -1689,7 +1688,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _merge_acl_metadata_to_entry(
         self,
         entry: FlextLdifModelsDomains.Entry,
-        acl_metadata_extensions: dict[str, object],
+        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> FlextLdifModelsDomains.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
@@ -1708,9 +1707,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     current_extensions_dict
                 )
             elif isinstance(entry.metadata.extensions, dict):
-                current_extensions = entry.metadata.extensions
+                # Type narrowing: dict is compatible with dict[str, t.MetadataAttributeValue]
+                current_extensions: dict[str, t.MetadataAttributeValue] = (
+                    entry.metadata.extensions
+                )
             else:
-                current_extensions = {}
+                current_extensions: dict[str, t.MetadataAttributeValue] = {}
             # Merge and create new entry
             current_extensions.update(acl_metadata_extensions)
             merged_extensions = FlextLdifModelsMetadata.DynamicMetadata(
@@ -1737,7 +1739,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _extract_acl_metadata_from_dynamic(
         self,
         acl_extensions: FlextLdifModelsMetadata.DynamicMetadata,
-        acl_metadata_extensions: dict[str, object],
+        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1781,8 +1783,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata_from_dict(
         self,
-        acl_extensions: dict[str, object],
-        acl_metadata_extensions: dict[str, object],
+        acl_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1827,7 +1829,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _process_single_aci_value(
         self,
         aci_value: str,
-        acl_metadata_extensions: dict[str, object],
+        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> FlextResult[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
@@ -2110,9 +2112,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         syntax_corrections: list[str] | dict[str, str] | None,
     ) -> FlextResult[FlextLdifModelsDomains.Entry]:
         """Apply syntax corrections to entry."""
-        corrected_attrs = corrected_data.get("corrected_attributes")
-        if not isinstance(corrected_attrs, dict):
+        corrected_attrs_raw = corrected_data.get("corrected_attributes")
+        # Type narrowing: corrected_attrs should be dict[str, str | list[str]] | None
+        if not isinstance(corrected_attrs_raw, dict):
             return FlextResult[FlextLdifModelsDomains.Entry].ok(entry)
+        # Type narrowing: after isinstance check, corrected_attrs is dict[str, str | list[str]]
+        corrected_attrs: dict[str, str | list[str]] = corrected_attrs_raw
 
         attrs_for_model: dict[str, list[str]] = {}
         for k, v in corrected_attrs.items():
@@ -2287,7 +2292,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 for k, v in parsed_attrs.items()
             }
             dn_differences, attribute_differences, original_attrs_complete, _ = (
-                u.Entry.analyze_differences(
+                u.Ldif.Entry.analyze_differences(
                     entry_attrs=original_entry_dict,
                     converted_attrs=converted_attrs,
                     original_dn=original_dn,
@@ -2324,7 +2329,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _determine_attribute_order(
         self,
         attr_names: list[str],
-        format_options: t.Types.WriteFormatOptions,
+        format_options: m.Ldif.WriteFormatOptions,
     ) -> list[str]:
         """Determine attribute order based on format options.
 
@@ -2336,7 +2341,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Ordered list of attribute names (sorted or original order)
 
         """
-        if format_options.get("sort_attributes", False):
+        if format_options and format_options.sort_attributes:
             return sorted(attr_names, key=str.lower)
         return attr_names
 
@@ -2344,7 +2349,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: list[str],
         attr_name: str,
-        transformation: t.Types.TransformationMetadata,
+        _transformation: t.Ldif.TransformationInfo,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.
@@ -2352,7 +2357,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         Args:
             comment_lines: List to append comments to
             attr_name: Name of transformed attribute
-            transformation: Transformation metadata
+            _transformation: Transformation metadata (unused, reserved for future use)
             comment_type: Type of transformation (MODIFIED, TRANSFORMED, etc.)
 
         """

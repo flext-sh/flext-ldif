@@ -17,9 +17,8 @@ from __future__ import annotations
 
 import json
 from functools import reduce
-from typing import Any, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -539,8 +538,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if new_attributes == entry.attributes.attributes:
             return entry
 
-        # Use dict[str, Any] for model_copy update to avoid type checker strictness
-        update_dict: dict[str, Any] = {
+        # Pydantic 2: model_copy accepts dict[str, object] for partial updates
+        update_dict: dict[str, object] = {
             "attributes": FlextLdifModelsDomains.LdifAttributes(
                 attributes=new_attributes
             ),
@@ -767,7 +766,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ("TRUE"/"FALSE") back to OID format ("1"/"0") during write.
 
         Uses FlextLdifServersOidConstants for boolean format constants.
-        Uses u.Entry for conversion (DRY principle).
+        Uses u.Ldif.Entry for conversion (DRY principle).
 
         Args:
             entry_data: Entry model with RFC-formatted boolean attributes
@@ -823,8 +822,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if entry_data.attributes and entry_data.attributes.metadata:
             # entry_data.attributes.metadata is already EntryMetadata | None
             entry_metadata = entry_data.attributes.metadata
-        # Use dict[str, Any] for model_copy update to avoid type checker strictness
-        update_dict: dict[str, Any] = {
+        # Pydantic 2: model_copy accepts dict[str, object] for partial updates
+        update_dict: dict[str, object] = {
             "attributes": FlextLdifModelsDomains.LdifAttributes(
                 attributes=restored_attrs,
                 attribute_metadata=(
@@ -852,7 +851,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         This hook is called by RFC._write_entry() before formatting the entry
         for LDIF output. Enables perfect round-trip OID→RFC→OID conversion.
 
-        Uses c.MetadataKeys for standardized metadata keys.
+        Uses c.Ldif.MetadataKeys for standardized metadata keys.
 
         Args:
             entry_data: RFC-normalized Entry model to restore
@@ -1070,21 +1069,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # Business Rule: DynamicMetadata accepts MetadataAttributeValue
         # Implication: All values must be compatible with MetadataAttributeValue
         # Type annotation ensures MetadataValue compatibility
-        extensions_data: dict[str, t.MetadataAttributeValue] = dict(
-            conversion_metadata,
-        )
-        # Type compatibility: dn_metadata is dict[str, str | bool], compatible with MetadataAttributeValue
-        extensions_data.update(cast("dict[str, t.MetadataAttributeValue]", dn_metadata))
-        # Type compatibility: rfc_compliance_metadata is DynamicMetadata, compatible with MetadataAttributeValue
-        extensions_data.update(
-            cast("dict[str, t.MetadataAttributeValue]", rfc_compliance_metadata),
-        )
-        # Type compatibility: generic_metadata may have complex nested dicts, but runtime-compatible
+        # Type narrowing: conversion_metadata values are list[str] which is compatible with MetadataAttributeValue
+        extensions_data: dict[str, t.MetadataAttributeValue] = dict(conversion_metadata)
+        # Type narrowing: dn_metadata values are str | bool which are compatible with MetadataAttributeValue
+        extensions_data.update(dn_metadata)
+        # Type narrowing: rfc_compliance_metadata values are str which is compatible with MetadataAttributeValue
+        extensions_data.update(rfc_compliance_metadata)
+        # Type narrowing: generic_metadata values are str which is compatible with MetadataAttributeValue
         extensions_data.update(generic_metadata)
-        # Type compatibility: original_extensions is dict[str, str | int | bool | list[str]], compatible
-        extensions_data.update(
-            cast("dict[str, t.MetadataAttributeValue]", original_extensions),
-        )
+        # Type narrowing: original_extensions values are str | int | bool | list[str] which are compatible with MetadataAttributeValue
+        extensions_data.update(original_extensions)
         extensions_data[c.Ldif.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )
@@ -1196,7 +1190,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     # ===== _parse_entry HELPER METHODS (DRY refactoring) =====
     # REMOVED: _analyze_oid_entry_differences (63 lines → utility)
-    # Now uses: u.Entry.analyze_differences()
+    # Now uses: u.Ldif.Entry.analyze_differences()
     # REMOVED: _store_oid_minimal_differences (68 lines → utility)
     # Now uses: u.Ldif.Metadata.store_minimal_differences()
 
@@ -1529,8 +1523,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # Update entry metadata with all extensions (ACL extensions + OID-specific metadata)
         if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
-            # Use dict[str, Any] for model_copy update to avoid type checker strictness
-            update_dict: dict[str, Any] = {
+            # Pydantic 2: model_copy accepts dict[str, object] for partial updates
+            update_dict: dict[str, object] = {
                 "extensions": FlextLdifModelsMetadata.DynamicMetadata(
                     **current_extensions
                 )

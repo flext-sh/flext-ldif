@@ -233,9 +233,12 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
                 # Return failure as r[Entry] by mapping error
-                return r[m.Ldif.Entry].fail(
-                    u.err(validation_result, default="DN validation failed"),
+                error_msg = (
+                    str(validation_result.error)
+                    if validation_result.error
+                    else "DN validation failed"
                 )
+                return r[m.Ldif.Entry].fail(error_msg)
 
         # Normalize DN
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)

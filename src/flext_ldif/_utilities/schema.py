@@ -1443,7 +1443,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute | FlextLdifModelsDomains.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -1454,7 +1454,7 @@ class FlextLdifUtilitiesSchema:
         trailing spaces from metadata when available.
 
         Args:
-            attr_data: SchemaAttribute model (public facade m.Ldif.SchemaAttribute)
+            attr_data: SchemaAttribute model (accepts both facade and domain models)
             restore_original: If True, try to restore original format first
 
         Returns:

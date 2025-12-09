@@ -223,7 +223,7 @@ class FlextLdifProcessing(
             FlextResult with list of processed results
 
         """
-        # Use u.process for batch processing with error handling
+        # Use u.Ldif.process for batch processing with error handling
         # FlextLdifUtilities may not have process() method with on_error, delegate to core
         batch_result = u.Collection.process(
             entries,
@@ -234,7 +234,7 @@ class FlextLdifProcessing(
             return r[list[m.Ldif.ProcessingResult]].fail(
                 batch_result.error or "Batch processing failed",
             )
-        # u.process returns list[R] | dict[str, R] depending on input
+        # u.Ldif.process returns list[R] | dict[str, R] depending on input
         # Type narrowing: batch_result.value is list[m.Ldif.ProcessingResult] | dict[str, m.Ldif.ProcessingResult]
         batch_value = batch_result.value
         if isinstance(batch_value, list):

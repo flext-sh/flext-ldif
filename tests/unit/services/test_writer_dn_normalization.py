@@ -148,8 +148,8 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
 
         # Create entry with normalized DN
         entry = m.Ldif.Entry(
-            dn=m.DistinguishedName(value=normalized_dn),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value=normalized_dn),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "cn": ["John Doe"],
                     "objectClass": ["person"],
@@ -161,7 +161,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         write_result = writer.write(
             entries=[entry],
             target_server_type="rfc",
-            format_options=m.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.Ldif.WriteFormatOptions(fold_long_lines=False),
         )
 
         assert write_result.is_success

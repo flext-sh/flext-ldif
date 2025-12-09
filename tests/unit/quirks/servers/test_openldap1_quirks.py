@@ -241,8 +241,8 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         """Test entry detection for traditional DIT (no cn=config)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.LdifAttributes(
+        dn = m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com")
+        attributes = m.Ldif.LdifAttributes.(
             attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         m.Ldif.Entry(dn=dn, attributes=attributes)
@@ -252,8 +252,8 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         """Test entry detection rejects cn=config DNs (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=config")
-        attributes = m.LdifAttributes(attributes={"cn": ["config"]})
+        dn = m.Ldif.DistinguishedName(value="cn=config")
+        attributes = m.Ldif.LdifAttributes.(attributes={"cn": ["config"]})
         m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False
 
@@ -261,8 +261,8 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         """Test entry detection rejects olc* attributes (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.LdifAttributes(
+        dn = m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com")
+        attributes = m.Ldif.LdifAttributes.(
             attributes={"olcDatabase": ["{1}mdb"]},
         )
         m.Ldif.Entry(dn=dn, attributes=attributes)

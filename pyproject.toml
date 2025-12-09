@@ -138,6 +138,12 @@ docker = ">=7.1.0"
             bandit = ">=1.8.0"
             pip-audit = ">=2.7.3"
 
+    [tool.coverage.run]
+        omit = [
+            "*/dependency_injector/*",
+            "*.pyx",
+        ]
+
     [tool.pytest.ini_options]
         pythonpath = ["src"]
         addopts = [

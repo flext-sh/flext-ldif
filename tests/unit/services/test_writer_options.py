@@ -35,7 +35,7 @@ class TestsFlextLdifWriterOptions(s):
 
 def config_to_write_options(
     config: FlextLdifConfig,
-) -> m.WriteFormatOptions | m.WriteOptions:
+) -> m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions:
     """Convert FlextLdifConfig to WriteOptions or WriteFormatOptions."""
     # Check if WriteFormatOptions fields are present
     has_format_options = any(
@@ -66,7 +66,7 @@ def config_to_write_options(
                     (bool, int, str, list, frozenset, dict),
                 ):
                     format_opts_dict[model_key] = value
-        return m.WriteFormatOptions.model_validate(format_opts_dict)
+        return m.Ldif.WriteFormatOptions.model_validate(format_opts_dict)
 
     # Create basic WriteOptions
     return m.WriteOptions(
@@ -247,8 +247,8 @@ class TestsFlextLdifWriterFormatOptions(s):
         metadata: m.Ldif.QuirkMetadata | None = None,
     ) -> m.Ldif.Entry:
         """Factory method to create Entry with reduced boilerplate."""
-        dn_obj = m.DistinguishedName(value=dn)
-        attrs_obj = m.LdifAttributes(attributes=attributes)
+        dn_obj = m.Ldif.DistinguishedName(value=dn)
+        attrs_obj = m.Ldif.LdifAttributes.(attributes=attributes)
         if metadata is not None:
             return m.Ldif.Entry(
                 dn=dn_obj,
@@ -288,7 +288,7 @@ class TestsFlextLdifWriterFormatOptions(s):
             )
         )
 
-        options: m.WriteFormatOptions | m.WriteOptions
+        options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions
         if has_format_options:
             # Create WriteFormatOptions from config_overrides
             format_opts_dict: dict[str, object] = {}
@@ -297,7 +297,7 @@ class TestsFlextLdifWriterFormatOptions(s):
                     value = config_overrides[config_key]
                     if isinstance(value, (bool, int, str, list, frozenset, dict)):
                         format_opts_dict[model_key] = value
-            options = m.WriteFormatOptions.model_validate(format_opts_dict)
+            options = m.Ldif.WriteFormatOptions.model_validate(format_opts_dict)
         else:
             # Create basic WriteOptions
             sort_entries_raw = config_overrides.get("ldif_write_sort_attributes", False)

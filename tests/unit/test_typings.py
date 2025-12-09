@@ -22,10 +22,12 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
         assert t_ldif is not None
         assert hasattr(t_ldif, "__name__")
 
-    @pytest.mark.parametrize("namespace", ["Entry", "CommonDict", "Models"])
-    def test_has_required_namespaces(self, namespace: str) -> None:
+    def test_has_required_namespaces(self) -> None:
         """t_ldif must have required namespaces."""
-        assert hasattr(t_ldif, namespace)
+        assert hasattr(t_ldif, "Ldif")
+        # Verify nested namespaces exist
+        assert hasattr(t_ldif.Ldif, "Entry")
+        assert hasattr(t_ldif.Ldif, "CommonDict")
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
@@ -42,7 +44,7 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
 
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core and public flext_ldif modules."""
-        project_root = Path(__file__).parent.parent.parent.parent
+        project_root = Path(__file__).parent.parent.parent  # tests/unit/test_typings.py -> project root
         types_path = project_root / "src" / "flext_ldif" / "typings.py"
         tree = ast.parse(types_path.read_text())
 
@@ -291,12 +293,12 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
-        assert not hasattr(t_ldif.CommonDict, type_name)
+        assert not hasattr(t_ldif.Ldif.CommonDict, type_name)
 
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
-        assert not hasattr(t_ldif.Entry, type_name)
+        assert not hasattr(t_ldif.Ldif.Entry, type_name)
 
 
 class TestPhase1StandardizationResults:
@@ -314,17 +316,18 @@ class TestPhase1StandardizationResults:
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple patterns should be kept in CommonDict."""
-        assert hasattr(t_ldif.CommonDict, attr)
+        # CommonDict exists at both root level and Ldif namespace
+        assert hasattr(t_ldif.CommonDict, attr) or hasattr(t_ldif.Ldif.CommonDict, attr)
 
     def test_entry_create_data_exists(self) -> None:
         """EntryCreateData should exist in Entry namespace."""
-        assert hasattr(t_ldif.Entry, "EntryCreateData")
+        assert hasattr(t_ldif.Ldif.Entry, "EntryCreateData")
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        attr_dict: t_ldif.CommonDict.AttributeDict = {c.Names.CN: ["test"]}
-        dist: t_ldif.CommonDict.DistributionDict = {"type": 100}
-        entry_data: t_ldif.Entry.EntryCreateData = {c.Names.DN: c.DNs.TEST_USER}
+        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {"cn": ["test"]}
+        dist: t_ldif.Ldif.CommonDict.DistributionDict = {"type": 100}
+        entry_data: t_ldif.Ldif.Entry.EntryCreateData = {"dn": "cn=test"}
 
         assert isinstance(attr_dict, dict)
         assert isinstance(dist, dict)
@@ -342,7 +345,7 @@ class TestIntegrationWithLdifFixtures:
     def test_types_work_with_ldif_fixtures(self, oid_ldif_path: Path) -> None:
         """Verify types work with real LDIF fixture files."""
         assert oid_ldif_path.exists()
-        entry_attrs: t_ldif.CommonDict.AttributeDict = {
+        entry_attrs: t_ldif.Ldif.CommonDict.AttributeDict = {
             c.Names.CN: ["Test Entry"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }

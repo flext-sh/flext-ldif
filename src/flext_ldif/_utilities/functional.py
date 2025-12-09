@@ -152,7 +152,7 @@ class FlextFunctional:
 
     @staticmethod
     def pick[T](
-        data: dict[str, T] | T,
+        data: dict[str, T],
         *keys: str,
         as_dict: bool = True,
     ) -> dict[str, T] | list[T]:
@@ -173,8 +173,6 @@ class FlextFunctional:
             [1, 2]
 
         """
-        if not isinstance(data, dict):
-            return {} if as_dict else []
         if as_dict:
             return {k: data[k] for k in keys if k in data}
         return [data[k] for k in keys if k in data]
@@ -187,7 +185,7 @@ class FlextFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: dict[str, T] | T,
+        data: dict[str, T],
         mapper: Callable[[str, T], tuple[str, U]],
     ) -> dict[str, U]:
         """Map dict with transformations (mnemonic: md).
@@ -204,8 +202,6 @@ class FlextFunctional:
             {'A': 2}
 
         """
-        if not isinstance(data, dict):
-            return {}
         result: dict[str, U] = {}
         for key, value in data.items():
             new_key, new_value = mapper(key, value)
@@ -216,7 +212,7 @@ class FlextFunctional:
 
     @staticmethod
     def reduce_dict[T, U](
-        data: dict[str, T] | T,
+        data: dict[str, T],
         *,
         processor: Callable[[str, T], U] | None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
@@ -242,8 +238,6 @@ class FlextFunctional:
             {'b': 20, 'c': 30}
 
         """
-        if not isinstance(data, dict):
-            return {}
         result: dict[str, U] = {}
         for key, value in data.items():
             if predicate(key, value):
@@ -313,8 +307,6 @@ class FlextFunctional:
             2
 
         """
-        if not isinstance(data, dict):
-            return default
         for key, value in data.items():
             if predicate(key, value):
                 return value
@@ -372,19 +364,19 @@ class FlextFunctional:
             return initial
         result = initial
         # Type narrowing: items is Sequence[T] after isinstance check
-        items_typed: Sequence[T] = cast("Sequence[T]", items)
-        for item in items_typed:
+        # isinstance narrows to list | tuple, both are Sequence[T]
+        for item in items:
             result = folder(result, item)
         return result
 
     fd = fold
 
     @staticmethod
-    def map_filter[T, U](
+    def map_filter[T](
         items: Sequence[T] | T,
-        mapper: Callable[[T], U] | None = None,
+        mapper: Callable[[T], T] | None = None,
         predicate: Callable[[object], bool] = lambda x: x is not None,
-    ) -> list[U]:
+    ) -> list[T]:
         """Map then filter items (mnemonic: mf).
 
         Args:
@@ -404,15 +396,15 @@ class FlextFunctional:
         """
         if not isinstance(items, (list, tuple)):
             return []
-        result: list[U] = []
+        result: list[T] = []
         # Type narrowing: items is Sequence[T] after isinstance check
-        items_typed: Sequence[T] = cast("Sequence[T]", items)
-        for item in items_typed:
+        # isinstance narrows to list | tuple, both are Sequence[T]
+        for item in items:
             if mapper is not None:
-                mapped: U = mapper(item)
+                mapped: T = mapper(item)
             else:
-                # When no mapper provided, T becomes U with identity mapper
-                mapped = cast("U", item)
+                # When no mapper provided, item is already T
+                mapped: T = item
             if predicate(mapped):
                 result.append(mapped)
         return result
@@ -450,15 +442,15 @@ class FlextFunctional:
             return []
         result: list[U] = []
         # Type narrowing: items is Sequence[T] after isinstance check
-        items_typed: Sequence[T] = cast("Sequence[T]", items)
-        for item in items_typed:
+        # isinstance narrows to list | tuple, both are Sequence[T]
+        for item in items:
             try:
                 processed = processor(item)
                 if isinstance(processed, (list, tuple)):
-                    # Type narrowing: sub_item is U after predicate check
-                    processed_seq: Sequence[U] = cast("Sequence[U]", processed)
+                    # Type narrowing: processed is Sequence[U] after isinstance check
+                    # isinstance narrows to list | tuple, both are Sequence[U]
                     result.extend([
-                        sub_item for sub_item in processed_seq if predicate(sub_item)
+                        sub_item for sub_item in processed if predicate(sub_item)
                     ])
                 # Single value (not list/tuple), predicate checks it
                 # Type narrowing: isinstance(processed, (list, tuple)) is False
@@ -466,7 +458,7 @@ class FlextFunctional:
                 elif predicate(processed):
                     # processed is U when not a sequence
                     # Runtime check ensures type compatibility
-                    result.append(cast("U", processed))
+                    result.append(processed)
             except Exception:
                 if on_error == "stop":
                     raise
@@ -537,12 +529,14 @@ class FlextFunctional:
         default_list = default if default is not None else []
 
         # Normalize value to Sequence[T] | None for or_
+        # isinstance narrows to list | tuple, both are Sequence[T]
         if isinstance(value, (list, tuple)):
-            value_seq: Sequence[T] | None = cast("Sequence[T]", value)
+            value_seq: Sequence[T] | None = value
         elif value is None:
             value_seq = None
         else:
-            value_seq = cast("Sequence[T]", [value])
+            # Single value wrapped in list becomes Sequence[T]
+            value_seq: Sequence[T] | None = [value]
 
         # Use or_ DSL for None handling
         extracted = cls.or_(value_seq, default=default_list)
@@ -573,17 +567,19 @@ class FlextFunctional:
             # Filter items and maintain type
             if mapper is not None:
                 # items_result is list[U] after mapper
+                # Type narrowing: item is U in list[U]
                 items_result = [
-                    cast("U", item)
+                    item
                     for item in items_result
-                    if predicate(cast("U", item))
+                    if predicate(item)
                 ]
             else:
                 # items_result is list[T] without mapper
+                # Type narrowing: item is T in list[T]
                 items_result = [
-                    cast("T", item)
+                    item
                     for item in items_result
-                    if predicate(cast("T", item))
+                    if predicate(item)
                 ]
 
         return items_result
@@ -603,9 +599,9 @@ class FlextFunctional:
         """Get value from dict with default (mnemonic: gt).
 
         Args:
-            data: Dictionary to get from (or any value)
+            data: Dictionary to get from
             key: Key to retrieve
-            default: Default value if key not found or data is not dict
+            default: Default value if key not found
 
         Returns:
             Value at key, or default if not found
@@ -617,15 +613,13 @@ class FlextFunctional:
             None
 
         """
-        if isinstance(data, dict):
-            return u_core.mapper().get(data, key, default=default)
-        return default
+        return u_core.mapper().get(data, key, default=default)
 
     gt = get
 
     @staticmethod
     def merge[T](
-        *dicts: dict[str, T] | T,
+        *dicts: dict[str, T],
     ) -> dict[str, T]:
         """Merge multiple dicts (mnemonic: mg).
 
@@ -646,16 +640,15 @@ class FlextFunctional:
         """
         result: dict[str, T] = {}
         for d in dicts:
-            if isinstance(d, dict):
-                result.update(d)
+            result.update(d)
         return result
 
     mg = merge
 
     @staticmethod
     def evolve[T](
-        data: dict[str, T] | T,
-        updates: dict[str, T] | T,
+        data: dict[str, T],
+        updates: dict[str, T],
     ) -> dict[str, T]:
         """Update dict with changes (mnemonic: ev).
 
@@ -673,12 +666,6 @@ class FlextFunctional:
             {'a': 1, 'b': 3}
 
         """
-        if not isinstance(data, dict):
-            if isinstance(updates, dict):
-                return dict(updates)
-            return {}
-        if not isinstance(updates, dict):
-            return dict(data)
         return {**data, **updates}
 
     ev = evolve
@@ -688,12 +675,12 @@ class FlextFunctional:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def when[T, U](
+    def when[T](
         *,
         condition: bool = False,
         then: T | Callable[[], T] | None = None,
-        else_: U | None = None,
-    ) -> T | U | None:
+        else_: T | None = None,
+    ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh).
 
         Args:
@@ -714,11 +701,12 @@ class FlextFunctional:
         if condition:
             # If then is callable, call it to get the value
             if callable(then):
-                result = then()
-                # Type narrowing: callable returns T, cast to T | U | None
-                return cast("T | U | None", result)
-            return cast("T | U | None", then)
-        return cast("T | U | None", else_)
+                # Type narrowing: callable returns T
+                return then()
+            # Type narrowing: then is T | None
+            return then
+        # Type narrowing: else_ is T | None
+        return else_
 
     wh = when
 
@@ -769,19 +757,23 @@ class FlextFunctional:
                 param_count = len(sig.parameters)
                 if param_count == 0:
                     result = condition_fn()
-                    return bool(result) if isinstance(result, bool) else False
+                    # Type narrowing: result is truthy/falsy, bool() converts to bool
+                    return bool(result)
                 if value is not None:
                     result = condition_fn(value)
-                    return bool(result) if isinstance(result, bool) else False
+                    # Type narrowing: result is truthy/falsy, bool() converts to bool
+                    return bool(result)
             except (TypeError, ValueError):
                 if value is not None:
                     try:
                         result = condition_fn(value)
-                        return bool(result) if isinstance(result, bool) else False
+                        # Type narrowing: result is truthy/falsy, bool() converts to bool
+                        return bool(result)
                     except (TypeError, ValueError):
                         try:
                             result = condition_fn()
-                            return bool(result) if isinstance(result, bool) else False
+                            # Type narrowing: result is truthy/falsy, bool() converts to bool
+                            return bool(result)
                         except (TypeError, ValueError):
                             pass
             return False

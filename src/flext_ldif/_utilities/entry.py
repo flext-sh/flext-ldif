@@ -13,7 +13,6 @@ from flext_core import (
     FlextExceptions,
     FlextLogger,
     FlextResult,
-    FlextRuntime,
     FlextService,
     FlextTypes,
     FlextUtilities as u,
@@ -927,7 +926,7 @@ class FlextLdifUtilitiesEntry:
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
                     # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                    # m.DistinguishedName is compatible via inheritance
+                    # m.Ldif.DistinguishedName is compatible via inheritance
                     dn_update: dict[str, object] = {
                         "dn": m.Ldif.DistinguishedName(value=norm_result.unwrap()),
                     }
@@ -942,7 +941,7 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                # m.LdifAttributes is compatible via inheritance
+                # m.Ldif.LdifAttributes. is compatible via inheritance
                 attrs_update: dict[str, object] = {
                     "attributes": m.Ldif.LdifAttributes(attributes=new_attrs),
                 }
@@ -964,7 +963,7 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                # m.LdifAttributes is compatible via inheritance
+                # m.Ldif.LdifAttributes. is compatible via inheritance
                 converted_attrs_update: dict[str, object] = {
                     "attributes": m.Ldif.LdifAttributes(attributes=converted),
                 }

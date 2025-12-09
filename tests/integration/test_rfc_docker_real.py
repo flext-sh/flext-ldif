@@ -218,8 +218,8 @@ class TestRfcDockerRealData:
             output_file = readonly_dir / "test.ldif"
             # Create test entry
             test_entry = m.Ldif.Entry(
-                dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+                dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
             )
 
             writer = FlextLdifWriter()
@@ -346,10 +346,10 @@ class TestRfcIntegrationRealWorld:
         # Create Entry models directly (writer expects Entry objects, not dicts)
         entry_models = [
             m.Ldif.Entry(
-                dn=m.DistinguishedName(
+                dn=m.Ldif.DistinguishedName(
                     value=f"cn=user{i},ou=people,dc=example,dc=com",
                 ),
-                attributes=m.LdifAttributes(
+                attributes=m.Ldif.LdifAttributes.(
                     attributes={
                         "cn": [f"user{i}"],
                         "objectClass": ["person", "inetOrgPerson"],

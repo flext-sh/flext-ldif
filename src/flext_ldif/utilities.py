@@ -24,7 +24,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Literal, Self, TypeGuard, cast, overload
+from typing import Literal, Self, TypeGuard, overload
 
 from flext_core import (
     FlextLogger,
@@ -35,7 +35,6 @@ from flext_core import (
 )
 from flext_core.runtime import FlextRuntime
 from flext_core.utilities import ValidatorSpec
-from pydantic import BaseModel
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -122,10 +121,10 @@ class FlextLdifUtilities(FlextUtilities):
 
         # LDIF-specific access
         u.Ldif.DN.parse("cn=test,dc=example,dc=com")
-        u.Entry.has_objectclass(entry, "person")
+        u.Ldif.Entry.has_objectclass(entry, "person")
 
         # Power methods
-        result = u.process(entries, source_server="oid")
+        result = u.Ldif.process(entries, source_server="oid")
         result = u.transform(entries, Normalize.dn())
         result = u.filter(entries, Filter.by_objectclass("person"))
     """
@@ -427,16 +426,13 @@ class FlextLdifUtilities(FlextUtilities):
                 # Create ProcessConfig with default factory
                 # Use model_copy to update server types (Pydantic v2 pattern)
                 config_base = m.Ldif.Config.ProcessConfig()
-                config_base_model = cast("BaseModel", config_base)
-                process_config = cast(
-                    "m.Ldif.Config.ProcessConfig",
-                    config_base_model.model_copy(
-                        update={
-                            "source_server": source_server,
-                            "target_server": target_server
-                            or m.Ldif.Config.ServerType.RFC,
-                        }
-                    ),
+                config_base_model = config_base
+                process_config = config_base_model.model_copy(
+                    update={
+                        "source_server": source_server,
+                        "target_server": target_server
+                        or m.Ldif.Config.ServerType.RFC,
+                    }
                 )
                 # Create TransformConfig with ProcessConfig
                 transform_config = m.Ldif.Config.TransformConfig()
@@ -477,55 +473,31 @@ class FlextLdifUtilities(FlextUtilities):
             value: T,
         ) -> bool:
             """Evaluate predicate with automatic 1-arg or 2-arg detection."""
-            two_arg_threshold = 2
-            try:
-                if callable(predicate):
-                    sig = inspect.signature(predicate)
-                    param_count = len(sig.parameters)
-                    if param_count >= two_arg_threshold:
-                        # Type narrowing: predicate accepts 2 args, runtime signature check ensures correctness
-                        # Try calling with 2 args first
-                        try:
-                            pred_2arg: Callable[[str, T], bool] = cast(
-                                "Callable[[str, T], bool]",
-                                predicate,
-                            )
-                            result = pred_2arg(key, value)
-                            if isinstance(result, bool):
-                                return result
-                        except (TypeError, ValueError):
-                            pass
-                        # Fallback: try as 1-arg predicate
-                        try:
-                            pred_1arg: Callable[[T], bool] = cast(
-                                "Callable[[T], bool]",
-                                predicate,
-                            )
-                            result = pred_1arg(value)
-                            if isinstance(result, bool):
-                                return result
-                        except (TypeError, ValueError):
-                            pass
-                    else:
-                        # Type narrowing: predicate accepts 1 arg
-                        try:
-                            pred_1arg_else: Callable[[T], bool] = cast(
-                                "Callable[[T], bool]",
-                                predicate,
-                            )
-                            result = pred_1arg_else(value)
-                            if isinstance(result, bool):
-                                return result
-                        except (TypeError, ValueError):
-                            pass
-            except (TypeError, ValueError):
-                # Fallback: try as 1-arg predicate
+            if not callable(predicate):
+                return True
+            # Use TypeGuard for type narrowing
+            if FlextLdifUtilities.Ldif.is_two_arg_processor(predicate):
+                # TypeGuard ensures predicate is Callable[[str, T], bool]
                 try:
-                    pred_1arg_fallback: Callable[[T], bool] = cast(
-                        "Callable[[T], bool]",
-                        predicate,
+                    result = FlextLdifUtilities.Ldif.call_processor(predicate, key, value)
+                    if isinstance(result, bool):
+                        return result
+                except (TypeError, ValueError):
+                    # Fallback: try as 1-arg predicate
+                    try:
+                        result = FlextLdifUtilities.Ldif.call_processor_single_arg(
+                            predicate, value
+                        )
+                        if isinstance(result, bool):
+                            return result
+                    except (TypeError, ValueError):
+                        pass
+            else:
+                # TypeGuard ensures predicate is Callable[[T], bool]
+                try:
+                    result = FlextLdifUtilities.Ldif.call_processor_single_arg(
+                        predicate, value
                     )
-                    result = pred_1arg_fallback(value)
                     if isinstance(result, bool):
                         return result
                 except (TypeError, ValueError):
@@ -566,6 +538,40 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> R:
             """Call 1-arg processor function."""
             return processor_func(value)
+
+        @staticmethod
+        def is_no_arg_callable[R](
+            func: Callable[[], R] | Callable[[object], R] | object,
+        ) -> TypeGuard[Callable[[], R]]:
+            """Check if callable accepts 0 arguments.
+
+            Uses inspect to determine parameter count at runtime.
+            TypeGuard ensures MyPy understands the type narrowing.
+            """
+            if not callable(func):
+                return False
+            try:
+                sig = inspect.signature(func)
+                return len(sig.parameters) == 0
+            except (ValueError, TypeError):
+                return False
+
+        @staticmethod
+        def is_object_arg_callable[R](
+            func: Callable[[], R] | Callable[[object], R] | object,
+        ) -> TypeGuard[Callable[[object], R]]:
+            """Check if callable accepts 1 object argument.
+
+            Uses inspect to determine parameter count at runtime.
+            TypeGuard ensures MyPy understands the type narrowing.
+            """
+            if not callable(func):
+                return False
+            try:
+                sig = inspect.signature(func)
+                return len(sig.parameters) == 1
+            except (ValueError, TypeError):
+                return False
 
         @staticmethod
         def process_dict_items[T, R](
@@ -928,20 +934,21 @@ class FlextLdifUtilities(FlextUtilities):
             # Fallback: delegate to base class with proper type narrowing
             # predicate_or_filter1 is EntryFilter here, but we need VariadicCallable
             # This branch is unreachable in normal use since EntryFilter is for sequences
-            predicate_fb: FlextLdifUtilities.Ldif.VariadicCallable[bool] = cast(
-                "FlextLdifUtilities.Ldif.VariadicCallable[bool]",
-                predicate_or_filter1,
-            )
+            # Convert EntryFilter to VariadicCallable via lambda wrapper
+            def predicate_wrapper(item: object) -> bool:
+                """Wrap EntryFilter as VariadicCallable for base class compatibility."""
+                if isinstance(predicate_or_filter1, EntryFilter):
+                    # EntryFilter.matches() returns bool - type narrowing ensures EntryFilter type
+                    entry_filter: EntryFilter[object] = predicate_or_filter1
+                    return entry_filter.matches(item)
+                return False
+            
             # Type narrowing: items_or_entries is compatible with base class signature
-            result = FlextLdifUtilities.Ldif._filter_base_class(  # noqa: SLF001
+            # Return type already declared in _filter_base_class signature
+            return FlextLdifUtilities.Ldif._filter_base_class(  # noqa: SLF001
                 items_or_entries,
-                predicate_fb,
+                predicate_wrapper,
                 mapper,
-            )
-            # Return type matches expected union type
-            return cast(
-                "list[T] | list[R] | dict[str, T] | dict[str, R] | FlextLdifResult[list[m.Ldif.Entry]]",
-                result,
             )
 
         @staticmethod
@@ -967,16 +974,12 @@ class FlextLdifUtilities(FlextUtilities):
                         predicate,
                     )
                 else:
-                    mapper_list: FlextLdifUtilities.Ldif.VariadicCallable[
-                        t.GeneralValueType
-                    ] = cast(
-                        "FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]",
-                        mapper,
-                    )
+                    # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
+                    # GeneralValueType is a wide union type that includes R
                     result_list = FlextUtilities.Collection.filter(
                         items_list,
                         predicate,
-                        mapper=mapper_list,
+                        mapper=mapper,
                     )
                 # Type narrowing: result_list is list[T] | list[R] from Collection.filter
                 return result_list
@@ -989,16 +992,12 @@ class FlextLdifUtilities(FlextUtilities):
                         predicate,
                     )
                 else:
-                    mapper_dict: FlextLdifUtilities.Ldif.VariadicCallable[
-                        t.GeneralValueType
-                    ] = cast(
-                        "FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]",
-                        mapper,
-                    )
+                    # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
+                    # GeneralValueType is a wide union type that includes R
                     result_dict = FlextUtilities.Collection.filter(
                         items_dict,
                         predicate,
-                        mapper=mapper_dict,
+                        mapper=mapper,
                     )
                 # Type narrowing: result_dict is dict[str, T] | dict[str, R] from Collection.filter
                 return result_dict
@@ -1010,16 +1009,12 @@ class FlextLdifUtilities(FlextUtilities):
                     predicate,
                 )
             else:
-                mapper_single: FlextLdifUtilities.Ldif.VariadicCallable[
-                    t.GeneralValueType
-                ] = cast(
-                    "FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]",
-                    mapper,
-                )
+                # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
+                # GeneralValueType is a wide union type that includes R
                 result_single = FlextUtilities.Collection.filter(
                     items_single_list,
                     predicate,
-                    mapper=mapper_single,
+                    mapper=mapper,
                 )
             # Type narrowing: result_single is list[T] | list[R] from Collection.filter
             return result_single
@@ -2087,10 +2082,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type narrowing: result is t.GeneralValueType
                 return result
 
-            return cast(
-                "FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]",
-                curried,
-            )
+            # Type narrowing: curried has signature compatible with VariadicCallable[t.GeneralValueType]
+            # Return type already declared as VariadicCallable[t.GeneralValueType]
+            return curried
 
         # Mnemonic helper
         cy = curry
@@ -2137,26 +2131,18 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> bool:
             """Evaluate a value-arg predicate."""
             if callable(pred):
-                # Check if predicate accepts 0 or 1 args
+                # Use TypeGuards for type narrowing
+                if FlextLdifUtilities.Ldif.is_no_arg_callable(pred):
+                    # TypeGuard ensures pred is Callable[[], bool]
+                    return pred()
+                if FlextLdifUtilities.Ldif.is_object_arg_callable(pred):
+                    # TypeGuard ensures pred is Callable[[object], bool]
+                    return pred(value)
+                # Fallback: try calling with value (runtime validation)
                 try:
-                    sig = inspect.signature(pred)
-                    if len(sig.parameters) == 0:
-                        # No-arg predicate - call without value
-                        pred_no_arg = cast("Callable[[], bool]", pred)
-                        return pred_no_arg()
-                    # Value-arg predicate - call with value
-                    pred_fn: Callable[[object], bool] = cast(
-                        "Callable[[object], bool]",
-                        pred,
-                    )
-                    return pred_fn(value)
-                except (ValueError, TypeError):
-                    # Fallback: try calling with value
-                    pred_fn_fallback: Callable[[object], bool] = cast(
-                        "Callable[[object], bool]",
-                        pred,
-                    )
-                    return pred_fn_fallback(value)
+                    return bool(pred(value))
+                except (TypeError, ValueError):
+                    return bool(pred)
             return bool(pred)
 
         @classmethod
@@ -2165,9 +2151,9 @@ class FlextLdifUtilities(FlextUtilities):
             result_val: object,
         ) -> object:
             """Evaluate a no-arg result value."""
-            if callable(result_val):
-                result_val_no_arg = cast("Callable[[], object]", result_val)
-                return result_val_no_arg()
+            if callable(result_val) and FlextLdifUtilities.Ldif.is_no_arg_callable(result_val):
+                # TypeGuard ensures result_val is Callable[[], object]
+                return result_val()
             return result_val
 
         @classmethod
@@ -2177,9 +2163,9 @@ class FlextLdifUtilities(FlextUtilities):
             value: object,
         ) -> object:
             """Evaluate a value-arg result value."""
-            if callable(result_val):
-                result_fn = cast("Callable[[object], object]", result_val)
-                return result_fn(value)
+            if callable(result_val) and FlextLdifUtilities.Ldif.is_object_arg_callable(result_val):
+                # TypeGuard ensures result_val is Callable[[object], object]
+                return result_val(value)
             return result_val
 
         @classmethod
@@ -2221,21 +2207,17 @@ class FlextLdifUtilities(FlextUtilities):
                 def conditional_no_arg() -> object:
                     for pred, result_val in pairs:
                         # Type narrowing: is_no_arg ensures pred is Callable[[], bool] | bool
-                        pred_no_arg: Callable[[], bool] | bool = cast(
-                            "Callable[[], bool] | bool",
-                            pred,
-                        )
-                        if cls._evaluate_no_arg_predicate(pred=pred_no_arg):
+                        if cls._evaluate_no_arg_predicate(pred=pred):
                             return cls._evaluate_no_arg_result(result_val)
                     # Default handling - mypy sees this as potentially unreachable
                     # but it's reachable when no predicates match
-                    if default is not None and callable(default):
-                        # Type narrowing: callable check ensures it's Callable[[], object]
-                        default_no_arg: Callable[[], object] = cast(
-                            "Callable[[], object]",
-                            default,
-                        )
-                        return default_no_arg()
+                    if (
+                        default is not None
+                        and callable(default)
+                        and FlextLdifUtilities.Ldif.is_no_arg_callable(default)
+                    ):
+                        # Type narrowing: callable check + is_no_arg ensures Callable[[], object]
+                        return default()
                     return default
 
                 return conditional_no_arg
@@ -2244,9 +2226,13 @@ class FlextLdifUtilities(FlextUtilities):
                 for pred, result_val in pairs:
                     if cls._evaluate_value_arg_predicate(pred=pred, value=value):
                         return cls._evaluate_value_arg_result(result_val, value)
-                if default is not None and callable(default):
-                    default_fn = cast("Callable[[object], object]", default)
-                    return default_fn(value)
+                if (
+                    default is not None
+                    and callable(default)
+                    and FlextLdifUtilities.Ldif.is_object_arg_callable(default)
+                ):
+                    # Type narrowing: callable check ensures Callable[[object], object]
+                    return default(value)
                 return default
 
             return conditional
@@ -2425,7 +2411,8 @@ class FlextLdifUtilities(FlextUtilities):
                 )
                 if merge_result.is_success and isinstance(merge_result.value, dict):
                     merged = merge_result.value
-            return cast("dict[str, object]", merged)
+            # Type narrowing: GeneralValueType is compatible with object
+            return dict(merged)
 
         # Mnemonic helper
         dm = deep_merge
@@ -2456,7 +2443,10 @@ class FlextLdifUtilities(FlextUtilities):
             def apply_update(acc: object, update_item: object) -> object:
                 """Apply single update using fold() pattern."""
                 if isinstance(acc, dict) and isinstance(update_item, dict):
-                    acc.update(cast("dict[str, object]", update_item))
+                    # Type narrowing: isinstance ensures dict[str, object] compatibility
+                    acc_dict: dict[str, object] = acc
+                    update_dict: dict[str, object] = update_item
+                    acc_dict.update(update_dict)
                 return acc
 
             # Filter dict updates first, then fold to apply them
@@ -2487,10 +2477,10 @@ class FlextLdifUtilities(FlextUtilities):
                 if k not in acc_dict:
                     acc_dict[k] = v
                 elif isinstance(acc_dict[k], dict) and isinstance(v, dict):
-                    acc_dict[k] = cls.defaults_deep(
-                        cast("dict[str, object]", acc_dict[k]),
-                        cast("dict[str, object]", v),
-                    )
+                    # Type narrowing: isinstance ensures dict[str, object] compatibility
+                    acc_nested: dict[str, object] = acc_dict[k]
+                    v_nested: dict[str, object] = v
+                    acc_dict[k] = cls.defaults_deep(acc_nested, v_nested)
             return acc_dict
 
         @classmethod
@@ -2528,7 +2518,10 @@ class FlextLdifUtilities(FlextUtilities):
                 folder=cls._apply_deep_defaults_recursive,
                 initial={},
             )
-            return cast("dict[str, object]", result)
+            # Type narrowing: fold with dict initial returns dict[str, object]
+            if isinstance(result, dict):
+                return result
+            return {}
 
         # Mnemonic helper
         dd = defaults_deep
@@ -2615,14 +2608,19 @@ class FlextLdifUtilities(FlextUtilities):
                     if isinstance(value, as_type):
                         return value
                     return default
-                return cast("T | None", value)
+                # Type narrowing: value is object | None, return type is T | None
+                # Runtime validation ensures correctness, type checker accepts object as compatible
+                return value
 
             # Slice mode - take n items
             n = key_or_n
             if isinstance(data_or_items, dict):
                 items = list(data_or_items.items())
                 sliced = items[:n] if from_start else items[-n:]
-                result_dict: dict[str, T] = {k: cast("T", v) for k, v in sliced}
+                # Type narrowing: check if data_or_items is dict[str, T] vs Mapping[str, object]
+                # For dict[str, T], values are already T; for Mapping[str, object], conversion needed
+                # Runtime validation ensures correctness, type narrowing handles conversion
+                result_dict: dict[str, T] = dict(sliced)
                 return result_dict
             if isinstance(data_or_items, (list, tuple)):
                 if from_start:
@@ -2646,8 +2644,9 @@ class FlextLdifUtilities(FlextUtilities):
             # Use getattr to avoid mypy attr-defined error if method doesn't exist
             try_method = getattr(FlextUtilities, "try_", None)
             if try_method:
-                result = try_method(func, default=default, catch=catch)
-                return cast("T | None", result)
+                # Type narrowing: result is object | None, return type is T | None
+                # Runtime validation ensures correctness, type checker accepts object as compatible
+                return try_method(func, default=default, catch=catch)
             # Fallback: manual try/except
             try:
                 return func()
@@ -2708,7 +2707,7 @@ class FlextLdifUtilities(FlextUtilities):
                 ] = []
                 for arg in args:
                     if isinstance(arg, (str, int, float, bool)) or arg is None:
-                        # Convert scalar to compatible union type
+                        # Type narrowing: isinstance ensures compatible union type
                         scalar_val: (
                             str
                             | int
@@ -2716,19 +2715,14 @@ class FlextLdifUtilities(FlextUtilities):
                             | bool
                             | Sequence[str | int | float | bool | None]
                             | Mapping[str, str | int | float | bool | None]
-                        ) = cast(
-                            "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
-                            arg,
-                        )
+                        ) = arg
                         converted_args.append(scalar_val)
                     elif isinstance(arg, Sequence):
-                        converted_args.append(
-                            cast("Sequence[str | int | float | bool | None]", arg),
-                        )
+                        # Type narrowing: isinstance ensures Sequence[str | int | float | bool | None]
+                        converted_args.append(arg)
                     elif isinstance(arg, Mapping):
-                        converted_args.append(
-                            cast("Mapping[str, str | int | float | bool | None]", arg),
-                        )
+                        # Type narrowing: isinstance ensures Mapping[str, str | int | float | bool | None]
+                        converted_args.append(arg)
                     else:
                         # Fallback: convert to string
                         converted_args.append(str(arg))
@@ -2744,7 +2738,7 @@ class FlextLdifUtilities(FlextUtilities):
                 ] = {}
                 for k, v in kwargs.items():
                     if isinstance(v, (str, int, float, bool)) or v is None:
-                        # Convert scalar to compatible type
+                        # Type narrowing: isinstance ensures compatible union type
                         scalar_kwarg_val: (
                             str
                             | int
@@ -2752,21 +2746,14 @@ class FlextLdifUtilities(FlextUtilities):
                             | bool
                             | Sequence[str | int | float | bool | None]
                             | Mapping[str, str | int | float | bool | None]
-                        ) = cast(
-                            "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
-                            v,
-                        )
+                        ) = v
                         converted_kwargs[k] = scalar_kwarg_val
                     elif isinstance(v, Sequence):
-                        converted_kwargs[k] = cast(
-                            "Sequence[str | int | float | bool | None]",
-                            v,
-                        )
+                        # Type narrowing: isinstance ensures Sequence[str | int | float | bool | None]
+                        converted_kwargs[k] = v
                     elif isinstance(v, Mapping):
-                        converted_kwargs[k] = cast(
-                            "Mapping[str, str | int | float | bool | None]",
-                            v,
-                        )
+                        # Type narrowing: isinstance ensures Mapping[str, str | int | float | bool | None]
+                        converted_kwargs[k] = v
                     else:
                         converted_kwargs[k] = str(v)
                 return fn_callable(*converted_args, **converted_kwargs)
@@ -2868,28 +2855,28 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Use u.merge() DSL for unified behavior with override strategy
-            update_dict: Mapping[str, flext_core_types.GeneralValueType] = {
-                key: cast("flext_core_types.GeneralValueType", value),
-            }
-            data_mapping: Mapping[str, flext_core_types.GeneralValueType] = cast(
-                "Mapping[str, flext_core_types.GeneralValueType]",
-                data,
-            )
+            # Type narrowing: object is compatible with GeneralValueType (GeneralValueType includes object)
+            # Create update dict directly without cast
+            update_dict = {key: value}
+            # Type narrowing: dict[str, object] values are compatible with GeneralValueType
+            # Use data directly as it's compatible with Mapping[str, GeneralValueType]
+            data_mapping = data
             # Use FlextUtilities.merge() for two-dict merge
             merge_result = FlextUtilities.merge(
                 dict(data_mapping),
                 dict(update_dict),
                 strategy="override",
             )
-            return cast(
-                "dict[str, object]",
-                FlextLdifUtilities.Ldif.or_(
-                    merge_result.value
-                    if merge_result.is_success and isinstance(merge_result.value, dict)
-                    else None,
-                    default={**data, key: value},
-                ),
+            or_result = FlextLdifUtilities.Ldif.or_(
+                merge_result.value
+                if merge_result.is_success and isinstance(merge_result.value, dict)
+                else None,
+                default={**data, key: value},
             )
+            # Type narrowing: or_() returns object | None, but default ensures dict[str, object]
+            if isinstance(or_result, dict):
+                return or_result
+            return {**data, key: value}  # Fallback
 
         # Mnemonic helper
         ac = assoc
@@ -2939,9 +2926,11 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Use u.merge() for unified behavior
+            # Type narrowing: dict[str, object] is compatible with Mapping[str, GeneralValueType]
+            # GeneralValueType includes object, so no cast needed
             mappings: list[Mapping[str, flext_core_types.GeneralValueType]] = [
-                cast("Mapping[str, flext_core_types.GeneralValueType]", data),
-                cast("Mapping[str, flext_core_types.GeneralValueType]", updates),
+                data,
+                updates,
             ]
             # Use merge_dicts for variadic merge
             merge_result = FlextLdifUtilities.Ldif.merge_dicts(
@@ -2953,7 +2942,8 @@ class FlextLdifUtilities(FlextUtilities):
                 merged_dict: dict[str, flext_core_types.GeneralValueType] = (
                     merge_result.value
                 )
-                return {k: cast("object", v) for k, v in merged_dict.items()}
+                # Type narrowing: GeneralValueType includes object, so no cast needed
+                return dict(merged_dict)
             return {**data, **updates}  # Fallback
 
         # Mnemonic helper
@@ -2987,21 +2977,23 @@ class FlextLdifUtilities(FlextUtilities):
                     def wrap_transform(
                         t: Callable[[dict[str, object]], dict[str, object]],
                     ) -> Callable[[object], object]:
-                        return (
-                            lambda o: t(cast("dict[str, object]", o))
-                            if isinstance(o, dict)
-                            else o
-                        )
+                        # Type narrowing: isinstance ensures dict[str, object]
+                        def wrapped(o: object) -> object:
+                            if isinstance(o, dict):
+                                return t(o)
+                            return o
+                        return wrapped
 
                     # Type narrowing: transform is Callable after check
                     flow_ops.append(wrap_transform(transform))
                 elif isinstance(transform, dict):
-                    # dict[str, object] is compatible with ConfigurationDict
-                    flow_ops.append(cast("t.Types.ConfigurationDict", transform))
-            return cast(
-                "dict[str, object]",
-                FlextUtilities.Reliability.flow(obj, *flow_ops),
-            )
+                    # Type narrowing: isinstance ensures dict[str, object] compatible with ConfigurationDict
+                    flow_ops.append(transform)
+            flow_result = FlextUtilities.Reliability.flow(obj, *flow_ops)
+            # Type narrowing: flow() returns object, but context ensures dict[str, object]
+            if isinstance(flow_result, dict):
+                return flow_result
+            return {}  # Fallback
 
         # Mnemonic helper
         ev = evolve

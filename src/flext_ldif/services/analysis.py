@@ -132,8 +132,8 @@ class FlextLdifAnalysis(
             if "ou=groups" in dn_str_lower:
                 patterns_detected.add("group pattern")
 
-        # Process entries using simple iteration - u.process has different signature
-        # (u.process is for server transformations, not generic processing)
+        # Process entries using simple iteration - u.Ldif.process has different signature
+        # (u.Ldif.process is for server transformations, not generic processing)
         for entry in entries:
             with contextlib.suppress(Exception):  # Skip errors like on_error="skip"
                 process_entry(entry)

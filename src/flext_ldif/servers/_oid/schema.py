@@ -624,7 +624,7 @@ class FlextLdifServersOidSchema(
 
         Metadata for Round-Trip
         -----------------------
-        Uses c.MetadataKeys:
+        Uses c.Ldif.MetadataKeys:
         - SCHEMA_ORIGINAL_FORMAT: Stripped definition string
         - SCHEMA_ORIGINAL_STRING_COMPLETE: Complete with all formatting
         - SCHEMA_SOURCE_SERVER: "oid"

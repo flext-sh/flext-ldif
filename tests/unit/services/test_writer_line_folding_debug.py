@@ -34,8 +34,8 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         """Create entry with long attribute value that needs folding."""
         long_value = "A" * 100  # 100 character value
         return m.Ldif.Entry(
-            dn=m.DistinguishedName(value=c.DNs.TEST_USER),
-            attributes=m.LdifAttributes(
+            dn=m.Ldif.DistinguishedName(value=c.DNs.TEST_USER),
+            attributes=m.Ldif.LdifAttributes.(
                 attributes={
                     "cn": ["test"],
                     "description": [long_value],  # Very long
@@ -54,7 +54,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,  # RFC 2849 recommendation
             ),
@@ -88,7 +88,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 fold_long_lines=False,
                 line_width=76,
             ),
@@ -114,7 +114,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 fold_long_lines=False,  # Disable line folding
                 line_width=76,
             ),
@@ -140,7 +140,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Ldif.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,
             ),
