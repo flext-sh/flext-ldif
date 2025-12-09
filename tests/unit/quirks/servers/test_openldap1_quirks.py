@@ -242,7 +242,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
         dn = m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.Ldif.LdifAttributes.(
+        attributes = m.Ldif.LdifAttributes(
             attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         m.Ldif.Entry(dn=dn, attributes=attributes)
@@ -253,7 +253,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
         dn = m.Ldif.DistinguishedName(value="cn=config")
-        attributes = m.Ldif.LdifAttributes.(attributes={"cn": ["config"]})
+        attributes = m.Ldif.LdifAttributes(attributes={"cn": ["config"]})
         m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False
 
@@ -262,7 +262,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
         dn = m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.Ldif.LdifAttributes.(
+        attributes = m.Ldif.LdifAttributes(
             attributes={"olcDatabase": ["{1}mdb"]},
         )
         m.Ldif.Entry(dn=dn, attributes=attributes)

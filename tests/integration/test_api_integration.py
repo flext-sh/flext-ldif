@@ -185,7 +185,7 @@ class TestFlextLdifAPIIntegration(tt):
         test_dn = c.RFC.TEST_DN
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value=test_dn),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     c.Names.CN: [c.General.ATTR_VALUE_TEST],
                     c.Names.SN: [c.General.ATTR_VALUE_USER],

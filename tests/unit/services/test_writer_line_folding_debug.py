@@ -35,7 +35,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         long_value = "A" * 100  # 100 character value
         return m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value=c.DNs.TEST_USER),
-            attributes=m.Ldif.LdifAttributes.(
+            attributes=m.Ldif.LdifAttributes(
                 attributes={
                     "cn": ["test"],
                     "description": [long_value],  # Very long

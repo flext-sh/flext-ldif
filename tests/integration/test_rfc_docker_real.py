@@ -219,7 +219,7 @@ class TestRfcDockerRealData:
             # Create test entry
             test_entry = m.Ldif.Entry(
                 dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.LdifAttributes.(attributes={"cn": ["test"]}),
+                attributes=m.Ldif.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
             writer = FlextLdifWriter()
@@ -349,7 +349,7 @@ class TestRfcIntegrationRealWorld:
                 dn=m.Ldif.DistinguishedName(
                     value=f"cn=user{i},ou=people,dc=example,dc=com",
                 ),
-                attributes=m.Ldif.LdifAttributes.(
+                attributes=m.Ldif.LdifAttributes(
                     attributes={
                         "cn": [f"user{i}"],
                         "objectClass": ["person", "inetOrgPerson"],

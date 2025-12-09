@@ -2127,7 +2127,7 @@ class TestErrorHandling:
         """Test error handling."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes.(attributes={}),
+            attributes=m.Ldif.LdifAttributes(attributes={}),
         )
         # Cast Entry to ConvertibleModel for type checker
         convertible_entry = cast("t.ConvertibleModel", entry)
