@@ -12,7 +12,8 @@ from typing import ClassVar, TypedDict
 
 import pytest
 
-from tests import c, m, s
+from tests import GenericFieldsDict, OIDs, c, m, s
+from tests.helpers.compat import TestAssertions
 
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
@@ -62,8 +63,8 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
     RFC_COMPLIANT_ATTRS: ClassVar[dict[str, list[str]]] = {
         c.Names.CN: [c.Values.TEST],
         c.Names.SN: [c.Values.USER],
-        c.Names.MAIL: [c.Values.TEST_EMAIL],
-        c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
+        c.Names.MAIL: ["test@example.com"],
+        c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         "userPassword": ["{SSHA}hash"],
         "employee-number": ["12345"],
         "cn;lang-en": [c.Values.TEST],
@@ -74,7 +75,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
         "ds-cfg-enabled": ["true"],
         "ds-cfg-java-class": ["org.opends.server.Example"],
         "orclGUID": ["12345678"],
-        "orclentrylevelaci": [c.RFC.ACL_SAMPLE_BROWSE],
+        "orclentrylevelaci": [c.Rfc.ACL_SAMPLE_BROWSE],
     }
 
     # Numeric OID attributes using constants
@@ -89,9 +90,9 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
         EntryType.NORMAL: {
             "dn": TEST_DN,
             "attributes": {
-                c.Names.UID: [c.Values.TEST],
+                "uid": [c.Values.TEST],
                 c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"],
-                c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
+                c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
             },
             "expect_violations": False,
         },
@@ -106,7 +107,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
         EntryType.VIOLATION: {
             "dn": TEST_DN,
             "attributes": {
-                c.Names.UID: [c.Values.TEST],
+                "uid": [c.Values.TEST],
                 c.Names.OBJECTCLASS: [c.Names.PERSON],
                 "ds-cfg-enabled": ["true"],
                 "orclGUID": ["12345678"],
@@ -118,7 +119,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
 
     @staticmethod
     def get_validation_metadata(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> m.ValidationMetadata | None:
         """Helper to get validation_metadata from entry.metadata.validation_results."""
         if not entry.metadata or not entry.metadata.validation_results:
@@ -129,10 +130,10 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
     def create_test_entry(
         cls,
         entry_type: EntryType,
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Factory method for creating test entries using s."""
         case = cls.ENTRY_TEST_CASES[entry_type]
-        return self.create_entry(
+        return TestAssertions.create_entry(
             dn=case["dn"],
             attributes=case["attributes"],
         )
@@ -274,7 +275,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
             "attribute_name_violations": attr_violations_list,
         }
 
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type="rfc",
             extensions=test_extensions,
         )

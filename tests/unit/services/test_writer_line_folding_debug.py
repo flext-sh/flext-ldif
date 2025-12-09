@@ -7,11 +7,13 @@ proper continuation of long values across multiple LDIF lines.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
-from tests import c, m
+from tests import c, m, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
@@ -19,16 +21,19 @@ from tests import c, m
 class TestsFlextLdifWriterLineFoldingDebug(s):
     """Debug line folding behavior in Writer."""
 
+    writer: ClassVar[FlextLdifWriter]  # pytest fixture
+    long_value_entry: ClassVar[m.Ldif.Entry]  # pytest fixture
+
     @pytest.fixture
     def writer(self) -> FlextLdifWriter:
         """Initialize writer service."""
         return FlextLdifWriter()
 
     @pytest.fixture
-    def long_value_entry(self) -> m.Entry:
+    def long_value_entry(self) -> m.Ldif.Entry:
         """Create entry with long attribute value that needs folding."""
         long_value = "A" * 100  # 100 character value
-        return m.Entry(
+        return m.Ldif.Entry(
             dn=m.DistinguishedName(value=c.DNs.TEST_USER),
             attributes=m.LdifAttributes(
                 attributes={
@@ -42,7 +47,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_enabled_explicit(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Entry,
+        long_value_entry: m.Ldif.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=True explicitly."""
         result = writer.write(
@@ -76,7 +81,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_disabled_explicit(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Entry,
+        long_value_entry: m.Ldif.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=False explicitly."""
         result = writer.write(
@@ -102,7 +107,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_fold_long_lines_override(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Entry,
+        long_value_entry: m.Ldif.Entry,
     ) -> None:
         """Test fold_long_lines=False to disable line folding."""
         result = writer.write(
@@ -128,7 +133,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def test_check_actual_line_lengths(
         self,
         writer: FlextLdifWriter,
-        long_value_entry: m.Entry,
+        long_value_entry: m.Ldif.Entry,
     ) -> None:
         """Check actual line lengths when folding should occur."""
         result = writer.write(

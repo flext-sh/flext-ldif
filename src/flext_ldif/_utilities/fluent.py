@@ -41,11 +41,16 @@ from typing import Literal, Self
 
 from flext_core import FlextResult
 
-from flext_ldif._utilities.configs import CaseFoldOption
+# Type aliases using facade for consistency
+# Use facade Entry type (m.Ldif.Entry) to match transformer types
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
 from flext_ldif.models import m
+
+# REMOVED: Runtime aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
+# LdifAttributes: TypeAlias = m.Ldif.LdifAttributes  # Use m.Ldif.LdifAttributes directly
 
 # =========================================================================
 # DN FLUENT OPERATIONS
@@ -85,7 +90,7 @@ class DnOps:
     def normalize(
         self,
         *,
-        case: CaseFoldOption = CaseFoldOption.LOWER,
+        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
     ) -> Self:
         """Normalize the DN.
 
@@ -365,7 +370,7 @@ class EntryOps:
     def normalize_dn(
         self,
         *,
-        case: CaseFoldOption = CaseFoldOption.LOWER,
+        case: m.Ldif.Config.CaseFoldOption = m.Ldif.Config.CaseFoldOption.LOWER,
         validate: bool = True,
     ) -> Self:
         """Normalize the entry's DN.
@@ -388,6 +393,7 @@ class EntryOps:
             self._error = result.error
             return self
 
+        # result.unwrap() returns Entry (m.Ldif.Entry), which matches self._entry type
         self._entry = result.unwrap()
         return self
 
@@ -457,7 +463,7 @@ class EntryOps:
             new_attrs[name] = list(values)
 
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.LdifAttributes(attributes=new_attrs)
+        new_attributes = m.Ldif.LdifAttributes(attributes=new_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
@@ -477,7 +483,7 @@ class EntryOps:
             return self
 
         # Business Rule: Remove specified attributes from entry for data sanitization
-        # remove_attributes expects entry and attributes list (positional args)
+        # remove_attributes expects m.Ldif.Entry, which is what Entry TypeAlias is
         self._entry = FlextLdifUtilitiesEntry.remove_attributes(
             self._entry,
             [name],
@@ -519,7 +525,7 @@ class EntryOps:
                 new_attrs[key] = values
 
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.LdifAttributes(attributes=new_attrs)
+        new_attributes = m.Ldif.LdifAttributes(attributes=new_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
@@ -572,6 +578,7 @@ class EntryOps:
         if self._error or not classes:
             return False
 
+        # Entry TypeAlias is m.Ldif.Entry, which is what has_objectclass expects
         if mode == "any":
             return any(
                 FlextLdifUtilitiesEntry.has_objectclass(self._entry, cls)

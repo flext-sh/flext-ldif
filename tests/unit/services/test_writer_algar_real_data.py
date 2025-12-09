@@ -16,8 +16,7 @@ from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
-from tests import m, s
+from tests import c, m, s
 
 # =============================================================================
 # TEST SCENARIO ENUMS & CONSTANTS
@@ -104,7 +103,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
             pytest.skip("algar-oud-mig data not available in this environment")
 
         # Create test entry
-        entry = m.Entry(
+        entry = m.Ldif.Entry(
             dn=CONFIG_DN,
             attributes={
                 "objectClass": ["top", "configserver"],
@@ -116,7 +115,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
         # Write with RFC 2849 compliance using modern API
         write_result = writer.write(
             entries=[entry],
-            target_server_type=FlextLdifConstants.ServerTypes.RFC,
+            target_server_type=c.Ldif.ServerTypes.RFC,
         )
 
         tm.ok(write_result)

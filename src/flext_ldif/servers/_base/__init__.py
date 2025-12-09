@@ -7,7 +7,6 @@ from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.constants import (
     FlextLdifServersBaseConstants,
     _get_server_type_from_utilities,
-    _get_utilities,
     logger,
 )
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
@@ -19,6 +18,5 @@ __all__ = [
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
     "_get_server_type_from_utilities",
-    "_get_utilities",
     "logger",
 ]

@@ -17,9 +17,12 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
+# Services CAN import constants, models, protocols, types, utilities
+# Services CANNOT import other services, servers, or api
+
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[m.ValidationServiceStatus],
+    FlextLdifServiceBase[m.Ldif.ValidationServiceStatus],
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
@@ -159,7 +162,7 @@ class FlextLdifValidation(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.ValidationServiceStatus]:
+    ) -> r[m.Ldif.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -173,8 +176,8 @@ class FlextLdifValidation(
             FlextResult with ValidationServiceStatus containing service metadata
 
         """
-        return r[m.ValidationServiceStatus].ok(
-            m.ValidationServiceStatus(
+        return r[m.Ldif.ValidationServiceStatus].ok(
+            m.Ldif.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
                 rfc_compliance="RFC 2849, RFC 4512",
@@ -219,7 +222,7 @@ class FlextLdifValidation(
         return self.model_copy(update={"max_attr_value_length": length})
 
     @d.track_performance()
-    def build(self) -> m.ValidationBatchResult:
+    def build(self) -> m.Ldif.ValidationBatchResult:
         """Execute validation and return unwrapped result (fluent terminal).
 
         Validates all configured attribute names and objectClass names,
@@ -244,9 +247,8 @@ class FlextLdifValidation(
             if obj_result.is_success:
                 result[name] = obj_result.unwrap()
 
-        # Convert dict[str, bool] to BooleanFlags for ValidationBatchResult
-        boolean_flags = m.Ldif.LdifResults.BooleanFlags(**result)
-        return m.ValidationBatchResult(results=boolean_flags)
+        # Create ValidationBatchResult from validation results
+        return m.Ldif.ValidationBatchResult(results=result)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
@@ -273,7 +275,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_attribute_name(c.Ldif.DictKeys.CN)
+            >>> result = service.validate_attribute_name("cn")
             >>> is_valid = result.unwrap()  # True
             >>>
             >>> result = service.validate_attribute_name("2invalid")
@@ -284,7 +286,7 @@ class FlextLdifValidation(
 
         """
         try:
-            is_valid = u.Constants.validate_attribute_name(name)
+            is_valid = u.Ldif.Attribute.validate_attribute_name(name)
             return r[bool].ok(is_valid)
 
         except Exception as e:
@@ -357,7 +359,7 @@ class FlextLdifValidation(
             max_len = (
                 max_length
                 if max_length is not None
-                else c.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                else c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
                 return r[bool].ok(False)
@@ -384,7 +386,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_dn_component(c.Ldif.DictKeys.CN, "John Smith")
+            >>> result = service.validate_dn_component("cn", "John Smith")
             >>> is_valid = result.unwrap()  # True
 
         """

@@ -59,7 +59,7 @@ class TestValidators:
     Validation = u
 
     @staticmethod
-    def validate_ldif_entry(entry: m.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: m.Ldif.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object.
 
         Args:

@@ -21,10 +21,24 @@ import pytest
 
 from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests import u
+from tests import tf, tm
+
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
-create_test_entry = u.TestAssertions.create_entry
+def create_test_entry(
+    dn: str,
+    attributes: dict[str, str | list[str]],
+) -> m.Ldif.Entry:
+    """Create test entry using test fixtures."""
+    # Convert attributes dict to kwargs format for tf.create_entry
+    attrs_kwargs: dict[str, str | list[str]] = {}
+    for key, value in attributes.items():
+        if isinstance(value, list):
+            attrs_kwargs[key] = value
+        else:
+            attrs_kwargs[key] = [value] if isinstance(value, str) else [str(value)]
+    return tf.create_entry(dn, **attrs_kwargs)
+
 
 # ACL test constants
 ACL_VALUE_SAMPLE: Final[str] = (
@@ -77,7 +91,7 @@ class TestsFlextLdifAclService:
             # execute() returns health check status (success with empty response)
             assert result.is_success
             response = result.unwrap()
-            assert isinstance(response, m.LdifResults.AclResponse)
+            assert isinstance(response, m.Ldif.LdifResults.AclResponse)
             assert response.acls == []
 
     class TestExtractAclEntries:
@@ -87,7 +101,7 @@ class TestsFlextLdifAclService:
             """Test extract_acl_entries with empty entry list."""
             service = FlextLdifAcl()
             result = service.extract_acl_entries([])
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_no_acl_attributes(self) -> None:
@@ -98,7 +112,7 @@ class TestsFlextLdifAclService:
                 {"objectClass": ["person"], "cn": "user1"},
             )
             result = service.extract_acl_entries([entry])
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_with_default_acl_attributes(self) -> None:
@@ -117,7 +131,7 @@ class TestsFlextLdifAclService:
                 {"objectClass": ["person"], "cn": "other"},
             )
             result = service.extract_acl_entries([entry_with_acl, entry_without_acl])
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
@@ -145,7 +159,7 @@ class TestsFlextLdifAclService:
                 [entry_with_orclaci, entry_with_aci],
                 acl_attributes=["orclaci"],
             )
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
@@ -170,7 +184,7 @@ class TestsFlextLdifAclService:
                 },
             )
             result = service.extract_acl_entries([schema_entry, regular_entry])
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
@@ -188,7 +202,7 @@ class TestsFlextLdifAclService:
                 },
             )
             result = service.extract_acl_entries([entry_with_multiple])
-            u.TestAssertions.assert_success(result)
+            tm.ok(result)
             assert len(result.unwrap()) == 1
 
     class TestIsSchemaEntry:

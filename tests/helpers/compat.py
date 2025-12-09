@@ -20,12 +20,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from flext_core.result import r
 
+from flext_ldif import FlextLdif
 from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.services.parser import FlextLdifParser
 from tests import s, tm
+from tests.base import FlextLdifTestsServiceBase
 
 
 class TestAssertions:
@@ -57,21 +60,19 @@ class TestAssertions:
     def create_entry(
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Create test entry - use s().create_entry() or tf.entry() instead."""
-        from tests.base import FlextLdifTestsServiceBase
-
         service = FlextLdifTestsServiceBase()
         return service.create_entry(dn, attributes)
 
     @staticmethod
-    def assert_entry_valid(entry: m.Entry, msg: str | None = None) -> None:
+    def assert_entry_valid(entry: m.Ldif.Entry, msg: str | None = None) -> None:
         """Assert entry is valid - use tm.entry() instead."""
         tm.entry(entry, msg=msg)
 
     @staticmethod
     def assert_entries_valid(
-        entries: list[m.Entry] | r[list[m.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         msg: str | None = None,
     ) -> None:
         """Assert entries are valid - use tm.entries() instead."""
@@ -79,7 +80,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_attribute_valid(
-        attr: Any,
+        attr: m.Ldif.SchemaAttribute | str,
         expected_oid: str | None = None,
         msg: str | None = None,
     ) -> None:
@@ -90,7 +91,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_objectclass_valid(
-        oc: Any,
+        oc: m.Ldif.SchemaObjectClass | str,
         expected_name: str | None = None,
         msg: str | None = None,
     ) -> None:
@@ -125,8 +126,8 @@ class TestAssertions:
 
     @staticmethod
     def assert_roundtrip_preserves(
-        original: list[m.Entry],
-        roundtripped: list[m.Entry],
+        original: list[m.Ldif.Entry],
+        roundtripped: list[m.Ldif.Entry],
         msg: str | None = None,
     ) -> None:
         """Assert roundtrip preserves entries - use tm.entries() instead."""
@@ -142,10 +143,10 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def filter_by_dn_and_unwrap(
-        entries: list[m.Entry] | r[list[m.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         dn_pattern: str,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Filter entries by DN pattern - use tm.entries() with filtering."""
         if isinstance(entries, r):
             entries = tm.ok(entries, msg=msg, is_=list)
@@ -154,10 +155,10 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def filter_by_objectclass_and_unwrap(
-        entries: list[m.Entry] | r[list[m.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         oc: str,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Filter entries by objectClass - use tm.entries() with filtering."""
         if isinstance(entries, r):
             entries = tm.ok(entries, msg=msg, is_=list)
@@ -166,10 +167,10 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def filter_by_attributes_and_unwrap(
-        entries: list[m.Entry] | r[list[m.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         attrs: list[str],
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Filter entries by attributes - use tm.entries() with filtering."""
         if isinstance(entries, r):
             entries = tm.ok(entries, msg=msg, is_=list)
@@ -180,7 +181,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_entries_dn_contains(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         pattern: str,
         msg: str | None = None,
     ) -> None:
@@ -190,7 +191,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_entries_have_attribute(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         attr: str,
         msg: str | None = None,
     ) -> None:
@@ -199,10 +200,10 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def remove_attributes_and_validate(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         attrs_to_remove: list[str],
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Remove attributes and validate - use s() service methods."""
         service = s()
         return service.create_entries([
@@ -212,28 +213,28 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def remove_objectclasses_and_validate(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         ocs_to_remove: list[str],
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Remove objectClasses and validate - use s() service methods."""
         # Basic implementation - can be enhanced
         return entries
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: Any,
+        quirk: p.Ldif.Quirks.SchemaProtocol,
         content: str,
         msg: str | None = None,
-    ) -> Any:
+    ) -> r[list[m.Ldif.Entry]]:
         """Parse using quirk - use service methods."""
         result = quirk.parse(content)
         return tm.ok(result, msg=msg)
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: Any,
-        data: Any,
+        quirk: p.Ldif.Quirks.SchemaProtocol,
+        data: list[m.Ldif.Entry] | m.Ldif.Entry,
         msg: str | None = None,
     ) -> str:
         """Write using quirk - use service methods."""
@@ -242,11 +243,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def batch_parse_and_assert(
-        parser: Any,
+        parser: FlextLdifParser,
         ldif_content: str,
         expected_count: int | None = None,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Batch parse and assert - use tm.ok() and tm.entries()."""
         result = parser.parse(ldif_content)
         entries = tm.ok(result, msg=msg, is_=list)
@@ -256,7 +257,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_get_supported_conversions_and_assert(
-        matrix: Any,
+        matrix: object,  # Conversion matrix type - using object for flexibility
         source: str,
         target: str,
         msg: str | None = None,
@@ -267,7 +268,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_convert_and_assert_strings(
-        service: Any,
+        service: object,  # Conversion service - using object for flexibility
         source: str,
         target: str,
         content: str,
@@ -279,7 +280,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_batch_convert_and_assert(
-        service: Any,
+        service: object,  # Conversion service - using object for flexibility
         source: str,
         target: str,
         contents: list[str],
@@ -294,18 +295,18 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def filter_execute_and_unwrap(
-        service: Any,
-        entries: list[m.Entry],
-        filter_config: Any,
+        service: object,  # Filter service - using object for flexibility
+        entries: list[m.Ldif.Entry],
+        filter_config: m.Ldif.Config.FilterConfig,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Filter execute and unwrap."""
         result = service.execute(entries=entries, filter_config=filter_config)
         return tm.ok(result, msg=msg, is_=list)
 
     @staticmethod
     def api_parse_write_file_and_assert(
-        api: Any,
+        api: FlextLdif,
         input_file: Path,
         output_file: Path,
         msg: str | None = None,
@@ -318,7 +319,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_parse_write_string_and_assert(
-        api: Any,
+        api: FlextLdif,
         ldif_content: str,
         msg: str | None = None,
     ) -> str:
@@ -330,8 +331,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_api_write_and_unwrap(
-        api: Any,
-        entries: list[m.Entry],
+        api: FlextLdif,
+        entries: list[m.Ldif.Entry],
         msg: str | None = None,
     ) -> str:
         """Helper API write and unwrap."""
@@ -342,10 +343,8 @@ class TestDeduplicationHelpers:
     def create_entries_batch(
         count: int = 3,
         base_dn: str = "dc=example,dc=com",
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Create entries batch - use tf.entries() instead."""
-        from tests.base import FlextLdifTestsServiceBase
-
         entries_data: list[tuple[str, dict[str, str | list[str]]]] = []
         for i in range(count):
             dn = f"cn=test{i},{base_dn}"
@@ -365,25 +364,23 @@ class OptimizedLdifTestHelpers:
     """
 
     @staticmethod
-    def create_parser() -> Any:
+    def create_parser() -> FlextLdifParser:
         """Create parser - use service directly."""
-        from flext_ldif.services.parser import FlextLdifParser
-
         return FlextLdifParser()
 
     @staticmethod
     def parse_ldif_file_and_validate(
-        parser: Any,
+        parser: FlextLdifParser,
         file_path: Path,
         msg: str | None = None,
-    ) -> Any:
+    ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF file and validate."""
         result = parser.parse(file_path)
         return tm.ok(result, msg=msg)
 
     @staticmethod
     def validate_entries_structure(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         msg: str | None = None,
     ) -> None:
         """Validate entries structure - use tm.entries() instead."""
@@ -401,10 +398,8 @@ class FixtureTestHelpers:
     def load_fixture_and_validate_structure(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture and validate structure."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif.get_instance()
         result = api.parse(fixture_path)
         entries = tm.ok(result, msg=msg, is_=list)
@@ -415,10 +410,8 @@ class FixtureTestHelpers:
     def load_fixture_entries(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture entries."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif.get_instance()
         result = api.parse(fixture_path)
         return tm.ok(result, msg=msg, is_=list)
@@ -427,10 +420,8 @@ class FixtureTestHelpers:
     def run_fixture_roundtrip(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Run fixture roundtrip."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif.get_instance()
         parse_result = api.parse(fixture_path)
         entries = tm.ok(parse_result, msg=msg, is_=list)
@@ -451,10 +442,8 @@ class FlextLdifTestFactories:
     def create_entry(
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Create entry - use tf.entry() or s().create_entry() instead."""
-        from tests.base import FlextLdifTestsServiceBase
-
         service = FlextLdifTestsServiceBase()
         return service.create_entry(dn, attributes)
 

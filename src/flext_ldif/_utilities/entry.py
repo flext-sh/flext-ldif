@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, cast
+from typing import Literal
 
 from flext_core import (
     FlextDecorators,
@@ -22,15 +22,10 @@ from flext_core import (
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
-# Aliases for simplified usage - after all imports
-# Use domain-specific classes that inherit from flext-core
-# u = FlextUtilities (from flext-core, avoids circular import)
-# t is already imported from flext_ldif.typings (FlextLdifTypes alias)
-c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
+# Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 
 # Use FlextLdifProtocols directly - no aliases
 r = FlextResult  # Shared from flext-core
@@ -131,7 +126,7 @@ class FlextLdifUtilitiesEntry:
                     attr_name
                 ]
                 # Normalize to list[str] - handle all input types
-                if FlextRuntime.is_list_like(raw_values):
+                if isinstance(raw_values, (list, tuple)):
                     normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
                         if isinstance(v, bytes)
@@ -155,7 +150,7 @@ class FlextLdifUtilitiesEntry:
             ]
             # Normalize values to list[str] first - convert bytes to str immediately
             str_values: list[str]
-            if FlextRuntime.is_list_like(attr_raw_values):
+            if isinstance(attr_raw_values, (list, tuple)):
                 # Convert bytes to str if needed
                 str_values = [
                     v.decode("utf-8", errors="replace")
@@ -379,7 +374,7 @@ class FlextLdifUtilitiesEntry:
 
         result = m.Ldif.Entry.create(
             dn=entry.dn,
-            attributes=m.LdifAttributes(attributes=filtered),
+            attributes=m.Ldif.LdifAttributes(attributes=filtered),
         )
         if result.is_failure:
             return entry
@@ -535,9 +530,7 @@ class FlextLdifUtilitiesEntry:
                 attr_names={"orclaci", "orclentrylevelaci"},
                 keyword_patterns=("orcl", "oracle"),
             )
-            # Lazy import to avoid circular dependency
-            from flext_ldif.utilities import u as u_ldif
-            matches = u_ldif.Entry.matches_server_patterns(
+            matches = FlextLdifUtilitiesEntry.matches_server_patterns(
                 entry_dn, attributes, config
             )
 
@@ -936,7 +929,7 @@ class FlextLdifUtilitiesEntry:
                     # Use dict[str, object] for model_copy update (Pydantic accepts object)
                     # m.DistinguishedName is compatible via inheritance
                     dn_update: dict[str, object] = {
-                        "dn": m.DistinguishedName(value=norm_result.unwrap()),
+                        "dn": m.Ldif.DistinguishedName(value=norm_result.unwrap()),
                     }
                     current = current.model_copy(update=dn_update)
             if config.normalize_attrs and current.attributes:
@@ -951,7 +944,7 @@ class FlextLdifUtilitiesEntry:
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.LdifAttributes is compatible via inheritance
                 attrs_update: dict[str, object] = {
-                    "attributes": m.LdifAttributes(attributes=new_attrs),
+                    "attributes": m.Ldif.LdifAttributes(attributes=new_attrs),
                 }
                 current = current.model_copy(update=attrs_update)
             if config.convert_booleans and current.attributes:
@@ -973,7 +966,7 @@ class FlextLdifUtilitiesEntry:
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.LdifAttributes is compatible via inheritance
                 converted_attrs_update: dict[str, object] = {
-                    "attributes": m.LdifAttributes(attributes=converted),
+                    "attributes": m.Ldif.LdifAttributes(attributes=converted),
                 }
                 current = current.model_copy(update=converted_attrs_update)
             if config.remove_attrs:
@@ -995,9 +988,7 @@ class FlextLdifUtilitiesEntry:
         results_raw = batch_data.get("results", [])
         if isinstance(results_raw, list):
             filtered: list[m.Ldif.Entry] = [
-                cast("m.Ldif.Entry", item)
-                for item in results_raw
-                if isinstance(item, m.Ldif.Entry)
+                item for item in results_raw if isinstance(item, m.Ldif.Entry)
             ]
             return r[list[m.Ldif.Entry]].ok(filtered)
         return r[list[m.Ldif.Entry]].fail("Batch results is not a list")

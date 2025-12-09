@@ -39,11 +39,13 @@ from pathlib import Path
 from typing import IO, Self, cast, overload
 
 from flext_core import FlextResult
+from flext_core.runtime import FlextRuntime
 
-from flext_ldif._utilities.power_protocols import (
-    FilterProtocol,
-    TransformerProtocol,
-)
+from flext_ldif.protocols import p
+
+# REMOVED: Runtime aliases redundantes - use p.Ldif.* diretamente (já importado com runtime alias)
+# FilterProtocol = p.Ldif.Utilities.FilterProtocol  # Use p.Ldif.Utilities.FilterProtocol directly
+# TransformerProtocol = p.Ldif.Utilities.TransformerProtocol  # Use p.Ldif.Utilities.TransformerProtocol directly
 
 # Alias for simplified usage - after all imports
 r = FlextResult  # Result
@@ -99,14 +101,24 @@ class FlextLdifResult[T]:
         """
         return hash(self._inner)
 
-    def __init__(self, inner: FlextResult[T]) -> None:
-        """Initialize FlextLdifResult wrapping a FlextResult.
+    def __init__(self, inner: FlextResult[T] | FlextRuntime.RuntimeResult[T]) -> None:
+        """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult.
 
         Args:
-            inner: The underlying FlextResult to wrap
+            inner: The underlying FlextResult or RuntimeResult to wrap
 
         """
-        self._inner: FlextResult[T] = inner
+        # Convert RuntimeResult to FlextResult if needed
+        if isinstance(inner, FlextRuntime.RuntimeResult):
+            # RuntimeResult is compatible with FlextResult interface
+            # Convert by creating new FlextResult with same value/error
+            if inner.is_success:
+                self._inner: FlextResult[T] = r.ok(inner.value)
+            else:
+                error_msg = inner.error if hasattr(inner, "error") else str(inner)
+                self._inner = r.fail(error_msg)
+        else:
+            self._inner = inner
 
     # =========================================================================
     # FACTORY METHODS - Create new results
@@ -245,7 +257,9 @@ class FlextLdifResult[T]:
             New FlextLdifResult with mapped value or propagated error
 
         """
-        return FlextLdifResult(self._inner.map(func))
+        # map may return RuntimeResult, convert to FlextResult
+        mapped_result = self._inner.map(func)
+        return FlextLdifResult(mapped_result)
 
     def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextLdifResult[U]:
         """Flat map a function that returns FlextResult.
@@ -257,7 +271,9 @@ class FlextLdifResult[T]:
             New FlextLdifResult with flat-mapped value or propagated error
 
         """
-        return FlextLdifResult(self._inner.flat_map(func))
+        # flat_map may return RuntimeResult, convert to FlextResult
+        mapped_result = self._inner.flat_map(func)
+        return FlextLdifResult(mapped_result)
 
     def map_error(self, func: Callable[[str], str]) -> FlextLdifResult[T]:
         """Map a function over the error message.
@@ -269,7 +285,9 @@ class FlextLdifResult[T]:
             New FlextLdifResult with mapped error or unchanged success
 
         """
-        return FlextLdifResult(self._inner.map_error(func))
+        # map_error may return RuntimeResult, convert to FlextResult
+        mapped_result = self._inner.map_error(func)
+        return FlextLdifResult(mapped_result)
 
     def to_inner(self) -> FlextResult[T]:
         """Get the underlying FlextResult.
@@ -285,7 +303,9 @@ class FlextLdifResult[T]:
     # =========================================================================
 
     @overload
-    def __or__(self, transformer: TransformerProtocol[T]) -> FlextLdifResult[T]: ...
+    def __or__(
+        self, transformer: p.Ldif.Utilities.TransformerProtocol[T]
+    ) -> FlextLdifResult[T]: ...
 
     @overload
     def __or__(self, transformer: Callable[[T], T]) -> FlextLdifResult[T]: ...
@@ -299,7 +319,9 @@ class FlextLdifResult[T]:
     def __or__(
         self,
         transformer: (
-            TransformerProtocol[T] | Callable[[T], T] | Callable[[T], FlextResult[T]]
+            p.Ldif.Utilities.TransformerProtocol[T]
+            | Callable[[T], T]
+            | Callable[[T], FlextResult[T]]
         ),
     ) -> FlextLdifResult[T]:
         """Pipe operator: result | transformer.
@@ -328,8 +350,8 @@ class FlextLdifResult[T]:
             return FlextLdifResult.fail(self.error)
 
         # Business Rule: Apply transformer to success value
-        # Transformer can be TransformerProtocol (has apply method) or callable
-        # TransformerProtocol.apply() returns FlextResult[T] or T
+        # Transformer can be p.Ldif.Utilities.TransformerProtocol (has apply method) or callable
+        # p.Ldif.Utilities.TransformerProtocol.apply() returns FlextResult[T] or T
         # Callable transforms T -> T or T -> FlextResult[T]
         # Check if it has apply method (TransformerProtocol)
         # Business Rule: Access apply method via getattr for type safety
@@ -476,7 +498,7 @@ class FlextLdifResult[T]:
 
     def filter(
         self,
-        predicate: FilterProtocol[T] | Callable[[T], bool],
+        predicate: p.Ldif.Utilities.FilterProtocol[T] | Callable[[T], bool],
     ) -> FlextLdifResult[T]:
         """Filter the result value using a predicate.
 
@@ -484,7 +506,7 @@ class FlextLdifResult[T]:
         For single values, returns empty list if predicate fails.
 
         Args:
-            predicate: Filter predicate (FilterProtocol or callable)
+            predicate: Filter predicate (p.Ldif.Utilities.FilterProtocol or callable)
 
         Returns:
             FlextLdifResult with filtered value or propagated error
@@ -496,16 +518,16 @@ class FlextLdifResult[T]:
         value = self.value
 
         # Business Rule: Filter result value using predicate
-        # Predicate can be FilterProtocol (has matches method) or callable
-        # FilterProtocol.matches() returns bool
+        # Predicate can be p.Ldif.Utilities.FilterProtocol (has matches method) or callable
+        # p.Ldif.Utilities.FilterProtocol.matches() returns bool
         # Callable returns bool
         # Get the matches function with proper type narrowing
         def get_matches_func(
-            pred: FilterProtocol[T] | Callable[[T], bool],
+            pred: p.Ldif.Utilities.FilterProtocol[T] | Callable[[T], bool],
         ) -> Callable[[T], bool]:
             """Extract matches function from predicate.
 
-            Business Rule: FilterProtocol has matches() method, callable predicates
+            Business Rule: p.Ldif.Utilities.FilterProtocol has matches() method, callable predicates
             are used directly. This enables both protocol-based and function-based filtering.
             Implication: Use getattr for type-safe access to matches method, avoiding
             pyright errors about FunctionType not having matches attribute.
@@ -520,7 +542,7 @@ class FlextLdifResult[T]:
             if callable(pred):
                 return pred
             # Invalid predicate type
-            msg = "Predicate must be FilterProtocol or callable"
+            msg = "Predicate must be p.Ldif.Utilities.FilterProtocol or callable"
             raise TypeError(msg)
 
         matches_func = get_matches_func(predicate)
@@ -536,9 +558,12 @@ class FlextLdifResult[T]:
             return FlextLdifResult[T].ok(cast("T", filtered))
 
         # Handle single value
-        # Type narrowing: value is T
-        if matches_func(value):
-            return FlextLdifResult[T].ok(value)
+        # Type narrowing: value is T (not str, since is_failure is False)
+        # But type checker may not infer this, so we check and narrow
+        if not isinstance(value, str):
+            value_typed: T = value
+            if matches_func(value_typed):
+                return FlextLdifResult[T].ok(value_typed)
 
         # Empty list case - return empty list matching the input type
         # If value was a sequence, return empty list of that type

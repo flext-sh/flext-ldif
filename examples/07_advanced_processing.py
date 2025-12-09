@@ -28,10 +28,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_core import u
-
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.utilities import u
 
 
 def basic_batch_processing() -> None:
@@ -277,7 +276,7 @@ sn: User
         processed = batch_result.unwrap()
 
         # Analyze processed results
-        analysis_result = api.analyze(entries)
+        analysis_result = api.get_entry_statistics(entries)
 
         if analysis_result.is_success:
             stats = analysis_result.unwrap()

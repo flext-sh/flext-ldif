@@ -11,11 +11,11 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
+from tests import GenericFieldsDict, s
 
 from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests import GenericFieldsDict, s
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
@@ -34,7 +34,7 @@ def parse_entry_and_unwrap(
     entry_quirk: FlextLdifServersBaseEntry,
     dn: str,
     attrs: Mapping[str, object],
-) -> m.Entry:
+) -> m.Ldif.Entry:
     """Parse entry using public API and unwrap result."""
     ldif_text = build_ldif_text(dn, attrs)
     result = entry_quirk.parse(ldif_text)
@@ -50,6 +50,9 @@ class TestsTestFlextLdifOidMetadata(s):
     Replaces 4 original test classes with parametrized tests using StrEnum
     scenarios and ClassVar test data for maximum code reuse.
     """
+
+    oid_entry: ClassVar[FlextLdifServersBaseEntry]  # pytest fixture
+    oid_server: ClassVar[FlextLdifServersOid]  # pytest fixture
 
     # ═════════════════════════════════════════════════════════════════════════════
     # TEST SCENARIO ENUMS
@@ -318,7 +321,7 @@ class TestsTestFlextLdifOidMetadata(s):
             assert (
                 isinstance(
                     entry.metadata.extensions,
-                    m.DynamicMetadata,
+                    m.Ldif.DynamicMetadata,
                 )
                 or entry.metadata.extensions is None
             )
@@ -386,7 +389,7 @@ class TestsTestFlextLdifOidMetadata(s):
         oid_server: FlextLdifServersOid,
     ) -> None:
         """Test creating metadata with OID quirk type."""
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type="oid",
             extensions={"test": "value"},
         )
@@ -396,7 +399,7 @@ class TestsTestFlextLdifOidMetadata(s):
 
     def test_metadata_structure(self) -> None:
         """Test QuirkMetadata structure."""
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type="oid",
             extensions={"key1": "value1", "key2": ["value2"]},
         )
@@ -411,7 +414,7 @@ class TestsTestFlextLdifOidMetadata(s):
 
     def test_empty_metadata(self) -> None:
         """Test empty metadata initialization."""
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type="oid",
             extensions={},
         )
@@ -445,7 +448,7 @@ class TestsTestFlextLdifOidMetadata(s):
         extensions_dict: GenericFieldsDict,
     ) -> None:
         """Test creating metadata with various configurations."""
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=extensions_dict,
         )

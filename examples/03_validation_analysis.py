@@ -24,23 +24,43 @@ class DRYValidationAnalysis:
     """DRY validation analysis: auto-generate → validate → analyze."""
 
     @staticmethod
-    def parallel_validation() -> r[m.ValidationResult]:
+    def parallel_validation() -> r[m.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = FlextLdif.get_instance()
 
         # DRY dataset generation with error injection
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
 
-        # DRY railway: validate → analyze in one composition
-        return api.validate_entries(entries).flat_map(
-            DRYValidationAnalysis._analyze_validation_results,
+        # Validate entries
+        validate_result = api.validate_entries(entries)
+        total_entries = len(entries)
+        if validate_result.is_failure:
+            # Create ValidationResult with errors
+            validation_result = m.Ldif.ValidationResult(
+                is_valid=False,
+                total_entries=total_entries,
+                valid_entries=0,
+                invalid_entries=total_entries,
+                errors=[str(validate_result.error)],
+            )
+            return r[m.Ldif.ValidationResult].ok(validation_result)
+
+        # Create ValidationResult from successful validation
+        is_valid = validate_result.value
+        validation_result = m.Ldif.ValidationResult(
+            is_valid=is_valid,
+            total_entries=total_entries,
+            valid_entries=total_entries if is_valid else 0,
+            invalid_entries=0 if is_valid else total_entries,
+            errors=[],
         )
+        return DRYValidationAnalysis._analyze_validation_results(validation_result)
 
     @staticmethod
     def _generate_test_dataset(
         count: int,
         error_rate: float = 0.0,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
 
@@ -81,8 +101,8 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _analyze_validation_results(
-        validation_result: m.ValidationResult,
-    ) -> r[m.ValidationResult]:
+        validation_result: m.Ldif.ValidationResult,
+    ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
             # Group errors by category for analysis
@@ -101,17 +121,22 @@ class DRYValidationAnalysis:
         api = FlextLdif.get_instance()
 
         # Generate large dataset → validate → extract statistics
-        return (
-            r.ok(DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05))
-            .flat_map(api.validate_entries)
-            .flat_map(
-                lambda vr: r[dict[str, int | float]].ok({
-                    "total_entries": vr.total_entries,
-                    "valid_entries": vr.valid_entries,
-                    "invalid_entries": vr.invalid_entries,
-                    "error_rate": float(vr.invalid_entries) / float(vr.total_entries)
-                    if vr.total_entries > 0
-                    else 0.0,
-                }),
-            )
-        )
+        entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
+        validate_result = api.validate_entries(entries)
+        if validate_result.is_failure:
+            return r[dict[str, int | float]].fail(validate_result.error)
+
+        # Create ValidationResult manually from validation
+        total_entries = len(entries)
+        valid_result = validate_result.value
+        valid_entries = total_entries if valid_result else 0
+        invalid_entries = total_entries - valid_entries
+
+        return r[dict[str, int | float]].ok({
+            "total_entries": total_entries,
+            "valid_entries": valid_entries,
+            "invalid_entries": invalid_entries,
+            "error_rate": float(invalid_entries) / float(total_entries)
+            if total_entries > 0
+            else 0.0,
+        })

@@ -228,7 +228,7 @@ class TestsFlextLdifSyntaxModel(s):
 
     def test_syntax_with_metadata(self) -> None:
         """Test creating Syntax with quirk metadata."""
-        metadata = m.QuirkMetadata(
+        metadata = m.Ldif.QuirkMetadata(
             quirk_type="oid",
             extensions=cast(
                 "m.DynamicMetadata",

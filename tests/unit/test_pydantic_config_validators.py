@@ -14,7 +14,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_ldif import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c as lib_c
 from tests import s
 
 
@@ -174,7 +174,7 @@ class TestsTestFlextLdifConfigValidators(s):
         if should_succeed:
             config = FlextLdifConfig(
                 ldif_encoding=cast(
-                    "FlextLdifConstants.LiteralTypes.EncodingLiteral",
+                    "lib_c.Ldif.LiteralTypes.EncodingLiteral",
                     encoding,
                 ),
             )
@@ -203,13 +203,13 @@ class TestsTestFlextLdifConfigValidators(s):
         if should_succeed:
             config = FlextLdifConfig(
                 server_type=cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
                     server_type,
                 ),
             )
             # The validator normalizes aliases to canonical form
             # So we should expect the normalized value, not the original
-            expected_server_type = FlextLdifConstants.normalize_server_type(server_type)
+            expected_server_type = lib_c.Ldif.normalize_server_type(server_type)
             assert config.server_type == expected_server_type
         else:
             with pytest.raises(ValidationError) as exc_info:
@@ -291,14 +291,14 @@ class TestsTestFlextLdifConfigValidators(s):
     ) -> None:
         """Test cross-field model_validator for quirks_detection_mode consistency.
 
-        mode uses Literal type matching FlextLdifConstants.LiteralTypes.DetectionMode.
+        mode uses Literal type matching lib_c.Ldif.LiteralTypes.DetectionMode.
         Pydantic validates the value at runtime.
         """
         if should_succeed:
             config = FlextLdifConfig(
                 quirks_detection_mode=mode,
                 quirks_server_type=cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None",
+                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral | None",
                     server_type,
                 ),
             )

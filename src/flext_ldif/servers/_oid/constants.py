@@ -20,7 +20,6 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif.constants import c
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
@@ -197,7 +196,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     """
 
     # Server identity and priority (defined at Constants level)
-    SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = "oid"
+    SERVER_TYPE: ClassVar[str] = "oid"
     PRIORITY: ClassVar[int] = 10
 
     # NOTE: DEFAULT_PORT, DEFAULT_SSL_PORT, DEFAULT_PAGE_SIZE

@@ -14,9 +14,9 @@ References:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, FlextResult, r
 
-from flext_ldif.models import m
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
@@ -42,29 +42,135 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Initialize RFC LDIF Entry processor."""
         super().__init__()
 
-    def parse(self, dn: str, attributes: dict[str, list[str]]) -> r[m.Ldif.Entry]:
-        """Parse LDIF entry from DN and attributes.
+    def _parse_content(
+        self, ldif_content: str
+    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        """Parse raw LDIF content string into Entry models (internal).
+
+        PRIMARY parsing entry point - implements base class abstract method.
+
+        Args:
+            ldif_content: Raw LDIF content as string
+
+        Returns:
+            FlextResult with list of Entry models
+
+        """
+        if not ldif_content or not ldif_content.strip():
+            return FlextResult[list[FlextLdifModelsDomains.Entry]].ok([])
+
+        try:
+            entries: list[FlextLdifModelsDomains.Entry] = []
+
+            # Split by empty lines to get entry blocks
+            raw_entries = ldif_content.strip().split("\n\n")
+
+            for raw_entry in raw_entries:
+                if not raw_entry.strip():
+                    continue
+
+                # Handle version line (global header)
+                lines = raw_entry.strip().split("\n")
+                if lines and lines[0].lower().startswith("version:"):
+                    lines = lines[1:]
+                    if not lines:
+                        continue
+
+                # Parse entry from lines
+                result = self._parse_entry_from_lines(lines)
+                if result.is_success:
+                    entries.append(result.unwrap())
+                else:
+                    logger.warning(
+                        "Failed to parse entry block",
+                        error=result.error,
+                    )
+
+            return FlextResult[list[FlextLdifModelsDomains.Entry]].ok(entries)
+
+        except Exception as e:
+            logger.exception("Failed to parse LDIF content")
+            return FlextResult[list[FlextLdifModelsDomains.Entry]].fail(
+                f"Processing failed: {e}"
+            )
+
+    def _parse_entry_from_lines(
+        self, lines: list[str]
+    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        """Parse entry from LDIF lines.
+
+        Args:
+            lines: LDIF lines for a single entry
+
+        Returns:
+            FlextResult with parsed Entry
+
+        """
+        dn: str = ""
+        attrs: dict[str, list[str]] = {}
+
+        for raw_line in lines:
+            line = raw_line.rstrip()
+            if not line or line.startswith("#"):
+                continue
+
+            # Handle line folding (continuation lines start with space)
+            if line.startswith(" ") and attrs:
+                last_key = list(attrs.keys())[-1]
+                if attrs[last_key]:
+                    attrs[last_key][-1] = attrs[last_key][-1] + line[1:]
+                continue
+
+            if ":" not in line:
+                continue
+
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+
+            if key.lower() == "dn":
+                dn = value
+            else:
+                if key not in attrs:
+                    attrs[key] = []
+                attrs[key].append(value)
+
+        if not dn:
+            return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                "No DN found in entry"
+            )
+
+        return self._create_entry(dn, attrs)
+
+    def _create_entry(
+        self, dn: str, attributes: dict[str, list[str]]
+    ) -> r[FlextLdifModelsDomains.Entry]:
+        """Create Entry from DN and attributes.
 
         Args:
             dn: Distinguished name (RFC 4512 format)
             attributes: LDAP attributes (case-insensitive keys)
 
         Returns:
-            FlextResult containing parsed Entry or error
+            FlextResult containing Entry or error
 
         """
         if not dn or not isinstance(dn, str):
             return r.fail(f"Invalid DN: {dn}")
-        if not attributes or not isinstance(attributes, dict):
+        if not isinstance(attributes, dict):
             return r.fail(f"Invalid attributes: {attributes}")
 
         try:
-            entry = m.Ldif.Entry(dn=dn.strip(), attributes=attributes)
+            entry = FlextLdifModelsDomains.Entry(
+                dn=dn.strip(), attributes=attributes or {}
+            )
             return r.ok(entry)
         except Exception as e:
-            return r.fail(f"Failed to parse entry {dn}: {e}")
+            return r.fail(f"Failed to create entry {dn}: {e}")
 
-    def validate(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+    def validate(
+        self, entry: FlextLdifModelsDomains.Entry
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Validate RFC 2849 compliance.
 
         Args:
@@ -74,9 +180,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             FlextResult containing validated Entry or error
 
         """
-        if not entry or not isinstance(entry, m.Ldif.Entry):
+        if not entry or not isinstance(entry, FlextLdifModelsDomains.Entry):
             return r.fail(f"Invalid entry: {entry}")
-        if not entry.dn or not isinstance(entry.dn, str):
+        # Entry.dn is DistinguishedName, not str - check .value
+        if not entry.dn or not hasattr(entry.dn, "value"):
             return r.fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not isinstance(entry.attributes, dict):
             return r.fail(f"Invalid attributes in entry: {entry.attributes}")

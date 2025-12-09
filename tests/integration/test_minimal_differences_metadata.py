@@ -14,8 +14,8 @@ from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifParser
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdif, FlextLdifParser, u
+from flext_ldif.constants import c
 from flext_ldif.models import m
 
 
@@ -66,7 +66,7 @@ class TestMinimalDifferencesOidOud:
         # not during simple parsing. This test validates parsing works correctly.
         for entry_protocol in entries:
             # Cast to Entry model to access metadata and dn attributes
-            entry = cast("m.Entry", entry_protocol)
+            entry = cast("m.Ldif.Entry", entry_protocol)
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             # Check that metadata structure exists (extensions may be empty during parsing)
             assert hasattr(entry.metadata, "extensions"), (
@@ -110,7 +110,7 @@ class TestMinimalDifferencesOidOud:
         # not during simple parsing. This test validates parsing works correctly.
         for entry_protocol in entries:
             # Cast to Entry model to access metadata and dn attributes
-            entry = cast("m.Entry", entry_protocol)
+            entry = cast("m.Ldif.Entry", entry_protocol)
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             # Check that metadata structure exists (extensions may be empty during parsing)
             assert hasattr(entry.metadata, "extensions"), (
@@ -142,7 +142,7 @@ orcldasisenabled: 1
         assert len(entries) == 1
         original_entry_protocol = entries[0]
         # Cast to Entry model to access metadata and dn attributes
-        original_entry = cast("m.Entry", original_entry_protocol)
+        original_entry = cast("m.Ldif.Entry", original_entry_protocol)
 
         # Verify metadata captured differences
         assert original_entry.metadata is not None
@@ -285,24 +285,27 @@ pwdlockout: 0
         assert entry.metadata is not None
         # Boolean conversions are stored in CONVERTED_ATTRIBUTES[CONVERSION_BOOLEAN_CONVERSIONS]
         converted_attrs = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.CONVERTED_ATTRIBUTES,
+            c.Ldif.MetadataKeys.CONVERTED_ATTRIBUTES,
             {},
         )
         if isinstance(converted_attrs, dict):
             boolean_conversions = converted_attrs.get(
-                FlextLdifConstants.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS,
+                c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )
         else:
             boolean_conversions = {}
         # Note: Boolean conversions are only tracked during conversion, not simple parsing
         # This test may need to be adjusted if boolean conversion tracking during parsing is not implemented
-        if len(boolean_conversions) > 0 and "orcldasisenabled" in boolean_conversions:
+        if (
+            u.Guards.is_dict_non_empty(boolean_conversions)
+            and "orcldasisenabled" in boolean_conversions
+        ):
             # Verify specific conversions
             conv = boolean_conversions["orcldasisenabled"]
             # Check structure: should have original_value and converted_value keys
-            original_key = FlextLdifConstants.MetadataKeys.CONVERSION_ORIGINAL_VALUE
-            converted_key = FlextLdifConstants.MetadataKeys.CONVERSION_CONVERTED_VALUE
+            original_key = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
+            converted_key = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
             assert original_key in conv
             assert converted_key in conv
             assert conv[original_key] == ["1"]

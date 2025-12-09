@@ -18,7 +18,7 @@ import re
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, u
 from tests.conftest import FlextLdifFixtures
 
 
@@ -63,7 +63,7 @@ class TestOudSchemaIntegration:
 
         # Schema fixtures may not return entries (parsed as schema-only)
         # We validate that the file can be successfully parsed without error
-        if len(entries) == 0:
+        if not u.Guards.is_list_non_empty(entries):
             # Schema-only parsing is successful
             assert True
             return
@@ -102,7 +102,7 @@ class TestOudSchemaIntegration:
 
         # Schema fixtures may not return entries (parsed as schema-only)
         # We validate that the file can be successfully parsed without error
-        if len(entries) == 0:
+        if not u.Guards.is_list_non_empty(entries):
             # Schema-only parsing is successful
             assert True
             return
@@ -350,7 +350,7 @@ class TestOudRoundTripIntegration:
         # Find entries with spaces in DN
         entries_with_dn_spaces = [entry for entry in entries if ", " in entry.dn.value]
 
-        if len(entries_with_dn_spaces) > 0:
+        if u.Guards.is_list_non_empty(entries_with_dn_spaces):
             # Take first entry and round-trip it
             test_entry = entries_with_dn_spaces[0]
             original_dn = test_entry.dn.value

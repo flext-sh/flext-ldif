@@ -354,7 +354,24 @@ Once you have FLEXT-LDIF installed and working:
 1. **[Architecture](architecture.md)**: Understand the service-oriented design
 2. **[API Reference](api-reference.md)**: Explore all available operations
 3. **[Examples](examples/)**: See practical usage patterns
-4. **[Integration](integration.md)**: Learn about FLEXT ecosystem integration
+4. **[Integration](guides/integration.md)**: Learn about FLEXT ecosystem integration
+
+## Related Documentation
+
+**Within Project**:
+- [Architecture](architecture.md) - Service-oriented design and RFC-first approach
+- [API Reference](api-reference.md) - Complete API documentation
+- [Configuration](configuration.md) - Settings and environment management
+- [Development](development.md) - Contributing and workflows
+- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+
+**Across Projects**:
+- [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/guides/railway-oriented-programming.md) - Railway-oriented programming patterns
+- [flext-ldap Integration](https://github.com/organization/flext/tree/main/flext-ldap/docs/guides/integration.md) - LDAP operations integration
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
 ---
 

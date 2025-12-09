@@ -13,21 +13,19 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar, Final, cast
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-
 # Factory function types (PEP 695) - defined at module level for better type checking
 # Business Rule: Type aliases defined at module level for reuse across the class.
 # Implication: These types are used in ClassVar annotations and method signatures.
 # Note: PEP 695 type aliases can be defined inside classes, but module-level avoids
 # pyright issues with ClassVar assignment.
+# Using object since services cannot import protocols
 type FilterFactoryType = Callable[
     [],
-    p.Ldif.Services.FilterServiceProtocol,
+    object,
 ]
 type CategorizationFactoryType = Callable[
-    [c.Ldif.LiteralTypes.ServerTypeLiteral | str],
-    p.Ldif.Services.CategorizationServiceProtocol,
+    [str],
+    object,
 ]
 
 
@@ -128,7 +126,7 @@ class FlextLdifServiceRegistry:
     @classmethod
     def get_filter_service(
         cls,
-    ) -> p.Ldif.Services.FilterServiceProtocol:
+    ) -> object:
         """Get filter service instance from registered factory.
 
         Business Rule: Service resolution follows fail-fast pattern - raises
@@ -158,8 +156,8 @@ class FlextLdifServiceRegistry:
     @classmethod
     def get_categorization_service(
         cls,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | str = "rfc",
-    ) -> p.Ldif.Services.CategorizationServiceProtocol:
+        server_type: str = "rfc",
+    ) -> object:
         """Get categorization service instance from registered factory.
 
         Business Rule: Server type parameter enables server-specific categorization

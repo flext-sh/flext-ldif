@@ -12,12 +12,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast
 
-from flext_core import r
-from flext_core.loggings import FlextLogger as l_core
+from flext_core import FlextLogger, r
 
 from flext_ldif.models import m
 
-logger: Final = l_core(__name__)
+logger: Final = FlextLogger(__name__)
 
 
 class FlextLdifFilters:
@@ -80,9 +79,11 @@ class FlextLdifFilters:
 
         # Extract attributes dict from LdifAttributes if needed
         if hasattr(attrs, "attributes"):
-            attrs_dict = cast("Mapping[str, list[str]]", attrs.attributes)
+            # Type narrowing: attrs.attributes is Mapping[str, list[str]]
+            attrs_dict: Mapping[str, list[str]] = attrs.attributes
         else:
-            # Type narrowing: attrs is dict[str, list[str]]
+            # Type narrowing: attrs is Mapping[str, list[str]]
+            # Cast to satisfy mypy - attrs is already the correct type
             attrs_dict = cast("Mapping[str, list[str]]", attrs)
 
         # Check each schema type

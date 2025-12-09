@@ -10,14 +10,12 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
+from tests import RfcTestHelpers, c, s
 
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, s
-
-from .fixtures.rfc_constants import TestsRfcConstants
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed
@@ -104,13 +102,13 @@ class TestFlextLdifServersBaseExecute:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         execute_result2 = rfc.execute(entries=[entry])
         written_result = RfcTestHelpers.test_result_success_and_unwrap(
             execute_result2,
-            expected_type=m.Entry,
+            expected_type=m.Ldif.Entry,
         )
-        written_entry: m.Entry = written_result
+        written_entry: m.Ldif.Entry = written_result
         assert written_entry.dn == entry.dn
 
         _ = RfcTestHelpers.test_result_success_and_unwrap(
@@ -124,7 +122,7 @@ class TestFlextLdifServersBaseExecute:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         result = rfc.execute(ldif_text=None, entries=[entry], _operation="write")
         _ = RfcTestHelpers.test_result_success_and_unwrap(result)
 
@@ -135,10 +133,10 @@ class TestFlextLdifServersBaseExecute:
         # and entries is provided, the code auto-detects "write" operation instead
         # This test verifies that write operation succeeds with entries
         entry_raw = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         result = rfc.execute(ldif_text=None, entries=[entry], _operation="parse")
         # The code ignores operation="parse" when entries are provided
         # It auto-detects to write operation and succeeds
@@ -191,11 +189,11 @@ class TestFlextLdifServersBaseCall:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         # __call__ returns Entry | str depending on operation
         result = rfc(ldif_text=None, entries=[entry], operation="write")
         # When write operation with entries, may return Entry or str
-        assert isinstance(result, (str, m.Entry))
+        assert isinstance(result, (str, m.Ldif.Entry))
 
     def test_call_with_operation(self) -> None:
         """Test __call__ with operation parameter."""
@@ -338,7 +336,7 @@ class TestFlextLdifServersBaseWrite:
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(
             rfc.write([entry]),
             expected_type=str,
@@ -354,7 +352,7 @@ class TestFlextLdifServersBaseWrite:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         result = rfc.write([entry])
         _ = self.assert_failure(result)
         assert "Entry quirk not available" in (result.error or "")
@@ -366,12 +364,12 @@ class TestFlextLdifServersBaseWrite:
             "cn=test1,dc=example,dc=com",
             {"cn": ["test1"]},
         )
-        entry1: m.Entry = entry1_raw
+        entry1: m.Ldif.Entry = entry1_raw
         entry2_raw = RfcTestHelpers.test_entry_create_and_unwrap(
             "cn=test2,dc=example,dc=com",
             {"cn": ["test2"]},
         )
-        entry2: m.Entry = entry2_raw
+        entry2: m.Ldif.Entry = entry2_raw
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(
             rfc.write([entry1, entry2]),
             expected_type=str,
@@ -388,7 +386,7 @@ class TestFlextLdifServersBaseWrite:
             dn="",  # Empty DN should cause failure
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         result = rfc.write([entry])
         # This should fail because DN is empty
         assert result.is_failure
@@ -449,7 +447,7 @@ class TestFlextLdifServersBaseRegisterInRegistry:
             def register_quirk(
                 self,
                 server_type: str,
-                quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
+                quirk: p.Quirks.SchemaProtocol,
             ) -> None:
                 """Register a quirk for server type."""
                 self.registered.append(quirk)
@@ -457,21 +455,21 @@ class TestFlextLdifServersBaseRegisterInRegistry:
             def get_quirk(
                 self,
                 server_type: str,
-            ) -> FlextLdifProtocols.Quirks.SchemaProtocol | None:
+            ) -> p.Quirks.SchemaProtocol | None:
                 """Get quirk for server type."""
                 return None
 
         real_registry = RealRegistry()
         # Type narrowing: RealRegistry implements QuirkRegistryProtocol structurally
         registry_protocol = cast(
-            "FlextLdifProtocols.Registry.QuirkRegistryProtocol",
+            "p.Registry.QuirkRegistryProtocol",
             real_registry,
         )
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
         assert len(real_registry.registered) == 1
         assert isinstance(
             real_registry.registered[0],
-            FlextLdifProtocols.Quirks.SchemaProtocol,
+            p.Quirks.SchemaProtocol,
         )
 
     def test_register_in_registry_no_register_method(self) -> None:
@@ -488,7 +486,7 @@ class TestFlextLdifServersBaseRegisterInRegistry:
         # Should not raise, just silently fail
         # Type narrowing: NoRegisterRegistry may not fully implement protocol, but hasattr check handles it
         registry_protocol = cast(
-            "FlextLdifProtocols.Registry.QuirkRegistryProtocol",
+            "p.Registry.QuirkRegistryProtocol",
             registry,
         )
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
@@ -518,7 +516,7 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         # This should call the concrete implementation in RFC
-        result = schema.parse_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_schema_parse_objectclass_abstract(self) -> None:
@@ -528,7 +526,7 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         # This should call the concrete implementation in RFC
-        result = schema.parse_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
 
     def test_schema_write_attribute_abstract(self) -> None:
@@ -538,8 +536,8 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -553,8 +551,8 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -568,7 +566,7 @@ class TestFlextLdifServersBaseNestedSchema:
         schema_concrete = rfc._schema_quirk
         # Base implementation returns False
         # RFC implementation should return True for valid definitions
-        result = schema_concrete.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema_concrete.can_handle_attribute(c.Rfc.ATTR_DEF_CN)
         assert isinstance(result, bool)
 
     def test_schema_can_handle_objectclass(self) -> None:
@@ -578,7 +576,7 @@ class TestFlextLdifServersBaseNestedSchema:
         schema_concrete = rfc._schema_quirk
         # Base implementation returns False
         # RFC implementation should return True for valid definitions
-        result = schema_concrete.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema_concrete.can_handle_objectclass(c.Rfc.OC_DEF_PERSON)
         assert isinstance(result, bool)
 
     def test_schema_hook_post_parse_attribute(self) -> None:
@@ -587,8 +585,8 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -602,8 +600,8 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -618,8 +616,8 @@ class TestFlextLdifServersBaseNestedSchema:
         schema_concrete = rfc._schema_quirk
         attrs = [
             RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-                oid=TestsRfcConstants.ATTR_OID_CN,
-                name=TestsRfcConstants.ATTR_NAME_CN,
+                oid=c.Rfc.ATTR_OID_CN,
+                name=c.Rfc.ATTR_NAME_CN,
             ),
         ]
         result = schema_concrete._hook_validate_attributes(attrs, {"cn"})
@@ -677,8 +675,8 @@ class TestFlextLdifServersBaseNestedAcl:
         # Access method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -691,8 +689,8 @@ class TestFlextLdifServersBaseNestedAcl:
         # Access method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -704,7 +702,7 @@ class TestFlextLdifServersBaseNestedAcl:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl_model = m.Acl()
+        acl_model = m.Ldif.Acl()
         result = acl_concrete._hook_post_parse_acl(acl_model)
         assert result.is_success
         assert result.unwrap() == acl_model
@@ -734,7 +732,7 @@ class TestFlextLdifServersBaseNestedEntry:
         entry_concrete = rfc._entry_quirk
         # Base implementation returns False
         # RFC implementation should handle RFC entries
-        result = entry_concrete.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
+        result = entry_concrete.can_handle(c.Rfc.TEST_DN, {"cn": ["test"]})
         assert isinstance(result, bool)
 
     def test_entry_can_handle_attribute(self) -> None:
@@ -743,8 +741,8 @@ class TestFlextLdifServersBaseNestedEntry:
         # Access method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -757,8 +755,8 @@ class TestFlextLdifServersBaseNestedEntry:
         # Access method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -771,7 +769,7 @@ class TestFlextLdifServersBaseNestedEntry:
         # Access private method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         result = entry_concrete._hook_validate_entry_raw(
-            TestsRfcConstants.TEST_DN,
+            c.Rfc.TEST_DN,
             {"cn": ["test"]},
         )
         assert result.is_success
@@ -791,10 +789,10 @@ class TestFlextLdifServersBaseNestedEntry:
         # Access private method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         entry_model_raw = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry_model: m.Entry = entry_model_raw
+        entry_model: m.Ldif.Entry = entry_model_raw
         result = entry_concrete._hook_post_parse_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
@@ -805,10 +803,10 @@ class TestFlextLdifServersBaseNestedEntry:
         # Access private method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         entry_model_raw = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        entry_model: m.Entry = entry_model_raw
+        entry_model: m.Ldif.Entry = entry_model_raw
         result = entry_concrete._hook_pre_write_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
@@ -856,7 +854,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn="",
             attributes={"cn": ["test"]},
         )
-        entry: m.Entry = entry_raw
+        entry: m.Ldif.Entry = entry_raw
         result = rfc.execute(entries=[entry])
         # Write may succeed or fail depending on implementation
         # The important thing is it doesn't crash
@@ -886,7 +884,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # So this succeeds and parses the LDIF
         assert result.is_success
         entry = result.unwrap()
-        assert isinstance(entry, m.Entry)
+        assert isinstance(entry, m.Ldif.Entry)
 
     def test_execute_no_operation_fallback(self) -> None:
         """Test execute fallback when no operation matches."""
@@ -963,7 +961,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # Test base abstract methods through RFC implementation
         # These delegate to _parse_attribute which is implemented in RFC
-        result = schema.parse_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_acl_abstract_methods(self) -> None:
@@ -983,7 +981,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         entry_concrete = rfc._entry_quirk
         # Test base abstract methods through RFC implementation
         # can_handle is implemented in RFC
-        result = entry_concrete.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
+        result = entry_concrete.can_handle(c.Rfc.TEST_DN, {"cn": ["test"]})
         assert isinstance(result, bool)
 
     def test_execute_parse_operation_requires_ldif_text(self) -> None:
@@ -1005,7 +1003,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # To avoid health check, we pass a non-empty list, but then operation="parse"
         # should force parse path
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = rfc.execute(ldif_text=None, entries=[entry], _operation="parse")
@@ -1013,7 +1011,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # When entries is provided, execute() returns the first entry regardless of operation
         assert result.is_success
         unwrapped_entry = result.unwrap()
-        assert isinstance(unwrapped_entry, m.Entry)
+        assert isinstance(unwrapped_entry, m.Ldif.Entry)
 
     def test_execute_write_operation_requires_entries(self) -> None:
         """Test execute write operation requires entries."""
@@ -1053,7 +1051,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         """Test write when entry_quirk is not available."""
         rfc = FlextLdifServersRfc()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         # Remove entry_quirk to test error path (bypasses type check)
@@ -1103,8 +1101,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -1118,8 +1116,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -1134,8 +1132,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema_concrete = rfc._schema_quirk
         attrs = [
             RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-                oid=TestsRfcConstants.ATTR_OID_CN,
-                name=TestsRfcConstants.ATTR_NAME_CN,
+                oid=c.Rfc.ATTR_OID_CN,
+                name=c.Rfc.ATTR_NAME_CN,
             ),
         ]
         available_attrs = {"cn"}
@@ -1147,7 +1145,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl = m.Acl()
+        acl = m.Ldif.Acl()
         result = acl_concrete._hook_post_parse_acl(acl)
         assert result.is_success
         assert result.unwrap() == acl
@@ -1158,7 +1156,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Access private method through concrete class, not protocol
         entry_concrete = rfc._entry_quirk
         result = entry_concrete._hook_validate_entry_raw(
-            TestsRfcConstants.TEST_DN,
+            c.Rfc.TEST_DN,
             {"cn": ["test"]},
         )
         assert result.is_success
@@ -1178,7 +1176,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Type narrowing: use _entry_quirk for concrete Entry instance methods
         entry_quirk = rfc._entry_quirk
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = entry_quirk._hook_post_parse_entry(entry)
@@ -1191,7 +1189,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Type narrowing: use _entry_quirk for concrete Entry instance methods
         entry_quirk = rfc._entry_quirk
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = entry_quirk._hook_pre_write_entry(entry)
@@ -1202,7 +1200,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         """Test write adds newline if ldif doesn't end with one."""
         rfc = FlextLdifServersRfc()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = rfc.write([entry])
@@ -1217,12 +1215,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn="cn=test1,dc=example,dc=com",
             attributes={"cn": ["test1"]},
         )
-        entry1: m.Entry = entry1_raw
+        entry1: m.Ldif.Entry = entry1_raw
         entry2_raw = RfcTestHelpers.test_create_entry_and_unwrap(
             dn="cn=test2,dc=example,dc=com",
             attributes={"cn": ["test2"]},
         )
-        entry2: m.Entry = entry2_raw
+        entry2: m.Ldif.Entry = entry2_raw
         result = rfc.write([entry1, entry2])
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(result)
         assert "cn=test1" in ldif_text
@@ -1306,7 +1304,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # This calls parse_attribute which delegates to _parse_attribute
         # In RFC, _parse_attribute is implemented, so this succeeds
-        result = schema.parse_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_schema_parse_objectclass_delegates(self) -> None:
@@ -1316,7 +1314,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # This calls parse_objectclass which delegates to _parse_objectclass
         # In RFC, _parse_objectclass is implemented, so this succeeds
-        result = schema.parse_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
 
     def test_schema_write_attribute_delegates(self) -> None:
@@ -1325,8 +1323,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Type narrowing: use _schema_quirk for concrete Schema instance methods
         schema = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -1341,8 +1339,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Type narrowing: use _schema_quirk for concrete Schema instance methods
         schema = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
         oc = oc_raw
         # This calls write_objectclass which delegates to _write_objectclass
@@ -1362,7 +1360,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def register_quirk(
                 self,
                 server_type: str,
-                quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
+                quirk: p.Quirks.SchemaProtocol,
             ) -> None:
                 """Register a quirk for server type."""
                 self.registered.append(quirk)
@@ -1370,21 +1368,21 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def get_quirk(
                 self,
                 server_type: str,
-            ) -> FlextLdifProtocols.Quirks.SchemaProtocol | None:
+            ) -> p.Quirks.SchemaProtocol | None:
                 """Get quirk for server type."""
                 return None
 
         registry = RegistryWithCallable()
         # Type narrowing: RegistryWithCallable implements QuirkRegistryProtocol structurally
         registry_protocol = cast(
-            "FlextLdifProtocols.Registry.QuirkRegistryProtocol",
+            "p.Registry.QuirkRegistryProtocol",
             registry,
         )
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
         assert len(registry.registered) == 1
         assert isinstance(
             registry.registered[0],
-            FlextLdifProtocols.Quirks.SchemaProtocol,
+            p.Quirks.SchemaProtocol,
         )
 
     def test_register_in_registry_with_non_callable(self) -> None:
@@ -1400,7 +1398,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Should not raise, just silently fail
         # Type narrowing: RegistryWithNonCallable may not fully implement protocol, but hasattr check handles it
         registry_protocol = cast(
-            "FlextLdifProtocols.Registry.QuirkRegistryProtocol",
+            "p.Registry.QuirkRegistryProtocol",
             registry,
         )
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
@@ -1424,7 +1422,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         """Test write_single_entry when entry_quirk becomes None."""
         rfc = FlextLdifServersRfc()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         # Remove entry_quirk after getting it
@@ -1442,7 +1440,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # We need to test the path where ldif doesn't end with \n
         # The write method in base.py adds \n if ldif doesn't end with one
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = rfc.write([entry])
@@ -1494,7 +1492,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -1510,13 +1508,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # Base implementation should return False
-        result = schema.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema.can_handle_attribute(c.Rfc.ATTR_DEF_CN)
         assert result is False
 
     def test_schema_can_handle_objectclass_base(self) -> None:
@@ -1527,13 +1525,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # Base implementation should return False
-        result = schema.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema.can_handle_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result is False
 
     def test_schema_parse_attribute_base_delegation(self) -> None:
@@ -1544,13 +1542,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # This should call _parse_attribute which returns fail in base
-        result = schema.parse_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1562,13 +1560,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # This should call _parse_objectclass which returns fail in base
-        result = schema.parse_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1580,14 +1578,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -1604,14 +1602,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -1653,7 +1651,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # The error path would be triggered if write failed
         # Since we can't easily force write to fail, we test success path
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = rfc.write([entry])
@@ -1683,7 +1681,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         """Test write_single_entry when entry_quirk is None (line 593)."""
         rfc = FlextLdifServersRfc()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         # The code checks entry_quirk is not None before calling write_single_entry
@@ -1697,7 +1695,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         # Create entry that produces non-empty LDIF
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = rfc.write([entry])
@@ -1754,7 +1752,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -1769,7 +1767,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1785,7 +1783,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1802,14 +1800,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -1824,14 +1822,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -1846,12 +1844,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
-        acl_model = m.Acl()
+        acl_model = m.Ldif.Acl()
         # Base implementation should return fail
         result = acl._write_acl(acl_model)
         assert result.is_failure
@@ -1865,7 +1863,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()
@@ -1880,13 +1878,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
         # Base implementation should return False
-        result = entry.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
+        result = entry.can_handle(c.Rfc.TEST_DN, {"cn": ["test"]})
         assert result is False
 
     def test_entry_parse_content_base(self) -> None:
@@ -1896,7 +1894,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1913,14 +1911,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr = attr_raw
@@ -1935,14 +1933,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
-            oid=TestsRfcConstants.OC_OID_PERSON,
-            name=TestsRfcConstants.OC_NAME_PERSON,
+            oid=c.Rfc.OC_OID_PERSON,
+            name=c.Rfc.OC_NAME_PERSON,
         )
 
         oc = oc_raw
@@ -1957,13 +1955,13 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
-        entry_model_raw = m.Entry.create(
-            dn=TestsRfcConstants.TEST_DN,
+        entry_model_raw = m.Ldif.Entry.create(
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         ).unwrap()
         entry_model = entry_model_raw
@@ -1981,7 +1979,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Entry]]:
+                ) -> FlextResult[list[m.Ldif.Entry]]:
                     return FlextResult.fail("Custom parse failure")
 
         server = FailingParseServer()
@@ -1997,14 +1995,14 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             class Entry(FlextLdifServersRfc.Entry):
                 def write(
                     self,
-                    entry_data: m.Entry | list[m.Entry],
+                    entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
                     write_options: m.WriteFormatOptions | None = None,
                 ) -> FlextResult[str]:
                     return FlextResult.fail("Custom write failure")
 
         server = FailingWriteServer()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = server.write([entry])
@@ -2020,7 +2018,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Entry]]:
+                ) -> FlextResult[list[m.Ldif.Entry]]:
                     return FlextResult.fail("Entry parsing failed")
 
         server = FailingEntryParseServer()
@@ -2036,7 +2034,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         class CustomEntry(FlextLdifServersRfc.Entry):
             def write(
                 self,
-                entry_data: m.Entry | list[m.Entry],
+                entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
                 write_options: m.WriteFormatOptions | None = None,
             ) -> FlextResult[str]:
                 # Write entry without trailing newline to test line 606
@@ -2054,7 +2052,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         server = CustomServer()
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
         result = server.write([entry])
@@ -2071,7 +2069,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -2087,7 +2085,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -2103,7 +2101,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()
@@ -2267,7 +2265,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # that's hard to trigger in normal flow.
         # We test the success path where entry_quirk is available.
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
 
@@ -2287,38 +2285,40 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
-                return FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str].ok("")
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+                return FlextResult[
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                ].ok("")
 
             def _parse_attribute(
                 self,
                 attr_definition: str,
-            ) -> FlextResult[m.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 return FlextResult.fail("Not implemented")
 
             def _parse_objectclass(
                 self,
                 oc_definition: str,
-            ) -> FlextResult[m.SchemaObjectClass]:
+            ) -> FlextResult[m.Ldif.SchemaObjectClass]:
                 return FlextResult.fail("Not implemented")
 
             def _write_attribute(
                 self,
-                attr_data: m.SchemaAttribute,
+                attr_data: m.Ldif.SchemaAttribute,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
             def _write_objectclass(
                 self,
-                oc_data: m.SchemaObjectClass,
+                oc_data: m.Ldif.SchemaObjectClass,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
         # Now test base.py's hook directly (lines 1181-1183)
         test_schema = TestSchema()
         attr1_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
         )
 
         attr2_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
@@ -2330,7 +2330,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         attr2 = attr2_raw
         attributes = [attr1, attr2]
-        available_attrs = {TestsRfcConstants.ATTR_NAME_CN.lower(), "testattr"}
+        available_attrs = {c.Rfc.ATTR_NAME_CN.lower(), "testattr"}
         # Call the hook directly - should return success (default implementation)
         result = test_schema._hook_validate_attributes(attributes, available_attrs)
         assert result.is_success
@@ -2346,7 +2346,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         assert isinstance(schema_quirk, FlextLdifServersRfc.Schema)
         schema: FlextLdifServersRfc.Schema = schema_quirk
         # Create LDIF with attribute definitions
-        ldif_content = f"dn: cn=schema\n{TestsRfcConstants.ATTR_DEF_CN}\n"
+        ldif_content = f"dn: cn=schema\n{c.Rfc.ATTR_DEF_CN}\n"
         # Call extract_schemas_from_ldif with validate_dependencies=True
         # This will call _hook_validate_attributes internally (line 1539 in rfc.py)
         # Note: rfc.py.Schema overrides _hook_validate_attributes, but it has the same
@@ -2409,7 +2409,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 def parse(
                     self,
                     ldif_content: str,
-                ) -> FlextResult[list[m.Entry]]:
+                ) -> FlextResult[list[m.Ldif.Entry]]:
                     return FlextResult.fail("Custom parse failure")
 
         server = FailingParseServer()
@@ -2424,7 +2424,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         """Test write appends newline when missing (line 606)."""
         # Create entry
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
-            dn=TestsRfcConstants.TEST_DN,
+            dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
         )
 
@@ -2446,7 +2446,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.SchemaAttribute | m.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -2464,7 +2464,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -2481,7 +2481,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Entry | str]:
+            ) -> FlextResult[m.Ldif.Entry | str]:
                 return FlextResult.ok("")
 
         entry = StandaloneEntry()

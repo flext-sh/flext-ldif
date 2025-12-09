@@ -15,7 +15,6 @@ from tests import m, s
 
 from flext_ldif._utilities import (
     AndFilter,
-    DnNormalizationConfig,
     # Fluent APIs
     DnOps,
     # Filters
@@ -26,21 +25,16 @@ from flext_ldif._utilities import (
     FilterConfigBuilder,
     # Result type
     FlextLdifResult,
-    # Main class
-    FlextLdifUtilities,
     Normalize,
     NotFilter,
     OrFilter,
     # Pipeline
     Pipeline,
-    # Configs
-    ProcessConfig,
     # Builders
     ProcessConfigBuilder,
     ProcessingPipeline,
     ReplaceBaseDnTransformer,
     Transform,
-    TransformConfig,
     TransformConfigBuilder,
     ValidationPipeline,
     ValidationResult,
@@ -48,6 +42,8 @@ from flext_ldif._utilities import (
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
 
 # =========================================================================
 # FIXTURES
@@ -55,11 +51,11 @@ from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
 @pytest.fixture
-def sample_entry() -> m.Entry:
+def sample_entry() -> m.Ldif.Entry:
     """Create a sample entry for testing."""
     # Entry accepts string dn and dict attributes via field validators
     # Note: Use DNs without spaces in values (spaces need escaping per RFC 4514)
-    return m.Entry(
+    return m.Ldif.Entry(
         dn=cast(
             "m.DistinguishedName | None",
             "CN=TestUser,OU=Users,DC=Example,DC=Com",
@@ -79,12 +75,12 @@ def sample_entry() -> m.Entry:
 
 
 @pytest.fixture
-def sample_entries() -> list[m.Entry]:
+def sample_entries() -> list[m.Ldif.Entry]:
     """Create a list of sample entries for testing."""
     # Entry accepts string dn and dict attributes via field validators
     # Note: Use DNs without spaces in values (spaces need escaping per RFC 4514)
     return [
-        m.Entry(
+        m.Ldif.Entry(
             dn=cast(
                 "m.DistinguishedName | None",
                 "cn=user1,ou=users,dc=example,dc=com",
@@ -98,7 +94,7 @@ def sample_entries() -> list[m.Entry]:
                 },
             ),
         ),
-        m.Entry(
+        m.Ldif.Entry(
             dn=cast(
                 "m.DistinguishedName | None",
                 "cn=user2,ou=users,dc=example,dc=com",
@@ -112,7 +108,7 @@ def sample_entries() -> list[m.Entry]:
                 },
             ),
         ),
-        m.Entry(
+        m.Ldif.Entry(
             dn=cast(
                 "m.DistinguishedName | None",
                 "cn=schema,cn=configuration,dc=example,dc=com",
@@ -155,7 +151,7 @@ class TestsTestFlextLdifResult(s):
         assert ldif_result.is_success
         assert ldif_result.unwrap() == 42
 
-    def test_pipe_operator_with_transformer(self, sample_entry: m.Entry) -> None:
+    def test_pipe_operator_with_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test | operator with transformers."""
         result = FlextLdifResult.ok(sample_entry)
         transformer = Normalize.attrs(case_fold_names=True)
@@ -186,7 +182,7 @@ class TestConfigs:
 
     def test_process_config_defaults(self) -> None:
         """Test ProcessConfig default values."""
-        config = ProcessConfig()
+        config = FlextLdifModels.Ldif.Config.ProcessConfig()
         assert config.source_server == "auto"
         assert config.target_server is None
         assert config.normalize_dns is True
@@ -194,7 +190,7 @@ class TestConfigs:
 
     def test_process_config_custom_values(self) -> None:
         """Test ProcessConfig with custom values."""
-        config = ProcessConfig(
+        config = FlextLdifModels.Ldif.Config.ProcessConfig(
             source_server="oid",
             target_server="oud",
             normalize_dns=False,
@@ -205,7 +201,7 @@ class TestConfigs:
 
     def test_dn_normalization_config(self) -> None:
         """Test DnNormalizationConfig."""
-        config = DnNormalizationConfig(
+        config = FlextLdifModels.Ldif.Config.DnNormalizationConfig(
             case_fold="upper",
             space_handling="normalize",
         )
@@ -214,7 +210,7 @@ class TestConfigs:
 
     def test_transform_config(self) -> None:
         """Test TransformConfig."""
-        config = TransformConfig(
+        config = FlextLdifModels.Ldif.Config.TransformConfig(
             fail_fast=False,
             preserve_order=True,
         )
@@ -255,19 +251,19 @@ class TestBuilders:
 class TestTransformers:
     """Tests for transformer classes."""
 
-    def test_normalize_dn_transformer(self, sample_entry: m.Entry) -> None:
+    def test_normalize_dn_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test NormalizeDnTransformer."""
         transformer = Normalize.dn(case="lower")
         result = transformer.apply(sample_entry)
         assert result.is_success
 
-    def test_normalize_attrs_transformer(self, sample_entry: m.Entry) -> None:
+    def test_normalize_attrs_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test NormalizeAttrsTransformer."""
         transformer = Normalize.attrs(case_fold_names=True)
         result = transformer.apply(sample_entry)
         assert result.is_success
 
-    def test_filter_attrs_transformer(self, sample_entry: m.Entry) -> None:
+    def test_filter_attrs_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test FilterAttrsTransformer."""
         transformer = Transform.filter_attrs(exclude=["userPassword"])
         result = transformer.apply(sample_entry)
@@ -296,7 +292,7 @@ class TestTransformers:
 class TestFilters:
     """Tests for filter classes."""
 
-    def test_by_objectclass_filter(self, sample_entry: m.Entry) -> None:
+    def test_by_objectclass_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test ByObjectClassFilter."""
         filter_person = Filter.by_objectclass("person")
         filter_group = Filter.by_objectclass("groupOfNames")
@@ -304,7 +300,7 @@ class TestFilters:
         assert filter_person.matches(sample_entry) is True
         assert filter_group.matches(sample_entry) is False
 
-    def test_by_dn_filter(self, sample_entry: m.Entry) -> None:
+    def test_by_dn_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test ByDnFilter."""
         filter_users = Filter.by_dn(r".*OU=Users.*")
         filter_groups = Filter.by_dn(r".*OU=Groups.*")
@@ -312,7 +308,7 @@ class TestFilters:
         assert filter_users.matches(sample_entry) is True
         assert filter_groups.matches(sample_entry) is False
 
-    def test_by_attrs_filter(self, sample_entry: m.Entry) -> None:
+    def test_by_attrs_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test ByAttrsFilter."""
         filter_mail = Filter.by_attrs("mail")
         filter_phone = Filter.by_attrs("telephoneNumber")
@@ -320,7 +316,7 @@ class TestFilters:
         assert filter_mail.matches(sample_entry) is True
         assert filter_phone.matches(sample_entry) is False
 
-    def test_and_filter(self, sample_entry: m.Entry) -> None:
+    def test_and_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test AndFilter using & operator."""
         f1 = Filter.by_objectclass("person")
         f2 = Filter.by_attrs("mail")
@@ -329,7 +325,7 @@ class TestFilters:
         assert isinstance(combined, AndFilter)
         assert combined.matches(sample_entry) is True
 
-    def test_or_filter(self, sample_entry: m.Entry) -> None:
+    def test_or_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test OrFilter using | operator."""
         f1 = Filter.by_objectclass("groupOfNames")
         f2 = Filter.by_objectclass("person")
@@ -338,7 +334,7 @@ class TestFilters:
         assert isinstance(combined, OrFilter)
         assert combined.matches(sample_entry) is True
 
-    def test_not_filter(self, sample_entry: m.Entry) -> None:
+    def test_not_filter(self, sample_entry: m.Ldif.Entry) -> None:
         """Test NotFilter using ~ operator."""
         f1 = Filter.by_objectclass("groupOfNames")
 
@@ -393,19 +389,19 @@ class TestDnOps:
 class TestEntryOps:
     """Tests for EntryOps fluent API."""
 
-    def test_normalize_dn(self, sample_entry: m.Entry) -> None:
+    def test_normalize_dn(self, sample_entry: m.Ldif.Entry) -> None:
         """Test EntryOps.normalize_dn()."""
         ops = EntryOps(sample_entry)
         result = ops.normalize_dn().build()
         assert result.is_success
 
-    def test_normalize_attrs(self, sample_entry: m.Entry) -> None:
+    def test_normalize_attrs(self, sample_entry: m.Ldif.Entry) -> None:
         """Test EntryOps.normalize_attrs()."""
         ops = EntryOps(sample_entry)
         result = ops.normalize_attrs().build()
         assert result.is_success
 
-    def test_filter_attrs(self, sample_entry: m.Entry) -> None:
+    def test_filter_attrs(self, sample_entry: m.Ldif.Entry) -> None:
         """Test EntryOps.filter_attrs()."""
         ops = EntryOps(sample_entry)
         result = ops.filter_attrs(exclude=["userPassword"]).build()
@@ -415,13 +411,13 @@ class TestEntryOps:
         attrs = entry.attributes.attributes if entry.attributes else {}
         assert "userPassword" not in attrs
 
-    def test_has_objectclass(self, sample_entry: m.Entry) -> None:
+    def test_has_objectclass(self, sample_entry: m.Ldif.Entry) -> None:
         """Test EntryOps.has_objectclass()."""
         ops = EntryOps(sample_entry)
         assert ops.has_objectclass("person") is True
         assert ops.has_objectclass("groupOfNames") is False
 
-    def test_method_chaining(self, sample_entry: m.Entry) -> None:
+    def test_method_chaining(self, sample_entry: m.Ldif.Entry) -> None:
         """Test EntryOps method chaining."""
         ops = EntryOps(sample_entry)
         result = (
@@ -441,20 +437,22 @@ class TestEntryOps:
 class TestPipeline:
     """Tests for Pipeline orchestration."""
 
-    def test_empty_pipeline(self, sample_entries: list[m.Entry]) -> None:
+    def test_empty_pipeline(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test empty pipeline passes entries through."""
         pipeline = Pipeline()
         result = pipeline.execute(sample_entries)
         assert result.is_success
         assert len(result.unwrap()) == len(sample_entries)
 
-    def test_pipeline_with_transformer(self, sample_entries: list[m.Entry]) -> None:
+    def test_pipeline_with_transformer(
+        self, sample_entries: list[m.Ldif.Entry]
+    ) -> None:
         """Test pipeline with transformer."""
         pipeline = Pipeline().add(Normalize.attrs())
         result = pipeline.execute(sample_entries)
         assert result.is_success
 
-    def test_pipeline_with_filter(self, sample_entries: list[m.Entry]) -> None:
+    def test_pipeline_with_filter(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test pipeline with filter."""
         pipeline = Pipeline().filter(Filter.by_objectclass("inetOrgPerson"))
         result = pipeline.execute(sample_entries)
@@ -465,7 +463,7 @@ class TestPipeline:
         entries = result.unwrap()
         assert len(entries) < len(sample_entries)
 
-    def test_pipeline_method_chaining(self, sample_entries: list[m.Entry]) -> None:
+    def test_pipeline_method_chaining(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test pipeline with multiple steps."""
         pipeline = (
             Pipeline().add(Normalize.attrs()).filter(Filter.by_objectclass("person"))
@@ -481,15 +479,15 @@ class TestPipeline:
 class TestProcessingPipeline:
     """Tests for ProcessingPipeline."""
 
-    def test_default_config(self, sample_entries: list[m.Entry]) -> None:
+    def test_default_config(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ProcessingPipeline with default config."""
         pipeline = ProcessingPipeline()
         result = pipeline.execute(sample_entries)
         assert result.is_success
 
-    def test_custom_config(self, sample_entries: list[m.Entry]) -> None:
+    def test_custom_config(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ProcessingPipeline with custom config."""
-        config = ProcessConfig(
+        config = FlextLdifModels.Ldif.Config.ProcessConfig(
             normalize_dns=True,
             normalize_attrs=True,
         )
@@ -501,7 +499,7 @@ class TestProcessingPipeline:
 class TestValidationPipeline:
     """Tests for ValidationPipeline."""
 
-    def test_validate_entries(self, sample_entries: list[m.Entry]) -> None:
+    def test_validate_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ValidationPipeline."""
         pipeline = ValidationPipeline(strict=True)
         result = pipeline.validate(sample_entries)
@@ -619,7 +617,7 @@ class TestAclBatchMethods:
 class TestEntryBatchMethods:
     """Tests for FlextLdifUtilitiesEntry batch methods."""
 
-    def test_matches_criteria(self, sample_entry: m.Entry) -> None:
+    def test_matches_criteria(self, sample_entry: m.Ldif.Entry) -> None:
         """Test matches_criteria."""
         # Should match person with mail attribute
         assert (
@@ -640,7 +638,7 @@ class TestEntryBatchMethods:
             is False
         )
 
-    def test_matches_criteria_dn_pattern(self, sample_entry: m.Entry) -> None:
+    def test_matches_criteria_dn_pattern(self, sample_entry: m.Ldif.Entry) -> None:
         """Test matches_criteria with DN pattern."""
         assert (
             FlextLdifUtilitiesEntry.matches_criteria(
@@ -658,7 +656,7 @@ class TestEntryBatchMethods:
             is False
         )
 
-    def test_transform_batch(self, sample_entries: list[m.Entry]) -> None:
+    def test_transform_batch(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test transform_batch."""
         result = FlextLdifUtilitiesEntry.transform_batch(
             sample_entries,
@@ -669,7 +667,7 @@ class TestEntryBatchMethods:
         transformed = result.unwrap()
         assert len(transformed) == len(sample_entries)
 
-    def test_filter_batch(self, sample_entries: list[m.Entry]) -> None:
+    def test_filter_batch(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test filter_batch."""
         result = FlextLdifUtilitiesEntry.filter_batch(
             sample_entries,
@@ -680,7 +678,9 @@ class TestEntryBatchMethods:
         # Only entries with inetOrgPerson should be included
         assert len(filtered) < len(sample_entries)
 
-    def test_filter_batch_exclude_schema(self, sample_entries: list[m.Entry]) -> None:
+    def test_filter_batch_exclude_schema(
+        self, sample_entries: list[m.Ldif.Entry]
+    ) -> None:
         """Test filter_batch with exclude_schema."""
         result = FlextLdifUtilitiesEntry.filter_batch(
             sample_entries,
@@ -714,19 +714,19 @@ class TestFlextLdifUtilitiesPowerMethods:
 
     def test_validate_method_exists(self) -> None:
         """Test that validate() method exists."""
-        assert hasattr(FlextLdifUtilities, "validate")
+        assert hasattr(FlextLdifUtilities.Ldif, "validate")
 
     def test_dn_method_returns_dnops(self) -> None:
         """Test that dn() returns DnOps instance."""
         ops = FlextLdifUtilities.dn("CN=Test,DC=Example")
         assert isinstance(ops, DnOps)
 
-    def test_entry_method_returns_entryops(self, sample_entry: m.Entry) -> None:
+    def test_entry_method_returns_entryops(self, sample_entry: m.Ldif.Entry) -> None:
         """Test that entry() returns EntryOps instance."""
         ops = FlextLdifUtilities.entry(sample_entry)
         assert isinstance(ops, EntryOps)
 
-    def test_process_entries(self, sample_entries: list[m.Entry]) -> None:
+    def test_process_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test FlextLdifUtilities.process()."""
         result = FlextLdifUtilities.process(
             sample_entries,
@@ -735,7 +735,7 @@ class TestFlextLdifUtilitiesPowerMethods:
         )
         assert result.is_success
 
-    def test_transform_entries(self, sample_entries: list[m.Entry]) -> None:
+    def test_transform_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test FlextLdifUtilities.transform()."""
         result = FlextLdifUtilities.transform(
             sample_entries,
@@ -743,7 +743,7 @@ class TestFlextLdifUtilitiesPowerMethods:
         )
         assert result.is_success
 
-    def test_filter_entries(self, sample_entries: list[m.Entry]) -> None:
+    def test_filter_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test FlextLdifUtilities.filter()."""
         result = FlextLdifUtilities.filter(
             sample_entries,
@@ -751,7 +751,7 @@ class TestFlextLdifUtilitiesPowerMethods:
         )
         assert result.is_success
 
-    def test_validate_entries(self, sample_entries: list[m.Entry]) -> None:
+    def test_validate_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test FlextLdifUtilities.validate()."""
         result = FlextLdifUtilities.validate(
             sample_entries,

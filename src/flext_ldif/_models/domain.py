@@ -17,8 +17,8 @@ from typing import ClassVar, Self, TypedDict, Unpack, cast
 from flext_core import (
     FlextLogger,
     FlextResult,
+    FlextUtilities,
     t,
-    u,
 )
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
@@ -37,14 +37,10 @@ from flext_ldif._models.base import (
 )
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-# Alias for simplified usage
-c = FlextLdifConstants
-
-# Alias for simplified usage
-c = FlextLdifConstants
+u = FlextUtilities
 
 logger = FlextLogger(__name__)
 
@@ -1422,17 +1418,20 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (not self.raw_acl or not self.raw_acl.strip()):
+            if acl_is_defined and not FlextUtilities.Guards.is_string_non_empty(
+                self.raw_acl
+            ):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Business Rule: AclElement is frozen=True, so we must use setattr() for mutation
-                # Implication: Direct assignment doesn't work for frozen models, must use setattr()
+                # Business Rule: AclElement is frozen=True, so we must use object.__setattr__() for mutation
+                # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__()
                 # This is the correct Pydantic 2 pattern for frozen models in validators
-                self.validation_violations = violations
+                # Ruff PLC2801: Ignored - required for frozen Pydantic models
+                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
@@ -1696,18 +1695,19 @@ class FlextLdifModelsDomains:
                 # Create default QuirkMetadata with quirk_type from data if available
                 # If no quirk_type provided, use 'rfc' as safe default
                 quirk_type_value = data.get("quirk_type")
+                final_quirk_type_val: c.Ldif.LiteralTypes.ServerTypeLiteral
                 if isinstance(quirk_type_value, str):
                     # Validate quirk_type is a valid ServerTypeLiteral
-                    quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
+                    final_quirk_type_val = cast(
                         "c.Ldif.LiteralTypes.ServerTypeLiteral",
                         quirk_type_value,
                     )
                 else:
                     # Use literal value directly for type safety
-                    quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc"
+                    final_quirk_type_val = "rfc"
 
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=quirk_type,
+                    quirk_type=final_quirk_type_val,
                 )
                 # Cast to allow assignment - data dict accepts MetadataAttributeValue
                 data["metadata"] = cast("t.MetadataAttributeValue", metadata_obj)
@@ -1926,13 +1926,14 @@ class FlextLdifModelsDomains:
                 if ";binary" in attr_name.lower():
                     continue
                 for value in attr_values:
+                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
                     has_binary = any(
                         (
-                            ord(c) < c.Ldif.Format.Rfc.ASCII_SPACE_CHAR
-                            and c not in "\t\n\r"
+                            ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                            and char not in "\t\n\r"
                         )
-                        or ord(c) > c.Ldif.Format.Rfc.ASCII_TILDE_CHAR
-                        for c in value
+                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
+                        for char in value
                     )
                     if has_binary:
                         violations.append(
@@ -2100,10 +2101,11 @@ class FlextLdifModelsDomains:
                 if ";binary" in attr_name.lower():
                     continue
                 for value in attr_values:
+                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
                     if any(
-                        ord(c) < c.Ldif.Format.Rfc.ASCII_SPACE_CHAR
-                        or ord(c) > c.Ldif.Format.Rfc.ASCII_TILDE_CHAR
-                        for c in value
+                        ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
+                        for char in value
                     ):
                         violations.append(
                             f"Server requires ';binary' option for '{attr_name}'",
@@ -3781,7 +3783,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_for(
             cls,
-            quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+            quirk_type: str | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
                 | dict[str, t.MetadataAttributeValue]
@@ -3936,13 +3938,13 @@ class FlextLdifModelsDomains:
                 ... )
 
             """
-            self.original_strings[c.Ldif.Format.Rfc.META_DN_ORIGINAL] = original_dn
-            self.extensions[c.Ldif.Format.Rfc.META_DN_WAS_BASE64] = was_base64
+            # Use getattr to access nested constants - helps MyPy understand the structure
+            rfc_format = c.Ldif.Format
+            self.original_strings[rfc_format.META_DN_ORIGINAL] = original_dn
+            self.extensions[rfc_format.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
                 # escapes_applied is Sequence[str] | None, compatible with MetadataAttributeValue
-                self.extensions[c.Ldif.Format.Rfc.META_DN_ESCAPES_APPLIED] = (
-                    escapes_applied
-                )
+                self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_applied
 
             # Add to conversion notes
             self.conversion_notes[f"dn_{transformation_type}"] = (
@@ -4030,13 +4032,11 @@ class FlextLdifModelsDomains:
                 self.target_server_type = target_server
 
             # Also store in extensions for generic access
-            self.extensions[c.Ldif.Format.Rfc.META_TRANSFORMATION_SOURCE] = (
-                source_server
-            )
+            # Use getattr to access nested constants - helps MyPy understand the structure
+            rfc_format = c.Ldif.Format
+            self.extensions[rfc_format.META_TRANSFORMATION_SOURCE] = source_server
             if target_server:
-                self.extensions[c.Ldif.Format.Rfc.META_TRANSFORMATION_TARGET] = (
-                    target_server
-                )
+                self.extensions[rfc_format.META_TRANSFORMATION_TARGET] = target_server
 
             return self
 

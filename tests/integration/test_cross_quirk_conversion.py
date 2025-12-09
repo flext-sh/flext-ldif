@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifTypes
 from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.typings import t
 
 
 # Cross-quirk conversion test constants - defined at top of module without type checking
@@ -49,8 +49,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
-        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oid_schema_quirk: t.Ldif.SchemaQuirk,
+        oud_schema_quirk: t.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
@@ -60,10 +60,10 @@ class TestOidToOudSchemaConversion:
         parse_result = oid_schema_quirk.parse(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.unwrap()
-        assert isinstance(unwrapped, m.SchemaAttribute), (
+        assert isinstance(unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(unwrapped).__name__}"
         )
-        parsed_data: m.SchemaAttribute = unwrapped
+        parsed_data: m.Ldif.SchemaAttribute = unwrapped
 
         # Verify parsed data (SchemaAttribute object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
@@ -84,10 +84,10 @@ class TestOidToOudSchemaConversion:
             f"OUD parse failed: {oud_parse_result.error}"
         )
         oud_unwrapped = oud_parse_result.unwrap()
-        assert isinstance(oud_unwrapped, m.SchemaAttribute), (
+        assert isinstance(oud_unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(oud_unwrapped).__name__}"
         )
-        oud_data: m.SchemaAttribute = oud_unwrapped
+        oud_data: m.Ldif.SchemaAttribute = oud_unwrapped
 
         # Verify conversion preserved key fields (both are objects, not dicts)
         assert oud_data.oid == parsed_data.oid
@@ -96,8 +96,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
-        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oid_schema_quirk: t.Ldif.SchemaQuirk,
+        oud_schema_quirk: t.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
@@ -107,10 +107,10 @@ class TestOidToOudSchemaConversion:
         parse_result = oid_schema_quirk.parse(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.unwrap()
-        assert isinstance(unwrapped, m.SchemaObjectClass), (
+        assert isinstance(unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(unwrapped).__name__}"
         )
-        parsed_data: m.SchemaObjectClass = unwrapped
+        parsed_data: m.Ldif.SchemaObjectClass = unwrapped
 
         # Verify parsed data (object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
@@ -129,10 +129,10 @@ class TestOidToOudSchemaConversion:
             f"OUD parse failed: {oud_parse_result.error}"
         )
         oud_unwrapped = oud_parse_result.unwrap()
-        assert isinstance(oud_unwrapped, m.SchemaObjectClass), (
+        assert isinstance(oud_unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(oud_unwrapped).__name__}"
         )
-        oud_data: m.SchemaObjectClass = oud_unwrapped
+        oud_data: m.Ldif.SchemaObjectClass = oud_unwrapped
 
         # Verify conversion preserved key fields (objects, not dicts)
         assert oud_data.oid == parsed_data.oid
@@ -154,7 +154,7 @@ class TestOidToOudAclConversion:
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: FlextLdifTypes.Ldif.AclQuirk,
+        oid_acl_quirk: t.Ldif.AclQuirk,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
@@ -178,7 +178,7 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl_quirk: FlextLdifTypes.Ldif.AclQuirk,
+        oud_acl_quirk: t.Ldif.AclQuirk,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
@@ -220,8 +220,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
-        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oid_schema_quirk: t.Ldif.SchemaQuirk,
+        oud_schema_quirk: t.Ldif.SchemaQuirk,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format.

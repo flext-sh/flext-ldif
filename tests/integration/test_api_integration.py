@@ -119,7 +119,7 @@ class TestFlextLdifAPIIntegration(tt):
 
         # Validate entry structure
         for entry in entries:
-            assert isinstance(entry, m.Entry)
+            assert isinstance(entry, m.Ldif.Entry)
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -183,7 +183,7 @@ class TestFlextLdifAPIIntegration(tt):
         """Test building entries programmatically using models."""
         # Create entry using Entry model directly
         test_dn = c.RFC.TEST_DN
-        entry = m.Entry(
+        entry = m.Ldif.Entry(
             dn=m.DistinguishedName(value=test_dn),
             attributes=m.LdifAttributes(
                 attributes={

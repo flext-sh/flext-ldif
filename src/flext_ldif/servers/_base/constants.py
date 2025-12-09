@@ -10,12 +10,15 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+
+# Removed: from flext_ldif.protocols import p (use string literals or hasattr checks)
+
+# Use FlextLdifUtilitiesServer directly to avoid circular import with utilities.py
 
 logger = FlextLogger(__name__)
 
@@ -34,7 +37,7 @@ class FlextLdifServersBaseConstants(ABC):
     """
 
     # Required: Must be overridden in subclasses
-    SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral]
+    SERVER_TYPE: ClassVar[str]
     PRIORITY: ClassVar[int]
 
     # Server naming (can be overridden)
@@ -72,28 +75,13 @@ class FlextLdifServersBaseConstants(ABC):
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
 
 
-def _get_utilities() -> type:
-    """Lazy import of FlextLdifUtilities to avoid circular dependency.
-
-    Business Rule: Breaks circular dependencies between servers and _utilities.
-    Returns type because exact type cannot be inferred statically.
-
-    Returns:
-        FlextLdifUtilities class type
-
-    """
-    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
-
-    return FlextLdifUtilities
-
-
 def _get_server_type_from_utilities(
     quirk_class: type[object],
-) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+) -> str:
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type determined by inspecting class hierarchy via
-    FlextLdifUtilities.Server.get_parent_server_type().
+    FlextLdifUtilitiesServer.get_parent_server_type().
 
     Args:
         quirk_class: The quirk class to get server type for
@@ -102,17 +90,11 @@ def _get_server_type_from_utilities(
         Server type literal (e.g., 'oid', 'oud', 'rfc')
 
     """
-    utilities_class = _get_utilities()
-    server_util = getattr(utilities_class, "Server", None)
-    if server_util is not None:
-        get_parent_method = getattr(server_util, "get_parent_server_type", None)
-        if get_parent_method is not None and callable(get_parent_method):
-            server_type_raw = get_parent_method(quirk_class)
-            return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                server_type_raw,
-            )
-    return "rfc"
+    # Business Rule: Access Server utility directly via FlextLdifUtilitiesServer
+    # Implication: Direct access to avoid circular import with utilities.py
+
+    server_type_raw = FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
+    return str(server_type_raw)
 
 
 def _get_priority_from_parent(parent: object | None) -> int:
@@ -142,7 +124,7 @@ def _get_priority_from_parent(parent: object | None) -> int:
 
 def _get_parent_quirk_safe_impl(
     instance: object,
-) -> p.Ldif.Quirks.ParentQuirkProtocol | None:
+) -> object | None:
     """Get _parent_quirk attribute safely with type narrowing.
 
     Business Rule: Consolidates the common pattern of getting and
@@ -157,7 +139,8 @@ def _get_parent_quirk_safe_impl(
     """
     parent_raw = getattr(instance, "_parent_quirk", None)
     # Use protocol isinstance check for type narrowing
-    if isinstance(parent_raw, p.Ldif.Quirks.ParentQuirkProtocol):
+    # Use hasattr check for protocol compliance (structural typing)
+    if parent_raw is not None and hasattr(parent_raw, "_parent_quirk"):
         return parent_raw
     return None
 
@@ -175,11 +158,11 @@ class QuirkMethodsMixin:
 
     """
 
-    def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+    def _get_server_type(self) -> str:
         """Get server_type from parent server class via __qualname__.
 
         Business Rule: Server type is determined by inspecting the class hierarchy
-        and accessing FlextLdifUtilities.Server.get_parent_server_type().
+        and accessing FlextLdifUtilitiesServer.get_parent_server_type().
 
         Returns:
             Server type literal (e.g., 'oid', 'oud', 'rfc')
@@ -194,7 +177,7 @@ class QuirkMethodsMixin:
 
     def _get_parent_quirk_safe(
         self,
-    ) -> p.Ldif.Quirks.ParentQuirkProtocol | None:
+    ) -> object | None:
         """Get _parent_quirk attribute safely with type narrowing.
 
         Returns:
@@ -210,6 +193,5 @@ __all__ = [
     "_get_parent_quirk_safe_impl",
     "_get_priority_from_parent",
     "_get_server_type_from_utilities",
-    "_get_utilities",
     "logger",
 ]

@@ -9,9 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from tests import s
 
 from flext_ldif import FlextLdif
-from tests import s
 
 
 @pytest.fixture(autouse=True)

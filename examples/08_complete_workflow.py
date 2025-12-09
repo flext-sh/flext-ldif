@@ -36,10 +36,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import u
-
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, m, u
 
 
 def railway_oriented_composition() -> None:
@@ -70,7 +67,7 @@ mail: railway@example.com
     if validate_result.is_failure:
         return
 
-    analyze_result = api.analyze(entries)
+    analyze_result = api.get_entry_statistics(entries)
     if analyze_result.is_failure:
         return
 
@@ -158,7 +155,7 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     # Step 3: Analyze entries
-    analysis_result = api.analyze(entries)
+    analysis_result = api.get_entry_statistics(entries)
 
     if analysis_result.is_failure:
         _ = analysis_result.error
@@ -286,7 +283,7 @@ def entry_building_and_processing_workflow() -> None:
         return
 
     # Step 3: Filter specific entry types
-    person_filter = api.filter(entries, objectclass="person")
+    person_filter = api.filter_persons(entries)
 
     if person_filter.is_failure:
         return
@@ -311,7 +308,7 @@ def schema_driven_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Step 1: Create entries using direct API methods
-    def create_user_entry(i: int) -> FlextLdifModels.Entry | None:
+    def create_user_entry(i: int) -> m.Ldif.Entry | None:
         """Create user entry."""
         person_result = api.create_entry(
             dn=f"cn=User {i},ou=People,dc=example,dc=com",
@@ -330,7 +327,7 @@ def schema_driven_workflow() -> None:
         on_error="skip",
     )
     _entries = (
-        cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        cast("list[m.Ldif.Entry]", batch_result.value["results"])
         if batch_result.is_success
         else []
     )
@@ -360,7 +357,7 @@ sn: Test
     entries = parse_result.unwrap()
 
     # Extract ACLs using direct API method (no service instantiation!)
-    def process_entry_acl(entry: FlextLdifModels.Entry) -> bool | None:
+    def process_entry_acl(entry: m.Ldif.Entry) -> bool | None:
         """Extract and evaluate ACLs from entry."""
         acl_result = api.extract_acls(entry)
 
@@ -371,12 +368,12 @@ sn: Test
             # Cast to expected type since models are compatible at runtime
             acls_list = acl_response.acls if hasattr(acl_response, "acls") else []
             # Type cast needed because domain and public Acl models are structurally compatible
-            # Use FlextLdifModels.Acl for type hint
-            public_acls = cast("list[FlextLdifModels.Acl]", acls_list)
+            # Use m.Acl for type hint
+            public_acls = cast("list[m.Acl]", acls_list)
 
             if public_acls:
                 # Evaluate ACL rules using direct API method
-                eval_result = api.evaluate_acl_rules(public_acls)
+                eval_result = api.acl_service.evaluate_acl_context(public_acls, {})
 
                 if eval_result.is_success:
                     return eval_result.unwrap()
@@ -394,7 +391,7 @@ def batch_processing_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Create large dataset
-    entries: list[FlextLdifModels.Entry] = []
+    entries: list[m.Ldif.Entry] = []
     for i in range(20):
         result = api.create_entry(
             dn=f"cn=BatchUser{i},ou=People,dc=example,dc=com",
@@ -509,7 +506,7 @@ cn: test
 
     if not validation_report.is_valid:
         # Handle validation errors and attempt recovery by fixing entries
-        def fix_entry(entry: FlextLdifModels.Entry) -> None:
+        def fix_entry(entry: m.Ldif.Entry) -> None:
             """Fix entry by adding missing required attribute."""
             # Add missing required attribute
             if entry.attributes:

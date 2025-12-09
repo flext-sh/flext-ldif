@@ -327,7 +327,7 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs in original
         def get_attribute_values_count(
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
             attr_name: str,
         ) -> int:
             attr_values = entry.attributes.attributes.get(attr_name)

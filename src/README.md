@@ -41,7 +41,7 @@ src/flext_ldif/
 
 - **Entities**: `FlextLdifModels.Entry` with identity and business logic
 - **Value Objects**: `FlextLdifModels.DistinguishedName`, `FlextLdifModels.LdifAttributes` (immutable)
-- **Domain Services**: Complex business operations in `services.py`
+- **Services**: Complex business operations in `services.py`
 - **Domain Events**: Planned for future implementation
 
 ### FLEXT Ecosystem Integration

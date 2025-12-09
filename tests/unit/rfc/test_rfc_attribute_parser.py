@@ -14,8 +14,7 @@ import pytest
 
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
-from tests import m, s
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests import RfcTestHelpers, c, m, s
 
 
 class TestsFlextLdifRfcAttributeParser(s):
@@ -31,6 +30,8 @@ class TestsFlextLdifRfcAttributeParser(s):
 
     Uses parametrized tests and factory methods to maximize coverage with minimal code.
     """
+
+    syntax_service: ClassVar[FlextLdifSyntax]  # pytest fixture
 
     # ========================================================================
     # Test Data: Attribute Definitions with Expected Properties
@@ -64,54 +65,54 @@ class TestsFlextLdifRfcAttributeParser(s):
     # Attribute definition test data mapped by test case
     ATTRIBUTE_DEFINITIONS: ClassVar[dict[str, tuple[str, str, str]]] = {
         AttributeTestCase.COMPLETE: (
-            TestsRfcConstants.ATTR_DEF_CN_COMPLETE,
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_DEF_CN_COMPLETE,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
         ),
         AttributeTestCase.MINIMAL: (
             "( 2.5.4.3 )",
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_OID_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_OID_CN,
         ),
         AttributeTestCase.WITH_SYNTAX: (
-            TestsRfcConstants.ATTR_DEF_SN,
-            TestsRfcConstants.ATTR_OID_SN,
-            TestsRfcConstants.ATTR_NAME_SN,
+            c.Rfc.ATTR_DEF_SN,
+            c.Rfc.ATTR_OID_SN,
+            c.Rfc.ATTR_NAME_SN,
         ),
         AttributeTestCase.WITH_MATCHING: (
-            TestsRfcConstants.ATTR_DEF_ST,
+            c.Rfc.ATTR_DEF_ST,
             "2.5.4.8",
             "st",
         ),
         AttributeTestCase.WITH_SUP: (
-            TestsRfcConstants.ATTR_DEF_MAIL,
-            TestsRfcConstants.ATTR_OID_MAIL,
-            TestsRfcConstants.ATTR_NAME_MAIL,
+            c.Rfc.ATTR_DEF_MAIL,
+            c.Rfc.ATTR_OID_MAIL,
+            c.Rfc.ATTR_NAME_MAIL,
         ),
         AttributeTestCase.WITH_USAGE: (
-            TestsRfcConstants.ATTR_DEF_MODIFY_TIMESTAMP,
+            c.Rfc.ATTR_DEF_MODIFY_TIMESTAMP,
             "2.5.18.2",
             "modifyTimestamp",
         ),
         AttributeTestCase.WITH_OBSOLETE: (
-            TestsRfcConstants.ATTR_DEF_OBSOLETE,
-            TestsRfcConstants.ATTR_OID_O,
-            TestsRfcConstants.ATTR_NAME_O,
+            c.Rfc.ATTR_DEF_OBSOLETE,
+            c.Rfc.ATTR_OID_O,
+            c.Rfc.ATTR_NAME_O,
         ),
         AttributeTestCase.CASE_INSENSITIVE: (
             "( 2.5.4.3 NAME 'cn' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )",
             "2.5.4.3",
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_NAME_CN,
         ),
         AttributeTestCase.QUOTED_SYNTAX: (
             "( 2.5.4.3 NAME 'cn' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )",
             "2.5.4.3",
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_NAME_CN,
         ),
         AttributeTestCase.UNQUOTED_SYNTAX: (
             "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
             "2.5.4.3",
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_NAME_CN,
         ),
     }
 
@@ -119,12 +120,12 @@ class TestsFlextLdifRfcAttributeParser(s):
     SYNTAX_DEFINITIONS: ClassVar[dict[str, tuple[str, str, str, str | None]]] = {
         SyntaxTestCase.DIRECTORY_STRING: (
             (
-                f"( {TestsRfcConstants.ATTR_OID_SN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_SN}' "
+                f"( {c.Rfc.ATTR_OID_SN} NAME "
+                f"'{c.Rfc.ATTR_NAME_SN}' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.21 )"
             ),
-            TestsRfcConstants.ATTR_OID_SN,
-            TestsRfcConstants.ATTR_NAME_SN,
+            c.Rfc.ATTR_OID_SN,
+            c.Rfc.ATTR_NAME_SN,
             "directory_string",
         ),
         SyntaxTestCase.BOOLEAN: (
@@ -140,23 +141,19 @@ class TestsFlextLdifRfcAttributeParser(s):
             "integer",
         ),
         SyntaxTestCase.RFC4517_NONSTANDARD: (
-            (
-                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
-                "SYNTAX 9.9.9.9.9.9 )"
-            ),
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            (f"( {c.Rfc.ATTR_OID_CN} NAME '{c.Rfc.ATTR_NAME_CN}' SYNTAX 9.9.9.9.9.9 )"),
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
             None,
         ),
         SyntaxTestCase.RFC4517_VALID: (
             (
-                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
+                f"( {c.Rfc.ATTR_OID_CN} NAME "
+                f"'{c.Rfc.ATTR_NAME_CN}' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
             ),
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
             "directory_string",
         ),
         SyntaxTestCase.IA5STRING: (
@@ -170,12 +167,12 @@ class TestsFlextLdifRfcAttributeParser(s):
         ),
         SyntaxTestCase.INVALID_FORMAT: (
             (
-                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
+                f"( {c.Rfc.ATTR_OID_CN} NAME "
+                f"'{c.Rfc.ATTR_NAME_CN}' "
                 "SYNTAX invalid-syntax-oid )"
             ),
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
             None,
         ),
     }
@@ -280,7 +277,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         """Test that missing OID causes parsing failure."""
         _ = RfcTestHelpers.test_parse_error_handling(
             rfc_schema_quirk,
-            TestsRfcConstants.INVALID_ATTR_DEF,
+            c.Rfc.INVALID_ATTR_DEF,
             should_fail=True,
         )
 
@@ -327,18 +324,18 @@ class TestsFlextLdifRfcAttributeParser(s):
     ) -> None:
         """Test syntax_definition returns None when syntax is absent or invalid."""
         # Case 1: No syntax specified
-        attr_def = TestsRfcConstants.ATTR_DEF_CN_MINIMAL
+        attr_def = c.Rfc.ATTR_DEF_CN_MINIMAL
         result = rfc_schema_quirk.parse(attr_def)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, m.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.syntax is None
         assert attr.syntax_definition is None
 
         # Case 2: Empty syntax
-        empty_syntax_attr = m.SchemaAttribute(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+        empty_syntax_attr = m.Ldif.SchemaAttribute(
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
             syntax="",
             desc=None,
             sup=None,
@@ -356,9 +353,9 @@ class TestsFlextLdifRfcAttributeParser(s):
         assert empty_syntax_attr.syntax_definition is None
 
         # Case 3: Invalid OID format
-        invalid_oid_attr = m.SchemaAttribute(
-            oid=TestsRfcConstants.ATTR_OID_CN,
-            name=TestsRfcConstants.ATTR_NAME_CN,
+        invalid_oid_attr = m.Ldif.SchemaAttribute(
+            oid=c.Rfc.ATTR_OID_CN,
+            name=c.Rfc.ATTR_NAME_CN,
             syntax="not.a.valid.oid.at.all",
             desc=None,
             sup=None,
@@ -385,12 +382,12 @@ class TestsFlextLdifRfcAttributeParser(s):
         attr = RfcTestHelpers.test_schema_parse_attribute(
             rfc_schema_quirk,
             (
-                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
-                f"SYNTAX {TestsRfcConstants.SYNTAX_OID_BOOLEAN} )"
+                f"( {c.Rfc.ATTR_OID_CN} NAME "
+                f"'{c.Rfc.ATTR_NAME_CN}' "
+                f"SYNTAX {c.Rfc.SYNTAX_OID_BOOLEAN} )"
             ),
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
         )
         syntax1 = attr.syntax_definition
         syntax2 = attr.syntax_definition
@@ -449,7 +446,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         assert result.is_success
 
         attr = result.unwrap()
-        assert isinstance(attr, m.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == expected_oid
         assert attr.name == expected_name
 
@@ -469,9 +466,7 @@ class TestsFlextLdifRfcAttributeParser(s):
     ) -> None:
         """Test Schema.can_handle_attribute with string input."""
         attr_def = (
-            f"( {TestsRfcConstants.ATTR_OID_CN} "
-            f"NAME '{TestsRfcConstants.ATTR_NAME_CN}' "
-            "DESC 'Common Name' )"
+            f"( {c.Rfc.ATTR_OID_CN} NAME '{c.Rfc.ATTR_NAME_CN}' DESC 'Common Name' )"
         )
         assert rfc_schema_quirk.can_handle_attribute(attr_def) is True
 
@@ -482,14 +477,12 @@ class TestsFlextLdifRfcAttributeParser(s):
     ) -> None:
         """Test Schema.can_handle_attribute with SchemaAttribute model."""
         attr_def = (
-            f"( {TestsRfcConstants.ATTR_OID_CN} "
-            f"NAME '{TestsRfcConstants.ATTR_NAME_CN}' "
-            "DESC 'Common Name' )"
+            f"( {c.Rfc.ATTR_OID_CN} NAME '{c.Rfc.ATTR_NAME_CN}' DESC 'Common Name' )"
         )
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, m.SchemaAttribute)
+        assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.can_handle_attribute(attr_model) is True
 
     @pytest.mark.timeout(5)
@@ -499,14 +492,12 @@ class TestsFlextLdifRfcAttributeParser(s):
     ) -> None:
         """Test Schema.should_filter_out_attribute always returns False."""
         attr_def = (
-            f"( {TestsRfcConstants.ATTR_OID_CN} "
-            f"NAME '{TestsRfcConstants.ATTR_NAME_CN}' "
-            "DESC 'Common Name' )"
+            f"( {c.Rfc.ATTR_OID_CN} NAME '{c.Rfc.ATTR_NAME_CN}' DESC 'Common Name' )"
         )
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, m.SchemaAttribute)
+        assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.should_filter_out_attribute(attr_model) is False
 
     @pytest.mark.timeout(5)
@@ -518,13 +509,13 @@ class TestsFlextLdifRfcAttributeParser(s):
         _, written = RfcTestHelpers.test_schema_write_attribute_with_metadata(
             rfc_schema_quirk,
             (
-                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
-                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
-                f"DESC 'Common Name' SYNTAX {TestsRfcConstants.SYNTAX_OID_DIRECTORY_STRING} "
+                f"( {c.Rfc.ATTR_OID_CN} NAME "
+                f"'{c.Rfc.ATTR_NAME_CN}' "
+                f"DESC 'Common Name' SYNTAX {c.Rfc.SYNTAX_OID_DIRECTORY_STRING} "
                 "SINGLE-VALUE NO-USER-MODIFICATION )"
             ),
-            TestsRfcConstants.ATTR_OID_CN,
-            TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
             must_contain=["SINGLE-VALUE", "NO-USER-MODIFICATION"],
         )
         assert ")" in written

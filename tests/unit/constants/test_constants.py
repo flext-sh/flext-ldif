@@ -13,10 +13,11 @@ import pytest
 from tests import s
 
 from flext_ldif import FlextLdifConstants
+from flext_ldif.constants import c
 
 
 class TestsTestFlextLdifConstants(s):
-    """Consolidated test suite for FlextLdifConstants.
+    """Consolidated test suite for c.Ldif.
 
     Tests all constant groups: Format, Processing, Encoding, Validation,
     Quality, ObjectClasses, LdapServers, RfcCompliance, Enums, and Namespace.
@@ -136,10 +137,10 @@ class TestsTestFlextLdifConstants(s):
     ]
 
     ENUM_CLASS_MAP: ClassVar[dict[str, type[object]]] = {
-        "PROCESSING_STAGE": FlextLdifConstants.SharedDomain.ProcessingStage,
-        "HEALTH_STATUS": FlextLdifConstants.SharedDomain.LdifHealthStatus,
-        "ENTRY_TYPE": FlextLdifConstants.SharedDomain.EntryType,
-        "ENTRY_MODIFICATION": FlextLdifConstants.SharedDomain.EntryModification,
+        "PROCESSING_STAGE": c.Ldif.ProcessingStage,
+        "HEALTH_STATUS": c.Ldif.LdifHealthStatus,
+        "ENTRY_TYPE": c.Ldif.EntryType,
+        "ENTRY_MODIFICATION": c.Ldif.EntryModification,
     }
 
     NAMESPACE_GROUPS: ClassVar[list[str]] = [
@@ -174,13 +175,13 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_format_constants(self, name: str, expected_value: object) -> None:
         """Test format constant value."""
-        actual = getattr(FlextLdifConstants.Format, name)
+        actual = getattr(c.Ldif.Format, name)
         assert actual == expected_value
 
     def test_default_version_matches_version_1(self) -> None:
         """Test that LDIF formatting constants are properly defined."""
-        assert FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH == 78
-        assert FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH == 199
+        assert c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH == 78
+        assert c.Ldif.LdifFormatting.MAX_LINE_WIDTH == 199
 
     # ════════════════════════════════════════════════════════════════════════
     # PROCESSING CONSTANTS TESTS (3 tests)
@@ -197,16 +198,13 @@ class TestsTestFlextLdifConstants(s):
 
     def test_debug_workers_less_than_max(self) -> None:
         """Test debug workers is less than max workers limit."""
-        assert (
-            FlextLdifConstants.DEBUG_MAX_WORKERS
-            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
-        )
+        assert c.Ldif.DEBUG_MAX_WORKERS <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
 
     def test_performance_workers_less_than_max(self) -> None:
         """Test performance workers is less than max workers limit."""
         assert (
-            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
-            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
+            c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS
+            <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
         )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -215,23 +213,20 @@ class TestsTestFlextLdifConstants(s):
 
     def test_default_encoding_is_utf8(self) -> None:
         """Test default encoding is utf-8."""
-        assert FlextLdifConstants.DEFAULT_ENCODING == "utf-8"
+        assert c.Ldif.DEFAULT_ENCODING == "utf-8"
 
     def test_supported_encodings_is_frozenset(self) -> None:
         """Test supported encodings is a frozenset."""
-        assert isinstance(FlextLdifConstants.SUPPORTED_ENCODINGS, frozenset)
+        assert isinstance(c.Ldif.SUPPORTED_ENCODINGS, frozenset)
 
     def test_default_in_supported_encodings(self) -> None:
         """Test default encoding is in supported encodings set."""
-        assert (
-            FlextLdifConstants.DEFAULT_ENCODING
-            in FlextLdifConstants.SUPPORTED_ENCODINGS
-        )
+        assert c.Ldif.DEFAULT_ENCODING in c.Ldif.SUPPORTED_ENCODINGS
 
     @pytest.mark.parametrize("encoding", SUPPORTED_ENCODINGS)
     def test_supported_encodings_contains(self, encoding: str) -> None:
         """Test encoding is in supported encodings."""
-        assert encoding in FlextLdifConstants.SUPPORTED_ENCODINGS
+        assert encoding in c.Ldif.SUPPORTED_ENCODINGS
 
     # ════════════════════════════════════════════════════════════════════════
     # VALIDATION CONSTANTS TESTS (1 test)
@@ -269,7 +264,7 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_ldap_person_classes(self, object_class: str) -> None:
         """Test object class is in LDAP person classes."""
-        assert object_class in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+        assert object_class in c.Ldif.ObjectClasses.LDAP_PERSON_CLASSES
 
     @pytest.mark.parametrize(
         "object_class",
@@ -277,7 +272,7 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_ldap_group_classes(self, object_class: str) -> None:
         """Test object class is in LDAP group classes."""
-        assert object_class in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+        assert object_class in c.Ldif.ObjectClasses.LDAP_GROUP_CLASSES
 
     # ════════════════════════════════════════════════════════════════════════
     # LDAP SERVER CONSTANTS TESTS (1 test)
@@ -289,7 +284,7 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_ldap_server_constants(self, attr_name: str, expected_value: str) -> None:
         """Test LDAP server constant value."""
-        actual = getattr(FlextLdifConstants.LdapServers, attr_name)
+        actual = getattr(c.Ldif.LdapServers, attr_name)
         assert actual == expected_value
 
     # ════════════════════════════════════════════════════════════════════════
@@ -299,12 +294,12 @@ class TestsTestFlextLdifConstants(s):
     @pytest.mark.parametrize("feature", REQUIRED_FEATURES)
     def test_required_features(self, feature: str) -> None:
         """Test feature is in required features."""
-        assert feature in FlextLdifConstants.RfcCompliance.REQUIRED_FEATURES
+        assert feature in c.Ldif.RfcCompliance.REQUIRED_FEATURES
 
     @pytest.mark.parametrize("feature", OPTIONAL_FEATURES)
     def test_optional_features(self, feature: str) -> None:
         """Test feature is in optional features."""
-        assert feature in FlextLdifConstants.RfcCompliance.OPTIONAL_FEATURES
+        assert feature in c.Ldif.RfcCompliance.OPTIONAL_FEATURES
 
     @pytest.mark.parametrize(
         ("attr_name", "expected_value"),
@@ -312,7 +307,7 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_compliance_modes(self, attr_name: str, expected_value: str) -> None:
         """Test RFC compliance mode constants."""
-        actual = getattr(FlextLdifConstants.RfcCompliance, attr_name)
+        actual = getattr(c.Ldif.RfcCompliance, attr_name)
         assert actual == expected_value
 
     # ════════════════════════════════════════════════════════════════════════
@@ -352,25 +347,19 @@ class TestsTestFlextLdifConstants(s):
     def test_constant_values_are_reasonable(self) -> None:
         """Test that constant values are within reasonable ranges."""
         # Encoding
-        assert (
-            FlextLdifConstants.DEFAULT_ENCODING
-            in FlextLdifConstants.SUPPORTED_ENCODINGS
-        )
+        assert c.Ldif.DEFAULT_ENCODING in c.Ldif.SUPPORTED_ENCODINGS
 
         # Format
-        assert 40 < FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH < 200
+        assert 40 < c.Ldif.LdifFormatting.MAX_LINE_WIDTH < 200
 
         # Processing
-        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT > 0
-        assert (
-            FlextLdifConstants.DEBUG_MAX_WORKERS
-            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
-        )
-        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
+        assert c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT > 0
+        assert c.Ldif.DEBUG_MAX_WORKERS <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        assert c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
-        assert FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
+        assert c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
         assert (
-            FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MAX
-            > FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN
+            c.Ldif.LdifGeneralValidation.NAME_LENGTH_MAX
+            > c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN
         )

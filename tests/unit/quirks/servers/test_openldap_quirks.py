@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
+from tests import GenericFieldsDict, RfcTestHelpers, c, s
+from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
-from flext_ldif import FlextLdif, FlextLdifConstants
+from flext_ldif import FlextLdif
+from flext_ldif.constants import c as lib_c
 from flext_ldif.models import m
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from tests import FlextLdifTestUtils, RfcTestHelpers, s
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
@@ -70,6 +72,13 @@ class EntryTestType(StrEnum):
 @pytest.mark.unit
 class TestsFlextLdifOpenldapQuirks(s):
     """Consolidated test class for OpenLDAP 2.x quirks."""
+
+    # Pytest fixtures with ClassVar annotations
+    ldif_api: ClassVar[FlextLdif]  # pytest fixture
+    server: ClassVar[FlextLdifServersOpenldap]  # pytest fixture
+    schema_quirk: ClassVar[FlextLdifServersOpenldap.Schema]  # pytest fixture
+    acl_quirk: ClassVar[FlextLdifServersOpenldap.Acl]  # pytest fixture
+    entry_quirk: ClassVar[FlextLdifServersOpenldap.Entry]  # pytest fixture
 
     # =========================================================================
     # FIXTURE SCENARIOS
@@ -284,8 +293,8 @@ class TestsFlextLdifOpenldapQuirks(s):
     ) -> None:
         """Test parsing OpenLDAP fixtures."""
         server_dir, filename, should_have_entries = config
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
-            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+        server_type: lib_c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
+            "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
             server_dir,
         )
         fixture_path = FlextLdifTestUtils.get_fixture_path(server_type, filename)
@@ -553,7 +562,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         acl_quirk: FlextLdifServersOpenldap.Acl,
     ) -> None:
         """Test writing ACL in RFC format."""
-        acl_data = m.Acl(
+        acl_data = m.Ldif.Acl(
             name="test-acl",
             target=m.AclTarget(
                 target_dn="*",
@@ -564,7 +573,7 @@ class TestsFlextLdifOpenldapQuirks(s):
                 subject_value="self",
             ),
             permissions=m.AclPermissions(write=True),
-            metadata=m.QuirkMetadata.create_for("openldap"),
+            metadata=m.Ldif.QuirkMetadata.create_for("openldap"),
             raw_acl="to attrs=userPassword by self write by * none",
         )
         result = acl_quirk.write(acl_data)
@@ -608,8 +617,8 @@ class TestsFlextLdifOpenldapQuirks(s):
     ) -> None:
         """Test writing attribute to RFC string format."""
         attr_dict: dict[str, str | bool] = {
-            "oid": TestsRfcConstants.ATTR_OID_CN,
-            "name": TestsRfcConstants.ATTR_NAME_CN,
+            "oid": c.Rfc.ATTR_OID_CN,
+            "name": c.Rfc.ATTR_NAME_CN,
             "desc": "common name",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "single_value": False,
@@ -620,8 +629,8 @@ class TestsFlextLdifOpenldapQuirks(s):
         result = schema_quirk.write(attr_model)
         assert result.is_success
         attr_str = result.unwrap()
-        assert TestsRfcConstants.ATTR_OID_CN in attr_str
-        assert TestsRfcConstants.ATTR_NAME_CN in attr_str
+        assert c.Rfc.ATTR_OID_CN in attr_str
+        assert c.Rfc.ATTR_NAME_CN in attr_str
 
     def test_write_objectclass_to_rfc(
         self,
@@ -629,8 +638,8 @@ class TestsFlextLdifOpenldapQuirks(s):
     ) -> None:
         """Test writing objectClass to RFC string format."""
         oc_dict: dict[str, str | list[str]] = {
-            "oid": TestsRfcConstants.OC_OID_PERSON,
-            "name": TestsRfcConstants.OC_NAME_PERSON,
+            "oid": c.Rfc.OC_OID_PERSON,
+            "name": c.Rfc.OC_NAME_PERSON,
             "desc": "RFC2256: person",
             "kind": "STRUCTURAL",
             "must": ["sn", "cn"],
@@ -642,6 +651,6 @@ class TestsFlextLdifOpenldapQuirks(s):
         result = schema_quirk._write_objectclass(oc_model)
         assert result.is_success
         oc_str = result.unwrap()
-        assert TestsRfcConstants.OC_OID_PERSON in oc_str
-        assert TestsRfcConstants.OC_NAME_PERSON in oc_str
+        assert c.Rfc.OC_OID_PERSON in oc_str
+        assert c.Rfc.OC_NAME_PERSON in oc_str
         assert "STRUCTURAL" in oc_str

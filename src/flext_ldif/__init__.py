@@ -30,7 +30,7 @@ from flext_ldif.base import FlextLdifServiceBase, s
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants, c
 from flext_ldif.models import FlextLdifModels, m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import FlextLdifProtocols, p
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.detector import FlextLdifDetector
@@ -70,6 +70,7 @@ __all__ = [
     "e",
     "h",
     "m",
+    "p",
     "r",
     "s",
     "t",

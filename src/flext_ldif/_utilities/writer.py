@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import cast
 
@@ -15,7 +16,7 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextTypes,
-    FlextUtilities,
+    FlextUtilities as u,
 )
 from jinja2 import Environment
 
@@ -23,10 +24,19 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
+# REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
+# REMOVED: Type aliases para objetos nested - use m.Ldif.* ou FlextLdifModelsDomains.* diretamente
+# SchemaAttribute: TypeAlias = m.Ldif.SchemaAttribute  # Use m.Ldif.SchemaAttribute or m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = m.Ldif.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or m.Ldif.SchemaObjectClass directly
+# QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata  # Use m.Ldif.QuirkMetadata or FlextLdifModelsDomains.QuirkMetadata directly
+
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
-u = FlextUtilities  # Use base class to avoid circular dependency
+# u is already imported as FlextUtilities as u above
 r = FlextResult  # Shared from flext-core
+
+# Constants
+_TUPLE_LENGTH_TWO = 2  # Length for tuple unpacking validation
 
 logger = FlextLogger(__name__)
 
@@ -314,8 +324,8 @@ class FlextLdifUtilitiesWriter:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
-        if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.MetadataKeys.COLLECTIVE,
+        if attr_data.metadata and u.mapper().get(
+            attr_data.metadata.extensions, c.Ldif.MetadataKeys.COLLECTIVE
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -334,8 +344,8 @@ class FlextLdifUtilitiesWriter:
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
 
-        if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.MetadataKeys.OBSOLETE,
+        if attr_data.metadata and u.mapper().get(
+            attr_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
         ):
             parts.append("OBSOLETE")
 
@@ -349,8 +359,13 @@ class FlextLdifUtilitiesWriter:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
 
-        if attr_data.metadata and attr_data.metadata.extensions.get("x_origin"):
-            parts.append(f"X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'")
+        x_origin = (
+            u.mapper().get(attr_data.metadata.extensions, "x_origin")
+            if attr_data.metadata
+            else None
+        )
+        if x_origin:
+            parts.append(f"X-ORIGIN '{x_origin}'")
 
         parts.append(")")
         return parts
@@ -385,7 +400,7 @@ class FlextLdifUtilitiesWriter:
         if not attr_list:
             return
 
-        if FlextRuntime.is_list_like(attr_list):
+        if isinstance(attr_list, (list, tuple)):
             if not isinstance(attr_list, list):
                 msg = f"Expected list, got {type(attr_list)}"
                 raise TypeError(msg)
@@ -411,14 +426,14 @@ class FlextLdifUtilitiesWriter:
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
 
-        if oc_data.metadata and oc_data.metadata.extensions.get(
-            c.Ldif.MetadataKeys.OBSOLETE,
+        if oc_data.metadata and u.mapper().get(
+            oc_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
         ):
             parts.append("OBSOLETE")
 
         if oc_data.sup:
             # Handle SUP as string or list
-            if FlextRuntime.is_list_like(oc_data.sup):
+            if isinstance(oc_data.sup, (list, tuple)):
                 # Multiple SUP values: format as ( value1 $ value2 $ ... )
                 if not isinstance(oc_data.sup, list):
                     msg = f"Expected list, got {type(oc_data.sup)}"
@@ -430,14 +445,21 @@ class FlextLdifUtilitiesWriter:
                 # Single SUP value
                 parts.append(f"SUP {oc_data.sup}")
 
-        kind = oc_data.kind or c.Ldif.Schema.STRUCTURAL
+        # Use full path to avoid type resolution issues
+        # Access Schema class directly from ErrorCategory namespace
+        kind = oc_data.kind or c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
         parts.append(str(kind))
 
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
 
-        if oc_data.metadata and oc_data.metadata.extensions.get("x_origin"):
-            parts.append(f"X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'")
+        oc_x_origin = (
+            u.mapper().get(oc_data.metadata.extensions, "x_origin")
+            if oc_data.metadata
+            else None
+        )
+        if oc_x_origin:
+            parts.append(f"X-ORIGIN '{oc_x_origin}'")
 
         parts.append(")")
 
@@ -518,31 +540,33 @@ class FlextLdifUtilitiesWriter:
         extensions = getattr(metadata, "extensions", None)
         if extensions is not None:
             attr_order = (
-                extensions.get("attribute_order")
+                u.mapper().get(extensions, "attribute_order")
                 if hasattr(extensions, "get")
                 else None
             )
-        elif FlextRuntime.is_dict_like(metadata):
-            extensions_raw = metadata.get("extensions", {})
+        elif isinstance(metadata, dict):
+            extensions_raw: dict[str, t.MetadataAttributeValue] | object = (
+                u.mapper().get(metadata, "extensions", default={})
+            )
             if not isinstance(extensions_raw, dict):
                 attr_order = None
             else:
+                # Type narrowing: after isinstance check, extensions_raw is dict[str, t.MetadataAttributeValue]
                 # Business Rule: extensions_raw is dict[str, GeneralValueType] from metadata
                 # but we need dict[str, MetadataAttributeValue] for type safety.
                 # GeneralValueType includes recursive types, but metadata extensions
                 # in practice only contain ScalarValue or Sequence[ScalarValue].
-                # Implication: We use cast for type conversion since runtime values
-                # are compatible with MetadataAttributeValue.
-                extensions_dict = cast(
-                    "dict[str, t.MetadataAttributeValue]",
-                    extensions_raw,
-                )
+                extensions_dict: dict[str, t.MetadataAttributeValue] = extensions_raw
                 if FlextRuntime.is_dict_like(extensions_dict):
-                    attr_order = extensions_dict.get("attribute_order")
+                    attr_order = u.mapper().get(extensions_dict, "attribute_order")
                 else:
                     attr_order = None
 
         if attr_order is None or not FlextRuntime.is_list_like(attr_order):
+            return None
+
+        # Type narrowing: ensure attr_order is iterable (list, tuple, or sequence)
+        if not isinstance(attr_order, (list, tuple)):
             return None
 
         # Build ordered list from attr_order
@@ -631,6 +655,9 @@ class FlextLdifUtilitiesWriter:
         """
         # Skip empty-valued attributes per RFC 2849
         if FlextRuntime.is_list_like(attr_value):
+            # Type narrowing: ensure attr_value is iterable (list, tuple, or sequence)
+            if not isinstance(attr_value, (list, tuple)):
+                return []
             # Filter out empty strings from list
             non_empty_values = [v for v in attr_value if v]
             if not non_empty_values:
@@ -642,13 +669,18 @@ class FlextLdifUtilitiesWriter:
         # Apply attribute name mapping
         mapped_attr_name = attr_name
         if attribute_case_map:
-            mapped_attr_name = attribute_case_map.get(attr_name.lower(), attr_name)
+            mapped_attr_name = u.mapper().get(
+                attribute_case_map, attr_name.lower(), default=attr_name
+            )
 
         # Determine prefix
         attr_prefix = f"{mapped_attr_name}::" if is_base64 else f"{mapped_attr_name}:"
 
         # Handle both list and single values
         if FlextRuntime.is_list_like(attr_value):
+            # Type narrowing: ensure attr_value is iterable (list, tuple, or sequence)
+            if not isinstance(attr_value, (list, tuple)):
+                return [f"{attr_prefix} {attr_value}"]
             # At this point, we know attr_value is a non-empty list
             # with non-empty values
             non_empty_values = [v for v in attr_value if v]
@@ -833,7 +865,12 @@ class FlextLdifUtilitiesWriter:
         # Write modify-add operations for attributetypes
         if "_modify_add_attributetypes" in entry_data:
             attr_types = entry_data["_modify_add_attributetypes"]
-            if FlextRuntime.is_list_like(attr_types) and attr_types:
+            # Type narrowing: ensure attr_types is iterable before using extend
+            if (
+                FlextRuntime.is_list_like(attr_types)
+                and attr_types
+                and isinstance(attr_types, (list, tuple))
+            ):
                 lines.append("add: attributetypes")
                 lines.extend(f"attributetypes: {attr_type}" for attr_type in attr_types)
                 lines.append("-")
@@ -841,7 +878,12 @@ class FlextLdifUtilitiesWriter:
         # Write modify-add operations for objectclasses
         if "_modify_add_objectclasses" in entry_data:
             obj_classes = entry_data["_modify_add_objectclasses"]
-            if FlextRuntime.is_list_like(obj_classes) and obj_classes:
+            # Type narrowing: ensure obj_classes is iterable before using extend
+            if (
+                FlextRuntime.is_list_like(obj_classes)
+                and obj_classes
+                and isinstance(obj_classes, (list, tuple))
+            ):
                 lines.append("add: objectclasses")
                 lines.extend(f"objectclasses: {obj_class}" for obj_class in obj_classes)
                 lines.append("-")
@@ -884,8 +926,8 @@ class FlextLdifUtilitiesWriter:
     def _apply_output_options(
         attr_name: str,
         attr_values: list[str],
-        entry_metadata: m.QuirkMetadata,
-        output_options: m.WriteOutputOptions,
+        entry_metadata: m.Ldif.QuirkMetadata,
+        output_options: m.Ldif.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Apply output visibility options based on attribute status.
 
@@ -918,23 +960,24 @@ class FlextLdifUtilitiesWriter:
 
         """
         # Get marked_attributes from metadata (type narrowing)
-        marked_attrs_raw = entry_metadata.extensions.get("marked_attributes", {})
+        marked_attrs_raw: dict[str, dict[str, t.MetadataAttributeValue]] | object = (
+            u.mapper().get(entry_metadata.extensions, "marked_attributes", default={})
+        )
         if not isinstance(marked_attrs_raw, dict):
             return (attr_name, attr_values)
 
-        # Type narrowing: ensure marked_attrs_raw is the correct nested dict type
-        marked_attrs: dict[str, dict[str, t.MetadataAttributeValue]] = cast(
-            "dict[str, dict[str, t.MetadataAttributeValue]]",
-            marked_attrs_raw,
-        )
-        attr_info = marked_attrs.get(attr_name)
+        # Type narrowing: after isinstance check, marked_attrs_raw is dict[str, dict[str, t.MetadataAttributeValue]]
+        marked_attrs: dict[str, dict[str, t.MetadataAttributeValue]] = marked_attrs_raw
+        attr_info = u.mapper().get(marked_attrs, attr_name)
 
         # If attribute not marked, write normally
         if not attr_info:
             return (attr_name, attr_values)
 
         # Check removed_attributes for already-removed attributes
-        removed_attrs_raw = entry_metadata.extensions.get("removed_attributes", {})
+        removed_attrs_raw: dict[str, t.MetadataAttributeValue] | object = (
+            u.mapper().get(entry_metadata.extensions, "removed_attributes", default={})
+        )
         if isinstance(removed_attrs_raw, dict) and attr_name in removed_attrs_raw:
             return FlextLdifUtilitiesWriter._handle_removed_attribute(
                 attr_name,
@@ -943,10 +986,10 @@ class FlextLdifUtilitiesWriter:
             )
 
         # Handle based on status - extracted to reduce complexity
-        status_raw = attr_info.get(
-            "status",
-            c.Ldif.AttributeMarkerStatus.NORMAL.value,
-        )
+        # Use full path to avoid type resolution issues
+        # Access enum value directly as string literal to avoid mypy issues with nested enum access
+        normal_status = "normal"  # c.Ldif.AttributeMarkerStatus.NORMAL.value
+        status_raw = u.mapper().get(attr_info, "status", default=normal_status)
         # Validate status is AttributeMarkerStatusLiteral
         valid_statuses = {
             "normal",
@@ -957,6 +1000,7 @@ class FlextLdifUtilitiesWriter:
             "renamed",
         }
         if isinstance(status_raw, str) and status_raw in valid_statuses:
+            # Use namespace completo para objetos nested (sem alias redundante)
             status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral = cast(
                 "c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral",
                 status_raw,
@@ -975,7 +1019,7 @@ class FlextLdifUtilitiesWriter:
     def _handle_removed_attribute(
         attr_name: str,
         attr_values: list[str],
-        output_options: m.WriteOutputOptions,
+        output_options: m.Ldif.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle already-removed attributes (extracted to reduce complexity)."""
         if output_options.show_removed_attributes:
@@ -987,27 +1031,51 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         attr_values: list[str],
         status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
-        output_options: m.WriteOutputOptions,
+        output_options: m.Ldif.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
-        status_handlers = {
-            c.Ldif.AttributeMarkerStatus.OPERATIONAL.value: (
-                output_options.show_operational_attributes,
-                attr_name,
-            ),
-            c.Ldif.AttributeMarkerStatus.FILTERED.value: (
-                output_options.show_filtered_attributes,
-                f"# {attr_name}",
-            ),
-            c.Ldif.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value: (
-                output_options.show_removed_attributes,
-                f"# {attr_name}",
-            ),
-            c.Ldif.AttributeMarkerStatus.HIDDEN.value: (False, None),
+        # Use full path to avoid type resolution issues
+        # Access AttributeMarkerStatus enum values directly as string literals
+        # (StrEnum values are known: "operational", "filtered", "marked_for_removal", "hidden")
+        # This avoids mypy issues with nested enum access while maintaining type safety
+        operational_value: str = (
+            "operational"  # c.Ldif.AttributeMarkerStatus.OPERATIONAL.value
+        )
+        filtered_value: str = "filtered"  # c.Ldif.AttributeMarkerStatus.FILTERED.value
+        marked_for_removal_value: str = "marked_for_removal"  # c.Ldif.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value
+        hidden_value: str = "hidden"  # c.Ldif.AttributeMarkerStatus.HIDDEN.value
+        # Type annotations: ensure tuples are correctly typed
+        # WriteOutputOptions attributes are str ("show", "hide", "comment"), not bool
+        # Convert to bool for handler logic: "show" = True, "hide"/"comment" = False
+        show_operational_str: str = output_options.show_operational_attributes
+        show_filtered_str: str = output_options.show_filtered_attributes
+        show_removed_str: str = output_options.show_removed_attributes
+        # Convert str to bool: "show" means show, anything else means don't show normally
+        show_operational: bool = show_operational_str == "show"
+        show_filtered: bool = show_filtered_str == "show"
+        show_removed: bool = show_removed_str == "show"
+        operational_handler: tuple[bool, str | None] = (show_operational, attr_name)
+        filtered_handler: tuple[bool, str | None] = (show_filtered, f"# {attr_name}")
+        marked_for_removal_handler: tuple[bool, str | None] = (
+            show_removed,
+            f"# {attr_name}",
+        )
+        hidden_handler: tuple[bool, str | None] = (False, None)
+        status_handlers: dict[str, tuple[bool, str | None]] = {
+            operational_value: operational_handler,
+            filtered_value: filtered_handler,
+            marked_for_removal_value: marked_for_removal_handler,
+            hidden_value: hidden_handler,
         }
 
-        handler_config = status_handlers.get(status)
-        if handler_config:
+        handler_config = u.mapper().get(status_handlers, status)
+        # Type narrowing: handler_config is tuple[bool, str | None] when found
+        if (
+            handler_config
+            and isinstance(handler_config, tuple)
+            and len(handler_config) == _TUPLE_LENGTH_TWO
+        ):
+            # Type narrowing: handler_config is tuple[bool, str | None]
             show_flag, name_format = handler_config
             if not show_flag:
                 return None
@@ -1038,21 +1106,25 @@ class FlextLdifUtilitiesWriter:
             False if no restoration needed (caller should continue writing)
 
         """
-        mk = c.Ldif.MetadataKeys
         # Check for minimal differences using both possible keys
-        attr_diff = minimal_differences_attrs.get(
-            attr_name,
-        ) or minimal_differences_attrs.get(f"attribute_{attr_name}")
+        attr_diff = u.mapper().get(
+            minimal_differences_attrs, attr_name
+        ) or u.mapper().get(minimal_differences_attrs, f"attribute_{attr_name}")
 
-        if FlextRuntime.is_dict_like(attr_diff) and attr_diff.get(mk.HAS_DIFFERENCES):
-            original_attr_str = attr_diff.get("original")
-            if original_attr_str and isinstance(original_attr_str, str):
-                ldif_lines.append(original_attr_str)
-                logger.debug(
-                    "Restored original attribute line",
-                    attribute_name=attr_name,
-                )
-                return True
+        # Check if attr_diff is a dict-like object and has differences
+        if FlextRuntime.is_dict_like(attr_diff):
+            has_diff_result = u.mapper().get(
+                attr_diff, c.Ldif.MetadataKeys.HAS_DIFFERENCES
+            )
+            if has_diff_result:
+                original_attr_str = u.mapper().get(attr_diff, "original")
+                if original_attr_str and isinstance(original_attr_str, str):
+                    ldif_lines.append(original_attr_str)
+                    logger.debug(
+                        "Restored original attribute line",
+                        attribute_name=attr_name,
+                    )
+                    return True
 
         return False
 
@@ -1073,8 +1145,30 @@ class FlextLdifUtilitiesWriter:
         """
         if isinstance(attr_values, str):
             return attr_values
+        # Type narrowing: ensure attr_values is iterable before using list comprehension
         if FlextRuntime.is_list_like(attr_values):
-            return [str(v) for v in attr_values]
+            if isinstance(attr_values, (list, tuple)):
+                return [str(v) for v in attr_values]
+            # Fallback for other sequence types - ensure it's iterable
+            if isinstance(attr_values, Sequence):
+                return [str(v) for v in attr_values]
+            # If not a sequence, try to convert to list
+            # Type narrowing: attr_values is list-like but not Sequence, try iter()
+            # Check if it's iterable but not a string/bytes
+            if hasattr(attr_values, "__iter__") and not isinstance(
+                attr_values, (str, bytes)
+            ):
+                # Type narrowing: attr_values has __iter__, safe to iterate
+                # Use cast to help mypy understand it's iterable
+                try:
+                    # Type narrowing: attr_values is iterable, convert to list
+                    if isinstance(attr_values, Iterable):
+                        attr_values_list: list[object] = list(attr_values)
+                        return [str(v) for v in attr_values_list]
+                    return str(attr_values) if attr_values else ""
+                except (TypeError, ValueError):
+                    return str(attr_values) if attr_values else ""
+            return str(attr_values) if attr_values else ""
         return str(attr_values) if attr_values else ""
 
     @staticmethod
@@ -1233,10 +1327,14 @@ class FlextLdifUtilitiesWriter:
             changetype_config: Dict with keys: include_changetype, changetype_value, fold_long_lines, width
 
         """
-        include_changetype = bool(changetype_config.get("include_changetype"))
-        changetype_value = changetype_config.get("changetype_value")
-        fold_long_lines = bool(changetype_config.get("fold_long_lines", True))
-        width_raw = changetype_config.get("width", 76)
+        include_changetype = bool(
+            u.mapper().get(changetype_config, "include_changetype")
+        )
+        changetype_value = u.mapper().get(changetype_config, "changetype_value")
+        fold_long_lines = bool(
+            u.mapper().get(changetype_config, "fold_long_lines", default=True)
+        )
+        width_raw = u.mapper().get(changetype_config, "width", default=76)
         width = int(width_raw) if isinstance(width_raw, int | str) else 76
 
         if format_type == "modify":
@@ -1286,16 +1384,18 @@ class FlextLdifUtilitiesWriter:
 
         """
         config = {**(format_config or {}), **kwargs}
-        format_type = str(config.get("format_type", "add"))
-        modify_operation = str(config.get("modify_operation", "add"))
-        include_changetype = bool(config.get("include_changetype"))
-        changetype_value = config.get("changetype_value")
-        hidden_attrs = config.get("hidden_attrs")
-        line_width_raw = config.get("line_width")
-        fold_long_lines = bool(config.get("fold_long_lines", True))
+        format_type = str(u.mapper().get(config, "format_type", default="add"))
+        modify_operation = str(
+            u.mapper().get(config, "modify_operation", default="add")
+        )
+        include_changetype = bool(u.mapper().get(config, "include_changetype"))
+        changetype_value = u.mapper().get(config, "changetype_value")
+        hidden_attrs = u.mapper().get(config, "hidden_attrs")
+        line_width_raw = u.mapper().get(config, "line_width")
+        fold_long_lines = bool(u.mapper().get(config, "fold_long_lines", default=True))
 
         ldif_lines: list[str] = []
-        hidden = hidden_attrs or set() if isinstance(hidden_attrs, set) else set()
+        hidden: set[str] = hidden_attrs if isinstance(hidden_attrs, set) else set()
         width = (
             int(line_width_raw)
             if isinstance(line_width_raw, int | str)
@@ -1312,7 +1412,8 @@ class FlextLdifUtilitiesWriter:
         )
 
         # Changetype handling
-        changetype_config = {
+        # Type narrowing: dict[str, bool | int | str] is compatible with dict[str, object]
+        changetype_config: dict[str, object] = {
             "include_changetype": include_changetype,
             "changetype_value": changetype_value,
             "fold_long_lines": fold_long_lines,

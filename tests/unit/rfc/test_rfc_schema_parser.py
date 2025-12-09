@@ -14,8 +14,7 @@ import pytest
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, s
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests import RfcTestHelpers, c, s
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed
@@ -60,7 +59,7 @@ class TestAutomaticSchemaDetection:
         """Test automatic detection and parsing of schema entry."""
         entries = RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
-            TestsRfcConstants.SAMPLE_SCHEMA_CONTENT,
+            c.Rfc.SAMPLE_SCHEMA_CONTENT,
             expected_count=1,
             server_type="rfc",
         )
@@ -76,18 +75,18 @@ class TestAutomaticSchemaDetection:
         """Test parsing various schema configurations."""
         test_cases = [
             (
-                f"""dn: {TestsRfcConstants.SCHEMA_DN_SCHEMA}
+                f"""dn: {c.Rfc.SCHEMA_DN_SCHEMA}
 objectClass: top
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
+attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
 """,
                 1,
                 None,
             ),
             (
-                f"""dn: {TestsRfcConstants.SCHEMA_DN_SCHEMA_SYSTEM}
+                f"""dn: {c.Rfc.SCHEMA_DN_SCHEMA_SYSTEM}
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_OBJECTCLASS}
+attributeTypes: {c.Rfc.ATTR_DEF_OBJECTCLASS}
 """,
                 1,
                 None,
@@ -102,10 +101,10 @@ sn: Doe
                 None,
             ),
             (
-                f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+                f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
-attributeTypes: {TestsRfcConstants.ATTR_DEF_SN}
+attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
+attributeTypes: {c.Rfc.ATTR_DEF_SN}
 attributeTypes: ( 0.9.2342.19200300.100.1.3 NAME 'mail' \
 DESC 'Email' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """,
@@ -113,9 +112,9 @@ DESC 'Email' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
                 ["attributeTypes"],
             ),
             (
-                f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+                f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-objectClasses: {TestsRfcConstants.OC_DEF_PERSON_FULL}
+objectClasses: {c.Rfc.OC_DEF_PERSON_FULL}
 objectClasses: ( 2.5.6.7 NAME 'organizationalPerson' \
 DESC 'Organizational Person' SUP person )
 """,
@@ -123,9 +122,9 @@ DESC 'Organizational Person' SUP person )
                 ["objectClasses"],
             ),
             (
-                f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+                f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
+attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
 """,
                 1,
                 None,
@@ -151,9 +150,9 @@ attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
         real_parser_service: FlextLdifParser,
     ) -> None:
         """Test schema parsing with server-specific quirks."""
-        schema_content = f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+        schema_content = f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
+attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
 """
         entries = RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
@@ -167,9 +166,9 @@ attributeTypes: {TestsRfcConstants.ATTR_DEF_CN_COMPLETE}
     @pytest.mark.timeout(5)
     def test_parse_schema_from_file(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing schema from a file."""
-        schema_content = f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+        schema_content = f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-attributeTypes: {TestsRfcConstants.ATTR_DEF_SN}
+attributeTypes: {c.Rfc.ATTR_DEF_SN}
 """
 
         with NamedTemporaryFile(
@@ -207,10 +206,10 @@ attributeTypes: {TestsRfcConstants.ATTR_DEF_SN}
         )
         assert len(entries) == 0
 
-        schema_content = f"""dn: {TestsRfcConstants.SCHEMA_DN_SUBSCHEMA}
+        schema_content = f"""dn: {c.Rfc.SCHEMA_DN_SUBSCHEMA}
 objectClass: subschema
-attributeTypes: ( {TestsRfcConstants.ATTR_OID_CN} \
-NAME '{TestsRfcConstants.ATTR_NAME_CN}' \
+attributeTypes: ( {c.Rfc.ATTR_OID_CN} \
+NAME '{c.Rfc.ATTR_NAME_CN}' \
 DESC 'Common Name - this is a very long description
   that spans multiple lines' \
 SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
@@ -233,11 +232,11 @@ class TestRfcSchemaQuirkDirectUsage:
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.parse with attribute definition."""
-        _ = QuirkTestHelpers.test_schema_parse_and_validate_complete(
+        _ = RfcTestHelpers.test_schema_parse_and_validate_complete(
             rfc_schema_quirk,
-            TestsRfcConstants.ATTR_DEF_CN_COMPLETE,
-            expected_oid=TestsRfcConstants.ATTR_OID_CN,
-            expected_name=TestsRfcConstants.ATTR_NAME_CN,
+            c.Rfc.ATTR_DEF_CN_COMPLETE,
+            expected_oid=c.Rfc.ATTR_OID_CN,
+            expected_name=c.Rfc.ATTR_NAME_CN,
         )
 
     @pytest.mark.timeout(5)
@@ -248,33 +247,28 @@ class TestRfcSchemaQuirkDirectUsage:
         """Test Schema.parse with objectClass definition."""
         oc = RfcTestHelpers.test_schema_parse_objectclass(
             rfc_schema_quirk,
-            TestsRfcConstants.OC_DEF_PERSON_BASIC,
-            TestsRfcConstants.OC_OID_PERSON,
-            TestsRfcConstants.OC_NAME_PERSON,
+            c.Rfc.OC_DEF_PERSON_BASIC,
+            c.Rfc.OC_OID_PERSON,
+            c.Rfc.OC_NAME_PERSON,
         )
-        assert oc.oid == TestsRfcConstants.OC_OID_PERSON
-        assert oc.name == TestsRfcConstants.OC_NAME_PERSON
+        assert oc.oid == c.Rfc.OC_OID_PERSON
+        assert oc.name == c.Rfc.OC_NAME_PERSON
 
     @pytest.mark.timeout(5)
     def test_schema_quirk_methods(
         self,
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
-        sample_schema_attribute: m.SchemaAttribute,
-        sample_schema_objectclass: m.SchemaObjectClass,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Schema quirk can_handle and should_filter methods."""
         assert rfc_schema_quirk.can_handle_attribute("any attribute definition") is True
-        assert (
-            rfc_schema_quirk.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN) is True
-        )
+        assert rfc_schema_quirk.can_handle_attribute(c.Rfc.ATTR_DEF_CN) is True
         assert (
             rfc_schema_quirk.can_handle_objectclass("any objectclass definition")
             is True
         )
-        assert (
-            rfc_schema_quirk.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON)
-            is True
-        )
+        assert rfc_schema_quirk.can_handle_objectclass(c.Rfc.OC_DEF_PERSON) is True
         assert (
             rfc_schema_quirk.should_filter_out_attribute(sample_schema_attribute)
             is False

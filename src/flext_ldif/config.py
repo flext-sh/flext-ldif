@@ -55,10 +55,10 @@ class FlextLdifConfig(FlextConfig):
     # Model configuration (disable str_strip_whitespace for LDIF fields
     # that need whitespace)
     # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
-    # Use standard .env file resolution
+    # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
-        env_file=".env",
+        env_file=FlextConfig.resolve_env_file(),
         env_file_encoding="utf-8",
         str_strip_whitespace=False,
         validate_assignment=True,
@@ -539,7 +539,7 @@ class FlextLdifConfig(FlextConfig):
         """Validate server_type is a recognized LDAP server.
 
         Ensures server_type is one of the supported server types defined in
-        c.ServerTypes. Accepts both canonical forms and
+        c.Ldif.ServerTypes. Accepts both canonical forms and
         common aliases.
 
         Args:
@@ -554,32 +554,32 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.Ldif.normalize_server_type(v)
+        normalized = c.normalize_server_type(v)
 
         valid_servers = [
-            c.ServerTypes.RFC,
-            c.ServerTypes.OID,
-            c.ServerTypes.OUD,
-            c.ServerTypes.OPENLDAP,
-            c.ServerTypes.OPENLDAP1,
-            c.ServerTypes.OPENLDAP2,
-            c.ServerTypes.AD,
-            c.ServerTypes.DS389,
-            c.ServerTypes.APACHE,
-            c.ServerTypes.NOVELL,
-            c.ServerTypes.IBM_TIVOLI,
+            c.Ldif.ServerTypes.RFC,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OUD,
+            c.Ldif.ServerTypes.OPENLDAP,
+            c.Ldif.ServerTypes.OPENLDAP1,
+            c.Ldif.ServerTypes.OPENLDAP2,
+            c.Ldif.ServerTypes.AD,
+            c.Ldif.ServerTypes.DS389,
+            c.Ldif.ServerTypes.APACHE,
+            c.Ldif.ServerTypes.NOVELL,
+            c.Ldif.ServerTypes.IBM_TIVOLI,
             # Fixed: IBM_TIVOLI not TIVOLI
-            c.ServerTypes.RELAXED,
-            c.ServerTypes.GENERIC,
+            c.Ldif.ServerTypes.RELAXED,
+            c.Ldif.ServerTypes.GENERIC,
             # Use constant instead of hardcoded
         ]
         if normalized not in valid_servers:
             # Suggest most common/useful server types
             common_servers = [
-                c.ServerTypes.RFC,
-                c.ServerTypes.OUD,
-                c.ServerTypes.OID,
-                c.ServerTypes.OPENLDAP,
+                c.Ldif.ServerTypes.RFC,
+                c.Ldif.ServerTypes.OUD,
+                c.Ldif.ServerTypes.OID,
+                c.Ldif.ServerTypes.OPENLDAP,
             ]
             msg = (
                 f"Invalid server_type '{v}' in field '{info.field_name}'.\n"
@@ -692,7 +692,7 @@ class FlextLdifConfig(FlextConfig):
         """Validate quirks_server_type when specified is a recognized server.
 
         Ensures quirks_server_type (when not None) is one of the supported
-        server types defined in c.ServerTypes.
+        server types defined in c.Ldif.ServerTypes.
         Accepts both canonical forms and common aliases.
 
         Args:
@@ -710,30 +710,30 @@ class FlextLdifConfig(FlextConfig):
             return v
 
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.Ldif.normalize_server_type(v)
+        normalized = c.normalize_server_type(v)
 
         # Use same validation logic as server_type field
         valid_servers = [
-            c.ServerTypes.RFC,
-            c.ServerTypes.OID,
-            c.ServerTypes.OUD,
-            c.ServerTypes.OPENLDAP,
-            c.ServerTypes.OPENLDAP1,
-            c.ServerTypes.OPENLDAP2,
-            c.ServerTypes.AD,
-            c.ServerTypes.DS389,
-            c.ServerTypes.APACHE,
-            c.ServerTypes.NOVELL,
-            c.ServerTypes.IBM_TIVOLI,
-            c.ServerTypes.RELAXED,
-            c.ServerTypes.GENERIC,
+            c.Ldif.ServerTypes.RFC,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OUD,
+            c.Ldif.ServerTypes.OPENLDAP,
+            c.Ldif.ServerTypes.OPENLDAP1,
+            c.Ldif.ServerTypes.OPENLDAP2,
+            c.Ldif.ServerTypes.AD,
+            c.Ldif.ServerTypes.DS389,
+            c.Ldif.ServerTypes.APACHE,
+            c.Ldif.ServerTypes.NOVELL,
+            c.Ldif.ServerTypes.IBM_TIVOLI,
+            c.Ldif.ServerTypes.RELAXED,
+            c.Ldif.ServerTypes.GENERIC,
         ]
         if normalized not in valid_servers:
             common_servers = [
-                c.ServerTypes.RFC,
-                c.ServerTypes.OUD,
-                c.ServerTypes.OID,
-                c.ServerTypes.OPENLDAP,
+                c.Ldif.ServerTypes.RFC,
+                c.Ldif.ServerTypes.OUD,
+                c.Ldif.ServerTypes.OID,
+                c.Ldif.ServerTypes.OPENLDAP,
             ]
             msg = (
                 f"Invalid quirks_server_type '{v}' in field '{info.field_name}'.\n"
@@ -767,26 +767,26 @@ class FlextLdifConfig(FlextConfig):
         """
         # Use same validation logic as server_type field
         valid_servers = [
-            c.ServerTypes.RFC,
-            c.ServerTypes.OID,
-            c.ServerTypes.OUD,
-            c.ServerTypes.OPENLDAP,
-            c.ServerTypes.OPENLDAP1,
-            c.ServerTypes.OPENLDAP2,
-            c.ServerTypes.AD,
-            c.ServerTypes.DS389,
-            c.ServerTypes.APACHE,
-            c.ServerTypes.NOVELL,
-            c.ServerTypes.IBM_TIVOLI,
-            c.ServerTypes.RELAXED,
-            c.ServerTypes.GENERIC,
+            c.Ldif.ServerTypes.RFC,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OUD,
+            c.Ldif.ServerTypes.OPENLDAP,
+            c.Ldif.ServerTypes.OPENLDAP1,
+            c.Ldif.ServerTypes.OPENLDAP2,
+            c.Ldif.ServerTypes.AD,
+            c.Ldif.ServerTypes.DS389,
+            c.Ldif.ServerTypes.APACHE,
+            c.Ldif.ServerTypes.NOVELL,
+            c.Ldif.ServerTypes.IBM_TIVOLI,
+            c.Ldif.ServerTypes.RELAXED,
+            c.Ldif.ServerTypes.GENERIC,
         ]
         if v not in valid_servers:
             msg = (
                 f"Invalid ldif_default_server_type '{v}' in field "
                 f"'{info.field_name}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
-                f"Suggestion: Use '{c.ServerTypes.RFC}' "
+                f"Suggestion: Use '{c.Ldif.ServerTypes.RFC}' "
                 f"for RFC compliance"
             )
             raise ValueError(msg)
@@ -808,7 +808,7 @@ class FlextLdifConfig(FlextConfig):
         if (
             self.ldif_enable_analytics
             and self.ldif_analytics_cache_size
-            <= c.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
+            <= c.Ldif.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
         ):
             msg = "Analytics cache size must be positive when analytics is enabled"
             raise ValueError(msg)
@@ -835,7 +835,7 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Server-specific encoding preferences
-        if self.server_type == c.ServerTypes.AD.value:
+        if self.server_type == c.Ldif.ServerTypes.AD.value:
             return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
 

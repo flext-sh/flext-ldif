@@ -30,7 +30,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
-    """Oracle OID server quirks - implements p.Ldif.Quirks.SchemaProtocol.
+    """Oracle OID server quirks - implements object.
 
     Extends RFC 4512 schema parsing with Oracle OID-specific features:
     - Oracle OID namespace (2.16.840.1.113894.*)
@@ -39,14 +39,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     - RFC compliance normalizations (OID proprietary → RFC standard)
 
     **Protocol Compliance**: Fully implements
-    p.Ldif.Quirks.SchemaProtocol through structural typing.
+    object
     All methods match protocol signatures exactly for type safety.
 
     **Validation**: Verify protocol compliance with:
-        from flext_ldif.protocols import FlextLdifProtocols
+        # Removed: from flext_ldif.protocols import FlextLdifProtocols (use structural typing)
         quirk = FlextLdifServersOid()
         # Protocol compliance verified via structural typing
-        if not isinstance(quirk, p.Ldif.Quirks.SchemaProtocol):
+        if not isinstance(quirk, object
             raise TypeError("Quirk does not satisfy SchemaProtocol")
 
     Example:

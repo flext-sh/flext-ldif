@@ -246,7 +246,7 @@ sn: test
 
         # Create test entries
         entries = [
-            m.Entry(
+            m.Ldif.Entry(
                 dn="cn=test,dc=example,dc=com",
                 attributes={"cn": ["test"], "objectClass": ["person"]},
             ),

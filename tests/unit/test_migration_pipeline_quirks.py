@@ -9,15 +9,30 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Final
 
 from flext_tests.utilities import FlextTestsUtilities
 
-from flext_ldif import FlextLdifConstants, FlextLdifMigrationPipeline
+from flext_ldif import FlextLdifMigrationPipeline
+from flext_ldif.constants import c as lib_c
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests import c, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+
+
+class OidTestConstants:
+    """Constants for OID boolean conversion tests."""
+
+    RFC_TO_OID_BOOLEAN: Final[dict[str, str]] = {
+        "TRUE": "1",
+        "FALSE": "0",
+    }
+    OID_TO_RFC_BOOLEAN: Final[dict[str, str]] = {
+        "1": "TRUE",
+        "0": "FALSE",
+    }
 
 
 class TestsFlextLdifMigrationPipelineQuirks(s):
@@ -53,8 +68,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.RFC,
+            source_server=lib_c.Ldif.ServerTypes.OID,
+            target_server=lib_c.Ldif.ServerTypes.RFC,
         )
 
         result = pipeline.execute()
@@ -104,8 +119,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.RFC,
-            target_server=FlextLdifConstants.ServerTypes.OID,
+            source_server=lib_c.Ldif.ServerTypes.RFC,
+            target_server=lib_c.Ldif.ServerTypes.OID,
         )
 
         result = pipeline.execute()
@@ -149,8 +164,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.RFC,
+            source_server=lib_c.Ldif.ServerTypes.OID,
+            target_server=lib_c.Ldif.ServerTypes.RFC,
         )
 
         result = pipeline.execute()
@@ -191,8 +206,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.RFC,
-            target_server=FlextLdifConstants.ServerTypes.OID,
+            source_server=lib_c.Ldif.ServerTypes.RFC,
+            target_server=lib_c.Ldif.ServerTypes.OID,
         )
 
         result = pipeline.execute()
@@ -232,8 +247,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.RFC,
+            source_server=lib_c.Ldif.ServerTypes.OID,
+            target_server=lib_c.Ldif.ServerTypes.RFC,
         )
 
         result = pipeline.execute()
@@ -274,8 +289,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.RFC,  # Treat input as RFC to parse "TRUE" correctly
-            target_server=FlextLdifConstants.ServerTypes.OID,  # Target OID to enforce "1"
+            source_server=lib_c.Ldif.ServerTypes.RFC,  # Treat input as RFC to parse "TRUE" correctly
+            target_server=lib_c.Ldif.ServerTypes.OID,  # Target OID to enforce "1"
         )
 
         result = pipeline.execute()

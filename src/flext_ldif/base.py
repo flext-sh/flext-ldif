@@ -10,12 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import T, s
+from flext_core import s, t
+from flext_core.service import FlextService
 
 from flext_ldif.config import FlextLdifConfig
 
 
-class FlextLdifServiceBase(s[T]):
+class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
     """Base class for LDIF services with typed config helper.
 
     Business Rule: All LDIF services inherit from this base class to ensure
@@ -35,6 +36,24 @@ class FlextLdifServiceBase(s[T]):
                 server_type = self.ldif_config.ldif_default_server_type
                 quirks_mode = self.ldif_config.quirks_detection_mode
     """
+
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+        """Return runtime bootstrap options for LDIF services.
+
+        Business Rule: This method provides runtime bootstrap configuration for
+        all LDIF services, ensuring they use FlextLdifConfig as the configuration
+        type. This enables proper DI integration and namespace access.
+
+        Implication: All services extending FlextLdifServiceBase automatically
+        use FlextLdifConfig for their runtime configuration, ensuring consistent
+        configuration handling across all LDIF services.
+
+        Returns:
+            Runtime bootstrap options with config_type set to FlextLdifConfig
+
+        """
+        return {"config_type": FlextLdifConfig}
 
     @property
     def ldif_config(self) -> FlextLdifConfig:

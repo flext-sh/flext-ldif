@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, u
 
 
 class TestSystematicFixtureCoverage:
@@ -122,7 +122,7 @@ class TestSystematicFixtureCoverage:
         # Content may be empty if no entries had ACLs
 
         # Validate basic structure is maintained
-        if len(entries) > 0:
+        if u.Guards.is_list_non_empty(entries):
             # If we parsed entries, we should be able to write them
             assert len(written_content) >= 0, "Write result should be string"
 

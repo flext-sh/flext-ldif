@@ -19,6 +19,13 @@ from flext_core import FlextResult, r
 
 from flext_ldif.models import m
 
+# REMOVED: Type aliases redundantes - use m.Ldif.* diretamente (já importado com runtime alias)
+# Entry: TypeAlias = FlextLdifModelsDomains.Entry  # Use m.Ldif.Entry directly
+# DistinguishedName: TypeAlias = FlextLdifModelsDomains.DistinguishedName  # Use m.Ldif.DistinguishedName directly
+# LdifAttributes: TypeAlias = FlextLdifModelsDomains.LdifAttributes  # Use m.Ldif.LdifAttributes directly
+# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
+
 logger = structlog.get_logger(__name__)
 
 
@@ -83,7 +90,7 @@ class FlextLdifUtilitiesParsers:
 
         # ===== NESTED STATISTICS DATACLASS =====
 
-        @dataclass(slots=True)
+        @dataclass
         class Stats:
             """Statistics for entry parsing."""
 
@@ -145,17 +152,17 @@ class FlextLdifUtilitiesParsers:
                     attributes.update(comments)
 
                 # Create entry
-                # Entry field validators will coerce str -> DistinguishedName and dict -> LdifAttributes
+                # Entry field validators will coerce str -> DistinguishedName and dict -> m.Ldif.LdifAttributes
                 # Convert types explicitly for mypy
                 dn_obj = (
                     dn
-                    if isinstance(dn, m.DistinguishedName)
-                    else m.DistinguishedName(value=dn)
+                    if isinstance(dn, m.Ldif.DistinguishedName)
+                    else m.Ldif.DistinguishedName(value=dn)
                 )
                 attrs_obj = (
                     attributes
-                    if isinstance(attributes, m.LdifAttributes)
-                    else m.LdifAttributes(attributes=attributes)
+                    if isinstance(attributes, m.Ldif.LdifAttributes)
+                    else m.Ldif.LdifAttributes(attributes=attributes)
                 )
                 entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
 
@@ -374,7 +381,7 @@ class FlextLdifUtilitiesParsers:
 
         # ===== NESTED STATISTICS DATACLASS =====
 
-        @dataclass(slots=True)
+        @dataclass
         class Stats:
             """Statistics for content parsing."""
 

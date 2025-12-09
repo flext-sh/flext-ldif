@@ -250,7 +250,7 @@ class TestRfcExceptionHandlingRealScenarios:
 
         try:
             # Create test entry
-            test_entry = m.Entry(
+            test_entry = m.Ldif.Entry(
                 dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
                 attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             )

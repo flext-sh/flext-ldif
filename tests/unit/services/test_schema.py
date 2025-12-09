@@ -415,7 +415,7 @@ class TestValidation:
         test_case: AttributeValidationTestCase,
     ) -> None:
         """Test validating attributes with parametrized test cases."""
-        attr = m.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=test_case.oid,
             name=test_case.name,
             syntax=test_case.syntax,
@@ -439,7 +439,7 @@ class TestValidation:
         test_case: ObjectClassValidationTestCase,
     ) -> None:
         """Test validating objectClasses with parametrized test cases."""
-        oc = m.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=test_case.oid,
             name=test_case.name,
             kind=test_case.kind,
@@ -465,7 +465,7 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing valid attribute."""
-        attr = m.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid="2.5.4.3",
             name="cn",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -481,7 +481,7 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid attribute (should fail validation)."""
-        attr = m.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid="",  # Invalid - no OID
             name="testAttr",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -496,7 +496,7 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing valid objectClass."""
-        oc = m.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
@@ -512,7 +512,7 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid objectClass (should fail validation)."""
-        oc = m.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid="",  # Invalid - no OID
             name="testOC",
             kind="STRUCTURAL",

@@ -12,24 +12,23 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext_core import r
+from flext_core import r, t as core_t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import t as core_t
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-# Alias for simplified usage
-c = FlextLdifConstants
-
-_Entry = p.Ldif.Models.EntryProtocol
-_SchemaObjectClass = p.Ldif.Models.SchemaObjectClassProtocol
-_QuirkMetadata = core_t.Metadata  # Use Metadata type from flext-core
-_Acl = p.Ldif.Models.AclProtocol
+# REMOVED: Aliases for nested objects - use p.Ldif.* directly (no redundant aliases for nested objects)
+# _Entry = p.Ldif.Models.EntryProtocol  # Use p.Ldif.Models.EntryProtocol directly
+# _SchemaObjectClass = p.Ldif.Models.SchemaObjectClassProtocol  # Use p.Ldif.Models.SchemaObjectClassProtocol directly
+# _Acl = p.Ldif.Models.AclProtocol  # Use p.Ldif.Models.AclProtocol directly
+_QuirkMetadata = (
+    core_t.Metadata
+)  # Use Metadata type from flext-core (this is from flext-core, not nested)
 
 
 class FlextLdifModelsConfig:
@@ -992,7 +991,7 @@ class FlextLdifModelsConfig:
 
         default_encoding: str
         allowed_encodings: list[c.Ldif.LiteralTypes.EncodingLiteral] = Field(
-            default_factory=list
+            default_factory=list,
         )
 
     class DnCaseRules(FlextModelsEntity.Value):
@@ -1721,11 +1720,15 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[_Entry], _Entry] | None = Field(
+        post_parse_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+        ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[_Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1775,11 +1778,15 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[_Entry], _Entry] | None = Field(
+        post_parse_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+        ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[_Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1821,7 +1828,9 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional SUP transformation",
         )
-        enrich_metadata_hook: Callable[[_SchemaObjectClass], None] | None = Field(
+        enrich_metadata_hook: (
+            Callable[[p.Ldif.Models.SchemaObjectClassProtocol], None] | None
+        ) = Field(
             default=None,
             description="Optional metadata enrichment",
         )
@@ -1893,7 +1902,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entry: _Entry = Field(
+        entry: p.Ldif.Models.EntryProtocol = Field(
             ...,
             description="Entry model to write",
         )
@@ -1901,15 +1910,21 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[_Entry, list[str]], None] = Field(
+        write_attributes_hook: Callable[
+            [p.Ldif.Models.EntryProtocol, list[str]], None
+        ] = Field(
             ...,
             description="Core attributes writing",
         )
-        write_comments_hook: Callable[[_Entry, list[str]], None] | None = Field(
+        write_comments_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol, list[str]], None] | None
+        ) = Field(
             default=None,
             description="Optional comments writing",
         )
-        transform_entry_hook: Callable[[_Entry], _Entry] | None = Field(
+        transform_entry_hook: (
+            Callable[[p.Ldif.Models.EntryProtocol], p.Ldif.Models.EntryProtocol] | None
+        ) = Field(
             default=None,
             description="Optional entry transformation",
         )
@@ -1935,7 +1950,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entries: list[_Entry] = Field(
+        entries: list[p.Ldif.Models.EntryProtocol] = Field(
             ...,
             description="List of entries to write",
         )
@@ -1943,7 +1958,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[_Entry], r[str]] = Field(
+        write_entry_hook: Callable[[p.Ldif.Models.EntryProtocol], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -2058,11 +2073,11 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        original_acl: _Acl = Field(
+        original_acl: p.Ldif.Models.AclProtocol = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: _Acl = Field(
+        converted_acl: p.Ldif.Models.AclProtocol = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2082,6 +2097,9 @@ class FlextLdifModelsConfig:
             default=False,
             description="Whether converted ACL has permissions",
         )
-# Note: All type references use direct imports or protocols (_Entry, _Acl, etc.)
+
+
+# Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
+# Nested objects use full namespace (p.Ldif.Models.EntryProtocol, not aliases)
 # No string-quoted forward references - models work without rebuilding
 # No model_rebuild() calls needed - architectural requirement

@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> p.Ldif.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> p.Ldif.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> p.Ldif.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> object
+    - FlextLdifServersBase.Acl -> object
+    - FlextLdifServersBase.Entry -> object
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -40,52 +40,28 @@ from typing import (
     overload,
 )
 
-from flext_core import r, s
-from flext_core.loggings import FlextLogger as l_core
+from flext_core import FlextLogger, FlextUtilities as u, r, s
 from pydantic import ConfigDict
 
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
-from flext_ldif.typings import t
 
-# Lazy import to avoid circular dependency - use _get_utilities() function
-
-
-# Business Rule: Lazy import to avoid circular dependency between servers/base.py
-# and _utilities modules. This function returns the u class type
-# for accessing nested utilities like Server, Schema, etc.
-# Implication: Type checker cannot infer the exact type, so we use type[object]
-# and rely on runtime hasattr checks for type safety.
-def _get_utilities() -> type[object]:
-    """Lazy import of u to avoid circular dependency.
-
-    Returns the u class for accessing nested utilities.
-    Business Rule: This is a lazy import pattern to break circular dependencies.
-    The returned type is type[object] because the exact type cannot be inferred
-    statically. Runtime hasattr checks ensure type safety.
-
-    Returns:
-        u class type (inferred as type[object] for type safety)
-
-    """
-    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
-
-    return FlextLdifUtilities
+# Removed: # Use FlextLdifUtilitiesServer directly to avoid circular import
 
 
 def _get_server_type_from_utilities(
     quirk_class: type[FlextLdifServersBase | object],
-) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+) -> str:
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type is determined by inspecting the class hierarchy
-    and accessing FlextLdifUtilities.Server.get_parent_server_type().
+    and accessing FlextLdifUtilitiesServer.get_parent_server_type().
     This helper function encapsulates the type-safe access pattern to avoid
     repetition and ensure consistent error handling.
 
@@ -96,46 +72,35 @@ def _get_server_type_from_utilities(
         Server type literal (e.g., 'oid', 'oud', 'rfc')
 
     """
-    utilities_class = _get_utilities()
-    # Business Rule: Type narrowing via hasattr check - utilities_class
-    # may have Server attribute at runtime even though type checker doesn't know.
-    # Implication: We use runtime checks for dynamic attribute access.
-    # Business Rule: Access Server utility via getattr for type safety
-    # Implication: Type checker cannot infer attributes on type[object], so we use runtime access
-    server_util = getattr(utilities_class, "Server", None)
-    if server_util is not None:
-        get_parent_method = getattr(server_util, "get_parent_server_type", None)
-        if get_parent_method is not None and callable(get_parent_method):
-            server_type_raw = get_parent_method(quirk_class)
-            # Business Rule: get_parent_server_type returns str, but we need
-            # ServerTypeLiteral. Cast is safe because the method returns valid literals.
-
-            return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                server_type_raw,
-            )
-    # Fallback if Server not available - return RFC as default
-    return "rfc"
+    # Business Rule: Access Server utility directly via FlextLdifUtilitiesServer
+    # Implication: Direct access to avoid circular import with utilities.py
+    server_type_raw = FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
+    # Business Rule: get_parent_server_type returns str, but we need
+    # ServerTypeLiteral. Cast is safe because the method returns valid literals.
+    return cast(
+        "str",
+        server_type_raw,
+    )
 
 
-logger = l_core(__name__)
+logger = FlextLogger(__name__)
 
 # NOTE: BaseServerConstants has been consolidated into FlextLdifServersRfc.Constants
 # All server-specific Constants should inherit from FlextLdifServersRfc.Constants
 
 
-class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
+class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
     r"""Abstract base class for LDIF/LDAP server quirks as FlextService V2.
 
     Configuration:
         Allows arbitrary types and extra attributes for nested quirk classes.
 
     This class defines the complete contract for a server quirk implementation
-    that satisfies `p.Ldif.Quirks.QuirksPort` through structural typing.
+    that satisfies `object` through structural typing.
     It uses the `ABC` helper class to define all methods as abstract,
     ensuring that any concrete subclass must implement the full interface.
 
-    Note: This class satisfies p.Ldif.Quirks.QuirksPort through
+    Note: This class satisfies object through
     structural typing (duck typing), not through inheritance, to avoid
     metaclass conflicts between ABC and Protocol.
 
@@ -170,9 +135,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     )
 
     # Class-level descriptor attributes (not Pydantic model fields)
-    # These are Python descriptors assigned dynamically at class level
-    # Annotations omitted to prevent type checker interference with descriptor assignment
-    # The descriptors implement __get__ returning str/int when accessed
+    # These are Python descriptors assigned dynamically at class level via __init_subclass__
+    # Type annotations: descriptors implement __get__ returning str/int when accessed
+    # Use property annotations to indicate descriptor return types
+    server_type: ClassVar[str]
+    priority: ClassVar[int]
 
     # Instance attributes for nested quirks (initialized in __init__)
     # schema_quirk: Self.Schema  # Commented out to avoid forward reference issues
@@ -305,7 +272,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def get_schema_quirk(
         self,
-    ) -> p.Ldif.Quirks.SchemaProtocol:
+    ) -> object:
         """Get schema quirk instance.
 
         Returns:
@@ -317,7 +284,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def acl(
         self,
-    ) -> p.Ldif.Quirks.AclProtocol:
+    ) -> object:
         """Get ACL quirk instance.
 
         Returns:
@@ -328,7 +295,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def entry(
         self,
-    ) -> p.Ldif.Quirks.EntryProtocol:
+    ) -> object:
         """Get entry quirk instance.
 
         Returns:
@@ -360,9 +327,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         self,
         *,
         ldif_text: str | None = None,
-        entries: Sequence[m.Ldif.Entry] | None = None,
-        _operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None,
-    ) -> r[m.Ldif.Entry]:
+        entries: Sequence[FlextLdifModelsDomains.Entry] | None = None,
+        _operation: str | None = None,
+    ) -> r[FlextLdifModelsDomains.Entry]:
         r"""Execute quirk operation with auto-detection.
 
         Args:
@@ -379,31 +346,31 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         if entries is not None and isinstance(entries, Sequence) and entries:
             first_entry = entries[0]
-            if isinstance(first_entry, m.Ldif.Entry):
-                return r[m.Ldif.Entry].ok(first_entry)
-            return r[m.Ldif.Entry].fail(
+            if isinstance(first_entry, FlextLdifModelsDomains.Entry):
+                return r[FlextLdifModelsDomains.Entry].ok(first_entry)
+            return r[FlextLdifModelsDomains.Entry].fail(
                 f"Invalid entry type: {type(first_entry).__name__}",
             )
 
-        return r[m.Ldif.Entry].fail("No valid parameters")
+        return r[FlextLdifModelsDomains.Entry].fail("No valid parameters")
 
-    def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
+    def _execute_parse(self, ldif_text: str) -> r[FlextLdifModelsDomains.Entry]:
         """Execute parse operation."""
         parse_result = self.parse(ldif_text)
         if not parse_result.is_success:
-            return r[m.Ldif.Entry].fail(
+            return r[FlextLdifModelsDomains.Entry].fail(
                 parse_result.error or "Parse failed",
             )
         parse_response = parse_result.unwrap()
         entries = getattr(parse_response, "entries", [])
         if not entries:
-            return r[m.Ldif.Entry].fail("No entries parsed")
+            return r[FlextLdifModelsDomains.Entry].fail("No entries parsed")
         # Get first entry - it's already a valid Entry model
         first_entry = entries[0]
-        if isinstance(first_entry, m.Ldif.Entry):
-            return r[m.Ldif.Entry].ok(first_entry)
+        if isinstance(first_entry, FlextLdifModelsDomains.Entry):
+            return r[FlextLdifModelsDomains.Entry].ok(first_entry)
         # Should never reach here, but handle just in case
-        return r[m.Ldif.Entry].fail("Invalid entry type")
+        return r[FlextLdifModelsDomains.Entry].fail("Invalid entry type")
 
     @overload
     def __call__(
@@ -411,32 +378,32 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         ldif_text: str,
         *,
         entries: None = None,
-        operation: c.Ldif.LiteralTypes.ParseOperationLiteral | None = None,
-    ) -> m.Ldif.Entry | str: ...
+        operation: str | None = None,
+    ) -> FlextLdifModelsDomains.Entry | str: ...
 
     @overload
     def __call__(
         self,
         *,
         ldif_text: None = None,
-        entries: list[m.Ldif.Entry],
-        operation: c.Ldif.LiteralTypes.WriteOperationLiteral | None = None,
+        entries: list[FlextLdifModelsDomains.Entry],
+        operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
-        operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None,
-    ) -> m.Ldif.Entry | str: ...
+        entries: list[FlextLdifModelsDomains.Entry] | None = None,
+        operation: str | None = None,
+    ) -> FlextLdifModelsDomains.Entry | str: ...
 
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
-        operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None,
-    ) -> m.Ldif.Entry | str:
+        entries: list[FlextLdifModelsDomains.Entry] | None = None,
+        operation: str | None = None,
+    ) -> FlextLdifModelsDomains.Entry | str:
         r"""Callable interface - use as processor.
 
         Enables direct usage as processor:
@@ -465,7 +432,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def __new__(
         cls,
-        **kwargs: t.Server.ServerInitKwargs,
+        **kwargs: object,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation.
 
@@ -519,7 +486,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 entries=entries,
                 _operation=operation,
             )
-            unwrapped: m.Ldif.Entry | str = result.unwrap()
+            unwrapped: FlextLdifModelsDomains.Entry | str = result.unwrap()
             if not isinstance(unwrapped, cls):
                 msg = f"Expected {cls.__name__}, got {type(unwrapped)}"
                 raise TypeError(msg)
@@ -529,7 +496,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: t.Server.ServerInitKwargs,
+        kwargs: object,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -542,8 +509,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_entries(
-        kwargs: t.Server.ServerInitKwargs,
-    ) -> list[m.Ldif.Entry] | None:
+        kwargs: object,
+    ) -> list[FlextLdifModelsDomains.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
@@ -557,10 +524,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return []
         # Type narrowing: verify all items are Entry instances
         # Use list comprehension to create properly typed list
-        entries: list[m.Ldif.Entry] = []
+        entries: list[FlextLdifModelsDomains.Entry] = []
         for idx in range(len(raw)):
-            item: m.Ldif.Entry | str = raw[idx]
-            if isinstance(item, m.Ldif.Entry):
+            item: FlextLdifModelsDomains.Entry | str = raw[idx]
+            if isinstance(item, FlextLdifModelsDomains.Entry):
                 entries.append(item)
             else:
                 msg = f"Expected list[Entry] for entries, got item of type {type(item)}"
@@ -569,8 +536,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_operation(
-        kwargs: t.Server.ServerInitKwargs,
-    ) -> c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None:
+        kwargs: object,
+    ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
             return None
@@ -587,11 +554,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: t.Server.ServerInitKwargs,
+        kwargs: object,
     ) -> tuple[
         str | None,
-        list[m.Ldif.Entry] | None,
-        c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None,
+        list[FlextLdifModelsDomains.Entry] | None,
+        str | None,
     ]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -605,7 +572,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     # =========================================================================
 
     @property
-    def schema_quirk(self) -> p.Ldif.Quirks.SchemaProtocol:
+    def schema_quirk(self) -> object:
         """Get the Schema quirk instance."""
         # Type narrowing: _schema_quirk implements SchemaProtocol structurally
         # The concrete Schema class implements all protocol methods
@@ -637,22 +604,22 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             raise TypeError(msg)
         # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
 
-        return cast("p.Ldif.Quirks.SchemaProtocol", schema_instance)
+        return cast("object", schema_instance)
 
     @property
-    def acl_quirk(self) -> p.Ldif.Quirks.AclProtocol:
+    def acl_quirk(self) -> object:
         """Get the Acl quirk instance."""
         # Type narrowing: _acl_quirk implements AclProtocol structurally
         # Acl class implements AclProtocol structurally (all methods match)
         # Mypy doesn't recognize structural typing, so we use cast
         acl_instance = self._acl_quirk
-        return cast("p.Ldif.Quirks.AclProtocol", acl_instance)
+        return cast("object", acl_instance)
 
     @property
-    def entry_quirk(self) -> p.Ldif.Quirks.EntryProtocol:
+    def entry_quirk(self) -> object:
         """Get the Entry quirk instance."""
         # Type narrowing: _entry_quirk implements EntryProtocol structurally
-        return cast("p.Ldif.Quirks.EntryProtocol", self._entry_quirk)
+        return cast("object", self._entry_quirk)
 
     # =========================================================================
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
@@ -661,7 +628,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     def parse(
         self,
         ldif_text: str,
-    ) -> r[m.ParseResponse]:
+    ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF text to Entry models.
 
         Routes to Entry quirk for server-specific parsing logic.
@@ -683,33 +650,35 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         if not entry_class:
             return r.fail("Entry nested class not available")
         entry_quirk = entry_class()
-        entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(
+        entries_result: r[list[FlextLdifModelsDomains.Entry]] = entry_quirk.parse(
             ldif_text,
         )
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
-            return r[m.ParseResponse].fail(error_msg)
+            return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
 
         entries = entries_result.unwrap()
         detected_server = getattr(self, "server_type", None)
-        statistics = m.Ldif.Statistics(
+        statistics = FlextLdifModelsResults.Statistics(
             total_entries=len(entries),
             processed_entries=len(entries),
             detected_server_type=detected_server,
         )
         # Convert entries for ParseResponse - use model_copy() for safety
-        domain_entries: Sequence[m.Ldif.Entry] = [
-            entry if isinstance(entry, m.Ldif.Entry) else entry.model_copy(deep=True)
+        domain_entries: Sequence[FlextLdifModelsDomains.Entry] = [
+            entry
+            if isinstance(entry, FlextLdifModelsDomains.Entry)
+            else entry.model_copy(deep=True)
             for entry in entries
         ]
-        parse_response = m.ParseResponse(
+        parse_response = FlextLdifModelsResults.ParseResponse(
             entries=list(domain_entries),
             statistics=statistics,
             detected_server_type=detected_server,
         )
-        return r[m.ParseResponse].ok(parse_response)
+        return r[FlextLdifModelsResults.ParseResponse].ok(parse_response)
 
-    def write(self, entries: list[m.Ldif.Entry]) -> r[str]:
+    def write(self, entries: list[FlextLdifModelsDomains.Entry]) -> r[str]:
         """Write Entry models to LDIF text.
 
         Routes to Entry quirk for server-specific writing logic.
@@ -732,7 +701,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return r[str].fail("Entry quirk not available")
 
         # Use functional composition to write all entries
-        def write_single_entry(entry_model: m.Ldif.Entry) -> r[str]:
+        def write_single_entry(entry_model: FlextLdifModelsDomains.Entry) -> r[str]:
             """Write single entry using entry quirk."""
             if entry_quirk is not None:
                 # Cast to r[str] - entry_quirk.write returns r[str]
@@ -757,7 +726,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def _route_model_to_write(
         self,
-        model: t.ConvertibleModel,
+        model: object,
     ) -> r[str]:
         """Route a single model to appropriate write method.
 
@@ -777,37 +746,31 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         """
         # Use isinstance for proper type narrowing and direct method calls
-        if isinstance(model, m.Ldif.Entry):
+        if isinstance(model, FlextLdifModelsDomains.Entry):
             # Cast to EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            entry_protocol: p.Ldif.Models.EntryProtocol = cast(
-                "p.Ldif.Models.EntryProtocol",
-                model,
-            )
-            return self.entry_quirk.write(entry_protocol)
-        if isinstance(model, m.Ldif.SchemaAttribute):
+            entry_protocol: object = model
+            return cast("r[str]", self.entry_quirk.write(entry_protocol))
+        if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_attribute(model)
-        if isinstance(model, m.Ldif.SchemaObjectClass):
+        if isinstance(model, FlextLdifModelsDomains.SchemaObjectClass):
             # Use _schema_quirk directly to access write_objectclass method
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_objectclass(model)
-        if isinstance(model, m.Ldif.Acl):
+        if isinstance(model, FlextLdifModelsDomains.Acl):
             # Cast to AclProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            acl_protocol: p.Ldif.Models.AclProtocol = cast(
-                "p.Ldif.Models.AclProtocol",
-                model,
-            )
-            return self.acl_quirk.write(acl_protocol)
+            acl_protocol: object = model
+            return cast("r[str]", self.acl_quirk.write(acl_protocol))
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
 
     def _handle_parse_operation(
         self,
         ldif_text: str,
-    ) -> r[m.Ldif.Entry | str]:
+    ) -> r[FlextLdifModelsDomains.Entry | str]:
         """Handle parse operation for main quirk.
 
         Generic implementation that parses LDIF text and returns the first entry
@@ -827,26 +790,26 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             parse_response = parse_result.unwrap()
             entries = getattr(parse_response, "entries", [])
             # ParseResponse.entries is always Sequence[Entry] (never a single Entry)
-            if entries and len(entries) > 0:
+            if u.Guards.is_list_non_empty(entries):
                 domain_entry = entries[0]
                 # Convert domain Entry to public Entry type for type compatibility
-                # m.Ldif.Entry extends m.Ldif.Entry
-                if isinstance(domain_entry, m.Ldif.Entry):
+                # FlextLdifModelsDomains.Entry extends FlextLdifModelsDomains.Entry
+                if isinstance(domain_entry, FlextLdifModelsDomains.Entry):
                     # Already public type
-                    return r[m.Ldif.Entry | str].ok(domain_entry)
+                    return r[FlextLdifModelsDomains.Entry | str].ok(domain_entry)
                 # Convert domain entry to public entry using model_validate
-                public_entry = m.Ldif.Entry.model_validate(
+                public_entry = FlextLdifModelsDomains.Entry.model_validate(
                     domain_entry.model_dump(mode="python"),
                 )
-                return r[m.Ldif.Entry | str].ok(public_entry)
-            return r[m.Ldif.Entry | str].ok("")
+                return r[FlextLdifModelsDomains.Entry | str].ok(public_entry)
+            return r[FlextLdifModelsDomains.Entry | str].ok("")
         error_msg: str = parse_result.error or "Parse failed"
-        return r[m.Ldif.Entry | str].fail(error_msg)
+        return r[FlextLdifModelsDomains.Entry | str].fail(error_msg)
 
     def _handle_write_operation(
         self,
-        entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.Entry | str]:
+        entries: list[FlextLdifModelsDomains.Entry],
+    ) -> r[FlextLdifModelsDomains.Entry | str]:
         """Handle write operation for main quirk.
 
         Generic implementation that writes Entry models to LDIF text.
@@ -862,9 +825,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         write_result = self.write(entries)
         if write_result.is_success:
             written_text: str = write_result.unwrap()
-            return r[m.Ldif.Entry | str].ok(written_text)
+            return r[FlextLdifModelsDomains.Entry | str].ok(written_text)
         error_msg: str = write_result.error or "Write failed"
-        return r[m.Ldif.Entry | str].fail(error_msg)
+        return r[FlextLdifModelsDomains.Entry | str].fail(error_msg)
 
     # =========================================================================
     # Registry method for DI-based automatic registration
@@ -878,7 +841,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     def _get_server_type_from_mro(
         cls,
         quirk_class: type[object],
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+    ) -> str:
         """Get server_type from parent class Constants via MRO traversal.
 
         Uses functional patterns.
@@ -916,7 +879,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if server_type and isinstance(server_type, str):
                 # Type narrowing: ensure server_type is a valid ServerTypeLiteral
                 # Use normalize_server_type for proper validation and type narrowing
-                return c.Ldif.normalize_server_type(server_type)
+                return FlextLdifUtilitiesServer.normalize_server_type(server_type)
         except StopIteration:
             pass
 
@@ -976,13 +939,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     @classmethod
     def _register_in_registry(
         cls,
-        quirk_instance: (
-            p.Ldif.Quirks.SchemaProtocol
-            | p.Ldif.Quirks.AclProtocol
-            | p.Ldif.Quirks.EntryProtocol
-            | FlextLdifServersBase
-        ),
-        registry: p.Ldif.Registry.QuirkRegistryProtocol,
+        quirk_instance: (object | FlextLdifServersBase),
+        registry: object,
     ) -> None:
         """Helper method to register a quirk instance in the registry.
 
@@ -1000,12 +958,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         # Functional composition: validate + register
         def validate_registry(
-            registry_obj: p.Ldif.Registry.QuirkRegistryProtocol,
+            registry_obj: object,
         ) -> (
             Callable[
                 [
-                    c.Ldif.LiteralTypes.ServerTypeLiteral | str,
-                    p.Ldif.Quirks.SchemaProtocol,
+                    str,
+                    object,
                 ],
                 None,
             ]
@@ -1021,7 +979,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if method and callable(method):
                 # Type narrowing: method is callable, cast to expected signature
                 return cast(
-                    "Callable[[c.Ldif.LiteralTypes.ServerTypeLiteral | str, p.Ldif.Quirks.SchemaProtocol], None]",
+                    "Callable[[str, object], None]",
                     method,
                 )
             return None
@@ -1030,19 +988,14 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             register_func: (
                 Callable[
                     [
-                        c.Ldif.LiteralTypes.ServerTypeLiteral | str,
-                        p.Ldif.Quirks.SchemaProtocol,
+                        str,
+                        object,
                     ],
                     None,
                 ]
                 | None
             ),
-            instance: (
-                p.Ldif.Quirks.SchemaProtocol
-                | p.Ldif.Quirks.AclProtocol
-                | p.Ldif.Quirks.EntryProtocol
-                | FlextLdifServersBase
-            ),
+            instance: (object | FlextLdifServersBase),
         ) -> None:
             """Execute registration if method is available."""
             # Business Rule: Validate instance satisfies SchemaProtocol structurally
@@ -1055,9 +1008,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                     hasattr(instance, method) and callable(getattr(instance, method))
                     for method in required_methods
                 ):
-                    # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
-
-                    schema_quirk = cast("p.Ldif.Quirks.SchemaProtocol", instance)
+                    # instance is already validated to support schema_quirk interface
+                    schema_quirk = instance
                     register_func("auto", schema_quirk)
                 # If not SchemaProtocol, skip registration (schema_quirk would be None)
 
@@ -1105,7 +1057,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return attr_name
         # Normalize objectclass variants to canonical objectClass
         if attr_name.lower() == "objectclass":
-            return c.Ldif.DictKeys.OBJECTCLASS
+            return "objectClass"
         # Other attributes: preserve as-is (cn, mail, uid, etc.)
         return attr_name
 
@@ -1147,11 +1099,10 @@ class _PriorityDescriptor:
 # class and instance access. Descriptors implement __get__ returning str/int,
 # satisfying the type annotations above. This is a class-level assignment that
 # happens at module import time, not instance creation time.
-# Use type.__setattr__ to bypass both Pydantic's __setattr__ and pyrefly's
-# descriptor immutability checks - this is the canonical pattern for setting
-# class-level descriptors on Pydantic models
-type.__setattr__(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-type.__setattr__(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
+# Use setattr to set class-level descriptors on Pydantic models
+# Note: setattr works here because we're setting on the class, not an instance
+FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
+FlextLdifServersBase.priority = _PriorityDescriptor(0)
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

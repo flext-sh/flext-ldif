@@ -70,11 +70,11 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 
 | ADR                                               | Title                                    | Status   | Date       |
 | ------------------------------------------------- | ---------------------------------------- | -------- | ---------- |
-| [ADR-001](ADR-001-rfc-first-design.md)            | RFC-First Design with Zero Bypass Paths  | Accepted | 2025-10-10 |
-| [ADR-002](ADR-002-universal-conversion-matrix.md) | Universal Conversion Matrix Architecture | Accepted | 2025-10-10 |
-| [ADR-003](ADR-003-dn-case-registry.md)            | DN Case Registry for OUD Compatibility   | Accepted | 2025-10-10 |
-| [ADR-004](ADR-004-memory-bound-architecture.md)   | Memory-Bound Processing Architecture     | Accepted | 2025-10-10 |
-| [ADR-005](ADR-005-pluggable-quirks-system.md)     | Pluggable Quirks System                  | Accepted | 2025-10-10 |
+| [ADR-001](adr-001-rfc-first-design.md)            | RFC-First Design with Zero Bypass Paths  | Accepted | 2025-10-10 |
+| [ADR-002](adr-002-universal-conversion-matrix.md) | Universal Conversion Matrix Architecture | Accepted | 2025-10-10 |
+| [ADR-003](adr-003-dn-case-registry.md)            | DN Case Registry for OUD Compatibility   | Accepted | 2025-10-10 |
+| [ADR-004](adr-004-memory-bound-architecture.md)   | Memory-Bound Processing Architecture     | Accepted | 2025-10-10 |
+| [ADR-005](adr-005-pluggable-quirks-system.md)     | Pluggable Quirks System                  | Accepted | 2025-10-10 |
 
 ## ADR Maintenance
 
@@ -85,6 +85,6 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 
 ## Related Documentation
 
-- [Architecture Overview](../architecture-overview.md) - High-level architecture documentation
-- [Architecture Diagrams](../diagrams/) - Visual representations of architecture
+- [Architecture Overview](../architecture.md) - High-level architecture documentation
+- **Architecture Diagrams** - Visual representations of architecture (*Documentation coming soon*)
 - [Development Guidelines](../development.md) - Implementation guidelines influenced by ADRs
