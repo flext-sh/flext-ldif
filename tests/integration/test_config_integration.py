@@ -103,7 +103,7 @@ class TestFlextLdifConfigIntegration:
         ldif = FlextLdif(config=config)
         result = ldif.parse(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_config_independence_between_instances(self) -> None:
@@ -148,7 +148,7 @@ class TestFlextLdifConfigIntegration:
         content = ConfigTestData.SERVER_CONTENT[expected_content_key]
         result = ldif.parse(content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_config_consistency_across_operations(self) -> None:
@@ -178,7 +178,7 @@ objectClass: person
         ldif = FlextLdif(config=config)
         result = ldif.parse(ConfigTestData.MULTIPLE_ENTRIES)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 3
 
     def test_config_filtering_behavior(self) -> None:
@@ -189,13 +189,13 @@ objectClass: person
         parse_result = ldif.parse(ConfigTestData.FILTER_CONTENT)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 2
 
         # Filter works regardless of config
         filter_result = ldif.filter(entries, objectclass="person")
         assert filter_result.is_success
-        filtered = filter_result.unwrap()
+        filtered = filter_result.value
         assert len(filtered) == 1
 
 

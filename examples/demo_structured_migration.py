@@ -107,7 +107,7 @@ description: Application data entry
             return
 
         # Display results
-        pipeline_result = result.unwrap()
+        pipeline_result = result.value
 
         for _category, path in sorted(pipeline_result.file_paths.items()):
             # Cast path to str for Path constructor

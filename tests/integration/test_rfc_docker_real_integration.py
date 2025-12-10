@@ -63,7 +63,7 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert len(parse_response.entries) > 0
 
     def test_parse_openldap_entries_fixture(
@@ -81,7 +81,7 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert len(parse_response.entries) > 0
 
 
@@ -108,7 +108,7 @@ class TestRfcSchemaParserRealFixtures:
         result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        parse_response = result.unwrap()
+        parse_response = result.value
         # Schema entries should be parsed with automatic schema extraction
         assert len(parse_response.entries) > 0
 
@@ -153,7 +153,7 @@ class TestRfcWriterRealFixtures:
         parse_result = parser.parse_ldif_file(source_file)
 
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
         original_count = len(entries)
 
@@ -176,7 +176,7 @@ class TestRfcWriterRealFixtures:
         reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
-        reparsed_response = reparse_result.unwrap()
+        reparsed_response = reparse_result.value
 
         # Verify counts match
         assert len(reparsed_response.entries) == original_count
@@ -199,7 +199,7 @@ class TestRfcWriterRealFixtures:
         if not parse_result.is_success:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
 
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
 
         # Write to file
@@ -289,5 +289,5 @@ class TestRfcExceptionHandlingRealScenarios:
 
         # Empty file should parse successfully with 0 entries
         assert result.is_success
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert len(parse_response.entries) == 0

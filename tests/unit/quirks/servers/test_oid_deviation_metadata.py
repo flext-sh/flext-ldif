@@ -39,7 +39,7 @@ def parse_entry_and_unwrap(
     ldif_text = build_ldif_text(dn, attrs)
     result = entry_quirk.parse(ldif_text)
     assert result.is_success, f"Parse failed: {result.error}"
-    entries = result.unwrap()
+    entries = result.value
     assert len(entries) > 0, "No entries parsed"
     return entries[0]
 
@@ -311,7 +311,7 @@ class TestsTestFlextLdifOidMetadata(s):
 
         result = oid_entry.parse(ldif_text)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0
 
         entry = entries[0]

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAcl,
     FlextLdifServersOidConstants,
@@ -54,7 +54,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         if quirk.schema.can_handle_attribute(attr_def):
             result = quirk.schema._parse_attribute(attr_def)
             if result.is_success:
-                parsed_attr = result.unwrap()
+                parsed_attr = result.value
 
     """
 
@@ -97,8 +97,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     ) -> FlextResult[
         dict[
             str,
-            list[p.Ldif.SchemaAttributeProtocol]
-            | list[p.Ldif.SchemaObjectClassProtocol]
+            list[m.Ldif.SchemaAttribute]
+            | list[m.Ldif.SchemaObjectClass]
             | int,
         ]
     ]:
@@ -116,8 +116,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[p.Ldif.SchemaAttributeProtocol]
-                    | list[p.Ldif.SchemaObjectClassProtocol]
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass]
                     | int,
                 ]
             ].fail(
@@ -128,12 +128,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         result = schema_quirk.extract_schemas_from_ldif(ldif_content)
         # Type narrowing: convert Union[dict[str, list[str], str]] to specific types
         if result.is_success:
-            data = result.unwrap()
+            data = result.value
             # Return schema extraction result with metadata
             converted_data: dict[
                 str,
-                list[p.Ldif.SchemaAttributeProtocol]
-                | list[p.Ldif.SchemaObjectClassProtocol]
+                list[m.Ldif.SchemaAttribute]
+                | list[m.Ldif.SchemaObjectClass]
                 | int,
             ] = {
                 "attributes": data.get("attributes", []),
@@ -144,16 +144,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[p.Ldif.SchemaAttributeProtocol]
-                    | list[p.Ldif.SchemaObjectClassProtocol]
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass]
                     | int,
                 ]
             ].ok(converted_data)
         return FlextResult[
             dict[
                 str,
-                list[p.Ldif.SchemaAttributeProtocol]
-                | list[p.Ldif.SchemaObjectClassProtocol]
+                list[m.Ldif.SchemaAttribute]
+                | list[m.Ldif.SchemaObjectClass]
                 | int,
             ]
         ].fail(

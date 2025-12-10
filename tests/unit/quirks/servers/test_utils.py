@@ -89,7 +89,7 @@ class FlextLdifTestUtils:
             raise ValueError(msg)
 
         # Return entries from the result
-        parsed_data = parse_result.unwrap()
+        parsed_data = parse_result.value
         if isinstance(parsed_data, list):
             return parsed_data
         if hasattr(parsed_data, "entries"):
@@ -234,7 +234,7 @@ class FlextLdifTestUtils:
             msg = f"Re-parse should succeed: {parse_result.error}"
             raise AssertionError(msg)
 
-        parsed_data = parse_result.unwrap()
+        parsed_data = parse_result.value
         if isinstance(parsed_data, list):
             roundtripped_entries = parsed_data
         elif hasattr(parsed_data, "entries"):
@@ -300,7 +300,7 @@ class FlextLdifTestUtils:
             msg = f"Failed to write entries: {write_result.error}"
             raise ValueError(msg)
 
-        ldif_content = write_result.unwrap()
+        ldif_content = write_result.value
 
         # Parse the written LDIF
         roundtrip_result = ldif_api.parse(
@@ -312,7 +312,7 @@ class FlextLdifTestUtils:
             msg = f"Failed to parse roundtrip LDIF: {roundtrip_result.error}"
             raise ValueError(msg)
 
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         if not isinstance(roundtrip_entries, list):
             msg = f"Unexpected roundtrip result type: {type(roundtrip_entries)}"
             raise TypeError(msg)

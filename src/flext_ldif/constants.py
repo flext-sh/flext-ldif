@@ -8,23 +8,9 @@ Python 3.13+ strict features:
 - collections.abc for type hints (preferred over typing)
 - StrEnum for type-safe string enums
 - Literal types derived from StrEnum values
-- No backward compatibility with Python < 3.13
-
-ACL Attribute Detection Strategy
-================================
-Uses HIERARCHY pattern with RFC foundation + server quirks
-- RFC Foundation: aci, acl, olcAccess (all LDAP servers)
-- Server Quirks: Added per server type (OID, OUD, AD)
-- Override: categorization_rules parameter can override completely
-
-This allows:
-1. Auto-detection: acl_attrs = AclAttributeRegistry.get_acl_attributes("oid")
-2. Override: acl_attrs = categorization_rules["acl_attributes"]
-3. Type-safe: AclAttributeRegistry.is_acl_attribute(attr, "oud")
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -35,6 +21,9 @@ from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
 from flext_core import FlextConstants
+
+# Validation level literal - no corresponding StrEnum (uses hardcoded strings)
+type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
 
 class FlextLdifConstants(FlextConstants):
@@ -376,7 +365,6 @@ class FlextLdifConstants(FlextConstants):
 
             DN_ATTRIBUTE: Final[str] = "dn"
             ATTRIBUTE_SEPARATOR: Final[str] = ":"
-            DN_PREFIX: Final[str] = "dn:"  # Combined DN attribute with separator
 
             # LDIF ObjectClass constants
             LDIF_OBJECTCLASS_GROUPOFNAMES: Final[str] = "groupOfNames"
@@ -447,19 +435,28 @@ class FlextLdifConstants(FlextConstants):
                 0x3C,
             })
 
-            # RFC 2849 §2 - BASE64-CHAR (valid characters in base64 encoding)
+            # RFC 2849 §2 - BASE64-CHAR (StrEnum Source of Truth)
+            # Note: BASE64 characters enumerated per RFC 2849 §2
             # BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
-            # Characters: + / 0-9 = A-Z a-z
+            # Using frozenset of string directly for efficiency
             BASE64_CHARS: Final[frozenset[str]] = frozenset(
                 "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
             )
 
+            # RFC 2849 §2 - Characters at Start (StrEnum Source of Truth)
+            class Base64StartChar(StrEnum):
+                """RFC 2849 §2 - Characters requiring base64 encoding at value start."""
+
+                SPACE = " "  # ASCII 32 - space at start
+                LANGLE = "<"  # Less-than sign (URL indicator conflict)
+                COLON = ":"  # Colon (separator conflict)
+
             # RFC 2849 §2 - Characters requiring base64 encoding at value start
             # SAFE-INIT-CHAR excludes these at position 0
             BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
-                " ",  # ASCII 32 - space at start
-                "<",  # Less-than sign (URL indicator conflict)
-                ":",  # Colon (separator conflict)
+                Base64StartChar.SPACE,
+                Base64StartChar.LANGLE,
+                Base64StartChar.COLON,
             })
 
             # RFC 2849 §3 - Line folding constants
@@ -510,8 +507,6 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA_EXTENSION_PREFIX: Final[str] = "X-"
 
             # RFC 4512 §4.1 - Schema definition keywords
-            SCHEMA_KW_NAME: Final[str] = "NAME"
-            SCHEMA_KW_DESC: Final[str] = "DESC"
             SCHEMA_KW_OBSOLETE: Final[str] = "OBSOLETE"
             SCHEMA_KW_SUP: Final[str] = "SUP"
             SCHEMA_KW_EQUALITY: Final[str] = "EQUALITY"
@@ -540,15 +535,28 @@ class FlextLdifConstants(FlextConstants):
             ATTR_SUBSCHEMA_SUBENTRY: Final[str] = "subschemaSubentry"
             ATTR_ENTRY_DN: Final[str] = "entryDN"
 
+            # RFC 4512 §4.2.1 - Operational attributes as StrEnum
+            class OperationalAttribute(StrEnum):
+                """RFC 4512 §4.2.1 - Standard operational attributes."""
+
+                CREATORS_NAME = "creatorsName"
+                CREATE_TIMESTAMP = "createTimestamp"
+                MODIFIERS_NAME = "modifiersName"
+                MODIFY_TIMESTAMP = "modifyTimestamp"
+                STRUCTURAL_OBJECTCLASS = "structuralObjectClass"
+                GOVERNING_STRUCTURE_RULE = "governingStructureRule"
+                SUBSCHEMA_SUBENTRY = "subschemaSubentry"
+                ENTRY_DN = "entryDN"
+
             OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-                ATTR_CREATORS_NAME,
-                ATTR_CREATE_TIMESTAMP,
-                ATTR_MODIFIERS_NAME,
-                ATTR_MODIFY_TIMESTAMP,
-                ATTR_STRUCTURAL_OBJECTCLASS,
-                ATTR_GOVERNING_STRUCTURE_RULE,
-                ATTR_SUBSCHEMA_SUBENTRY,
-                ATTR_ENTRY_DN,
+                OperationalAttribute.CREATORS_NAME,
+                OperationalAttribute.CREATE_TIMESTAMP,
+                OperationalAttribute.MODIFIERS_NAME,
+                OperationalAttribute.MODIFY_TIMESTAMP,
+                OperationalAttribute.STRUCTURAL_OBJECTCLASS,
+                OperationalAttribute.GOVERNING_STRUCTURE_RULE,
+                OperationalAttribute.SUBSCHEMA_SUBENTRY,
+                OperationalAttribute.ENTRY_DN,
             })
 
             # RFC 4512 - Schema entry attribute names
@@ -610,23 +618,49 @@ class FlextLdifConstants(FlextConstants):
                 0x5C,
             })
 
+            # RFC 4514 §2.4 - DN Escape Characters (StrEnum Source of Truth)
+            class DnEscapeChar(StrEnum):
+                """RFC 4514 §2.4 - Characters always requiring escape in DN values."""
+
+                DQUOTE = '"'  # 0x22 - Quotation mark
+                PLUS = "+"  # 0x2B - Plus sign (RDN separator)
+                COMMA = ","  # 0x2C - Comma (RDN separator)
+                SEMICOLON = ";"  # 0x3B - Semicolon (alternative RDN separator)
+                LANGLE = "<"  # 0x3C - Less-than
+                RANGLE = ">"  # 0x3E - Greater-than
+                BACKSLASH = "\\"  # 0x5C - Backslash (escape character)
+
             # RFC 4514 §2.4 - Characters requiring escaping in DN attribute values
             DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset({
-                '"',  # Quotation mark
-                "+",  # Plus sign (RDN separator)
-                ",",  # Comma (RDN separator)
-                ";",  # Semicolon (alternative RDN separator)
-                "<",  # Less-than
-                ">",  # Greater-than
-                "\\",  # Backslash (escape character)
+                DnEscapeChar.DQUOTE,
+                DnEscapeChar.PLUS,
+                DnEscapeChar.COMMA,
+                DnEscapeChar.SEMICOLON,
+                DnEscapeChar.LANGLE,
+                DnEscapeChar.RANGLE,
+                DnEscapeChar.BACKSLASH,
             })
+
+            # RFC 4514 §2.4 - Characters at Start/End (StrEnum Source of Truth)
+            class DnEscapeAtStart(StrEnum):
+                """RFC 4514 §2.4 - Characters requiring escape at DN value start."""
+
+                SPACE = " "  # 0x20 - Space at start
+                SHARP = "#"  # 0x23 - Hash at start (indicates hex string)
+
+            class DnEscapeAtEnd(StrEnum):
+                """RFC 4514 §2.4 - Characters requiring escape at DN value end."""
+
+                SPACE = " "  # 0x20 - Space at end
 
             # RFC 4514 §2.4 - Characters requiring escaping at value start/end
             DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset({
-                " ",  # Space at start
-                "#",  # Hash at start (indicates hex string)
+                DnEscapeAtStart.SPACE,
+                DnEscapeAtStart.SHARP,
             })
-            DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({" "})  # Space at end
+            DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({
+                DnEscapeAtEnd.SPACE,
+            })
 
             # RFC 4514 §3 - Required attribute type short names
             DN_ATTR_CN: Final[str] = "CN"  # commonName (2.5.4.3)
@@ -1151,19 +1185,15 @@ class FlextLdifConstants(FlextConstants):
 
             # Structural object classes (RFC 4512)
             TOP: Final[str] = "top"
-            PERSON: Final[str] = "person"
             ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
             INET_ORG_PERSON: Final[str] = "inetOrgPerson"
             GROUP_OF_NAMES: Final[str] = "groupOfNames"
             GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
             POSIX_GROUP: Final[str] = "posixGroup"
-            ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
             ORGANIZATION: Final[str] = "organization"
             DOMAIN: Final[str] = "domain"
 
             # Common auxiliary object classes
-            USER: Final[str] = "user"
-            GROUP: Final[str] = "group"
             COUNTRY: Final[str] = "country"
             LOCALITY: Final[str] = "locality"
 
@@ -1188,7 +1218,6 @@ class FlextLdifConstants(FlextConstants):
             # RFC 4524 - Common multimedia attributes
             PHOTO: Final[str] = "photo"
             JPEG_PHOTO: Final[str] = "jpegphoto"
-            AUDIO: Final[str] = "audio"
 
             # PKCS#12 and other security attributes
             USER_PKCS12: Final[str] = "userpkcs12"
@@ -1200,22 +1229,44 @@ class FlextLdifConstants(FlextConstants):
             OBJECT_GUID: Final[str] = "objectguid"
             OBJECT_SID: Final[str] = "objectsid"
 
+            # =====================================================================
+            # BINARY ATTRIBUTE ENUMERATION (Source of Truth)
+            # =====================================================================
+
+            class BinaryAttribute(StrEnum):
+                """RFC 4517/4523/4524 - Binary attributes requiring ;binary option."""
+
+                USER_CERTIFICATE = "usercertificate"
+                CA_CERTIFICATE = "cacertificate"
+                CERTIFICATE_REVOCATION_LIST = "certificaterevocationlist"
+                AUTHORITY_REVOCATION_LIST = "authorityrevocationlist"
+                CROSS_CERTIFICATE_PAIR = "crosscertificatepair"
+                PHOTO = "photo"
+                JPEG_PHOTO = "jpegphoto"
+                AUDIO = "audio"
+                USER_PKCS12 = "userpkcs12"
+                USER_SMIME_CERTIFICATE = "usersmimecertificate"
+                THUMBNAIL_PHOTO = "thumbnailphoto"
+                THUMBNAIL_LOGO = "thumbnaillogo"
+                OBJECT_GUID = "objectguid"
+                OBJECT_SID = "objectsid"
+
             # Convenience set for validation - all binary attribute names
             BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
-                USER_CERTIFICATE,
-                CA_CERTIFICATE,
-                CERTIFICATE_REVOCATION_LIST,
-                AUTHORITY_REVOCATION_LIST,
-                CROSS_CERTIFICATE_PAIR,
-                PHOTO,
-                JPEG_PHOTO,
-                AUDIO,
-                USER_PKCS12,
-                USER_SMIME_CERTIFICATE,
-                THUMBNAIL_PHOTO,
-                THUMBNAIL_LOGO,
-                OBJECT_GUID,
-                OBJECT_SID,
+                BinaryAttribute.USER_CERTIFICATE,
+                BinaryAttribute.CA_CERTIFICATE,
+                BinaryAttribute.CERTIFICATE_REVOCATION_LIST,
+                BinaryAttribute.AUTHORITY_REVOCATION_LIST,
+                BinaryAttribute.CROSS_CERTIFICATE_PAIR,
+                BinaryAttribute.PHOTO,
+                BinaryAttribute.JPEG_PHOTO,
+                BinaryAttribute.AUDIO,
+                BinaryAttribute.USER_PKCS12,
+                BinaryAttribute.USER_SMIME_CERTIFICATE,
+                BinaryAttribute.THUMBNAIL_PHOTO,
+                BinaryAttribute.THUMBNAIL_LOGO,
+                BinaryAttribute.OBJECT_GUID,
+                BinaryAttribute.OBJECT_SID,
             ])
 
         class ServerValidationRules:
@@ -1747,189 +1798,55 @@ class FlextLdifConstants(FlextConstants):
             # Cannot reference StrEnum members directly due to Python class scoping rules
             # (nested classes cannot reference sibling classes during class definition).
             # The string values are kept here to match StrEnum values exactly - DRY at doc level.
-            type ProcessingStageLiteral = Literal[
-                "parsing",
-                "validation",
-                "analytics",
-                "writing",
-            ]
+            
             """Literal type matching ProcessingStage StrEnum values exactly."""
 
-            type HealthStatusLiteral = Literal[
-                "healthy",
-                "degraded",
-                "unhealthy",
-            ]
             """Literal type matching LdifHealthStatus StrEnum values exactly."""
 
-            type EntryTypeLiteral = Literal[
-                "person",
-                "group",
-                "organizationalunit",
-                "domain",
-                "other",
-            ]
             """Literal type matching EntryType StrEnum values exactly."""
 
-            type ModificationTypeLiteral = Literal["add", "modify", "delete", "modrdn"]
             """Literal type matching EntryModification StrEnum values exactly."""
-            type ServerTypeLiteral = Literal[
-                # Referencing StrEnum values directly (NO duplication!)
-                "oid",
-                "oud",
-                "openldap",
-                "openldap1",
-                "openldap2",
-                "ad",
-                "apache",
-                "rfc",
-                "ds389",
-                "relaxed",
-                "novell",
-                "ibm_tivoli",
-                "generic",
-                # Backward compatibility aliases
-                "active_directory",
-                "apache_directory",
-                "novell_edirectory",
-                "oracle_oid",
-                "oracle_oud",
-            ]
 
-            type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
-
-            type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
-
-            type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
-
-            type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]
-
-            type MigrationModeLiteral = Literal["simple", "categorized", "structured"]
-
-            type ParserInputSourceLiteral = Literal["string", "file", "ldap3"]
-
-            type WriterOutputTargetLiteral = Literal["string", "file", "ldap3", "model"]
-
-            type AttributeOutputModeLiteral = Literal["show", "hide", "comment"]
             """Output mode for attribute visibility in LDIF output.
 
             - show: Write attribute normally
             - hide: Don't write attribute at all
             - comment: Write attribute as a comment (# attr: value)
             """
-            type AttributeMarkerStatusLiteral = Literal[
-                "normal",
-                "marked_for_removal",
-                "filtered",
-                "operational",
-                "hidden",
-                "renamed",
-            ]
+            
             """Marker status for attribute processing metadata.
 
             NOTE: Matches AttributeMarkerStatus StrEnum values exactly.
             Cannot reference directly due to Python class scoping rules.
             """
 
-            type ProjectTypeLiteral = Literal[
-                "library",
-                "application",
-                "service",
-                "ldif-processor",
-                "directory-converter",
-                "ldif-validator",
-                "ldif-analyzer",
-                "ldif-parser",
-                "directory-migrator",
-                "ldap-data-processor",
-                "ldif-transformer",
-                "directory-sync",
-                "ldif-exporter",
-                "ldif-importer",
-                "data-migration",
-                "ldif-etl",
-                "directory-backup",
-                "ldif-merger",
-                "ldif-splitter",
-                "directory-validator",
-                "ldif-normalizer",
-                "ldap-directory-tool",
-            ]
-
             # Additional Literal types consolidated from outside the class
             # These complement the ones above and are derived from Enums/StrEnums
-            type CategoryLiteral = Literal[
-                "all",
-                "users",
-                "groups",
-                "hierarchy",
-                "schema",
-                "acl",
-                "rejected",
-            ]
+            
             """Category literals derived from Categories StrEnum."""
 
-            type ChangeTypeLiteral = Literal[
-                "add",
-                "delete",
-                "modify",
-                "modrdn",
-                "moddn",
-            ]
             """Change type literals derived from RFC constants."""
 
-            type ModifyOperationLiteral = Literal["add", "delete", "replace"]
             """Modify operation literals derived from RFC constants."""
 
-            type SortStrategyLiteral = Literal[
-                "hierarchy",
-                "dn",
-                "alphabetical",
-                "schema",
-                "custom",
-            ]
             """Sort strategy literals matching SortStrategy StrEnum values exactly."""
 
-            type SortTargetLiteral = Literal[
-                "entries",
-                "attributes",
-                "acl",
-                "schema",
-                "combined",
-            ]
             """Sort target literals matching SortTarget StrEnum values exactly."""
 
-            type EncodingLiteral = Literal[
-                "utf-8",
-                "utf-16-le",
-                "utf-16",
-                "utf-32",
-                "ascii",
-                "latin-1",
-                "cp1252",
-                "iso-8859-1",
-            ]
             """Encoding literals matching Encoding StrEnum values exactly."""
 
-            type LdifFormatLiteral = Literal[":", "::", ":<"]
             """LDIF format literals matching LdifFormat StrEnum values exactly."""
 
-            type QuirkOperationLiteral = Literal["parse", "write"]
             """Quirk operation literals for parse/write operations."""
 
-            type SchemaParseOperationLiteral = Literal["parse"]
             """Schema parse operation literal."""
 
-            type AclWriteOperationLiteral = Literal["write"]
             """ACL write operation literal."""
 
-            type ParseOperationLiteral = Literal["parse"]
             """Parse operation literal."""
 
-            type WriteOperationLiteral = Literal["write"]
             """Write operation literal."""
 
-            type ParseWriteOperationLiteral = Literal["parse", "write"]
             """Parse/write operation literal."""
 
             # =====================================================================
@@ -1939,59 +1856,94 @@ class FlextLdifConstants(FlextConstants):
             # Use these for type annotations in Pydantic models and function signatures
             # Using PEP 695 type statement for better type checking and IDE support
 
-            type RfcAclPermissionLiteral = Literal[
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "all",
-                "none",
-            ]
             """RFC ACL permission literals matching RfcAclPermission StrEnum values exactly."""
 
-            type AclPermissionLiteral = Literal[
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "all",
-                "none",
-                "auth",
-                "create",
-                "control_access",
-            ]
             """Comprehensive ACL permission literals matching AclPermission StrEnum values exactly.
 
             Includes RFC 4876 base permissions plus server-specific extensions.
             Use this for type-safe ACL permission handling across all server types.
             """
 
-            type AclActionLiteral = Literal["allow", "deny"]
             """ACL action literals matching AclAction StrEnum values exactly.
 
             Use this for type-safe ACL action handling across all server types.
             """
 
-            type AclSubjectTypeLiteral = Literal[
-                "user",
-                "group",
-                "role",
-                "self",
-                "all",
-                "public",
-                "anonymous",
-                "authenticated",
-                "sddl",
-            ]
             """ACL subject type literals matching AclSubjectType StrEnum values exactly.
 
             Includes server-specific extensions like "sddl" for Active Directory.
             Note: "dn", "user_dn", "userdn" are not in the base enum - they may be server-specific.
             """
+
+            """Transformation type literals derived from TransformationType StrEnum."""
+
+            """Filter type literals derived from FilterType StrEnum."""
+
+            """Validation status literals derived from ValidationStatus StrEnum."""
+
+            """Rejection category literals derived from RejectionCategory StrEnum."""
+
+            """Error category literals derived from ErrorCategory StrEnum."""
+
+            """Sorting strategy type literals derived from SortingStrategyType StrEnum."""
+
+            # DictKeys StrEnum → Literal
+            
+            """Dictionary key literals derived from DictKeys StrEnum."""
+
+            # QuirkMetadataKeys StrEnum → Literal
+            
+            """Quirk metadata key literals derived from QuirkMetadataKeys StrEnum."""
+
+            # AclKeys StrEnum → Literal
+            
+            """ACL key literals derived from AclKeys StrEnum."""
+
+            # FilterTypes StrEnum → Literal
+            
+            """Filter type enum literals derived from FilterTypes StrEnum."""
+
+            # Modes StrEnum → Literal
+            
+            """Mode literals derived from Modes StrEnum."""
+
+            # Categories StrEnum → Literal (already defined above, skipping duplicate)
+
+            # DataTypes StrEnum → Literal
+            
+            """Data type literals derived from DataTypes StrEnum."""
+
+            # ChangeType StrEnum → Literal
+            
+            """Change type enum literals derived from ChangeType StrEnum."""
+
+            # ServiceType StrEnum → Literal (complete list matching ServiceType StrEnum)
+
+            """Service type enum literals derived from ServiceType StrEnum.
+
+        Complete list matching all ServiceType StrEnum values for
+        type-safe annotations. Use this in function signatures and
+        Pydantic models instead of direct StrEnum references.
+        """
+
+            # ServerTypes StrEnum → Literal
+
+            type ServerTypeLiteral = Literal[
+                "oid",
+                "oud",
+                "openldap",
+                "openldap1",
+                "openldap2",
+                "ad",
+                "apache",
+                "ds389",
+                "rfc",
+                "relaxed",
+                "novell",
+                "ibm_tivoli",
+                "generic",
+            ]
+            """Server type enum literals derived from ServerTypes StrEnum."""
 
             type TransformationTypeLiteral = Literal[
                 "dn_cleaned",
@@ -2017,145 +1969,75 @@ class FlextLdifConstants(FlextConstants):
             ]
             """Transformation type literals derived from TransformationType StrEnum."""
 
-            type FilterTypeLiteral = Literal[
-                "base_dn_filter",
-                "schema_whitelist",
-                "forbidden_attributes",
-                "forbidden_objectclasses",
-                "operational_attributes",
-                "acl_extraction",
-                "schema_entry",
+            type EncodingLiteral = Literal[
+                "utf-8",
+                "utf-16-le",
+                "utf-16",
+                "utf-32",
+                "ascii",
+                "latin-1",
+                "cp1252",
+                "iso-8859-1",
             ]
-            """Filter type literals derived from FilterType StrEnum."""
+            """Encoding literals matching Encoding StrEnum values exactly."""
 
-            type ValidationStatusLiteral = Literal[
-                "valid",
-                "warning",
-                "error",
-                "rejected",
-            ]
-            """Validation status literals derived from ValidationStatus StrEnum."""
-
-            type RejectionCategoryLiteral = Literal[
-                "invalid_dn",
-                "base_dn_filter",
-                "schema_violation",
-                "forbidden_attribute",
-                "forbidden_objectclass",
-                "categorization_failed",
-                "no_category_match",
-                "parsing_error",
-                "conversion_error",
-            ]
-            """Rejection category literals derived from RejectionCategory StrEnum."""
-
-            type ErrorCategoryLiteral = Literal[
-                "parsing",
-                "validation",
-                "conversion",
-                "sync",
-                "schema",
-                "acl",
-                "modrdn",
-            ]
-            """Error category literals derived from ErrorCategory StrEnum."""
-
-            type SortingStrategyTypeLiteral = Literal[
-                "alphabetical_case_sensitive",
-                "alphabetical_case_insensitive",
-                "custom_order",
-            ]
-            """Sorting strategy type literals derived from SortingStrategyType StrEnum."""
-
-            # DictKeys StrEnum → Literal
-            type DictKeyLiteral = Literal[
-                "dn",
-                "attributes",
-                "objectClass",
-                "cn",
-                "oid",
-            ]
-            """Dictionary key literals derived from DictKeys StrEnum."""
-
-            # QuirkMetadataKeys StrEnum → Literal
-            type QuirkMetadataKeyLiteral = Literal[
-                "server_type",
-                "is_config_entry",
-                "is_traditional_dit",
-            ]
-            """Quirk metadata key literals derived from QuirkMetadataKeys StrEnum."""
-
-            # AclKeys StrEnum → Literal
-            type AclKeyLiteral = Literal[
-                "acl",
-                "aci",
-                "access",
-            ]
-            """ACL key literals derived from AclKeys StrEnum."""
-
-            # FilterTypes StrEnum → Literal
-            type FilterTypeEnumLiteral = Literal[
-                "objectclass",
-                "dn_pattern",
-                "attributes",
-                "schema_oid",
-                "oid_pattern",
-                "attribute",
-            ]
-            """Filter type enum literals derived from FilterTypes StrEnum."""
-
-            # Modes StrEnum → Literal
-            type ModeLiteral = Literal[
-                "include",
-                "exclude",
-                "auto",
-                "manual",
-                "disabled",
-            ]
-            """Mode literals derived from Modes StrEnum."""
-
-            # Categories StrEnum → Literal (already defined above, skipping duplicate)
-
-            # DataTypes StrEnum → Literal
-            type DataTypeLiteral = Literal[
-                "attribute",
-                "objectclass",
-                "acl",
-                "entry",
-                "schema",
-            ]
-            """Data type literals derived from DataTypes StrEnum."""
-
-            # ChangeType StrEnum → Literal
-            type ChangeTypeEnumLiteral = Literal[
+            type ChangeTypeLiteral = Literal[
                 "add",
                 "delete",
                 "modify",
                 "modrdn",
+                "moddn",
             ]
-            """Change type enum literals derived from ChangeType StrEnum."""
+            """Change type literals derived from RFC constants."""
 
-            # ServiceType StrEnum → Literal (complete list matching ServiceType StrEnum)
-            type ServiceTypeEnumLiteral = Literal[
-                "parser",
+            type ModifyOperationLiteral = Literal["add", "delete", "replace"]
+            """Modify operation literals derived from RFC constants."""
+
+            type AclSubjectTypeLiteral = Literal[
+                "user",
+                "group",
+                "role",
+                "self",
+                "all",
+                "public",
+                "anonymous",
+                "authenticated",
+                "sddl",
+            ]
+            """ACL subject type literals matching AclSubjectType StrEnum values exactly."""
+
+            type AttributeMarkerStatusLiteral = Literal[
+                "normal",
+                "marked_for_removal",
+                "filtered",
+                "operational",
+                "hidden",
+                "renamed",
+            ]
+            """Marker status literals matching AttributeMarkerStatus StrEnum."""
+
+            type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
+            """Analytics detail level literals."""
+
+            type CategoryLiteral = Literal[
+                "all",
+                "users",
+                "groups",
+                "hierarchy",
+                "schema",
                 "acl",
-                "writer",
-                "entries",
-                "analysis",
-                "processing",
-                "detector",
-                "filters",
-                "categorization",
-                "conversion",
-                "validation",
-                "syntax",
+                "rejected",
             ]
-            """Service type enum literals derived from ServiceType StrEnum.
+            """Category literals derived from Categories StrEnum."""
 
-        Complete list matching all ServiceType StrEnum values for
-        type-safe annotations. Use this in function signatures and
-        Pydantic models instead of direct StrEnum references.
-        """
+            type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
+            """Detection mode literals."""
+
+            type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]
+            """Error recovery mode literals."""
+
+            type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
+            """Validation level literals."""
 
         # =============================================================================
         # ENCODING CONSTANTS
@@ -2206,9 +2088,7 @@ class FlextLdifConstants(FlextConstants):
             LINE_WITH_NEWLINE: Final[int] = LINE_LENGTH_LIMIT + 1  # 77
 
             # Validation strictness levels
-            STRICT: Final[str] = "strict"
             MODERATE: Final[str] = "moderate"
-            LENIENT: Final[str] = "lenient"
 
         class Acl:
             """ACL-related constants - RFC 4876 baseline ONLY.
@@ -2223,9 +2103,6 @@ class FlextLdifConstants(FlextConstants):
             ALLOW: Final[str] = "allow"
 
             # ACL scope types
-            SUBTREE: Final[str] = "subtree"
-            ONELEVEL: Final[str] = "onelevel"
-            BASE: Final[str] = "base"
 
             # RFC 4876 ACL permissions (baseline only - no extensions)
             READ: Final[str] = "read"
@@ -2260,15 +2137,11 @@ class FlextLdifConstants(FlextConstants):
             """
 
             # Subject types for ACL permissions
-            USER: Final[str] = "user"
-            GROUP: Final[str] = "group"
             ROLE: Final[str] = "role"
             SELF: Final[str] = "self"  # Self (person modifying own entry)
-            ALL: Final[str] = "all"  # Everyone
             PUBLIC: Final[str] = "public"  # Public access
             ANONYMOUS: Final[str] = "anonymous"  # Anonymous access
             AUTHENTICATED: Final[str] = "authenticated"  # Any authenticated user
-            DN_PREFIX: Final[str] = "dn"  # DN prefix for specific DN subjects
 
             class Schema:
                 """Schema-related constants."""
@@ -2280,13 +2153,10 @@ class FlextLdifConstants(FlextConstants):
             MATCHINGRULE: Final[str] = "matchingrule"
 
             # Schema validation levels
-            STRICT: Final[str] = "strict"
-            LENIENT: Final[str] = "lenient"
 
             # Schema status
             ACTIVE: Final[str] = "active"
             DEPRECATED: Final[str] = "deprecated"
-            OBSOLETE: Final[str] = "obsolete"
 
             # Object class kinds (RFC 4512)
             STRUCTURAL: Final[str] = "STRUCTURAL"
@@ -2387,7 +2257,6 @@ class FlextLdifConstants(FlextConstants):
             """
 
             # RFC 4876 standard
-            ACI: Final[str] = "aci"  # RFC 4876 ACI attribute (OUD, 389 DS standard)
 
             # Common ACL-related attributes for filtering
             ACLRIGHTS: Final[str] = "aclrights"  # Generic ACL rights attribute
@@ -2396,7 +2265,7 @@ class FlextLdifConstants(FlextConstants):
             # Default ACL attributes for sorting (RFC baseline + common server attributes)
             DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = [
                 "acl",  # Generic ACL attribute
-                ACI,  # RFC 4876 standard (OUD, 389 DS)
+                "aci",  # RFC 4876 standard (OUD, 389 DS)
                 "olcAccess",  # OpenLDAP ACL attribute
             ]
 
@@ -2453,22 +2322,44 @@ class FlextLdifConstants(FlextConstants):
             HAS_SUBORDINATES: Final[str] = "hasSubordinates"  # RFC 3673 operational
             SUBORDINATE_DN: Final[str] = "subordinateDn"  # Subordinate reference
 
+            # =====================================================================
+            # DN-VALUED ATTRIBUTE ENUMERATION (Source of Truth)
+            # =====================================================================
+
+            class DnValuedAttribute(StrEnum):
+                """Attributes that contain Distinguished Names as values."""
+
+                MEMBER = "member"
+                UNIQUE_MEMBER = "uniqueMember"
+                OWNER = "owner"
+                MANAGED_BY = "managedBy"
+                MANAGER = "manager"
+                SECRETARY = "secretary"
+                SEES_ALSO = "seeAlso"
+                PARENT = "parent"
+                REFERS_TO = "refersTo"
+                MEMBER_OF = "memberOf"
+                GROUPS = "groups"
+                AUTHORIZED_TO = "authorizedTo"
+                HAS_SUBORDINATES = "hasSubordinates"
+                SUBORDINATE_DN = "subordinateDn"
+
             # All DN-valued attributes as frozenset for membership testing
             ALL_DN_VALUED: Final[frozenset[str]] = frozenset([
-                MEMBER,
-                UNIQUE_MEMBER,
-                OWNER,
-                MANAGED_BY,
-                MANAGER,
-                SECRETARY,
-                SEES_ALSO,
-                PARENT,
-                REFERS_TO,
-                MEMBER_OF,
-                GROUPS,
-                AUTHORIZED_TO,
-                HAS_SUBORDINATES,
-                SUBORDINATE_DN,
+                DnValuedAttribute.MEMBER,
+                DnValuedAttribute.UNIQUE_MEMBER,
+                DnValuedAttribute.OWNER,
+                DnValuedAttribute.MANAGED_BY,
+                DnValuedAttribute.MANAGER,
+                DnValuedAttribute.SECRETARY,
+                DnValuedAttribute.SEES_ALSO,
+                DnValuedAttribute.PARENT,
+                DnValuedAttribute.REFERS_TO,
+                DnValuedAttribute.MEMBER_OF,
+                DnValuedAttribute.GROUPS,
+                DnValuedAttribute.AUTHORIZED_TO,
+                DnValuedAttribute.HAS_SUBORDINATES,
+                DnValuedAttribute.SUBORDINATE_DN,
             ])
 
             # =============================================================================
@@ -2478,55 +2369,6 @@ class FlextLdifConstants(FlextConstants):
         # =============================================================================
         # PERMISSION NAMES - ACL Permission Type Identifiers
         # =============================================================================
-
-        class PermissionNames:
-            """RFC 4876 ACL permission type identifiers (magic strings).
-
-            DEPRECATED: Use c.RfcAclPermission (StrEnum) instead
-            for type safety.
-            This class maintained for backward compatibility only.
-
-            Standard LDAP ACL permissions (RFC baseline).
-            Server-specific permissions defined in respective server Constants classes:
-            - OUD: FlextLdifServersOud.Constants.OudPermission
-            - OID: FlextLdifServersOid.Constants (if any extensions)
-            - Others: Server-specific Constants classes
-
-            Note: These are different from actions (add/delete/modify in changetype).
-            """
-
-            # Standard LDAP ACL permissions (RFC 4876)
-            READ: Final[str] = "read"
-            WRITE: Final[str] = "write"
-            ADD: Final[str] = "add"
-            DELETE: Final[str] = "delete"
-            SEARCH: Final[str] = "search"
-            COMPARE: Final[str] = "compare"
-            ALL: Final[str] = "all"
-            NONE: Final[str] = "none"
-
-            # NOTE: Server-specific permissions migrated to respective Constants classes:
-            # - SELF_WRITE (OUD) → FlextLdifServersOud.Constants.OudPermission.SELF_WRITE
-            # - SELFWRITE (Oracle) → FlextLdifServersOud.Constants.OudPermission.SELFWRITE
-            # - PROXY (OUD/OID) → FlextLdifServersOud.Constants.OudPermission.PROXY
-            # - BROWSE → Server-specific Constants
-            # NOTE: PERMISSION_MAPPINGS migrated to server-specific Constants classes
-            # - OUD mappings → FlextLdifServersOud.Constants.PERMISSION_NORMALIZATION_MAP
-            # - Other mappings → Respective server Constants
-
-            # All permission names for validation (RFC baseline only)
-            ALL_PERMISSIONS: Final[frozenset[str]] = frozenset(
-                [
-                    READ,
-                    WRITE,
-                    ADD,
-                    DELETE,
-                    SEARCH,
-                    COMPARE,
-                    ALL,
-                    NONE,
-                ],
-            )
 
         # =============================================================================
         # BOOLEAN FORMATS - Server-Specific Boolean Representations
@@ -2684,7 +2526,6 @@ class FlextLdifConstants(FlextConstants):
             SYNTAX_OID_VALID: Final[str] = "syntax_oid_valid"
             SYNTAX_VALIDATION_ERROR: Final[str] = "syntax_validation_error"
             X_ORIGIN: Final[str] = "x_origin"  # RFC 2252 X-ORIGIN extension
-            OBSOLETE: Final[str] = "obsolete"  # RFC 4512 OBSOLETE flag
             COLLECTIVE: Final[str] = "collective"  # RFC 2876 COLLECTIVE flag
 
             # =========================
@@ -2859,7 +2700,6 @@ class FlextLdifConstants(FlextConstants):
                 "targetcontrol"  # OUD targetcontrol (LDAP control OID targeting)
             )
             ACL_EXTOP: Final[str] = "extop"  # OUD extop (extended operation OID)
-            ACL_BIND_IP: Final[str] = "bind_ip"  # OUD ip bind rule (IP/CIDR filtering)
             ACL_BIND_DNS: Final[str] = (
                 "bind_dns"  # OUD dns bind rule (DNS pattern matching)
             )
@@ -3182,9 +3022,7 @@ class FlextLdifConstants(FlextConstants):
 
             # Generic/RFC ACL formats (only generic constants remain)
             RFC_GENERIC: Final[str] = "rfc_generic"
-            ACI: Final[str] = (
-                "aci"  # RFC 4876 standard ACI attribute (used by multiple servers)
-            )
+            ACI: Final[str] = "aci"  # RFC 4876 standard ACI attribute
 
             # RFC Baseline defaults (for core modules that cannot access services/*)
             DEFAULT_ACL_FORMAT: Final[str] = ACI
@@ -3372,7 +3210,6 @@ class FlextLdifConstants(FlextConstants):
             Used in ACL service for rule type identification.
             """
 
-            BASE: Final[str] = "base"
             COMPOSITE: Final[str] = "composite"
             PERMISSION: Final[str] = "permission"
             SUBJECT: Final[str] = "subject"
@@ -3385,10 +3222,7 @@ class FlextLdifConstants(FlextConstants):
             Used in entry builder and API for entry type identification.
             """
 
-            PERSON: Final[str] = "person"
-            GROUP: Final[str] = "group"
             OU: Final[str] = "ou"
-            ORGANIZATIONAL_UNIT: Final[str] = "organizationalunit"
             CUSTOM: Final[str] = "custom"
 
         class ConversionTypes:
@@ -3405,13 +3239,6 @@ class FlextLdifConstants(FlextConstants):
             JSON_TO_ENTRIES: Final[str] = "json_to_entries"
 
             # Python 3.13+ PEP 695 type alias for better type checking
-            type ConversionTypeLiteral = Literal[
-                "entry_to_dict",
-                "entries_to_dicts",
-                "dicts_to_entries",
-                "entries_to_json",
-                "json_to_entries",
-            ]
 
         class ProcessorTypes:
             """Processor type identifier constants.
@@ -3429,11 +3256,9 @@ class FlextLdifConstants(FlextConstants):
             Zero Tolerance: All match type strings MUST be defined here.
             """
 
-            ALL: Final[str] = "all"
             ANY: Final[str] = "any"
 
             # Python 3.13+ PEP 695 type alias for better type checking
-            type MatchTypeLiteral = Literal["all", "any"]
 
         class Scopes:
             """LDAP search scope constants.
@@ -3441,22 +3266,11 @@ class FlextLdifConstants(FlextConstants):
             Zero Tolerance: All scope strings MUST be defined here.
             """
 
-            BASE: Final[str] = "base"
             ONE: Final[str] = "one"
-            ONELEVEL: Final[str] = "onelevel"
             SUB: Final[str] = "sub"
-            SUBTREE: Final[str] = "subtree"
             SUBORDINATE: Final[str] = "subordinate"
 
             # Python 3.13+ PEP 695 type alias for better type checking
-            type ScopeLiteral = Literal[
-                "base",
-                "one",
-                "onelevel",
-                "sub",
-                "subtree",
-                "subordinate",
-            ]
 
         class Parameters:
             """Parameter name constants.
@@ -3472,13 +3286,6 @@ class FlextLdifConstants(FlextConstants):
             PARSE_OBJECTCLASSES: Final[str] = "parse_objectclasses"
 
             # Python 3.13+ PEP 695 type alias for better type checking
-            type ParameterLiteral = Literal[
-                "file_path",
-                "content",
-                "parse_changes",
-                "parse_attributes",
-                "parse_objectclasses",
-            ]
 
         # =============================================================================
         # REGEX PATTERNS - All regex patterns centralized
@@ -3643,8 +3450,6 @@ class FlextLdifConstants(FlextConstants):
 
             # ACL utility constants
             ACL_WILDCARD_DN: Final[str] = "*"
-            ACL_WILDCARD_TYPE: Final[str] = "all"
-            ACL_WILDCARD_VALUE: Final[str] = "*"
             LDIF_FILE_EXTENSION: Final[str] = ".ldif"
 
             # Schema builder constants
@@ -3784,15 +3589,12 @@ class FlextLdifConstants(FlextConstants):
             """
 
             # RFC 4517 Syntax OIDs (base: 1.3.6.1.4.1.1466.115.121.1)
-            BASE: Final[str] = "1.3.6.1.4.1.1466.115.121.1"
 
             # Basic syntaxes
-            ACI: Final[str] = "1.3.6.1.4.1.1466.115.121.1.1"  # ACI Item
             ACCESS_POINT: Final[str] = "1.3.6.1.4.1.1466.115.121.1.2"  # Access Point
             ATTRIBUTE_TYPE_DESCRIPTION: Final[str] = (
                 "1.3.6.1.4.1.1466.115.121.1.3"  # Attribute Type Description
             )
-            AUDIO: Final[str] = "1.3.6.1.4.1.1466.115.121.1.4"  # Audio
             BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.5"  # Binary
             BIT_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.6"  # Bit String
             BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"  # Boolean
@@ -4413,7 +4215,98 @@ class FlextLdifConstants(FlextConstants):
             NONE = "none"
             ALPHABETICAL = "alphabetical"
             HIERARCHICAL = "hierarchical"
+    class DnPrefixField(StrEnum):
+        """Dn_Prefix field constants."""
 
+        PREFIX = 'dn:'
+        PREFIX_SHORT = 'dn'
+
+    class SchemaKwField(StrEnum):
+        """Schema_Kw field constants."""
+
+        NAME = 'NAME'
+        DESC = 'DESC'
+
+    class AclBindIpField(StrEnum):
+        """Acl_Bind_Ip field constants."""
+
+        IP_FULL = 'acl:vendor:bind_ip'
+        IP = 'bind_ip'
+
+    class PersonField(StrEnum):
+        """Person field constants."""
+
+        PERSON = 'person'
+
+    class OrganizationalUnitField(StrEnum):
+        """Organizational_Unit field constants."""
+
+        UNIT = 'organizationalUnit'
+        UNIT_LOWER = 'organizationalunit'
+
+    class UserField(StrEnum):
+        """User field constants."""
+
+        USER = 'user'
+
+    class GroupField(StrEnum):
+        """Group field constants."""
+
+        GROUP = 'group'
+
+    class AudioField(StrEnum):
+        """Audio field constants."""
+
+        AUDIO = 'audio'
+        AUDIO_OID = '1.3.6.1.4.1.1466.115.121.1.4'
+
+    class StrictField(StrEnum):
+        """Strict field constants."""
+
+        STRICT = 'strict'
+
+    class LenientField(StrEnum):
+        """Lenient field constants."""
+
+        LENIENT = 'lenient'
+
+    class SubtreeField(StrEnum):
+        """Subtree field constants."""
+
+        SUBTREE = 'subtree'
+
+    class OnelevelField(StrEnum):
+        """Onelevel field constants."""
+
+        ONELEVEL = 'onelevel'
+
+    class BaseField(StrEnum):
+        """Base field constants."""
+
+        BASE = 'base'
+        BASE_OID = '1.3.6.1.4.1.1466.115.121.1'
+
+    class AllField(StrEnum):
+        """All field constants."""
+
+        ALL = 'all'
+
+    class ObsoleteField(StrEnum):
+        """Obsolete field constants."""
+
+        OBSOLETE = 'obsolete'
+
+    class AciField(StrEnum):
+        """Aci field constants."""
+
+        ACI = 'aci'
+        ACI_OID = '1.3.6.1.4.1.1466.115.121.1.1'
+    class AclWildcardField(StrEnum):
+        """Acl_Wildcard field constants."""
+        
+        TYPE = 'all'
+        VALUE = '*'
+        
         class OutputFormat(StrEnum):
             """Output format options."""
 
@@ -4433,7 +4326,6 @@ class FlextLdifConstants(FlextConstants):
 # Runtime alias for basic class (objetos nested sem aliases redundantes)
 # Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 c = FlextLdifConstants
-
 
 __all__ = [
     "FlextLdifConstants",

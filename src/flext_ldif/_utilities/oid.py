@@ -14,8 +14,8 @@ from flext_core import FlextLogger, FlextResult, FlextUtilities
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 # REMOVED: Type aliases redundantes - use m.* diretamente (já importado com runtime alias)
-# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use p.Ldif.SchemaAttributeProtocol directly
-# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use p.Ldif.SchemaObjectClassProtocol directly
+# SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass directly
 
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
@@ -188,7 +188,7 @@ class FlextLdifUtilitiesOID:
             ...     "1.3.6.1.4.1.1466.115.121.1.7"
             ... )
             >>> if result.is_success:
-            >>>     is_valid = result.unwrap()  # True
+            >>>     is_valid = result.value  # True
 
         Note:
             This is the canonical OID validation for all _utilities modules.

@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from flext_core import r, t as core_t
+
+if TYPE_CHECKING:
+    from flext_ldif import m
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -20,12 +23,11 @@ from pydantic import ConfigDict, Field
 
 from flext_ldif._models.shared import FlextLdifModelsBase
 from flext_ldif.constants import c
-from flext_ldif.protocols import p
 
 # REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
-# _Entry = p.Ldif.EntryProtocol  # Use p.Ldif.EntryProtocol directly
-# _SchemaObjectClass = p.Ldif.SchemaObjectClassProtocol  # Use p.Ldif.SchemaObjectClassProtocol directly
-# _Acl = p.Ldif.AclProtocol  # Use p.Ldif.AclProtocol directly
+# _Entry = "m.Ldif.Entry"  # Use "m.Ldif.Entry" directly
+# _SchemaObjectClass = "m.Ldif.SchemaObjectClass"  # Use "m.Ldif.SchemaObjectClass" directly
+# _Acl = "m.Ldif.Acl"  # Use "m.Ldif.Acl" directly
 _QuirkMetadata = (
     core_t.Metadata
 )  # Use Metadata type from flext-core (this is from flext-core, not nested)
@@ -1722,8 +1724,8 @@ class FlextLdifModelsConfig:
         )
         post_parse_hook: (
             Callable[
-                [p.Ldif.EntryProtocol],
-                p.Ldif.EntryProtocol,
+                ["m.Ldif.Entry"],
+                "m.Ldif.Entry",
             ]
             | None
         ) = Field(
@@ -1731,7 +1733,7 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[[p.Ldif.EntryProtocol, str, str], None] | None
+            Callable[["m.Ldif.Entry", str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1784,8 +1786,8 @@ class FlextLdifModelsConfig:
         )
         post_parse_hook: (
             Callable[
-                [p.Ldif.EntryProtocol],
-                p.Ldif.EntryProtocol,
+                ["m.Ldif.Entry"],
+                "m.Ldif.Entry",
             ]
             | None
         ) = Field(
@@ -1793,7 +1795,7 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[[p.Ldif.EntryProtocol, str, str], None] | None
+            Callable[["m.Ldif.Entry", str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1837,7 +1839,7 @@ class FlextLdifModelsConfig:
             description="Optional SUP transformation",
         )
         enrich_metadata_hook: (
-            Callable[[p.Ldif.SchemaObjectClassProtocol], None] | None
+            Callable[["m.Ldif.SchemaObjectClass"], None] | None
         ) = Field(
             default=None,
             description="Optional metadata enrichment",
@@ -1910,7 +1912,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entry: p.Ldif.EntryProtocol = Field(
+        entry: "m.Ldif.Entry" = Field(
             ...,
             description="Entry model to write",
         )
@@ -1918,22 +1920,22 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[p.Ldif.EntryProtocol, list[str]], None] = (
+        write_attributes_hook: Callable[["m.Ldif.Entry", list[str]], None] = (
             Field(
                 ...,
                 description="Core attributes writing",
             )
         )
         write_comments_hook: (
-            Callable[[p.Ldif.EntryProtocol, list[str]], None] | None
+            Callable[["m.Ldif.Entry", list[str]], None] | None
         ) = Field(
             default=None,
             description="Optional comments writing",
         )
         transform_entry_hook: (
             Callable[
-                [p.Ldif.EntryProtocol],
-                p.Ldif.EntryProtocol,
+                ["m.Ldif.Entry"],
+                "m.Ldif.Entry",
             ]
             | None
         ) = Field(
@@ -1962,7 +1964,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entries: list[p.Ldif.EntryProtocol] = Field(
+        entries: list["m.Ldif.Entry"] = Field(
             ...,
             description="List of entries to write",
         )
@@ -1970,7 +1972,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]] = Field(
+        write_entry_hook: Callable[["m.Ldif.Entry"], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -2085,11 +2087,11 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        original_acl: p.Ldif.AclProtocol = Field(
+        original_acl: "m.Ldif.Acl" = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: p.Ldif.AclProtocol = Field(
+        converted_acl: "m.Ldif.Acl" = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2112,6 +2114,6 @@ class FlextLdifModelsConfig:
 
 
 # Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
-# Nested objects use full namespace (p.Ldif.EntryProtocol, not aliases)
+# Nested objects use full namespace ("m.Ldif.Entry", not aliases)
 # No string-quoted forward references - models work without rebuilding
 # No model_rebuild() calls needed - architectural requirement

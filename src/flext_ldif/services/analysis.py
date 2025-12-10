@@ -49,13 +49,13 @@ class FlextLdifAnalysis(
         # Analyze entries
         result = analysis_service.analyze(entries)
         if result.is_success:
-            stats = result.unwrap()
+            stats = result.value
             print(f"Total: {stats.total_entries}")
 
         # Validate entries
         validation_result = analysis_service.validate_entries(entries, validation_service)
         if validation_result.is_success:
-            report = validation_result.unwrap()
+            report = validation_result.value
             print(f"Valid: {report.is_valid}")
 
     """
@@ -111,7 +111,7 @@ class FlextLdifAnalysis(
         Example:
             result = analysis_service.analyze(entries)
             if result.is_success:
-                stats = result.unwrap()
+                stats = result.value
                 print(f"Total: {stats.total_entries}")
                 print(f"Classes: {stats.objectclass_distribution}")
 
@@ -182,7 +182,7 @@ class FlextLdifAnalysis(
             validation_service = FlextLdifValidation()
             result = analysis_service.validate_entries(entries, validation_service)
             if result.is_success:
-                report = result.unwrap()
+                report = result.value
                 print(f"Valid: {report.is_valid}")
                 print(f"Valid entries: {report.valid_entries}/{report.total_entries}")
 
@@ -263,7 +263,7 @@ class FlextLdifAnalysis(
 
         for attr_name in entry.attributes.attributes:
             attr_result = validation_service.validate_attribute_name(attr_name)
-            if attr_result.is_failure or not attr_result.unwrap():
+            if attr_result.is_failure or not attr_result.value:
                 errors.append(f"Entry {dn_str}: Invalid attribute name '{attr_name}'")
                 is_valid = False
         return (is_valid, errors)
@@ -300,13 +300,13 @@ class FlextLdifAnalysis(
                     msg = f"Expected str, got {type(oc_item)}"
                     raise TypeError(msg)
                 oc_result = validation_service.validate_objectclass_name(oc_item)
-                if oc_result.is_failure or not oc_result.unwrap():
+                if oc_result.is_failure or not oc_result.value:
                     errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
                     is_valid = False
         elif isinstance(oc_values, str):
             # Single string objectClass value
             oc_result = validation_service.validate_objectclass_name(oc_values)
-            if oc_result.is_failure or not oc_result.unwrap():
+            if oc_result.is_failure or not oc_result.value:
                 errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_values}'")
                 is_valid = False
         return (is_valid, errors)

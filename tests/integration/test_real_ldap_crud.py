@@ -25,7 +25,7 @@ import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -65,7 +65,7 @@ class TestRealLdapCRUD:
             objectclasses=["inetOrgPerson", "person", "top"],
         )
         assert person_result.is_success
-        person_entry = person_result.unwrap()
+        person_entry = person_result.value
 
         # Write to LDAP
         obj_class_values = person_entry.get_attribute_values("objectclass")
@@ -136,14 +136,14 @@ class TestRealLdapBatchOperations:
                 objectclasses=["inetOrgPerson", "person", "top"],
             )
             if result.is_success:
-                unwrapped_entry = result.unwrap()
+                unwrapped_entry = result.value
                 # Convert domain Entry to facade Entry if needed
-                if isinstance(unwrapped_entry, p.Entry):
+                if hasattr(unwrapped_entry, "dn") and hasattr(unwrapped_entry, "attributes"):
                     entries.append(unwrapped_entry)
                 else:
                     # Convert domain Entry to facade Entry
                     entry_dict = unwrapped_entry.model_dump()
-                    facade_entry = p.Entry.model_validate(entry_dict)
+                    facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
 
         assert len(entries) == 20
@@ -243,14 +243,14 @@ class TestRealLdapBatchOperations:
                 metadata=None,
             )
             assert result.is_success
-            unwrapped_entry = result.unwrap()
+            unwrapped_entry = result.value
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, p.Entry):
+            if hasattr(unwrapped_entry, "dn") and hasattr(unwrapped_entry, "attributes"):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = p.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         export_file = tmp_path / "batch_export.ldif"
@@ -261,7 +261,7 @@ class TestRealLdapBatchOperations:
         # Parse exported file - should match number of exported entries
         parse_result = flext_api.parse(export_file)
         assert parse_result.is_success
-        parsed_entries = parse_result.unwrap()
+        parsed_entries = parse_result.value
         # Verify roundtrip preserves entry count
         assert len(parsed_entries) == actual_count
 

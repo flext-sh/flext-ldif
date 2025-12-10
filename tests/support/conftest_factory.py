@@ -239,7 +239,7 @@ class FlextLdifTestConftest:
             self.LDAP_PORT,
             max_wait=30,
         )
-        if port_ready.is_failure or not port_ready.unwrap():
+        if port_ready.is_failure or not port_ready.value:
             pytest.skip(f"Container port {self.LDAP_PORT} not ready within 30s")
 
         # Verify LDAP is functional
@@ -866,7 +866,7 @@ objectClass: person
         assert quirk_result.is_success, (
             f"RFC quirk must be registered: {quirk_result.error}"
         )
-        quirk = quirk_result.unwrap()
+        quirk = quirk_result.value
         assert quirk is not None, "RFC quirk must be registered"
         return quirk
 
@@ -876,7 +876,7 @@ objectClass: person
         assert quirk_result.is_success, (
             f"OID quirk must be registered: {quirk_result.error}"
         )
-        quirk = quirk_result.unwrap()
+        quirk = quirk_result.value
         assert quirk is not None, "OID quirk must be registered"
         return quirk
 
@@ -886,7 +886,7 @@ objectClass: person
         assert quirk_result.is_success, (
             f"OUD quirk must be registered: {quirk_result.error}"
         )
-        quirk = quirk_result.unwrap()
+        quirk = quirk_result.value
         assert quirk is not None, "OUD quirk must be registered"
         return quirk
 

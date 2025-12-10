@@ -475,7 +475,7 @@ orclIsEnabled: 1
         parse_result = oid_server.parse(ldif_with_oid_booleans)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
 
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         # ParseResponse has .entries attribute (not a list directly)
         assert len(parse_response.entries) == 1
 
@@ -506,7 +506,7 @@ orclIsEnabled: 1
         write_result = oid_server.write(entries_list)
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         # Verify that values are written back in OID format (1/0)
         assert "orclEnabled: 1" in written_ldif, "Should write back as '1'"

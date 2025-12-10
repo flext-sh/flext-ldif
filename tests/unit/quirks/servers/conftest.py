@@ -124,7 +124,7 @@ def sample_schema_objectclass() -> p.Ldif.SchemaObjectClass:
 @pytest.fixture
 def sample_entry() -> p.Entry:
     """Provides a sample Entry for tests."""
-    result = p.Entry.create(
+    result = m.Ldif.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
             c.Ldif.DictKeys.OBJECTCLASS: [
@@ -133,7 +133,7 @@ def sample_entry() -> p.Entry:
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
     )
-    entry_domain = result.unwrap()
+    entry_domain = result.value
     # Create new instance using p.Entry to ensure correct type
     return m.Ldif.Entry(
         dn=entry_domain.dn,
@@ -226,7 +226,7 @@ invalidAttribute: value without proper formatting
 @pytest.fixture
 def sample_entry_with_metadata() -> p.Entry:
     """Provides a sample Entry with metadata for tests."""
-    result = p.Entry.create(
+    result = m.Ldif.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
             c.Ldif.DictKeys.OBJECTCLASS: [
@@ -238,7 +238,7 @@ def sample_entry_with_metadata() -> p.Entry:
             write_options=m.WriteFormatOptions(),
         ),
     )
-    entry_domain = result.unwrap()
+    entry_domain = result.value
     # Create new instance using p.Entry to ensure correct type
     return m.Ldif.Entry(
         dn=entry_domain.dn,

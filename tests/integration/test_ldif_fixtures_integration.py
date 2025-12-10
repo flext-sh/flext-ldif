@@ -32,7 +32,7 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries_raw = result.unwrap()
+        entries_raw = result.value
         assert isinstance(entries_raw, list)
         assert len(entries_raw) >= 45, (
             f"Expected 45+ RFC entries, got {len(entries_raw)}"
@@ -44,7 +44,7 @@ class TestsFlextLdifFixtures:
         parse_result = ldif.parse(fixture)
         assert parse_result.is_success
 
-        entries_raw = parse_result.unwrap()
+        entries_raw = parse_result.value
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
             assert entry.dn is not None
@@ -55,7 +55,7 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries_raw = result.unwrap()
+        entries_raw = result.value
         assert isinstance(entries_raw, list)
         assert len(entries_raw) >= 1
 
@@ -64,7 +64,7 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries_raw = result.unwrap()
+        entries_raw = result.value
         assert isinstance(entries_raw, list)
         assert len(entries_raw) >= 1
 
@@ -73,7 +73,7 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries_raw = result.unwrap()
+        entries_raw = result.value
         assert isinstance(entries_raw, list)
         assert len(entries_raw) >= 45, (
             f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
@@ -91,7 +91,7 @@ class TestsFlextLdifFixtures:
         for fixture_path in fixtures:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
-            entries_raw = result.unwrap()
+            entries_raw = result.value
             assert isinstance(entries_raw, list)
             assert len(entries_raw) >= 1, (
                 f"Expected at least 1 entry from {fixture_path}"
@@ -103,7 +103,7 @@ class TestsFlextLdifFixtures:
         result = ldif.parse(fixture)
         assert result.is_success
 
-        entries_raw = result.unwrap()
+        entries_raw = result.value
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
             # DN should follow RFC 4514 format
@@ -126,7 +126,7 @@ class TestsFlextLdifFixtures:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success
 
-            entries_raw = result.unwrap()
+            entries_raw = result.value
             assert isinstance(entries_raw, list)
             for entry in entries_raw:
                 # Check for objectClass (case-insensitive)

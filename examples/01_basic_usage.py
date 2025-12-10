@@ -54,14 +54,14 @@ mail: jane.smith@example.com
         if detect_result.is_failure:
             return r.fail(detect_result.error or "Detection failed")
 
-        detected = detect_result.unwrap()
+        detected = detect_result.value
         server_type = detected.detected_server_type or "rfc"
 
         parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
         if parse_result.is_failure:
             return parse_result
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
@@ -90,19 +90,19 @@ mail: jane.smith@example.com
         if detect_result.is_failure:
             return detect_result
 
-        detected = detect_result.unwrap()
+        detected = detect_result.value
         server_type = detected.detected_server_type or "rfc"
 
         parse_result = api.parse(sample_file, server_type=server_type)
         if parse_result.is_failure:
             return parse_result
 
-        validate_result = api.validate_entries(parse_result.unwrap())
+        validate_result = api.validate_entries(parse_result.value)
         if validate_result.is_failure:
             return validate_result
 
         write_result = api.write_file(
-            parse_result.unwrap(),
+            parse_result.value,
             Path("examples/output_dry.ldif"),
         )
         if write_result.is_failure:
@@ -128,16 +128,16 @@ mail: jane.smith@example.com
 
             parse_result = api.parse(
                 self.SAMPLE_LDIF[:100],
-                server_type=server_result.unwrap(),
+                server_type=server_result.value,
             )
             if parse_result.is_failure:
                 return parse_result
 
-            validate_result = api.validate_entries(parse_result.unwrap())
+            validate_result = api.validate_entries(parse_result.value)
             if validate_result.is_failure:
                 return r.fail(validate_result.error or "Validation failed")
 
-            return r.ok(parse_result.unwrap())
+            return r.ok(parse_result.value)
 
     @staticmethod
     def batch_transform() -> r:
@@ -157,7 +157,7 @@ mail: jane.smith@example.com
                 },
             )
             if result.is_success:
-                entries.append(result.unwrap())
+                entries.append(result.value)
 
         if not entries:
             return r.fail("Failed to create entries")

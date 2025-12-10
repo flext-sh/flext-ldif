@@ -176,7 +176,7 @@ class Pipeline:
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
                 return r.fail(transformer_result.error)
             # Transformers always return Entry (never FILTERED)
-            entry_value = transformer_result.unwrap()
+            entry_value = transformer_result.value
             return r.ok(entry_value)
 
         self._steps.append((step_name, wrapped_transformer))
@@ -250,7 +250,7 @@ class Pipeline:
             if isinstance(func_result, r):
                 # If result is Entry, wrap in Entry | FILTERED union
                 if func_result.is_success:
-                    entry_value = func_result.unwrap()
+                    entry_value = func_result.value
                     # Type narrowing: entry_value is Entry when success
                     return r.ok(entry_value)
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
@@ -287,7 +287,7 @@ class Pipeline:
             if result.is_failure:
                 return r.fail(f"Step '{step_name}' failed: {result.error}")
 
-            unwrapped = result.unwrap()
+            unwrapped = result.value
             # Business Rule: FILTERED sentinel indicates entry was filtered out
             # Type narrowing: unwrapped is Entry | FILTERED
             current = unwrapped
@@ -322,7 +322,7 @@ class Pipeline:
                 # For fail_fast, batch will stop on first error
                 # For collect mode, fail result signals skip
                 return r[m.Ldif.Entry].fail(result.error or "Processing failed")
-            processed = result.unwrap()
+            processed = result.value
             # Type narrowing: processed is Entry | _Filtered
             if isinstance(processed, _Filtered):
                 # Filtered entries return None (not an error, just skipped)
@@ -344,7 +344,7 @@ class Pipeline:
                 # Collect mode: skip error and continue
                 continue
             # Success: add to results
-            results.append(process_result.unwrap())
+            results.append(process_result.value)
         return r.ok(results)
 
     @property
@@ -577,7 +577,7 @@ class ValidationPipeline:
                 # Convert r[ValidationResult] failure to r[list[ValidationResult]] failure
                 return r.fail(validation_result.error)
 
-            validation = validation_result.unwrap()
+            validation = validation_result.value
             results.append(validation)
 
             total_errors += len(validation.errors)

@@ -36,7 +36,6 @@ from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
@@ -148,7 +147,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def can_handle_attribute(
         self,
-        attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+        attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if RFC quirk can handle attribute definitions (abstract impl).
 
@@ -159,7 +158,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+        oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if RFC quirk can handle objectClass definitions (abstract impl).
 
@@ -170,7 +169,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def should_filter_out_attribute(
         self,
-        _attribute: p.Ldif.SchemaAttributeProtocol,
+        _attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """RFC quirk does not filter attributes.
 
@@ -186,7 +185,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def should_filter_out_objectclass(
         self,
-        _objectclass: p.Ldif.SchemaObjectClassProtocol,
+        _objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """RFC quirk does not filter objectClasses.
 
@@ -252,7 +251,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser.
 
         Args:
@@ -280,20 +279,20 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # (FlextLdifUtilities.Ldif.Parsers.Attribute.parse was removed to break circular imports)
         parse_result_raw = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
         # Type narrowing: parse_attribute returns dict, convert to SchemaAttribute
-        parse_result: FlextResult[p.Ldif.SchemaAttributeProtocol] = FlextResult[
-            p.Ldif.SchemaAttributeProtocol
-        ].ok(p.Ldif.SchemaAttributeProtocol.model_validate(parse_result_raw))
+        parse_result: FlextResult[m.Ldif.SchemaAttribute] = FlextResult[
+            m.Ldif.SchemaAttribute
+        ].ok(m.Ldif.SchemaAttribute.model_validate(parse_result_raw))
 
         # Invoke post-parse hook for server-specific customization
         if parse_result.is_failure:
             return parse_result
 
-        return self._hook_post_parse_attribute(parse_result.unwrap())
+        return self._hook_post_parse_attribute(parse_result.value)
 
     def _parse_attribute_core(
         self,
         attr_definition: str,
-    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Core RFC 4512 attribute parsing per Section 4.1.2.
 
         RFC 4512 ABNF (AttributeTypeDescription):
@@ -485,7 +484,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 )
             )
 
-            attribute = p.Ldif.SchemaAttributeProtocol(
+            attribute = m.Ldif.SchemaAttribute(
                 oid=oid,
                 name=name,
                 desc=desc,
@@ -506,18 +505,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 x_oid=None,
             )
 
-            return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(attribute)
+            return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC attribute parsing exception")
-            return FlextResult[p.Ldif.SchemaAttributeProtocol].fail(
+            return FlextResult[m.Ldif.SchemaAttribute].fail(
                 f"RFC attribute parsing failed: {e}",
             )
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using generalized parser.
 
         Args:
@@ -542,7 +541,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         # DSL: Use config-based parse signature
         # ObjectClass.parse accepts config=None with **kwargs
-        parse_result: FlextResult[p.Ldif.SchemaObjectClassProtocol] = (
+        parse_result: FlextResult[m.Ldif.SchemaObjectClass] = (
             FlextLdifUtilitiesObjectClass.parse(
                 definition=oc_definition,
                 server_type=server_type,
@@ -554,7 +553,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if parse_result.is_failure:
             return parse_result
 
-        return self._hook_post_parse_objectclass(parse_result.unwrap())
+        return self._hook_post_parse_objectclass(parse_result.value)
 
     def _validate_oid_list(
         self,
@@ -595,7 +594,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _parse_objectclass_core(
         self,
         oc_definition: str,
-    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1.
 
         Delegates parsing to FlextLdifUtilitiesSchema.parse_objectclass()
@@ -715,7 +714,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 oc_may_value if isinstance(oc_may_value, list) else None
             )
 
-            objectclass = p.Ldif.SchemaObjectClassProtocol(
+            objectclass = m.Ldif.SchemaObjectClass(
                 oid=oc_oid,
                 name=oc_name,
                 desc=oc_desc,
@@ -726,11 +725,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 metadata=metadata,
             )
 
-            return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(objectclass)
+            return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
-            return FlextResult[p.Ldif.SchemaObjectClassProtocol].fail(
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
                 f"RFC objectClass parsing failed: {e}",
             )
 
@@ -738,8 +737,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _transform_objectclass_for_write(
         self,
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
-    ) -> p.Ldif.SchemaObjectClassProtocol:
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> m.Ldif.SchemaObjectClass:
         """Hook for subclasses to transform objectClass before writing."""
         return oc_data
 
@@ -749,8 +748,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _transform_attribute_for_write(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
-    ) -> p.Ldif.SchemaAttributeProtocol:
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
         """Hook for subclasses to transform attribute before writing."""
         return attr_data
 
@@ -762,7 +761,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # Import here to avoid circular import
         # Import here to avoid circular import
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> list[str]:
         """Build RFC attribute definition parts.
 
@@ -786,7 +785,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # Import here to avoid circular import
         # Import here to avoid circular import
         self,
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC objectClass definition parts.
 
@@ -830,7 +829,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _write_schema_item(
         self,
-        data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format.
 
@@ -845,7 +844,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         try:
             # Use isinstance for proper type narrowing
-            if isinstance(data, p.Ldif.SchemaAttributeProtocol):
+            if isinstance(data, m.Ldif.SchemaAttribute):
                 attr_transformed = self._transform_attribute_for_write(data)
                 if not attr_transformed.oid:
                     return FlextResult[str].fail(
@@ -899,7 +898,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         except (ValueError, TypeError, AttributeError) as e:
             item_type = (
                 "attribute"
-                if isinstance(data, p.Ldif.SchemaAttributeProtocol)
+                if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
             logger.exception(
@@ -911,10 +910,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _write_attribute(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute to RFC-compliant string format (internal)."""
-        if not isinstance(attr_data, p.Ldif.SchemaAttributeProtocol):
+        if not isinstance(attr_data, m.Ldif.SchemaAttribute):
             return FlextResult[str].fail(
                 f"Invalid attribute type: expected SchemaAttribute, "
                 f"got {type(attr_data).__name__}",
@@ -923,10 +922,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _write_objectclass(
         self,
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
-        if not isinstance(oc_data, p.Ldif.SchemaObjectClassProtocol):
+        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
             return FlextResult[str].fail(
                 f"Invalid objectClass type: expected SchemaObjectClass, "
                 f"got {type(oc_data).__name__}",
@@ -967,7 +966,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         *,
         attr_definition: None = None,
         oc_definition: None = None,
-        attr_model: p.Ldif.SchemaAttributeProtocol,
+        attr_model: m.Ldif.SchemaAttribute,
         oc_model: None = None,
         operation: str | None = None,
     ) -> str: ...
@@ -979,7 +978,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_definition: None = None,
         oc_definition: None = None,
         attr_model: None = None,
-        oc_model: p.Ldif.SchemaObjectClassProtocol,
+        oc_model: m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
@@ -988,8 +987,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         attr_definition: str | None = None,
         oc_definition: str | None = None,
-        attr_model: p.Ldif.SchemaAttributeProtocol | None = None,
-        oc_model: p.Ldif.SchemaObjectClassProtocol | None = None,
+        attr_model: m.Ldif.SchemaAttribute | None = None,
+        oc_model: m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
     ) -> t.Ldif.SchemaModelOrString: ...
 
@@ -997,8 +996,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         attr_definition: str | None = None,
         oc_definition: str | None = None,
-        attr_model: p.Ldif.SchemaAttributeProtocol | None = None,
-        oc_model: p.Ldif.SchemaObjectClassProtocol | None = None,
+        attr_model: m.Ldif.SchemaAttribute | None = None,
+        oc_model: m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
     ) -> t.Ldif.SchemaModelOrString:
         """Callable interface - automatic polymorphic processor.
@@ -1013,8 +1012,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # If attr_model is provided, use it; otherwise use oc_model
         data: (
             str
-            | p.Ldif.SchemaAttributeProtocol
-            | p.Ldif.SchemaObjectClassProtocol
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
             | None
         ) = None
         if attr_definition is not None:
@@ -1027,7 +1026,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             data = oc_model
 
         result = self.execute(data=data, operation=operation)
-        unwrapped = result.unwrap()
+        unwrapped = result.value
         # Type narrowing: unwrapped is SchemaAttribute | SchemaObjectClass | str
         # Cast to satisfy protocol return type
         return cast("t.Ldif.SchemaModelOrString", unwrapped)
@@ -1091,15 +1090,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             oc_def_raw = kwargs.get("oc_definition")
             oc_def: str | None = oc_def_raw if isinstance(oc_def_raw, str) else None
             attr_mod_raw = kwargs.get("attr_model")
-            attr_mod: p.Ldif.SchemaAttributeProtocol | None = (
+            attr_mod: m.Ldif.SchemaAttribute | None = (
                 attr_mod_raw
-                if isinstance(attr_mod_raw, p.Ldif.SchemaAttributeProtocol)
+                if isinstance(attr_mod_raw, m.Ldif.SchemaAttribute)
                 else None
             )
             oc_mod_raw = kwargs.get("oc_model")
-            oc_mod: p.Ldif.SchemaObjectClassProtocol | None = (
+            oc_mod: m.Ldif.SchemaObjectClass | None = (
                 oc_mod_raw
-                if isinstance(oc_mod_raw, p.Ldif.SchemaObjectClassProtocol)
+                if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass)
                 else None
             )
             op_raw = kwargs.get("operation")
@@ -1109,8 +1108,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             # Schema.execute() expects a single 'data' parameter
             data: (
                 str
-                | p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
                 | None
             ) = None
             if attr_def is not None:
@@ -1125,7 +1124,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             # Use schema_instance from above
             result = schema_instance.execute(data=data, operation=op)
             # Unwrap and return the result of auto-execute
-            unwrapped = result.unwrap()
+            unwrapped = result.value
             if isinstance(unwrapped, cls):
                 return unwrapped
             return instance
@@ -1187,8 +1186,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> FlextResult[
         dict[
             str,
-            list[p.Ldif.SchemaAttributeProtocol]
-            | list[p.Ldif.SchemaObjectClassProtocol],
+            list[m.Ldif.SchemaAttribute]
+            | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u.
@@ -1225,8 +1224,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     return FlextResult[
                         dict[
                             str,
-                            list[p.Ldif.SchemaAttributeProtocol]
-                            | list[p.Ldif.SchemaObjectClassProtocol],
+                            list[m.Ldif.SchemaAttribute]
+                            | list[m.Ldif.SchemaObjectClass],
                         ]
                     ].fail(
                         f"Attribute validation failed: {validation_result.error}",
@@ -1244,8 +1243,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             # Use c.Ldif.DictKeys for type-safe dictionary keys
             schema_dict: dict[
                 str,
-                list[p.Ldif.SchemaAttributeProtocol]
-                | list[p.Ldif.SchemaObjectClassProtocol],
+                list[m.Ldif.SchemaAttribute]
+                | list[m.Ldif.SchemaObjectClass],
             ] = {
                 c.Ldif.DictKeys.ATTRIBUTES: attributes_parsed,
                 c.Ldif.DictKeys.OBJECTCLASS: objectclasses_parsed,
@@ -1253,8 +1252,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[
                 dict[
                     str,
-                    list[p.Ldif.SchemaAttributeProtocol]
-                    | list[p.Ldif.SchemaObjectClassProtocol],
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass],
                 ]
             ].ok(schema_dict)
 
@@ -1265,8 +1264,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[
                 dict[
                     str,
-                    list[p.Ldif.SchemaAttributeProtocol]
-                    | list[p.Ldif.SchemaObjectClassProtocol],
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass],
                 ]
             ].fail(
                 f"Schema extraction failed: {e}",

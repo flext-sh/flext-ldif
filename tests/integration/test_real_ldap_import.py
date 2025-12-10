@@ -64,7 +64,7 @@ mail: import@example.com
         # Parse LDIF
         parse_result = flext_api.parse(ldif_content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         entry = entries[0]
@@ -139,7 +139,7 @@ jpegPhoto:: {encoded_photo}
         # Parse LDIF
         parse_result = flext_api.parse(ldif_content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         entry = entries[0]
 
@@ -199,7 +199,7 @@ mail: import@example.com
         # Parse file
         parse_result = flext_api.parse(ldif_file)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         entry = entries[0]

@@ -153,7 +153,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
         if should_succeed:
             assert result.is_success, f"Scenario {scenario}: expected success"
-            parsed = result.unwrap()
+            parsed = result.value
             assert hasattr(parsed, "name")
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
                 assert parsed.oid is not None
@@ -183,7 +183,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
         if should_succeed:
             assert result.is_success, f"Scenario {scenario}: expected success"
-            parsed = result.unwrap()
+            parsed = result.value
             assert hasattr(parsed, "name")
         else:
             assert result.is_failure, f"Scenario {scenario}: expected failure"
@@ -211,7 +211,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
         result = schema_quirk.parse_attribute(original)
         assert result.is_success
-        parsed = result.unwrap()
+        parsed = result.value
         assert parsed.metadata
         assert parsed.metadata.extensions.get("original_format") == original
 
@@ -239,7 +239,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         )
         result = schema_quirk.write_attribute(attr_data)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert isinstance(written, str)
         assert len(written) > 0
 
@@ -270,7 +270,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         # Relaxed mode accepts everything
         assert hasattr(result, "is_success")
         if result.is_success:
-            parsed = result.unwrap()
+            parsed = result.value
             assert parsed.raw_acl == acl_line
 
     def test_write_acl_preserves_raw_content(
@@ -288,7 +288,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         )
         result = acl_quirk.write(acl_data)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert written == raw_acl
 
     # ========== Entry Tests ==========
@@ -335,7 +335,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
         # Should succeed if OID can be extracted
         assert result.is_success
-        parsed = result.unwrap()
+        parsed = result.value
         assert parsed.metadata
         assert parsed.metadata.extensions.get(
             "original_format",
@@ -390,7 +390,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         else:
             result = schema_quirk.parse_objectclass(input_with_oid)
         assert result.is_success
-        parsed = result.unwrap()
+        parsed = result.value
         assert hasattr(parsed, "name")
 
     # ========== Integration Tests ==========
@@ -481,7 +481,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         )
         result = schema_quirk.write_attribute(attr_data)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert "2.16.840.1.113894.1.1.1" in written
         assert "orclGUID" in written
 
@@ -498,6 +498,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         )
         result = schema_quirk.write_objectclass(oc_data)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert "2.16.840.1.113894.1.2.1" in written
         assert "orclContext" in written

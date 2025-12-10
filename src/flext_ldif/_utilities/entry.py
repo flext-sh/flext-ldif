@@ -363,7 +363,7 @@ class FlextLdifUtilitiesEntry:
             return entry
 
         # Use entry directly - both types share same interface (duck-typing)
-        return result.unwrap()
+        return result.value
 
     @staticmethod
     def analyze_differences(
@@ -912,7 +912,7 @@ class FlextLdifUtilitiesEntry:
                     # Use dict[str, object] for model_copy update (Pydantic accepts object)
                     # m.Ldif.DN is compatible via inheritance
                     dn_update: dict[str, object] = {
-                        "dn": m.Ldif.DN(value=norm_result.unwrap()),
+                        "dn": m.Ldif.DN(value=norm_result.value),
                     }
                     current = current.model_copy(update=dn_update)
             if config.normalize_attrs and current.attributes:

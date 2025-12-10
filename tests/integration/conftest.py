@@ -141,7 +141,7 @@ def oid_schema_entries(
     """
     result = api.parse(oid_schema_fixture)
     assert result.is_success, f"OID schema parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 @pytest.fixture
@@ -164,7 +164,7 @@ def oid_entries(
     """
     result = api.parse(oid_entries_fixture)
     assert result.is_success, f"OID entries parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 # ============================================================================
@@ -240,7 +240,7 @@ def oud_schema_entries(
     """
     result = api.parse(oud_schema_fixture)
     assert result.is_success, f"OUD schema parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 @pytest.fixture
@@ -263,7 +263,7 @@ def oud_entries(
     """
     result = api.parse(oud_entries_fixture)
     assert result.is_success, f"OUD entries parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 # ============================================================================
@@ -339,7 +339,7 @@ def openldap_schema_entries(
     """
     result = api.parse(openldap_schema_fixture)
     assert result.is_success, f"OpenLDAP schema parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 @pytest.fixture
@@ -362,7 +362,7 @@ def openldap_entries(
     """
     result = api.parse(openldap_entries_fixture)
     assert result.is_success, f"OpenLDAP entries parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 # ============================================================================
@@ -402,7 +402,7 @@ def rfc_schema_entries(
     """
     result = api.parse(rfc_schema_fixture)
     assert result.is_success, f"RFC schema parsing failed: {result.error}"
-    return result.unwrap()
+    return result.value
 
 
 # ============================================================================
@@ -551,7 +551,7 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     assert quirk_result.is_success, (
         f"OID quirk must be registered: {quirk_result.error_message}"
     )
-    return quirk_result.unwrap()
+    return quirk_result.value
 
 
 @pytest.fixture
@@ -561,7 +561,7 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     assert quirk_result.is_success, (
         f"OUD quirk must be registered: {quirk_result.error_message}"
     )
-    return quirk_result.unwrap()
+    return quirk_result.value
 
 
 @pytest.fixture

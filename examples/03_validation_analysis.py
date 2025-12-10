@@ -81,7 +81,7 @@ class DRYValidationAnalysis:
                         {} if i % int(1 / error_rate) != 0 else {"sn": []}
                     ),  # Missing sn
                 },
-            ).unwrap()
+            ).value
             for i in range(count)
             if api.create_entry(
                 dn=f"cn=Test User {i},ou=People,dc=example,dc=com",

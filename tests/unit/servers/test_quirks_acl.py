@@ -146,7 +146,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -155,13 +155,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         assert "userdn=" in oud_aci.lower()
         assert "self" in oud_aci.lower()
@@ -183,7 +183,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -192,13 +192,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "manager" in oud_aci.lower()
@@ -221,7 +221,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -230,13 +230,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "orclguid" in oud_aci.lower()
@@ -259,7 +259,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -268,13 +268,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "uniqueMember" in oud_aci or "uniquemember" in oud_aci.lower()
@@ -297,7 +297,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -333,7 +333,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -343,7 +343,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         # Conversion succeeds and maps selfwrite → write
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Verify mapping: selfwrite → write
@@ -356,7 +356,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert write_result.is_success, (
             f"Write should succeed after mapping: {write_result.error}"
         )
-        written_acl = write_result.unwrap()
+        written_acl = write_result.value
         assert "allow (write)" in written_acl
         assert "selfwrite" not in written_acl
 
@@ -379,7 +379,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -388,13 +388,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         # Should have both read and search
         assert "read" in oud_aci.lower()
@@ -419,7 +419,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -428,13 +428,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         # Should have deny rules or absence of add/delete permissions
         # Implementation may vary - verify it converts (check for OUD format or deny rules)
@@ -465,7 +465,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -476,13 +476,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
 
     def test_oid_orclentrylevelaci_with_constraint_to_oud(
@@ -504,7 +504,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -515,13 +515,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
 
     def test_oid_multiple_by_clauses_to_oud(
@@ -543,7 +543,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -554,13 +554,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
 
     def test_oid_attribute_target_to_oud(
@@ -587,7 +587,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler = FlextLdifServersOid.Acl()
         parse_result = oid_acl_handler.parse(oid_acl)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oid,
@@ -596,13 +596,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
+        oud_aci = write_result.value
         assert isinstance(oud_aci, str)
         # After removing fallback, OUD properly converts to its own format
         assert "aci:" in oud_aci.lower(), "Should have OUD aci: prefix"
@@ -629,7 +629,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oud_acl_handler = FlextLdifServersOud.Acl()
         parse_result = oud_acl_handler.parse(oud_aci)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oud,
@@ -638,13 +638,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        converted_acl_model = result.unwrap()
+        converted_acl_model = result.value
         assert isinstance(converted_acl_model, m.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
         assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oid_acl = write_result.unwrap()
+        oid_acl = write_result.value
         assert isinstance(oid_acl, str)
         assert "orclaci:" in oid_acl.lower()
         assert "self" in oid_acl.lower()
@@ -666,7 +666,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oud_acl_handler = FlextLdifServersOud.Acl()
         parse_result = oud_acl_handler.parse(oud_aci)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oud,
@@ -677,13 +677,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
             assert "orclaci:" in oid_acl.lower()
 
@@ -710,7 +710,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oud_acl_handler = FlextLdifServersOud.Acl()
         parse_result = oud_acl_handler.parse(oud_aci)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oud,
@@ -721,13 +721,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
             assert "orclaci:" in oid_acl.lower()
 
@@ -750,7 +750,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oud_acl_handler = FlextLdifServersOud.Acl()
         parse_result = oud_acl_handler.parse(oud_aci)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oud,
@@ -761,13 +761,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
 
     def test_oud_targetattr_negation_to_oid(
@@ -789,7 +789,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         oud_acl_handler = FlextLdifServersOud.Acl()
         parse_result = oud_acl_handler.parse(oud_aci)
         assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion.convert(
             source=oud,
@@ -800,13 +800,13 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            converted_acl_model = result.unwrap()
+            converted_acl_model = result.value
             assert isinstance(converted_acl_model, m.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
             assert write_result.is_success, f"ACL write failed: {write_result.error}"
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
             assert isinstance(oid_acl, str)
 
     # ============================================================================
@@ -837,7 +837,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with default format
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format
         assert oid_acl.startswith("orclaci:")
@@ -869,7 +869,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with oneline format
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format is single line (no newlines)
         assert "\n" not in oid_acl
@@ -909,7 +909,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with default format
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format
         assert oid_acl.startswith("orclaci:")
@@ -945,7 +945,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with oneline format
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format is single line
         assert "\n" not in oid_acl
@@ -986,7 +986,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with default format
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format
         assert oid_acl.startswith("orclaci:")
@@ -1021,7 +1021,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with oneline format
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format is single line with multiple permissions
         assert "\n" not in oid_acl
@@ -1068,7 +1068,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with oneline format
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format
         assert "\n" not in oid_acl
@@ -1101,7 +1101,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with default format
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify entry target
         assert oid_acl.startswith("orclaci:")
@@ -1132,7 +1132,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with oneline format
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format and proxy permission
         assert "\n" not in oid_acl
@@ -1165,7 +1165,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Write with default format
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify format
         assert oid_acl.startswith("orclaci:")
@@ -1206,7 +1206,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Verify all permissions are present
         assert "(read,write,add,delete,search,compare,selfwrite,proxy)" in oid_acl or (
@@ -1233,7 +1233,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Empty attributes list should produce "access to entry"
         assert "access to entry" in oid_acl
@@ -1258,7 +1258,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Single attribute still in attr=(...) format
         assert "attr=(cn)" in oid_acl
@@ -1284,7 +1284,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # All attributes should be present
         assert "attr=(cn,mail,telephoneNumber,mobile,description,department)" in oid_acl
@@ -1309,7 +1309,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # DN should be extracted from LDAP URL
         assert 'by "cn=john,ou=users,dc=example,dc=com"' in oid_acl
@@ -1340,7 +1340,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # group= format with extracted DN
         assert 'by group="cn=engineers,ou=groups,dc=example,dc=com"' in oid_acl
@@ -1370,7 +1370,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Suffix should be removed - only attr name
         assert "by dnattr=(manager)" in oid_acl
@@ -1401,7 +1401,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Suffix should be removed
         assert "by guidattr=(owner)" in oid_acl
@@ -1432,7 +1432,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Suffix should be removed
         assert "by groupattr=(memberOf)" in oid_acl
@@ -1460,7 +1460,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Should return raw_acl unchanged
         assert oid_acl == raw_orclaci
@@ -1486,7 +1486,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # DN with special chars should be quoted
         assert f'by "{special_dn}"' in oid_acl
@@ -1516,7 +1516,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Permissions should be in order: read, write, search, compare
         assert "(read,write,search,compare)" in oid_acl
@@ -1538,7 +1538,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
-        oid_acl = result.unwrap()
+        oid_acl = result.value
 
         # Should produce valid output even without subject
         assert oid_acl.startswith("orclaci:")

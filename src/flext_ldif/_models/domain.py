@@ -692,7 +692,9 @@ class FlextLdifModelsDomains:
             # Return empty list by default (lenient processing)
             return []
 
-        def get_values(self, key: str, default: list[LaxStr] | None = None) -> list[LaxStr]:
+        def get_values(
+            self, key: str, default: list[LaxStr] | None = None
+        ) -> list[LaxStr]:
             """Get attribute values as a list (same as get()).
 
             Args:

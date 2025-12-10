@@ -146,9 +146,9 @@ class FlextLdifMigrationPipeline(
             if result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(str(result.error))
 
-            # result.unwrap() already returns list[m.Ldif.Entry] - entries are already m.Ldif.Entry via inheritance
+            # result.value already returns list[m.Ldif.Entry] - entries are already m.Ldif.Entry via inheritance
             # Business Rule: pipeline.execute returns FlextResult[list[m.Ldif.Entry]], so entries are already compatible
-            migrated = result.unwrap()
+            migrated = result.value
             return r[list[m.Ldif.Entry]].ok(migrated)
 
         except Exception as e:
@@ -195,7 +195,7 @@ class FlextLdifMigrationPipeline(
                     f"Parse failed: {parse_result.error}",
                 )
 
-            response = parse_result.unwrap()
+            response = parse_result.value
             # response.entries is Sequence[m.Ldif.Entry] - entries are already m.Ldif.Entry
             # Type narrowing: response.entries contains m.Ldif.Entry
             # Convert to list and ensure type compatibility
@@ -211,7 +211,7 @@ class FlextLdifMigrationPipeline(
                     f"Migration failed: {migrate_result.error}",
                 )
 
-            migrated = migrate_result.unwrap()
+            migrated = migrate_result.value
 
             # Write output file
             if output_file is None:
@@ -234,7 +234,7 @@ class FlextLdifMigrationPipeline(
                 )
 
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            output_file.write_text(write_result.unwrap(), encoding="utf-8")
+            output_file.write_text(write_result.value, encoding="utf-8")
 
             # Return result using public model classes via m alias
             # Convert m.Ldif.Entry to base Entry type for MigrationPipelineResult
@@ -300,7 +300,7 @@ class FlextLdifMigrationPipeline(
             for input_file in in_dir.glob("*.ldif"):
                 result = self.migrate_file(input_file)
                 if result.is_success:
-                    res = result.unwrap()
+                    res = result.value
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
                     # res.entries is list[m.Ldif.Entry] - convert to m.Ldif.Entry

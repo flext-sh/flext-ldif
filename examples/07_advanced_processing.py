@@ -59,14 +59,14 @@ sn: Three
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     # Process in batch mode - ONE LINE! (was 15+ lines)
     # No processor creation, no manual conversion loops!
     batch_result = api.process("transform", entries, parallel=False)
 
     if batch_result.is_success:
-        processed = batch_result.unwrap()
+        processed = batch_result.value
         _ = len(processed)
 
 
@@ -91,13 +91,13 @@ def parallel_processing() -> None:
             },
         )
         if result.is_success:
-            entries.append(result.unwrap())
+            entries.append(result.value)
 
     # Process in parallel using ThreadPoolExecutor
     parallel_result = api.process("validate", entries, parallel=True)
 
     if parallel_result.is_success:
-        processed = parallel_result.unwrap()
+        processed = parallel_result.value
         _ = len(processed)
         # Note: Results may be in different order than input due to parallel execution
 
@@ -111,7 +111,7 @@ def use_dn_utilities() -> None:
     parse_result = FlextLdifDn.parse_components(dn)
 
     if parse_result.is_success:
-        components = parse_result.unwrap()
+        components = parse_result.value
         # Components is list of (attribute, value) pairs
         _ = len(components)
 
@@ -119,14 +119,14 @@ def use_dn_utilities() -> None:
     validation_result = FlextLdifDn.validate_format(dn)
 
     if validation_result.is_success:
-        is_valid = validation_result.unwrap()
+        is_valid = validation_result.value
         _ = is_valid
 
     # Normalize DN
     normalize_result = FlextLdifDn.normalize(dn)
 
     if normalize_result.is_success:
-        normalized = normalize_result.unwrap()
+        normalized = normalize_result.value
         _ = normalized
 
 
@@ -192,7 +192,7 @@ def use_ldif_utilities() -> None:
 
     # Count LDIF entries using API
     if syntax_result.is_success:
-        entries = syntax_result.unwrap()
+        entries = syntax_result.value
         _ = len(entries)
 
 
@@ -255,7 +255,7 @@ sn: User
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     # Validate using services
     def validate_entry(entry: FlextLdifModels.Entry) -> bool:
@@ -273,13 +273,13 @@ sn: User
     batch_result = api.process("transform", entries, parallel=False)
 
     if batch_result.is_success:
-        processed = batch_result.unwrap()
+        processed = batch_result.value
 
         # Analyze processed results
         analysis_result = api.get_entry_statistics(entries)
 
         if analysis_result.is_success:
-            stats = analysis_result.unwrap()
+            stats = analysis_result.value
             _ = (len(processed), stats)
 
 

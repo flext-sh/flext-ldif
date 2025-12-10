@@ -27,7 +27,6 @@ from flext_core import FlextLogger, FlextResult, FlextTypes, t, u
 # Metadata access via m.Ldif namespace from models import
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 
@@ -210,7 +209,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def can_handle_attribute(
         self,
-        attribute: p.Ldif.SchemaAttributeProtocol,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if quirk handles schema attributes.
 
@@ -228,7 +227,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def can_handle_objectclass(
         self,
-        objectclass: p.Ldif.SchemaObjectClassProtocol,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if quirk handles objectclasses.
 
@@ -284,7 +283,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         Type auto-detection handles routing automatically.
         """
         result = self.execute(data=data, operation=operation)
-        return result.unwrap()
+        return result.value
 
     def __new__(
         cls,
@@ -341,7 +340,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             # Type narrowing: instance is Self (Acl subclass)
             # Use acl_instance from above
             result = acl_instance.execute(data=data, operation=op)
-            unwrapped: m.Ldif.Acl | str = result.unwrap()
+            unwrapped: m.Ldif.Acl | str = result.value
             if isinstance(unwrapped, cls):
                 return unwrapped
             return instance

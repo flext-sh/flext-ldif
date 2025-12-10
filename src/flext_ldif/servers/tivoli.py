@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import (
     FlextResult,
@@ -18,7 +18,6 @@ from flext_core import (
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -190,10 +189,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
-            if isinstance(attr_definition, p.Ldif.SchemaAttributeProtocol):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return u.Ldif.Server.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
@@ -213,10 +212,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
-            if isinstance(oc_definition, p.Ldif.SchemaObjectClassProtocol):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return u.Ldif.Server.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
@@ -236,7 +235,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Tivoli metadata.
 
             Args:
@@ -248,11 +247,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
@@ -260,7 +259,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Tivoli metadata.
 
             Args:
@@ -272,11 +271,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
@@ -458,7 +457,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             norm_result = u.Ldif.DN.norm(entry_dn)
             if norm_result.is_success:
-                return norm_result.unwrap()
+                return norm_result.value
             # Fallback to lowercase if normalization fails (Tivoli specific)
             return entry_dn.lower()
 

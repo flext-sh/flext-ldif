@@ -40,7 +40,6 @@ from pydantic import Field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
 logger = FlextLogger(__name__)
@@ -226,7 +225,7 @@ class FlextLdifServersBaseEntry(
 
     def can_handle_attribute(
         self,
-        attribute: p.Ldif.SchemaAttributeProtocol,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if this quirk can handle a schema attribute.
 
@@ -245,7 +244,7 @@ class FlextLdifServersBaseEntry(
 
     def can_handle_objectclass(
         self,
-        objectclass: p.Ldif.SchemaObjectClassProtocol,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if this quirk can handle a schema objectClass.
 
@@ -587,7 +586,7 @@ class FlextLdifServersBaseEntry(
             result = self._write_single_entry(entry, write_options)
             if result.is_failure:
                 return result
-            results.append(result.unwrap())
+            results.append(result.value)
 
         all_lines = header_lines + results
         ldif_output = "\n".join(all_lines) if all_lines else ""
@@ -673,7 +672,7 @@ class FlextLdifServersBaseEntry(
         if isinstance(ldif_content, str):
             entries_result = self._parse_content(ldif_content)
             if entries_result.is_success:
-                entries = entries_result.unwrap()
+                entries = entries_result.value
                 return FlextResult[m.Ldif.Entry | str].ok(
                     entries[0] if entries else "",
                 )
@@ -681,7 +680,7 @@ class FlextLdifServersBaseEntry(
         if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
             return FlextResult[m.Ldif.Entry | str].ok(
-                str_result.unwrap() if str_result.is_success else "",
+                str_result.value if str_result.is_success else "",
             )
 
         return FlextResult[m.Ldif.Entry | str].ok("")
@@ -744,7 +743,7 @@ class FlextLdifServersBaseEntry(
             return FlextResult[m.Ldif.Entry].fail(
                 result.error or "Failed to parse entry",
             )
-        entries = result.unwrap()
+        entries = result.value
         if not entries:
             return FlextResult[m.Ldif.Entry].fail("No entries parsed")
         return FlextResult[m.Ldif.Entry].ok(entries[0])

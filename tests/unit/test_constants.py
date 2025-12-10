@@ -183,7 +183,9 @@ class TestsTestFlextLdifConstants(s):
 
     def test_debug_workers_less_than_max(self) -> None:
         """Test debug workers is less than max workers limit."""
-        assert lib_c.Ldif.DEBUG_MAX_WORKERS <= lib_c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        assert (
+            lib_c.Ldif.DEBUG_MAX_WORKERS <= lib_c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        )
 
     def test_performance_workers_less_than_max(self) -> None:
         """Test performance workers is less than max workers limit."""
@@ -302,7 +304,9 @@ class TestsTestFlextLdifConstants(s):
         assert lib_c.Ldif.DEFAULT_ENCODING in lib_c.Ldif.SUPPORTED_ENCODINGS
         assert 40 < lib_c.Ldif.LdifFormatting.MAX_LINE_WIDTH < 200
         assert lib_c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT > 0
-        assert lib_c.Ldif.DEBUG_MAX_WORKERS <= lib_c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        assert (
+            lib_c.Ldif.DEBUG_MAX_WORKERS <= lib_c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        )
         assert lib_c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
         assert lib_c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
         assert (

@@ -99,7 +99,7 @@ member: cn=OUD User,ou=People,dc=example,dc=com
         if migration_result.is_failure:
             return r.fail(f"Migration failed: {migration_result.error}")
 
-        result = migration_result.unwrap()
+        result = migration_result.value
 
         # Verify migration results
         if hasattr(result, "entries_by_category"):
@@ -141,7 +141,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         if detect_result.is_failure:
             return r.fail(f"Server detection failed: {detect_result.error}")
 
-        detection = detect_result.unwrap()
+        detection = detect_result.value
         detected_server = detection.detected_server_type or "rfc"
 
         # Parse with detected server type
@@ -149,7 +149,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         if parse_result.is_failure:
             return r.fail(f"Parse failed: {parse_result.error}")
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Migrate to standardized RFC format
         migration_dir = Path("examples/auto_migration")
@@ -210,7 +210,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
             server_type = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", server)
             parse_result = api.parse(test_ldif, server_type=server_type)
             if parse_result.is_success:
-                entries = parse_result.unwrap()
+                entries = parse_result.value
                 comparison_results[server] = {
                     "parsed_successfully": True,
                     "entry_count": len(entries),
@@ -221,7 +221,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
                 if entries:
                     validate_result = api.validate_entries(entries)
                     if validate_result.is_success:
-                        report = validate_result.unwrap()
+                        report = validate_result.value
                         server_result = comparison_results[server]
                         if isinstance(server_result, dict):
                             server_result["validation"] = {
@@ -312,7 +312,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
         source_data: list[str] = []
         if batch_result.is_success:
-            value = batch_result.unwrap()
+            value = batch_result.value
             if isinstance(value, list):
                 source_data = cast("list[str]", value)
 
@@ -337,7 +337,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         detect_result = api.detect_server_type(ldif_content=sample_file)
         detection_data: dict[str, object] = {}
         if detect_result.is_success:
-            detection = detect_result.unwrap()
+            detection = detect_result.value
             detection_data = {
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
@@ -398,7 +398,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         if final_migration.is_failure:
             return r.fail(f"Final migration failed: {final_migration.error}")
 
-        final_result = final_migration.unwrap()
+        final_result = final_migration.value
         final_count = (
             final_result.statistics.processed_entries
             if hasattr(final_result, "statistics") and final_result.statistics

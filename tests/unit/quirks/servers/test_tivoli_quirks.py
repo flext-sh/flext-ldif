@@ -10,8 +10,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import p, s
+from tests import s
 
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
@@ -429,13 +430,13 @@ class TestsTestFlextLdifTivoliQuirks(s):
         """Test Tivoli entry detection by various patterns."""
         # Reconstruct with proper typing for Entry.create
         typed_attributes: dict[str, str | list[str]] = dict(attributes.items())
-        entry_result = p.Entry.create(
+        entry_result = m.Ldif.Entry.create(
             dn=dn,
             attributes=typed_attributes,
         )
 
         assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = entry_result.value
 
         # Verify entry can be created with Tivoli-like patterns
         assert entry.dn is not None

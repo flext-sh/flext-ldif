@@ -391,7 +391,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         result = schema_quirk.parse_attribute(clean_def)
         assert result.is_success
         if expected_oid:
-            attr = result.unwrap()
+            attr = result.value
             assert attr.oid == expected_oid
 
     def test_parse_attribute_missing_oid(
@@ -493,7 +493,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         result = schema_quirk.parse_objectclass(clean_def)
         assert result.is_success
         if expected_oid:
-            oc = result.unwrap()
+            oc = result.value
             assert oc.oid == expected_oid
             if expected_kind:
                 assert oc.kind == expected_kind
@@ -532,7 +532,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         result = acl_quirk.parse(acl_line)
         assert result.is_success == should_parse
         if should_parse:
-            acl = result.unwrap()
+            acl = result.value
             assert acl.raw_acl == acl_line
 
     def test_acl_can_handle_to_clause(
@@ -578,7 +578,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         )
         result = acl_quirk.write(acl_data)
         assert result.is_success
-        acl_str = result.unwrap()
+        acl_str = result.value
         assert isinstance(acl_str, str)
 
     # =========================================================================
@@ -628,7 +628,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         )
         result = schema_quirk.write(attr_model)
         assert result.is_success
-        attr_str = result.unwrap()
+        attr_str = result.value
         assert c.Rfc.ATTR_OID_CN in attr_str
         assert c.Rfc.ATTR_NAME_CN in attr_str
 
@@ -650,7 +650,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         )
         result = schema_quirk._write_objectclass(oc_model)
         assert result.is_success
-        oc_str = result.unwrap()
+        oc_str = result.value
         assert c.Rfc.OC_OID_PERSON in oc_str
         assert c.Rfc.OC_NAME_PERSON in oc_str
         assert "STRUCTURAL" in oc_str

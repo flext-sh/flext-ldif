@@ -70,7 +70,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         if not result.is_success:
             msg = f"Entry creation failed: {result.error}"
             raise AssertionError(msg)
-        return result.unwrap()
+        return result.value
 
     def create_entries(
         self,

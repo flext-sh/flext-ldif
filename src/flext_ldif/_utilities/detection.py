@@ -49,6 +49,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import FlextRuntime
 
+from flext_ldif.models import m
 from flext_ldif.protocols import p
 
 
@@ -119,10 +120,10 @@ class FlextLdifUtilitiesDetection:
             *,
             data: (
                 str
-                | p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.EntryProtocol
-                | p.Ldif.AclProtocol
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Entry
+                | m.Ldif.Acl
                 | None
             ),
         ) -> bool:
@@ -169,10 +170,10 @@ class FlextLdifUtilitiesDetection:
         def can_handle_prefix(
             data: (
                 str
-                | p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.EntryProtocol
-                | p.Ldif.AclProtocol
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Entry
+                | m.Ldif.Acl
                 | None
             ),
             prefixes: frozenset[str],
@@ -218,8 +219,8 @@ class FlextLdifUtilitiesDetection:
         def can_handle_in_set(
             data: (
                 str
-                | p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
                 | None
             ),
             items: frozenset[str],
@@ -275,7 +276,7 @@ class FlextLdifUtilitiesDetection:
         def _can_handle_schema_item_by_pattern(
             self,
             schema_item: (
-                str | p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
+                str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
             ),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
@@ -302,7 +303,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -319,7 +320,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -348,7 +349,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -399,7 +400,7 @@ class FlextLdifUtilitiesDetection:
             attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | p.Ldif.EntryProtocol
+                | m.Ldif.Entry
             ),
         ) -> bool:
             """Check if entry objectClasses match detection list.
@@ -428,7 +429,7 @@ class FlextLdifUtilitiesDetection:
             # Get objectClass from attributes
             objectclasses: Sequence[str] | str | None = None
             # Check for EntryProtocol first (has get_objectclass_names method)
-            if isinstance(attributes, p.Ldif.EntryProtocol):
+            if isinstance(attributes, m.Ldif.Entry):
                 # Entry protocol has get_objectclass_names method
                 objectclasses = list(attributes.get_objectclass_names())
             elif isinstance(attributes, Mapping):
@@ -470,7 +471,7 @@ class FlextLdifUtilitiesDetection:
             _attributes: (
                 Mapping[str, Sequence[str] | str]
                 | dict[str, Sequence[str] | str]
-                | p.Ldif.EntryProtocol
+                | m.Ldif.Entry
                 | None
             ),
         ) -> bool:
@@ -514,7 +515,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_acl(
             self,
-            acl_line: str | p.Ldif.AclProtocol,
+            acl_line: str | m.Ldif.Acl,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 

@@ -23,7 +23,7 @@ import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -101,11 +101,11 @@ class TestRealLdapExport:
             metadata=None,
         )
         assert entry_result.is_success
-        flext_entry = entry_result.unwrap()
+        flext_entry = entry_result.value
 
         write_result = flext_api.write([flext_entry])
         assert write_result.is_success
-        ldif_output = write_result.unwrap()
+        ldif_output = write_result.value
 
         assert f"dn: cn={unique_username}" in ldif_output
         assert f"cn: {unique_username}" in ldif_output
@@ -174,19 +174,19 @@ class TestRealLdapExport:
                 metadata=None,
             )
             assert result.is_success
-            unwrapped_entry = result.unwrap()
+            unwrapped_entry = result.value
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, p.Entry):
+            if hasattr(unwrapped_entry, "dn") and hasattr(unwrapped_entry, "attributes"):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = p.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)
         assert write_result.is_success
-        ldif_output = write_result.unwrap()
+        ldif_output = write_result.value
 
         for unique_username in unique_usernames:
             assert f"cn: {unique_username}" in ldif_output
@@ -261,19 +261,19 @@ class TestRealLdapExport:
                 metadata=None,
             )
             assert result.is_success
-            unwrapped_entry = result.unwrap()
+            unwrapped_entry = result.value
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, p.Entry):
+            if hasattr(unwrapped_entry, "dn") and hasattr(unwrapped_entry, "attributes"):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = p.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)
         assert write_result.is_success
-        ldif_output = write_result.unwrap()
+        ldif_output = write_result.value
 
         assert "ou=Groups" in ldif_output
         assert "ou=People" in ldif_output
@@ -318,7 +318,7 @@ class TestRealLdapExport:
             metadata=None,
         )
         assert entry_result.is_success
-        flext_entry = entry_result.unwrap()
+        flext_entry = entry_result.value
 
         output_file = tmp_path / "export.ldif"
         write_result = flext_api.write([flext_entry], output_path=output_file)

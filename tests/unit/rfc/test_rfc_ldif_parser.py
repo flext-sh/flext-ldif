@@ -637,7 +637,7 @@ description: {large_value}
             _output_target="string",
         )
         assert result.is_success
-        content = result.unwrap()
+        content = result.value
         assert content == "version: 1\n"
 
     @pytest.mark.timeout(10)
@@ -850,7 +850,7 @@ objectClass: person
 """
             parse_result = rfc_entry_quirk.parse(ldif_content)
             assert parse_result.is_success, f"Failed to parse with {input_name}"
-            entries = parse_result.unwrap()
+            entries = parse_result.value
             assert len(entries) == 1
             entry = entries[0]
             # Verify the attribute was normalized to expected canonical form
@@ -890,7 +890,7 @@ objectClass: person
                 entry.attributes.attributes["description"] = [value]
             write_result = rfc_entry_quirk.write(entry)
             assert write_result.is_success, f"Failed to write with value: {value!r}"
-            written_ldif = write_result.unwrap()
+            written_ldif = write_result.value
             # Value should be base64 encoded (indicated by ::)
             assert (
                 "description::" in written_ldif
@@ -902,7 +902,7 @@ objectClass: person
                 entry.attributes.attributes["description"] = [value]
             write_result = rfc_entry_quirk.write(entry)
             assert write_result.is_success, f"Failed to write with value: {value!r}"
-            written_ldif = write_result.unwrap()
+            written_ldif = write_result.value
             # Value should be written as plain text (indicated by :)
             if value:  # Skip empty string case
                 assert (
@@ -992,7 +992,7 @@ objectClass: person
         result = rfc_acl_quirk.convert_rfc_acl_to_aci(rfc_acl_attrs, "oid")
 
         assert result.is_success
-        assert result.unwrap() == rfc_acl_attrs
+        assert result.value == rfc_acl_attrs
 
     @pytest.mark.timeout(5)
     def test_acl_create_metadata(

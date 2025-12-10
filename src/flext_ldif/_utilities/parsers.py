@@ -429,7 +429,7 @@ class FlextLdifUtilitiesParsers:
                     result = parse_entry_hook(processed_entry)
                     if result.is_success:
                         stats.successful += 1
-                        entries.append(result.unwrap())
+                        entries.append(result.value)
                     else:
                         stats.failed += 1
                         logger.warning(

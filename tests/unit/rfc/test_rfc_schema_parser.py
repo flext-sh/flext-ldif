@@ -39,7 +39,7 @@ cn: test
             server_type="rfc",
         )
         assert result.is_success
-        entries = result.unwrap().entries
+        entries = result.value.entries
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
 

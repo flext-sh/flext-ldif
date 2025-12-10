@@ -406,7 +406,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
         # Check if this is an OID ACL and parent parser populated it correctly
         if (
             parent_result.is_success
-            and (acl_data := parent_result.unwrap())
+            and (acl_data := parent_result.value)
             and self.can_handle_acl(acl_line)
             and any(
                 getattr(acl_data, field) is not None
@@ -420,7 +420,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
         # Not an OID ACL - use parent result or fall through
         if (
             parent_result.is_success
-            and (acl_data := parent_result.unwrap())
+            and (acl_data := parent_result.value)
             and not self.can_handle_acl(acl_line)
         ):
             return FlextResult[m.Ldif.Acl].ok(acl_data)

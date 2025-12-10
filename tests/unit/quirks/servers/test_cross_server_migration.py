@@ -59,7 +59,7 @@ class TestsFlextLdifCrossServerMigration(s):
         oud_result = ldif_api.parse(output_path, server_type="oud")
         assert oud_result.is_success, f"OUD parse failed: {oud_result.error}"
 
-        oud_entries = oud_result.unwrap()
+        oud_entries = oud_result.value
         assert len(oud_entries) > 0
         # Entry count should match
         assert len(oud_entries) == len(oid_entries)
@@ -87,7 +87,7 @@ class TestsFlextLdifCrossServerMigration(s):
         oid_result = ldif_api.parse(output_path, server_type="oid")
         assert oid_result.is_success, f"OID parse failed: {oid_result.error}"
 
-        oid_entries = oid_result.unwrap()
+        oid_entries = oid_result.value
         assert len(oid_entries) > 0
 
     def test_rfc_to_oid_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
@@ -169,7 +169,7 @@ class TestsFlextLdifCrossServerMigration(s):
         oud_result = ldif_api.parse(output_path, server_type="oud")
         assert oud_result.is_success
 
-        oud_entries = oud_result.unwrap()
+        oud_entries = oud_result.value
 
         # Validate DNs are preserved (no data loss)
         oid_dns = {e.dn.value for e in oid_entries if e.dn is not None}
@@ -212,7 +212,7 @@ class TestsFlextLdifCrossServerMigration(s):
         oud_result = ldif_api.parse(output_path, server_type="oud")
         assert oud_result.is_success
 
-        oud_entries = oud_result.unwrap()
+        oud_entries = oud_result.value
 
         # Get all attribute names from OUD
         oud_attr_names: set[str] = set()

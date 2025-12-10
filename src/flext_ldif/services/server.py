@@ -289,12 +289,9 @@ class FlextLdifServer:
             # Using object since services cannot import typings/protocols
             return r[object | None].fail(str(e))
 
-        # Using object since services cannot import typings/protocols
-        base: object | None = u.mapper().get(
-            self._bases,
-            normalized_type,
-            default=None,
-        )
+        # Direct dict access - u.mapper().get() fails for Pydantic models
+        # because is_general_value_type TypeGuard rejects complex objects
+        base: object | None = self._bases.get(normalized_type)
         if not base:
             return r[object | None].fail(
                 f"No base found for server type: {server_type}",
@@ -349,11 +346,8 @@ class FlextLdifServer:
         except ValueError as e:
             # Invalid server type - return failure
             return r[_QuirksDict].fail(str(e))
-        base: FlextLdifServersBase | None = u.mapper().get(
-            self._bases,
-            normalized_type,
-            default=None,
-        )
+        # Direct dict access - u.mapper().get() fails for Pydantic models
+        base: FlextLdifServersBase | None = self._bases.get(normalized_type)
         if not base:
             return r[_QuirksDict].fail(
                 f"No base found for server type: {server_type}",
@@ -383,12 +377,12 @@ class FlextLdifServer:
         quirk_raw = result.value if result.is_success else None
         if quirk_raw is None:
             return None
-        # Verify quirk_raw satisfies SchemaProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.SchemaQuirkProtocol):
+        # Verify quirk_raw satisfies SchemaProtocol via duck typing (has parse and write methods)
+        if hasattr(quirk_raw, "parse") and hasattr(quirk_raw, "write"):
             return quirk_raw
         return None
 
-    def acl(self, server_type: str) -> p.Ldif.AclProtocol | None:
+    def acl(self, server_type: str) -> p.Ldif.AclQuirkProtocol | None:
         """Get ACL quirk for a server type.
 
         Args:
@@ -404,12 +398,12 @@ class FlextLdifServer:
         quirk_raw = result.value if result.is_success else None
         if quirk_raw is None:
             return None
-        # Verify quirk_raw satisfies AclProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.AclProtocol):
+        # Verify quirk_raw satisfies AclQuirkProtocol via duck typing
+        if hasattr(quirk_raw, "parse") and hasattr(quirk_raw, "write"):
             return quirk_raw
         return None
 
-    def entry(self, server_type: str) -> p.Ldif.EntryProtocol | None:
+    def entry(self, server_type: str) -> p.Ldif.EntryQuirkProtocol | None:
         """Get entry quirk for a server type.
 
         Args:
@@ -425,8 +419,8 @@ class FlextLdifServer:
         quirk_raw = result.value if result.is_success else None
         if quirk_raw is None:
             return None
-        # Verify quirk_raw satisfies EntryProtocol (runtime_checkable)
-        if isinstance(quirk_raw, p.Ldif.EntryProtocol):
+        # Verify quirk_raw satisfies EntryQuirkProtocol via duck typing
+        if hasattr(quirk_raw, "parse") and hasattr(quirk_raw, "write"):
             return quirk_raw
         return None
 
@@ -456,13 +450,13 @@ class FlextLdifServer:
 
         for server_type, base_quirk in self._bases.items():
             quirks_by_server[server_type] = {
-                "schema_type": base_quirk.schema_quirk.__class__.__name__
+                "schema": base_quirk.schema_quirk.__class__.__name__
                 if base_quirk.schema_quirk
                 else None,
-                "acl_type": base_quirk.acl_quirk.__class__.__name__
+                "acl": base_quirk.acl_quirk.__class__.__name__
                 if base_quirk.acl_quirk
                 else None,
-                "entry_type": base_quirk.entry_quirk.__class__.__name__
+                "entry": base_quirk.entry_quirk.__class__.__name__
                 if base_quirk.entry_quirk
                 else None,
             }

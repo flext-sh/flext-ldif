@@ -27,7 +27,6 @@ from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -243,7 +242,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             return FlextLdifUtilitiesServer.matches_server_patterns(
@@ -255,7 +254,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             return FlextLdifUtilitiesServer.matches_server_patterns(
@@ -267,7 +266,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add AD metadata.
 
             Args:
@@ -279,18 +278,18 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
                 attr_updated = attr_data.model_copy(update={"metadata": metadata})
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(attr_updated)
+                return FlextResult[m.Ldif.SchemaAttribute].ok(attr_updated)
             return result
 
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add AD metadata.
 
             Args:
@@ -302,7 +301,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilitiesSchema.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesSchema.fix_kind_mismatch(oc_data)
@@ -310,7 +309,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     self._get_server_type(),
                 )
                 oc_updated = oc_data.model_copy(update={"metadata": metadata})
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(oc_updated)
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(oc_updated)
             return result
 
         # Nested class references for Schema - allows Schema().Entry() pattern

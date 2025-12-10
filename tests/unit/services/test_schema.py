@@ -317,7 +317,7 @@ class TestsFlextLdifExecuteAndBuilder(s):
         """Test execute returns service status."""
         result = schema_service.execute()
         assert result.is_success
-        status = result.unwrap()
+        status = result.value
         assert status.service == "SchemaService"
         assert status.server_type == "rfc"
         assert status.status == "operational"
@@ -331,7 +331,7 @@ class TestsFlextLdifExecuteAndBuilder(s):
         """Test execute with different server type."""
         result = schema_service_oud.execute()
         assert result.is_success
-        status = result.unwrap()
+        status = result.value
         assert status.server_type == "oud"
 
     def test_builder_creates_instance(self) -> None:
@@ -375,7 +375,7 @@ class TestParsing:
 
         if test_case.should_succeed:
             assert result.is_success, f"Failed to parse: {test_case.description}"
-            attr = result.unwrap()
+            attr = result.value
             if test_case.expected_oid:
                 assert attr.oid == test_case.expected_oid
             if test_case.expected_name:
@@ -394,7 +394,7 @@ class TestParsing:
 
         if test_case.should_succeed:
             assert result.is_success, f"Failed to parse: {test_case.description}"
-            oc = result.unwrap()
+            oc = result.value
             if test_case.expected_oid:
                 assert oc.oid == test_case.expected_oid
             if test_case.expected_name:
@@ -424,7 +424,7 @@ class TestValidation:
 
         if test_case.should_succeed:
             assert result.is_success, f"Validation failed: {test_case.description}"
-            assert result.unwrap() is True
+            assert result.value is True
         else:
             assert result.is_failure, f"Should have failed: {test_case.description}"
             error = result.error or ""
@@ -448,7 +448,7 @@ class TestValidation:
 
         if test_case.should_succeed:
             assert result.is_success, f"Validation failed: {test_case.description}"
-            assert result.unwrap() is True
+            assert result.value is True
         else:
             assert result.is_failure, f"Should have failed: {test_case.description}"
             error = result.error or ""
@@ -472,7 +472,7 @@ class TestWriting:
         )
         result = schema_service.write_attribute(attr)
         assert result.is_success
-        ldif = result.unwrap()
+        ldif = result.value
         assert isinstance(ldif, str)
         assert "cn" in ldif or "2.5.4.3" in ldif
 
@@ -503,7 +503,7 @@ class TestWriting:
         )
         result = schema_service.write_objectclass(oc)
         assert result.is_success
-        ldif = result.unwrap()
+        ldif = result.value
         assert isinstance(ldif, str)
         assert "person" in ldif or "2.5.6.6" in ldif
 
@@ -535,12 +535,12 @@ class TestRoundtrip:
         # Parse
         parse_result = schema_service.parse_attribute(sample_attribute_definition)
         assert parse_result.is_success
-        attr = parse_result.unwrap()
+        attr = parse_result.value
 
         # Write
         write_result = schema_service.write_attribute(attr)
         assert write_result.is_success
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         # Parse again
         parse2_result = schema_service.parse_attribute(written_ldif)
@@ -556,12 +556,12 @@ class TestRoundtrip:
         # Parse
         parse_result = schema_service.parse_objectclass(sample_objectclass_definition)
         assert parse_result.is_success
-        oc = parse_result.unwrap()
+        oc = parse_result.value
 
         # Write
         write_result = schema_service.write_objectclass(oc)
         assert write_result.is_success
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         # Parse again
         parse2_result = schema_service.parse_objectclass(written_ldif)

@@ -71,7 +71,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         """Test execute() returns service status."""
         result = schema_service.execute()
         assert result.is_success
-        status = result.unwrap()
+        status = result.value
         assert isinstance(status, m.Ldif.SchemaServiceStatus)
         assert status.service == "SchemaService"
         assert status.status == "operational"
@@ -85,7 +85,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         """Test execute() with different server type."""
         result = schema_service_oud.execute()
         assert result.is_success
-        status = result.unwrap()
+        status = result.value
         assert status.server_type == "oud"
 
 
@@ -122,7 +122,7 @@ class TestSchemaServiceBuilder:
         assert service.server_type == "oud"
         result = service.execute()
         assert result.is_success
-        status = result.unwrap()
+        status = result.value
         assert status.server_type == "oud"
 
 
@@ -142,7 +142,7 @@ class TestSchemaServiceParseAttribute:
         """Test parsing simple attribute definition."""
         result = schema_service.parse_attribute(simple_attribute_definition)
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "2.5.4.3"
         assert attr.name == "cn"
@@ -155,7 +155,7 @@ class TestSchemaServiceParseAttribute:
         """Test parsing complex attribute definition."""
         result = schema_service.parse_attribute(complex_attribute_definition)
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "2.5.4.0"
         assert attr.name == "objectClass"
@@ -205,7 +205,7 @@ class TestSchemaServiceParseObjectClass:
         """Test parsing simple objectClass definition."""
         result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert result.is_success
-        oc = result.unwrap()
+        oc = result.value
         assert isinstance(oc, m.Ldif.SchemaObjectClass)
         assert oc.oid == "2.5.6.6"
         assert oc.name == "person"
@@ -219,7 +219,7 @@ class TestSchemaServiceParseObjectClass:
         """Test parsing complex objectClass definition."""
         result = schema_service.parse_objectclass(complex_objectclass_definition)
         assert result.is_success
-        oc = result.unwrap()
+        oc = result.value
         assert isinstance(oc, m.Ldif.SchemaObjectClass)
         assert oc.oid == "2.5.6.2"
         assert oc.name == "country"
@@ -270,11 +270,11 @@ class TestSchemaServiceValidateAttribute:
         """Test validating valid attribute."""
         parse_result = schema_service.parse_attribute(simple_attribute_definition)
         assert parse_result.is_success
-        attr = parse_result.unwrap()
+        attr = parse_result.value
 
         result = schema_service.validate_attribute(attr)
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_attribute_without_name(
         self,
@@ -346,11 +346,11 @@ class TestSchemaServiceValidateObjectClass:
         """Test validating valid objectClass."""
         parse_result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert parse_result.is_success
-        oc = parse_result.unwrap()
+        oc = parse_result.value
 
         result = schema_service.validate_objectclass(oc)
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_objectclass_without_name(
         self,
@@ -436,11 +436,11 @@ class TestSchemaServiceWriteAttribute:
         """Test writing valid attribute to LDIF."""
         parse_result = schema_service.parse_attribute(simple_attribute_definition)
         assert parse_result.is_success
-        attr = parse_result.unwrap()
+        attr = parse_result.value
 
         result = schema_service.write_attribute(attr)
         assert result.is_success
-        ldif = result.unwrap()
+        ldif = result.value
         assert isinstance(ldif, str)
         assert "cn" in ldif or "2.5.4.3" in ldif
 
@@ -453,17 +453,17 @@ class TestSchemaServiceWriteAttribute:
         # Parse
         parse_result = schema_service.parse_attribute(simple_attribute_definition)
         assert parse_result.is_success
-        attr = parse_result.unwrap()
+        attr = parse_result.value
 
         # Write
         write_result = schema_service.write_attribute(attr)
         assert write_result.is_success
-        written = write_result.unwrap()
+        written = write_result.value
 
         # Parse written
         roundtrip_result = schema_service.parse_attribute(written)
         assert roundtrip_result.is_success
-        roundtrip_attr = roundtrip_result.unwrap()
+        roundtrip_attr = roundtrip_result.value
         assert roundtrip_attr.oid == attr.oid
         assert roundtrip_attr.name == attr.name
 
@@ -499,11 +499,11 @@ class TestSchemaServiceWriteObjectClass:
         """Test writing valid objectClass to LDIF."""
         parse_result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert parse_result.is_success
-        oc = parse_result.unwrap()
+        oc = parse_result.value
 
         result = schema_service.write_objectclass(oc)
         assert result.is_success
-        ldif = result.unwrap()
+        ldif = result.value
         assert isinstance(ldif, str)
         assert "person" in ldif or "2.5.6.6" in ldif
 
@@ -516,17 +516,17 @@ class TestSchemaServiceWriteObjectClass:
         # Parse
         parse_result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert parse_result.is_success
-        oc = parse_result.unwrap()
+        oc = parse_result.value
 
         # Write
         write_result = schema_service.write_objectclass(oc)
         assert write_result.is_success
-        written = write_result.unwrap()
+        written = write_result.value
 
         # Parse written
         roundtrip_result = schema_service.parse_objectclass(written)
         assert roundtrip_result.is_success
-        roundtrip_oc = roundtrip_result.unwrap()
+        roundtrip_oc = roundtrip_result.value
         assert roundtrip_oc.oid == oc.oid
         assert roundtrip_oc.name == oc.name
 
@@ -649,7 +649,7 @@ class TestSchemaServiceIntegration:
         # Parse
         parse_result = schema_service.parse_attribute(simple_attribute_definition)
         assert parse_result.is_success
-        attr = parse_result.unwrap()
+        attr = parse_result.value
 
         # Validate
         validate_result = schema_service.validate_attribute(attr)
@@ -658,12 +658,12 @@ class TestSchemaServiceIntegration:
         # Write
         write_result = schema_service.write_attribute(attr)
         assert write_result.is_success
-        written = write_result.unwrap()
+        written = write_result.value
 
         # Parse written
         roundtrip_result = schema_service.parse_attribute(written)
         assert roundtrip_result.is_success
-        roundtrip_attr = roundtrip_result.unwrap()
+        roundtrip_attr = roundtrip_result.value
 
         # Verify roundtrip
         assert roundtrip_attr.oid == attr.oid
@@ -678,7 +678,7 @@ class TestSchemaServiceIntegration:
         # Parse
         parse_result = schema_service.parse_objectclass(simple_objectclass_definition)
         assert parse_result.is_success
-        oc = parse_result.unwrap()
+        oc = parse_result.value
 
         # Validate
         validate_result = schema_service.validate_objectclass(oc)
@@ -687,12 +687,12 @@ class TestSchemaServiceIntegration:
         # Write
         write_result = schema_service.write_objectclass(oc)
         assert write_result.is_success
-        written = write_result.unwrap()
+        written = write_result.value
 
         # Parse written
         roundtrip_result = schema_service.parse_objectclass(written)
         assert roundtrip_result.is_success
-        roundtrip_oc = roundtrip_result.unwrap()
+        roundtrip_oc = roundtrip_result.value
 
         # Verify roundtrip
         assert roundtrip_oc.oid == oc.oid
@@ -712,5 +712,5 @@ class TestSchemaServiceIntegration:
             )
             result = service.execute()
             assert result.is_success
-            status = result.unwrap()
+            status = result.value
             assert status.server_type == server_type

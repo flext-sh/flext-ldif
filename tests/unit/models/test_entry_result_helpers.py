@@ -40,14 +40,14 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_get_all_entries_flattens_categories(self) -> None:
         """Test get_all_entries() flattens all categories."""
-        entry1 = p.Entry.create(
+        entry1 = m.Ldif.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
-        ).unwrap()
-        entry2 = p.Entry.create(
+        ).value
+        entry2 = m.Ldif.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
-        ).unwrap()
+        ).value
 
         # Use _FlexibleCategories directly for type safety
         categories = m.FlexibleCategories()
@@ -65,14 +65,14 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_get_category_returns_entries(self) -> None:
         """Test get_category() returns specific category."""
-        entry1 = p.Entry.create(
+        entry1 = m.Ldif.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
-        ).unwrap()
-        entry2 = p.Entry.create(
+        ).value
+        entry2 = m.Ldif.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
-        ).unwrap()
+        ).value
 
         # Use _FlexibleCategories directly for type safety
         categories = m.FlexibleCategories()
@@ -103,14 +103,14 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_merge_combines_entry_results(self) -> None:
         """Test merge() combines two EntryResults."""
-        entry1 = p.Entry.create(
+        entry1 = m.Ldif.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
-        ).unwrap()
-        entry2 = p.Entry.create(
+        ).value
+        entry2 = m.Ldif.Entry.create(
             dn="cn=user2,dc=example,dc=com",
             attributes={"cn": ["user2"]},
-        ).unwrap()
+        ).value
 
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()
@@ -140,14 +140,14 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_merge_handles_different_categories(self) -> None:
         """Test merge() with different categories."""
-        entry1 = p.Entry.create(
+        entry1 = m.Ldif.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
-        ).unwrap()
-        entry2 = p.Entry.create(
+        ).value
+        entry2 = m.Ldif.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
-        ).unwrap()
+        ).value
 
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()
@@ -173,10 +173,10 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_merge_preserves_immutability(self) -> None:
         """Test merge() doesn't modify original EntryResults."""
-        entry1 = p.Entry.create(
+        entry1 = m.Ldif.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
-        ).unwrap()
+        ).value
 
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()

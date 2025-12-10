@@ -688,7 +688,7 @@ class FlextLdifUtilitiesDN:
             return r.fail(
                 norm_result.error or "DN normalization failed",
             )
-        normalized = norm_result.unwrap()
+        normalized = norm_result.value
 
         # Track if normalization changed the DN
         transformations: list[str] = []
@@ -1047,8 +1047,8 @@ class FlextLdifUtilitiesDN:
             )
 
         return r.ok((
-            norm1_result.unwrap().lower(),
-            norm2_result.unwrap().lower(),
+            norm1_result.value.lower(),
+            norm2_result.value.lower(),
         ))
 
     @staticmethod
@@ -1068,7 +1068,7 @@ class FlextLdifUtilitiesDN:
             if not norm_result.is_success:
                 return r.fail(norm_result.error or "Normalization failed")
 
-            norm1_lower, norm2_lower = norm_result.unwrap()
+            norm1_lower, norm2_lower = norm_result.value
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
             return r.ok(comparison)
         except Exception as e:
@@ -1434,7 +1434,7 @@ class FlextLdifUtilitiesDN:
                 return r.fail(
                     f"DN comparison failed: {comparison_result.error}",
                 )
-            comparison_value = comparison_result.unwrap()
+            comparison_value = comparison_result.value
             if comparison_value != 0:  # 0 means equal
                 return r.fail(
                     f"{dn_label.capitalize()} mismatch: {context_dn} != {dn_value}",
@@ -1492,7 +1492,7 @@ class FlextLdifUtilitiesDN:
 
         # Normalize the DN first
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-        normalized_dn = norm_result.unwrap() if norm_result.is_success else dn_str
+        normalized_dn = norm_result.value if norm_result.is_success else dn_str
 
         # Use regex to replace source base DN suffix with target base DN
         # Pattern: match either:
@@ -1962,7 +1962,7 @@ class FlextLdifUtilitiesDN:
 
         Replaces the common 3-line pattern:
             norm_result = FlextLdifUtilitiesDN.norm(dn)
-            normalized = norm_result.unwrap() if norm_result.is_success else dn.lower()
+            normalized = norm_result.value if norm_result.is_success else dn.lower()
 
         With a single call:
             normalized = FlextLdifUtilitiesDN.norm_or_fallback(dn)
@@ -1993,7 +1993,7 @@ class FlextLdifUtilitiesDN:
 
         result = FlextLdifUtilitiesDN.norm(dn)
         if result.is_success:
-            return result.unwrap()
+            return result.value
 
         # Apply fallback strategy
         if fallback == "lower":
@@ -2029,7 +2029,7 @@ class FlextLdifUtilitiesDN:
             ...     "CN=User1,DC=Example",
             ...     "CN=User2,DC=Example",
             ... ])
-            >>> result.unwrap()
+            >>> result.value
             ['cn=user1,dc=example', 'cn=user2,dc=example']
 
             >>> # With skip fallback for invalid DNs
@@ -2096,7 +2096,7 @@ class FlextLdifUtilitiesDN:
             ...     "CN=Valid,DC=Example",
             ...     "invalid-dn",
             ... ])
-            >>> for dn, is_valid, errors in result.unwrap():
+            >>> for dn, is_valid, errors in result.value:
             ...     print(f"{dn}: {'valid' if is_valid else 'invalid'}")
 
         """
@@ -2147,7 +2147,7 @@ class FlextLdifUtilitiesDN:
             ...     "dc=old,dc=com",
             ...     "dc=new,dc=com",
             ... )
-            >>> result.unwrap()
+            >>> result.value
             ['cn=user1,dc=new,dc=com', 'cn=user2,dc=new,dc=com']
 
         """
@@ -2207,7 +2207,7 @@ class FlextLdifUtilitiesDN:
             ...     validate=True,
             ...     normalize=True,
             ... )
-            >>> result.unwrap()
+            >>> result.value
             'cn=test,dc=example'
 
             >>> # Parse into components
@@ -2215,7 +2215,7 @@ class FlextLdifUtilitiesDN:
             ...     "CN=Test,DC=Example",
             ...     parse=True,
             ... )
-            >>> result.unwrap()
+            >>> result.value
             [('cn', 'test'), ('dc', 'example')]
 
         """
@@ -2239,7 +2239,7 @@ class FlextLdifUtilitiesDN:
             norm_result = FlextLdifUtilitiesDN.norm(current_dn)
             if norm_result.is_failure:
                 return r.fail(f"Normalization failed: {norm_result.error}")
-            current_dn = norm_result.unwrap()
+            current_dn = norm_result.value
 
         # Step 4: Parse (optional)
         # Business Rule: When parse=True, use parse() method which returns r[list[tuple[str, str]]]
@@ -2249,7 +2249,7 @@ class FlextLdifUtilitiesDN:
             parse_result = FlextLdifUtilitiesDN.parse(current_dn)
             if parse_result.is_failure:
                 return r.fail(f"Parse failed: {parse_result.error}")
-            return r.ok(parse_result.unwrap())
+            return r.ok(parse_result.value)
 
         return r.ok(current_dn)
 

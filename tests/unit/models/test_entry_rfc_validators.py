@@ -278,9 +278,9 @@ class TestsFlextLdifEntryRfcValidators(s):
         if dn is None or attributes is None:
             entry = self.create_entry_with_handling(dn, attributes)
         else:
-            result = p.Entry.create(dn=dn, attributes=attributes)
+            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
             assert result.is_success, f"Entry creation failed for {test_case}"
-            entry = result.unwrap()
+            entry = result.value
 
         # Get validation metadata
         metadata = self.get_validation_metadata(entry)
@@ -318,7 +318,7 @@ class TestsFlextLdifEntryRfcValidators(s):
         should_be_valid: bool,
     ) -> None:
         """Parametrized test for RFC 4512 § 2.5 attribute name validation."""
-        entry_result = p.Entry.create(
+        entry_result = m.Ldif.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
@@ -330,7 +330,7 @@ class TestsFlextLdifEntryRfcValidators(s):
         assert entry_result.is_success, (
             f"Entry creation failed for attr_name={attr_name}"
         )
-        entry = entry_result.unwrap()
+        entry = entry_result.value
 
         metadata = self.get_validation_metadata(entry)
         # ValidationMetadata is a Pydantic model, use attribute access
@@ -354,9 +354,9 @@ class TestsFlextLdifEntryRfcValidators(s):
 
     def test_validation_metadata_structure(self) -> None:
         """Test that validation context metadata is properly structured."""
-        result = p.Entry.create(dn="", attributes={})
+        result = m.Ldif.Entry.create(dn="", attributes={})
         assert result.is_success
-        entry = result.unwrap()
+        entry = result.value
 
         metadata = self.get_validation_metadata(entry)
         assert metadata is not None
@@ -368,12 +368,12 @@ class TestsFlextLdifEntryRfcValidators(s):
 
     def test_entry_data_preservation_with_violations(self) -> None:
         """Test that invalid entries preserve data while capturing violations."""
-        result = p.Entry.create(
+        result = m.Ldif.Entry.create(
             dn="invalid dn",
             attributes={"1invalid": ["value"], "cn": ["test"]},
         )
         assert result.is_success
-        entry = result.unwrap()
+        entry = result.value
 
         # Data preserved
         assert str(entry.dn) == "invalid dn"

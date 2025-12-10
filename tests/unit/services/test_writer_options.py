@@ -344,7 +344,7 @@ class TestsFlextLdifWriterFormatOptions(s):
         )
 
         assert result.is_success, f"Write failed: {result.error}"
-        output = result.unwrap()
+        output = result.value
         assert isinstance(output, str), "Expected string output"
         return output
 
@@ -744,7 +744,7 @@ class TestsFlextLdifWriterFormatOptions(s):
             )
 
             assert result.is_success
-            output_data = result.unwrap()
+            output_data = result.value
             # Always returns string when no output_path is provided
             assert isinstance(output_data, str)
             assert "version: 1" in output_data
@@ -843,7 +843,7 @@ class TestsFlextLdifWriterFormatOptions(s):
         )
 
         assert result.is_success
-        unwrapped = result.unwrap()
+        unwrapped = result.value
         assert isinstance(unwrapped, str), "Expected string output"
 
         # With defaults: include_version_header=True

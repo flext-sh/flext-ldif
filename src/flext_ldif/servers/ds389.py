@@ -28,7 +28,6 @@ from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -204,10 +203,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, p.Ldif.SchemaAttributeProtocol):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -237,10 +236,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, p.Ldif.SchemaObjectClassProtocol):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -268,7 +267,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add 389 DS metadata.
 
             Args:
@@ -280,11 +279,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -292,7 +291,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add 389 DS metadata.
 
             Args:
@@ -304,14 +303,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilitiesSchema.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesSchema.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result

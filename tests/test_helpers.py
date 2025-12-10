@@ -629,7 +629,7 @@ class TestsFlextLdifFixtures(tf_base):
         if not result.is_success:
             msg = f"Failed to create entry: {result.error}"
             raise AssertionError(msg)
-        return result.unwrap()
+        return result.value
 
     @classmethod
     def create_entries(

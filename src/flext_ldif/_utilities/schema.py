@@ -19,7 +19,7 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.constants import c
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 from flext_ldif.typings import t
 
 # REMOVED: Type aliases redundantes - use m.* diretamente (já importado com runtime alias)
@@ -180,7 +180,7 @@ class FlextLdifUtilitiesSchema:
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.is_failure:
             return f"Syntax OID validation failed: {validate_result.error}"
-        if not validate_result.unwrap():
+        if not validate_result.value:
             return f"Invalid syntax OID format: {syntax}"
 
         return None
@@ -278,7 +278,7 @@ class FlextLdifUtilitiesSchema:
                     return FlextResult.fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}",
                     )
-                setattr(transformed, field_name, new_value.unwrap())
+                setattr(transformed, field_name, new_value.value)
             else:
                 setattr(transformed, field_name, new_value)
 
@@ -406,7 +406,7 @@ class FlextLdifUtilitiesSchema:
                     result.error or "Field transformation failed",
                 )
 
-            unwrapped = result.unwrap()
+            unwrapped = result.value
             validation_result = (
                 FlextLdifUtilitiesSchema._validate_transformation_result(
                     unwrapped,
@@ -415,7 +415,7 @@ class FlextLdifUtilitiesSchema:
             )
             if validation_result.is_failure:
                 return validation_result
-            unwrapped_validated = validation_result.unwrap()
+            unwrapped_validated = validation_result.value
             # Type narrowing: validate and narrow type explicitly
             if isinstance(
                 unwrapped_validated,
@@ -496,7 +496,7 @@ class FlextLdifUtilitiesSchema:
                 )
                 if transform_result.is_failure:
                     return transform_result
-                transformed = transform_result.unwrap()
+                transformed = transform_result.value
 
             # Return with proper type based on input
             return FlextLdifUtilitiesSchema._return_result(transformed, schema_obj)
@@ -597,7 +597,7 @@ class FlextLdifUtilitiesSchema:
                 item_def = line.split(":", 1)[1].strip()
                 result = parse_callback(item_def)
                 if hasattr(result, "is_success") and result.is_success:
-                    unwrapped = result.unwrap()
+                    unwrapped = result.value
                     # Type narrowing: unwrapped is guaranteed to be SchemaAttribute | SchemaObjectClass
                     if isinstance(
                         unwrapped,
@@ -806,7 +806,7 @@ class FlextLdifUtilitiesSchema:
             syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
                 f"Syntax OID validation failed: {validate_result.error}"
             )
-        elif not validate_result.unwrap():
+        elif not validate_result.value:
             syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
                 f"Invalid syntax OID format: {syntax} "
                 f"(must be numeric dot-separated format)"
@@ -1408,7 +1408,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> list[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -1443,7 +1443,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: p.Ldif.SchemaAttributeProtocol
+        attr_data: m.Ldif.SchemaAttribute
         | FlextLdifModelsDomains.SchemaAttribute,
         *,
         restore_original: bool = True,

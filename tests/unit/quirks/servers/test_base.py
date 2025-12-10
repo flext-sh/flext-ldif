@@ -193,7 +193,7 @@ class TestFlextLdifServersBaseCall:
         # __call__ returns Entry | str depending on operation
         result = rfc(ldif_text=None, entries=[entry], operation="write")
         # When write operation with entries, may return Entry or str
-        assert isinstance(result, (str, p.Entry))
+        assert isinstance(result, (str, m.Ldif.Entry))
 
     def test_call_with_operation(self) -> None:
         """Test __call__ with operation parameter."""
@@ -592,7 +592,7 @@ class TestFlextLdifServersBaseNestedSchema:
         attr = attr_raw
         result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
-        assert result.unwrap() == attr
+        assert result.value == attr
 
     def test_schema_hook_post_parse_objectclass(self) -> None:
         """Test Schema._hook_post_parse_objectclass."""
@@ -607,7 +607,7 @@ class TestFlextLdifServersBaseNestedSchema:
         oc = oc_raw
         result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
-        assert result.unwrap() == oc
+        assert result.value == oc
 
     def test_schema_hook_validate_attributes(self) -> None:
         """Test Schema._hook_validate_attributes."""
@@ -705,7 +705,7 @@ class TestFlextLdifServersBaseNestedAcl:
         acl_model = m.Acl()
         result = acl_concrete._hook_post_parse_acl(acl_model)
         assert result.is_success
-        assert result.unwrap() == acl_model
+        assert result.value == acl_model
 
 
 class TestFlextLdifServersBaseNestedEntry:
@@ -795,7 +795,7 @@ class TestFlextLdifServersBaseNestedEntry:
         entry_model: p.Entry = entry_model_raw
         result = entry_concrete._hook_post_parse_entry(entry_model)
         assert result.is_success
-        assert result.unwrap() == entry_model
+        assert result.value == entry_model
 
     def test_entry_hook_pre_write_entry(self) -> None:
         """Test Entry._hook_pre_write_entry."""
@@ -809,7 +809,7 @@ class TestFlextLdifServersBaseNestedEntry:
         entry_model: p.Entry = entry_model_raw
         result = entry_concrete._hook_pre_write_entry(entry_model)
         assert result.is_success
-        assert result.unwrap() == entry_model
+        assert result.value == entry_model
 
 
 class TestFlextLdifServersBaseDescriptors:
@@ -883,8 +883,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # execute() will use ldif_text (if provided) regardless of operation="write"
         # So this succeeds and parses the LDIF
         assert result.is_success
-        entry = result.unwrap()
-        assert isinstance(entry, p.Entry)
+        entry = result.value
+        assert isinstance(entry, m.Ldif.Entry)
 
     def test_execute_no_operation_fallback(self) -> None:
         """Test execute fallback when no operation matches."""
@@ -1010,8 +1010,8 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Note: execute() ignores operation parameter and checks parameters instead
         # When entries is provided, execute() returns the first entry regardless of operation
         assert result.is_success
-        unwrapped_entry = result.unwrap()
-        assert isinstance(unwrapped_entry, p.Entry)
+        unwrapped_entry = result.value
+        assert isinstance(unwrapped_entry, m.Ldif.Entry)
 
     def test_execute_write_operation_requires_entries(self) -> None:
         """Test execute write operation requires entries."""
@@ -1043,7 +1043,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Test success path - Entry class is always available in RFC
         result = rfc.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
         assert result.is_success
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert isinstance(parse_response, m.ParseResponse)
         assert len(parse_response.entries) > 0
 
@@ -1108,7 +1108,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         attr = attr_raw
         result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
-        assert result.unwrap() == attr
+        assert result.value == attr
 
     def test_schema_hook_post_parse_objectclass(self) -> None:
         """Test Schema._hook_post_parse_objectclass."""
@@ -1123,7 +1123,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         oc = oc_raw
         result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
-        assert result.unwrap() == oc
+        assert result.value == oc
 
     def test_schema_hook_validate_attributes(self) -> None:
         """Test Schema._hook_validate_attributes."""
@@ -1148,7 +1148,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         acl = m.Acl()
         result = acl_concrete._hook_post_parse_acl(acl)
         assert result.is_success
-        assert result.unwrap() == acl
+        assert result.value == acl
 
     def test_entry_hook_validate_entry_raw(self) -> None:
         """Test Entry._hook_validate_entry_raw."""
@@ -1181,7 +1181,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         result = entry_quirk._hook_post_parse_entry(entry)
         assert result.is_success
-        assert result.unwrap() == entry
+        assert result.value == entry
 
     def test_entry_hook_pre_write_entry(self) -> None:
         """Test Entry._hook_pre_write_entry."""
@@ -1194,7 +1194,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         result = entry_quirk._hook_pre_write_entry(entry)
         assert result.is_success
-        assert result.unwrap() == entry
+        assert result.value == entry
 
     def test_write_ldif_ends_with_newline(self) -> None:
         """Test write adds newline if ldif doesn't end with one."""
@@ -1445,7 +1445,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         result = rfc.write([entry])
         assert result.is_success
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         # Verify it ends with newline (line 585 should be covered)
         assert ldif_text.endswith("\n")
 
@@ -1480,7 +1480,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         result = rfc.parse("")
         # Empty LDIF returns success with empty entries
         assert result.is_success
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert len(parse_response.entries) == 0
 
     def test_schema_get_server_type_error_path_no_parent(self) -> None:
@@ -1700,7 +1700,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         result = rfc.write([entry])
         assert result.is_success
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         # LDIF should end with newline (line 606 should be covered)
         assert ldif_text.endswith("\n")
 
@@ -1960,10 +1960,10 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
-        entry_model_raw = p.Entry.create(
+        entry_model_raw = m.Ldif.Entry.create(
             dn=c.Rfc.TEST_DN,
             attributes={"cn": ["test"]},
-        ).unwrap()
+        ).value
         entry_model = entry_model_raw
         # Base implementation should return fail
         result = entry._write_entry(entry_model)
@@ -2040,7 +2040,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
                 # Write entry without trailing newline to test line 606
                 result = super().write(entry_data, write_options)
                 if result.is_success:
-                    ldif = result.unwrap()
+                    ldif = result.value
                     # Remove trailing newline if present
                     ldif = ldif.removesuffix("\n")
                     return FlextResult.ok(ldif)
@@ -2057,7 +2057,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         result = server.write([entry])
         assert result.is_success
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         # LDIF should end with newline (base.py line 606 adds it)
         assert ldif_text.endswith("\n")
 
@@ -2252,7 +2252,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         result = rfc.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
         assert result.is_success
-        parse_response = result.unwrap()
+        parse_response = result.value
         assert isinstance(parse_response, m.ParseResponse)
         assert len(parse_response.entries) > 0
 
@@ -2272,7 +2272,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         server = FlextLdifServersRfc()
         result = server.write([entry])
         assert result.is_success
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         assert "dn: cn=test" in ldif_text
 
     def test_schema_hook_validate_attributes_real(self) -> None:
@@ -2336,7 +2336,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         assert result.is_success
         # Verify the hook was called (lines 1181-1183)
         # _hook_validate_attributes returns FlextResult[bool], not None
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_schema_extract_schemas_from_ldif_with_validation_real(self) -> None:
         """Test extract_schemas_from_ldif with validate_dependencies=True to call _hook_validate_attributes."""
@@ -2358,7 +2358,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         )
         # Should succeed and call the hook
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_dict = result.value
         assert isinstance(schema_dict, dict)
         assert "attributes" in schema_dict or "ATTRIBUTES" in schema_dict
 
@@ -2431,7 +2431,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         server = FlextLdifServersRfc()
         result = server.write([entry])
         assert result.is_success
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         # Line 606: if ldif and not ldif.endswith("\n"): ldif += "\n"
         # This should ensure ldif ends with newline
         assert ldif_text.endswith("\n")

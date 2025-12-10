@@ -78,13 +78,13 @@ def test_create_and_export_entry(
         },
     )
     assert entry_result.is_success
-    flext_entry = entry_result.unwrap()
+    flext_entry = entry_result.value
 
     # Write to LDIF
     write_result = api.write([flext_entry])
     assert write_result.is_success
 
-    ldif_output = write_result.unwrap()
+    ldif_output = write_result.value
     assert f"cn: {unique_username}" in ldif_output
     assert "sn: Test" in ldif_output
 

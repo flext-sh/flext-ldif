@@ -12,7 +12,6 @@ from flext_core import FlextResult
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -137,10 +136,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, p.Ldif.SchemaAttributeProtocol):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return u.Ldif.Server.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -173,10 +172,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, p.Ldif.SchemaObjectClassProtocol):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return u.Ldif.Server.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -202,7 +201,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata.
 
             Args:
@@ -214,11 +213,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     "apache_directory",
                 )
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -226,7 +225,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata.
 
             Args:
@@ -238,7 +237,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 u.ObjectClass.fix_missing_sup(
                     oc_data,
@@ -251,7 +250,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -327,7 +326,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             # Try parent's write method first (RFC format)
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:
-                acl_str = parent_result.unwrap()
+                acl_str = parent_result.value
                 # Ensure Apache ACI prefix is present
                 if acl_str and not acl_str.strip().startswith(("aci:", "ads-aci:")):
                     # Add aci: prefix for Apache
@@ -372,7 +371,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if base_result.is_failure:
                 return base_result
 
-            entry = base_result.unwrap()
+            entry = base_result.value
 
             try:
                 # Check if entry has DN

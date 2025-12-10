@@ -20,7 +20,6 @@ from flext_core import FlextLogger, r
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -174,8 +173,8 @@ class FlextLdifServersOidSchema(
 
     def _hook_post_parse_attribute(
         self,
-        attr: p.Ldif.SchemaAttributeProtocol,
-    ) -> r[p.Ldif.SchemaAttributeProtocol]:
+        attr: m.Ldif.SchemaAttribute,
+    ) -> r[m.Ldif.SchemaAttribute]:
         """Hook: Transform parsed attribute using OID-specific normalizations.
 
         Called by RFC._parse_attribute() after RFC 4512 baseline parsing.
@@ -294,8 +293,8 @@ class FlextLdifServersOidSchema(
 
     def _hook_post_parse_objectclass(
         self,
-        oc: p.Ldif.SchemaObjectClassProtocol,
-    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Hook: Transform parsed objectClass using OID-specific normalizations.
 
         Called by RFC._parse_objectclass() after RFC 4512 baseline parsing.
@@ -422,8 +421,8 @@ class FlextLdifServersOidSchema(
 
     def _transform_case_ignore_substrings(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
-    ) -> p.Ldif.SchemaAttributeProtocol:
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.
 
         RFC 4517 compliance: caseIgnoreSubstringsMatch must be SUBSTR, not EQUALITY.
@@ -500,7 +499,7 @@ class FlextLdifServersOidSchema(
 
     def _capture_attribute_values(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> dict[str, str | None]:
         """Capture attribute values for metadata tracking.
 
@@ -519,7 +518,7 @@ class FlextLdifServersOidSchema(
 
     def _add_target_metadata(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
         target_values: dict[str, str | None],
     ) -> None:
         """Add target metadata to attribute."""
@@ -558,7 +557,7 @@ class FlextLdifServersOidSchema(
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> r[p.Ldif.SchemaAttributeProtocol]:
+    ) -> r[m.Ldif.SchemaAttribute]:
         r"""Parse Oracle OID attribute definition (Phase 1: Normalization).
 
         OID vs RFC Attribute Parsing
@@ -646,7 +645,7 @@ class FlextLdifServersOidSchema(
                 return result
 
             # Unwrap parsed attribute (already has OID transformations via hook)
-            attr_data = result.unwrap()
+            attr_data = result.value
 
             # Preserve TARGET values AFTER transformations (applied by hook)
             target_values = self._capture_attribute_values(attr_data)
@@ -681,19 +680,19 @@ class FlextLdifServersOidSchema(
                 # Add target metadata (transformations applied by hook)
                 self._add_target_metadata(attr_data, target_values)
 
-            return r[p.Ldif.SchemaAttributeProtocol].ok(attr_data)
+            return r[m.Ldif.SchemaAttribute].ok(attr_data)
 
         except Exception as e:
             logger.exception(
                 "OID attribute parsing failed",
             )
-            return r[p.Ldif.SchemaAttributeProtocol].fail(
+            return r[m.Ldif.SchemaAttribute].fail(
                 f"OID attribute parsing failed: {e}",
             )
 
     def _write_attribute(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> r[str]:
         r"""Write Oracle OID attribute definition (Phase 2: Denormalization).
 
@@ -862,7 +861,7 @@ class FlextLdifServersOidSchema(
 
     def _normalize_sup_from_model(
         self,
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> str | (list[str] | None):
         """Normalize SUP from objectClass model.
 
@@ -935,7 +934,7 @@ class FlextLdifServersOidSchema(
 
     def _normalize_auxiliary_typo(
         self,
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: m.Ldif.SchemaObjectClass,
         original_format_str: str,
     ) -> str | None:
         """Normalize AUXILLARY typo to AUXILIARY.
@@ -1001,7 +1000,7 @@ class FlextLdifServersOidSchema(
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> r[p.Ldif.SchemaObjectClassProtocol]:
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse Oracle OID objectClass definition.
 
         Uses RFC 4512 compliant baseline parser with lenient mode for OID quirks,
@@ -1023,7 +1022,7 @@ class FlextLdifServersOidSchema(
                 return result
 
             # Unwrap parsed objectClass from RFC baseline
-            oc_data = result.unwrap()
+            oc_data = result.value
 
             # Apply OID-specific enhancements on top of RFC baseline
             # Hook _hook_post_parse_objectclass() called by RFC
@@ -1043,20 +1042,20 @@ class FlextLdifServersOidSchema(
                     c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP
                 ] = u.Generators.generate_iso_timestamp()
 
-            return r[p.Ldif.SchemaObjectClassProtocol].ok(oc_data)
+            return r[m.Ldif.SchemaObjectClass].ok(oc_data)
 
         except Exception as e:
             logger.exception(
                 "OID objectClass parsing failed",
             )
-            return r[p.Ldif.SchemaObjectClassProtocol].fail(
+            return r[m.Ldif.SchemaObjectClass].fail(
                 f"OID objectClass parsing failed: {e}",
             )
 
     def _transform_attribute_for_write(
         self,
-        attr_data: p.Ldif.SchemaAttributeProtocol,
-    ) -> p.Ldif.SchemaAttributeProtocol:
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
         """Apply OID-specific attribute transformations before writing.
 
         IMPORTANT: Writer denormalization (RFC → OID) happens in _write_attribute.
@@ -1126,7 +1125,7 @@ class FlextLdifServersOidSchema(
                         },
                     )
 
-        return p.Ldif.SchemaAttributeProtocol(
+        return m.Ldif.SchemaAttribute(
             oid=attr_data.oid,
             name=fixed_name,
             desc=attr_data.desc,
@@ -1158,8 +1157,8 @@ class FlextLdifServersOidSchema(
     ) -> r[
         dict[
             str,
-            list[p.Ldif.SchemaAttributeProtocol]
-            | list[p.Ldif.SchemaObjectClassProtocol],
+            list[m.Ldif.SchemaAttribute]
+            | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.

@@ -26,8 +26,8 @@ from flext_ldif.typings import t
 
 # REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
 # REMOVED: Type aliases para objetos nested - use m.* ou FlextLdifModelsDomains.* diretamente
-# SchemaAttribute: TypeAlias = p.Ldif.SchemaAttributeProtocol  # Use p.Ldif.SchemaAttributeProtocol or p.Ldif.SchemaAttributeProtocol directly
-# SchemaObjectClass: TypeAlias = p.Ldif.SchemaObjectClassProtocol  # Use p.Ldif.SchemaObjectClassProtocol or p.Ldif.SchemaObjectClassProtocol directly
+# SchemaAttribute: TypeAlias = m.Ldif.SchemaAttribute  # Use m.Ldif.SchemaAttribute or m.Ldif.SchemaAttribute directly
+# SchemaObjectClass: TypeAlias = m.Ldif.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or m.Ldif.SchemaObjectClass directly
 # QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata  # Use m.Ldif.QuirkMetadata or FlextLdifModelsDomains.QuirkMetadata directly
 
 # Aliases for simplified usage - after all imports
@@ -227,7 +227,7 @@ class FlextLdifUtilitiesWriter:
             >>> result = LdifWriter.render_template(
             ...     "Hello {{ name }}", {"name": "World"}
             ... )
-            >>> result.unwrap()
+            >>> result.value
             'Hello World'
 
         """
@@ -260,7 +260,7 @@ class FlextLdifUtilitiesWriter:
 
         Example:
             >>> result = LdifWriter.write_file("content", Path("out.ldif"))
-            >>> stats = result.unwrap()
+            >>> stats = result.value
             >>> stats["bytes_written"]
             7
 

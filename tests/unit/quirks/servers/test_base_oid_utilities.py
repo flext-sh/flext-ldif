@@ -464,8 +464,8 @@ class TestsTestFlextLdifUtilitiesOid(s):
         """Test OID format validation with parametrized scenarios."""
         result = u.OID.validate_format(oid)
         assert result.is_success, f"Validation failed for {scenario}"
-        assert result.unwrap() is is_valid, (
-            f"Format validation failed for {scenario}: expected {is_valid}, got {result.unwrap()}"
+        assert result.value is is_valid, (
+            f"Format validation failed for {scenario}: expected {is_valid}, got {result.value}"
         )
 
     @pytest.mark.parametrize(

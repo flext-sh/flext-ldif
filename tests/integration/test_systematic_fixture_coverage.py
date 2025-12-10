@@ -63,13 +63,13 @@ class TestSystematicFixtureCoverage:
         # Parse schema
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) > 0, "No entries parsed from schema fixture"
 
         # Write parsed entries
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.unwrap()
+        written_content = write_result.value
         assert len(written_content) > 0, "Write produced empty content"
 
         # Parse written content (roundtrip)
@@ -77,7 +77,7 @@ class TestSystematicFixtureCoverage:
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == len(
             entries,
         ), f"Entry count mismatch: {len(roundtrip_entries)} != {len(entries)}"
@@ -112,13 +112,13 @@ class TestSystematicFixtureCoverage:
         # Parse ACL data
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         # ACL fixtures may have 0+ entries depending on fixture format
 
         # Write parsed entries
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.unwrap()
+        written_content = write_result.value
         # Content may be empty if no entries had ACLs
 
         # Validate basic structure is maintained
@@ -154,7 +154,7 @@ class TestSystematicFixtureCoverage:
         # Parse entries
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) > 0, "Entry fixture should parse to at least one entry"
 
         # Validate entry structure
@@ -165,7 +165,7 @@ class TestSystematicFixtureCoverage:
         # Write entries
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.unwrap()
+        written_content = write_result.value
         assert len(written_content) > 0, "Write produced empty content"
 
         # Roundtrip parse
@@ -173,7 +173,7 @@ class TestSystematicFixtureCoverage:
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == len(
             entries,
         ), (
@@ -214,7 +214,7 @@ class TestSystematicFixtureCoverage:
         # Parse large integration fixture
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) > 0, "Integration fixture should parse to multiple entries"
 
         # Validate diverse entry structure
@@ -231,7 +231,7 @@ class TestSystematicFixtureCoverage:
         # Write parsed entries
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.unwrap()
+        written_content = write_result.value
         assert len(written_content) > len(fixture_data) * 0.5, (
             "Written content significantly smaller than fixture (possible data loss)"
         )
@@ -241,7 +241,7 @@ class TestSystematicFixtureCoverage:
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
 
         # Validate roundtrip integrity
         assert len(roundtrip_entries) == len(
@@ -315,19 +315,19 @@ mail: test@example.com
         # Test basic operations without server-specific quirks
         parse_result = api.parse(ldif_content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         write_result = api.write(entries)
         assert write_result.is_success
-        written_content = write_result.unwrap()
+        written_content = write_result.value
         # DN is normalized to lowercase in written output
         assert "cn=test,dc=example,dc=com" in written_content.lower()
 
         # Roundtrip
         roundtrip_result = api.parse(written_content)
         assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
         assert str(roundtrip_entries[0].dn) == str(entries[0].dn)
 

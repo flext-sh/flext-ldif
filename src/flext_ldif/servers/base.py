@@ -117,7 +117,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         >>> entries = processor.parse("...").result
         >>> ldif = processor.write(entries).result
         >>> # Monadic composition
-        >>> entries = processor.parse("...").map(filter_entries).unwrap()
+        >>> entries = processor.parse("...").map(filter_entries).value
 
     It also preserves the nested abstract base classes for `Schema`, `Acl`, and
     `Entry` quirks. These nested classes define the internal implementation
@@ -356,7 +356,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             return r[FlextLdifModelsDomains.Entry].fail(
                 parse_result.error or "Parse failed",
             )
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = getattr(parse_response, "entries", [])
         if not entries:
             return r[FlextLdifModelsDomains.Entry].fail("No entries parsed")
@@ -423,7 +423,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             entries=entries,
             _operation=operation,
         )
-        return result.unwrap()
+        return result.value
 
     def __new__(
         cls,
@@ -481,7 +481,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
                 entries=entries,
                 _operation=operation,
             )
-            unwrapped: FlextLdifModelsDomains.Entry | str = result.unwrap()
+            unwrapped: FlextLdifModelsDomains.Entry | str = result.value
             if not isinstance(unwrapped, cls):
                 msg = f"Expected {cls.__name__}, got {type(unwrapped)}"
                 raise TypeError(msg)
@@ -630,7 +630,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         **V2 Usage:**
             >>> quirk = FlextLdifServersRfc()
             >>> entries = quirk.parse(ldif_text).result
-            >>> entries = quirk.parse(ldif_text).map(filter_fn).unwrap()
+            >>> entries = quirk.parse(ldif_text).map(filter_fn).value
 
         Args:
             ldif_text: LDIF content string
@@ -651,7 +651,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             error_msg = entries_result.error or "Entry parsing failed"
             return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
 
-        entries = entries_result.unwrap()
+        entries = entries_result.value
         detected_server = getattr(self, "server_type", None)
         statistics = FlextLdifModelsResults.Statistics(
             total_entries=len(entries),
@@ -680,7 +680,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         **V2 Usage:**
             >>> quirk = FlextLdifServersRfc()
             >>> ldif_text = quirk.write(entries).result
-            >>> ldif_text = quirk.write(entries).map(str.upper).unwrap()
+            >>> ldif_text = quirk.write(entries).map(str.upper).value
 
         Args:
             entries: List of Entry models
@@ -709,7 +709,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             result = write_single_entry(entry_model)
             if result.is_failure:
                 return r[str].fail(f"Failed to write entry: {result.error}")
-            ldif_lines.append(result.unwrap())
+            ldif_lines.append(result.value)
 
         # Finalize LDIF with proper formatting
         ldif = "\n".join(ldif_lines)
@@ -781,7 +781,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         """
         parse_result = self.parse(ldif_text)
         if parse_result.is_success:
-            parse_response = parse_result.unwrap()
+            parse_response = parse_result.value
             entries = getattr(parse_response, "entries", [])
             # ParseResponse.entries is always Sequence[Entry] (never a single Entry)
             if u.Guards.is_list_non_empty(entries):
@@ -818,7 +818,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         """
         write_result = self.write(entries)
         if write_result.is_success:
-            written_text: str = write_result.unwrap()
+            written_text: str = write_result.value
             return r[FlextLdifModelsDomains.Entry | str].ok(written_text)
         error_msg: str = write_result.error or "Write failed"
         return r[FlextLdifModelsDomains.Entry | str].fail(error_msg)

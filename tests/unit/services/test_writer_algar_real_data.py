@@ -119,7 +119,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
         )
 
         tm.ok(write_result)
-        content = write_result.unwrap()
+        content = write_result.value
 
         # Validate RFC 2849 compliance
         if isinstance(content, m.WriteResponse) and content.content:

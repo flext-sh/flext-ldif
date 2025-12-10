@@ -1565,7 +1565,7 @@ class FlextLdifUtilitiesACL:
                 error_msg = f"ACL parse failed: {result.error}"
                 raise ValueError(error_msg)
             return None
-        return result.unwrap()
+        return result.value
 
     @staticmethod
     def _format_batch_errors(errors: list[tuple[int, str]]) -> list[str]:
@@ -1639,7 +1639,7 @@ class FlextLdifUtilitiesACL:
             ...     fail_fast=False,
             ... )
             >>> if result.is_success:
-            ...     acls = result.unwrap()
+            ...     acls = result.value
 
         """
 
@@ -1662,7 +1662,7 @@ class FlextLdifUtilitiesACL:
             """Wrapper that returns T | r[T] for batch compatibility."""
             result = parse_single_acl(acl_line)
             if result.is_success:
-                return result.unwrap()
+                return result.value
             return result
 
         batch_result = u_core.Collection.batch(
@@ -1838,7 +1838,7 @@ class FlextLdifUtilitiesACL:
             ...     "invalid-acl",
             ... ])
             >>> if result.is_success:
-            ...     for line, is_valid, error in result.unwrap():
+            ...     for line, is_valid, error in result.value:
             ...         print(f"Valid: {is_valid}")
 
         """

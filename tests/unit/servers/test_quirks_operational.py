@@ -104,7 +104,7 @@ class SchemaValidator:
     ) -> T:
         """Validate parsing result with common assertions."""
         assert result.is_success, f"Failed to parse {description}: {result.error}"
-        parsed = result.unwrap()
+        parsed = result.value
         assert isinstance(parsed, expected_type), (
             f"Expected {expected_type.__name__}, got {type(parsed).__name__}"
         )
@@ -150,7 +150,7 @@ class SchemaValidator:
     ) -> T:
         """Validate conversion result with common assertions."""
         assert result.is_success, f"Conversion failed for {description}: {result.error}"
-        converted = result.unwrap()
+        converted = result.value
         assert isinstance(converted, expected_type), (
             f"Expected {expected_type.__name__}, got {type(converted).__name__}"
         )

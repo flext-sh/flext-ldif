@@ -339,6 +339,7 @@ class FlextLdifUtilitiesServer:
             "oracleoid": c.Ldif.ServerTypes.OID.value,
             "oracle_oud": c.Ldif.ServerTypes.OUD.value,
             "oracleoud": c.Ldif.ServerTypes.OUD.value,
+            "openldap": c.Ldif.ServerTypes.OPENLDAP2.value,  # "openldap" maps to "openldap2"
             "openldap1": c.Ldif.ServerTypes.OPENLDAP1.value,
             "openldap2": c.Ldif.ServerTypes.OPENLDAP2.value,
             "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,

@@ -137,7 +137,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         if quirk.can_handle(acl_line):
             result = quirk.parse(acl_line)
             if result.is_success:
-                acl_model = result.unwrap()
+                acl_model = result.value
                 # Access OUD-specific fields via metadata.extensions
 
     """
@@ -421,7 +421,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         if rfc_result.is_success:
             # RFC parser succeeded - check if it has a valid name
             # If name is empty and line doesn't look like RFC format, try ds-privilege-name
-            acl_model = rfc_result.unwrap()
+            acl_model = rfc_result.value
             if acl_model.name or normalized.startswith("aci:"):
                 # RFC parser returned valid result with name or recognized format
                 return rfc_result
@@ -514,7 +514,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             return result
 
         # Post-process for OUD-specific multi-group patterns (timeofday, ssf)
-        acl = result.unwrap()
+        acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
         # Preserve all extensions from parse_aci (including targattrfilters, targetcontrol, etc.)
         extensions = (
@@ -1295,7 +1295,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 subject_str = subject_str.rstrip(";)")
                 subject_str = f"{subject_str} and {' and '.join(bind_rules)};)"
 
-            aci_parts.extend([perms_result.unwrap(), subject_str])
+            aci_parts.extend([perms_result.value, subject_str])
 
             # Build final ACI string
             aci_string = f"{sc.ACL_ACI_PREFIX} {' '.join(aci_parts)}"
@@ -1357,4 +1357,4 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             aci_text = "\n".join(current_aci)
             result = self.parse(aci_text)
             if result.is_success:
-                acls.append(result.unwrap())
+                acls.append(result.value)

@@ -36,7 +36,7 @@ mail: test@example.com
         result = ldif.parse(ldif_content)
 
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
 
@@ -63,7 +63,7 @@ sn: User3
         result = ldif.parse(ldif_content)
 
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 3
 
     def test_parse_entries_with_multivalued_attributes(self) -> None:
@@ -81,7 +81,7 @@ member: cn=user3,dc=example,dc=com
         result = ldif.parse(ldif_content)
 
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_validate_parsed_entries(self) -> None:
@@ -97,7 +97,7 @@ sn: Test
         parse_result = ldif.parse(ldif_content)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         validation_result = ldif.validate_entries(entries)
 
         assert validation_result is not None
@@ -114,7 +114,7 @@ sn: Test
 """
 
         parse_result = ldif.parse(ldif_content)
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         write_result = ldif.write(entries, output_file)
 
@@ -134,7 +134,7 @@ sn: Test
         result = ldif.parse(ldif_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            entries = result.value
             assert len(entries) == 1
 
     def test_parse_handles_encoding(self, tmp_path: Path) -> None:
@@ -187,7 +187,7 @@ mail: test@example.com
 """
 
         parse_result = ldif.parse(ldif_content)
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         if entries:
             entry = entries[0]
@@ -231,6 +231,6 @@ sn: Test
         result = ldif.parse(ldif_content)
 
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
         assert "cn" in entries[0].attributes.attributes

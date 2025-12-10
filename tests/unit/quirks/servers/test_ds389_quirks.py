@@ -394,7 +394,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.parse(oc_def)
 
         assert result.is_success
-        oc_data = result.unwrap()
+        oc_data = result.value
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
@@ -430,7 +430,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.write(oc_data)
 
         assert result.is_success
-        oc_str = result.unwrap()
+        oc_str = result.value
         assert "2.16.840.1.113730.3.2.1" in oc_str
         assert "nscontainer" in oc_str
         assert "STRUCTURAL" in oc_str
