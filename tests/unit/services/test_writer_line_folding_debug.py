@@ -32,9 +32,9 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
     def long_value_entry(self) -> p.Entry:
         """Create entry with long attribute value that needs folding."""
         long_value = "A" * 100  # 100 character value
-        return p.Entry(
-            dn=m.DistinguishedName(value=c.DNs.TEST_USER),
-            attributes=m.LdifAttributes(
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=c.DNs.TEST_USER),
+            attributes=m.Ldif.Attributes(
                 attributes={
                     "cn": ["test"],
                     "description": [long_value],  # Very long

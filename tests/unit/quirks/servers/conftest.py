@@ -127,7 +127,7 @@ def sample_entry() -> p.Entry:
     result = p.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
-            c.DictKeys.OBJECTCLASS: [
+            c.Ldif.DictKeys.OBJECTCLASS: [
                 c.General.OC_NAME_PERSON,
             ],
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
@@ -135,7 +135,7 @@ def sample_entry() -> p.Entry:
     )
     entry_domain = result.unwrap()
     # Create new instance using p.Entry to ensure correct type
-    return p.Entry(
+    return m.Ldif.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,
@@ -229,7 +229,7 @@ def sample_entry_with_metadata() -> p.Entry:
     result = p.Entry.create(
         dn=c.General.SAMPLE_DN,
         attributes={
-            c.DictKeys.OBJECTCLASS: [
+            c.Ldif.DictKeys.OBJECTCLASS: [
                 c.General.OC_NAME_PERSON,
             ],
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
@@ -240,7 +240,7 @@ def sample_entry_with_metadata() -> p.Entry:
     )
     entry_domain = result.unwrap()
     # Create new instance using p.Entry to ensure correct type
-    return p.Entry(
+    return m.Ldif.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,

@@ -209,9 +209,6 @@ class FlextLdifConstants(FlextConstants):
         DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
         # Supported encodings - derived from Encoding StrEnum for DRY principle
         # Uses comprehension over StrEnum members instead of explicit listing
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset(
-            e.value for e in Encoding
-        )
 
         # ===== RFC 2849 LDIF FORMAT CONSTANTS =====
         class LdifFormat(StrEnum):
@@ -402,7 +399,6 @@ class FlextLdifConstants(FlextConstants):
             COMMENT_PREFIX: Final[str] = "#"
             VERSION_PREFIX: Final[str] = "version:"
             CHANGE_TYPE_PREFIX: Final[str] = "changetype:"
-            LINE_CONTINUATION_CHARS: Final[frozenset[str]] = frozenset([" ", "\t"])
             ATTRIBUTE_OPTION_SEPARATOR: Final[str] = ";"
             URL_PREFIX: Final[str] = "<"
             URL_SUFFIX: Final[str] = ">"
@@ -432,18 +428,6 @@ class FlextLdifConstants(FlextConstants):
             # RFC 2849 §2 - Characters requiring base64 encoding at value start
             # "The distinguishing characteristic of an LDIF file is that it
             #  begins with a version number."
-            BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
-                " ",  # ASCII 32 - space at start
-                "<",  # Less-than sign (URL indicator conflict)
-                ":",  # Colon (separator conflict)
-            })
-
-            # RFC 2849 §2 - Characters requiring base64 encoding anywhere in value
-            BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset({
-                "\x00",  # NUL character
-                "\n",  # Newline (line separator)
-                "\r",  # Carriage return
-            })
 
             # RFC 2849 §2 - SAFE-CHAR range (no base64 needed)
             # SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F (all but NUL, LF, CR)
@@ -470,6 +454,14 @@ class FlextLdifConstants(FlextConstants):
                 "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
             )
 
+            # RFC 2849 §2 - Characters requiring base64 encoding at value start
+            # SAFE-INIT-CHAR excludes these at position 0
+            BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
+                " ",  # ASCII 32 - space at start
+                "<",  # Less-than sign (URL indicator conflict)
+                ":",  # Colon (separator conflict)
+            })
+
             # RFC 2849 §3 - Line folding constants
             LINE_FOLD_WIDTH: Final[int] = 76  # Max chars before fold
             LINE_CONTINUATION_SPACE: Final[str] = " "  # Single space for continuation
@@ -482,13 +474,7 @@ class FlextLdifConstants(FlextConstants):
             URL_SEPARATOR: Final[str] = ":<"  # attribute:< url
 
             # RFC 2849 §4 - Change record types
-            # RFC 2849 §4 - Modify operation types
-            # DRY: String literals used directly; no separate constants needed.
-            MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset({
-                "add",
-                "delete",
-                "replace",
-            })
+            # RFC 2849 §4 - Modify operation types (see ModifyOperation StrEnum)
 
             # RFC 2849 §5 - Control record keywords
             KEYWORD_DN: Final[str] = "dn"
@@ -502,25 +488,9 @@ class FlextLdifConstants(FlextConstants):
             # RFC 4512: LDAP Directory Information Models
             # =================================================================
 
-            # RFC 4512 §4.1 - Schema usage values for attributeType
-            # DRY: String literals used directly; no separate constants needed.
-            SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset({
-                "userApplications",
-                "directoryOperation",
-                "distributedOperation",
-                "dSAOperation",
-            })
+            # RFC 4512 §4.1 - Schema usage values (see SchemaUsage StrEnum)
 
-            # RFC 4512 §4.1.1 - ObjectClass kinds
-            SCHEMA_KIND_ABSTRACT: Final[str] = "ABSTRACT"
-            SCHEMA_KIND_STRUCTURAL: Final[str] = "STRUCTURAL"
-            SCHEMA_KIND_AUXILIARY: Final[str] = "AUXILIARY"
-
-            SCHEMA_KINDS: Final[frozenset[str]] = frozenset({
-                SCHEMA_KIND_ABSTRACT,
-                SCHEMA_KIND_STRUCTURAL,
-                SCHEMA_KIND_AUXILIARY,
-            })
+            # RFC 4512 §4.1.1 - ObjectClass kinds (see SchemaKind StrEnum)
 
             # RFC 4512 - ABNF Syntax Characters
             # WSP = 0*SPACE, SP = 1*SPACE, SPACE = %x20
@@ -591,17 +561,6 @@ class FlextLdifConstants(FlextConstants):
             ATTR_DITSTRUCTURERULES: Final[str] = "dITStructureRules"
             ATTR_NAMEFORMS: Final[str] = "nameForms"
 
-            SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-                ATTR_OBJECTCLASSES,
-                ATTR_ATTRIBUTETYPES,
-                ATTR_MATCHINGRULES,
-                ATTR_MATCHINGRULEUSE,
-                ATTR_LDAPSYNTAXES,
-                ATTR_DITCONTENTRULES,
-                ATTR_DITSTRUCTURERULES,
-                ATTR_NAMEFORMS,
-            })
-
             # =================================================================
             # RFC 4514: LDAP Distinguished Names
             # =================================================================
@@ -649,28 +608,6 @@ class FlextLdifConstants(FlextConstants):
                 0x3C,
                 0x3E,
                 0x5C,
-            })
-
-            # RFC 4514 §2.4 - special = escaped / SPACE / SHARP / EQUALS
-            # escaped = DQUOTE / PLUS / COMMA / SEMI / LANGLE / RANGLE
-            DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset({
-                '"',
-                "+",
-                ",",
-                ";",
-                "<",
-                ">",
-                " ",
-                "#",
-                "=",
-            })
-            DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset({
-                '"',
-                "+",
-                ",",
-                ";",
-                "<",
-                ">",
             })
 
             # RFC 4514 §2.4 - Characters requiring escaping in DN attribute values
@@ -958,49 +895,6 @@ class FlextLdifConstants(FlextConstants):
             # =====================================================================
             # FEATURE CATEGORY SETS
             # =====================================================================
-
-            RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset({
-                ACL_READ,
-                ACL_WRITE,
-                ACL_ADD,
-                ACL_DELETE,
-                ACL_SEARCH,
-                ACL_COMPARE,
-                ACL_SUBJECT_USER_DN,
-                ACL_SUBJECT_GROUP_DN,
-                ACL_SUBJECT_SELF,
-                ACL_SUBJECT_ANONYMOUS,
-                ACL_SUBJECT_ALL,
-                ACL_TARGET_ENTRY,
-                ACL_TARGET_ATTRS,
-                ACL_TARGET_DN,
-                SCHEMA_ATTR_SYNTAX,
-                SCHEMA_ATTR_MATCHING,
-                SCHEMA_ATTR_SINGLE_VALUE,
-                SCHEMA_OC_SUP,
-                SCHEMA_OC_KIND,
-                ENTRY_DN,
-                ENTRY_CHANGETYPE,
-                ENTRY_CONTROLS,
-            })
-
-            VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset({
-                ACL_SELF_WRITE,
-                ACL_PROXY_AUTH,
-                ACL_BROWSE_PERMISSION,
-                ACL_AUTH_PERMISSION,
-                ACL_ALL_PERMISSIONS,
-                ACL_NEGATIVE_PERMISSIONS,
-                ACL_DNATTR_SUBJECT,
-                ACL_GUIDATTR_SUBJECT,
-                ACL_BIND_IP,
-                ACL_BIND_TIME,
-                ACL_BIND_AUTHMETHOD,
-                ACL_BIND_SSF,
-                ACL_TARGET_FILTER,
-            })
-
-            # =====================================================================
             # RFC FALLBACK VALUES (when vendor feature not supported)
             # =====================================================================
             # Servers declare their own FEATURE_TO_LOCAL mappings in their Constants
@@ -1235,7 +1129,6 @@ class FlextLdifConstants(FlextConstants):
             MIN_URL_LENGTH: Final[int] = 1
             MAX_URL_LENGTH: Final[int] = 2048
             URL_PATTERN: Final[str] = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
-            SECURE_PROTOCOLS: Final[frozenset[str]] = frozenset(["https", "ldaps"])
 
             # Encoding constraints
             MIN_ENCODING_LENGTH: Final[int] = 1
@@ -1274,36 +1167,7 @@ class FlextLdifConstants(FlextConstants):
             COUNTRY: Final[str] = "country"
             LOCALITY: Final[str] = "locality"
 
-            # Convenience sets for validation and filtering
-            LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
-                [
-                    PERSON,
-                    ORGANIZATIONAL_PERSON,
-                    INET_ORG_PERSON,
-                ],
-            )
-
-            LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
-                [
-                    GROUP_OF_NAMES,
-                    GROUP_OF_UNIQUE_NAMES,
-                    POSIX_GROUP,
-                ],
-            )
-
             # Standard structural hierarchy
-            LDAP_STRUCTURAL_BASE: Final[frozenset[str]] = frozenset(
-                [
-                    TOP,
-                    PERSON,
-                    ORGANIZATIONAL_PERSON,
-                    INET_ORG_PERSON,
-                    GROUP_OF_NAMES,
-                    ORGANIZATIONAL_UNIT,
-                    ORGANIZATION,
-                    DOMAIN,
-                ],
-            )
 
         class RfcBinaryAttributes:
             """RFC 4517 Binary attribute names that typically require ;binary option.
@@ -1336,25 +1200,23 @@ class FlextLdifConstants(FlextConstants):
             OBJECT_GUID: Final[str] = "objectguid"
             OBJECT_SID: Final[str] = "objectsid"
 
-            # Convenience set for validation
-            BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset(
-                [
-                    USER_CERTIFICATE,
-                    CA_CERTIFICATE,
-                    CERTIFICATE_REVOCATION_LIST,
-                    AUTHORITY_REVOCATION_LIST,
-                    CROSS_CERTIFICATE_PAIR,
-                    PHOTO,
-                    JPEG_PHOTO,
-                    AUDIO,
-                    USER_PKCS12,
-                    USER_SMIME_CERTIFICATE,
-                    THUMBNAIL_PHOTO,
-                    THUMBNAIL_LOGO,
-                    OBJECT_GUID,
-                    OBJECT_SID,
-                ],
-            )
+            # Convenience set for validation - all binary attribute names
+            BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+                USER_CERTIFICATE,
+                CA_CERTIFICATE,
+                CERTIFICATE_REVOCATION_LIST,
+                AUTHORITY_REVOCATION_LIST,
+                CROSS_CERTIFICATE_PAIR,
+                PHOTO,
+                JPEG_PHOTO,
+                AUDIO,
+                USER_PKCS12,
+                USER_SMIME_CERTIFICATE,
+                THUMBNAIL_PHOTO,
+                THUMBNAIL_LOGO,
+                OBJECT_GUID,
+                OBJECT_SID,
+            ])
 
         class ServerValidationRules:
             """Server-specific validation rules for Entry model validators.
@@ -1372,24 +1234,6 @@ class FlextLdifConstants(FlextConstants):
             # =============================================================================
             # OBJECTCLASS REQUIREMENTS
             # =============================================================================
-
-            # Servers that REQUIRE objectClass attribute (stricter than RFC SHOULD)
-            OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oud",  # Oracle Unified Directory - strict schema enforcement
-                    "ad",  # Active Directory - requires objectClass for all entries
-                ],
-            )
-
-            # Servers that allow missing objectClass (lenient mode)
-            OBJECTCLASS_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oid",  # Oracle Internet Directory - allows schema-less entries
-                    "openldap",  # OpenLDAP - flexible objectClass handling
-                    "openldap1",  # OpenLDAP 1.x - legacy lenient mode
-                    "relaxed",  # Relaxed mode - best-effort parsing
-                ],
-            )
 
             # =============================================================================
             # SCHEMA ENTRY DETECTION PATTERNS
@@ -1420,45 +1264,9 @@ class FlextLdifConstants(FlextConstants):
             # NAMING ATTRIBUTE (RDN) REQUIREMENTS
             # =============================================================================
 
-            # Servers that REQUIRE naming attribute in entry (stricter than RFC SHOULD)
-            NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oud",  # OUD enforces naming attribute presence
-                    "ad",  # AD requires RDN attribute in entry
-                ],
-            )
-
-            # Servers that allow missing naming attribute (lenient mode)
-            NAMING_ATTR_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oid",  # OID allows missing RDN attribute
-                    "openldap",  # OpenLDAP flexible
-                    "openldap1",  # OpenLDAP 1.x legacy
-                    "relaxed",  # Relaxed mode
-                ],
-            )
-
             # =============================================================================
             # BINARY ATTRIBUTE HANDLING
             # =============================================================================
-
-            # Servers that REQUIRE ;binary option for binary attributes
-            BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oud",  # OUD strict ;binary enforcement
-                    "openldap",  # OpenLDAP 2.x requires ;binary
-                ],
-            )
-
-            # Servers that make ;binary optional (auto-detect or lenient)
-            BINARY_OPTION_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset(
-                [
-                    "oid",  # OID auto-detects binary
-                    "openldap1",  # OpenLDAP 1.x no ;binary support
-                    "ad",  # AD auto-detects binary attributes
-                    "relaxed",  # Relaxed mode
-                ],
-            )
 
             # Server-specific binary attributes (in addition to RFC standard, immutable)
             SERVER_BINARY_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
@@ -2356,37 +2164,19 @@ class FlextLdifConstants(FlextConstants):
         class LdapServers:
             """LDAP server implementation constants."""
 
-            # Server types - using Literal types for ACL compatibility
+            # Server types - reference ServerTypes enum for DRY compliance
+            # No string duplication - all server types defined in ServerTypes enum above
             ACTIVE_DIRECTORY: Final = "ad"
-            OPENLDAP: Final = "openldap"  # Legacy catch-all
-            OPENLDAP_2: Final = "openldap2"  # Modern cn=config based
-            OPENLDAP_1: Final = "openldap1"  # Legacy slapd.conf based
+            OPENLDAP: Final = "openldap"
+            OPENLDAP_2: Final = "openldap2"
+            OPENLDAP_1: Final = "openldap1"
             APACHE_DIRECTORY: Final = "apache"
             NOVELL_EDIRECTORY: Final = "novell"
             IBM_TIVOLI: Final = "ibm_tivoli"
             GENERIC: Final = "generic"
-            # Oracle server types
             ORACLE_OID: Final = "oid"
             ORACLE_OUD: Final = "oud"
-            # Additional server types
             DS_389: Final = "ds389"
-
-            # Supported server types list
-            SUPPORTED_TYPES: Final[frozenset[str]] = frozenset(
-                [
-                    ACTIVE_DIRECTORY,
-                    OPENLDAP,
-                    OPENLDAP_2,
-                    OPENLDAP_1,
-                    APACHE_DIRECTORY,
-                    NOVELL_EDIRECTORY,
-                    IBM_TIVOLI,
-                    GENERIC,
-                    ORACLE_OID,
-                    ORACLE_OUD,
-                    DS_389,
-                ],
-            )
 
             # NOTE: Server-specific DN patterns, attributes, and object classes migrated:
             # - AD_DN_PATTERNS → FlextLdifServersAd.Constants.AD_DN_PATTERNS
@@ -2414,28 +2204,6 @@ class FlextLdifConstants(FlextConstants):
             # RFC 2849 format constants
             LINE_LENGTH_LIMIT: Final[int] = 76
             LINE_WITH_NEWLINE: Final[int] = LINE_LENGTH_LIMIT + 1  # 77
-
-            # Required RFC 2849 features
-            REQUIRED_FEATURES: Final[frozenset[str]] = frozenset(
-                [
-                    "base64_encoding",
-                    "line_continuation",
-                    "change_records",
-                    "url_references",
-                    "attribute_options",
-                    "comments",
-                    "version_control",
-                ],
-            )
-
-            # Optional RFC 2849 features
-            OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset(
-                [
-                    "language_tags",
-                    "binary_data",
-                    "large_entries",
-                ],
-            )
 
             # Validation strictness levels
             STRICT: Final[str] = "strict"
@@ -2540,24 +2308,6 @@ class FlextLdifConstants(FlextConstants):
             Zero Tolerance: All operational attribute names MUST be defined here.
             """
 
-            # Common operational attributes across all LDAP servers
-            # These are defined in RFC 4512 and generated by directory servers
-            COMMON: Final[frozenset[str]] = frozenset(
-                [
-                    "createTimestamp",
-                    "modifyTimestamp",
-                    "creatorsName",
-                    "modifiersName",
-                    "entryUUID",
-                    "entryDN",
-                    "entryCSN",
-                    "subschemaSubentry",
-                    "hasSubordinates",
-                    "numSubordinates",
-                    "subordinateCount",
-                ],
-            )
-
             # NOTE: Server-specific operational attributes migrated to server Constants:
             # - OID_SPECIFIC → FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES
             # - OID_BOOLEAN_ATTRIBUTES →
@@ -2579,36 +2329,10 @@ class FlextLdifConstants(FlextConstants):
 
             # Common operational attributes to filter from ALL entries
             # These are always filtered regardless of entry type
-            FILTER_FROM_ALL_ENTRIES: Final[frozenset[str]] = frozenset(
-                [
-                    "createtimestamp",
-                    "creatorsname",
-                    "modifytimestamp",
-                    "modifiersname",
-                    "entrycsn",
-                    "entryuuid",
-                    "structuralobjectclass",
-                    "hassubordinates",
-                    "numsubordinates",
-                    "subordinatecount",
-                ],
-            )
 
             # Schema-related operational attributes to filter from NON-SCHEMA entries only
             # These are preserved in schema entries (cn=schema, cn=subschemasubentry, etc.)
             # as they contain the actual schema content
-            FILTER_FROM_NON_SCHEMA_ENTRIES: Final[frozenset[str]] = frozenset(
-                [
-                    # "attributetypes",
-                    # "objectclasses",
-                    # "ldapsyntaxes",
-                    # "matchingrules",
-                    # "ditcontentrules",
-                    # "ditstructurerules",
-                    # "nameformsrules",
-                    # "matchingruleuse",
-                ],
-            )
 
         class SchemaFields:
             """LDIF schema structure field names (case-sensitive).
@@ -2645,18 +2369,6 @@ class FlextLdifConstants(FlextConstants):
             OBJECT_CLASS_CAMEL: Final[str] = "objectClass"
 
             # All schema field names as frozenset for membership testing
-            ALL_SCHEMA_FIELDS: Final[frozenset[str]] = frozenset(
-                [
-                    ATTRIBUTE_TYPES,
-                    OBJECT_CLASSES,
-                    MATCHING_RULES,
-                    MATCHING_RULE_USE,
-                    DIT_CONTENT_RULES,
-                    DIT_STRUCTURE_RULES,
-                    NAME_FORMS,
-                    LDAP_SYNTAXES,
-                ],
-            )
 
         # =============================================================================
         # ACL ATTRIBUTES - ACL attribute names consolidated by server type
@@ -2692,31 +2404,9 @@ class FlextLdifConstants(FlextConstants):
             # NOTE: Server-specific attributes (e.g., orclaci,
             # nTSecurityDescriptor, ads-aci) are defined in their respective
             # server Constants classes
-            ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-                [
-                    ACI,  # RFC 4876 standard (OUD, 389 DS)
-                    ACLRIGHTS,
-                    ACLENTRY,
-                    # Server-specific attributes moved to respective Constants:
-                    # - "olcAccess" (OpenLDAP) → FlextLdifServersOpenldap.Constants
-                    # - "orclaci", "orclentrylevelaci" (OID) → FlextLdifServersOid.Constants
-                    # - "nTSecurityDescriptor" (AD) → FlextLdifServersAd.Constants
-                    # - "ads-aci" (Apache DS) → FlextLdifServersApache.Constants
-                    # - "ibm-slapdaccesscontrol" (Tivoli) → FlextLdifServersTivoli.Constants
-                    # - Custom ACL attributes (various) → Respective server Constants
-                ],
-            )
 
             # ACL attributes to filter/detect during migration
             # NOTE: All values commented, list empty - add as needed
-            FILTER_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-                [
-                    # "aci",
-                    # "orclaci",
-                    # "aclrights",
-                    # "aclentry",
-                ],
-            )
 
             # NOTE: Server-specific ACL attribute sets should be defined in
             # their respective server Constants classes:
@@ -2764,24 +2454,22 @@ class FlextLdifConstants(FlextConstants):
             SUBORDINATE_DN: Final[str] = "subordinateDn"  # Subordinate reference
 
             # All DN-valued attributes as frozenset for membership testing
-            ALL_DN_VALUED: Final[frozenset[str]] = frozenset(
-                [
-                    MEMBER,
-                    UNIQUE_MEMBER,
-                    OWNER,
-                    MANAGED_BY,
-                    MANAGER,
-                    SECRETARY,
-                    SEES_ALSO,
-                    PARENT,
-                    REFERS_TO,
-                    MEMBER_OF,
-                    GROUPS,
-                    AUTHORIZED_TO,
-                    HAS_SUBORDINATES,
-                    SUBORDINATE_DN,
-                ],
-            )
+            ALL_DN_VALUED: Final[frozenset[str]] = frozenset([
+                MEMBER,
+                UNIQUE_MEMBER,
+                OWNER,
+                MANAGED_BY,
+                MANAGER,
+                SECRETARY,
+                SEES_ALSO,
+                PARENT,
+                REFERS_TO,
+                MEMBER_OF,
+                GROUPS,
+                AUTHORIZED_TO,
+                HAS_SUBORDINATES,
+                SUBORDINATE_DN,
+            ])
 
             # =============================================================================
             # DN PATTERNS - Standard DN patterns for schema and configuration
@@ -2867,13 +2555,6 @@ class FlextLdifConstants(FlextConstants):
             # Legacy variants (case-insensitive)
             TRUE_LOWER: Final[str] = "true"
             FALSE_LOWER: Final[str] = "false"
-
-            # Universal boolean check (RFC-compliant values only)
-            RFC_TRUE_VALUES: Final[frozenset[str]] = frozenset([TRUE_RFC, TRUE_LOWER])
-            RFC_FALSE_VALUES: Final[frozenset[str]] = frozenset([
-                FALSE_RFC,
-                FALSE_LOWER,
-            ])
 
         # =============================================================================
         # METADATA KEYS - Quirk Processing and Entry Extension Metadata
@@ -3403,38 +3084,6 @@ class FlextLdifConstants(FlextConstants):
             # NOTE: ALL_OID_KEYS moved to FlextLdifServersOid.Constants.ALL_OID_KEYS
             # Use FlextLdifServersOid.Constants for OID-specific metadata keys
 
-            ALL_SCHEMA_KEYS: Final[frozenset[str]] = frozenset(
-                [
-                    X_ORIGIN,
-                    OBSOLETE,
-                    COLLECTIVE,
-                    ORIGINAL_FORMAT,
-                    ORIGINAL_SOURCE,
-                ],
-            )
-
-            ALL_ACL_KEYS: Final[frozenset[str]] = frozenset(
-                [
-                    VERSION,
-                    LINE_BREAKS,
-                    IS_MULTILINE,
-                    DN_SPACES,
-                    TARGETSCOPE,
-                    ATTRIBUTE_ORDER,
-                    SUBJECT_BINDING,
-                ],
-            )
-
-            ALL_ENTRY_KEYS: Final[frozenset[str]] = frozenset(
-                [
-                    BASE64_ATTRS,
-                    MODIFY_ADD_ATTRIBUTETYPES,
-                    MODIFY_ADD_OBJECTCLASSES,
-                    SKIPPED_ATTRIBUTES,
-                    CONVERTED_ATTRIBUTES,
-                ],
-            )
-
         class DnPatterns:
             """Standard DN patterns used in LDAP/LDIF processing.
 
@@ -3498,22 +3147,6 @@ class FlextLdifConstants(FlextConstants):
             # - OLCOVERLAY_PREFIX → FlextLdifServersOpenldap.Constants.OLCOVERLAY_PREFIX
 
             # All schema subentry patterns
-            SCHEMA_SUBENTRY_PATTERNS: Final[frozenset[str]] = frozenset(
-                [
-                    CN_SCHEMA,
-                    CN_SUBSCHEMA,
-                    CN_SUBSCHEMA_SUBENTRY,
-                    CN_SCHEMA_CN_CONFIG,
-                ],
-            )
-
-            # All config DN patterns
-            CONFIG_DN_PATTERNS: Final[frozenset[str]] = frozenset(
-                [
-                    CN_CONFIG,
-                    CN_SCHEMA_CN_CONFIG,
-                ],
-            )
 
             # NOTE: ORACLE_DN_PATTERNS moved to
             # FlextLdifServersOid.Constants.ORACLE_DN_PATTERNS
@@ -3608,21 +3241,6 @@ class FlextLdifConstants(FlextConstants):
             ALIASES: Final[Mapping[str, str]] = MappingProxyType(_ALIASES_DICT)
 
             # Server type variants (for compatibility checks)
-            ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset([
-                "oid",
-                "oracle_oid",
-            ])
-            ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset([
-                "oud",
-                "oracle_oud",
-            ])
-            OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset(
-                [
-                    "openldap",
-                    "openldap1",
-                    "openldap2",
-                ],
-            )
 
             # All validation functions removed - use utilities instead
 
@@ -3646,13 +3264,6 @@ class FlextLdifConstants(FlextConstants):
                 "CUSTOM": "CUSTOM",
             })
 
-            # LDIF format validation set - using hardcoded values
-            LDIF_FORMAT_VALIDATION_SET: Final[frozenset[str]] = frozenset({
-                "RFC2849",
-                "EXTENDED",
-                "CUSTOM",
-            })
-
             # Server types validation mapping - hardcoded to avoid forward reference
             # Canonical types only (excludes ORACLE_* aliases)
             SERVER_TYPE_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
@@ -3669,24 +3280,6 @@ class FlextLdifConstants(FlextConstants):
                 "relaxed": "relaxed",
                 "novell_edirectory": "novell_edirectory",
                 "ibm_tivoli": "ibm_tivoli",
-            })
-
-            # Server types validation set - hardcoded to avoid forward reference
-            # Canonical types only (excludes ORACLE_* aliases)
-            SERVER_TYPE_VALIDATION_SET: Final[frozenset[str]] = frozenset({
-                "oid",
-                "oud",
-                "openldap",
-                "openldap1",
-                "openldap2",
-                "active_directory",
-                "apache_directory",
-                "generic",
-                "rfc",
-                "389ds",
-                "relaxed",
-                "novell_edirectory",
-                "ibm_tivoli",
             })
 
             # All validation/getter functions removed - use utilities instead
@@ -3908,7 +3501,7 @@ class FlextLdifConstants(FlextConstants):
             # attribute=value where attribute starts with letter,
             # value can be anything (including escaped chars)
             # This pattern ensures each component has both attribute and = sign
-            # Full validation happens in DistinguishedName validator
+            # Full validation happens in DN validator
             # which parses escaped characters
             DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$"
             DN_SEPARATOR: Final[str] = r"(?<!\\),"
@@ -4079,6 +3672,43 @@ class FlextLdifConstants(FlextConstants):
             MODRDN = "modrdn"
             MODDN = "moddn"
 
+        class ModifyOperation(StrEnum):
+            """LDIF modify operation types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ModifyOperation.ADD.value
+                or ModifyOperation.ADD directly - no separate frozenset needed.
+            """
+
+            ADD = "add"
+            DELETE = "delete"
+            REPLACE = "replace"
+
+        class SchemaUsage(StrEnum):
+            """RFC 4512 attribute usage types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SchemaUsage.USER_APPLICATIONS.value
+                or SchemaUsage.USER_APPLICATIONS directly - no separate frozenset needed.
+            """
+
+            USER_APPLICATIONS = "userApplications"
+            DIRECTORY_OPERATION = "directoryOperation"
+            DISTRIBUTED_OPERATION = "distributedOperation"
+            DSA_OPERATION = "dSAOperation"
+
+        class SchemaKind(StrEnum):
+            """RFC 4512 objectClass kind types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SchemaKind.ABSTRACT.value
+                or SchemaKind.ABSTRACT directly - no separate frozenset or Final[str] needed.
+            """
+
+            ABSTRACT = "ABSTRACT"
+            STRUCTURAL = "STRUCTURAL"
+            AUXILIARY = "AUXILIARY"
+
         # LDAP SERVERS - Server-specific detection patterns
         # =============================================================================
 
@@ -4134,57 +3764,6 @@ class FlextLdifConstants(FlextConstants):
             NOTE: Server-specific validation rules belong in servers/* modules,
             NOT here. This class contains only RFC-generic validation constants.
             """
-
-            # String validation rules
-            VALID_ENCODINGS_RULE: Final[frozenset[str]] = frozenset(
-                [
-                    "utf-8",
-                    "latin-1",
-                    "ascii",
-                    "utf-16",
-                    "utf-32",
-                    "cp1252",
-                    "iso-8859-1",
-                ],
-            )
-
-            VALID_VALIDATION_LEVELS_RULE: Final[frozenset[str]] = frozenset(
-                [
-                    "strict",
-                    "moderate",
-                    "lenient",
-                ],
-            )
-
-            VALID_SERVER_TYPES_RULE: Final[frozenset[str]] = frozenset(
-                [
-                    "active_directory",
-                    "openldap",
-                    "apache_directory",
-                    "novell_edirectory",
-                    "ibm_tivoli",
-                    "generic",
-                    "oracle_oid",
-                    "oracle_oud",
-                    "389ds",
-                ],
-            )
-
-            VALID_ANALYTICS_LEVELS_RULE: Final[frozenset[str]] = frozenset(
-                [
-                    "low",
-                    "medium",
-                    "high",
-                ],
-            )
-
-            VALID_ERROR_MODES_RULE: Final[frozenset[str]] = frozenset(
-                [
-                    "continue",
-                    "stop",
-                    "skip",
-                ],
-            )
 
             # Numeric validation rules
             MIN_WORKERS_PERFORMANCE_RULE: Final[int] = 4
@@ -4405,18 +3984,6 @@ class FlextLdifConstants(FlextConstants):
 
             # Mapping of human-readable name to OID
             NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
-
-            # Commonly used syntaxes
-            COMMON_SYNTAXES: Final[frozenset[str]] = frozenset(
-                [
-                    "1.3.6.1.4.1.1466.115.121.1.7",  # Boolean
-                    "1.3.6.1.4.1.1466.115.121.1.12",  # DN
-                    "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
-                    "1.3.6.1.4.1.1466.115.121.1.27",  # IA5 String
-                    "1.3.6.1.4.1.1466.115.121.1.39",  # Octet String
-                    "1.3.6.1.4.1.1466.115.121.1.55",  # UTF-8 String
-                ],
-            )
 
             # Mapping of syntax names to type categories (immutable)
             NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType({

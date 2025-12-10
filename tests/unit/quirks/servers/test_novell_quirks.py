@@ -11,8 +11,9 @@ from enum import StrEnum
 from typing import cast
 
 import pytest
-from tests import RfcTestHelpers, TestDeduplicationHelpers, p, s
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
+from flext_ldif.models import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
 
 
@@ -355,7 +356,7 @@ class TestNovellSchemaObjectClassParsing:
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
         quirk = FlextLdifServersNovell.Schema()
-        attr_data = p.Ldif.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
             desc="Password Policy DN",
@@ -376,7 +377,7 @@ class TestNovellSchemaObjectClassParsing:
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
         quirk = FlextLdifServersNovell.Schema()
-        oc_data = p.Ldif.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
             kind="STRUCTURAL",

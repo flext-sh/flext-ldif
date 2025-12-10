@@ -715,7 +715,7 @@ class FlextLdifSorting(
                         modified = True
 
             if modified:
-                sorted_attrs = m.Ldif.LdifAttributes(attributes=attrs_dict)
+                sorted_attrs = m.Ldif.Attributes(attributes=attrs_dict)
                 new_entry = entry.model_copy(update={"attributes": sorted_attrs})
                 return self._track_acl_sorting_metadata(new_entry)
             return entry
@@ -1125,7 +1125,7 @@ class FlextLdifSorting(
 
         original_attr_order = list(attrs_dict.keys())
         sorted_dict: dict[str, list[str]] = dict(sorted_items)
-        sorted_attrs = m.Ldif.LdifAttributes(attributes=sorted_dict)
+        sorted_attrs = m.Ldif.Attributes(attributes=sorted_dict)
         new_entry = entry.model_copy(update={"attributes": sorted_attrs})
 
         # Track sorting transformation in metadata if order changed
@@ -1199,7 +1199,7 @@ class FlextLdifSorting(
             key=lambda x: x[0].lower(),
         )
         sorted_dict = dict(ordered + remaining)
-        sorted_attrs = m.Ldif.LdifAttributes(attributes=sorted_dict)
+        sorted_attrs = m.Ldif.Attributes(attributes=sorted_dict)
         new_entry = entry.model_copy(update={"attributes": sorted_attrs})
 
         # Track sorting transformation in metadata if order changed

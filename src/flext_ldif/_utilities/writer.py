@@ -442,7 +442,7 @@ class FlextLdifUtilitiesWriter:
 
         # Use full path to avoid type resolution issues
         # Access Schema class directly from ErrorCategory namespace
-        kind = oc_data.kind or c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+        kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(str(kind))
 
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")

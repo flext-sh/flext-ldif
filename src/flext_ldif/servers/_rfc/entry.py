@@ -170,7 +170,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """
         if not entry or not isinstance(entry, m.Ldif.Entry):
             return r.fail(f"Invalid entry: {entry}")
-        # Entry.dn is DistinguishedName, not str - check .value
+        # Entry.dn is DN, not str - check .value
         if not entry.dn or not hasattr(entry.dn, "value"):
             return r.fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not isinstance(entry.attributes, dict):

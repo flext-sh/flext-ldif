@@ -65,12 +65,12 @@ class FlextLdifProtocols(FlextProtocols):
 
             @property
             def dn(self) -> str | object | None:
-                """Distinguished Name (str, DistinguishedName model, or None)."""
+                """Distinguished Name (str, DN model, or None)."""
                 ...
 
             @property
             def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
-                """Entry attributes (Mapping, LdifAttributes model, or None)."""
+                """Entry attributes (Mapping, Attributes model, or None)."""
                 ...
 
             @property
@@ -97,7 +97,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             @property
             def dn(self) -> str | object | None:
-                """DN - str, DistinguishedName model, or None."""
+                """DN - str, DN model, or None."""
                 ...
 
         @runtime_checkable
@@ -720,7 +720,7 @@ class FlextLdifProtocols(FlextProtocols):
         # =========================================================================
 
         # Core protocols
-        # Entry = p.Ldif.Entry.EntryProtocol  # REMOVED: Entry is concrete model in m.Ldif.Entry
+        Entry = EntryProtocol  # PRIMARY protocol for LDIF entries
         SchemaAttribute = SchemaAttributeProtocol
         SchemaObjectClass = SchemaObjectClassProtocol
         Acl = AclProtocol
@@ -739,7 +739,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Constants namespace for protocol access."""
 
 
-# Runtime alias
+# Runtime aliases
 p = FlextLdifProtocols
+fldif = FlextLdifProtocols
 
-__all__ = ["FlextLdifProtocols", "p"]
+__all__ = ["FlextLdifProtocols", "fldif", "p"]

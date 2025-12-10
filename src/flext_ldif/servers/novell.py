@@ -638,7 +638,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             ):
                 return True
 
-            # objectClasses is already list[str] in LdifAttributes
+            # objectClasses is already list[str] in Attributes
             object_classes_raw = u_core.mapper().get(
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
             )
@@ -665,7 +665,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
             attributes = entry.attributes.attributes.copy()
             try:
-                # Get objectClasses (already list[str] in LdifAttributes)
+                # Get objectClasses (already list[str] in Attributes)
                 object_classes = u_core.mapper().get(
                     attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
                 )
@@ -693,8 +693,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
 
-                # Create new LdifAttributes directly
-                new_attrs = m.Ldif.LdifAttributes(
+                # Create new Attributes directly
+                new_attrs = m.Ldif.Attributes(
                     attributes=processed_attributes,
                 )
                 new_entry = entry.model_copy(

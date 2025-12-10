@@ -94,7 +94,7 @@ class TestsFlextLdifRfcQuirks(s):
 
     # Constants validation data: (attr_name, expected_value)
     CONSTANTS_DATA: ClassVar[dict[str, tuple[str, object]]] = {
-        "server_type": ("SERVER_TYPE", lib_c.ServerTypes.RFC),
+        "server_type": ("SERVER_TYPE", lib_c.Ldif.ServerTypes.RFC),
         "priority": ("PRIORITY", 100),
         "canonical_name": ("CANONICAL_NAME", "rfc"),
         "default_port": ("DEFAULT_PORT", 389),
@@ -337,7 +337,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_attribute with model."""
-        attr = p.Ldif.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=c.Rfc.ATTR_OID_CN,
             name=c.Rfc.ATTR_NAME_CN,
         )
@@ -355,7 +355,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_objectclass with model."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=c.Rfc.OC_OID_PERSON,
             name=c.Rfc.OC_NAME_PERSON,
         )
@@ -370,7 +370,6 @@ class TestsFlextLdifRfcQuirks(s):
         result = schema_quirk._parse_attribute(c.Rfc.ATTR_DEF_CN_COMPLETE)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, p.Ldif.SchemaAttribute)
         assert attr.oid == c.Rfc.ATTR_OID_CN
         assert attr.name == c.Rfc.ATTR_NAME_CN
 
@@ -383,7 +382,6 @@ class TestsFlextLdifRfcQuirks(s):
         result = schema_quirk._parse_objectclass(c.Rfc.OC_DEF_PERSON_FULL)
         assert result.is_success
         oc = result.unwrap()
-        assert isinstance(oc, p.Ldif.SchemaObjectClass)
         assert oc.oid == c.Rfc.OC_OID_PERSON
         assert oc.name == c.Rfc.OC_NAME_PERSON
 
@@ -400,7 +398,7 @@ class TestsFlextLdifRfcQuirks(s):
         data: SchemaAttributeDict,
     ) -> None:
         """Parametrized test for Schema._write_attribute."""
-        attr = p.Ldif.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=str(data["oid"]),
             name=str(data["name"]),
             single_value=bool(data.get("single_value")),
@@ -426,7 +424,7 @@ class TestsFlextLdifRfcQuirks(s):
         data: ObjectClassDict,
     ) -> None:
         """Parametrized test for Schema._write_objectclass."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=str(data["oid"]),
             name=str(data["name"]),
         )
@@ -443,7 +441,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.should_filter_out_attribute returns bool."""
-        attr = p.Ldif.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=c.Rfc.ATTR_OID_CN,
             name=c.Rfc.ATTR_NAME_CN,
         )
@@ -455,7 +453,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.should_filter_out_objectclass returns bool."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=c.Rfc.OC_OID_PERSON,
             name=c.Rfc.OC_NAME_PERSON,
         )
@@ -658,7 +656,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._write_attribute with invalid type returns failure."""
         # Pass invalid type directly - test expects failure (runtime validation)
         # Cast used because we're testing runtime type validation intentionally
-        invalid_attr = cast("p.Ldif.SchemaAttribute", "not an attribute")
+        invalid_attr = cast(m.Ldif.SchemaAttribute, "not an attribute")  # noqa: TC006
         result = schema_quirk._write_attribute(invalid_attr)
         assert result.is_failure
 
@@ -668,7 +666,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema._write_objectclass with invalid type returns failure."""
         # Cast used because we're testing runtime type validation intentionally
-        invalid_oc = cast("p.Ldif.SchemaObjectClass", "not an objectclass")
+        invalid_oc = cast(m.Ldif.SchemaObjectClass, "not an objectclass")  # noqa: TC006
         result = schema_quirk._write_objectclass(invalid_oc)
         assert result.is_failure
 
@@ -686,7 +684,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with X-ORIGIN in metadata."""
-        attr = p.Ldif.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid=c.Rfc.ATTR_OID_CN,
             name=c.Rfc.ATTR_NAME_CN,
             metadata=m.Ldif.QuirkMetadata(
@@ -705,7 +703,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_objectclass with X-ORIGIN in metadata."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid=c.Rfc.OC_OID_PERSON,
             name=c.Rfc.OC_NAME_PERSON,
             metadata=m.Ldif.QuirkMetadata(

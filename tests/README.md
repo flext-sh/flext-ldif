@@ -198,8 +198,8 @@ def sample_entries():
     """Sample LDIF entries for testing."""
     return [
         FlextLdifModels.Entry.model_validate({
-            "dn": FlextLdifModels.DistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
-            "attributes": FlextLdifModels.LdifAttributes(data={
+            "dn": FlextLdifModels.DN(value="cn=John Doe,ou=people,dc=example,dc=com"),
+            "attributes": FlextLdifModels.Attributes(data={
                 "cn": ["John Doe"],
                 "objectClass": ["person", "inetOrgPerson"],
                 "mail": ["john@example.com"]

@@ -12,7 +12,6 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.protocols import p
 from flext_ldif.services.dn import FlextLdifDn
 from tests import m, s
 
@@ -148,9 +147,9 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         normalized_dn = normalize_result.unwrap()
 
         # Create entry with normalized DN
-        entry = p.Entry(
-            dn=m.DistinguishedName(value=normalized_dn),
-            attributes=m.LdifAttributes(
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=normalized_dn),
+            attributes=m.Ldif.Attributes(
                 attributes={
                     "cn": ["John Doe"],
                     "objectClass": ["person"],

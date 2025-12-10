@@ -689,7 +689,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
-                    attributes=m.Ldif.LdifAttributes(attributes=attributes),
+                    attributes=m.Ldif.Attributes(attributes=attributes),
                     metadata=metadata,
                 )
 

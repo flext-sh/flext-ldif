@@ -55,14 +55,19 @@ class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead.
 
     .. deprecated:: 1.0.0
-        Use ``FlextModels.Ldif.*`` or ``m.*`` instead of ``FlextLdifModels.*``.
+        Use ``FlextModels.Ldif.*`` or ``m.Ldif.*`` instead of ``FlextLdifModels.*``.
 
-    Unified namespace class that aggregates all LDIF domain models.
-    Provides a single access point for all LDIF models while maintaining
-    modular organization.
+    NAMESPACE HIERARCHY PADRAO:
+    ───────────────────────────
+    Classe unificada que agrega todos os modelos de dominio LDIF.
+    Fornece um unico ponto de acesso para todos os modelos LDIF mantendo
+    organizacao modular.
 
-    This class extends flext-core FlextModels and organizes LDIF-specific
-    models into focused sub-modules for better maintainability.
+    Esta classe estende flext-core FlextModels e organiza modelos LDIF-specificos
+    em sub-modulos focados para melhor manutenibilidade.
+
+    PADRAO: Namespace hierarquico completo m.Ldif.Entry, m.Ldif.Attribute, etc.
+    SEM duplicacao de declaracoes - heranca real de classes base.
 
     Migration Guide:
         Old: ``from flext_ldif import FlextLdifModels; entry = FlextLdifModels.Ldif.Entry(...)``
@@ -191,7 +196,7 @@ class FlextLdifModels(FlextModels):
             """Quirk metadata model for server-specific extensions."""
 
         # DN models - real inheritance classes
-        class DistinguishedName(FlextLdifModelsDomains.DistinguishedName):
+        class DN(FlextLdifModelsDomains.DN):
             """Distinguished Name model."""
 
         class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
@@ -537,7 +542,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class LdifAttributes(FlextLdifModelsDomains.LdifAttributes):
+        class Attributes(FlextLdifModelsDomains.Attributes):
             """LDIF attribute collection.
 
             Manages collections of LDAP attributes with type safety and
@@ -545,7 +550,7 @@ class FlextLdifModels(FlextModels):
             with support for single and multi-valued attributes.
 
             Example:
-                attributes = LdifAttributes({
+                attributes = Attributes({
                     "cn": ["john.doe"],
                     "member": ["cn=user1,ou=users,dc=example,dc=com", "cn=user2,ou=users,dc=example,dc=com"],
                     "description": ["User account for John Doe"]
@@ -1491,10 +1496,7 @@ class FlextLdifModels(FlextModels):
 
             type QuirksDict = dict[
                 str,
-                "p.Ldif.SchemaQuirkProtocol"
-                | "p.Ldif.AclQuirkProtocol"
-                | "p.Ldif.EntryQuirkProtocol"
-                | None,
+                p.Ldif.SchemaQuirkProtocol | p.Ldif.AclQuirkProtocol | p.Ldif.EntryQuirkProtocol | None,
             ]
             """Type alias for quirks dictionary returned by get_all_quirks."""
 
@@ -1509,7 +1511,14 @@ class FlextLdifModels(FlextModels):
             ServerType = c.Ldif.ServerTypes
 
 
-m = FlextLdifModels
+# =========================================================================
+# NAMESPACE HIERARCHY - PADRAO CORRETO PARA FLEXT-LDIF
+# =========================================================================
+# Use namespace hierarquico completo: m.Ldif.Entry, m.Ldif.Attribute, m.Ldif.DN
+# SEM duplicacao de declaracoes - heranca real de FlextModels
+# SEM quebra de codigo - mantem compatibilidade backward
+# =========================================================================
 
+m = FlextLdifModels
 
 __all__ = ["FlextLdifModels", "m"]

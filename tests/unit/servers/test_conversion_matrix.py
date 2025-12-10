@@ -104,7 +104,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -112,7 +112,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -253,7 +253,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -261,7 +261,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -437,7 +437,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -445,7 +445,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -705,7 +705,7 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -713,7 +713,7 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -832,7 +832,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -840,7 +840,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -979,7 +979,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -987,7 +987,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1102,7 +1102,7 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1110,7 +1110,7 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1232,7 +1232,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1240,7 +1240,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1377,7 +1377,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1385,7 +1385,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1522,7 +1522,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1530,7 +1530,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1683,7 +1683,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1691,7 +1691,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -1841,7 +1841,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
             )
 
         # operation == "write"
-        if isinstance(data, p.Ldif.SchemaAttribute):
+        if isinstance(data, m.Ldif.SchemaAttribute):
             # write_attribute returns FlextResult[str]
             # Cast to match expected union return type
             write_result = self.write_attribute(data)
@@ -1849,7 +1849,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
                 "FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]",
                 write_result,
             )
-        if isinstance(data, p.Ldif.SchemaObjectClass):
+        if isinstance(data, m.Ldif.SchemaObjectClass):
             # write_objectclass returns FlextResult[str]
             # Cast to match expected union return type
             write_oc_result = self.write_objectclass(data)
@@ -2121,9 +2121,9 @@ class TestErrorHandling:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test error handling."""
-        entry = p.Entry(
-            dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={}),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(attributes={}),
         )
         # Cast Entry to ConvertibleModel for type checker
         convertible_entry = cast("t.ConvertibleModel", entry)

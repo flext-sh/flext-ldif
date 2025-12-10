@@ -15,7 +15,7 @@ from tests import c, m, p, s
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 
-meta_keys = c.MetadataKeys
+meta_keys = c.Ldif.MetadataKeys
 
 
 class ParseScenario(StrEnum):
@@ -220,7 +220,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
-        attr_data = p.Ldif.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             desc="Test attribute",
@@ -462,7 +462,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
-        attr_data = p.Ldif.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             desc="Oracle GUID",
@@ -490,7 +490,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
-        oc_data = p.Ldif.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="2.16.840.1.113894.1.2.1",
             name="orclContext",
             desc="Oracle Context",

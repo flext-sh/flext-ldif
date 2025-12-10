@@ -9,7 +9,6 @@ from __future__ import annotations
 from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
 
 
@@ -141,7 +140,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format with attributetype prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
-        attr_data = p.Ldif.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             desc="Test attribute",
@@ -167,7 +166,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format with objectclass prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
-        oc_data = p.Ldif.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="testClass",
             desc="Test class",
@@ -242,29 +241,29 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         """Test entry detection for traditional DIT (no cn=config)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.LdifAttributes(
+        dn = m.Ldif.DN(value="cn=test,dc=example,dc=com")
+        attributes = m.Ldif.Attributes(
             attributes={"cn": ["test"], "objectclass": ["person"]},
         )
-        p.Entry(dn=dn, attributes=attributes)
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
 
     def test_entry_rejects_config_dn(self) -> None:
         """Test entry detection rejects cn=config DNs (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=config")
-        attributes = m.LdifAttributes(attributes={"cn": ["config"]})
-        p.Entry(dn=dn, attributes=attributes)
+        dn = m.Ldif.DN(value="cn=config")
+        attributes = m.Ldif.Attributes(attributes={"cn": ["config"]})
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False
 
     def test_entry_rejects_olc_attributes(self) -> None:
         """Test entry detection rejects olc* attributes (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
         entry = openldap1_server.Entry()
-        dn = m.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = m.LdifAttributes(
+        dn = m.Ldif.DN(value="cn=test,dc=example,dc=com")
+        attributes = m.Ldif.Attributes(
             attributes={"olcDatabase": ["{1}mdb"]},
         )
-        p.Entry(dn=dn, attributes=attributes)
+        m.Ldif.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False

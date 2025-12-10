@@ -398,7 +398,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """Extract attributes from entry.
 
         Business Rule: Attribute extraction handles multiple entry formats per EntryProtocol:
-        - LdifAttributes model (has .attributes attribute containing dict[str, list[str]])
+        - Attributes model (has .attributes attribute containing dict[str, list[str]])
         - dict-like objects (used directly)
         - Protocol-compliant objects (structural typing)
 
@@ -562,7 +562,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.LdifAttributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes(attributes=new_attrs),
             metadata=entry.metadata,
         )
 
@@ -615,7 +615,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.LdifAttributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes(attributes=new_attrs),
             metadata=entry.metadata,
         )
         return r.ok(modified_entry)
@@ -830,7 +830,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.LdifAttributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes(attributes=new_attrs),
             metadata=entry.metadata,
         )
 

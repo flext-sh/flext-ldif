@@ -77,8 +77,8 @@ class TestEntryAdaptation:
         attributes: dict[str, list[str]],
     ) -> p.Entry:
         """Helper to create entry with DN and attributes."""
-        dn = m.DistinguishedName(value=dn_string)
-        ldif_attributes = m.LdifAttributes(attributes=attributes)
+        dn = m.Ldif.DN(value=dn_string)
+        ldif_attributes = m.Ldif.Attributes(attributes=attributes)
         entry_result = p.Entry.create(dn=dn, attributes=ldif_attributes)
         assert entry_result.is_success
         return entry_result.unwrap()

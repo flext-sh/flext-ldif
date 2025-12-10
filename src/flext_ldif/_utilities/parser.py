@@ -918,7 +918,7 @@ class FlextLdifUtilitiesParser:
             kind = (
                 kind_match.group(1).upper()
                 if kind_match
-                else c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+                else c.Ldif.SchemaKind.STRUCTURAL.value
             )
 
             must = None

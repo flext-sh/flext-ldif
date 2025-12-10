@@ -791,7 +791,115 @@ class RfcTestHelpers:
 class TestDeduplicationHelpers:
     """Test helpers for deduplication functionality."""
 
-    # Placeholder for deduplication helper methods if needed
+    @staticmethod
+    def create_entries_batch(
+        entries_data: list[dict[str, object]],
+        validate_all: bool = True,
+    ) -> list[object]:
+        """Create multiple entries from data dictionaries.
+
+        Args:
+            entries_data: List of dicts with 'dn' and 'attributes' keys
+            validate_all: Whether to validate all entries (currently unused)
+
+        Returns:
+            List of created Entry instances
+
+        """
+        from flext_ldif.services.entries import FlextLdifEntries
+
+        service = FlextLdifEntries()
+        entries = []
+        for entry_data in entries_data:
+            dn: str = entry_data["dn"]  # type: ignore[assignment]
+            attrs: dict[str, object] = entry_data["attributes"]  # type: ignore[assignment]
+            result = service.create_entry(dn=dn, attributes=attrs)  # type: ignore[arg-type]
+            if result.is_success:
+                entries.append(result.unwrap())
+        return entries
+
+    @staticmethod
+    def helper_api_write_and_unwrap(
+        api: object,
+        entries: list[object],
+        must_contain: list[str] | None = None,
+    ) -> str:
+        """Write entries to string and unwrap result.
+
+        Args:
+            api: FlextLdif instance
+            entries: List of entries to write
+            must_contain: List of strings that must appear in output
+
+        Returns:
+            LDIF string
+
+        """
+        from flext_ldif import FlextLdif
+
+        assert isinstance(api, FlextLdif)
+        result = api.write(entries)  # type: ignore[arg-type]
+        assert result.is_success, f"write() failed: {result.error}"
+        ldif_string = result.unwrap()
+        assert isinstance(ldif_string, str)
+
+        if must_contain:
+            for substring in must_contain:
+                assert substring in ldif_string, f"'{substring}' not found in LDIF output"
+
+        return ldif_string
+
+    @staticmethod
+    def api_parse_write_file_and_assert(
+        api: object,
+        entries: list[object],
+        output_file: object,
+        must_contain: list[str] | None = None,
+    ) -> None:
+        """Write entries to file and assert content.
+
+        Args:
+            api: FlextLdif instance
+            entries: List of entries to write
+            output_file: Path to output file
+            must_contain: List of strings that must appear in output
+
+        """
+        from pathlib import Path
+
+        from flext_ldif import FlextLdif
+
+        assert isinstance(api, FlextLdif)
+        assert isinstance(output_file, Path)
+
+        ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            api,
+            entries,
+            must_contain=must_contain,
+        )
+
+        output_file.write_text(ldif_string)
+        assert output_file.exists(), f"Output file {output_file} was not created"
+
+    @staticmethod
+    def api_parse_write_string_and_assert(
+        api: object,
+        entries: list[object],
+        must_contain: list[str] | None = None,
+    ) -> None:
+        """Write entries to string and assert content.
+
+        Args:
+            api: FlextLdif instance
+            entries: List of entries to write
+            must_contain: List of strings that must appear in output
+
+        """
+        TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            api,
+            entries,
+            must_contain=must_contain,
+        )
 
 
 class TestCategorization:

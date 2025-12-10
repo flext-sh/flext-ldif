@@ -2169,8 +2169,8 @@ class FlextLdifModelsResults:
 
                 converted_entries.append(
                     FlextLdifModelsDomains.Entry(
-                        dn=FlextLdifModelsDomains.DistinguishedName(value=dn_value),
-                        attributes=FlextLdifModelsDomains.LdifAttributes(
+                        dn=FlextLdifModelsDomains.DN(value=dn_value),
+                        attributes=FlextLdifModelsDomains.Attributes(
                             attributes=attrs_dict,
                         ),
                     ),

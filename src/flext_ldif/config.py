@@ -19,6 +19,7 @@ from flext_core import FlextConfig
 from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
+from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 
 
@@ -553,11 +554,7 @@ class FlextLdifConfig(FlextConfig):
             ValueError: If server_type is not recognized
 
         """
-        # Normalize aliases to canonical form (ad → active_directory, etc)
-        # Import here to avoid circular import
-        from flext_ldif.utilities import u
-
-        normalized = u.Ldif.Server.normalize_server_type(v)
+        normalized = normalize_server_type(v)
 
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
@@ -712,11 +709,7 @@ class FlextLdifConfig(FlextConfig):
         if v is None:
             return v
 
-        # Normalize aliases to canonical form (ad → active_directory, etc)
-        # Import here to avoid circular import
-        from flext_ldif.utilities import u
-
-        normalized = u.Ldif.Server.normalize_server_type(v)
+        normalized = normalize_server_type(v)
 
         # Use same validation logic as server_type field
         valid_servers = [
@@ -814,7 +807,7 @@ class FlextLdifConfig(FlextConfig):
         if (
             self.ldif_enable_analytics
             and self.ldif_analytics_cache_size
-            <= c.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
+            <= c.Ldif.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
         ):
             msg = "Analytics cache size must be positive when analytics is enabled"
             raise ValueError(msg)

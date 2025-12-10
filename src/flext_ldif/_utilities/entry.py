@@ -357,7 +357,7 @@ class FlextLdifUtilitiesEntry:
 
         result = m.Ldif.Entry.create(
             dn=entry.dn,
-            attributes=m.Ldif.LdifAttributes(attributes=filtered),
+            attributes=m.Ldif.Attributes(attributes=filtered),
         )
         if result.is_failure:
             return entry
@@ -910,9 +910,9 @@ class FlextLdifUtilitiesEntry:
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
                     # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                    # m.Ldif.DistinguishedName is compatible via inheritance
+                    # m.Ldif.DN is compatible via inheritance
                     dn_update: dict[str, object] = {
-                        "dn": m.Ldif.DistinguishedName(value=norm_result.unwrap()),
+                        "dn": m.Ldif.DN(value=norm_result.unwrap()),
                     }
                     current = current.model_copy(update=dn_update)
             if config.normalize_attrs and current.attributes:
@@ -925,9 +925,9 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                # m.Ldif.LdifAttributes. is compatible via inheritance
+                # m.Ldif.Attributes. is compatible via inheritance
                 attrs_update: dict[str, object] = {
-                    "attributes": m.Ldif.LdifAttributes(attributes=new_attrs),
+                    "attributes": m.Ldif.Attributes(attributes=new_attrs),
                 }
                 current = current.model_copy(update=attrs_update)
             if config.convert_booleans and current.attributes:
@@ -947,9 +947,9 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
-                # m.Ldif.LdifAttributes. is compatible via inheritance
+                # m.Ldif.Attributes. is compatible via inheritance
                 converted_attrs_update: dict[str, object] = {
-                    "attributes": m.Ldif.LdifAttributes(attributes=converted),
+                    "attributes": m.Ldif.Attributes(attributes=converted),
                 }
                 current = current.model_copy(update=converted_attrs_update)
             if config.remove_attrs:

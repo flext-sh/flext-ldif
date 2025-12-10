@@ -270,9 +270,9 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-            # entry.attributes is LdifAttributes, not dict
+            # entry.attributes is Attributes, not dict
             # Use .attributes property to get dict[str, list[str]]
-            # LdifAttributes has .attributes property that returns dict[str, list[str]]
+            # Attributes has .attributes property that returns dict[str, list[str]]
             attrs_dict = entry.attributes.attributes
             return m.Ldif.ProcessingResult(
                 dn=dn_str,
@@ -305,9 +305,9 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-            # entry.attributes is LdifAttributes, not dict
+            # entry.attributes is Attributes, not dict
             # Use .attributes property to get dict[str, list[str]]
-            # LdifAttributes has .attributes property that returns dict[str, list[str]]
+            # Attributes has .attributes property that returns dict[str, list[str]]
             attrs_dict = entry.attributes.attributes
             return m.Ldif.ProcessingResult(
                 dn=dn_str,

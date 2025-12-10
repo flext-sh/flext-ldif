@@ -51,6 +51,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.typings import t
 
 
 class FlextLdif(FlextLdifServiceBase[object]):
@@ -272,7 +273,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         output_dir: Path | None = None,
         source_server: str = "rfc",
         target_server: str = "rfc",
-        options: object | None = None,
+        options: m.Ldif.MigrateOptions | None = None,
         **kwargs: str | float | bool | None,
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Migrate LDIF data between servers.
@@ -442,7 +443,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
     def get_attribute_values(
         self,
-        attribute: object,
+        attribute: t.GeneralValueType,
     ) -> r[list[str]]:
         """Get values from attribute object.
 
@@ -807,7 +808,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
             # Use hasattr check for structural typing (protocol compliance)
             if not hasattr(entry, "attributes") or not hasattr(entry, "dn"):
                 return False
-            attrs = entry.attributes
+            attrs = getattr(entry, "attributes")
             if attrs is None:
                 return False
             # Handle both dict-like and model-like attributes

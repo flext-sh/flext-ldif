@@ -52,7 +52,7 @@ from flext_ldif.models import m
 
 # REMOVED: Runtime aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
-# LdifAttributes: TypeAlias = m.Ldif.LdifAttributes  # Use m.Ldif.LdifAttributes directly
+# Attributes: TypeAlias = m.Ldif.Attributes  # Use m.Ldif.Attributes directly
 
 # =========================================================================
 # DN FLUENT OPERATIONS
@@ -465,7 +465,7 @@ class EntryOps:
             new_attrs[name] = list(values)
 
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.Ldif.LdifAttributes(attributes=new_attrs)
+        new_attributes = m.Ldif.Attributes(attributes=new_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
@@ -527,7 +527,7 @@ class EntryOps:
                 new_attrs[key] = values
 
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = m.Ldif.LdifAttributes(attributes=new_attrs)
+        new_attributes = m.Ldif.Attributes(attributes=new_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 

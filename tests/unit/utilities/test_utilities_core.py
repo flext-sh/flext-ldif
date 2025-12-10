@@ -11,7 +11,7 @@ import pytest
 from tests import s
 
 from flext_ldif.constants import c as lib_c
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -145,7 +145,7 @@ class TestDnObjectClassMethods:
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
         # Create real SchemaObjectClass with missing SUP
-        obj = p.Ldif.SchemaObjectClass(
+        obj = m.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="orcldasattrcategory",
             kind="AUXILIARY",
@@ -158,7 +158,7 @@ class TestDnObjectClassMethods:
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
         # Create real SchemaObjectClass with kind mismatch
-        obj = p.Ldif.SchemaObjectClass(
+        obj = m.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="testOC",
             sup="orclpwdverifierprofile",
@@ -171,7 +171,7 @@ class TestDnObjectClassMethods:
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
         # Create real SchemaObjectClass with missing SUP
-        obj = p.Ldif.SchemaObjectClass(
+        obj = m.Ldif.SchemaObjectClass(
             oid="1.2.3.4",
             name="testOC",
             kind="AUXILIARY",
@@ -345,7 +345,7 @@ class TestObjectClassUtilities:
     def test_fix_missing_sup_auxiliary_without_sup(self) -> None:
         """Test fixing missing SUP for known AUXILIARY classes."""
         # Create AUXILIARY class without SUP
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="orcldAsAttrCategory",
             oid="1.2.3.4.5",
             kind=lib_c.Schema.AUXILIARY,
@@ -359,7 +359,7 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
         """Test that AUXILIARY with SUP is not modified."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.5",
             kind=lib_c.Schema.AUXILIARY,
@@ -372,7 +372,7 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_structural_ignored(self) -> None:
         """Test that STRUCTURAL classes are ignored."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testStructural",
             oid="1.2.3.4.6",
             kind=lib_c.Schema.STRUCTURAL,
@@ -385,7 +385,7 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
         """Test ensure_sup_for_auxiliary adds SUP when missing."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.7",
             kind=lib_c.Schema.AUXILIARY,
@@ -396,7 +396,7 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
         """Test ensure_sup_for_auxiliary with custom default SUP."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.8",
             kind=lib_c.Schema.AUXILIARY,
@@ -410,7 +410,7 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_structural_superior(self) -> None:
         """Test fixing kind mismatch with STRUCTURAL superior."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.9",
             kind=lib_c.Schema.AUXILIARY,
@@ -421,7 +421,7 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.10",
             kind=lib_c.Schema.STRUCTURAL,
@@ -432,7 +432,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_structural(self) -> None:
         """Test aligning kind with STRUCTURAL superior."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.11",
             kind=lib_c.Schema.AUXILIARY,
@@ -446,7 +446,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.12",
             kind=lib_c.Schema.STRUCTURAL,
@@ -460,7 +460,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_no_conflict(self) -> None:
         """Test that matching kinds are not changed."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.13",
             kind=lib_c.Schema.STRUCTURAL,

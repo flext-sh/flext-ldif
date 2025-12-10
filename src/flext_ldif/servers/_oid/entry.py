@@ -187,8 +187,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     Example Parsed Entry (RFC-normalized)
     =====================================
     Entry(
-        dn=DistinguishedName(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=People,dc=example,dc=com"),
-        attributes=LdifAttributes(
+        dn=DN(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=People,dc=example,dc=com"),
+        attributes=Attributes(
             attributes={
                 "objectClass": ["person", "organizationalPerson", "orcluser"],
                 "cn": ["REDACTED_LDAP_BIND_PASSWORD"],
@@ -541,7 +541,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # Pydantic 2: model_copy accepts dict[str, object] for partial updates
         update_dict: dict[str, object] = {
-            "attributes": m.Ldif.LdifAttributes(attributes=new_attributes),
+            "attributes": m.Ldif.Attributes(attributes=new_attributes),
         }
         return entry.model_copy(update=update_dict)
 
@@ -814,7 +814,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return entry_data
 
         # Return entry with restored attributes
-        # Business Rule: LdifAttributes.metadata must be EntryMetadata | None
+        # Business Rule: Attributes.metadata must be EntryMetadata | None
         # Implication: Remote auditing requires proper metadata structure
         # Type narrowing: ensure metadata is EntryMetadata | None, not dict
         entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None
@@ -823,7 +823,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry_metadata = entry_data.attributes.metadata
         # Pydantic 2: model_copy accepts dict[str, object] for partial updates
         update_dict: dict[str, object] = {
-            "attributes": m.Ldif.LdifAttributes(
+            "attributes": m.Ldif.Attributes(
                 attributes=restored_attrs,
                 attribute_metadata=(
                     entry_data.attributes.attribute_metadata
@@ -1178,10 +1178,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             metadata.attribute_transformations.update(acl_transformations)
 
         # Create final Entry
-        ldif_attrs = m.Ldif.LdifAttributes(attributes=converted_attributes)
+        ldif_attrs = m.Ldif.Attributes(attributes=converted_attributes)
         return FlextResult[m.Ldif.Entry].ok(
             m.Ldif.Entry(
-                dn=m.Ldif.DistinguishedName(value=cleaned_dn),
+                dn=m.Ldif.DN(value=cleaned_dn),
                 attributes=ldif_attrs,
                 metadata=metadata,
             ),

@@ -85,7 +85,7 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - m.Ldif.DistinguishedName (DN model)
+    - m.Ldif.DN (DN model)
     - str (DN string value)
 
     """
@@ -279,7 +279,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def get_dn_value(
-        dn: m.Ldif.DistinguishedName | str | object,
+        dn: m.Ldif.DN | str | object,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
@@ -290,9 +290,9 @@ class FlextLdifUtilitiesDN:
             DN string value
 
         """
-        # Check if it's a DistinguishedName model (local import to avoid circular dependency)
+        # Check if it's a DN model (local import to avoid circular dependency)
 
-        if isinstance(dn, m.Ldif.DistinguishedName):
+        if isinstance(dn, m.Ldif.DN):
             return dn.value
         if isinstance(dn, str):
             return dn
@@ -304,10 +304,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: m.Ldif.DistinguishedName) -> list[str]: ...
+    def split(dn: m.Ldif.DN) -> list[str]: ...
 
     @staticmethod
-    def split(dn: str | m.Ldif.DistinguishedName) -> list[str]:
+    def split(dn: str | m.Ldif.DN) -> list[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -365,10 +365,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: m.Ldif.DistinguishedName) -> str: ...
+    def norm_string(dn: m.Ldif.DN) -> str: ...
 
     @staticmethod
-    def norm_string(dn: str | m.Ldif.DistinguishedName) -> str:
+    def norm_string(dn: str | m.Ldif.DN) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -417,7 +417,7 @@ class FlextLdifUtilitiesDN:
         return all(check() for check in checks)
 
     @staticmethod
-    def validate(dn: str | m.Ldif.DistinguishedName) -> bool:
+    def validate(dn: str | m.Ldif.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -520,12 +520,12 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def parse(
-        dn: m.Ldif.DistinguishedName,
+        dn: m.Ldif.DN,
     ) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
     def parse(
-        dn: str | m.Ldif.DistinguishedName | None,
+        dn: str | m.Ldif.DN | None,
     ) -> r[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
@@ -593,11 +593,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: m.Ldif.DistinguishedName) -> r[str]: ...
+    def norm(dn: m.Ldif.DN) -> r[str]: ...
 
     @staticmethod
     def norm(
-        dn: str | m.Ldif.DistinguishedName | None,
+        dn: str | m.Ldif.DN | None,
     ) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
@@ -716,10 +716,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: m.Ldif.DistinguishedName) -> str: ...
+    def clean_dn(dn: m.Ldif.DN) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | m.Ldif.DistinguishedName) -> str:
+    def clean_dn(dn: str | m.Ldif.DN) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
@@ -778,7 +778,7 @@ class FlextLdifUtilitiesDN:
         for diagnostic and audit purposes.
 
         Args:
-            dn: DN string or DistinguishedName object
+            dn: DN string or DN object
 
         Returns:
             Tuple of (cleaned_dn, DNStatistics with transformation history)
@@ -1453,14 +1453,14 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: m.Ldif.DistinguishedName,
+        value: m.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | m.Ldif.DistinguishedName,
+        value: str | m.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -1470,7 +1470,7 @@ class FlextLdifUtilitiesDN:
         when migrating from one LDAP server to another with different base DNs.
 
         Args:
-            value: DN value to transform (str or DistinguishedName model)
+            value: DN value to transform (str or DN model)
             source_dn: Source base DN to replace (e.g., "dc=example")
             target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
 
@@ -1577,7 +1577,7 @@ class FlextLdifUtilitiesDN:
             if entry.dn is None or entry.attributes is None:
                 return r[m.Ldif.Entry].fail("Entry has no DN or attributes")
             # Type narrowing: entry.dn is not None after check
-            # Use get_dn_value to handle str | DistinguishedName | None
+            # Use get_dn_value to handle str | DN | None
             dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
             if not dn_value:
                 return r[m.Ldif.Entry].fail("Entry DN is empty")
@@ -1597,7 +1597,7 @@ class FlextLdifUtilitiesDN:
             return entry.model_copy(
                 update={
                     "dn": transformed_dn,
-                    "attributes": m.Ldif.LdifAttributes(attributes=transformed_attrs),
+                    "attributes": m.Ldif.Attributes(attributes=transformed_attrs),
                 },
             )
 
@@ -1834,7 +1834,7 @@ class FlextLdifUtilitiesDN:
 
         original_dn_str = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
         # Type narrowing: entry.dn is not None (checked earlier)
-        # Use get_dn_value to handle str | DistinguishedName | None
+        # Use get_dn_value to handle str | DN | None
         dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
         if not dn_value:
             # Return original entry if DN is empty (early return pattern)
@@ -1844,7 +1844,7 @@ class FlextLdifUtilitiesDN:
             source_dn,
             target_dn,
         )
-        # Convert LdifAttributes to dict for processing
+        # Convert Attributes to dict for processing
         if hasattr(entry.attributes, "attributes"):
             attrs_dict = entry.attributes.attributes
         elif isinstance(entry.attributes, Mapping):

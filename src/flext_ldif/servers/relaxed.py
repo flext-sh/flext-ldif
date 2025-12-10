@@ -565,7 +565,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             kind = (
                 kind_match.group(1).upper()
                 if kind_match
-                else c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+                else c.Ldif.SchemaKind.STRUCTURAL.value
             )
 
             # Extract MUST/MAY fields
@@ -742,7 +742,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             oc_name = oc_data.name or oc_data.oid
             # Use kind if available, otherwise use STRUCTURAL
             oc_kind: str
-            oc_kind = oc_data.kind or c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+            oc_kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
             return FlextResult[str].ok(f"( {oc_data.oid} NAME '{oc_name}' {oc_kind} )")
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
@@ -1023,17 +1023,15 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         "Entry DN cannot be empty",
                     )
 
-                effective_dn = FlextLdifModelsDomains.DistinguishedName(
-                    value=entry_dn.strip()
-                )
+                effective_dn = FlextLdifModelsDomains.DN(value=entry_dn.strip())
 
-                # Convert attributes dict to LdifAttributes if needed
-                if isinstance(entry_attrs, m.Ldif.LdifAttributes):
+                # Convert attributes dict to Attributes if needed
+                if isinstance(entry_attrs, m.Ldif.Attributes):
                     ldif_attrs = entry_attrs
                 else:
-                    # Create LdifAttributes from dict - convert values to lists if needed
+                    # Create Attributes from dict - convert values to lists if needed
                     # Business Rule: entry_attrs may contain various types (Sequence, bytes, etc.)
-                    # but we need dict[str, list[str]] for LdifAttributes. We validate and convert.
+                    # but we need dict[str, list[str]] for Attributes. We validate and convert.
                     # Implication: LDIF attribute values are always list[str | bytes] in practice,
                     # but we handle edge cases for type safety.
                     attr_dict: dict[str, list[str]] = {}
@@ -1055,9 +1053,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             else:
                                 converted_list.append(str(v))
                         attr_dict[str(attr_key)] = converted_list
-                    ldif_attrs = FlextLdifModelsDomains.LdifAttributes(
-                        attributes=attr_dict
-                    )
+                    ldif_attrs = FlextLdifModelsDomains.Attributes(attributes=attr_dict)
 
                 # ZERO DATA LOSS: Create metadata for relaxed mode fallback
                 # Track original attribute case for analysis

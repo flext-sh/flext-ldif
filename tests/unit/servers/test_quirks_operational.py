@@ -9,16 +9,21 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Callable
 from enum import IntEnum
+from typing import TypeVar
 
 import pytest
 from flext_core import FlextResult
 
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests import T, c, p, s, tf
+from tests import c, p, s, tf
+
+# TypeVar for generic validation methods
+T = TypeVar("T")
 
 extract_oid = FlextLdifUtilitiesParser.extract_oid
 extract_attributes = FlextLdifUtilitiesSchema.extract_attributes_from_lines
@@ -421,8 +426,8 @@ class TestOperationalServerRoundtrip:
 
         # Validate roundtrip preservation
         # Type narrowing: original_model and final_model are guaranteed to be SchemaAttribute
-        assert isinstance(original_model, p.Ldif.SchemaAttribute)
-        assert isinstance(final_model, p.Ldif.SchemaAttribute)
+        assert isinstance(original_model, m.Ldif.SchemaAttribute)
+        assert isinstance(final_model, m.Ldif.SchemaAttribute)
         SchemaValidator.validate_roundtrip_preservation(
             original_model,
             final_model,

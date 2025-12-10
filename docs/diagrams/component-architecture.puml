@@ -44,7 +44,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
 
     Component_Boundary(model_layer, "Domain Models") {
         Component(entry_model, "Entry", "Pydantic Model", "LDIF entry", "Dn, attributes, changetype")
-        Component(dn_model, "DistinguishedName", "Pydantic Model", "DN parsing", "RFC 4514 compliance")
+        Component(dn_model, "DN", "Pydantic Model", "DN parsing", "RFC 4514 compliance")
         Component(attribute_model, "AttributeValues", "Pydantic Model", "Attribute values", "Multi-valued, typed")
         Component(schema_models, "Schema Models", "Pydantic Models", "LDAP schema", "Attributes, objectClasses")
         Component(config_model, "Config Models", "Pydantic Models", "Configuration", "Validation and typing")

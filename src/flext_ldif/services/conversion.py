@@ -225,8 +225,8 @@ class FlextLdifConversion(
         try:
             # Return empty Entry for health check to satisfy type constraints
             empty_entry = m.Ldif.Entry(
-                dn=m.Ldif.DistinguishedName(value="cn=health-check"),
-                attributes=m.Ldif.LdifAttributes(attributes={}),
+                dn=m.Ldif.DN(value="cn=health-check"),
+                attributes=m.Ldif.Attributes(attributes={}),
             )
             return r[
                 m.Ldif.Entry
@@ -1602,10 +1602,10 @@ class FlextLdifConversion(
 
             # Step 1: Create Entry RFC with Acl in metadata.acls
             # This preserves the Acl model with all its fields (subject, permissions, etc.)
-            entry_dn = m.Ldif.DistinguishedName(
+            entry_dn = m.Ldif.DN(
                 value="cn=acl-conversion,dc=example,dc=com",
             )
-            entry_attributes = m.Ldif.LdifAttributes(attributes={})
+            entry_attributes = m.Ldif.Attributes(attributes={})
 
             # Create metadata with ACL stored in metadata.acls
             # Get server_type and default to None (RFC) if not valid

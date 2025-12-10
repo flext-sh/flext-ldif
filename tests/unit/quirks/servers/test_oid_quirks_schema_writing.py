@@ -14,6 +14,7 @@ from tests import p, s
 from tests.conftest import FlextLdifFixtures
 from tests.helpers.compat import TestDeduplicationHelpers
 
+from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 
 
@@ -243,7 +244,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(parsed_attr_result, p.Ldif.SchemaAttribute)
+        assert isinstance(parsed_attr_result, m.Ldif.SchemaAttribute)
         parsed_attr = cast("p.Ldif.SchemaAttribute", parsed_attr_result)
 
         # Write
@@ -347,7 +348,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_objectclass",
             expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(parsed_oc_result, p.Ldif.SchemaObjectClass)
+        assert isinstance(parsed_oc_result, m.Ldif.SchemaObjectClass)
         parsed_oc = cast("p.Ldif.SchemaObjectClass", parsed_oc_result)
 
         # Write
