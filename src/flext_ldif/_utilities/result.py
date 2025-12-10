@@ -211,7 +211,7 @@ class FlextLdifResult[T]:
             ValueError: If the result is a failure
 
         """
-        return self._inner.unwrap()
+        return self._inner.value
 
     def unwrap_or(self, default: T) -> T:
         """Unwrap the success value or return a default.
@@ -242,7 +242,7 @@ class FlextLdifResult[T]:
         """
         if self.is_failure:
             return func()
-        return self._inner.unwrap()
+        return self._inner.value
 
     def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
         """Map a function over the success value.

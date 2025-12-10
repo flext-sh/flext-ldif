@@ -1375,7 +1375,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             acl_result = acl_result_raw
             if not acl_result.is_success:
                 return
-            acl_model = acl_result.unwrap()
+            acl_model = acl_result.value
             if not (acl_model.metadata and acl_model.metadata.extensions):
                 return
             acl_extensions = (

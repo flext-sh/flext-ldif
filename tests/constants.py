@@ -17,11 +17,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Final
 
 from flext_tests.constants import FlextTestsConstants
 
+from flext_ldif import FlextLdif
 from flext_ldif.constants import c
+from flext_ldif.services.entries import FlextLdifEntries
 
 
 class TestsFlextLdifConstants(FlextTestsConstants):
@@ -794,6 +797,7 @@ class TestDeduplicationHelpers:
     @staticmethod
     def create_entries_batch(
         entries_data: list[dict[str, object]],
+        *,
         validate_all: bool = True,
     ) -> list[object]:
         """Create multiple entries from data dictionaries.
@@ -806,8 +810,6 @@ class TestDeduplicationHelpers:
             List of created Entry instances
 
         """
-        from flext_ldif.services.entries import FlextLdifEntries
-
         service = FlextLdifEntries()
         entries = []
         for entry_data in entries_data:
@@ -815,7 +817,7 @@ class TestDeduplicationHelpers:
             attrs: dict[str, object] = entry_data["attributes"]  # type: ignore[assignment]
             result = service.create_entry(dn=dn, attributes=attrs)  # type: ignore[arg-type]
             if result.is_success:
-                entries.append(result.unwrap())
+                entries.append(result.value)
         return entries
 
     @staticmethod
@@ -835,17 +837,17 @@ class TestDeduplicationHelpers:
             LDIF string
 
         """
-        from flext_ldif import FlextLdif
-
         assert isinstance(api, FlextLdif)
         result = api.write(entries)  # type: ignore[arg-type]
         assert result.is_success, f"write() failed: {result.error}"
-        ldif_string = result.unwrap()
+        ldif_string = result.value
         assert isinstance(ldif_string, str)
 
         if must_contain:
             for substring in must_contain:
-                assert substring in ldif_string, f"'{substring}' not found in LDIF output"
+                assert substring in ldif_string, (
+                    f"'{substring}' not found in LDIF output"
+                )
 
         return ldif_string
 
@@ -865,10 +867,6 @@ class TestDeduplicationHelpers:
             must_contain: List of strings that must appear in output
 
         """
-        from pathlib import Path
-
-        from flext_ldif import FlextLdif
-
         assert isinstance(api, FlextLdif)
         assert isinstance(output_file, Path)
 

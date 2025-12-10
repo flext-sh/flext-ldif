@@ -333,7 +333,7 @@ class FlextLdifSorting(
 
         Example:
             result = FlextLdifSorting.by_hierarchy(entries)
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -358,7 +358,7 @@ class FlextLdifSorting(
 
         Example:
             result = FlextLdifSorting.by_dn(entries)
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -383,7 +383,7 @@ class FlextLdifSorting(
 
         Example:
             result = FlextLdifSorting.by_schema(schema_entries)
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -414,7 +414,7 @@ class FlextLdifSorting(
                 entries,
                 lambda e: u.Ldif.DN.get_dn_value(e.dn).count(",")
             )
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -445,7 +445,7 @@ class FlextLdifSorting(
                 entries,
                 order=["cn", "sn", "mail"]
             )
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -473,7 +473,7 @@ class FlextLdifSorting(
 
         Example:
             result = FlextLdifSorting.sort_acl_in_entries(entries)
-            sorted_entries = result.unwrap()
+            sorted_entries = result.value
 
         """
         sorting_instance = cls(
@@ -1001,7 +1001,7 @@ class FlextLdifSorting(
                 if dn_value:
                     norm_result = u.Ldif.DN.norm(dn_value)
                     normalized = (
-                        norm_result.unwrap() if norm_result.is_success else None
+                        norm_result.value if norm_result.is_success else None
                     )
                     normalized_result = u.normalize_ldif(
                         normalized or dn_value,

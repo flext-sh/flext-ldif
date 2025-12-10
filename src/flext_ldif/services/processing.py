@@ -142,7 +142,7 @@ class FlextLdifProcessing(
             return r[list[m.Ldif.ProcessingResult]].fail(
                 processor_result.error or "Processor function not found",
             )
-        processor_func = processor_result.unwrap()
+        processor_func = processor_result.value
 
         if parallel:
             return self._execute_parallel_processing(

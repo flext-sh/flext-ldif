@@ -230,7 +230,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         assert result.is_success
-        transformed = result.unwrap()
+        transformed = result.value
         assert isinstance(transformed, m.Ldif.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
@@ -275,7 +275,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         assert result.is_success
-        transformed = result.unwrap()
+        transformed = result.value
         assert isinstance(transformed, m.Ldif.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
@@ -297,6 +297,6 @@ class TestSchemaTransformerApplyObjectClassTransformations:
         )
 
         assert result.is_success
-        transformed = result.unwrap()
+        transformed = result.value
         assert transformed.name == "top"
         assert transformed.oid == "2.5.6.0"

@@ -59,7 +59,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path, server_type="oid")
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID entries: {result.error}")
-            return result.unwrap()
+            return result.value
 
         @staticmethod
         def load_oid_schema() -> list[p.Entry]:
@@ -76,7 +76,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path)
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID schema: {result.error}")
-            return result.unwrap()
+            return result.value
 
         @staticmethod
         def load_oid_acl() -> list[p.Entry]:
@@ -93,7 +93,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path)
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID ACL: {result.error}")
-            return result.unwrap()
+            return result.value
 
     class TestType(StrEnum):
         """Sort test type enumeration organized as nested enum."""
@@ -433,7 +433,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         for name, strategy_func in strategies:
             result = strategy_func(oid_entries)
             assert result.is_success, f"Failed for strategy: {name}"
-            assert len(result.unwrap()) == len(oid_entries)
+            assert len(result.value) == len(oid_entries)
 
     def test_sorting_preserves_data_integrity(
         self,
@@ -503,7 +503,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         for method in methods:
             result = method(oid_entries)
             assert result.is_success, f"Failed for method: {method.__name__}"
-            assert len(result.unwrap()) == len(oid_entries)
+            assert len(result.value) == len(oid_entries)
 
     def test_all_sort_targets_via_execute(
         self,

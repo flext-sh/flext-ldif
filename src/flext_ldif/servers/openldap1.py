@@ -16,14 +16,13 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -169,7 +168,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute.
 
@@ -214,7 +213,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass.
 
@@ -248,7 +247,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata.
 
             Args:
@@ -269,11 +268,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
             result = super()._parse_attribute(stripped)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
@@ -281,7 +280,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add OpenLDAP1 metadata.
 
             Args:
@@ -299,18 +298,18 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             ).strip()
             result = super()._parse_objectclass(stripped)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
 
         def _write_attribute(
             self,
-            attr_data: p.Ldif.SchemaAttributeProtocol,
+            attr_data: m.Ldif.SchemaAttribute,
         ) -> FlextResult[str]:
             """Write attribute data to RFC-compliant string format.
 
@@ -353,7 +352,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         def _write_objectclass(
             self,
-            oc_data: p.Ldif.SchemaObjectClassProtocol,
+            oc_data: m.Ldif.SchemaObjectClass,
         ) -> FlextResult[str]:
             """Write objectClass data to RFC-compliant string format.
 

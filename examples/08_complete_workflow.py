@@ -61,7 +61,7 @@ mail: railway@example.com
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     validate_result = api.validate_entries(entries)
     if validate_result.is_failure:
@@ -71,13 +71,13 @@ mail: railway@example.com
     if analyze_result.is_failure:
         return
 
-    stats = analyze_result.unwrap()
+    stats = analyze_result.value
 
     write_result = api.write(entries)
     if write_result.is_failure:
         return
 
-    _ldif_output = write_result.unwrap()
+    _ldif_output = write_result.value
 
     # Handle final result
     # stats is EntryAnalysisResult model, access attributes directly
@@ -139,7 +139,7 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         _ = parse_result.error
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     # Step 2: Validate entries
     validation_result = api.validate_entries(entries)
@@ -148,7 +148,7 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         _ = validation_result.error
         return
 
-    validation_report = validation_result.unwrap()
+    validation_report = validation_result.value
     # validation_report is ValidationResult model, access attributes directly
     if not validation_report.is_valid:
         _ = validation_report.errors
@@ -161,7 +161,7 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         _ = analysis_result.error
         return
 
-    stats = analysis_result.unwrap()
+    stats = analysis_result.value
     # stats is EntryAnalysisResult model, access attributes directly
     _ = stats.total_entries
 
@@ -170,7 +170,7 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
     write_result = api.write(entries, output_path)
 
     if write_result.is_success:
-        _ = write_result.unwrap()
+        _ = write_result.value
 
 
 def server_migration_workflow() -> None:
@@ -202,7 +202,7 @@ mail: migration@example.com
     if source_parse.is_failure:
         return
 
-    source_entries = source_parse.unwrap()
+    source_entries = source_parse.value
 
     source_validation = api.validate_entries(source_entries)
 
@@ -222,7 +222,7 @@ mail: migration@example.com
         return
 
     # migration_result is EntryResult model, access attributes directly
-    migration_stats = migration_result.unwrap()
+    migration_stats = migration_result.value
 
     # Step 4: Verify migrated data
     # file_paths is dict[str, str] mapping category to file path
@@ -233,7 +233,7 @@ mail: migration@example.com
         verify_result = api.parse(Path(file_path_str), server_type="oud")
 
         if verify_result.is_success:
-            migrated_entries = verify_result.unwrap()
+            migrated_entries = verify_result.value
             _ = len(migrated_entries)
 
 
@@ -255,7 +255,7 @@ def entry_building_and_processing_workflow() -> None:
     if person_result.is_failure:
         return
 
-    person = person_result.unwrap()
+    person = person_result.value
 
     # Convert DN to string for members list
     member_dns = [str(person.dn)]
@@ -272,7 +272,7 @@ def entry_building_and_processing_workflow() -> None:
     if group_result.is_failure:
         return
 
-    group = group_result.unwrap()
+    group = group_result.value
 
     entries = [person, group]
 
@@ -288,18 +288,18 @@ def entry_building_and_processing_workflow() -> None:
     if person_filter.is_failure:
         return
 
-    persons = person_filter.unwrap()
+    persons = person_filter.value
 
     # Step 4: Analyze and write
     analysis_result = api.analyze(persons)
 
     if analysis_result.is_success:
-        stats = analysis_result.unwrap()
+        stats = analysis_result.value
 
         write_result = api.write(persons)
 
         if write_result.is_success:
-            ldif_output = write_result.unwrap()
+            ldif_output = write_result.value
             _ = (stats, len(ldif_output))
 
 
@@ -319,7 +319,7 @@ def schema_driven_workflow() -> None:
             },
         )
 
-        return person_result.unwrap() if person_result.is_success else None
+        return person_result.value if person_result.is_success else None
 
     batch_result = u.process(
         list(range(5)),
@@ -354,7 +354,7 @@ sn: Test
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     # Extract ACLs using direct API method (no service instantiation!)
     def process_entry_acl(entry: p.Entry) -> bool | None:
@@ -362,7 +362,7 @@ sn: Test
         acl_result = api.extract_acls(entry)
 
         if acl_result.is_success:
-            acl_response = acl_result.unwrap()
+            acl_response = acl_result.value
             # Extract ACLs list from AclResponse
             # AclResponse from API returns public models, but type checker sees domain models
             # Cast to expected type since models are compatible at runtime
@@ -376,7 +376,7 @@ sn: Test
                 eval_result = api.acl_service.evaluate_acl_context(public_acls, {})
 
                 if eval_result.is_success:
-                    return eval_result.unwrap()
+                    return eval_result.value
         return None
 
     _ = u.process(
@@ -402,7 +402,7 @@ def batch_processing_workflow() -> None:
             },
         )
         if result.is_success:
-            entries.append(result.unwrap())
+            entries.append(result.value)
 
     # Validate all entries
     validation_result = api.validate_entries(entries)
@@ -415,7 +415,7 @@ def batch_processing_workflow() -> None:
     batch_result = api.process("validate", entries, parallel=False)
 
     if batch_result.is_success:
-        processed = batch_result.unwrap()
+        processed = batch_result.value
         _ = len(processed)
 
 
@@ -430,7 +430,7 @@ def access_all_namespace_classes() -> None:
     )
     if entry_result.is_failure:
         return
-    entry = entry_result.unwrap()
+    entry = entry_result.value
 
     # Access Constants
     max_line_length = api.constants.LdifFormatting.MAX_LINE_WIDTH
@@ -491,7 +491,7 @@ cn: test
         _ = error
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     # Validate and handle validation errors
     validation_result = api.validate_entries(entries)
@@ -501,7 +501,7 @@ cn: test
         _ = validation_result.error
         return
 
-    validation_report = validation_result.unwrap()
+    validation_report = validation_result.value
     # validation_report is ValidationResult model, access attributes directly
 
     if not validation_report.is_valid:
@@ -528,7 +528,7 @@ cn: test
         retry_result = api.validate_entries(entries)
 
         if retry_result.is_success:
-            retry_report = retry_result.unwrap()
+            retry_report = retry_result.value
             # retry_report is ValidationResult model, access attributes directly
             _ = retry_report.is_valid
         else:

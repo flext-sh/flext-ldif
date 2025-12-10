@@ -365,7 +365,7 @@ class TestDnCaseRegistry(s):
         """Test validation passes on empty registry."""
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_single_case_variant_success(
         self,
@@ -375,7 +375,7 @@ class TestDnCaseRegistry(s):
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_multiple_dns_single_case_each(
         self,
@@ -388,7 +388,7 @@ class TestDnCaseRegistry(s):
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_detects_case_inconsistencies(
         self,
@@ -400,7 +400,7 @@ class TestDnCaseRegistry(s):
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is False
+        assert result.value is False
 
     def test_validate_provides_inconsistency_metadata(
         self,
@@ -413,7 +413,7 @@ class TestDnCaseRegistry(s):
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        is_consistent = result.unwrap()
+        is_consistent = result.value
         assert is_consistent is False
 
         variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -437,7 +437,7 @@ class TestDnCaseRegistry(s):
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        is_consistent = result.unwrap()
+        is_consistent = result.value
         assert is_consistent is False
 
         REDACTED_LDAP_BIND_PASSWORD_variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -465,7 +465,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
         assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]
 
@@ -484,7 +484,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["member"] == ["cn=user1,dc=com", "cn=user2,dc=com"]
 
     def test_normalize_multiple_dn_fields(
@@ -503,7 +503,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
         assert normalized["manager"] == "cn=user1,dc=com"
         assert normalized["secretary"] == "cn=user2,dc=com"
@@ -520,7 +520,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=unknown,dc=com"
 
     def test_normalize_with_none_dn_fields_uses_defaults(
@@ -538,7 +538,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
         assert normalized["member"] == ["cn=user1,dc=com"]
         assert normalized["owner"] == "cn=user2,dc=com"
@@ -555,7 +555,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized == data
 
     def test_normalize_mixed_registered_unregistered(
@@ -576,7 +576,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         member_list = normalized["member"]
         assert isinstance(member_list, list)
         assert member_list[0] == "cn=user1,dc=com"
@@ -756,7 +756,7 @@ class TestDnCaseRegistry(s):
         )
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["someField"] == 123
 
 

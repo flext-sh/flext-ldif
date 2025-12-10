@@ -113,7 +113,7 @@ class TestDnCaseRegistry(s):
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is True
+        assert result.value is True
 
     def test_validate_oud_consistency_multiple_cases(
         self,
@@ -126,7 +126,7 @@ class TestDnCaseRegistry(s):
         result = registry.validate_oud_consistency()
         assert result.is_success
         # validate_oud_consistency returns False when inconsistencies are detected
-        assert result.unwrap() is False
+        assert result.value is False
 
     def test_normalize_dn_references_single_dn(
         self,
@@ -139,7 +139,7 @@ class TestDnCaseRegistry(s):
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
         assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]  # Non-DN field unchanged
 
@@ -158,7 +158,7 @@ class TestDnCaseRegistry(s):
         result = registry.normalize_dn_references(data, ["dn", "member"])
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["member"] == ["cn=user1,dc=com", "cn=user2,dc=com"]
 
     def test_normalize_dn_references_unregistered_dn_unchanged(
@@ -170,7 +170,7 @@ class TestDnCaseRegistry(s):
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert normalized["dn"] == "cn=unknown,dc=com"  # Unchanged
 
     def test_clear_removes_all_registrations(
@@ -223,7 +223,7 @@ class TestDnCaseNormalizationScenarios:
         result = registry.validate_oud_consistency()
         assert result.is_success
         # validate_oud_consistency returns False when inconsistencies are detected
-        assert result.unwrap() is False
+        assert result.value is False
 
     def test_hierarchical_dn_references(
         self,
@@ -246,7 +246,7 @@ class TestDnCaseNormalizationScenarios:
 
         # No inconsistencies (each DN used once)
         result = registry.validate_oud_consistency()
-        assert result.unwrap() is True
+        assert result.value is True
 
 
 __all__ = [

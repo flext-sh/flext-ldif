@@ -38,7 +38,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     if not entries:
         return
@@ -52,7 +52,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
     if acl_result.is_success:
-        acl_response = acl_result.unwrap()
+        acl_response = acl_result.value
         # Access ACLs from response
         acls = acl_response.acls
         _ = len(acls)
@@ -75,7 +75,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     if not entries:
         return
@@ -90,7 +90,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     if acl_result.is_failure:
         return
 
-    acl_response = acl_result.unwrap()
+    acl_response = acl_result.value
     acls = acl_response.acls
 
     # Evaluate ACLs directly against a context
@@ -114,7 +114,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     )
 
     if evaluation_result.is_success:
-        allowed = evaluation_result.unwrap()
+        allowed = evaluation_result.value
         # allowed is True if all ACL constraints are met, False otherwise
         _ = allowed
 
@@ -145,7 +145,7 @@ sn: test
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     acl_service = api.acl_service
 
@@ -155,7 +155,7 @@ sn: test
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
         if acl_result.is_success:
-            acl_response = acl_result.unwrap()
+            acl_response = acl_result.value
             acls = acl_response.acls
 
             if acls:
@@ -191,7 +191,7 @@ def execute_acl_service() -> None:
     )
     if entry_result.is_failure:
         return
-    entry_result.unwrap()
+    entry_result.value
 
     acl_service = api.acl_service
 
@@ -199,7 +199,7 @@ def execute_acl_service() -> None:
     exec_result = acl_service.execute()
 
     if exec_result.is_success:
-        acl_data = exec_result.unwrap()
+        acl_data = exec_result.value
         # Result contains service status
         _ = acl_data
 
@@ -220,7 +220,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = parse_result.value
 
     if not entries:
         return
@@ -234,7 +234,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
     if acl_result.is_failure:
         return
 
-    acl_response = acl_result.unwrap()
+    acl_response = acl_result.value
     acls = acl_response.acls
 
     # Evaluate ACLs against an anonymous user context

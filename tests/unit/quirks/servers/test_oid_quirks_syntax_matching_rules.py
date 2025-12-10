@@ -382,7 +382,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
 
         result = oid_schema.parse_attribute(attr_def)
         assert result.is_success
-        parsed_attr = result.unwrap()
+        parsed_attr = result.value
         assert parsed_attr.name == name
 
     def test_complex_attribute_transformation(

@@ -111,7 +111,7 @@ cn: Test2
         result = api.parse(ldif_content)
         # DN alone should be valid
         if result.is_success:
-            entries = result.unwrap()
+            entries = result.value
             assert len(entries) > 0 or len(entries) == 0
 
     def test_empty_attribute_values(self, api: FlextLdif) -> None:
@@ -148,7 +148,7 @@ mail: test3@example.com
 """
         result = api.parse(ldif_content)
         if result.is_success:
-            entries = result.unwrap()
+            entries = result.value
             assert len(entries) > 0
 
     def test_special_characters_in_values(self, api: FlextLdif) -> None:
@@ -394,7 +394,7 @@ description: Contains UTF-8: café, naïve, résumé
 """
         result = api.parse(ldif_content)
         if result.is_success:
-            entries = result.unwrap()
+            entries = result.value
             assert len(entries) >= 0
 
     def test_invalid_base64_binary(self, api: FlextLdif) -> None:

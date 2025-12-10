@@ -197,7 +197,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
 
         # Pipeline should succeed with 0 entries
         assert result.is_success
-        migration_result = result.unwrap()
+        migration_result = result.value
         assert migration_result.stats.total_entries == 0
 
     # ════════════════════════════════════════════════════════════════════════
@@ -230,7 +230,7 @@ sn: test
         result = pipeline.execute()
 
         assert result.is_success
-        migration_result = result.unwrap()
+        migration_result = result.value
         assert migration_result.stats.processed_entries >= 1
 
     def test_migrate_entries_method(self, tmp_path: Path) -> None:
@@ -258,7 +258,7 @@ sn: test
         result = pipeline.migrate_entries(entries)
 
         assert result.is_success
-        migrated = result.unwrap()
+        migrated = result.value
         assert len(migrated) == 1
 
     def test_migrate_file_method(self, tmp_path: Path) -> None:
@@ -286,7 +286,7 @@ cn: test
         result = pipeline.migrate_file(input_file)
 
         assert result.is_success
-        migration_result = result.unwrap()
+        migration_result = result.value
         assert migration_result.stats.total_entries >= 1
 
     # ════════════════════════════════════════════════════════════════════════
@@ -358,7 +358,7 @@ cn: test
         result = pipeline.execute()
 
         assert result.is_success
-        migration_result = result.unwrap()
+        migration_result = result.value
         # Should process entries from both files
         assert migration_result.stats.total_entries >= 2
 
@@ -403,5 +403,5 @@ cn: test
         result = pipeline.migrate_entries([])
 
         assert result.is_success
-        migrated = result.unwrap()
+        migrated = result.value
         assert len(migrated) == 0

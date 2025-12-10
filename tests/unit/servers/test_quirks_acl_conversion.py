@@ -55,7 +55,7 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
         source_acl = type(oid_quirk).Acl()
         parse_result = source_acl.parse(oid_acl_string)
         assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         # Now convert the model using NEW API
         result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
@@ -65,14 +65,14 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
 
         # If conversion succeeds, validate OUD ACI format
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             # Write converted model to string for validation
             target_acl = type(oud_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OUD ACI: {write_result.error}"
             )
-            oud_aci = write_result.unwrap()
+            oud_aci = write_result.value
 
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
@@ -98,7 +98,7 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
         source_acl = type(oid_quirk).Acl()
         parse_result = source_acl.parse(oid_acl_string)
         assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
@@ -107,13 +107,13 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
 
         # If conversion succeeds, validate OUD ACI format with groupdn
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             target_acl = type(oud_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OUD ACI: {write_result.error}"
             )
-            oud_aci = write_result.unwrap()
+            oud_aci = write_result.value
 
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
@@ -138,7 +138,7 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
         source_acl = type(oid_quirk).Acl()
         parse_result = source_acl.parse(oid_acl_string)
         assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
@@ -147,13 +147,13 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
 
         # If conversion succeeds, validate attribute targeting
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             target_acl = type(oud_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OUD ACI: {write_result.error}"
             )
-            oud_aci = write_result.unwrap()
+            oud_aci = write_result.value
 
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "targetattr" in oud_aci.lower(), "Should have targetattr"
@@ -179,7 +179,7 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
         source_acl = type(oid_quirk).Acl()
         parse_result = source_acl.parse(oid_acl_string)
         assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
@@ -188,13 +188,13 @@ class TestsFlextLdifOIDToOUDACLConversion(s):
 
         # If conversion succeeds, validate OUD ACI format
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             target_acl = type(oud_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OUD ACI: {write_result.error}"
             )
-            oud_aci = write_result.unwrap()
+            oud_aci = write_result.value
 
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
@@ -222,7 +222,7 @@ class TestOUDToOIDACLConversion:
         source_acl = type(oud_quirk).Acl()
         parse_result = source_acl.parse(oud_aci_string)
         assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
 
@@ -231,13 +231,13 @@ class TestOUDToOIDACLConversion:
 
         # If conversion succeeds, validate OID orclaci format
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             target_acl = type(oid_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OID ACL: {write_result.error}"
             )
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
 
             assert isinstance(oid_acl, str), "Should return string ACL"
             assert (
@@ -265,7 +265,7 @@ class TestOUDToOIDACLConversion:
         source_acl = type(oud_quirk).Acl()
         parse_result = source_acl.parse(oud_aci_string)
         assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
 
@@ -274,13 +274,13 @@ class TestOUDToOIDACLConversion:
 
         # If conversion succeeds, validate OID orclaci format with anonymous access
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
             target_acl = type(oid_quirk).Acl()
             write_result = target_acl.write(converted_acl)
             assert write_result.is_success, (
                 f"Failed to write OID ACL: {write_result.error}"
             )
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
 
             assert isinstance(oid_acl, str), "Should return string ACL"
             assert (
@@ -315,7 +315,7 @@ class TestOUDToOIDACLConversion:
             pass
 
         assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
-        acl_model = parse_result.unwrap()
+        acl_model = parse_result.value
 
         result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
         if not result.is_success:
@@ -326,7 +326,7 @@ class TestOUDToOIDACLConversion:
 
         # If conversion succeeds, validate DN extraction and format
         if result.is_success:
-            converted_acl = result.unwrap()
+            converted_acl = result.value
 
             target_acl = type(oid_quirk).Acl()
             write_result = target_acl.write(converted_acl)
@@ -336,7 +336,7 @@ class TestOUDToOIDACLConversion:
             assert write_result.is_success, (
                 f"Failed to write OID ACL: {write_result.error}"
             )
-            oid_acl = write_result.unwrap()
+            oid_acl = write_result.value
 
             assert isinstance(oid_acl, str), "Should return string ACL"
 

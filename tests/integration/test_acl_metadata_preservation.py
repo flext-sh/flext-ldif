@@ -38,7 +38,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success, f"Parse failed: {result.error}"
 
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
         entry = entries[0]
@@ -76,7 +76,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check DenyGroupOverride in extensions
@@ -95,7 +95,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check AppendToAll in extensions
@@ -114,7 +114,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check BINDIPFILTER in extensions
@@ -135,7 +135,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check constraintonaddedobject in extensions
@@ -156,7 +156,7 @@ cn: test
         result = api.parse(oid_ldif, server_type="oid")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Verify all extensions present
@@ -205,7 +205,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success, f"Parse failed: {result.error}"
 
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
         entry = entries[0]
@@ -228,7 +228,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check targetcontrol in extensions
@@ -249,7 +249,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check extop in extensions
@@ -266,7 +266,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check ip bind rule in extensions
@@ -285,7 +285,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check dns bind rule in extensions
@@ -304,7 +304,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check dayofweek bind rule in extensions
@@ -323,7 +323,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check timeofday bind rule in extensions (stored as tuple)
@@ -344,7 +344,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check authmethod bind rule in extensions
@@ -363,7 +363,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Check ssf bind rule in extensions (stored as tuple)
@@ -382,7 +382,7 @@ cn: test
         result = api.parse(oud_ldif, server_type="oud")
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         entry = entries[0]
 
         # Verify target extensions
@@ -452,20 +452,20 @@ cn: test
         parse_result = api.parse(original_ldif, server_type="oid")
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         entry = entries[0]
 
         # Write back to OID format
         write_result = api.write([entry], server_type="oid")
         assert write_result.is_success
 
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         # Parse again
         reparse_result = api.parse(written_ldif, server_type="oid")
         assert reparse_result.is_success
 
-        reparsed_entries = reparse_result.unwrap()
+        reparsed_entries = reparse_result.value
         reparsed_entry = reparsed_entries[0]
 
         # Verify metadata preserved
@@ -493,20 +493,20 @@ cn: test
         parse_result = api.parse(original_ldif, server_type="oud")
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         entry = entries[0]
 
         # Write back to OUD format
         write_result = api.write([entry], server_type="oud")
         assert write_result.is_success
 
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         # Parse again
         reparse_result = api.parse(written_ldif, server_type="oud")
         assert reparse_result.is_success
 
-        reparsed_entries = reparse_result.unwrap()
+        reparsed_entries = reparse_result.value
         reparsed_entry = reparsed_entries[0]
 
         # Verify metadata preserved

@@ -143,7 +143,7 @@ class OudTestHelpers:
             # Use the correct write() API instead of execute()
             result = quirk.write([entry])
             assert result.is_success, "Entry write should succeed"
-            written_str = result.unwrap()
+            written_str = result.value
             assert isinstance(written_str, str), "Write should return string"
             assert len(written_str) > 0, "Written string should not be empty"
 

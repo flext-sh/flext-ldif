@@ -186,13 +186,13 @@ class FlextLdifDn(
             if self.operation == "parse" and result.is_success:
                 parse_result = self.parse_components(self.dn)
                 if parse_result.is_success:
-                    parse_components = parse_result.unwrap()
+                    parse_components = parse_result.value
 
             # Create DN event config
             dn_config = m.Ldif.LdifResults.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
-                output_dn=result.unwrap() if result.is_success else None,
+                output_dn=result.value if result.is_success else None,
                 operation_duration_ms=duration_ms,
                 validation_result=result.is_success
                 if self.operation == "validate"
@@ -259,7 +259,7 @@ class FlextLdifDn(
 
         Example:
             result = FlextLdifDn.parse("cn=John,dc=example,dc=com")
-            components = result.unwrap()
+            components = result.value
 
         """
         return cls.Parser.parse_components(dn)
@@ -289,7 +289,7 @@ class FlextLdifDn(
 
         Example:
             result = FlextLdifDn.norm("CN=Admin,DC=Example,DC=Com")
-            normalized = result.unwrap()  # "cn=Admin,dc=Example,dc=Com"
+            normalized = result.value  # "cn=Admin,dc=Example,dc=Com"
 
         """
         return cls.Normalizer.normalize(dn)
@@ -363,7 +363,7 @@ class FlextLdifDn(
                 "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                 "CN=ADMIN,DC=EXAMPLE,DC=COM"
             )
-            comparison = result.unwrap()  # 0 (equal)
+            comparison = result.value  # 0 (equal)
 
         """
         return cls.Parser.compare_dns(dn1, dn2)
@@ -382,7 +382,7 @@ class FlextLdifDn(
 
         Example:
             result = FlextLdifDn.parse_rdn("cn=John+ou=people")
-            pairs = result.unwrap()  # [("cn", "John"), ("ou", "people")]
+            pairs = result.value  # [("cn", "John"), ("ou", "people")]
 
         """
         return cls.Parser.parse_rdn(rdn)
@@ -453,7 +453,7 @@ class FlextLdifDn(
 
     def build(self) -> str:
         """Execute and return unwrapped result (fluent terminal)."""
-        return self.execute().unwrap()
+        return self.execute().value
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED PARSER CLASS (Parsing & Validation)
@@ -496,7 +496,7 @@ class FlextLdifDn(
             result = FlextLdifDn.Parser.parse_components(dn)
             if result.is_failure:
                 return r[str].fail(result.error or "Parse components failed")
-            components = result.unwrap()
+            components = result.value
             components_str = ", ".join(f"{attr}={value}" for attr, value in components)
             return r[str].ok(components_str)
 
@@ -506,7 +506,7 @@ class FlextLdifDn(
             result = FlextLdifDn.Parser.validate_format(dn)
             if result.is_failure:
                 return r[str].fail(result.error or "Validation failed")
-            is_valid = result.unwrap()
+            is_valid = result.value
             return r[str].ok(str(is_valid))
 
         @staticmethod
@@ -515,7 +515,7 @@ class FlextLdifDn(
             result = FlextLdifDn.Parser.compare_dns(dn1, dn2)
             if result.is_failure:
                 return r[str].fail(result.error or "Comparison failed")
-            comparison = result.unwrap()
+            comparison = result.value
             return r[str].ok(str(comparison))
 
         @staticmethod
@@ -524,7 +524,7 @@ class FlextLdifDn(
             result = FlextLdifDn.Parser.parse_rdn(dn)
             if result.is_failure:
                 return r[str].fail(result.error or "Parse RDN failed")
-            pairs = result.unwrap()
+            pairs = result.value
             pairs_str = ", ".join(f"{attr}={value}" for attr, value in pairs)
             return r[str].ok(pairs_str)
 

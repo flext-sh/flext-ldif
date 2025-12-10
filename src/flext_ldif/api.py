@@ -84,7 +84,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         >>> api = FlextLdif()
         >>> result = api.parse("dn: cn=test\ncn: test\n\n")
         >>> if result.is_success:
-        ...     entries = result.unwrap()
+        ...     entries = result.value
         ...     print(f"Parsed {len(entries)} entries")
 
     """
@@ -498,7 +498,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         if parse_result.is_failure:
             return r[list[object]].fail(str(parse_result.error))
 
-        response = parse_result.unwrap()
+        response = parse_result.value
         entries_list: list[object] = list(response.entries)
         return r.ok(entries_list)
 
@@ -626,7 +626,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         """
         result = self.get_effective_server_type()
         if result.is_success:
-            return result.unwrap()
+            return result.value
         return "rfc"
 
     def write(
@@ -695,7 +695,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         if write_result.is_failure:
             return r[bool].fail(str(write_result.error))
 
-        content = write_result.unwrap()
+        content = write_result.value
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")

@@ -327,7 +327,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         attr_def = c.Rfc.ATTR_DEF_CN_MINIMAL
         result = rfc_schema_quirk.parse(attr_def)
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.syntax is None
         assert attr.syntax_definition is None
@@ -422,7 +422,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         """
         result = syntax_service.validate_value(value, syntax_oid)
         assert result.is_success
-        is_valid = result.unwrap()
+        is_valid = result.value
         assert is_valid is expected
 
     # ========================================================================
@@ -445,7 +445,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         result = rfc_schema_quirk.parse(attr_def)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == expected_oid
         assert attr.name == expected_name
@@ -481,7 +481,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         )
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
-        attr_model = parse_result.unwrap()
+        attr_model = parse_result.value
         assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.can_handle_attribute(attr_model) is True
 
@@ -496,7 +496,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         )
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
-        attr_model = parse_result.unwrap()
+        attr_model = parse_result.value
         assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.should_filter_out_attribute(attr_model) is False
 
@@ -534,7 +534,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         )
         write_result = rfc_schema_quirk.write_attribute(attr)
         assert write_result.is_success
-        written_str = write_result.unwrap()
+        written_str = write_result.value
         assert "2.5.4.3" in written_str
         assert "cn" in written_str
 

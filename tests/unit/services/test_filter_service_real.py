@@ -155,7 +155,7 @@ def load_real_ldif_entries(fixture_path: str) -> list[p.Entry]:
     if not result.is_success:
         pytest.skip(f"Failed to parse fixture: {result.error}")
 
-    return result.unwrap()
+    return result.value
 
 
 @pytest.fixture
@@ -340,7 +340,7 @@ class TestFlextLdifFilterService(tt):
             acl_attributes=oid_acl_attributes,
         )
         assert result.is_success
-        acl_entries = result.unwrap()
+        acl_entries = result.value
         assert len(acl_entries) > 0, "Should extract ACL entries"
         for entry in acl_entries:
             has_acl_attr = entry.has_attribute("orclaci") or entry.has_attribute(
@@ -394,7 +394,7 @@ class TestFlextLdifFilterService(tt):
         assert oc_to_remove, "Should have an objectClass to remove"
         result = FlextLdifFilters.remove_objectclasses(test_entry, [oc_to_remove])
         assert result.is_success
-        modified_entry = result.unwrap()
+        modified_entry = result.value
         new_ocs = modified_entry.get_attribute_values("objectClass")
         assert oc_to_remove not in new_ocs, (
             f"objectClass {oc_to_remove} should be removed"

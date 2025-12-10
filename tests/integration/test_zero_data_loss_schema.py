@@ -53,7 +53,7 @@ class TestSchemaDeviationsSyntaxQuotes:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         # Verify syntax_quotes is tracked
@@ -86,7 +86,7 @@ class TestSchemaDeviationsSyntaxQuotes:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         # Verify syntax_quotes is tracked as False
@@ -130,7 +130,7 @@ class TestSchemaDeviationsXOrigin:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         # Verify X-ORIGIN is tracked as absent
@@ -165,7 +165,7 @@ class TestSchemaDeviationsXOrigin:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         # Verify X-ORIGIN is tracked with value
@@ -213,7 +213,7 @@ class TestSchemaDeviationsNameAliases:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
@@ -245,7 +245,7 @@ class TestSchemaDeviationsNameAliases:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
@@ -285,7 +285,7 @@ class TestSchemaDeviationsObsolete:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success, f"Parse failed: {result.error}"
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
@@ -318,7 +318,7 @@ class TestSchemaDeviationsObsolete:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -351,7 +351,7 @@ class TestSchemaDeviationsSpacing:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -387,7 +387,7 @@ class TestSchemaDeviationsSpacing:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -437,7 +437,7 @@ class TestSchemaDeviationsOriginalString:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -476,7 +476,7 @@ class TestSchemaDeviationsOriginalString:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -517,7 +517,7 @@ class TestSchemaDeviationsRoundTrip:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
 
         # Verify all key metadata is present for round-trip
         assert attr.metadata is not None
@@ -554,7 +554,7 @@ class TestSchemaDeviationsRoundTrip:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
 
         # Verify all key metadata is present for round-trip
         assert attr.metadata is not None
@@ -688,7 +688,7 @@ class TestSchemaDeviationsMissingSpaces:
         # Even if parsing fails due to malformation, the formatting details should be tracked
         # Check that schema_format_details exists and captures the malformation
         if result.is_success:
-            attr = result.unwrap()
+            attr = result.value
             if attr.metadata and attr.metadata.schema_format_details:
                 # schema_format_details is a Pydantic model - check syntax spacing details
                 # The malformed "SYNTAX1.3.6.1" (missing space) should be detected
@@ -779,7 +779,7 @@ class TestSchemaDeviationsComplete:
         result = oid_schema._parse_attribute(oid_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
@@ -842,7 +842,7 @@ class TestSchemaDeviationsComplete:
         result = oud_schema._parse_attribute(oud_definition)
         assert result.is_success
 
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details

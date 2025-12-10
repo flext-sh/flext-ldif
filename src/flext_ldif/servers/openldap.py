@@ -25,7 +25,6 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -253,7 +252,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE).
 
@@ -282,7 +281,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
                 # Otherwise, delegate to RFC base (RFC attributes are also valid)
                 return super().can_handle_attribute(attr_definition)
-            if isinstance(attr_definition, p.Ldif.SchemaAttributeProtocol):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 # Check if it contains OpenLDAP-specific markers
                 if attr_definition.oid and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
@@ -305,7 +304,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE).
 
@@ -330,7 +329,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
                 # Otherwise, delegate to RFC base (RFC objectClasses are also valid)
                 return super().can_handle_objectclass(oc_definition)
-            if isinstance(oc_definition, p.Ldif.SchemaObjectClassProtocol):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 # Check if it contains OpenLDAP-specific markers
                 if oc_definition.oid and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
@@ -344,8 +343,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def _transform_attribute_for_write(
             self,
-            attr_data: p.Ldif.SchemaAttributeProtocol,
-        ) -> p.Ldif.SchemaAttributeProtocol:
+            attr_data: m.Ldif.SchemaAttribute,
+        ) -> m.Ldif.SchemaAttribute:
             """Transform attribute before writing (hook from base.py).
 
             OpenLDAP 2.x can use this hook to transform attributes before writing.
@@ -364,8 +363,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def _transform_objectclass_for_write(
             self,
-            oc_data: p.Ldif.SchemaObjectClassProtocol,
-        ) -> p.Ldif.SchemaObjectClassProtocol:
+            oc_data: m.Ldif.SchemaObjectClass,
+        ) -> m.Ldif.SchemaObjectClass:
             """Transform objectClass before writing (hook from base.py).
 
             OpenLDAP 2.x can use this hook to transform objectClasses before writing.

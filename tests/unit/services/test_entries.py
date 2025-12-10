@@ -63,7 +63,7 @@ class RealLdifLoader:
         ldif = FlextLdif()
         result = ldif.parse(fixture_path)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         msg = f"Failed to parse OID fixtures: {result.error}"
         raise ValueError(msg)
 
@@ -74,7 +74,7 @@ class RealLdifLoader:
         ldif = FlextLdif()
         result = ldif.parse(fixture_path)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         msg = f"Failed to parse OUD fixtures: {result.error}"
         raise ValueError(msg)
 
@@ -85,7 +85,7 @@ class RealLdifLoader:
         ldif = FlextLdif()
         result = ldif.parse(fixture_path)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         msg = f"Failed to parse OpenLDAP2 fixtures: {result.error}"
         raise ValueError(msg)
 
@@ -96,7 +96,7 @@ class RealLdifLoader:
         ldif = FlextLdif()
         result = ldif.parse(fixture_path)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         msg = f"Failed to parse RFC fixtures: {result.error}"
         raise ValueError(msg)
 
@@ -243,7 +243,7 @@ class TestsFlextLdifEntries(s):
             service = FlextLdifEntries()
             result = service.create_entry(dn, attrs)
             if result.is_success:
-                return result.unwrap()
+                return result.value
             return p.Entry.model_construct(
                 dn=m.Ldif.DN(value=dn),
                 attributes=m.Ldif.Attributes(attributes=attrs),
@@ -311,7 +311,7 @@ class TestsFlextLdifEntries(s):
                 },
             )
             if result.is_success:
-                return result.unwrap()
+                return result.value
             raise ValueError(f"Failed to create entry: {result.error}")
 
         @staticmethod
@@ -393,7 +393,7 @@ class TestsFlextLdifEntries(s):
         service = FlextLdifEntries()
         result = service.get_entry_dn(entry)
         tm.ok(result)
-        assert result.unwrap() == c.DNs.TEST_USER
+        assert result.value == c.DNs.TEST_USER
 
     @pytest.mark.parametrize(
         ("entry_input", "expected_dn", "should_succeed"),
@@ -419,14 +419,14 @@ class TestsFlextLdifEntries(s):
         if should_succeed:
             assert expected_dn is not None
             tm.ok(result)
-            assert result.unwrap() == expected_dn
+            assert result.value == expected_dn
         else:
             assert result.is_failure
             assert result.error is not None
 
     def test_get_entry_dn_from_entry_missing_dn(self) -> None:
         """Test get_entry_dn with Entry model missing DN."""
-        entry = p.Entry.model_construct(
+        entry = m.Ldif.Entry.model_construct(
             dn=None,
             attributes=m.Ldif.Attributes.model_construct(attributes={}),
         )
@@ -456,7 +456,7 @@ class TestsFlextLdifEntries(s):
         service = FlextLdifEntries()
         result = service.get_entry_dn(entry)
         tm.ok(result)
-        assert result.unwrap() == dn_value
+        assert result.value == dn_value
 
     # ════════════════════════════════════════════════════════════════════════
     # ENTRY CREATION TESTS
@@ -473,7 +473,7 @@ class TestsFlextLdifEntries(s):
             },
         )
         tm.ok(result)
-        entry = result.unwrap()
+        entry = result.value
         assert entry.dn is not None
         assert entry.attributes is not None
         assert entry.dn.value == c.DNs.TEST_USER
@@ -491,7 +491,7 @@ class TestsFlextLdifEntries(s):
             objectclasses=[c.Names.PERSON, c.Names.TOP],
         )
         tm.ok(result)
-        entry = result.unwrap()
+        entry = result.value
         assert entry.attributes is not None
         assert c.Names.OBJECTCLASS in entry.attributes.attributes
         objectclasses = entry.attributes.attributes[c.Names.OBJECTCLASS]
@@ -516,7 +516,7 @@ class TestsFlextLdifEntries(s):
         )
         result = service.get_entry_attributes(entry)
         tm.ok(result)
-        attrs = result.unwrap()
+        attrs = result.value
         assert c.Names.CN in attrs
         assert c.Names.SN in attrs
         assert c.Names.OBJECTCLASS in attrs
@@ -533,7 +533,7 @@ class TestsFlextLdifEntries(s):
         )
         result = service.get_entry_objectclasses(entry)
         tm.ok(result)
-        objectclasses = result.unwrap()
+        objectclasses = result.value
         assert c.Names.PERSON in objectclasses
         assert c.Names.TOP in objectclasses
 
@@ -556,7 +556,7 @@ class TestsFlextLdifEntries(s):
         service = FlextLdifEntries()
         result = service.get_attribute_values(attr_input)
         tm.ok(result)
-        assert result.unwrap() == expected_values
+        assert result.value == expected_values
 
     # ════════════════════════════════════════════════════════════════════════
     # DN CLEANING TESTS
@@ -695,7 +695,7 @@ class TestsFlextLdifEntries(s):
         fixture_data = fixtures[fixture_name]
 
         if is_selective and fixture_name == "simple_entry":
-            assert isinstance(fixture_data, p.Entry)
+            assert isinstance(fixture_data, m.Ldif.Entry)
             result_list = tm.ok(
                 FlextLdifEntries()
                 .with_entries([fixture_data])
@@ -735,7 +735,7 @@ class TestsFlextLdifEntries(s):
                 if attrs_to_check:
                     tm.entry(entry, not_has_attr=attrs_to_check)
         else:
-            assert isinstance(fixture_data, p.Entry)
+            assert isinstance(fixture_data, m.Ldif.Entry)
             result_list = tm.ok(
                 FlextLdifEntries()
                 .with_entries([fixture_data])
@@ -984,7 +984,7 @@ class TestsFlextLdifEntries(s):
                 c.Names.MAIL,
                 "2invalid",
                 c.Names.OBJECTCLASS,
-            ]).unwrap()
+            ]).value
             assert validated[c.Names.CN] is True
             assert validated["2invalid"] is False
 
@@ -1098,7 +1098,7 @@ class TestsFlextLdifEntries(s):
         result = entries_service.remove_operational_attributes(entry)
 
         assert result.is_success
-        cleaned_entry = result.unwrap()
+        cleaned_entry = result.value
 
         assert cleaned_entry.attributes is not None
         assert len(cleaned_entry.attributes.attributes) > 0
@@ -1117,7 +1117,7 @@ class TestsFlextLdifEntries(s):
         result = entries_service.remove_operational_attributes_batch(oid_entries)
 
         assert result.is_success
-        cleaned_entries = result.unwrap()
+        cleaned_entries = result.value
 
         assert len(cleaned_entries) == len(oid_entries)
 
@@ -1140,7 +1140,7 @@ class TestsFlextLdifEntries(s):
         ).execute()
 
         assert result.is_success
-        cleaned_entries = result.unwrap()
+        cleaned_entries = result.value
         assert len(cleaned_entries) == len(oid_entries)
 
     def test_builder_with_oid_entries(
@@ -1179,7 +1179,7 @@ class TestsFlextLdifEntries(s):
             result = entries_service.remove_operational_attributes_batch(entries)
 
             assert result.is_success, f"Cleaning {server_name} entries should succeed"
-            cleaned = result.unwrap()
+            cleaned = result.value
             assert len(cleaned) == len(entries), (
                 f"{server_name} entry count should match"
             )
@@ -1252,7 +1252,7 @@ class TestsFlextLdifEntries(s):
 
             if test_name == "no_attributes":
                 dn = m.Ldif.DN(value=c.DNs.TEST_USER)
-                attrs = m.Ldif.Attributes.create({}).unwrap()
+                attrs = m.Ldif.Attributes.create({}).value
                 entry = m.Ldif.Entry(dn=dn, attributes=attrs)
             else:
                 entry = TestsFlextLdifEntries.Factories.create_simple_user_entry()

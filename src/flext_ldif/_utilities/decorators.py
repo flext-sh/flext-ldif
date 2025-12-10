@@ -30,7 +30,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
@@ -53,8 +52,8 @@ class FlextLdifUtilitiesDecorators:
     def _get_server_type_from_class(
         obj: (
             m.Ldif.Entry
-            | p.Ldif.SchemaAttributeProtocol
-            | p.Ldif.SchemaObjectClassProtocol
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
             | m.Ldif.Acl
             | str
             | float
@@ -84,8 +83,8 @@ class FlextLdifUtilitiesDecorators:
     def _attach_metadata_if_present(
         result_value: (
             m.Ldif.Entry
-            | p.Ldif.SchemaAttributeProtocol
-            | p.Ldif.SchemaObjectClassProtocol
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
             | m.Ldif.Acl
             | str
             | float
@@ -173,15 +172,15 @@ class FlextLdifUtilitiesDecorators:
 
                 # If result is successful, attach metadata using helper methods
                 if result.is_success:
-                    unwrapped = result.unwrap()
+                    unwrapped = result.value
                     # Type narrowing: self is a protocol, but we need concrete types
                     # Check if unwrapped is one of the supported types
                     if isinstance(
                         unwrapped,
                         (
                             m.Ldif.Entry,
-                            p.Ldif.SchemaAttributeProtocol,
-                            p.Ldif.SchemaObjectClassProtocol,
+                            m.Ldif.SchemaAttribute,
+                            m.Ldif.SchemaObjectClass,
                             m.Ldif.Acl,
                         ),
                     ):

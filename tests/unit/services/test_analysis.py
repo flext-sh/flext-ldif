@@ -44,7 +44,7 @@ class TestsTestFlextLdifAnalysis(s):
             service = FlextLdifAnalysis()
             result = service.analyze([])
             self.assert_success(result)
-            stats = result.unwrap()
+            stats = result.value
             assert stats.total_entries == 0
             assert stats.objectclass_distribution == {}
             assert stats.patterns_detected == []
@@ -58,11 +58,11 @@ class TestsTestFlextLdifAnalysis(s):
                 attributes={"objectClass": ["person", "inetOrgPerson"], "cn": "user1"},
             )
             assert entry_result.is_success
-            entry = entry_result.unwrap()
+            entry = entry_result.value
 
             result = service.analyze([entry])
             self.assert_success(result)
-            stats = result.unwrap()
+            stats = result.value
             assert stats.total_entries == 1
             oc_dist = stats.objectclass_distribution.model_dump()
             assert "person" in oc_dist
@@ -81,18 +81,18 @@ class TestsTestFlextLdifAnalysis(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             group_result = entries_service.create_entry(
                 dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
                 attributes={"objectClass": ["groupOfNames"], "cn": "REDACTED_LDAP_BIND_PASSWORDs"},
             )
             assert group_result.is_success
-            entries.append(group_result.unwrap())
+            entries.append(group_result.value)
 
             result = service.analyze(entries)
             self.assert_success(result)
-            stats = result.unwrap()
+            stats = result.value
             assert stats.total_entries == 4
             oc_dist = stats.objectclass_distribution.model_dump()
             assert oc_dist["person"] == 3
@@ -109,11 +109,11 @@ class TestsTestFlextLdifAnalysis(s):
                 attributes={"cn": "test"},
             )
             assert entry_result.is_success
-            entry = entry_result.unwrap()
+            entry = entry_result.value
 
             result = service.analyze([entry])
             self.assert_success(result)
-            stats = result.unwrap()
+            stats = result.value
             assert stats.total_entries == 1
             assert stats.objectclass_distribution == {}
 
@@ -126,7 +126,7 @@ class TestsTestFlextLdifAnalysis(s):
             validation_service = FlextLdifValidation()
             result = service.validate_entries([], validation_service)
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is True
             assert report.total_entries == 0
             assert report.valid_entries == 0
@@ -146,11 +146,11 @@ class TestsTestFlextLdifAnalysis(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.validate_entries(entries, validation_service)
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is True
             assert report.total_entries == 2
             assert report.valid_entries == 2
@@ -171,11 +171,11 @@ class TestsTestFlextLdifAnalysis(s):
                 },
             )
             assert entry_result.is_success
-            entry = entry_result.unwrap()
+            entry = entry_result.value
 
             result = service.validate_entries([entry], validation_service)
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is False
             assert report.total_entries == 1
             assert report.valid_entries == 0
@@ -197,17 +197,17 @@ class TestsTestFlextLdifAnalysis(s):
                 },
             )
             assert entry_result.is_success
-            entry = entry_result.unwrap()
+            entry = entry_result.value
 
             result = service.validate_entries([entry], validation_service)
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             # Validation service may accept objectClass names that are RFC-compliant format
             # even if they don't exist in schema. Check if validation actually fails.
             validation_result = validation_service.validate_objectclass_name(
                 "invalid-objectclass-with-dashes",
             )
-            if validation_result.is_failure or not validation_result.unwrap():
+            if validation_result.is_failure or not validation_result.value:
                 assert report.is_valid is False
                 assert report.total_entries == 1
                 assert report.valid_entries == 0
@@ -241,11 +241,11 @@ class TestsTestFlextLdifAnalysis(s):
             assert invalid_entry_result.is_success
 
             result = service.validate_entries(
-                [valid_entry_result.unwrap(), invalid_entry_result.unwrap()],
+                [valid_entry_result.value, invalid_entry_result.value],
                 validation_service,
             )
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is False
             assert report.total_entries == 2
             assert report.valid_entries == 1
@@ -268,11 +268,11 @@ class TestsTestFlextLdifAnalysis(s):
                     },
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.validate_entries(entries, validation_service)
             self.assert_success(result)
-            report = result.unwrap()
+            report = result.value
             assert len(report.errors) <= 100
 
     class TestValidateSingleEntryMethod:
@@ -291,7 +291,7 @@ class TestsTestFlextLdifAnalysis(s):
             assert entry_result.is_success
 
             is_valid, errors = service._validate_single_entry(
-                entry_result.unwrap(),
+                entry_result.value,
                 validation_service,
             )
             assert is_valid is True
@@ -314,7 +314,7 @@ class TestsTestFlextLdifAnalysis(s):
             assert entry_result.is_success
 
             is_valid, errors = service._validate_single_entry(
-                entry_result.unwrap(),
+                entry_result.value,
                 validation_service,
             )
             assert is_valid is False
@@ -337,7 +337,7 @@ class TestsTestFlextLdifAnalysis(s):
             assert entry_result.is_success
 
             is_valid, errors = service._validate_single_entry(
-                entry_result.unwrap(),
+                entry_result.value,
                 validation_service,
             )
             assert is_valid is False
@@ -355,7 +355,7 @@ class TestsTestFlextLdifAnalysis(s):
                 attributes={"objectClass": ["person"], "cn": "test"},
             )
             assert entry_result.is_success
-            entry = entry_result.unwrap()
+            entry = entry_result.value
 
             # Test that validation correctly handles objectClass values
             # Note: Pydantic prevents creating entries with non-string objectClass values,

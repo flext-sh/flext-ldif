@@ -485,7 +485,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         parse_result = self.parse(data)
         if parse_result.is_success:
-            return FlextResult[m.Ldif.Acl | str].ok(parse_result.unwrap())
+            return FlextResult[m.Ldif.Acl | str].ok(parse_result.value)
         return FlextResult[m.Ldif.Acl | str].fail(
             parse_result.error or "Parse failed",
         )
@@ -505,7 +505,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         write_result = self.write(data)
         if write_result.is_success:
-            return FlextResult[m.Ldif.Acl | str].ok(write_result.unwrap())
+            return FlextResult[m.Ldif.Acl | str].ok(write_result.value)
         return FlextResult[m.Ldif.Acl | str].fail(
             write_result.error or "Write failed",
         )
@@ -687,7 +687,7 @@ class FlextLdifServersBaseSchemaAcl(
         if pattern_result.is_failure:
             return FlextResult[str].ok(acl_value)
 
-        pattern, replacement_template = pattern_result.unwrap()
+        pattern, replacement_template = pattern_result.value
         formatted_value = pattern.sub(
             replacement_template.format(sanitized_name),
             acl_value,

@@ -43,7 +43,7 @@ class TestsTestFlextLdifProcessing(s):
             service = FlextLdifProcessing()
             result = service.process("transform", [])
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert processed == []
 
         def test_process_transform_batch_mode(self) -> None:
@@ -63,9 +63,9 @@ class TestsTestFlextLdifProcessing(s):
             )
             assert entry2.is_success
 
-            result = service.process("transform", [entry1.unwrap(), entry2.unwrap()])
+            result = service.process("transform", [entry1.value, entry2.value])
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 2
             # ProcessingResult is a Pydantic model, access attributes directly
             assert processed[0].dn == "cn=user1,dc=example,dc=com"
@@ -85,11 +85,11 @@ class TestsTestFlextLdifProcessing(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.process("transform", entries, parallel=True, max_workers=2)
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 5
             # ProcessingResult is a Pydantic model, access attributes directly
             assert all(hasattr(p, "dn") and isinstance(p.dn, str) for p in processed)
@@ -106,9 +106,9 @@ class TestsTestFlextLdifProcessing(s):
             )
             assert entry.is_success
 
-            result = service.process("validate", [entry.unwrap()])
+            result = service.process("validate", [entry.value])
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 1
             # ProcessingResult is a Pydantic model with dn and attributes
             assert processed[0].dn == "cn=test,dc=example,dc=com"
@@ -128,11 +128,11 @@ class TestsTestFlextLdifProcessing(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.process("validate", entries, parallel=True, max_workers=3)
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 3
             # ProcessingResult is a Pydantic model with dn and attributes
             for p in processed:
@@ -152,7 +152,7 @@ class TestsTestFlextLdifProcessing(s):
             )
             assert entry.is_success
 
-            result = service.process("unknown_processor", [entry.unwrap()])
+            result = service.process("unknown_processor", [entry.value])
             assert result.is_failure
             assert result.error is not None
             assert "Unknown processor" in result.error
@@ -169,11 +169,11 @@ class TestsTestFlextLdifProcessing(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.process("transform", entries, batch_size=3)
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 10
 
         def test_process_max_workers_custom(self) -> None:
@@ -188,11 +188,11 @@ class TestsTestFlextLdifProcessing(s):
                     attributes={"objectClass": ["person"], "cn": f"user{i}"},
                 )
                 assert entry_result.is_success
-                entries.append(entry_result.unwrap())
+                entries.append(entry_result.value)
 
             result = service.process("transform", entries, parallel=True, max_workers=8)
             self.assert_success(result)
-            processed = result.unwrap()
+            processed = result.value
             assert len(processed) == 5
 
     class TestTransformProcessor:
@@ -210,7 +210,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry.is_success
 
             transform_func = service._create_transform_processor()
-            result = transform_func(entry.unwrap())
+            result = transform_func(entry.value)
             # ProcessingResult is a Pydantic model, access attributes directly
             assert hasattr(result, "dn")
             assert hasattr(result, "attributes")
@@ -228,7 +228,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry.is_success
 
             transform_func = service._create_transform_processor()
-            result = transform_func(entry.unwrap())
+            result = transform_func(entry.value)
             # ProcessingResult is a Pydantic model, access attributes directly
             assert hasattr(result, "dn")
             assert hasattr(result, "attributes")
@@ -244,7 +244,7 @@ class TestsTestFlextLdifProcessing(s):
                 attributes={"objectClass": ["person"], "cn": "test"},
             )
             assert entry.is_success
-            entry_obj = entry.unwrap()
+            entry_obj = entry.value
 
             # Add processing_stats to metadata to test line 228
             entry_obj.metadata.processing_stats = m.EntryStatistics(
@@ -274,7 +274,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry.is_success
 
             validate_func = service._create_validate_processor()
-            result = validate_func(entry.unwrap())
+            result = validate_func(entry.value)
             # ProcessingResult is a Pydantic model, access attributes directly
             assert result.dn == "cn=test,dc=example,dc=com"
             # ProcessingResult does not have 'valid' or 'attribute_count' attributes
@@ -293,7 +293,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry.is_success
 
             validate_func = service._create_validate_processor()
-            result = validate_func(entry.unwrap())
+            result = validate_func(entry.value)
             # ProcessingResult is a Pydantic model, access attributes directly
             # ProcessingResult does not have 'valid' or 'attribute_count' attributes
             # It only has 'dn' and 'attributes'

@@ -77,7 +77,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 # Parse entry from lines
                 result = self._parse_entry_from_lines(lines)
                 if result.is_success:
-                    entries.append(result.unwrap())
+                    entries.append(result.value)
                 else:
                     logger.warning(
                         "Failed to parse entry block",

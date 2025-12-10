@@ -212,8 +212,8 @@ class TestsFlextLdifRfcQuirks(s):
         attributes: dict[str, str | list[str]],
     ) -> p.Entry:
         """Create Entry model from dict."""
-        result = p.Entry.create(dn=dn, attributes=attributes)
-        return result.unwrap()
+        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+        return result.value
 
     # =========================================================================
     # FIXTURE TESTS - Parse and Roundtrip
@@ -238,7 +238,7 @@ class TestsFlextLdifRfcQuirks(s):
         result = api.parse(path, server_type="rfc")
         assert result.is_success, f"Parse failed: {result.error}"
 
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0, f"No entries in {fixture_type}"
 
         for entry in entries:
@@ -269,17 +269,17 @@ class TestsFlextLdifRfcQuirks(s):
         # Parse original
         parse_result = api.parse(path, server_type="rfc")
         assert parse_result.is_success
-        original = parse_result.unwrap()
+        original = parse_result.value
 
         # Write to string
         write_result = api.write(original, server_type="rfc")
         assert write_result.is_success
-        ldif_content = write_result.unwrap()
+        ldif_content = write_result.value
 
         # Parse written content
         roundtrip_result = api.parse(ldif_content, server_type="rfc")
         assert roundtrip_result.is_success
-        roundtrip = roundtrip_result.unwrap()
+        roundtrip = roundtrip_result.value
 
         # Validate entry count preserved
         assert len(roundtrip) == len(original), "Roundtrip must preserve entry count"
@@ -369,7 +369,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._parse_attribute."""
         result = schema_quirk._parse_attribute(c.Rfc.ATTR_DEF_CN_COMPLETE)
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert attr.oid == c.Rfc.ATTR_OID_CN
         assert attr.name == c.Rfc.ATTR_NAME_CN
 
@@ -381,7 +381,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._parse_objectclass."""
         result = schema_quirk._parse_objectclass(c.Rfc.OC_DEF_PERSON_FULL)
         assert result.is_success
-        oc = result.unwrap()
+        oc = result.value
         assert oc.oid == c.Rfc.OC_OID_PERSON
         assert oc.name == c.Rfc.OC_NAME_PERSON
 
@@ -405,7 +405,7 @@ class TestsFlextLdifRfcQuirks(s):
         )
         result = schema_quirk._write_attribute(attr)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         must_contain = data.get("must_contain")
         if must_contain is not None and isinstance(must_contain, list):
             for expected in must_contain:
@@ -430,7 +430,7 @@ class TestsFlextLdifRfcQuirks(s):
         )
         result = schema_quirk._write_objectclass(oc)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         must_contain = data.get("must_contain")
         if must_contain is not None and isinstance(must_contain, list):
             for expected in must_contain:
@@ -495,7 +495,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl_line, expected_server = data
         result = acl_quirk._parse_acl(acl_line)
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert acl.server_type == expected_server
 
     def test_acl_parse_empty_fails(
@@ -532,7 +532,7 @@ class TestsFlextLdifRfcQuirks(s):
         rfc_acl_attrs = {"aci": ["test acl"]}
         result = acl_quirk.convert_rfc_acl_to_aci(rfc_acl_attrs, "target")
         assert result.is_success
-        converted = result.unwrap()
+        converted = result.value
         assert converted == rfc_acl_attrs
 
     # =========================================================================
@@ -589,7 +589,7 @@ class TestsFlextLdifRfcQuirks(s):
 
         result = entry_quirk.write([entry])
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert dn in written, f"DN {dn} not in output"
         assert len(written) > 0
 
@@ -605,7 +605,7 @@ class TestsFlextLdifRfcQuirks(s):
         }
         result = entry_quirk._parse_entry(dn, attrs)
         assert result.is_success
-        entry = result.unwrap()
+        entry = result.value
         assert entry.dn is not None
         assert "cn=test,dc=example,dc=com" in entry.dn.value
 
@@ -615,10 +615,10 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Entry.can_handle_entry with empty dn returns False (RFC requires DN)."""
         # RFC baseline requires valid DN for entries
-        entry = p.Entry.create(
+        entry = m.Ldif.Entry.create(
             dn="",
             attributes={"objectClass": ["person"], "cn": ["test"]},
-        ).unwrap()
+        ).value
         result = entry_quirk.can_handle_entry(entry)
         # Empty DN is not valid for RFC
         assert result is False
@@ -642,7 +642,7 @@ class TestsFlextLdifRfcQuirks(s):
         path = self._get_fixture_path(fixture_type)
         result = api.parse(path, server_type="rfc")
         assert result.is_success, f"Routing failed for {fixture_type}"
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0
 
     # =========================================================================
@@ -694,7 +694,7 @@ class TestsFlextLdifRfcQuirks(s):
         )
         result = schema_quirk._write_attribute(attr)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert "X-ORIGIN" in written
         assert "test-origin" in written
 
@@ -713,7 +713,7 @@ class TestsFlextLdifRfcQuirks(s):
         )
         result = schema_quirk._write_objectclass(oc)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert "X-ORIGIN" in written
         assert "test-origin" in written
 
@@ -725,7 +725,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl = m.Acl(raw_acl="aci: test acl value", server_type="rfc")
         result = acl_quirk._write_acl(acl)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         assert "test acl value" in written
 
     def test_entry_handle_parse_operation_entry_object(
@@ -755,7 +755,7 @@ class TestsFlextLdifRfcQuirks(s):
         ]
         result = entry_quirk.write(entries)
         assert result.is_success
-        written = result.unwrap()
+        written = result.value
         for i in range(3):
             assert f"cn=user{i}" in written
 
@@ -767,7 +767,7 @@ class TestsFlextLdifRfcQuirks(s):
         # Test parse_attribute public method
         result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert attr.name == c.Rfc.ATTR_NAME_CN
 
     def test_schema_auto_execute_objectclass(
@@ -778,5 +778,5 @@ class TestsFlextLdifRfcQuirks(s):
         # Test parse_objectclass public method
         result = schema_quirk.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
-        oc = result.unwrap()
+        oc = result.value
         assert oc.name == c.Rfc.OC_NAME_PERSON

@@ -17,6 +17,7 @@ import pytest
 from flext_tests import tm, tt, u
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
+from flext_ldif.models import m
 from flext_ldif.protocols import p
 from tests import OIDs, Syntax, c
 
@@ -118,11 +119,11 @@ class FlextLdifParserWriterIntegrationTests(tt):
         )
 
         assert parse_result.is_success, f"Failed to parse content for {scenario}"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries_list = parse_response.entries
         # Convert to list[p.Entry] for write method
         entries: list[p.Entry] = [
-            entry for entry in entries_list if isinstance(entry, p.Entry)
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
 
         # Verify we got entries
@@ -140,7 +141,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
         )
 
         tm.assert_result_success(write_result)
-        output_content_raw = write_result.unwrap()
+        output_content_raw = write_result.value
         # Extract string from WriteResponse if needed
         if isinstance(output_content_raw, str):
             output_content = output_content_raw
@@ -163,7 +164,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
         )
 
         assert reparse_result.is_success, f"Failed to re-parse output for {scenario}"
-        reparsed_response = reparse_result.unwrap()
+        reparsed_response = reparse_result.value
         reparsed_entries = reparsed_response.entries
 
         # Should have same number of entries
@@ -190,11 +191,11 @@ class FlextLdifParserWriterIntegrationTests(tt):
         )
 
         assert parse_result.is_success, "Failed to parse from file"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries_list = parse_response.entries
         # Convert to list[p.Entry] for write method
         entries: list[p.Entry] = [
-            entry for entry in entries_list if isinstance(entry, p.Entry)
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
         tm.assert_length_equals(
             entries,
@@ -230,7 +231,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
         )
 
         assert reparse_result.is_success, "Failed to re-parse from file"
-        reparsed_response = reparse_result.unwrap()
+        reparsed_response = reparse_result.value
         reparsed_entries = reparsed_response.entries
         assert len(reparsed_entries) == len(entries), (
             "File roundtrip entry count mismatch"
@@ -258,7 +259,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
             )
         else:
             # If parsing succeeded, entries might have validation issues
-            parse_response = parse_result.unwrap()
+            parse_response = parse_result.value
             entries = parse_response.entries
             # At minimum, we should have attempted to parse something
             u.Tests.Assertions.assert_result_matches_expected(
@@ -296,11 +297,11 @@ class FlextLdifParserWriterIntegrationTests(tt):
         parse_time = (time.time() - start_time) * 1000
 
         assert parse_result.is_success, f"Failed to parse {entry_count} entries"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries_list = parse_response.entries
         # Convert to list[p.Entry] for write method
         entries: list[p.Entry] = [
-            entry for entry in entries_list if isinstance(entry, p.Entry)
+            entry for entry in entries_list if isinstance(entry, m.Ldif.Entry)
         ]
         assert len(entries) == entry_count, (
             f"Expected {entry_count} entries, got {len(entries)}"
@@ -335,7 +336,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
             server_type="rfc",
         )
         assert parse_result.is_success, "Empty content should parse successfully"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
         tm.assert_length_equals(
             entries,
@@ -351,7 +352,7 @@ class FlextLdifParserWriterIntegrationTests(tt):
             server_type="rfc",
         )
         assert parse_result.is_success, "Version-only content should parse successfully"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
         tm.assert_length_equals(
             entries,

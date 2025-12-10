@@ -271,7 +271,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
                 ldif_content=ldif_content,
             )
             if detection_result.is_success:
-                result = detection_result.unwrap()
+                result = detection_result.value
                 if isinstance(result, m.Ldif.LdifResults.ServerDetectionResult):
                     return r.ok(result.detected_server_type)
 
@@ -761,7 +761,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
         if not server_quirk_result.is_success:
             return None
 
-        server_quirk = server_quirk_result.unwrap()
+        server_quirk = server_quirk_result.value
         quirk_class = type(server_quirk)
         if not hasattr(quirk_class, "Constants"):
             return None

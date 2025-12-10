@@ -61,7 +61,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _get_server_type_from_class with Entry model."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).value,
         )
 
         server_type = FlextLdifUtilitiesDecorators._get_server_type_from_class(entry)
@@ -73,7 +73,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _attach_metadata_if_present attaches metadata to Entry."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).value,
         )
 
         # Entry has metadata by default (created automatically)
@@ -170,7 +170,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         result = quirk.parse_attribute("( 1.2.3.4.5 NAME 'testAttr' )")
 
         assert result.is_success
-        attr = result.unwrap()
+        attr = result.value
         assert attr.metadata is not None
         assert attr.metadata.quirk_type == "oid"
 
@@ -203,7 +203,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             ) -> FlextResult[p.Entry]:
                 entry = m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn),
-                    attributes=m.Ldif.Attributes.create(attrs).unwrap(),
+                    attributes=m.Ldif.Attributes.create(attrs).value,
                 )
                 return FlextResult.ok(entry)
 
@@ -214,7 +214,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         )
 
         assert result.is_success
-        entry = result.unwrap()
+        entry = result.value
         assert entry.metadata is not None
         assert entry.metadata.quirk_type == "rfc"
 
@@ -231,7 +231,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         assert result.is_success
         # String results don't get metadata attached
-        assert result.unwrap() == "test"
+        assert result.value == "test"
 
     def test_attach_write_metadata_decorator(self) -> None:
         """Test attach_write_metadata decorator."""
@@ -249,7 +249,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         result = quirk.write_attribute(attr)
 
         assert result.is_success
-        assert result.unwrap() == "( 1.2.3.4.5 NAME 'testAttr' )"
+        assert result.value == "( 1.2.3.4.5 NAME 'testAttr' )"
 
     def test_safe_parse_decorator_success(self) -> None:
         """Test safe_parse decorator with successful operation."""
@@ -270,7 +270,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         result = quirk.parse_attribute("( 1.2.3.4.5 NAME 'testAttr' )")
 
         assert result.is_success
-        assert result.unwrap().name == "testAttr"
+        assert result.value.name == "testAttr"
 
     def test_safe_parse_decorator_exception(self) -> None:
         """Test safe_parse decorator catches exceptions."""
@@ -307,7 +307,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         result = quirk.write_attribute(attr)
 
         assert result.is_success
-        assert "( 1.2.3.4.5 NAME 'testAttr' )" in result.unwrap()
+        assert "( 1.2.3.4.5 NAME 'testAttr' )" in result.value
 
     def test_safe_write_decorator_exception(self) -> None:
         """Test safe_write decorator catches exceptions."""
@@ -374,7 +374,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         """Test _attach_metadata_if_present handles None server_type."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).unwrap(),
+            attributes=m.Ldif.Attributes.create({"cn": ["test"]}).value,
         )
 
         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
@@ -404,7 +404,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         result = quirk.parse_acl("access to *")
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         # ACL may have metadata by default or it may be attached by decorator
         # The decorator checks isinstance for Acl, so it should attach metadata
         # But the check in _attach_metadata_if_present may prevent it if metadata already exists

@@ -89,7 +89,7 @@ class TestsFlextLdifAclService:
             result = service.execute()
             # execute() returns health check status (success with empty response)
             assert result.is_success
-            response = result.unwrap()
+            response = result.value
             assert isinstance(response, m.Ldif.LdifResults.AclResponse)
             assert response.acls == []
 
@@ -101,7 +101,7 @@ class TestsFlextLdifAclService:
             service = FlextLdifAcl()
             result = service.extract_acl_entries([])
             tm.ok(result)
-            assert result.unwrap() == []
+            assert result.value == []
 
         def test_extract_acl_entries_no_acl_attributes(self) -> None:
             """Test extract_acl_entries with entries without ACL attributes."""
@@ -112,7 +112,7 @@ class TestsFlextLdifAclService:
             )
             result = service.extract_acl_entries([entry])
             tm.ok(result)
-            assert result.unwrap() == []
+            assert result.value == []
 
         def test_extract_acl_entries_with_default_acl_attributes(self) -> None:
             """Test extract_acl_entries with default ACL attributes (acl, aci, olcAccess)."""
@@ -131,7 +131,7 @@ class TestsFlextLdifAclService:
             )
             result = service.extract_acl_entries([entry_with_acl, entry_without_acl])
             tm.ok(result)
-            acl_entries = result.unwrap()
+            acl_entries = result.value
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
@@ -159,7 +159,7 @@ class TestsFlextLdifAclService:
                 acl_attributes=["orclaci"],
             )
             tm.ok(result)
-            acl_entries = result.unwrap()
+            acl_entries = result.value
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
@@ -184,7 +184,7 @@ class TestsFlextLdifAclService:
             )
             result = service.extract_acl_entries([schema_entry, regular_entry])
             tm.ok(result)
-            acl_entries = result.unwrap()
+            acl_entries = result.value
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
@@ -202,7 +202,7 @@ class TestsFlextLdifAclService:
             )
             result = service.extract_acl_entries([entry_with_multiple])
             tm.ok(result)
-            assert len(result.unwrap()) == 1
+            assert len(result.value) == 1
 
     class TestIsSchemaEntry:
         """Test _is_schema_entry static method for schema entry detection."""

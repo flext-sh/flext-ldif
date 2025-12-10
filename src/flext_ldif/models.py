@@ -1314,7 +1314,7 @@ class FlextLdifModels(FlextModels):
                 """ACL permissions model - exposed in results namespace for unified service access."""
 
             class FlexibleCategories(
-                FlextModelsCollections.Categories[p.Ldif.EntryProtocol]
+                FlextModelsCollections.Categories["Ldif.Entry"]
             ):
                 """Flexible categories model - exposed in results namespace for unified service access."""
 
@@ -1481,8 +1481,8 @@ class FlextLdifModels(FlextModels):
             """Schema element type with protocol references."""
 
             type SchemaElement = (
-                p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
+                m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
                 | str
                 | int
                 | float
@@ -1496,7 +1496,10 @@ class FlextLdifModels(FlextModels):
 
             type QuirksDict = dict[
                 str,
-                p.Ldif.SchemaQuirkProtocol | p.Ldif.AclQuirkProtocol | p.Ldif.EntryQuirkProtocol | None,
+                p.Ldif.SchemaQuirkProtocol
+                | p.Ldif.AclQuirkProtocol
+                | p.Ldif.EntryQuirkProtocol
+                | None,
             ]
             """Type alias for quirks dictionary returned by get_all_quirks."""
 

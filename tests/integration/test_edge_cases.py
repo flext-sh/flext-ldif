@@ -42,7 +42,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = ""
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 0
 
     def test_only_whitespace(self, api: FlextLdif) -> None:
@@ -56,7 +56,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "   \n\n  \t\n  "
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 0
 
     def test_only_comments(self, api: FlextLdif) -> None:
@@ -73,7 +73,7 @@ class TestEmptyAndMinimalCases:
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 0
 
     def test_single_entry_minimal(self, api: FlextLdif) -> None:
@@ -87,7 +87,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "dn: cn=Single,dc=example,dc=com\n"
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
         assert str(entries[0].dn).lower() == "cn=single,dc=example,dc=com"
 
@@ -104,7 +104,7 @@ cn: OneAttr
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
 
@@ -131,7 +131,7 @@ cn: ManyAttrs
 {attributes}"""
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
         assert len(entries[0].attributes) > 0
 
@@ -150,7 +150,7 @@ cn: ManyValues
 {values}"""
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_very_long_single_value(self, api: FlextLdif) -> None:
@@ -169,7 +169,7 @@ description: {long_value}
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_deeply_nested_dn_hierarchy(self, api: FlextLdif) -> None:
@@ -188,7 +188,7 @@ cn: DeepNest
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
 
@@ -215,7 +215,7 @@ sn: B
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_special_single_characters(self, api: FlextLdif) -> None:
@@ -234,7 +234,7 @@ description: -
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_maximum_rdn_components(self, api: FlextLdif) -> None:
@@ -254,7 +254,7 @@ cn: MaxRDN
 """
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
     def test_minimum_valid_dn(self, api: FlextLdif) -> None:
@@ -363,12 +363,12 @@ class TestRoundtripEdgeCases:
         ldif_content = ""
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 0
 
         write_result = api.write(entries)
         assert write_result.is_success
-        written = write_result.unwrap()
+        written = write_result.value
         # Empty entries may produce empty output or "version: 1\n" (both valid per RFC 2849)
         assert len(written) == 0 or written.isspace() or written.strip() == "version: 1"
 
@@ -383,15 +383,15 @@ class TestRoundtripEdgeCases:
         ldif_content = "dn: cn=Test,dc=example,dc=com\ncn: Test\n"
         result = api.parse(ldif_content)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
         write_result = api.write(entries)
         assert write_result.is_success
 
-        roundtrip_result = api.parse(write_result.unwrap())
+        roundtrip_result = api.parse(write_result.value)
         assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
 
     def test_roundtrip_with_many_entries(self, api: FlextLdif) -> None:
@@ -411,15 +411,15 @@ sn: Test{i}"""
         )
         result = api.parse(entries_ldif)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         initial_count = len(entries)
 
         write_result = api.write(entries)
         assert write_result.is_success
 
-        roundtrip_result = api.parse(write_result.unwrap())
+        roundtrip_result = api.parse(write_result.value)
         assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == initial_count
 
 

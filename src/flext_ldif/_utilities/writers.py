@@ -20,14 +20,14 @@ from flext_core import FlextRuntime, r
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 
 # Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 
 # REMOVED: Type aliases for nested objects - use m.* or FlextLdifModelsDomains.* directly
-# type Entry = FlextLdifModelsDomains.Entry  # Use p.Ldif.EntryProtocol or FlextLdifModelsDomains.Entry directly
-# type SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute  # Use p.Ldif.SchemaAttributeProtocol or FlextLdifModelsDomains.SchemaAttribute directly
-# type SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass  # Use p.Ldif.SchemaObjectClassProtocol or FlextLdifModelsDomains.SchemaObjectClass directly
+# type Entry = FlextLdifModelsDomains.Entry  # Use m.Ldif.Entry or FlextLdifModelsDomains.Entry directly
+# type SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute or FlextLdifModelsDomains.SchemaAttribute directly
+# type SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or FlextLdifModelsDomains.SchemaObjectClass directly
 
 logger = structlog.get_logger(__name__)
 
@@ -65,7 +65,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: p.Ldif.EntryProtocol,
+                entry: m.Ldif.Entry,
                 lines: list[str],
             ) -> None: ...
 
@@ -74,7 +74,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: p.Ldif.EntryProtocol,
+                entry: m.Ldif.Entry,
                 lines: list[str],
             ) -> None: ...
 
@@ -88,8 +88,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                entry: p.Ldif.EntryProtocol,
-            ) -> p.Ldif.EntryProtocol: ...
+                entry: m.Ldif.Entry,
+            ) -> m.Ldif.Entry: ...
 
         class WriteDnHook(Protocol):
             """Protocol for writing DN line."""
@@ -111,7 +111,7 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_dn_string(entry: p.Ldif.EntryProtocol) -> str:
+        def get_dn_string(entry: m.Ldif.Entry) -> str:
             """Extract DN string from entry."""
             if entry.dn is None:
                 return ""
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entry_parts(
-            entry: p.Ldif.EntryProtocol,
+            entry: m.Ldif.Entry,
             config: FlextLdifModelsConfig.EntryWriteConfig,
             lines: list[str],
         ) -> None:
@@ -254,7 +254,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: p.Ldif.SchemaAttributeProtocol,
+                attribute: m.Ldif.SchemaAttribute,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
@@ -262,8 +262,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: p.Ldif.SchemaAttributeProtocol,
-            ) -> p.Ldif.SchemaAttributeProtocol: ...
+                attribute: m.Ldif.SchemaAttribute,
+            ) -> m.Ldif.SchemaAttribute: ...
 
         class FormatOidHook(Protocol):
             """Protocol for OID formatting."""
@@ -274,7 +274,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            attribute: p.Ldif.SchemaAttributeProtocol,
+            attribute: m.Ldif.SchemaAttribute,
             server_type: str,
             build_parts_hook: BuildPartsHook,
             *,
@@ -408,7 +408,7 @@ class FlextLdifUtilitiesWriters:
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""
 
-            def __call__(self, entry: p.Ldif.EntryProtocol) -> r[str]: ...
+            def __call__(self, entry: m.Ldif.Entry) -> r[str]: ...
 
         class WriteHeaderHook(Protocol):
             """Protocol for writing LDIF header."""
@@ -428,7 +428,7 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_entry_dn_for_error(entry: p.Ldif.EntryProtocol) -> str | None:
+        def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
             """Get DN string for error logging."""
             if entry.dn is None:
                 return None
@@ -441,15 +441,15 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_single_entry_with_stats(
-            entry: p.Ldif.EntryProtocol,
-            write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]],
+            entry: m.Ldif.Entry,
+            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
             stats: Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""
             result = write_entry_hook(entry)
             if result.is_success:
                 stats.successful += 1
-                return result.unwrap()
+                return result.value
             stats.failed += 1
             dn_str = FlextLdifUtilitiesWriters.Content.get_entry_dn_for_error(entry)
             logger.error(
@@ -461,8 +461,8 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entries_fallback(
-            entries: Sequence[p.Ldif.EntryProtocol],
-            write_entry_hook: Callable[[p.Ldif.EntryProtocol], r[str]],
+            entries: Sequence[m.Ldif.Entry],
+            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
             stats: Stats,
         ) -> list[str]:
             """Fallback manual processing if batch fails."""

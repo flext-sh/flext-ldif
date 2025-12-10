@@ -45,7 +45,7 @@ objectClass: person
 """
         result = ldif_api.parse(unicode_ldif, server_type="rfc")
         assert result.is_success, f"Failed to parse unicode content: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0
 
         # Validate unicode characters are preserved
@@ -68,7 +68,7 @@ objectClass: person
 """
         result = ldif_api.parse(deep_dn_ldif, server_type="rfc")
         assert result.is_success, f"Failed to parse deep DN content: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0
 
         # Find the deepest DN
@@ -98,7 +98,7 @@ objectClass: person
         assert result.is_success, (
             f"Failed to parse large multivalue fixture: {result.error}"
         )
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) > 0
 
         # Find attributes with many values
@@ -132,7 +132,7 @@ objectClass: person
         # Parse
         parse_result = ldif_api.parse(unicode_ldif, server_type="rfc")
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         # Write
@@ -149,7 +149,7 @@ objectClass: person
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
 
     def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
@@ -163,7 +163,7 @@ objectClass: person
         # Parse
         parse_result = ldif_api.parse(deep_dn_ldif, server_type="rfc")
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         # Write
@@ -180,7 +180,7 @@ objectClass: person
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
 
     def test_roundtrip_large_multivalue(
@@ -203,7 +203,7 @@ objectClass: groupOfNames
         # Parse
         parse_result = ldif_api.parse(large_multivalue_ldif, server_type="rfc")
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 1
 
         # Write
@@ -220,5 +220,5 @@ objectClass: groupOfNames
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.unwrap()
+        roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1

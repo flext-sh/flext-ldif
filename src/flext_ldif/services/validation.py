@@ -104,22 +104,22 @@ class FlextLdifValidation(
 
     # Validate attribute name
     result = validation_service.validate_attribute_name("cn")
-    is_valid = result.unwrap()  # True
+    is_valid = result.value  # True
 
     result = validation_service.validate_attribute_name("2invalid")
-    is_valid = result.unwrap()  # False (starts with digit)
+    is_valid = result.value  # False (starts with digit)
 
     # Validate objectClass name
     result = validation_service.validate_objectclass_name("person")
-    is_valid = result.unwrap()  # True
+    is_valid = result.value  # True
 
     # Validate attribute value length
     result = validation_service.validate_attribute_value("John Smith", max_length=1024)
-    is_valid = result.unwrap()  # True
+    is_valid = result.value  # True
 
     # Validate DN component
     result = validation_service.validate_dn_component("cn", "John Smith")
-    is_valid = result.unwrap()  # True
+    is_valid = result.value  # True
 
     # Batch validate multiple attribute names
     result = validation_service.validate_attribute_names([
@@ -128,14 +128,14 @@ class FlextLdifValidation(
         "2invalid",
         "objectClass",
     ])
-    validated = result.unwrap()
+    validated = result.value
     # {"cn": True, "mail": True, "2invalid": False, "objectClass": True}
 
     # PATTERN 2: Execute Method (V1 FlextService Style)
     ────────────────────────────────────────────────────
     result = FlextLdifValidation().execute()
     if result.is_success:
-        status = result.unwrap()
+        status = result.value
         # {"service": "ValidationService", "status": "operational", ...}
 
     ═══════════════════════════════════════════════════════════════════════════
@@ -239,13 +239,13 @@ class FlextLdifValidation(
         if self.attribute_names:
             attr_result = self.validate_attribute_names(self.attribute_names)
             if attr_result.is_success:
-                result.update(attr_result.unwrap())
+                result.update(attr_result.value)
 
         # Validate objectClass names
         for name in self.objectclass_names:
             obj_result = self.validate_objectclass_name(name)
             if obj_result.is_success:
-                result[name] = obj_result.unwrap()
+                result[name] = obj_result.value
 
         # Create ValidationBatchResult from validation results
         return m.Ldif.ValidationBatchResult(results=result)
@@ -276,13 +276,13 @@ class FlextLdifValidation(
 
         Example:
             >>> result = service.validate_attribute_name("cn")
-            >>> is_valid = result.unwrap()  # True
+            >>> is_valid = result.value  # True
             >>>
             >>> result = service.validate_attribute_name("2invalid")
-            >>> is_valid = result.unwrap()  # False (starts with digit)
+            >>> is_valid = result.value  # False (starts with digit)
             >>>
             >>> result = service.validate_attribute_name("user-name")
-            >>> is_valid = result.unwrap()  # True (hyphens allowed)
+            >>> is_valid = result.value  # True (hyphens allowed)
 
         """
         try:
@@ -316,13 +316,13 @@ class FlextLdifValidation(
 
         Example:
             >>> result = service.validate_objectclass_name("person")
-            >>> is_valid = result.unwrap()  # True
+            >>> is_valid = result.value  # True
             >>>
             >>> result = service.validate_objectclass_name("inetOrgPerson")
-            >>> is_valid = result.unwrap()  # True
+            >>> is_valid = result.value  # True
             >>>
             >>> result = service.validate_objectclass_name("invalid class")
-            >>> is_valid = result.unwrap()  # False (contains space)
+            >>> is_valid = result.value  # False (contains space)
 
         """
         # Object class names follow same rules as attribute names (RFC 4512)
@@ -344,10 +344,10 @@ class FlextLdifValidation(
 
         Example:
             >>> result = service.validate_attribute_value("John Smith")
-            >>> is_valid = result.unwrap()  # True
+            >>> is_valid = result.value  # True
             >>>
             >>> result = service.validate_attribute_value("test", max_length=2)
-            >>> is_valid = result.unwrap()  # False (exceeds max_length)
+            >>> is_valid = result.value  # False (exceeds max_length)
 
         """
         try:
@@ -387,13 +387,13 @@ class FlextLdifValidation(
 
         Example:
             >>> result = service.validate_dn_component("cn", "John Smith")
-            >>> is_valid = result.unwrap()  # True
+            >>> is_valid = result.value  # True
 
         """
         try:
             # Validate attribute name
             attr_result = self.validate_attribute_name(attr)
-            if attr_result.is_failure or not attr_result.unwrap():
+            if attr_result.is_failure or not attr_result.value:
                 return r[bool].ok(False)
 
             # Validate value - must be a string for DN component
@@ -428,7 +428,7 @@ class FlextLdifValidation(
             ...     "2invalid",
             ...     "objectClass",
             ... ])
-            >>> validated = result.unwrap()
+            >>> validated = result.value
             >>> print(validated["cn"])  # True
             >>> print(validated["2invalid"])  # False
 
@@ -439,7 +439,7 @@ class FlextLdifValidation(
             for name in names:
                 result = self.validate_attribute_name(name)
                 if result.is_success:
-                    validated_names[name] = result.unwrap()
+                    validated_names[name] = result.value
                 else:
                     # If validation fails, mark as invalid
                     validated_names[name] = False

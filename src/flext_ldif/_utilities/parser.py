@@ -19,7 +19,6 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
@@ -681,7 +680,7 @@ class FlextLdifUtilitiesParser:
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.is_failure:
             return f"Syntax OID validation failed: {validate_result.error}"
-        if not validate_result.unwrap():
+        if not validate_result.value:
             return f"Invalid syntax OID format: {syntax}"
 
         return None
@@ -744,7 +743,7 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-    ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition.
 
         Args:
@@ -832,7 +831,7 @@ class FlextLdifUtilitiesParser:
                 server_type="rfc",
             )
 
-            attribute = p.Ldif.SchemaAttributeProtocol(
+            attribute = m.Ldif.SchemaAttribute(
                 oid=oid,
                 name=name or oid,
                 desc=desc,
@@ -867,7 +866,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_rfc_objectclass(
         oc_definition: str,
-    ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition.
 
         Args:
@@ -966,7 +965,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = p.Ldif.SchemaObjectClassProtocol(
+            objectclass = m.Ldif.SchemaObjectClass(
                 oid=oid,
                 name=name,
                 desc=desc,

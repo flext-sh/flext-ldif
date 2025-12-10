@@ -79,9 +79,9 @@ class TestEntryAdaptation:
         """Helper to create entry with DN and attributes."""
         dn = m.Ldif.DN(value=dn_string)
         ldif_attributes = m.Ldif.Attributes(attributes=attributes)
-        entry_result = p.Entry.create(dn=dn, attributes=ldif_attributes)
+        entry_result = m.Ldif.Entry.create(dn=dn, attributes=ldif_attributes)
         assert entry_result.is_success
-        return entry_result.unwrap()
+        return entry_result.value
 
     def test_adapt_entry_generic_server(self) -> None:
         """Test adapting entry for generic LDAP server."""
@@ -100,7 +100,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("mail")
         assert adapted.has_attribute("objectClass")
@@ -121,7 +121,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("sn")
 
@@ -141,7 +141,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("uid")
 
@@ -161,7 +161,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("mail")
 
@@ -182,7 +182,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         # User attributes preserved
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("mail")
@@ -206,7 +206,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         # User attributes preserved
         assert adapted.has_attribute("cn")
         # Case-insensitive stripping of operational attributes
@@ -253,7 +253,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
 
         # All user attributes should be preserved
         for attr in [
@@ -283,7 +283,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
 
     def test_adapt_entry_multiple_values(self) -> None:
@@ -307,7 +307,7 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("mail")
         assert adapted.has_attribute("objectClass")
@@ -325,5 +325,5 @@ class TestEntryAdaptation:
         result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
-        adapted = result.unwrap()
+        adapted = result.value
         assert adapted.dn.value.lower() == original_dn.lower()

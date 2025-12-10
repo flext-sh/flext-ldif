@@ -179,7 +179,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
             return r.fail(write_result.error or "LDIF writing failed")
 
         # Convert protocol result to concrete FlextResult (unwrap and re-wrap)
-        return r[str].ok(write_result.unwrap())
+        return r[str].ok(write_result.value)
 
     def write_to_file(
         self,
@@ -218,7 +218,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
                 string_result.error or "Failed to generate LDIF content",
             )
 
-        ldif_content = string_result.unwrap()
+        ldif_content = string_result.value
 
         # Write to file
         try:
@@ -283,7 +283,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
             )
             if file_result.is_failure:
                 return r.fail(file_result.error or "File write failed")
-            return r.ok(file_result.unwrap())
+            return r.ok(file_result.value)
         # Return string
         string_result = self.write_to_string(
             entries,
@@ -292,7 +292,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         )
         if string_result.is_failure:
             return r.fail(string_result.error or "String write failed")
-        return r.ok(string_result.unwrap())
+        return r.ok(string_result.value)
 
     def execute(
         self,
@@ -378,7 +378,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         if write_result.is_failure:
             return r.fail(write_result.error)
 
-        result_value = write_result.unwrap()
+        result_value = write_result.value
         if isinstance(result_value, m.Ldif.LdifResults.WriteResponse):
             return r.ok(result_value)
 

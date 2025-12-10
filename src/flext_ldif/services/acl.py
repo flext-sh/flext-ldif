@@ -239,7 +239,7 @@ class FlextLdifAcl(FlextLdifServiceBase[m.Ldif.LdifResults.AclResponse]):
             nonlocal failed_count
             parse_result = self.parse_acl_string(acl_value, server_type)
             if parse_result.is_success:
-                return r[m.Ldif.Acl].ok(parse_result.unwrap())
+                return r[m.Ldif.Acl].ok(parse_result.value)
             failed_count += 1
             self.logger.warning(
                 "Failed to parse ACL value",

@@ -20,7 +20,6 @@ from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 
 # Removed: from flext_ldif.constants import c (prohibited in services/)
 # Use FlextLdifUtilitiesServer helpers or direct string literals
@@ -70,7 +69,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
         # Parse attribute
         result = schema_service.parse_attribute(attr_definition)
         if result.is_success:
-            attr = result.unwrap()
+            attr = result.value
 
         # Detect schema entry
         if schema_service.is_schema(entry):
@@ -261,7 +260,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse_attribute(attr_definition)
                     if server_result.is_success:
-                        attr_domain = server_result.unwrap()
+                        attr_domain = server_result.value
 
             # Type narrowing: attr_domain is already m.Ldif.SchemaAttribute
             attr: m.Ldif.SchemaAttribute = attr_domain
@@ -334,7 +333,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse_objectclass(oc_definition)
                     if server_result.is_success:
-                        oc_domain = server_result.unwrap()
+                        oc_domain = server_result.value
 
             # Type narrowing: oc_domain is already m.Ldif.SchemaObjectClass
             oc: m.Ldif.SchemaObjectClass = oc_domain
@@ -358,7 +357,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def validate_attribute(
         self,
-        attr: p.Ldif.SchemaAttributeProtocol,
+        attr: m.Ldif.SchemaAttribute,
     ) -> r[bool]:
         """Validate attribute model syntax and constraints.
 
@@ -388,7 +387,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
             # Validate syntax OID format if present using utilities
             if attr.syntax:
                 validation_result = FlextLdifUtilitiesOID.validate_format(attr.syntax)
-                if validation_result.is_failure or not validation_result.unwrap():
+                if validation_result.is_failure or not validation_result.value:
                     return r.fail(f"Invalid SYNTAX OID: {attr.syntax}")
 
             return r.ok(True)
@@ -403,7 +402,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def validate_objectclass(
         self,
-        oc: p.Ldif.SchemaObjectClassProtocol,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> r[bool]:
         """Validate objectClass model syntax and constraints.
 
@@ -460,7 +459,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def write_attribute(
         self,
-        attr: p.Ldif.SchemaAttributeProtocol,
+        attr: m.Ldif.SchemaAttribute,
     ) -> r[str]:
         """Convert attribute model to LDIF format.
 
@@ -492,7 +491,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
 
     def write_objectclass(
         self,
-        oc: p.Ldif.SchemaObjectClassProtocol,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Convert objectClass model to LDIF format.
 

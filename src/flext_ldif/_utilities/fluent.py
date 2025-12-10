@@ -73,7 +73,7 @@ class DnOps:
         ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
         ...     .build()
         ... )
-        >>> # result.unwrap() == "cn=test,dc=new,dc=com"
+        >>> # result.value == "cn=test,dc=new,dc=com"
 
     """
 
@@ -111,7 +111,7 @@ class DnOps:
             self._error = result.error
             return self
 
-        normalized = result.unwrap()
+        normalized = result.value
 
         if case == "lower":
             self._dn = normalized.lower()
@@ -265,7 +265,7 @@ class DnOps:
         if compare_result.is_failure:
             return False
         # compare_dns returns int: 0 = equal, <0 = less, >0 = greater
-        return compare_result.unwrap() == 0
+        return compare_result.value == 0
 
     def validate(self, *, strict: bool = True) -> FlextResult[bool]:
         """Validate the DN.
@@ -395,8 +395,8 @@ class EntryOps:
             self._error = result.error
             return self
 
-        # result.unwrap() returns Entry (m.Ldif.Entry), which matches self._entry type
-        self._entry = result.unwrap()
+        # result.value returns Entry (m.Ldif.Entry), which matches self._entry type
+        self._entry = result.value
         return self
 
     def normalize_attrs(
@@ -431,7 +431,7 @@ class EntryOps:
             self._error = result.error
             return self
 
-        self._entry = result.unwrap()
+        self._entry = result.value
         return self
 
     def add_attr(self, name: str, *values: str) -> Self:
@@ -559,7 +559,7 @@ class EntryOps:
             self._error = result.error
             return self
 
-        self._entry = result.unwrap()
+        self._entry = result.value
         return self
 
     def has_objectclass(
@@ -614,7 +614,7 @@ class EntryOps:
             self._error = result.error
             return self
 
-        self._entry = result.unwrap()
+        self._entry = result.value
         return self
 
     def attach_metadata(

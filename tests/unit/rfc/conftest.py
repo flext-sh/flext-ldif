@@ -107,7 +107,7 @@ def real_writer_service() -> FlextLdifWriter:
 @pytest.fixture
 def sample_entry() -> p.Entry:
     """Provides a sample Entry for RFC tests."""
-    result = p.Entry.create(
+    result = m.Ldif.Entry.create(
         dn="cn=Test User,dc=example,dc=com",
         attributes={
             "cn": ["Test User"],
@@ -119,7 +119,7 @@ def sample_entry() -> p.Entry:
             "mail": ["test@example.com"],
         },
     )
-    return cast("p.Entry", result.unwrap())
+    return cast("p.Entry", result.value)
 
 
 @pytest.fixture
@@ -127,7 +127,7 @@ def sample_entries(
     sample_entry: p.Entry,
 ) -> list[p.Entry]:
     """Provides multiple sample entries for RFC tests."""
-    entry2_result = p.Entry.create(
+    entry2_result = m.Ldif.Entry.create(
         dn="cn=Another User,dc=example,dc=com",
         attributes={
             "cn": ["Another User"],
@@ -135,4 +135,4 @@ def sample_entries(
             c.Ldif.DictKeys.OBJECTCLASS: ["person"],
         },
     )
-    return [sample_entry, cast("p.Entry", entry2_result.unwrap())]
+    return [sample_entry, cast("p.Entry", entry2_result.value)]

@@ -411,7 +411,7 @@ sn:"""
         )
 
         if result.is_success:
-            response = result.unwrap()
+            response = result.value
             # Parser may succeed but filter out invalid entries
             tm.assert_length_greater_or_equal(response.entries, 0)
         else:
@@ -441,7 +441,7 @@ sn:"""
         )
 
         if result.is_success:
-            response = result.unwrap()
+            response = result.value
             # Parser may succeed but filter out invalid entries
             tm.assert_length_greater_or_equal(response.entries, 0)
 

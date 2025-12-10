@@ -60,7 +60,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         )
 
         tm.ok(result)
-        output = result.unwrap()
+        output = result.value
 
         # With folding ENABLED, long lines should be wrapped
         # Check if there are any continuation lines (starting with space)
@@ -94,7 +94,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         )
 
         tm.ok(result)
-        output = result.unwrap()
+        output = result.value
 
         # With folding DISABLED, verify output is valid
         if isinstance(output, str):
@@ -120,7 +120,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         )
 
         tm.ok(result)
-        output = result.unwrap()
+        output = result.value
 
         # With folding DISABLED, verify output is valid
         if isinstance(output, str):
@@ -146,7 +146,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         )
 
         tm.ok(result)
-        output = result.unwrap()
+        output = result.value
 
         lines = output.split("\n") if isinstance(output, str) else []
         over_limit = [

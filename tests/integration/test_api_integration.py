@@ -21,7 +21,6 @@ from flext_tests import tt
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from tests import c
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
@@ -115,12 +114,12 @@ class TestFlextLdifAPIIntegration(tt):
         result = ldif.parse(ldif_content)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == expected_entries
 
         # Validate entry structure
         for entry in entries:
-            assert isinstance(entry, p.Entry)
+            assert hasattr(entry, "dn") and hasattr(entry, "attributes")
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -143,13 +142,13 @@ class TestFlextLdifAPIIntegration(tt):
         # Parse multi-entry content
         parse_result = ldif.parse(self._MULTI_ENTRY_LDIF)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Filter by objectclass
         result = ldif.filter(entries, objectclass=objectclass)
         assert result.is_success
 
-        filtered = result.unwrap()
+        filtered = result.value
         assert len(filtered) == expected_count
 
     @pytest.mark.parametrize(
@@ -171,13 +170,13 @@ class TestFlextLdifAPIIntegration(tt):
         # Parse complex content with REDACTED_LDAP_BIND_PASSWORDs and people
         parse_result = ldif.parse(self._COMPLEX_LDIF)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Filter by DN pattern
         result = ldif.filter(entries, dn_pattern=dn_pattern)
         assert result.is_success
 
-        filtered = result.unwrap()
+        filtered = result.value
         assert len(filtered) == expected_count
 
     def test_build_entry_programmatic(self) -> None:
@@ -205,7 +204,7 @@ class TestFlextLdifAPIIntegration(tt):
 
         parse_result = ldif.parse(self._SIMPLE_LDIF)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         validate_result = ldif.validate_entries(entries)
         assert validate_result.is_success
@@ -221,8 +220,8 @@ class TestFlextLdifAPIIntegration(tt):
         assert result1.is_success
         assert result2.is_success
 
-        entries1 = result1.unwrap()
-        entries2 = result2.unwrap()
+        entries1 = result1.value
+        entries2 = result2.value
 
         assert len(entries1) == len(entries2) == 1
         assert entries1[0].dn.value == entries2[0].dn.value
@@ -233,7 +232,7 @@ class TestFlextLdifAPIIntegration(tt):
 
         parse_result = ldif.parse(self._COMPLEX_LDIF)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Filter by DN pattern AND attributes
         result = ldif.filter(
@@ -243,7 +242,7 @@ class TestFlextLdifAPIIntegration(tt):
         )
         assert result.is_success
 
-        filtered = result.unwrap()
+        filtered = result.value
         assert len(filtered) == 2  # Both REDACTED_LDAP_BIND_PASSWORDs have mail
 
     def test_api_facade_property_access(self) -> None:
@@ -266,12 +265,12 @@ class TestFlextLdifAPIIntegration(tt):
         # Step 1: Parse
         parse_result = ldif.parse(self._SIMPLE_LDIF)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Step 2: Analyze
         analyze_result = ldif.analyze(entries)
         assert analyze_result.is_success
-        stats = analyze_result.unwrap()
+        stats = analyze_result.value
         assert stats.total_entries == 1
 
         # Step 3: Validate
@@ -282,7 +281,7 @@ class TestFlextLdifAPIIntegration(tt):
         person_oc = c.SharedDomain.EntryType.PERSON
         filter_result = ldif.filter(entries, objectclass=person_oc)
         assert filter_result.is_success
-        filtered = filter_result.unwrap()
+        filtered = filter_result.value
         assert len(filtered) == 1
 
 

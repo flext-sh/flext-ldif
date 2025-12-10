@@ -137,7 +137,7 @@ class TestsTestFlextLdifResult(s):
         """Test creating successful result."""
         result = FlextLdifResult.ok("test value")
         assert result.is_success
-        assert result.unwrap() == "test value"
+        assert result.value == "test value"
 
     def test_fail_result(self) -> None:
         """Test creating failed result."""
@@ -150,7 +150,7 @@ class TestsTestFlextLdifResult(s):
         original = FlextResult.ok(42)
         ldif_result = FlextLdifResult.from_result(original)
         assert ldif_result.is_success
-        assert ldif_result.unwrap() == 42
+        assert ldif_result.value == 42
 
     def test_pipe_operator_with_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test | operator with transformers."""
@@ -169,7 +169,7 @@ class TestsTestFlextLdifResult(s):
         combined = result1 & result2
         assert combined.is_success
         # Combined should contain both lists
-        values = combined.unwrap()
+        values = combined.value
         assert len(values) == 2
 
 
@@ -270,7 +270,7 @@ class TestTransformers:
         result = transformer.apply(sample_entry)
         assert result.is_success
 
-        entry = result.unwrap()
+        entry = result.value
         attrs = entry.attributes.attributes if entry.attributes else {}
         # userPassword should be removed
         assert "userPassword" not in attrs
@@ -358,7 +358,7 @@ class TestDnOps:
         result = ops.normalize(case="lower").build()
         assert result.is_success
         # Note: normalization may vary based on implementation
-        assert "example" in result.unwrap().lower()
+        assert "example" in result.value.lower()
 
     def test_clean(self) -> None:
         """Test DnOps.clean()."""
@@ -408,7 +408,7 @@ class TestEntryOps:
         result = ops.filter_attrs(exclude=["userPassword"]).build()
         assert result.is_success
 
-        entry = result.unwrap()
+        entry = result.value
         attrs = entry.attributes.attributes if entry.attributes else {}
         assert "userPassword" not in attrs
 
@@ -443,7 +443,7 @@ class TestPipeline:
         pipeline = Pipeline()
         result = pipeline.execute(sample_entries)
         assert result.is_success
-        assert len(result.unwrap()) == len(sample_entries)
+        assert len(result.value) == len(sample_entries)
 
     def test_pipeline_with_transformer(self, sample_entries: list[p.Entry]) -> None:
         """Test pipeline with transformer."""
@@ -459,7 +459,7 @@ class TestPipeline:
         # Filtered entries are excluded from results but don't cause failure
         assert result.is_success
         # Only entries with inetOrgPerson should pass
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) < len(sample_entries)
 
     def test_pipeline_method_chaining(self, sample_entries: list[p.Entry]) -> None:
@@ -471,7 +471,7 @@ class TestPipeline:
         # Pipeline returns success even if some entries are filtered
         # At least 2 entries should pass (user1 and user2 have "person" objectClass)
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) >= 2  # At least user1 and user2 should pass
 
 
@@ -503,7 +503,7 @@ class TestValidationPipeline:
         pipeline = ValidationPipeline(strict=True)
         result = pipeline.validate(sample_entries)
         assert result.is_success
-        validations = result.unwrap()
+        validations = result.value
         assert len(validations) == len(sample_entries)
 
     def test_validation_result(self) -> None:
@@ -541,7 +541,7 @@ class TestDnBatchMethods:
         dns = ["CN=User1,DC=Example", "CN=User2,DC=Example"]
         result = FlextLdifUtilitiesDN.norm_batch(dns)
         assert result.is_success
-        normalized = result.unwrap()
+        normalized = result.value
         assert len(normalized) == 2
 
     def test_validate_batch(self) -> None:
@@ -549,7 +549,7 @@ class TestDnBatchMethods:
         dns = ["CN=Valid,DC=Example", "invalid-dn-format"]
         result = FlextLdifUtilitiesDN.validate_batch(dns)
         assert result.is_success
-        validations = result.unwrap()
+        validations = result.value
         assert len(validations) == 2
 
     def test_replace_base_batch(self) -> None:
@@ -564,7 +564,7 @@ class TestDnBatchMethods:
             "dc=new,dc=com",
         )
         assert result.is_success
-        replaced = result.unwrap()
+        replaced = result.value
         assert len(replaced) == 2
         for dn in replaced:
             assert "dc=new,dc=com" in dn.lower()
@@ -663,7 +663,7 @@ class TestEntryBatchMethods:
             attr_case="lower",
         )
         assert result.is_success
-        transformed = result.unwrap()
+        transformed = result.value
         assert len(transformed) == len(sample_entries)
 
     def test_filter_batch(self, sample_entries: list[p.Entry]) -> None:
@@ -673,7 +673,7 @@ class TestEntryBatchMethods:
             objectclasses=["inetOrgPerson"],
         )
         assert result.is_success
-        filtered = result.unwrap()
+        filtered = result.value
         # Only entries with inetOrgPerson should be included
         assert len(filtered) < len(sample_entries)
 
@@ -684,7 +684,7 @@ class TestEntryBatchMethods:
             exclude_schema=True,
         )
         assert result.is_success
-        filtered = result.unwrap()
+        filtered = result.value
         # Schema entry should be excluded
         assert len(filtered) < len(sample_entries)
 

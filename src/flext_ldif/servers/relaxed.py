@@ -222,7 +222,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_attribute(attr_definition)
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
-                attribute = parent_result.unwrap()
+                attribute = parent_result.value
 
                 if not attribute.metadata:
                     # Build extensions dict first, then create DynamicMetadata
@@ -622,7 +622,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_objectclass(oc_definition)
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
-                objectclass = parent_result.unwrap()
+                objectclass = parent_result.value
                 return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
                     self._enhance_objectclass_metadata(objectclass, oc_definition),
                 )
@@ -808,7 +808,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 # Try parent's parse method first (RFC format)
                 parent_result = super()._parse_acl(acl_line)
                 if parent_result.is_success:
-                    acl = parent_result.unwrap()
+                    acl = parent_result.value
                     # Enhance metadata to indicate relaxed mode
                     # Business Rule: Acl model is frozen, so we cannot modify metadata directly.
                     # We need to use model_copy to create a new instance with updated metadata.
@@ -1306,7 +1306,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 # Use RFC 4514 compliant utility normalization
                 norm_result = u.Ldif.DN.norm(dn)
                 if norm_result.is_success:
-                    return FlextResult[str].ok(norm_result.unwrap())
+                    return FlextResult[str].ok(norm_result.value)
                 # No fallback - return error if normalization fails
                 return FlextResult[str].fail(
                     f"DN normalization failed for DN: {dn}: {norm_result.error}",

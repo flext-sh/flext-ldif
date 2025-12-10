@@ -42,7 +42,7 @@ class TestOidSchemaIntegration:
         result = api.parse(oid_schema_fixture)
 
         assert result.is_success, f"Schema parsing failed: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
 
         # Should have at least one schema entry
         assert len(entries) > 0, "No schema entries parsed"
@@ -65,7 +65,7 @@ class TestOidSchemaIntegration:
         result = api.parse(oid_schema_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         schema_entry = entries[0]
 
         # Check for attributetypes attribute
@@ -111,7 +111,7 @@ class TestOidSchemaIntegration:
         result = api.parse(oid_schema_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         schema_entry = entries[0]
 
         # Check for objectclasses attribute
@@ -168,7 +168,7 @@ class TestOidEntryIntegration:
         result = api.parse(oid_integration_fixture)
 
         assert result.is_success, f"Integration fixture parsing failed: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
 
         # Should have many entries
         min_expected_entries = 100
@@ -190,7 +190,7 @@ class TestOidEntryIntegration:
         result = api.parse(oid_integration_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Count entries with Oracle ACLs
         entries_with_orclaci = sum(
@@ -219,7 +219,7 @@ class TestOidEntryIntegration:
         result = api.parse(oid_integration_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Count entries with actual Oracle attributes from fixture
         oracle_attr_patterns = [
@@ -257,7 +257,7 @@ class TestOidRoundTripIntegration:
         # Parse original
         parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success, f"First parse failed: {parse_result_1.error}"
-        entries_1 = parse_result_1.unwrap()
+        entries_1 = parse_result_1.value
 
         original_entry_count = len(entries_1)
         assert original_entry_count > 0, "No entries in original parse"
@@ -265,12 +265,12 @@ class TestOidRoundTripIntegration:
         # Write to LDIF
         write_result = api.write(entries_1)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        ldif_output = write_result.unwrap()
+        ldif_output = write_result.value
 
         # Parse written LDIF
         parse_result_2 = api.parse(ldif_output)
         assert parse_result_2.is_success, f"Second parse failed: {parse_result_2.error}"
-        entries_2 = parse_result_2.unwrap()
+        entries_2 = parse_result_2.value
 
         # Should have same number of entries
         assert len(entries_2) == original_entry_count, (
@@ -292,7 +292,7 @@ class TestOidRoundTripIntegration:
         # Parse original
         parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success
-        entries_1 = parse_result_1.unwrap()
+        entries_1 = parse_result_1.value
 
         original_dns = sorted([str(entry.dn) for entry in entries_1])
 
@@ -300,9 +300,9 @@ class TestOidRoundTripIntegration:
         write_result = api.write(entries_1)
         assert write_result.is_success
 
-        parse_result_2 = api.parse(write_result.unwrap())
+        parse_result_2 = api.parse(write_result.value)
         assert parse_result_2.is_success
-        entries_2 = parse_result_2.unwrap()
+        entries_2 = parse_result_2.value
 
         roundtrip_dns = sorted([str(entry.dn) for entry in entries_2])
 
@@ -323,7 +323,7 @@ class TestOidRoundTripIntegration:
         # Parse original
         parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success
-        entries_1 = parse_result_1.unwrap()
+        entries_1 = parse_result_1.value
 
         # Count ACLs in original
         def get_attribute_values_count(
@@ -351,9 +351,9 @@ class TestOidRoundTripIntegration:
         write_result = api.write(entries_1)
         assert write_result.is_success
 
-        parse_result_2 = api.parse(write_result.unwrap())
+        parse_result_2 = api.parse(write_result.value)
         assert parse_result_2.is_success
-        entries_2 = parse_result_2.unwrap()
+        entries_2 = parse_result_2.value
 
         # Count ACLs after round-trip
         roundtrip_orclaci_count = sum(

@@ -164,12 +164,12 @@ class TestCategorizationRealData:
         )
 
         # Categorize entries
-        categories_result = categorization.categorize_entries(validate_result.unwrap())
+        categories_result = categorization.categorize_entries(validate_result.value)
         assert categories_result.is_success, (
             f"Categorization failed: {categories_result.error}"
         )
 
-        categories = categories_result.unwrap()
+        categories = categories_result.value
 
         # Filter by base DN
         filtered = categorization.filter_by_base_dn(categories)
@@ -289,10 +289,10 @@ class TestCategorizationRealData:
         validate_result = categorization.validate_dns(acl_entries)
         assert validate_result.is_success
 
-        categories_result = categorization.categorize_entries(validate_result.unwrap())
+        categories_result = categorization.categorize_entries(validate_result.value)
         assert categories_result.is_success
 
-        categories = categories_result.unwrap()
+        categories = categories_result.value
         acl_category = categories.get_entries(c.Ldif.Categories.ACL)
 
         # Filter ACLs by base DN (simulating client-a-oud-mig logic)
@@ -416,7 +416,7 @@ ou: test
         )
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
 
         # Categorize with base DN filtering
@@ -426,10 +426,10 @@ ou: test
         validate_result = categorization.validate_dns(entries)
         assert validate_result.is_success
 
-        categories_result = categorization.categorize_entries(validate_result.unwrap())
+        categories_result = categorization.categorize_entries(validate_result.value)
         assert categories_result.is_success
 
-        categories = categories_result.unwrap()
+        categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
 
         # Write categorized output to temporary file

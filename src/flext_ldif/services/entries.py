@@ -140,7 +140,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if result.is_failure:
             error_msg = f"Build failed: {result.error}"
             raise RuntimeError(error_msg)
-        return result.unwrap()
+        return result.value
 
     def execute(self) -> r[list[m.Ldif.Entry]]:
         """Execute the configured operation on entries.
@@ -215,7 +215,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
+        batch_data: core_t.Types.BatchResultDict = batch_result.value
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
         # operation_fn returns r[Entry], so batch extracts .value and R = Entry
         raw_results = batch_data["results"]
@@ -267,7 +267,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.Types.BatchResultDict = batch_result.unwrap()
+        batch_data: core_t.Types.BatchResultDict = batch_result.value
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
         raw_results = batch_data["results"]
         if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):
@@ -463,7 +463,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if attributes_result.is_failure:
             return r.fail(f"Failed to get entry attributes: {attributes_result.error}")
 
-        attributes = attributes_result.unwrap()
+        attributes = attributes_result.value
         if not attributes:
             return r.ok([])
 
@@ -591,7 +591,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if objectclasses_result.is_failure:
             return r.ok(entry)  # No objectClass attribute, nothing to remove
 
-        current_ocs = objectclasses_result.unwrap()
+        current_ocs = objectclasses_result.value
         if not current_ocs:
             return r.ok(entry)  # Empty objectClass list, nothing to remove
 
@@ -764,7 +764,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if result.is_failure:
             return r.fail(f"Attribute '{attribute_name}' not found")
 
-        values = result.unwrap()
+        values = result.value
         return FlextLdifEntries.normalize_attribute_value(values)
 
     @staticmethod

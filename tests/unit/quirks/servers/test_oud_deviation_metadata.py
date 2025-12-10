@@ -118,7 +118,7 @@ class TestsFlextLdifOudDeviationMetadata(s):
         result = oud_entry.parse_entry(dn, entry_attrs)
 
         assert result.is_success, f"Entry parsing failed for {scenario}"
-        entry = result.unwrap()
+        entry = result.value
 
         if test_type == OudMetadataTestType.FORMAT_DETAILS_POPULATED:
             # Verify original_format_details is populated

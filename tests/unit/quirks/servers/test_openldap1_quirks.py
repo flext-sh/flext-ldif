@@ -196,7 +196,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         acl_line = "access to attrs=userPassword by self write by * auth"
         parse_result = acl.parse(acl_line)
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-        parse_result.unwrap()
+        parse_result.value
         assert acl.can_handle(acl_line) is True
 
     def test_acl_can_handle_negative(self) -> None:
@@ -206,7 +206,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         acl_line = "random text"
         parse_result = acl.parse(acl_line)
         if parse_result.is_success:
-            parse_result.unwrap()
+            parse_result.value
             assert acl.can_handle(acl_line) is False
         else:
             assert parse_result.is_success is False
@@ -218,7 +218,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         acl_line = "access to attrs=userPassword by self write by * read"
         result = acl.parse(acl_line)
         assert result.is_success
-        acl_data = result.unwrap()
+        acl_data = result.value
         assert isinstance(acl_data, m.Acl)
         assert acl_data.target is not None
         assert acl_data.target.attributes == ["userPassword"]

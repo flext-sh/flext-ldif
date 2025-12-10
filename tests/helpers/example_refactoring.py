@@ -18,7 +18,7 @@ def test_schema_parse_attribute(self, rfc_schema_quirk) -> None:
     attr_def = c.Rfc.ATTR_DEF_CN_COMPLETE
     result = rfc_schema_quirk._parse_attribute(attr_def)
     assert result.is_success
-    attr = result.unwrap()
+    attr = result.value
     assert attr.oid == c.Rfc.ATTR_OID_CN
     assert attr.name == c.Rfc.ATTR_NAME_CN
 
@@ -26,7 +26,7 @@ def test_schema_parse_another_attribute(self, rfc_schema_quirk) -> None:
     attr_def = c.Rfc.ATTR_DEF_SN
     result = rfc_schema_quirk._parse_attribute(attr_def)
     assert result.is_success
-    attr = result.unwrap()
+    attr = result.value
     assert attr.oid == c.Rfc.ATTR_OID_SN
     assert attr.name == c.Rfc.ATTR_NAME_SN
 
@@ -34,7 +34,7 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
     oc_def = c.Rfc.OC_DEF_PERSON_FULL
     result = rfc_schema_quirk._parse_objectclass(oc_def)
     assert result.is_success
-    oc = result.unwrap()
+    oc = result.value
     assert oc.oid == c.Rfc.OC_OID_PERSON
     assert oc.name == c.Rfc.OC_NAME_PERSON
 """
@@ -108,14 +108,14 @@ def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> Non
 
     write_result = ldif_api.write(entries)
     assert write_result.is_success
-    ldif = write_result.unwrap()
+    ldif = write_result.value
 
     output_file = tmp_path / "roundtrip.ldif"
     output_file.write_text(ldif)
 
     re_read_result = ldif_api.parse(output_file)
     assert re_read_result.is_success
-    roundtripped_entries = re_read_result.unwrap()
+    roundtripped_entries = re_read_result.value
 
     assert len(roundtripped_entries) == len(entries)
     for i, (orig, roundtrip) in enumerate(zip(entries, roundtripped_entries)):
@@ -141,13 +141,13 @@ def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> Non
 # ❌ ANTES:
 """
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = p.Entry.create(
+    entry = m.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
-    ).unwrap()
+    ).value
     result = entry_quirk.write(entry)
     assert result.is_success
-    ldif = result.unwrap()
+    ldif = result.value
     assert "dn: cn=test,dc=example,dc=com" in ldif
 """
 
@@ -156,10 +156,10 @@ def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
 from .test_operations import TestOperations
 
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
-    entry = p.Entry.create(
+    entry = m.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"cn": ["test"], "objectClass": ["person"]},
-    ).unwrap()
+    ).value
     TestOperations.write_entry_and_validate(
         entry_quirk, entry, expected_content="dn: cn=test,dc=example,dc=com"
     )

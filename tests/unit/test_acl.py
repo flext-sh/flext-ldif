@@ -492,7 +492,9 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         """Get non-empty lines from content."""
         return [line for line in content.split("\n") if line.strip()]
 
-    def _get_acl_lines(self, content: str, server_type: lib_c.Ldif.ServerTypes) -> list[str]:
+    def _get_acl_lines(
+        self, content: str, server_type: lib_c.Ldif.ServerTypes
+    ) -> list[str]:
         """Get ACL lines from content."""
         indicators = self.ACL_INDICATORS[server_type]
         return [
@@ -514,7 +516,9 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
         lines = self._get_content_lines(content)
         return len(lines) >= self.ACL_MIN_LINES[server_type]
 
-    def _check_acl_presence(self, content: str, server_type: lib_c.Ldif.ServerTypes) -> bool:
+    def _check_acl_presence(
+        self, content: str, server_type: lib_c.Ldif.ServerTypes
+    ) -> bool:
         """Check if content has ACL indicators."""
         acl_lines = self._get_acl_lines(content, server_type)
         return len(acl_lines) > 0
@@ -742,7 +746,7 @@ class TestFlextLdifAclComponents(s):
         result = TestFlextLdifAclComponents.Helpers.create_acl_components()
         assert result.is_success
 
-        target, subject, permissions = result.unwrap()
+        target, subject, permissions = result.value
 
         match test_case.test_type:
             case AclTestType.COMPONENTS_CREATION:
@@ -790,13 +794,13 @@ class TestFlextLdifAclComponents(s):
         match test_case.test_type:
             case AclTestType.UNIFIED_BASIC:
                 assert result.is_success, f"Failed to create ACL: {result.error}"
-                acl = result.unwrap()
+                acl = result.value
                 assert isinstance(acl, m.Acl)
                 assert acl.name == test_case.acl_name
 
             case AclTestType.UNIFIED_PROPERTY_PRESERVATION:
                 assert result.is_success
-                acl = result.unwrap()
+                acl = result.value
                 assert acl.name == test_case.property_name
                 assert acl.target == target
                 assert acl.subject == subject
@@ -805,7 +809,7 @@ class TestFlextLdifAclComponents(s):
 
             case AclTestType.UNIFIED_INSTANCE_TYPE:
                 assert result.is_success
-                acl = result.unwrap()
+                acl = result.value
                 assert isinstance(acl, m.Acl)
 
             case AclTestType.UNIFIED_EXCEPTION_HANDLING:
@@ -813,7 +817,7 @@ class TestFlextLdifAclComponents(s):
 
             case AclTestType.UNIFIED_INVALID_SERVER_TYPE:
                 assert result.is_success
-                acl = result.unwrap()
+                acl = result.value
                 assert acl.server_type == lib_c.Ldif.LdapServers.OPENLDAP
 
 
@@ -910,7 +914,7 @@ class TestsTestFlextLdifAclParser(s):
             case AclParserTestType.EXECUTE:
                 result = acl_service.execute()
                 assert result.is_success
-                acl_response = result.unwrap()
+                acl_response = result.value
                 assert isinstance(acl_response, m.Ldif.LdifResults.AclResponse)
                 assert len(acl_response.acls) == 0
                 assert isinstance(acl_response.acls, list)
@@ -925,7 +929,7 @@ class TestsTestFlextLdifAclParser(s):
                 assert parse_result_openldap.is_success, (
                     f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
                 )
-                parsed_acl = parse_result_openldap.unwrap()
+                parsed_acl = parse_result_openldap.value
                 assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
@@ -938,7 +942,7 @@ class TestsTestFlextLdifAclParser(s):
                 assert parse_result_oid.is_success, (
                     f"OID ACL parsing should succeed: {test_case.acl_line}"
                 )
-                parsed_acl = parse_result_oid.unwrap()
+                parsed_acl = parse_result_oid.value
                 assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
@@ -951,7 +955,7 @@ class TestsTestFlextLdifAclParser(s):
                 assert parse_result_oud.is_success, (
                     f"OUD ACI parsing should succeed: {test_case.acl_line}"
                 )
-                parsed_acl = parse_result_oud.unwrap()
+                parsed_acl = parse_result_oud.value
                 assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
@@ -964,7 +968,7 @@ class TestsTestFlextLdifAclParser(s):
                 )
                 assert isinstance(parse_result_real_oid, FlextResult)
                 if parse_result_real_oid.is_success:
-                    parsed_acl = parse_result_real_oid.unwrap()
+                    parsed_acl = parse_result_real_oid.value
                     assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
@@ -979,7 +983,7 @@ class TestsTestFlextLdifAclParser(s):
                 )
                 assert isinstance(parse_result_real_oud, FlextResult)
                 if parse_result_real_oud.is_success:
-                    parsed_acl = parse_result_real_oud.unwrap()
+                    parsed_acl = parse_result_real_oud.value
                     assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
@@ -1008,7 +1012,7 @@ class TestsTestFlextLdifAclParser(s):
                     required_permissions={"read": True},
                 )
                 assert empty_result.is_success
-                eval_result = empty_result.unwrap()
+                eval_result = empty_result.value
                 assert not eval_result.granted
                 assert eval_result.matched_acl is None
                 assert "No ACLs to evaluate" in eval_result.message
@@ -1024,7 +1028,7 @@ class TestsTestFlextLdifAclParser(s):
                     required_permissions={"read": True},
                 )
                 assert valid_result.is_success
-                eval_result = valid_result.unwrap()
+                eval_result = valid_result.value
                 assert eval_result.granted
                 assert eval_result.matched_acl is not None
                 assert eval_result.matched_acl.name == "valid-acl"
@@ -1040,7 +1044,7 @@ class TestsTestFlextLdifAclParser(s):
                     required_permissions={"write": True},
                 )
                 assert mismatch_result.is_success
-                eval_result = mismatch_result.unwrap()
+                eval_result = mismatch_result.value
                 assert not eval_result.granted
                 assert eval_result.matched_acl is None
                 assert "No ACL grants required permissions" in eval_result.message
@@ -1054,7 +1058,7 @@ class TestsFlextLdifComponentFactory(s):
         result = create_acl_components_helper()
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.value
         assert isinstance(components, tuple)
         assert len(components) == 3
 
@@ -1066,14 +1070,14 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_acl_components_target_properties(self) -> None:
         """Test ACL target component properties."""
         result = create_acl_components_helper()
-        target, _, _ = result.unwrap()
+        target, _, _ = result.value
 
         assert target.target_dn == "*"
 
     def test_create_acl_components_subject_properties(self) -> None:
         """Test ACL subject component properties."""
         result = create_acl_components_helper()
-        _, subject, _ = result.unwrap()
+        _, subject, _ = result.value
 
         assert subject.subject_type == "all"
         assert subject.subject_value == "*"
@@ -1081,7 +1085,7 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_acl_components_permissions_properties(self) -> None:
         """Test ACL permissions component properties."""
         result = create_acl_components_helper()
-        _, _, permissions = result.unwrap()
+        _, _, permissions = result.value
 
         assert permissions.read is True
 
@@ -1104,7 +1108,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
         assert acl.name == "openldap_acl"
         assert acl.server_type in {
@@ -1131,7 +1135,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_openldap_1(self) -> None:
@@ -1153,7 +1157,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oid(self) -> None:
@@ -1175,7 +1179,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oud(self) -> None:
@@ -1197,7 +1201,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_ds389(self) -> None:
@@ -1219,7 +1223,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
@@ -1241,7 +1245,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert acl.server_type in {"openldap", "openldap2"}
 
     def test_create_unified_acl_preserves_properties(self) -> None:
@@ -1269,7 +1273,7 @@ class TestsFlextLdifComponentFactory(s):
             raw_acl="original acl string",
         )
 
-        acl = result.unwrap()
+        acl = result.value
         assert acl.name == "test_acl"
         assert acl.target == target
         assert acl.subject == subject
@@ -1294,7 +1298,7 @@ class TestsFlextLdifComponentFactory(s):
             raw_acl="test",
         )
 
-        acl = result.unwrap()
+        acl = result.value
         assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_exception_handling_caught(self) -> None:
@@ -1336,7 +1340,7 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         assert result.is_success
-        acl = result.unwrap()
+        acl = result.value
         assert acl.server_type in {
             lib_c.Ldif.LdapServers.OPENLDAP,
             "openldap2",

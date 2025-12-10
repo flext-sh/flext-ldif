@@ -282,7 +282,7 @@ class TestsFlextLdifOperationalAttributesStripping(s):
         result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success, f"Failed to strip attributes: {result.error}"
-        adapted = result.unwrap()
+        adapted = result.value
 
         # Verify all expected preserved attributes are present
         for attr in test_case.expected_preserved:

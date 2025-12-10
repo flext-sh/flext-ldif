@@ -42,7 +42,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
         },
     )
     if schema_root_result.is_success:
-        schema_entries.append(schema_root_result.unwrap())
+        schema_entries.append(schema_root_result.value)
 
     # Attribute type definitions
     attribute_types = [
@@ -92,7 +92,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
                 "usage": [str(attr_def["usage"])],
             },
         )
-        return attr_result.unwrap() if attr_result.is_success else None
+        return attr_result.value if attr_result.is_success else None
 
     batch_result = u.process(
         cast("list[dict[str, str | int | float | bool | list[str]]]", attribute_types),
@@ -152,7 +152,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
             attrs["may"] = may_val
 
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
-        return oc_result.unwrap() if oc_result.is_success else None
+        return oc_result.value if oc_result.is_success else None
 
     batch_result = u.process(
         cast("list[dict[str, str | list[str] | object]]", object_classes),
@@ -212,7 +212,7 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
             )
 
         if entry_result.is_success:
-            test_entries.append(entry_result.unwrap())
+            test_entries.append(entry_result.value)
 
     # Invalid entries (schema violations)
     invalid_scenarios = [
@@ -262,14 +262,14 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
             continue
         entry_result = api.create_entry(dn=dn, attributes=attrs_dict)
         if entry_result.is_success:
-            test_entries.append(entry_result.unwrap())
+            test_entries.append(entry_result.value)
 
     # Parallel schema validation
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
         return FlextResult.fail(f"Schema validation failed: {validation_result.error}")
 
-    validation_report = validation_result.unwrap()
+    validation_report = validation_result.value
 
     # Analyze validation results
     error_analysis: dict[str, int] = {}
@@ -356,7 +356,7 @@ mail: modern@example.com
     def parse_file(ldif_file: Path) -> list[FlextLdifModels.Entry]:
         """Parse LDIF file."""
         parse_result = api.parse(ldif_file)
-        return parse_result.unwrap() if parse_result.is_success else []
+        return parse_result.value if parse_result.is_success else []
 
     batch_result = u.process(
         list(source_dir.glob("*.ldif")),
@@ -375,7 +375,7 @@ mail: modern@example.com
     # Step 2: Schema validation before migration
     pre_validation = api.validate_entries(all_entries)
     if pre_validation.is_success:
-        pre_report = pre_validation.unwrap()
+        pre_report = pre_validation.value
         migration_results["pre_migration_validation"] = {
             "valid": pre_report.valid_entries,
             "invalid": pre_report.invalid_entries,
@@ -414,7 +414,7 @@ mail: modern@example.com
             dn=entry_dn,
             attributes=attrs_dict,
         )
-        return migrate_result.unwrap() if migrate_result.is_success else None
+        return migrate_result.value if migrate_result.is_success else None
 
     batch_result = u.process(
         all_entries,
@@ -432,7 +432,7 @@ mail: modern@example.com
     # Step 4: Post-migration schema validation
     post_validation = api.validate_entries(migrated_entries)
     if post_validation.is_success:
-        post_report = post_validation.unwrap()
+        post_report = post_validation.value
         migration_results["post_migration_validation"] = {
             "valid": post_report.valid_entries,
             "invalid": post_report.invalid_entries,
@@ -479,7 +479,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
                 "singleValue": ["TRUE" if single_val else "FALSE"],
             },
         )
-        return attr_result.unwrap() if attr_result.is_success else None
+        return attr_result.value if attr_result.is_success else None
 
     batch_result = u.process(
         core_attribute_definitions,
@@ -534,7 +534,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
             attrs["may"] = may_attrs
 
         oc_result = api.create_entry(dn=f"cn={name},cn=schema", attributes=attrs)
-        return oc_result.unwrap() if oc_result.is_success else None
+        return oc_result.value if oc_result.is_success else None
 
     batch_result = u.process(
         oc_definitions,
@@ -562,7 +562,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
             batch_results[f"{batch_name}_error"] = validation_result.error
             continue
 
-        report = validation_result.unwrap()
+        report = validation_result.value
         batch_results[batch_name] = {
             "entries": len(entries),
             "valid": report.valid_entries,
@@ -595,14 +595,14 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
             f"Schema building failed: {schema_build_result.error}",
         )
 
-    schema_entries = schema_build_result.unwrap()
+    schema_entries = schema_build_result.value
 
     # Railway Step 2: Validate schema compliance
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
         return FlextResult.fail(f"Schema validation failed: {schema_validation.error}")
 
-    schema_report = schema_validation.unwrap()
+    schema_report = schema_validation.value
     if not schema_report.is_valid:
         return FlextResult.fail(f"Schema entries invalid: {schema_report.errors}")
 
@@ -635,7 +635,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
                 },
             )
 
-        return entry_result.unwrap() if entry_result.is_success else None
+        return entry_result.value if entry_result.is_success else None
 
     batch_result = u.process(
         list(range(10)),
@@ -653,7 +653,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     if entry_validation.is_failure:
         return FlextResult.fail(f"Entry validation failed: {entry_validation.error}")
 
-    entry_report = entry_validation.unwrap()
+    entry_report = entry_validation.value
     if not entry_report.is_valid:
         return FlextResult.fail(f"Test entries invalid: {entry_report.errors}")
 
@@ -669,7 +669,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
             f"Processing failed: {process_result.error}",
         )
 
-    transformed_count = len(process_result.unwrap())
+    transformed_count = len(process_result.value)
 
     # Railway Step 6: Write schema-compliant output
     output_dir = Path("examples/schema_compliant_output")

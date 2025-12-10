@@ -81,7 +81,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
                 result = validation_service.validate_attribute_name(attr_name)
                 if not result.is_success:
                     return False
-                if not result.unwrap():
+                if not result.value:
                     return False
             return True
 
@@ -140,7 +140,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
             result,
             f"Validation should succeed for '{attr_name}'",
         )
-        is_valid = result.unwrap()
+        is_valid = result.value
         assert is_valid == expected_valid, (
             f"Expected '{attr_name}' to be {'valid' if expected_valid else 'invalid'}"
         )

@@ -162,7 +162,7 @@ class TestsTestFlextLdifValidation(s):
             test_name = "testName"
             attr_result = service.validate_attribute_name(test_name)
             class_result = service.validate_objectclass_name(test_name)
-            assert attr_result.unwrap() == class_result.unwrap()
+            assert attr_result.value == class_result.value
 
     class TestAttributeValue:
         """Test attribute value validation."""

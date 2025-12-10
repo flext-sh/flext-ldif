@@ -453,7 +453,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         else:
             result = api.parse(test_case.content)
             assert result.is_success, f"Parse failed: {result.error}"
-            entries = result.unwrap()
+            entries = result.value
             assert len(entries) == test_case.expected_count
 
 
@@ -530,12 +530,12 @@ class TestAPIWritingOperations:
         elif scenario == WritingScenario.EMPTY_LIST:
             result = api.write([])
             if result.is_success:
-                ldif_string = result.unwrap()
+                ldif_string = result.value
                 assert isinstance(ldif_string, str)
         elif scenario == WritingScenario.PROPER_FORMAT:
             result = api.write(sample_write_entries)
             assert result.is_success, f"Write failed: {result.error}"
-            ldif_string = result.unwrap()
+            ldif_string = result.value
             assert "dn:" in ldif_string
             assert "version:" in ldif_string
 
@@ -598,8 +598,8 @@ class TestAPIEntryManipulation:
         result = api.create_entry(build_case.dn, build_case.attributes)
         if build_case.should_succeed:
             assert result.is_success
-            entry = result.unwrap()
-            assert isinstance(entry, p.Entry)
+            entry = result.value
+            assert isinstance(entry, m.Ldif.Entry)
             assert entry.dn is not None
             assert entry.dn.value == build_case.dn
 
@@ -624,28 +624,28 @@ class TestAPIEntryManipulation:
         if scenario == EntryManipulationScenario.GET_DN:
             result_dn = api.get_entry_dn(sample_entry)
             assert result_dn.is_success
-            dn = result_dn.unwrap()
+            dn = result_dn.value
             assert isinstance(dn, str)
             assert dn == f"cn={c.Values.TEST} {c.Values.USER},ou=People,{c.DNs.EXAMPLE}"
         elif scenario == EntryManipulationScenario.GET_ATTRIBUTES:
             result_attrs = api.get_entry_attributes(sample_entry)
             assert result_attrs.is_success
-            attrs = result_attrs.unwrap()
+            attrs = result_attrs.value
             assert isinstance(attrs, dict)
             assert "cn" in attrs
         elif scenario == EntryManipulationScenario.GET_OBJECTCLASSES:
             result_classes = api.get_entry_objectclasses(sample_entry)
             assert result_classes.is_success
-            classes = result_classes.unwrap()
+            classes = result_classes.value
             assert isinstance(classes, list)
             assert "person" in classes
         elif scenario == EntryManipulationScenario.GET_ATTR_VALUES:
             result_attrs_for_values = api.get_entry_attributes(sample_entry)
             assert result_attrs_for_values.is_success
-            attributes = result_attrs_for_values.unwrap()
+            attributes = result_attrs_for_values.value
             attr_result = api.get_attribute_values(attributes["mail"])
             assert attr_result.is_success
-            values = attr_result.unwrap()
+            values = attr_result.value
             assert isinstance(values, list)
             assert "test@example.com" in values
 
@@ -658,7 +658,7 @@ class TestAPIValidationAndFiltering:
         """Create sample entries for validation testing."""
         entries: list[p.Entry] = []
         for _i, name in enumerate(["Valid User", "Test User"]):
-            entry_result = p.Entry.create(
+            entry_result = m.Ldif.Entry.create(
                 dn=f"cn={name},ou=People,{c.DNs.EXAMPLE}",
                 attributes={
                     c.Names.CN: [name],
@@ -667,7 +667,7 @@ class TestAPIValidationAndFiltering:
                 },
             )
             if entry_result.is_success:
-                entry = entry_result.unwrap()
+                entry = entry_result.value
                 entries.append(entry)
 
         return [m.Ldif.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
@@ -697,19 +697,19 @@ class TestAPIValidationAndFiltering:
         if scenario == ValidationScenario.VALID_ENTRIES:
             result = api.validate_entries(validation_entries)
             assert result.is_success
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is True
             assert report.total_entries == 2
         elif scenario == ValidationScenario.EMPTY_LIST:
             result = api.validate_entries([])
             assert result.is_success
-            report = result.unwrap()
+            report = result.value
             assert report.is_valid is True
             assert report.total_entries == 0
         elif scenario == ValidationScenario.PROPER_STRUCTURE:
             result = api.validate_entries(validation_entries)
             assert result.is_success
-            report = result.unwrap()
+            report = result.value
             assert hasattr(report, "is_valid")
             assert hasattr(report, "total_entries")
             assert hasattr(report, "errors")
@@ -718,14 +718,14 @@ class TestAPIValidationAndFiltering:
             # not FlextResult[ValidationResult]
             filter_result = api.filter(sample_entries, objectclass="inetOrgPerson")
             if filter_result.is_success:
-                filtered = filter_result.unwrap()
+                filtered = filter_result.value
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.FILTER_DN_PATTERN:
             # filter() returns FlextResult[list[Entry]],
             # not FlextResult[ValidationResult]
             filter_result = api.filter(sample_entries, dn_pattern="User0")
             if filter_result.is_success:
-                filtered = filter_result.unwrap()
+                filtered = filter_result.value
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.EXTRACT_ACLS:
             # extract_acls() returns FlextResult[AclResponse],
@@ -964,7 +964,7 @@ class TestAPIProcessing:
         if test_case.should_succeed or scenario != ProcessingScenario.UNKNOWN_PROCESSOR:
             assert result.is_success or result.is_failure
             if result.is_success:
-                processed = result.unwrap()
+                processed = result.value
                 assert isinstance(processed, list)
 
 

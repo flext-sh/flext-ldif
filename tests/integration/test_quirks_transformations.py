@@ -46,7 +46,7 @@ class TestOidQuirksTransformations:
 
         parse_result = api.parse(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.unwrap()
+            entries = parse_result.value
             write_result = api.write(entries, tmp_path / "oid_schema_output.ldif")
             assert write_result.is_success or write_result.is_failure
 
@@ -63,7 +63,7 @@ class TestOidQuirksTransformations:
 
         parse_result = api.parse(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.unwrap()
+            entries = parse_result.value
             write_result = api.write(entries, tmp_path / "oid_acl_output.ldif")
             assert write_result.is_success or write_result.is_failure
 
@@ -122,7 +122,7 @@ class TestOudQuirksTransformations:
 
         parse_result = api.parse(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.unwrap()
+            entries = parse_result.value
             write_result = api.write(entries, tmp_path / "oud_schema_output.ldif")
             assert write_result.is_success or write_result.is_failure
 
@@ -139,7 +139,7 @@ class TestOudQuirksTransformations:
 
         parse_result = api.parse(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.unwrap()
+            entries = parse_result.value
             write_result = api.write(entries, tmp_path / "oud_acl_output.ldif")
             assert write_result.is_success or write_result.is_failure
 

@@ -273,7 +273,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
                 f"Cannot validate - failed to resolve syntax OID: {syntax_oid}",
             )
 
-        type_category = resolve_result.unwrap().type_category
+        type_category = resolve_result.value.type_category
         validator_raw = u.mapper().get(
             self._VALIDATOR_MAP,
             type_category,
@@ -303,7 +303,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
                 f"Cannot determine category - unknown syntax OID: {oid}",
             )
 
-        return r[str].ok(resolve_result.unwrap().type_category)
+        return r[str].ok(resolve_result.value.type_category)
 
     def list_common_syntaxes(self) -> r[list[str]]:
         """List all supported RFC 4517 syntax OIDs.

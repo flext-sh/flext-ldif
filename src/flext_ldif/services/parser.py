@@ -116,7 +116,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
             return r.fail(parse_result.error or "LDIF parsing failed")
 
         # Extract entries from server response
-        raw_entries = parse_result.unwrap()
+        raw_entries = parse_result.value
 
         # Convert to expected type (m.Ldif.Entry should be compatible with m.Ldif.Entry)
         entries: list[m.Ldif.Entry] = list(raw_entries)

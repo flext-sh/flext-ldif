@@ -153,7 +153,7 @@ class TestRealLdapRailwayComposition:
             metadata=None,
         )
         assert entry_result.is_success
-        flext_entry = entry_result.unwrap()
+        flext_entry = entry_result.value
 
         # Railway composition: write → parse → validate
         output_file = tmp_path / "railway.ldif"
@@ -169,7 +169,7 @@ class TestRealLdapRailwayComposition:
 
         # Verify railway succeeded
         assert result.is_success
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
 

@@ -142,7 +142,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if quirk.can_handle_entry(entry):
             result = quirk.parse_entry(entry.dn.value, entry.attributes.attributes)
             if result.is_success:
-                parsed_entry = result.unwrap()
+                parsed_entry = result.value
                 # Access OUD-specific operational attributes
 
     """
@@ -364,7 +364,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if result.is_failure:
             return result
 
-        entry = result.unwrap()
+        entry = result.value
 
         # Build OUD-specific metadata
         original_attribute_case: dict[str, str] = {}
@@ -483,7 +483,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         original_result = self._write_entry_as_comment(original_entry_obj)
         if original_result.is_success:
-            ldif_parts.append(original_result.unwrap())
+            ldif_parts.append(original_result.value)
 
         ldif_parts.extend(
             [
@@ -1142,7 +1142,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return FlextResult[str].fail(
                 f"Pre-write hook failed: {hook_result.error}",
             )
-        normalized_entry = hook_result.unwrap()
+        normalized_entry = hook_result.value
 
         # Step 2: Restore original formatting from metadata
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
@@ -1171,7 +1171,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if result.is_failure:
             return result
 
-        ldif_parts.append(result.unwrap())
+        ldif_parts.append(result.value)
         # Use utilities for finalization (SRP: delegate to writer)
         ldif_str = u.Writer.finalize_ldif_text(ldif_parts)
         return FlextResult[str].ok(ldif_str)
@@ -1195,7 +1195,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return result
 
         # Prefix each line with '# '
-        ldif_text = result.unwrap()
+        ldif_text = result.value
         commented_lines = [f"# {line}" for line in ldif_text.split("\n")]
         return FlextResult[str].ok("\n".join(commented_lines))
 
@@ -1665,7 +1665,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             # Parse ACL using OUD ACL quirk's parse() method (public API)
             acl_result = acl_quirk.parse(normalized_aci)
             if acl_result.is_success:
-                acl_model = acl_result.unwrap()
+                acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = (
                         acl_model.metadata.extensions.model_dump()
@@ -1841,7 +1841,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_quirk = FlextLdifServersOudAcl()
         parse_result = acl_quirk.parse(aci_value)
         if parse_result.is_success:
-            parsed_acl = parse_result.unwrap()
+            parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if isinstance(acl_extensions, FlextLdifModelsMetadata.DynamicMetadata):
@@ -1947,7 +1947,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         return FlextResult[m.Ldif.Entry].fail(
                             process_result.error or "ACI processing failed",
                         )
-                    if process_result.unwrap():
+                    if process_result.value:
                         has_macros = True
 
             # Log if macros were found (metadata is immutable - just log)
@@ -2051,7 +2051,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 corrected_result.error or "Unknown error",
             )
 
-        corrected_data = corrected_result.unwrap()
+        corrected_data = corrected_result.value
         # Business Rule: apply_syntax_corrections expects specific types
         # Implication: Convert corrected_data and syntax_corrections to expected formats
         # Type compatibility: corrected_data is AttributeDict (dict[str, list[str]]), compatible with expected type
@@ -2277,7 +2277,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         result = self._parse_entry(dn, entry_attrs)
         if result.is_success:
-            entry = result.unwrap()
+            entry = result.value
             original_dn = dn
             parsed_dn = entry.dn.value if entry.dn else None
             parsed_attrs = entry.attributes.attributes if entry.attributes else {}

@@ -104,7 +104,7 @@ class TestsFlextLdifDnOperationsPure(s):
         dn = "cn=John,ou=Users,dc=example"
         result = FlextLdifUtilities.Ldif.DN.parse(dn)
         assert result.is_success
-        parsed = result.unwrap()
+        parsed = result.value
         assert len(parsed) >= 2
 
     def test_compare_dns(self) -> None:
@@ -115,7 +115,7 @@ class TestsFlextLdifDnOperationsPure(s):
 
         # compare_dns returns FlextResult[int], not int directly
         assert result.is_success
-        comparison = result.unwrap()
+        comparison = result.value
         assert isinstance(comparison, int)
 
     def test_escape_dn_value(self) -> None:

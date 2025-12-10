@@ -36,7 +36,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.execute()
 
             assert result.is_success
-            status = result.unwrap()
+            status = result.value
             assert status.service == "SyntaxService"
             assert status.status == "operational"
             assert status.rfc_compliance == "RFC 4517"
@@ -52,7 +52,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_valid_directory_string_oid(self) -> None:
             """Test validation of valid Directory String OID."""
@@ -60,7 +60,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("1.3.6.1.4.1.1466.115.121.1.15")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_empty_oid(self) -> None:
             """Test validation of empty OID."""
@@ -68,7 +68,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("")
 
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_invalid_oid_format(self) -> None:
             """Test validation of invalid OID format."""
@@ -76,7 +76,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("not.an.oid")
 
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_oid_with_letters(self) -> None:
             """Test validation rejects OIDs with letters."""
@@ -84,7 +84,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("1.3.6.a.1.b.1")
 
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_oid_single_number(self) -> None:
             """Test validation of single numeric OID."""
@@ -92,7 +92,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("2")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_very_long_valid_oid(self) -> None:
             """Test validation of very long but valid OID."""
@@ -100,7 +100,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_oid("1.2.3.4.5.6.7.8.9.10.11.12.13.14.15")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
     class TestRfc4517Standard:
         """Test RFC 4517 standard OID detection."""
@@ -111,7 +111,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_is_rfc4517_directory_string(self) -> None:
             """Test detection of RFC 4517 Directory String OID."""
@@ -119,7 +119,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.15")
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_is_not_rfc4517_oracle_oid(self) -> None:
             """Test detection of non-RFC 4517 OID (Oracle)."""
@@ -127,7 +127,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.is_rfc4517_standard("2.16.840.1.113894.1.1.1")
 
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_is_rfc4517_empty_oid(self) -> None:
             """Test detection with empty OID."""
@@ -135,7 +135,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.is_rfc4517_standard("")
 
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
     class TestOidLookup:
         """Test OID to name lookup."""
@@ -146,7 +146,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
 
             assert result.is_success
-            name = result.unwrap()
+            name = result.value
             assert name == "boolean"
 
         def test_lookup_directory_string_oid(self) -> None:
@@ -155,7 +155,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.15")
 
             assert result.is_success
-            name = result.unwrap()
+            name = result.value
             assert name == "directory_string"
 
         def test_lookup_integer_oid(self) -> None:
@@ -164,7 +164,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.27")
 
             assert result.is_success
-            name = result.unwrap()
+            name = result.value
             assert name == "ia5_string"
 
         def test_lookup_unknown_oid(self) -> None:
@@ -194,7 +194,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_name("boolean")
 
             assert result.is_success
-            oid = result.unwrap()
+            oid = result.value
             assert oid == "1.3.6.1.4.1.1466.115.121.1.7"
 
         def test_lookup_directory_string_name(self) -> None:
@@ -203,7 +203,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_name("directory_string")
 
             assert result.is_success
-            oid = result.unwrap()
+            oid = result.value
             assert oid == "1.3.6.1.4.1.1466.115.121.1.21"
 
         def test_lookup_integer_name(self) -> None:
@@ -212,7 +212,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.lookup_name("ia5_string")
 
             assert result.is_success
-            oid = result.unwrap()
+            oid = result.value
             assert oid == "1.3.6.1.4.1.1466.115.121.1.27"
 
         def test_lookup_unknown_name(self) -> None:
@@ -242,7 +242,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
 
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.7"
             assert syntax.name == "boolean"
             assert syntax.is_rfc4517_standard is True
@@ -256,7 +256,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.name == "Custom Boolean"
 
         def test_resolve_syntax_with_description(self) -> None:
@@ -268,7 +268,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.desc == "Boolean value syntax"
 
         def test_resolve_syntax_with_server_type(self) -> None:
@@ -280,7 +280,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.metadata is not None
             assert syntax.metadata.quirk_type == "oid"
 
@@ -290,7 +290,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.resolve_syntax("9.9.9.9.9.9")
 
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.oid == "9.9.9.9.9.9"
 
     class TestValueValidation:
@@ -305,7 +305,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_boolean_false(self) -> None:
             """Test validating Boolean value FALSE."""
@@ -316,7 +316,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_boolean_lowercase_true(self) -> None:
             """Test validating Boolean value with lowercase."""
@@ -327,7 +327,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_boolean_invalid(self) -> None:
             """Test validating invalid Boolean value."""
@@ -339,7 +339,7 @@ class TestsTestFlextLdifSyntax(s):
 
             assert result.is_success
             # Invalid boolean value should return False (validation fails)
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_integer_via_numeric_string(self) -> None:
             """Test validating numeric string (IA5 String defaults to string validation)."""
@@ -350,7 +350,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_numeric_negative(self) -> None:
             """Test validating negative numeric value."""
@@ -361,7 +361,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_string_value(self) -> None:
             """Test validating string value (default is string validation)."""
@@ -373,7 +373,7 @@ class TestsTestFlextLdifSyntax(s):
 
             assert result.is_success
             # String validation passes for string types
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_empty_value(self) -> None:
             """Test validating empty value (should pass)."""
@@ -384,7 +384,7 @@ class TestsTestFlextLdifSyntax(s):
             )
 
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_unknown_syntax_oid_uses_default(self) -> None:
             """Test validating value against unknown syntax OID uses default validation."""
@@ -410,7 +410,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")
 
             assert result.is_success
-            category = result.unwrap()
+            category = result.value
             assert category == "boolean"  # Boolean syntax OID
 
         def test_get_category_ia5_string(self) -> None:
@@ -419,7 +419,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.27")
 
             assert result.is_success
-            category = result.unwrap()
+            category = result.value
             assert category == "string"  # Default type_category
 
         def test_get_category_directory_string(self) -> None:
@@ -428,7 +428,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.15")
 
             assert result.is_success
-            category = result.unwrap()
+            category = result.value
             assert category == "string"
 
         def test_get_category_unknown_oid_succeeds(self) -> None:
@@ -437,7 +437,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.get_syntax_category("9.9.9.9.9.9")
 
             assert result.is_success
-            category = result.unwrap()
+            category = result.value
             assert category == "string"  # Default
 
     class TestListSyntaxes:
@@ -449,7 +449,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.list_common_syntaxes()
 
             assert result.is_success
-            syntaxes = result.unwrap()
+            syntaxes = result.value
             assert isinstance(syntaxes, list)
             assert len(syntaxes) > 0
             assert "1.3.6.1.4.1.1466.115.121.1.7" in syntaxes
@@ -460,7 +460,7 @@ class TestsTestFlextLdifSyntax(s):
             result = service.list_common_syntaxes()
 
             assert result.is_success
-            syntaxes = result.unwrap()
+            syntaxes = result.value
             assert syntaxes == sorted(syntaxes)
 
     class TestMultipleServices:
@@ -476,8 +476,8 @@ class TestsTestFlextLdifSyntax(s):
 
             assert result1.is_success
             assert result2.is_success
-            assert result1.unwrap() is True
-            assert result2.unwrap() is True
+            assert result1.value is True
+            assert result2.value is True
 
     class TestValueValidationDetailed:
         """Test detailed value validation for different syntax types."""
@@ -487,21 +487,21 @@ class TestsTestFlextLdifSyntax(s):
             service = FlextLdifSyntax()
             result = service.validate_value("TRUE", "1.3.6.1.4.1.1466.115.121.1.7")
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_boolean_false_uppercase(self) -> None:
             """Test validating Boolean FALSE (uppercase)."""
             service = FlextLdifSyntax()
             result = service.validate_value("FALSE", "1.3.6.1.4.1.1466.115.121.1.7")
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_boolean_invalid_value(self) -> None:
             """Test validating invalid Boolean value."""
             service = FlextLdifSyntax()
             result = service.validate_value("MAYBE", "1.3.6.1.4.1.1466.115.121.1.7")
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_integer_valid(self) -> None:
             """Test validating valid integer value."""
@@ -510,14 +510,14 @@ class TestsTestFlextLdifSyntax(s):
             result = service.validate_value("123", "1.3.6.1.4.1.1466.115.121.1.27")
             assert result.is_success
             # May pass or fail depending on type_category resolution
-            assert isinstance(result.unwrap(), bool)
+            assert isinstance(result.value, bool)
 
         def test_validate_integer_negative(self) -> None:
             """Test validating negative integer."""
             service = FlextLdifSyntax()
             result = service.validate_value("-123", "1.3.6.1.4.1.1466.115.121.1.27")
             assert result.is_success
-            assert isinstance(result.unwrap(), bool)
+            assert isinstance(result.value, bool)
 
         def test_validate_dn_valid(self) -> None:
             """Test validating valid DN value."""
@@ -527,14 +527,14 @@ class TestsTestFlextLdifSyntax(s):
                 "1.3.6.1.4.1.1466.115.121.1.12",
             )
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_dn_invalid(self) -> None:
             """Test validating invalid DN value."""
             service = FlextLdifSyntax()
             result = service.validate_value("not a dn", "1.3.6.1.4.1.1466.115.121.1.12")
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_time_valid(self) -> None:
             """Test validating valid GeneralizedTime value."""
@@ -544,7 +544,7 @@ class TestsTestFlextLdifSyntax(s):
                 "1.3.6.1.4.1.1466.115.121.1.24",
             )
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_time_invalid(self) -> None:
             """Test validating invalid GeneralizedTime value."""
@@ -555,7 +555,7 @@ class TestsTestFlextLdifSyntax(s):
                 "1.3.6.1.4.1.1466.115.121.1.25",
             )
             assert result.is_success
-            assert result.unwrap() is False
+            assert result.value is False
 
         def test_validate_binary_syntax(self) -> None:
             """Test validating binary syntax (always passes)."""
@@ -565,7 +565,7 @@ class TestsTestFlextLdifSyntax(s):
                 "1.3.6.1.4.1.1466.115.121.1.5",
             )
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_string_syntax(self) -> None:
             """Test validating string syntax (always passes)."""
@@ -575,14 +575,14 @@ class TestsTestFlextLdifSyntax(s):
                 "1.3.6.1.4.1.1466.115.121.1.15",
             )
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_value_empty(self) -> None:
             """Test validating empty value."""
             service = FlextLdifSyntax()
             result = service.validate_value("", "1.3.6.1.4.1.1466.115.121.1.7")
             assert result.is_success
-            assert result.unwrap() is True  # Empty values pass
+            assert result.value is True  # Empty values pass
 
         def test_validate_value_unknown_syntax(self) -> None:
             """Test validating value with unknown syntax OID."""
@@ -660,7 +660,7 @@ class TestsTestFlextLdifSyntax(s):
             service = FlextLdifSyntax()
             result = service.list_common_syntaxes()
             assert result.is_success
-            oids = result.unwrap()
+            oids = result.value
             assert isinstance(oids, list)
             assert len(oids) > 0
 
@@ -700,7 +700,7 @@ class TestsTestFlextLdifSyntax(s):
                 desc="Custom Boolean Description",
             )
             assert result.is_success
-            syntax = result.unwrap()
+            syntax = result.value
             assert syntax.name == "Custom Boolean Name"
             assert syntax.desc == "Custom Boolean Description"
 
@@ -709,14 +709,14 @@ class TestsTestFlextLdifSyntax(s):
             service = FlextLdifSyntax()
             result = service.validate_value("value", "")
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_value_empty_value(self) -> None:
             """Test validate_value with empty value (line 228)."""
             service = FlextLdifSyntax()
             result = service.validate_value("", "1.3.6.1.4.1.1466.115.121.1.7")
             assert result.is_success
-            assert result.unwrap() is True
+            assert result.value is True
 
         def test_validate_value_resolve_failure_path(self) -> None:
             """Test validate_value when resolve_syntax fails (line 237)."""

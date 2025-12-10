@@ -191,7 +191,7 @@ class TestsFlextLdifServerDetector(s):
             content = DetectorTestData.build_ldif_content(server_type, patterns)
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+            TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
         @pytest.mark.parametrize(
             "server_type",
@@ -212,7 +212,7 @@ class TestsFlextLdifServerDetector(s):
             content = DetectorTestData.build_ldif_content(server_type, patterns)
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            detection = result.unwrap()
+            detection = result.value
             TestsFlextLdifServerDetector._assert_detection_result(detection)
             assert len(detection.scores) > 0, "Should have at least one score"
 
@@ -235,7 +235,7 @@ class TestsFlextLdifServerDetector(s):
             content += f"{c.Names.OBJECTCLASS}: top\n"
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+            TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
     class TestConfidenceAndFallback:
         """Test confidence threshold and fallback behavior."""
@@ -260,7 +260,7 @@ class TestsFlextLdifServerDetector(s):
             content = DetectorTestData.build_ldif_content(server_type, patterns)
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            detection = result.unwrap()
+            detection = result.value
             TestsFlextLdifServerDetector._assert_detection_result(detection)
             if expected_high_confidence:
                 assert detection.is_confident is not None
@@ -274,7 +274,7 @@ class TestsFlextLdifServerDetector(s):
 """
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+            TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
         def test_mixed_patterns_detection(self, detector: FlextLdifDetector) -> None:
             """Test detection with multiple mixed patterns."""
@@ -294,7 +294,7 @@ class TestsFlextLdifServerDetector(s):
 
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            detection = result.unwrap()
+            detection = result.value
             TestsFlextLdifServerDetector._assert_detection_result(detection)
             assert len(detection.scores) > 0, "Should have at least one score"
 
@@ -318,7 +318,7 @@ class TestsFlextLdifServerDetector(s):
             content = DetectorTestData.build_ldif_content(server_type, patterns)
             result = detector.detect_server_type(ldif_content=content)
             tm.ok(result)
-            detection = result.unwrap()
+            detection = result.value
             patterns_found = detection.patterns_found
             assert isinstance(patterns_found, list)
             tm.assert_length_greater_than(patterns_found, 0)
@@ -349,7 +349,7 @@ class TestsFlextLdifServerDetector(s):
 
                 result = detector.detect_server_type(ldif_path=ldif_file)
                 tm.ok(result)
-                TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+                TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
         def test_detect_from_file_with_encoding_error(
             self,
@@ -377,7 +377,7 @@ class TestsFlextLdifServerDetector(s):
             """Test detection with empty LDIF content."""
             result = detector.detect_server_type(ldif_content="")
             tm.ok(result)
-            TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+            TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
         def test_detect_with_nonexistent_file(
             self,
@@ -405,7 +405,7 @@ class TestsFlextLdifServerDetector(s):
                 max_lines=DetectorTestData.MAX_LINES_LIMIT,
             )
             tm.ok(result)
-            TestsFlextLdifServerDetector._assert_detection_result(result.unwrap())
+            TestsFlextLdifServerDetector._assert_detection_result(result.value)
 
     class TestServiceExecution:
         """Test server detector service execution."""
@@ -414,7 +414,7 @@ class TestsFlextLdifServerDetector(s):
             """Test execute method returns service status."""
             status_result = detector.execute()
             tm.ok(status_result)
-            status = status_result.unwrap()
+            status = status_result.value
             assert isinstance(status, m.ClientStatus)
             assert status.config["service"] == "FlextLdifDetector"
             assert "detect_server_type" in status.services
@@ -517,7 +517,7 @@ class TestsFlextLdifServerDetector(s):
             content = DetectorTestData.build_ldif_content(server_type, patterns)
             result = detector.get_effective_server_type(ldif_content=content)
             tm.ok(result)
-            effective_type = result.unwrap()
+            effective_type = result.value
             assert isinstance(effective_type, str)
             tm.assert_length_greater_than(effective_type, 0)
 
@@ -542,7 +542,7 @@ class TestsFlextLdifServerDetector(s):
                 ldif_file.write_text(content, encoding="utf-8")
                 result = detector.get_effective_server_type(ldif_path=ldif_file)
                 tm.ok(result)
-                effective_type = result.unwrap()
+                effective_type = result.value
                 assert isinstance(effective_type, str)
 
         def test_get_effective_server_type_default(
@@ -552,7 +552,7 @@ class TestsFlextLdifServerDetector(s):
             """Test get_effective_server_type without input (defaults to RFC)."""
             result = detector.get_effective_server_type()
             tm.ok(result)
-            server_type = result.unwrap()
+            server_type = result.value
             assert server_type == DetectorTestData.SERVER_RFC
 
         def test_get_effective_server_type_with_detection_failure(

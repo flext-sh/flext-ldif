@@ -39,7 +39,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         result = dn_service.parse_components(dn)
         assert result.is_success, "DN parsing should succeed"
 
-        components = result.unwrap()
+        components = result.value
         assert len(components) == 4, "DN should have 4 components"
 
         # Check parsed structure (attr_name, attr_value, escaped_value)
@@ -55,7 +55,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         result = dn_service.parse_components(dn)
         assert result.is_success, "Escaped DN parsing should succeed"
 
-        components = result.unwrap()
+        components = result.value
         # Parser creates components for each comma found, even with escapes
         # The important thing is that parsing succeeds and includes expected attributes
         assert len(components) >= 3, "DN should have at least 3 components"
@@ -72,7 +72,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         result = dn_service.normalize(dn)
         assert result.is_success, "DN normalization should succeed"
 
-        normalized = result.unwrap()
+        normalized = result.value
         # Should have lowercase attribute names
         assert normalized.startswith("cn="), "Attribute names should be lowercase"
         assert "ou=" in normalized.lower(), "Should contain ou component"
@@ -85,7 +85,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         result = dn_service.validate_format(dn)
         assert result.is_success, "Validation should succeed"
 
-        is_valid = result.unwrap()
+        is_valid = result.value
         assert is_valid is True, "Valid DN should pass format validation"
 
     def test_validate_dn_format_invalid(self, dn_service: FlextLdifDn) -> None:
@@ -96,7 +96,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         result = dn_service.validate_format(dn)
         assert result.is_success, "Validation check should complete"
 
-        is_valid = result.unwrap()
+        is_valid = result.value
         assert is_valid is False, "Malformed DN should fail validation"
 
     def test_clean_dn_removes_spacing_issues(self, dn_service: FlextLdifDn) -> None:
@@ -144,7 +144,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         normalize_result = dn_service.normalize(dn_value)
         assert normalize_result.is_success
 
-        normalized_dn = normalize_result.unwrap()
+        normalized_dn = normalize_result.value
 
         # Create entry with normalized DN
         entry = m.Ldif.Entry(
@@ -165,7 +165,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         )
 
         assert write_result.is_success
-        output = write_result.unwrap()
+        output = write_result.value
         # Should contain the normalized DN
         if isinstance(output, str):
             assert "dn: cn=" in output, (

@@ -159,7 +159,7 @@ class TestNestedQuirks:
 
         # Updated API: get_all_quirks now returns FlextResult
         assert alls_result.is_success
-        alls = alls_result.unwrap()
+        alls = alls_result.value
 
         assert "schema" in alls
         assert "acl" in alls

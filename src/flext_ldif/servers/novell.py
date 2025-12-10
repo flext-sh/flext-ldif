@@ -23,15 +23,15 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextUtilities as u_core
+from flext_core.utilities import FlextUtilities as u
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
 )
@@ -196,7 +196,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | p.Ldif.SchemaAttributeProtocol,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if not isinstance(attr_definition, str):
@@ -249,7 +249,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | p.Ldif.SchemaObjectClassProtocol,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if not isinstance(oc_definition, str):
@@ -280,7 +280,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaAttributeProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Novell metadata.
 
             Args:
@@ -292,13 +292,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
-                attr_data = result.unwrap()
+                attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[p.Ldif.SchemaAttributeProtocol].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
@@ -306,7 +306,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[p.Ldif.SchemaObjectClassProtocol]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Novell metadata.
 
             Args:
@@ -318,13 +318,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
-                oc_data = result.unwrap()
+                oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[p.Ldif.SchemaObjectClassProtocol].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(
-                        update=cast("dict[str, object]", {"metadata": metadata}),
+                        update={"metadata": metadata},
                     ),
                 )
             return result
@@ -413,12 +413,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Implication: Character-by-character parsing is required for remote
                 # auditing to track which permissions were granted/denied
                 char_mapping: dict[str, list[str]] = {
-                    "B": [c.Ldif.PermissionNames.SEARCH],
-                    "C": [c.Ldif.PermissionNames.COMPARE],
-                    "D": [c.Ldif.PermissionNames.DELETE],
-                    "R": [c.Ldif.PermissionNames.READ],
-                    "W": [c.Ldif.PermissionNames.WRITE],
-                    "A": [c.Ldif.PermissionNames.ADD],
+                    "B": [c.Ldif.RfcAclPermission.SEARCH],
+                    "C": [c.Ldif.RfcAclPermission.COMPARE],
+                    "D": [c.Ldif.RfcAclPermission.DELETE],
+                    "R": [c.Ldif.RfcAclPermission.READ],
+                    "W": [c.Ldif.RfcAclPermission.WRITE],
+                    "A": [c.Ldif.RfcAclPermission.ADD],
                     "S": ["supervisor"],  # Novell-specific
                     "E": ["entry"],  # Novell-specific
                 }
@@ -445,7 +445,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             # Add if it looks like an attribute name (not a permission)
                             if (
                                 attr_name.lower()
-                                not in c.Ldif.PermissionNames.ALL_PERMISSIONS
+                                not in u.Enum.values(c.Ldif.RfcAclPermission)
                             ):
                                 attributes.append(attr_name)
 
@@ -470,12 +470,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         **self._build_novell_permissions_from_rights(
                             rights,
                             {
-                                "read": c.Ldif.PermissionNames.READ,
-                                "write": c.Ldif.PermissionNames.WRITE,
-                                "add": c.Ldif.PermissionNames.ADD,
-                                "delete": c.Ldif.PermissionNames.DELETE,
-                                "search": c.Ldif.PermissionNames.SEARCH,
-                                "compare": c.Ldif.PermissionNames.COMPARE,
+                                "read": c.Ldif.RfcAclPermission.READ,
+                                "write": c.Ldif.RfcAclPermission.WRITE,
+                                "add": c.Ldif.RfcAclPermission.ADD,
+                                "delete": c.Ldif.RfcAclPermission.DELETE,
+                                "search": c.Ldif.RfcAclPermission.SEARCH,
+                                "compare": c.Ldif.RfcAclPermission.COMPARE,
                             },
                         ),
                     ),
@@ -563,12 +563,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Add rights - collect active permissions from permissions dict
                 # Map canonical permission names to Novell format
                 permission_map = {
-                    "read": c.Ldif.PermissionNames.READ,
-                    "write": c.Ldif.PermissionNames.WRITE,
-                    "add": c.Ldif.PermissionNames.ADD,
-                    "delete": c.Ldif.PermissionNames.DELETE,
-                    "search": c.Ldif.PermissionNames.SEARCH,
-                    "compare": c.Ldif.PermissionNames.COMPARE,
+                    "read": c.Ldif.RfcAclPermission.READ,
+                    "write": c.Ldif.RfcAclPermission.WRITE,
+                    "add": c.Ldif.RfcAclPermission.ADD,
+                    "delete": c.Ldif.RfcAclPermission.DELETE,
+                    "search": c.Ldif.RfcAclPermission.SEARCH,
+                    "compare": c.Ldif.RfcAclPermission.COMPARE,
                 }
                 active_perms: list[str] = []
                 if acl_data.permissions:

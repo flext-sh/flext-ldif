@@ -104,7 +104,7 @@ class TestsTestFlextLdifAdQuirks(s):
         assert result.is_success, f"Failed to parse AD attribute: {result.error}"
 
         # Validate the parsed attribute output
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.840.113556.1.4.221", f"OID mismatch: {attr.oid}"
         assert attr.name == "sAMAccountName", f"NAME mismatch: {attr.name}"
@@ -126,7 +126,7 @@ class TestsTestFlextLdifAdQuirks(s):
         )
 
         # Validate the parsed attribute output
-        attr = result.unwrap()
+        attr = result.value
         assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.3.4", f"OID mismatch: {attr.oid}"
         assert attr.name == "objectGUID", f"NAME mismatch: {attr.name}"
@@ -219,7 +219,7 @@ class TestsTestFlextLdifAdQuirks(s):
         )
         result = schema.parse_objectclass(oc_def)
         assert result.is_success
-        oc_data = result.unwrap()
+        oc_data = result.value
         assert oc_data.oid == "1.2.840.113556.1.5.9"
         assert oc_data.name == "user"
         assert oc_data.desc == "User object"
@@ -337,7 +337,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl_line = "nTSecurityDescriptor:: T0JBAQAABABABAgA=="
         result = acl.parse(acl_line)
         assert result.is_success
-        acl_model = result.unwrap()
+        acl_model = result.value
         assert isinstance(acl_model, m.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.raw_acl == acl_line
@@ -351,7 +351,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl_line = "nTSecurityDescriptor: O:BAG:BAD:S:"
         result = acl.parse(acl_line)
         assert result.is_success
-        acl_model = result.unwrap()
+        acl_model = result.value
         assert isinstance(acl_model, m.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.subject is not None

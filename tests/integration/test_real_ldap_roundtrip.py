@@ -90,18 +90,18 @@ class TestRealLdapRoundtrip:
             metadata=None,
         )
         assert entry_result.is_success
-        flext_entry = entry_result.unwrap()
+        flext_entry = entry_result.value
 
         write_result = flext_api.write([flext_entry])
         assert write_result.is_success
-        ldif_output = write_result.unwrap()
+        ldif_output = write_result.value
 
         # Re-import from LDIF (to different DN with isolated username)
         unique_username_copy = make_test_username("RoundtripTestCopy")
         reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
         parse_result = flext_api.parse(ldif_output)
         assert parse_result.is_success
-        parsed_entries = parse_result.unwrap()
+        parsed_entries = parse_result.value
         assert len(parsed_entries) == 1
 
         reimport_entry = parsed_entries[0]

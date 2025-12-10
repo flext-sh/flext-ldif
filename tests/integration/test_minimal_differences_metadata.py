@@ -56,7 +56,7 @@ class TestMinimalDifferencesOidOud:
         )
 
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
 
         assert len(entries) > 0, "No entries parsed from OID fixture"
@@ -100,7 +100,7 @@ class TestMinimalDifferencesOidOud:
         )
 
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
-        parse_response = parse_result.unwrap()
+        parse_response = parse_result.value
         entries = parse_response.entries
 
         assert len(entries) > 0, "No entries parsed from OUD fixture"
@@ -138,7 +138,7 @@ orcldasisenabled: 1
             server_type="oid",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         original_entry_protocol = entries[0]
         # Cast to Entry model to access metadata and dn attributes
@@ -155,7 +155,7 @@ orcldasisenabled: 1
         )
         assert write_result.is_success
 
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
         assert isinstance(written_ldif, str)
 
         # Verify no data loss - check that original_dn_complete is preserved
@@ -179,7 +179,7 @@ cn: test
             server_type="rfc",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
 
@@ -208,7 +208,7 @@ cn: test
             server_type="rfc",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
 
@@ -241,7 +241,7 @@ cn: test
             server_type="rfc",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
 
@@ -277,7 +277,7 @@ pwdlockout: 0
             server_type="oid",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
 
@@ -332,7 +332,7 @@ createTimestamp: 20250101000000Z
             server_type="rfc",
         )
         assert parse_result.is_success
-        entries = parse_result.unwrap().entries
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
 

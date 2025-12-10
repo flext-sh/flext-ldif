@@ -44,7 +44,7 @@ class TestOudSchemaIntegration:
         result = api.parse(oud_schema_fixture)
 
         assert result.is_success, f"Schema parsing failed: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
 
         # Schema fixtures may not return entries (parsed as schema-only)
         # We validate that the file can be successfully parsed without error
@@ -59,7 +59,7 @@ class TestOudSchemaIntegration:
         result = api.parse(oud_schema_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Schema fixtures may not return entries (parsed as schema-only)
         # We validate that the file can be successfully parsed without error
@@ -98,7 +98,7 @@ class TestOudSchemaIntegration:
         result = api.parse(oud_schema_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Schema fixtures may not return entries (parsed as schema-only)
         # We validate that the file can be successfully parsed without error
@@ -157,7 +157,7 @@ class TestOudAclIntegration:
         result = api.parse(acl_fixture)
 
         assert result.is_success, f"ACL parsing failed: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
 
         # Should have entries with ACLs
         assert len(entries) > 0, "No ACL entries parsed"
@@ -167,7 +167,7 @@ class TestOudAclIntegration:
         result = api.parse(acl_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Count entries with ACI attributes
         entries_with_aci = sum(
@@ -226,7 +226,7 @@ class TestOudEntryIntegration:
         result = api.parse(entry_fixture)
 
         assert result.is_success, f"Entry fixture parsing failed: {result.error}"
-        entries = result.unwrap()
+        entries = result.value
 
         # Should have multiple entries
         min_expected_entries = 10
@@ -243,7 +243,7 @@ class TestOudEntryIntegration:
         result = api.parse(entry_fixture)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
 
         # Count entries with Oracle objectClasses
         oracle_oc_patterns = ["orclContext", "orclContainer", "orclPrivilegeGroup"]
@@ -307,21 +307,21 @@ class TestOudRoundTripIntegration:
         # Step 1: Parse original fixture
         parse1_result = api.parse(oud_integration_fixture)
         assert parse1_result.is_success, f"Initial parse failed: {parse1_result.error}"
-        entries1 = parse1_result.unwrap()
+        entries1 = parse1_result.value
 
         assert len(entries1) > 0, "No entries parsed from fixture"
 
         # Step 2: Write entries back to LDIF
         write_result = api.write(entries1)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_ldif = write_result.unwrap()
+        written_ldif = write_result.value
 
         assert len(written_ldif) > 0, "Empty LDIF output"
 
         # Step 3: Parse written LDIF
         parse2_result = api.parse(written_ldif)
         assert parse2_result.is_success, f"Second parse failed: {parse2_result.error}"
-        entries2 = parse2_result.unwrap()
+        entries2 = parse2_result.value
 
         # Validate: Same number of entries
         assert len(entries1) == len(entries2), (
@@ -345,7 +345,7 @@ class TestOudRoundTripIntegration:
         parse_result = api.parse(oud_integration_fixture)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = parse_result.value
 
         # Find entries with spaces in DN
         entries_with_dn_spaces = [entry for entry in entries if ", " in entry.dn.value]
@@ -359,12 +359,12 @@ class TestOudRoundTripIntegration:
             write_result = api.write([test_entry])
             assert write_result.is_success
 
-            written_ldif = write_result.unwrap()
+            written_ldif = write_result.value
 
             parse2_result = api.parse(written_ldif)
             assert parse2_result.is_success
 
-            entries2 = parse2_result.unwrap()
+            entries2 = parse2_result.value
             assert len(entries2) == 1
 
             # Verify DN normalization (ldap3 will normalize spaces)
@@ -400,7 +400,7 @@ orclVersion: 90600
         result = api.parse(test_ldif)
         assert result.is_success
 
-        entries = result.unwrap()
+        entries = result.value
         assert len(entries) == 1
 
         entry = entries[0]

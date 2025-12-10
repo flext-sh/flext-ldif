@@ -89,7 +89,7 @@ class EntryTransformer[T](ABC):
             result = self.apply(item)
             if result.is_failure:
                 return r.fail(result.error or "Transform failed")
-            results.append(result.unwrap())
+            results.append(result.value)
         return r[list[T]].ok(results)
 
 
@@ -199,7 +199,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if norm_result.is_failure:
             return r.fail(norm_result.error)
 
-        normalized_dn = norm_result.unwrap()
+        normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
         # Update entry DN (create new DN)

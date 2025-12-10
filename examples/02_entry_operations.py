@@ -38,7 +38,7 @@ class DRYEntryOperations:
                     "mail": email,
                     "telephoneNumber": phone,
                 },
-            ).unwrap()
+            ).value
             for name, surname, email, phone in [
                 ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
                 ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
@@ -65,7 +65,7 @@ class DRYEntryOperations:
         if entries_result.is_failure:
             return entries_result
 
-        entries = entries_result.unwrap()
+        entries = entries_result.value
 
         # DRY filtering: department IT + valid email in one pipeline
         filtered_it = api.filter_entries(
