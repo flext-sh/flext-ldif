@@ -108,8 +108,8 @@ VALIDATION_RANGES: tuple[ValidationRange, ...] = (
     ),
     ValidationRange(
         field_name="memory_limit_mb",
-        min_value=lib_c.LdifProcessing.MIN_MEMORY_MB,
-        max_value=lib_c.LdifProcessing.MAX_MEMORY_MB,
+        min_value=lib_c.Ldif.LdifProcessing.MIN_MEMORY_MB,
+        max_value=lib_c.Ldif.LdifProcessing.MAX_MEMORY_MB,
         valid_values=[64, 512, 4096],
         invalid_below=63,
         invalid_above=8193,

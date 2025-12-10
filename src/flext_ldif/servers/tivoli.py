@@ -566,8 +566,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 # Update objectClass (already in list format)
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
 
-                # Create new LdifAttributes directly
-                new_attrs = m.Ldif.LdifAttributes(
+                # Create new Attributes directly
+                new_attrs = m.Ldif.Attributes(
                     attributes=processed_attributes,
                 )
 

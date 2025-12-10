@@ -377,8 +377,8 @@ class FlextLdifCategorization(
                     f"DN normalization failed: {norm_result.error or 'Unknown error'}"
                 )
             # Create new Entry with normalized DN
-            # Use model_copy with DN string value, not DistinguishedName object
-            dn_obj = m.Ldif.DistinguishedName(value=normalized_dn)
+            # Use model_copy with DN string value, not DN object
+            dn_obj = m.Ldif.DN(value=normalized_dn)
             return entry.model_copy(
                 update={"dn": dn_obj},
             )

@@ -400,9 +400,9 @@ class TestsTestFlextLdifConversionService(s):
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test converting Entry with invalid DN."""
-        entry = p.Entry(
-            dn=m.DistinguishedName(value="invalid-dn-format"),
-            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value="invalid-dn-format"),
+            attributes=m.Ldif.Attributes(attributes={"cn": ["test"]}),
         )
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
@@ -488,9 +488,9 @@ class TestsTestFlextLdifConversionService(s):
                 "cn=valid,dc=example,dc=com",
                 {"cn": ["valid"], "objectClass": ["person"]},
             ),
-            p.Entry(
-                dn=m.DistinguishedName(value="invalid-dn"),
-                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="invalid-dn"),
+                attributes=m.Ldif.Attributes(attributes={"cn": ["test"]}),
             ),
         ]
         # Cast list[Entry] to Sequence[ConvertibleModel] for type checker
@@ -719,7 +719,7 @@ class TestsTestFlextLdifConversionService(s):
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test SchemaAttribute conversion is supported."""
-        attr = p.Ldif.SchemaAttribute(
+        attr = m.Ldif.SchemaAttribute(
             oid="2.5.4.3",
             name="cn",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -732,7 +732,7 @@ class TestsTestFlextLdifConversionService(s):
         )
         assert result.is_success
         converted_attr = result.unwrap()
-        assert isinstance(converted_attr, p.Ldif.SchemaAttribute)
+        assert isinstance(converted_attr, m.Ldif.SchemaAttribute)
         assert converted_attr.name == "cn"
 
     def test_convert_schema_objectclass(
@@ -742,7 +742,7 @@ class TestsTestFlextLdifConversionService(s):
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test SchemaObjectClass conversion is supported."""
-        oc = p.Ldif.SchemaObjectClass(
+        oc = m.Ldif.SchemaObjectClass(
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
@@ -755,7 +755,7 @@ class TestsTestFlextLdifConversionService(s):
         )
         assert result.is_success
         converted_oc = result.unwrap()
-        assert isinstance(converted_oc, p.Ldif.SchemaObjectClass)
+        assert isinstance(converted_oc, m.Ldif.SchemaObjectClass)
         assert converted_oc.name == "person"
 
     # ────────────────────────────────────────────────────────────────────────

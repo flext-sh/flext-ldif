@@ -184,9 +184,9 @@ class TestFlextLdifAPIIntegration(tt):
         """Test building entries programmatically using models."""
         # Create entry using Entry model directly
         test_dn = c.RFC.TEST_DN
-        entry = p.Entry(
-            dn=m.DistinguishedName(value=test_dn),
-            attributes=m.LdifAttributes(
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=test_dn),
+            attributes=m.Ldif.Attributes(
                 attributes={
                     c.Names.CN: [c.General.ATTR_VALUE_TEST],
                     c.Names.SN: [c.General.ATTR_VALUE_USER],

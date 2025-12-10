@@ -969,7 +969,7 @@ class FlextLdifUtilities(FlextUtilities):
                     predicate_or_filter1
                 )
 
-                return FlextLdifUtilities.Ldif._filter_base_class(
+                return FlextLdifUtilities.Ldif.filter_base_class(
                     items_or_entries,
                     predicate,
                     mapper,
@@ -983,7 +983,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type already narrowed by isinstance checks
                 entries: Sequence[p.Ldif.EntryProtocol] = items_or_entries
                 filter_entry: EntryFilter[p.Ldif.EntryProtocol] = predicate_or_filter1
-                return FlextLdifUtilities.Ldif._filter_ldif_entries(
+                return FlextLdifUtilities.Ldif.filter_ldif_entries(
                     entries,
                     filter_entry,
                     filters,
@@ -1003,15 +1003,15 @@ class FlextLdifUtilities(FlextUtilities):
                 return False
 
             # Type narrowing: items_or_entries is compatible with base class signature
-            # Return type already declared in _filter_base_class signature
-            return FlextLdifUtilities.Ldif._filter_base_class(
+            # Return type already declared in filter_base_class signature
+            return FlextLdifUtilities.Ldif.filter_base_class(
                 items_or_entries,
                 predicate_wrapper,
                 mapper,
             )
 
         @staticmethod
-        def _filter_base_class[T, R](
+        def filter_base_class[T, R](
             items_or_entries: (
                 T
                 | list[T]
@@ -1079,7 +1079,7 @@ class FlextLdifUtilities(FlextUtilities):
             return result_single
 
         @staticmethod
-        def _filter_ldif_entries(
+        def filter_ldif_entries(
             entries: Sequence[p.Ldif.EntryProtocol],
             predicate_or_filter1: EntryFilter[p.Ldif.EntryProtocol],
             filters: tuple[EntryFilter[p.Ldif.EntryProtocol], ...],

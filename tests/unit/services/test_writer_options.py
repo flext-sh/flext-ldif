@@ -246,15 +246,15 @@ class TestsFlextLdifWriterFormatOptions(s):
         metadata: m.Ldif.QuirkMetadata | None = None,
     ) -> p.Entry:
         """Factory method to create Entry with reduced boilerplate."""
-        dn_obj = m.DistinguishedName(value=dn)
-        attrs_obj = m.LdifAttributes(attributes=attributes)
+        dn_obj = m.Ldif.DN(value=dn)
+        attrs_obj = m.Ldif.Attributes(attributes=attributes)
         if metadata is not None:
-            return p.Entry(
+            return m.Ldif.Entry(
                 dn=dn_obj,
                 attributes=attrs_obj,
                 metadata=metadata,
             )
-        return p.Entry(
+        return m.Ldif.Entry(
             dn=dn_obj,
             attributes=attrs_obj,
         )

@@ -121,7 +121,7 @@ class WriterTestFactory:
     @classmethod
     def create_simple_entry(cls) -> p.Entry:
         """Create a simple RFC-compliant entry."""
-        return p.Entry(
+        return m.Ldif.Entry(
             dn="cn=testuser,ou=people,dc=example,dc=com",
             attributes={
                 "cn": ["testuser"],
@@ -134,7 +134,7 @@ class WriterTestFactory:
     @classmethod
     def create_multivalue_entry(cls) -> p.Entry:
         """Create entry with multiple values for same attribute."""
-        return p.Entry(
+        return m.Ldif.Entry(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             attributes={
                 "cn": ["testgroup"],
@@ -150,7 +150,7 @@ class WriterTestFactory:
     @classmethod
     def create_second_entry(cls) -> p.Entry:
         """Create a second RFC-compliant entry."""
-        return p.Entry(
+        return m.Ldif.Entry(
             dn="cn=test2,dc=example,dc=com",
             attributes={
                 "cn": ["test2"],

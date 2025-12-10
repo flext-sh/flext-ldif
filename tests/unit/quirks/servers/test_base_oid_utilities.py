@@ -116,13 +116,13 @@ class TestsTestFlextLdifUtilitiesOid(s):
         dict[
             str,
             tuple[
-                m.SchemaAttribute | m.SchemaObjectClass,
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
                 str,
             ],
         ]
     ] = {
         ExtractOidScenario.FROM_ORIGINAL_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.16.840.1.113894.1.1.1",
                 name="orclGUID",
                 metadata=m.Ldif.QuirkMetadata(
@@ -135,14 +135,14 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.16.840.1.113894.1.1.1",
         ),
         ExtractOidScenario.FALLBACK_TO_MODEL_OID: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
             "2.5.4.3",
         ),
         ExtractOidScenario.FROM_OBJECTCLASS: (
-            m.SchemaObjectClass(
+            m.Ldif.SchemaObjectClass(
                 oid="2.16.840.1.113894.1.1.5",
                 name="orcldASObject",
                 metadata=m.Ldif.QuirkMetadata(
@@ -155,7 +155,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.16.840.1.113894.1.1.5",
         ),
         ExtractOidScenario.WHITESPACE_IN_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.6.0",
                 name="top",
                 metadata=m.Ldif.QuirkMetadata(
@@ -168,7 +168,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.6.0",
         ),
         ExtractOidScenario.NON_STRING_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -181,7 +181,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.DICT_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -194,7 +194,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.NONE_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -207,7 +207,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.EMPTY_STRING_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -220,7 +220,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.METADATA_NO_EXTENSIONS: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -231,7 +231,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.OBJECTCLASS_NON_STRING: (
-            m.SchemaObjectClass(
+            m.Ldif.SchemaObjectClass(
                 oid="2.5.6.0",
                 name="top",
                 metadata=m.Ldif.QuirkMetadata(
@@ -244,7 +244,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.6.0",
         ),
         ExtractOidScenario.MALFORMED_FORMAT: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -257,7 +257,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.ORIGINAL_FORMAT_MISSING_OID: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
                 metadata=m.Ldif.QuirkMetadata(
@@ -270,7 +270,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
             "2.5.4.3",
         ),
         ExtractOidScenario.NO_METADATA: (
-            m.SchemaAttribute(
+            m.Ldif.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
@@ -423,7 +423,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
     def test_extract_oid_from_schema_object(
         self,
         scenario: str,
-        schema_obj: m.SchemaAttribute | m.SchemaObjectClass,
+        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         expected_oid: str,
     ) -> None:
         """Test extracting OID from schema objects with parametrized scenarios."""

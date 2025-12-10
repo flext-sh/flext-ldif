@@ -245,8 +245,8 @@ class TestsFlextLdifEntries(s):
             if result.is_success:
                 return result.unwrap()
             return p.Entry.model_construct(
-                dn=m.DistinguishedName(value=dn),
-                attributes=m.LdifAttributes(attributes=attrs),
+                dn=m.Ldif.DN(value=dn),
+                attributes=m.Ldif.Attributes(attributes=attrs),
             )
 
         @staticmethod
@@ -428,7 +428,7 @@ class TestsFlextLdifEntries(s):
         """Test get_entry_dn with Entry model missing DN."""
         entry = p.Entry.model_construct(
             dn=None,
-            attributes=m.LdifAttributes.model_construct(attributes={}),
+            attributes=m.Ldif.Attributes.model_construct(attributes={}),
         )
         service = FlextLdifEntries()
         result = service.get_entry_dn(entry)
@@ -1251,9 +1251,9 @@ class TestsFlextLdifEntries(s):
             service = TestsFlextLdifEntries.Factories.create_service()
 
             if test_name == "no_attributes":
-                dn = m.DistinguishedName(value=c.DNs.TEST_USER)
-                attrs = m.LdifAttributes.create({}).unwrap()
-                entry = p.Entry(dn=dn, attributes=attrs)
+                dn = m.Ldif.DN(value=c.DNs.TEST_USER)
+                attrs = m.Ldif.Attributes.create({}).unwrap()
+                entry = m.Ldif.Entry(dn=dn, attributes=attrs)
             else:
                 entry = TestsFlextLdifEntries.Factories.create_simple_user_entry()
 

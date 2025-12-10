@@ -112,7 +112,7 @@ def sample_entry() -> p.Entry:
         attributes={
             "cn": ["Test User"],
             "sn": ["User"],
-            c.DictKeys.OBJECTCLASS: [
+            c.Ldif.DictKeys.OBJECTCLASS: [
                 "person",
                 "organizationalPerson",
             ],
@@ -132,7 +132,7 @@ def sample_entries(
         attributes={
             "cn": ["Another User"],
             "sn": ["User"],
-            c.DictKeys.OBJECTCLASS: ["person"],
+            c.Ldif.DictKeys.OBJECTCLASS: ["person"],
         },
     )
     return [sample_entry, cast("p.Entry", entry2_result.unwrap())]

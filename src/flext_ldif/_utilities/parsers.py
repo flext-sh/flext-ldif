@@ -145,17 +145,13 @@ class FlextLdifUtilitiesParsers:
                     attributes.update(comments)
 
                 # Create entry
-                # Entry field validators will coerce str -> DistinguishedName and dict -> m.Ldif.LdifAttributes
+                # Entry field validators will coerce str -> DN and dict -> m.Ldif.Attributes
                 # Convert types explicitly for mypy
-                dn_obj = (
-                    dn
-                    if isinstance(dn, m.Ldif.DistinguishedName)
-                    else m.Ldif.DistinguishedName(value=dn)
-                )
+                dn_obj = dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN(value=dn)
                 attrs_obj = (
                     attributes
-                    if isinstance(attributes, m.Ldif.LdifAttributes)
-                    else m.Ldif.LdifAttributes(attributes=attributes)
+                    if isinstance(attributes, m.Ldif.Attributes)
+                    else m.Ldif.Attributes(attributes=attributes)
                 )
                 entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
 

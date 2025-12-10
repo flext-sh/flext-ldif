@@ -14,7 +14,7 @@ import pytest
 
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
-from tests import RfcTestHelpers, c, m, p, s
+from tests import RfcTestHelpers, c, m, s
 
 
 class TestsFlextLdifRfcAttributeParser(s):
@@ -328,12 +328,12 @@ class TestsFlextLdifRfcAttributeParser(s):
         result = rfc_schema_quirk.parse(attr_def)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, p.Ldif.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.syntax is None
         assert attr.syntax_definition is None
 
         # Case 2: Empty syntax
-        empty_syntax_attr = p.Ldif.SchemaAttribute(
+        empty_syntax_attr = m.Ldif.SchemaAttribute(
             oid=c.Rfc.ATTR_OID_CN,
             name=c.Rfc.ATTR_NAME_CN,
             syntax="",
@@ -353,7 +353,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         assert empty_syntax_attr.syntax_definition is None
 
         # Case 3: Invalid OID format
-        invalid_oid_attr = p.Ldif.SchemaAttribute(
+        invalid_oid_attr = m.Ldif.SchemaAttribute(
             oid=c.Rfc.ATTR_OID_CN,
             name=c.Rfc.ATTR_NAME_CN,
             syntax="not.a.valid.oid.at.all",
@@ -446,7 +446,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         assert result.is_success
 
         attr = result.unwrap()
-        assert isinstance(attr, p.Ldif.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == expected_oid
         assert attr.name == expected_name
 
@@ -482,7 +482,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, p.Ldif.SchemaAttribute)
+        assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.can_handle_attribute(attr_model) is True
 
     @pytest.mark.timeout(5)
@@ -497,7 +497,7 @@ class TestsFlextLdifRfcAttributeParser(s):
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, p.Ldif.SchemaAttribute)
+        assert isinstance(attr_model, m.Ldif.SchemaAttribute)
         assert rfc_schema_quirk.should_filter_out_attribute(attr_model) is False
 
     @pytest.mark.timeout(5)

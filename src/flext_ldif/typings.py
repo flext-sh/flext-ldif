@@ -16,6 +16,9 @@ from typing import Literal, TypeAlias, TypeVar
 
 from flext_core import FlextTypes
 
+# LaxStr compatibility for ldap3 integration
+LaxStr: TypeAlias = str | bytes | bytearray
+
 # Metadata type for processing context
 MetadataType: TypeAlias = dict[str, str | int | float | bool | list[str] | None]
 

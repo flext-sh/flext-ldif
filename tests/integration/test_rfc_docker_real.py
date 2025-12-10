@@ -20,7 +20,6 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.services.server import FlextLdifServer
 
 
@@ -179,7 +178,7 @@ class TestRfcDockerRealData:
             parse_response = result.unwrap()
             entries = parse_response.entries
             # OUD ACLs should have 'aci' attributes
-            # LdifAttributes is a wrapper - access inner dict via .attributes
+            # Attributes is a wrapper - access inner dict via .attributes
             acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
         assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
 
@@ -218,9 +217,9 @@ class TestRfcDockerRealData:
         try:
             output_file = readonly_dir / "test.ldif"
             # Create test entry
-            test_entry = p.Entry(
-                dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
+            test_entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(attributes={"cn": ["test"]}),
             )
 
             writer = FlextLdifWriter()
@@ -346,11 +345,11 @@ class TestRfcIntegrationRealWorld:
         # Create 100 test entries
         # Create Entry models directly (writer expects Entry objects, not dicts)
         entry_models = [
-            p.Entry(
-                dn=m.DistinguishedName(
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(
                     value=f"cn=user{i},ou=people,dc=example,dc=com",
                 ),
-                attributes=m.LdifAttributes(
+                attributes=m.Ldif.Attributes(
                     attributes={
                         "cn": [f"user{i}"],
                         "objectClass": ["person", "inetOrgPerson"],

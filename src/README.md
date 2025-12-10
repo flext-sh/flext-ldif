@@ -40,7 +40,7 @@ src/flext_ldif/
 ### Domain-Driven Design
 
 - **Entities**: `FlextLdifModels.Entry` with identity and business logic
-- **Value Objects**: `FlextLdifModels.DistinguishedName`, `FlextLdifModels.LdifAttributes` (immutable)
+- **Value Objects**: `FlextLdifModels.DN`, `FlextLdifModels.Attributes` (immutable)
 - **Services**: Complex business operations in `services.py`
 - **Domain Events**: Planned for future implementation
 

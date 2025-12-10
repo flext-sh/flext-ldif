@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
@@ -60,7 +61,7 @@ class TestOidToOudSchemaConversion:
         parse_result = oid_schema_quirk.parse(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.unwrap()
-        assert isinstance(unwrapped, p.Ldif.SchemaAttribute), (
+        assert isinstance(unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(unwrapped).__name__}"
         )
         parsed_data: p.Ldif.SchemaAttribute = unwrapped
@@ -84,7 +85,7 @@ class TestOidToOudSchemaConversion:
             f"OUD parse failed: {oud_parse_result.error}"
         )
         oud_unwrapped = oud_parse_result.unwrap()
-        assert isinstance(oud_unwrapped, p.Ldif.SchemaAttribute), (
+        assert isinstance(oud_unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(oud_unwrapped).__name__}"
         )
         oud_data: p.Ldif.SchemaAttribute = oud_unwrapped
@@ -107,7 +108,7 @@ class TestOidToOudSchemaConversion:
         parse_result = oid_schema_quirk.parse(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.unwrap()
-        assert isinstance(unwrapped, p.Ldif.SchemaObjectClass), (
+        assert isinstance(unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(unwrapped).__name__}"
         )
         parsed_data: p.Ldif.SchemaObjectClass = unwrapped
@@ -129,7 +130,7 @@ class TestOidToOudSchemaConversion:
             f"OUD parse failed: {oud_parse_result.error}"
         )
         oud_unwrapped = oud_parse_result.unwrap()
-        assert isinstance(oud_unwrapped, p.Ldif.SchemaObjectClass), (
+        assert isinstance(oud_unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(oud_unwrapped).__name__}"
         )
         oud_data: p.Ldif.SchemaObjectClass = oud_unwrapped

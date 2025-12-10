@@ -1073,7 +1073,7 @@ class FlextLdifUtilitiesSchema:
         return (
             kind_match.group(1).upper()
             if kind_match
-            else c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+            else c.Ldif.SchemaKind.STRUCTURAL.value
         )
 
     @staticmethod
@@ -1668,7 +1668,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(sup_part)
 
         # KIND (structural, auxiliary, abstract)
-        kind = oc_data.kind or c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+        kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(str(kind))
 
         # MUST and MAY attributes (using helper)
@@ -1833,7 +1833,7 @@ class FlextLdifUtilitiesSchema:
 
         FlextLdifUtilitiesSchema._add_objectclass_sup(oc_data, parts)
 
-        kind = oc_data.kind or c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+        kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(str(kind))
 
         FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data, parts)

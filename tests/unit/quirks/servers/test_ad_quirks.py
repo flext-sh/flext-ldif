@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, cast
 
-from tests import RfcTestHelpers, TestDeduplicationHelpers, m, p, s
+from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
 
 from flext_ldif.servers import FlextLdifServersAd
 
@@ -105,7 +105,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         # Validate the parsed attribute output
         attr = result.unwrap()
-        assert isinstance(attr, p.Ldif.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.840.113556.1.4.221", f"OID mismatch: {attr.oid}"
         assert attr.name == "sAMAccountName", f"NAME mismatch: {attr.name}"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15", (
@@ -127,7 +127,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         # Validate the parsed attribute output
         attr = result.unwrap()
-        assert isinstance(attr, p.Ldif.SchemaAttribute)
+        assert isinstance(attr, m.Ldif.SchemaAttribute)
         assert attr.oid == "1.2.3.4", f"OID mismatch: {attr.oid}"
         assert attr.name == "objectGUID", f"NAME mismatch: {attr.name}"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.40", (
@@ -266,7 +266,7 @@ class TestsTestFlextLdifAdQuirks(s):
             "FlextLdifServersAd.Schema",
             server.schema_quirk,
         )
-        attr_model = p.Ldif.SchemaAttribute(
+        attr_model = m.Ldif.SchemaAttribute(
             oid="1.2.840.113556.1.4.221",
             name="sAMAccountName",
             desc="SAM Account Name",
@@ -288,7 +288,7 @@ class TestsTestFlextLdifAdQuirks(s):
             "FlextLdifServersAd.Schema",
             server.schema_quirk,
         )
-        oc_model = p.Ldif.SchemaObjectClass(
+        oc_model = m.Ldif.SchemaObjectClass(
             oid="1.2.840.113556.1.5.9",
             name="user",
             desc="User object",

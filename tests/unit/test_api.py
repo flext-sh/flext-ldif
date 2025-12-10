@@ -22,14 +22,17 @@ from flext_ldif.constants import FlextLdifConstants, c as lib_c
 from flext_ldif.models import FlextLdifModels
 from tests import TestDeduplicationHelpers, c, p, s
 
+m = FlextLdifModels
+
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
 
 @pytest.fixture
 def sample_entries() -> list[p.Entry]:
     """Create sample entries for testing."""
+    helper = s()
     return [
-        s.create_entry(
+        helper.create_entry(
             dn=f"cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}",
             attributes={
                 c.Names.CN: [f"{c.Values.USER}{i}"],
@@ -336,7 +339,8 @@ def simple_ldif_content() -> str:
 @pytest.fixture
 def sample_entry() -> p.Entry:
     """Create a sample entry for testing."""
-    return s.create_entry(
+    helper = s()
+    return helper.create_entry(
         dn=f"cn={c.Values.TEST} {c.Values.USER}, {c.DNs.EXAMPLE}",
         attributes={
             c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"],
@@ -666,7 +670,7 @@ class TestAPIValidationAndFiltering:
                 entry = entry_result.unwrap()
                 entries.append(entry)
 
-        return [p.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
+        return [m.Ldif.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
 
     VALIDATION_SCENARIOS: ClassVar[set[ValidationScenario]] = {
         ValidationScenario.VALID_ENTRIES,

@@ -202,9 +202,9 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         normalized_dn = norm_result.unwrap()
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
-        # Update entry DN (create new DistinguishedName)
+        # Update entry DN (create new DN)
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_dn = FlextLdifModelsDomains.DistinguishedName(value=normalized_dn)
+        new_dn = FlextLdifModelsDomains.DN(value=normalized_dn)
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
@@ -294,7 +294,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         # Update entry with processed attributes if anything changed
         if needs_update:
             # Use dict[str, object] for model_copy update (Pydantic accepts object)
-            new_attributes = FlextLdifModelsDomains.LdifAttributes(attributes=new_attrs)
+            new_attributes = FlextLdifModelsDomains.Attributes(attributes=new_attrs)
             update_dict: dict[str, object] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
 
@@ -420,7 +420,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
         # Create new DN and update entry
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_dn = FlextLdifModelsDomains.DistinguishedName(value=new_dn_str)
+        new_dn = FlextLdifModelsDomains.DN(value=new_dn_str)
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
@@ -497,9 +497,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
 
         # Create new entry with converted attributes
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = FlextLdifModelsDomains.LdifAttributes(
-            attributes=converted_attrs
-        )
+        new_attributes = FlextLdifModelsDomains.Attributes(attributes=converted_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
@@ -571,7 +569,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         # Update entry with filtered attributes
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = FlextLdifModelsDomains.LdifAttributes(attributes=attrs)
+        new_attributes = FlextLdifModelsDomains.Attributes(attributes=attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 

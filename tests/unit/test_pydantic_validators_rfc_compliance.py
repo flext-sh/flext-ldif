@@ -202,18 +202,18 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
         attr_dict: str,
         description: str,
     ) -> None:
-        """Test LdifAttributes RFC 4512 § 2.5 compliance using parametrized approach."""
+        """Test Attributes RFC 4512 § 2.5 compliance using parametrized approach."""
         attrs_dict = getattr(self, attr_dict)
-        ldif_attrs = m.LdifAttributes(attributes=attrs_dict)
+        ldif_attrs = m.Ldif.Attributes(attributes=attrs_dict)
         for attr_name in attrs_dict:
             assert attr_name in ldif_attrs.attributes, (
                 f"{description}: {attr_name} not found in attributes"
             )
 
     def test_ldif_attributes_combined_compliance(self) -> None:
-        """Test LdifAttributes with combined RFC and server-specific attributes."""
+        """Test Attributes with combined RFC and server-specific attributes."""
         combined_attrs = {**self.RFC_COMPLIANT_ATTRS, **self.SERVER_SPECIFIC_ATTRS}
-        server_ldif_attrs = m.LdifAttributes(attributes=combined_attrs)
+        server_ldif_attrs = m.Ldif.Attributes(attributes=combined_attrs)
         for attr_name in combined_attrs:
             assert attr_name in server_ldif_attrs.attributes
 
@@ -232,8 +232,8 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
         dn_value: str,
         expected_components: int,
     ) -> None:
-        """Parametrized test for DistinguishedName RFC 4514 compliance."""
-        dn = m.DistinguishedName(value=dn_value)
+        """Parametrized test for DN RFC 4514 compliance."""
+        dn = m.Ldif.DN(value=dn_value)
 
         assert dn.value == dn_value
         components = dn.components
@@ -242,7 +242,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
 
     def test_dn_invalid_format_preserved(self) -> None:
         """Validate invalid DN format is preserved for server quirks."""
-        dn = m.DistinguishedName(value=self.INVALID_DN)
+        dn = m.Ldif.DN(value=self.INVALID_DN)
         assert dn.value == self.INVALID_DN
 
     def test_dn_metadata_preservation(self) -> None:
@@ -251,7 +251,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
             "original_case": "UID=Test,DC=Example,DC=Com",
             "had_spaces": True,
         }
-        dn = m.DistinguishedName(
+        dn = m.Ldif.DN(
             value=self.TEST_DN,
             metadata=test_metadata,
         )

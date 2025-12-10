@@ -82,7 +82,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             "distributedOperation" /
             "dSAOperation"
 
-    kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"  ; Rfc.SCHEMA_KIND_*
+    kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"  ; c.Ldif.SchemaKind enum
 
     ABNF Syntax (c.Ldif.Rfc):
     =====================================
@@ -104,7 +104,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     RFC 4512 - Schema:
         - Schema keywords: Rfc.SCHEMA_KW_*
-        - Usage values: Rfc.SCHEMA_USAGE_VALUES
+        - Usage values: c.Ldif.SchemaUsage enum
         - Kind values: Rfc.SCHEMA_KINDS
 
     RFC 4514 - Distinguished Names:

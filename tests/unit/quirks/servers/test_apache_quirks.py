@@ -262,7 +262,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_attribute",
             expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(attr_data, p.Ldif.SchemaAttribute)
+        assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
         assert attr_data.name == "ads-enabled"
         assert attr_data.desc == "Enable flag"
@@ -280,7 +280,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_attribute",
             expected_type=p.Ldif.SchemaAttribute,
         )
-        assert isinstance(attr_data, p.Ldif.SchemaAttribute)
+        assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
         assert attr_data.length == 256
 
@@ -322,7 +322,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
         assert oc_data.name == "ads-directoryService"
         assert oc_data.kind == "STRUCTURAL"
@@ -346,7 +346,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.kind == "AUXILIARY"
 
     def test_schema_objectclass_parse_abstract(self) -> None:
@@ -360,7 +360,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=p.Ldif.SchemaObjectClass,
         )
-        assert isinstance(oc_data, p.Ldif.SchemaObjectClass)
+        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
@@ -379,7 +379,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing attribute to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        attr_data = p.Ldif.SchemaAttribute(
+        attr_data = m.Ldif.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
             name="ads-enabled",
             desc="Enable flag",
@@ -401,7 +401,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test writing objectClass to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        oc_data = p.Ldif.SchemaObjectClass(
+        oc_data = m.Ldif.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
             name="ads-directoryService",
             kind="STRUCTURAL",

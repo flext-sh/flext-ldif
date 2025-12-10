@@ -787,7 +787,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Return updated entry with new attributes dict (without ACLs)
         return entry_data.model_copy(
             update={
-                "attributes": m.Ldif.LdifAttributes(
+                "attributes": m.Ldif.Attributes(
                     attributes=new_attributes_dict,
                     attribute_metadata=entry_data.attributes.attribute_metadata,
                     metadata=entry_data.attributes.metadata,
@@ -1003,7 +1003,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if has_diff:
                     entry_data = entry_data.model_copy(
                         update={
-                            "dn": m.Ldif.DistinguishedName(value=original_dn),
+                            "dn": m.Ldif.DN(value=original_dn),
                         },
                     )
 
@@ -1052,7 +1052,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if restored:
                 entry_data = entry_data.model_copy(
                     update={
-                        "attributes": m.Ldif.LdifAttributes(
+                        "attributes": m.Ldif.Attributes(
                             attributes=restored,
                             attribute_metadata=entry_data.attributes.attribute_metadata,
                             metadata=entry_data.attributes.metadata,
@@ -2126,7 +2126,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 case _ if isinstance(v, (list, tuple)):
                     attrs_for_model[k] = [str(v)]
 
-        corrected_ldif_attrs = m.Ldif.LdifAttributes(
+        corrected_ldif_attrs = m.Ldif.Attributes(
             attributes=attrs_for_model,
         )
         corrected_entry = entry.model_copy(

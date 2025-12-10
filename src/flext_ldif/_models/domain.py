@@ -37,8 +37,10 @@ from flext_ldif._models.base import (
 )
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
+from flext_ldif.typings import LaxStr
 
 u = FlextUtilities
 
@@ -56,7 +58,7 @@ class FlextLdifModelsDomains:
     # DOMAIN MODELS - Core LDIF entities
     # =========================================================================
 
-    class DistinguishedName(FlextModelsEntity.Value):
+    class DN(FlextModelsEntity.Value):
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -84,7 +86,7 @@ class FlextLdifModelsDomains:
         )
 
         # NOTE: DN validation moved to Entry.validate_entry_rfc_compliance()
-        # DistinguishedName is a frozen Value Object and cannot be modified
+        # DN is a frozen Value Object and cannot be modified
         # after construction
 
         @computed_field
@@ -146,7 +148,7 @@ class FlextLdifModelsDomains:
                 DNStatistics instance tracking transformation history
 
             Example:
-                dn = DistinguishedName(value="cn=test,dc=example,dc=com")
+                dn = DN(value="cn=test,dc=example,dc=com")
                 stats = dn.create_statistics(
                     original_dn="cn=test  ,dc=example,dc=com",
                     transformations=[c.Ldif.TransformationType.SPACE_CLEANED],
@@ -178,17 +180,17 @@ class FlextLdifModelsDomains:
             )
 
         @classmethod
-        def from_value(cls, dn: str | Self) -> Self:
-            """Create DistinguishedName from string or existing instance.
+        def from_value(cls, dn: str | Self | None) -> Self:
+            """Create DN from string or existing instance.
 
-            Factory method that normalizes DN input to DistinguishedName object.
+            Factory method that normalizes DN input to DN object.
             Uses Self for proper facade compatibility (models.py exposure).
 
             Args:
-                dn: DN as string or DistinguishedName object
+                dn: DN as string or DN object
 
             Returns:
-                DistinguishedName instance (new or existing)
+                DN instance (new or existing)
 
             Raises:
                 ValueError: If dn is None
@@ -199,8 +201,7 @@ class FlextLdifModelsDomains:
 
             """
             if dn is None:
-                # Mypy false positive: raise is reachable when dn is None
-                msg = "DN cannot be None (required per RFC 2849 § 2)"
+                msg = "dn cannot be None"
                 raise ValueError(msg)
 
             if isinstance(dn, str):
@@ -609,7 +610,7 @@ class FlextLdifModelsDomains:
                 "total": must_count + may_count,
             }
 
-    class LdifAttributes(FlextModelsBase.ArbitraryTypesModel):
+    class Attributes(FlextModelsBase.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
         model_config = ConfigDict(
@@ -619,7 +620,7 @@ class FlextLdifModelsDomains:
             str_strip_whitespace=True,
         )
 
-        attributes: dict[str, list[str]] = Field(
+        attributes: dict[LaxStr, list[LaxStr]] = Field(
             default_factory=dict,
             description="Attribute name to values list",
         )
@@ -633,13 +634,13 @@ class FlextLdifModelsDomains:
         )
 
         # NOTE: Attribute name validation moved to Entry.validate_entry_rfc_compliance()
-        # LdifAttributes uses validate_assignment=True for mutable dict-like operations
+        # Attributes uses validate_assignment=True for mutable dict-like operations
 
         def __len__(self) -> int:
             """Return the number of attributes."""
             return len(self.attributes)
 
-        def __getitem__(self, key: str) -> list[str]:
+        def __getitem__(self, key: LaxStr) -> list[LaxStr]:
             """Get attribute values by name (case-sensitive LDAP).
 
             Args:
@@ -654,7 +655,7 @@ class FlextLdifModelsDomains:
             """
             return self.attributes[key]
 
-        def __setitem__(self, key: str, value: list[str]) -> None:
+        def __setitem__(self, key: LaxStr, value: list[LaxStr]) -> None:
             """Set attribute values by name.
 
             Args:
@@ -672,7 +673,7 @@ class FlextLdifModelsDomains:
         # Use: entry.attributes.keys() for iteration over attribute names
         # Use: entry.model_dump() for Pydantic default iteration behavior
 
-        def get(self, key: str, default: list[str] | None = None) -> list[str]:
+        def get(self, key: str, default: list[LaxStr] | None = None) -> list[LaxStr]:
             """Get attribute values with optional default.
 
             Args:
@@ -691,7 +692,7 @@ class FlextLdifModelsDomains:
             # Return empty list by default (lenient processing)
             return []
 
-        def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
+        def get_values(self, key: str, default: list[LaxStr] | None = None) -> list[LaxStr]:
             """Get attribute values as a list (same as get()).
 
             Args:
@@ -716,7 +717,7 @@ class FlextLdifModelsDomains:
             """
             return key in self.attributes
 
-        def iter_attributes(self) -> list[str]:
+        def iter_attributes(self) -> list[LaxStr]:
             """Get list of all attribute names.
 
             Returns:
@@ -725,7 +726,7 @@ class FlextLdifModelsDomains:
             """
             return list(self.attributes.keys())
 
-        def items(self) -> list[tuple[str, list[str]]]:
+        def items(self) -> list[tuple[LaxStr, list[LaxStr]]]:
             """Get attribute name-values pairs.
 
             Returns:
@@ -734,15 +735,15 @@ class FlextLdifModelsDomains:
             """
             return list(self.attributes.items())
 
-        def keys(self) -> KeysView[str]:
+        def keys(self) -> KeysView[LaxStr]:
             """Get attribute names."""
             return self.attributes.keys()
 
-        def values(self) -> ValuesView[list[str]]:
+        def values(self) -> ValuesView[list[LaxStr]]:
             """Get attribute values lists."""
             return self.attributes.values()
 
-        def add_attribute(self, key: str, values: str | list[str]) -> Self:
+        def add_attribute(self, key: LaxStr, values: LaxStr | list[LaxStr]) -> Self:
             """Add or update an attribute with values.
 
             Args:
@@ -753,7 +754,7 @@ class FlextLdifModelsDomains:
                 Self for method chaining
 
             """
-            if isinstance(values, str):
+            if isinstance(values, (str, bytes, bytearray)):
                 values = [values]
             self.attributes[key] = values
             return self
@@ -774,7 +775,7 @@ class FlextLdifModelsDomains:
         def to_ldap3(
             self,
             exclude: list[str] | None = None,
-        ) -> dict[str, list[str]]:
+        ) -> dict[LaxStr, list[LaxStr]]:
             """Convert to ldap3-compatible attributes dict.
 
             Args:
@@ -798,15 +799,15 @@ class FlextLdifModelsDomains:
                 str,
                 str | list[str] | bytes | list[bytes] | int | float | bool | None,
             ],
-        ) -> FlextResult[FlextLdifModelsDomains.LdifAttributes]:
-            """Create an LdifAttributes instance from data.
+        ) -> FlextResult[FlextLdifModelsDomains.Attributes]:
+            """Create an Attributes instance from data.
 
             Args:
                 attrs_data: Mapping of attribute names to values
                 (str, list[str], bytes, list[bytes], int, float, bool, or None)
 
             Returns:
-                FlextResult with LdifAttributes instance or error
+                FlextResult with Attributes instance or error
 
             """
             try:
@@ -821,12 +822,13 @@ class FlextLdifModelsDomains:
                     else:
                         normalized_dict[key] = [str(val)]
 
-                return FlextResult[FlextLdifModelsDomains.LdifAttributes].ok(
-                    cls(attributes=normalized_dict),
+                # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
+                return FlextResult[FlextLdifModelsDomains.Attributes].ok(
+                    cls(attributes=cast("dict[LaxStr, list[LaxStr]]", normalized_dict)),
                 )
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[FlextLdifModelsDomains.LdifAttributes].fail(
-                    f"Failed to create LdifAttributes: {e}",
+                return FlextResult[FlextLdifModelsDomains.Attributes].fail(
+                    f"Failed to create Attributes: {e}",
                 )
 
         def mark_as_deleted(
@@ -1427,13 +1429,11 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Business Rule: AclElement is frozen=True, so we must use object.__setattr__() for mutation
-                # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__()
-                # This is the correct Pydantic 2 pattern for frozen models in validators
-                # Ruff PLC2801: Ignored - required for frozen Pydantic models
-                object.__setattr__(self, "validation_violations", violations)
+                return self.model_copy(
+                    update={"validation_violations": violations},
+                )
 
-            # ALWAYS return self (not a copy) - Pydantic 2 requirement
+            # Return existing instance when no violations are present
             return self
 
         @classmethod
@@ -1564,8 +1564,8 @@ class FlextLdifModelsDomains:
         - attributes: FlextLdifModelsMetadata.DynamicMetadata
 
         This model provides these through:
-        - dn field (DistinguishedName) which has .value property returning str
-        - attributes field (LdifAttributes) which has .attributes property returning FlextLdifModelsDomains.UnconvertedAttributes
+        - dn field (DN) which has .value property returning str
+        - attributes field (Attributes) which has .attributes property returning FlextLdifModelsDomains.UnconvertedAttributes
         """
 
         model_config = ConfigDict(
@@ -1585,27 +1585,27 @@ class FlextLdifModelsDomains:
         # Pydantic v2: Keep field validators for now (BeforeValidator needs module-level functions)
         # NOTE: Fields allow None to pass through for RFC violation capture in model_validator.
         # RFC compliance is enforced in validate_entry_rfc_compliance, not here.
-        dn: FlextLdifModelsDomains.DistinguishedName | None = Field(
+        dn: FlextLdifModelsDomains.DN | None = Field(
             ...,
             description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
         )
-        attributes: FlextLdifModelsDomains.LdifAttributes | None = Field(
+        attributes: FlextLdifModelsDomains.Attributes | None = Field(
             ...,
             description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
         )
 
         # PROTOCOL COMPLIANCE: Entry FULLY satisfies p.Ldif.Entry.EntryProtocol
         # Field validators coerce inputs to proper types BEFORE Pydantic validation:
-        # - dn: Accepts str | DistinguishedName via field validator
-        # - attributes: Accepts dict | LdifAttributes via field validator
+        # - dn: Accepts str | DN via field validator
+        # - attributes: Accepts dict | Attributes via field validator
 
         @field_validator("dn", mode="before")
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: str | FlextLdifModelsDomains.DistinguishedName | None,
-        ) -> FlextLdifModelsDomains.DistinguishedName | None:
-            """Convert string DN to DistinguishedName instance.
+            value: str | FlextLdifModelsDomains.DN | None,
+        ) -> FlextLdifModelsDomains.DN | None:
+            """Convert string DN to DN instance.
 
             Allows None to pass through for violation capture in model_validator.
             RFC 2849 § 2 violations are captured in validate_entry_rfc_compliance.
@@ -1614,23 +1614,18 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if isinstance(value, FlextLdifModelsDomains.DistinguishedName):
+            if isinstance(value, FlextLdifModelsDomains.DN):
                 return value
 
-            if isinstance(value, str):
-                return FlextLdifModelsDomains.DistinguishedName(value=value)
-
-            # Mypy false positive: raise is reachable when value is not str or DistinguishedName
-            msg = f"DN must be str or DistinguishedName, got {type(value)}"
-            raise ValueError(msg)
+            return FlextLdifModelsDomains.DN(value=value)
 
         @field_validator("attributes", mode="before")
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: dict[str, list[str]] | FlextLdifModelsDomains.LdifAttributes | None,
-        ) -> FlextLdifModelsDomains.LdifAttributes | None:
-            """Convert dict to LdifAttributes instance.
+            value: dict[str, list[str]] | FlextLdifModelsDomains.Attributes | None,
+        ) -> FlextLdifModelsDomains.Attributes | None:
+            """Convert dict to Attributes instance.
 
             Allows None to pass through for violation capture in model_validator.
             RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
@@ -1639,15 +1634,13 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if isinstance(value, FlextLdifModelsDomains.LdifAttributes):
+            if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
 
-            if isinstance(value, dict):
-                return FlextLdifModelsDomains.LdifAttributes(attributes=value)
-
-            # Mypy false positive: raise is reachable when value is not dict or LdifAttributes
-            msg = f"Attributes must be dict or LdifAttributes, got {type(value)}"
-            raise ValueError(msg)
+            # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
+            return FlextLdifModelsDomains.Attributes(
+                attributes=cast("dict[LaxStr, list[LaxStr]]", value)
+            )
 
         # ===================================================================
         # REMAINING FIELDS
@@ -2214,10 +2207,10 @@ class FlextLdifModelsDomains:
                 """Initialize builder with reference to outer class."""
                 super().__init__()
                 self._outer_cls = outer_cls
-                self._dn: str | FlextLdifModelsDomains.DistinguishedName | None = None
+                self._dn: str | FlextLdifModelsDomains.DN | None = None
                 self._attributes: (
                     dict[str, str | list[str]]
-                    | FlextLdifModelsDomains.LdifAttributes
+                    | FlextLdifModelsDomains.Attributes
                     | None
                 ) = None
                 self._metadata: FlextLdifModelsDomains.QuirkMetadata | None = None
@@ -2242,7 +2235,7 @@ class FlextLdifModelsDomains:
 
             def dn(
                 self,
-                dn: str | FlextLdifModelsDomains.DistinguishedName,
+                dn: str | FlextLdifModelsDomains.DN,
             ) -> Self:
                 self._dn = dn
                 return self
@@ -2250,7 +2243,7 @@ class FlextLdifModelsDomains:
             def attributes(
                 self,
                 attributes: dict[str, str | list[str]]
-                | FlextLdifModelsDomains.LdifAttributes,
+                | FlextLdifModelsDomains.Attributes,
             ) -> Self:
                 self._attributes = attributes
                 return self
@@ -2340,9 +2333,9 @@ class FlextLdifModelsDomains:
         @classmethod
         def create(
             cls,
-            dn: str | FlextLdifModelsDomains.DistinguishedName,
+            dn: str | FlextLdifModelsDomains.DN,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes
+                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
             metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
             acls: list[FlextLdifModelsDomains.Acl] | None = None,
@@ -2380,16 +2373,16 @@ class FlextLdifModelsDomains:
         def _normalize_attributes(
             cls,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes
+                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
-        ) -> FlextLdifModelsDomains.LdifAttributes:
-            """Normalize attributes to LdifAttributes object.
+        ) -> FlextLdifModelsDomains.Attributes:
+            """Normalize attributes to Attributes object.
 
             Args:
-                attributes: Attributes as dict or LdifAttributes object
+                attributes: Attributes as dict or Attributes object
 
             Returns:
-                LdifAttributes object with normalized values
+                Attributes object with normalized values
 
             Note:
                 Lenient processing: Empty attributes dict is accepted and will be captured
@@ -2403,7 +2396,7 @@ class FlextLdifModelsDomains:
 
             if isinstance(attributes, dict):
                 # Lenient processing: Accept empty dict (violation captured in validation_metadata)
-                # Empty dict is valid LdifAttributes (Pydantic allows it)
+                # Empty dict is valid Attributes (Pydantic allows it)
                 attrs_dict: dict[str, list[str]] = {}
                 for attr_name, attr_values in attributes.items():
                     # Normalize to list if string
@@ -2416,16 +2409,17 @@ class FlextLdifModelsDomains:
                         # Mypy false positive: this branch is reachable when attr_values is not str or list
                         values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
-                return FlextLdifModelsDomains.LdifAttributes(
-                    attributes=attrs_dict,
+                # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
+                return FlextLdifModelsDomains.Attributes(
+                    attributes=cast("dict[LaxStr, list[LaxStr]]", attrs_dict),
                 )
 
-            # Already LdifAttributes instance
-            if isinstance(attributes, FlextLdifModelsDomains.LdifAttributes):
+            # Already Attributes instance
+            if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
             # Should not reach here, but ensure return type
-            # Mypy false positive: raise is reachable when attributes is not dict or LdifAttributes
-            msg = f"Attributes must be dict or LdifAttributes, got {type(attributes).__name__}"
+            # Mypy false positive: raise is reachable when attributes is not dict or Attributes
+            msg = f"Attributes must be dict or Attributes, got {type(attributes).__name__}"
             raise TypeError(msg)
 
         @classmethod
@@ -2507,9 +2501,9 @@ class FlextLdifModelsDomains:
         @classmethod
         def _create_entry(
             cls,
-            dn: str | FlextLdifModelsDomains.DistinguishedName,
+            dn: str | FlextLdifModelsDomains.DN,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes
+                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
             metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
             acls: list[FlextLdifModelsDomains.Acl] | None = None,
@@ -2531,7 +2525,7 @@ class FlextLdifModelsDomains:
 
             Args:
             dn: Distinguished Name for the entry
-            attributes: Entry attributes as FlextLdifModelsDomains.UnconvertedAttributes or LdifAttributes
+            attributes: Entry attributes as FlextLdifModelsDomains.UnconvertedAttributes or Attributes
             metadata: Optional quirk metadata for preserving original format
             acls: Optional list of Access Control Lists for the entry
             objectclasses: Optional list of ObjectClass definitions for schema validation
@@ -2548,10 +2542,10 @@ class FlextLdifModelsDomains:
 
             """
             try:
-                # Normalize DN to DistinguishedName object (uses Self for facade compatibility)
-                dn_obj = FlextLdifModelsDomains.DistinguishedName.from_value(dn)
+                # Normalize DN to DN object (uses Self for facade compatibility)
+                dn_obj = FlextLdifModelsDomains.DN.from_value(dn)
 
-                # Normalize attributes to LdifAttributes object
+                # Normalize attributes to Attributes object
                 attrs_obj = cls._normalize_attributes(attributes)
 
                 # Build or update metadata
@@ -2568,8 +2562,8 @@ class FlextLdifModelsDomains:
                 entry_data: dict[
                     str,
                     (
-                        FlextLdifModelsDomains.DistinguishedName
-                        | FlextLdifModelsDomains.LdifAttributes
+                        FlextLdifModelsDomains.DN
+                        | FlextLdifModelsDomains.Attributes
                         | FlextLdifModelsDomains.QuirkMetadata
                         | list[FlextLdifModelsDomains.Acl]
                         | list[FlextLdifModelsDomains.SchemaObjectClass]
@@ -2678,7 +2672,7 @@ class FlextLdifModelsDomains:
             if self.attributes is None:
                 return []
 
-            # Access the actual attributes dict (LdifAttributes.attributes property)
+            # Access the actual attributes dict (Attributes.attributes property)
             attrs_dict = (
                 self.attributes.attributes
                 if hasattr(self.attributes, "attributes")
@@ -2688,13 +2682,13 @@ class FlextLdifModelsDomains:
                 return []
 
             attr_name_lower = attribute_name.lower()
-            # Handle both dict and LdifAttributes objects
+            # Handle both dict and Attributes objects
             if isinstance(attrs_dict, dict):
                 for stored_name, attr_values in attrs_dict.items():
                     if stored_name.lower() == attr_name_lower:
                         return attr_values
             elif hasattr(attrs_dict, "items"):
-                # LdifAttributes object with items() method
+                # Attributes object with items() method
                 for stored_name, attr_values in attrs_dict.items():
                     if stored_name.lower() == attr_name_lower:
                         return attr_values
@@ -3783,7 +3777,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_for(
             cls,
-            quirk_type: str | None = None,
+            quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
                 | dict[str, t.MetadataAttributeValue]
@@ -3801,8 +3795,10 @@ class FlextLdifModelsDomains:
 
             """
             # Use Constants default for quirk_type if not provided
-            default_quirk_type = (
-                quirk_type if quirk_type is not None else c.Ldif.ServerTypes.RFC.value
+            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+                normalize_server_type(quirk_type)
+                if quirk_type is not None
+                else c.Ldif.ServerTypes.RFC.value
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata

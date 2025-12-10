@@ -93,7 +93,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             "distributedOperation" / "dSAOperation"
     kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"
 
-    Valid Usage Values (c.Ldif.Rfc.SCHEMA_USAGE_VALUES):
+    Valid Usage Values (c.Ldif.SchemaUsage enum):
     - userApplications     (default for user attributes)
     - directoryOperation   (operational attributes)
     - distributedOperation (distributed across DSAs)

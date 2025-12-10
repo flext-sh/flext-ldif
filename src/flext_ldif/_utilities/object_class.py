@@ -19,11 +19,10 @@ class _SchemaConstants:
     STRUCTURAL: str
 
     def __init__(self) -> None:
-        """Initialize schema constants from Format constants."""
-        # Constants are at Format level, not Format.Rfc level
-        # Access directly without type: ignore (prohibited)
-        self.AUXILIARY = c.Ldif.Format.SCHEMA_KIND_AUXILIARY
-        self.STRUCTURAL = c.Ldif.Format.SCHEMA_KIND_STRUCTURAL
+        """Initialize schema constants from SchemaKind enum."""
+        # Use SchemaKind enum values directly (DRY pattern)
+        self.AUXILIARY = c.Ldif.SchemaKind.AUXILIARY.value
+        self.STRUCTURAL = c.Ldif.SchemaKind.STRUCTURAL.value
 
 
 # Cache schema constants to avoid repeated getattr calls
