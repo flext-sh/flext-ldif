@@ -32,7 +32,7 @@ from flext_core import (
 )
 
 # Removed: from flext_ldif._collection.server import FlextLdifUtilitiesCollection (does not exist)
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -602,7 +602,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def track_transformation(
         metadata: m.Ldif.QuirkMetadata,
-        config: FlextLdifModelsConfig.TransformationTrackingConfig,
+        config: FlextLdifModelsSettings.TransformationTrackingConfig,
     ) -> None:
         """Track an attribute transformation in QuirkMetadata.
 
@@ -617,7 +617,7 @@ class FlextLdifUtilitiesMetadata:
             config: TransformationTrackingConfig with all transformation parameters
 
         Example:
-            >>> config = FlextLdifModelsConfig.TransformationTrackingConfig(
+            >>> config = FlextLdifModelsSettings.TransformationTrackingConfig(
             ...     original_name="orcldasisenabled",
             ...     target_name="orcldasisenabled",
             ...     original_values=["1"],
@@ -1655,7 +1655,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_parse_metadata(
-        config: FlextLdifModelsConfig.EntryParseMetadataConfig,
+        config: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation.
 
@@ -1669,7 +1669,7 @@ class FlextLdifUtilitiesMetadata:
             QuirkMetadata with all entry parsing details preserved
 
         Example:
-            >>> config = FlextLdifModelsConfig.EntryParseMetadataConfig(
+            >>> config = FlextLdifModelsSettings.EntryParseMetadataConfig(
             ...     quirk_type="oid",
             ...     original_entry_dn="cn=test,dc=example",
             ...     cleaned_dn="cn=test,dc=example",

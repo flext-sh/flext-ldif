@@ -427,13 +427,13 @@ class FlextLdifUtilitiesParser:
 
         # Convert to list if needed
         existing = entry_dict[attr_name]
-        # Type narrowing: handle set[str] separately as it's not in GeneralValueType
+        # Type narrowing: handle set[str] separately as it's not in t.GeneralValueType
         if isinstance(existing, set):
             # Convert set to list before appending
             entry_dict[attr_name] = [*existing, attr_value]
             return True
         # For str and other types, check if list-like using FlextRuntime
-        # Cast to GeneralValueType for type checker (set[str] already handled above)
+        # Cast to t.GeneralValueType for type checker (set[str] already handled above)
         if not FlextRuntime.is_list_like(existing):
             # Type narrowing: existing is str, convert to list
             if isinstance(existing, str):

@@ -656,7 +656,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._write_attribute with invalid type returns failure."""
         # Pass invalid type directly - test expects failure (runtime validation)
         # Cast used because we're testing runtime type validation intentionally
-        invalid_attr = cast(m.Ldif.SchemaAttribute, "not an attribute")  # noqa: TC006
+        invalid_attr = cast("m.Ldif.SchemaAttribute", "not an attribute")
         result = schema_quirk._write_attribute(invalid_attr)
         assert result.is_failure
 
@@ -666,7 +666,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema._write_objectclass with invalid type returns failure."""
         # Cast used because we're testing runtime type validation intentionally
-        invalid_oc = cast(m.Ldif.SchemaObjectClass, "not an objectclass")  # noqa: TC006
+        invalid_oc = cast("m.Ldif.SchemaObjectClass", "not an objectclass")
         result = schema_quirk._write_objectclass(invalid_oc)
         assert result.is_failure
 

@@ -561,7 +561,7 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 ```mermaid
 graph TB
     API --> Models[FlextLdifModels]
-    API --> Config[FlextLdifConfig]
+    API --> Config[FlextLdifSettings]
 
     Client --> Parser[RFC Parser]
     Client --> Writer[RFC Writer]

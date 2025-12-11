@@ -1,4 +1,4 @@
-"""Config Integration Tests - FlextLdifConfig Integration Verification.
+"""Config Integration Tests - FlextLdifSettings Integration Verification.
 
 Tests comprehensive config integration with FlextLdif facade including:
 - Configuration initialization with facade
@@ -7,7 +7,7 @@ Tests comprehensive config integration with FlextLdif facade including:
 - Configuration impacts on parsing
 - Config consistency across operations
 
-Scope: Integration testing of FlextLdifConfig through FlextLdif facade,
+Scope: Integration testing of FlextLdifSettings through FlextLdif facade,
 server type behavior, parsing consistency, and filtering operations.
 
 Modules tested: flext_ldif, flext_ldif.config
@@ -24,7 +24,7 @@ from typing import Final
 import pytest
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdif, FlextLdifConfig
+from flext_ldif import FlextLdif, FlextLdifSettings
 
 logger = FlextLogger(__name__)
 
@@ -84,8 +84,8 @@ objectClass: person
     }
 
 
-class TestFlextLdifConfigIntegration:
-    """Test FlextLdifConfig integration through FlextLdif facade.
+class TestFlextLdifSettingsIntegration:
+    """Test FlextLdifSettings integration through FlextLdif facade.
 
     All tests use real implementations without mocks.
     Uses parametrization and mappings for maximum DRY.
@@ -99,7 +99,7 @@ class TestFlextLdifConfigIntegration:
 
     def test_custom_config_with_server_type(self) -> None:
         """Test facade with custom config and server type."""
-        config = FlextLdifConfig(server_type="openldap")
+        config = FlextLdifSettings(server_type="openldap")
         ldif = FlextLdif(config=config)
         result = ldif.parse(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
@@ -108,8 +108,8 @@ class TestFlextLdifConfigIntegration:
 
     def test_config_independence_between_instances(self) -> None:
         """Test that multiple FlextLdif instances with different configs are independent."""
-        config1 = FlextLdifConfig(server_type="oid")
-        config2 = FlextLdifConfig(server_type="openldap")
+        config1 = FlextLdifSettings(server_type="oid")
+        config2 = FlextLdifSettings(server_type="openldap")
         ldif1 = FlextLdif(config=config1)
         ldif2 = FlextLdif(config=config2)
 
@@ -122,7 +122,7 @@ class TestFlextLdifConfigIntegration:
     @pytest.mark.parametrize("server_type", ConfigTestData.SERVER_TYPES[:3])
     def test_config_affects_parsing_behavior(self, server_type: str) -> None:
         """Test that config settings affect parsing behavior."""
-        config = FlextLdifConfig(server_type=server_type)
+        config = FlextLdifSettings(server_type=server_type)
         ldif = FlextLdif(config=config)
         result = ldif.parse(ConfigTestData.BASIC_ENTRY)
         # All server types should support basic parsing
@@ -143,7 +143,7 @@ class TestFlextLdifConfigIntegration:
         expected_content_key: str,
     ) -> None:
         """Test config with specific server type using parametrization."""
-        config = FlextLdifConfig(server_type=server_type)
+        config = FlextLdifSettings(server_type=server_type)
         ldif = FlextLdif(config=config)
         content = ConfigTestData.SERVER_CONTENT[expected_content_key]
         result = ldif.parse(content)
@@ -153,7 +153,7 @@ class TestFlextLdifConfigIntegration:
 
     def test_config_consistency_across_operations(self) -> None:
         """Test that config remains consistent across operations."""
-        config = FlextLdifConfig(server_type="rfc")
+        config = FlextLdifSettings(server_type="rfc")
         ldif = FlextLdif(config=config)
 
         # Perform multiple operations with same config
@@ -174,7 +174,7 @@ objectClass: person
 
     def test_config_with_multiple_entries(self) -> None:
         """Test config handling with multiple entries."""
-        config = FlextLdifConfig(server_type="rfc")
+        config = FlextLdifSettings(server_type="rfc")
         ldif = FlextLdif(config=config)
         result = ldif.parse(ConfigTestData.MULTIPLE_ENTRIES)
         assert result.is_success
@@ -183,7 +183,7 @@ objectClass: person
 
     def test_config_filtering_behavior(self) -> None:
         """Test that config doesn't interfere with filtering."""
-        config = FlextLdifConfig(server_type="rfc")
+        config = FlextLdifSettings(server_type="rfc")
         ldif = FlextLdif(config=config)
 
         parse_result = ldif.parse(ConfigTestData.FILTER_CONTENT)

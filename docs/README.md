@@ -68,7 +68,7 @@ docs/
 
 **[configuration.md](configuration.md)** - Settings and environment:
 
-- **Configuration Management**: FlextLdifConfig and settings
+- **Configuration Management**: FlextLdifSettings and settings
 - **Environment Variables**: Runtime configuration options
 - **Validation Rules**: Input validation and processing limits
 - **Performance Tuning**: Memory and processing optimization

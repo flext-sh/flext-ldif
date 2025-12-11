@@ -37,7 +37,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.utilities import ValidatorSpec
 
 # Local aliases for model types
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.configs import ProcessConfig
@@ -358,9 +358,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Entry utilities for LDIF operations using composition to avoid circular imports."""
 
             @staticmethod
-            def is_schema_entry(
-                entry: m.Ldif.Entry, *, strict: bool = True
-            ) -> bool:
+            def is_schema_entry(entry: m.Ldif.Entry, *, strict: bool = True) -> bool:
                 """Check if entry is a REAL schema entry with schema definitions."""
                 return FlextLdifUtilitiesEntry.is_schema_entry(entry, strict=strict)
 
@@ -399,7 +397,7 @@ class FlextLdifUtilities(FlextUtilities):
             @staticmethod
             def transform_batch(
                 entries: Sequence[m.Ldif.Entry],
-                config: FlextLdifModelsConfig.EntryTransformConfig | None = None,
+                config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
                 **kwargs: object,
             ) -> r[list[m.Ldif.Entry]]:
                 """Transform multiple entries with common operations."""
@@ -410,7 +408,7 @@ class FlextLdifUtilities(FlextUtilities):
             @staticmethod
             def filter_batch(
                 entries: Sequence[m.Ldif.Entry],
-                config: FlextLdifModelsConfig.EntryFilterConfig | None = None,
+                config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
                 **kwargs: object,
             ) -> r[list[m.Ldif.Entry]]:
                 """Filter entries based on criteria."""
@@ -498,15 +496,23 @@ class FlextLdifUtilities(FlextUtilities):
                 )
                 # Create TransformConfig with ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
-                transform_config = transform_config.model_copy(
-                    update={"process_config": process_config}
-                )
+                if hasattr(transform_config, "model_copy"):
+                    transform_config = transform_config.model_copy(
+                        update={"process_config": process_config}
+                    )
+                else:
+                    # Fallback for older Pydantic versions or non-Pydantic models
+                    transform_config.process_config = process_config
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
-                transform_config = transform_config.model_copy(
-                    update={"process_config": config}
-                )
+                if hasattr(transform_config, "model_copy"):
+                    transform_config = transform_config.model_copy(
+                        update={"process_config": config}
+                    )
+                else:
+                    # Fallback for older Pydantic versions or non-Pydantic models
+                    transform_config.process_config = config
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
@@ -1040,7 +1046,7 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
-                    # GeneralValueType is a wide union type that includes R
+                    # t.GeneralValueType is a wide union type that includes R
                     result_list = FlextUtilities.Collection.filter(
                         items_list,
                         predicate,
@@ -1058,7 +1064,7 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
-                    # GeneralValueType is a wide union type that includes R
+                    # t.GeneralValueType is a wide union type that includes R
                     result_dict = FlextUtilities.Collection.filter(
                         items_dict,
                         predicate,
@@ -1075,7 +1081,7 @@ class FlextLdifUtilities(FlextUtilities):
                 )
             else:
                 # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
-                # GeneralValueType is a wide union type that includes R
+                # t.GeneralValueType is a wide union type that includes R
                 result_single = FlextUtilities.Collection.filter(
                     items_single_list,
                     predicate,
@@ -1372,10 +1378,10 @@ class FlextLdifUtilities(FlextUtilities):
                 )
 
             # LDIF-specific pipe using flow()
-            flow_ops: list[t.Types.ConfigurationDict | Callable[[object], object]] = []
+            flow_ops: list[t.ConfigurationDict | Callable[[object], object]] = []
             for op in ops:
                 if isinstance(op, dict):
-                    # dict[str, object] is compatible with ConfigurationDict (dict[str, GeneralValueType])
+                    # dict[str, object] is compatible with ConfigurationDict (dict[str, t.GeneralValueType])
                     flow_ops.append(op)
                 elif callable(op):
                     # Type narrowing: op is Callable[[object], object] after callable check
@@ -1733,10 +1739,10 @@ class FlextLdifUtilities(FlextUtilities):
                 ...     merged = result.value
 
             """
-            # Convert dicts to Mapping[str, GeneralValueType] for u.merge()
+            # Convert dicts to Mapping[str, t.GeneralValueType] for u.merge()
             # Use list comprehension for better performance
-            # Type narrowing: isinstance already guarantees Mapping[str, GeneralValueType]
-            _mappings_list: list[Mapping[str, flext_core_types.GeneralValueType]] = [
+            # Type narrowing: isinstance already guarantees Mapping[str, t.GeneralValueType]
+            _mappings_list: list[Mapping[str, flext_core_types.t.GeneralValueType]] = [
                 dict_item
                 for dict_item in dicts
                 if isinstance(dict_item, (dict, Mapping))
@@ -1974,7 +1980,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Fallback to u.build() for dict, tuple and other types
             ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
             result = cls.build(value, ops=ops)
-            # Ensure result is GeneralValueType for or_()
+            # Ensure result is t.GeneralValueType for or_()
             # Type narrowing: result is object, but we know it's t.GeneralValueType
             result_typed: t.GeneralValueType | None = (
                 result if result is not None else None
@@ -2464,14 +2470,14 @@ class FlextLdifUtilities(FlextUtilities):
             ]
             if not dict_list:
                 return {}
-            # Type narrowing: dict_item is Mapping[str, GeneralValueType] (filter already ensures dict type)
-            mappings: list[Mapping[str, flext_core_types.GeneralValueType]] = list(
+            # Type narrowing: dict_item is Mapping[str, t.GeneralValueType] (filter already ensures dict type)
+            mappings: list[Mapping[str, flext_core_types.t.GeneralValueType]] = list(
                 dict_list,
             )
             if not mappings:
                 return {}
             # Merge mappings sequentially (merge accepts 2 args, not variadic)
-            merged: dict[str, flext_core_types.GeneralValueType] = dict(mappings[0])
+            merged: dict[str, flext_core_types.t.GeneralValueType] = dict(mappings[0])
             for mapping in mappings[1:]:
                 merge_result = FlextUtilities.merge(
                     merged,
@@ -2480,7 +2486,7 @@ class FlextLdifUtilities(FlextUtilities):
                 )
                 if merge_result.is_success and isinstance(merge_result.value, dict):
                     merged = merge_result.value
-            # Type narrowing: GeneralValueType is compatible with object
+            # Type narrowing: t.GeneralValueType is compatible with object
             return dict(merged)
 
         # Mnemonic helper
@@ -2924,11 +2930,11 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Use u.merge() DSL for unified behavior with override strategy
-            # Type narrowing: object is compatible with GeneralValueType (GeneralValueType includes object)
+            # Type narrowing: object is compatible with t.GeneralValueType (t.GeneralValueType includes object)
             # Create update dict directly without cast
             update_dict = {key: value}
-            # Type narrowing: dict[str, object] values are compatible with GeneralValueType
-            # Use data directly as it's compatible with Mapping[str, GeneralValueType]
+            # Type narrowing: dict[str, object] values are compatible with t.GeneralValueType
+            # Use data directly as it's compatible with Mapping[str, t.GeneralValueType]
             data_mapping = data
             # Use FlextUtilities.merge() for two-dict merge
             merge_result = FlextUtilities.merge(
@@ -2995,9 +3001,9 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Use u.merge() for unified behavior
-            # Type narrowing: dict[str, object] is compatible with Mapping[str, GeneralValueType]
-            # GeneralValueType includes object, so no cast needed
-            mappings: list[Mapping[str, flext_core_types.GeneralValueType]] = [
+            # Type narrowing: dict[str, object] is compatible with Mapping[str, t.GeneralValueType]
+            # t.GeneralValueType includes object, so no cast needed
+            mappings: list[Mapping[str, flext_core_types.t.GeneralValueType]] = [
                 data,
                 updates,
             ]
@@ -3007,11 +3013,11 @@ class FlextLdifUtilities(FlextUtilities):
                 strategy="override",
             )
             if merge_result.is_success and isinstance(merge_result.value, dict):
-                # Convert GeneralValueType values to object
-                merged_dict: dict[str, flext_core_types.GeneralValueType] = (
+                # Convert t.GeneralValueType values to object
+                merged_dict: dict[str, flext_core_types.t.GeneralValueType] = (
                     merge_result.value
                 )
-                # Type narrowing: GeneralValueType includes object, so no cast needed
+                # Type narrowing: t.GeneralValueType includes object, so no cast needed
                 return dict(merged_dict)
             return {**data, **updates}  # Fallback
 
@@ -3039,7 +3045,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Convert transforms to compatible format for u.flow()
-            flow_ops: list[t.Types.ConfigurationDict | Callable[[object], object]] = []
+            flow_ops: list[t.ConfigurationDict | Callable[[object], object]] = []
             for transform in transforms:
                 if callable(transform):
                     # Wrap dict transform function to accept object

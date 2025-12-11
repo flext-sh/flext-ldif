@@ -78,12 +78,12 @@ class FlextLdifParser(Flext[dict[str, object]]):
     """LDIF parsing service following FLEXT patterns."""
 
     _logger: FlextLogger          # Structured logging
-    _config: FlextLdifConfig      # Configuration
+    _config: FlextLdifSettings      # Configuration
 ```
 
 ### Dependencies
 
-- **FlextLdifConfig**: Configuration for parsing behavior
+- **FlextLdifSettings**: Configuration for parsing behavior
 - **FlextLogger**: Structured logging for operations
 - **FlextResult**: Railway-oriented error handling
 - **FlextService**: Base class for FLEXT ecosystem integration
@@ -108,9 +108,9 @@ Replace existing parse methods in `FlextLdif` class:
 class FlextLdif(Flext[dict[str, object]]):
     _parser: FlextLdifParser  # Add new service
 
-    def __init__(self, config: FlextLdifConfig | None = None) -> None:
+    def __init__(self, config: FlextLdifSettings | None = None) -> None:
         super().__init__()
-        self._config = config if config is not None else FlextLdifConfig()
+        self._config = config if config is not None else FlextLdifSettings()
 
         # Initialize parser service
         self._parser = FlextLdifParser(

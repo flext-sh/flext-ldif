@@ -42,7 +42,7 @@ Supporting modules live under `_models/` (domain/config/processing/results) and
 `FlextLdif` is the single public entry point. It registers factories for filter
 and categorization services, maps service types to concrete classes via
 `SERVICE_MAPPING`, and lazily instantiates services on first access. The facade
-inherits flext-core `FlextService`, exposing configuration (`FlextLdifConfig`),
+inherits flext-core `FlextService`, exposing configuration (`FlextLdifSettings`),
 logging, and `FlextResult` helpers to callers. Builder-style helpers (parse →
 filter → write) reuse the same instance-level services to avoid redundant
 initialization.

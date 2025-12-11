@@ -38,7 +38,7 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
@@ -464,7 +464,7 @@ class FlextLdifServersBaseEntry(
 
     def _build_header_lines(
         self,
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
         entry_count: int,
     ) -> list[str]:
         """Build header lines based on write options."""
@@ -483,31 +483,31 @@ class FlextLdifServersBaseEntry(
 
     def _resolve_write_options_for_header(
         self,
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None,
-    ) -> FlextLdifModelsConfig.WriteFormatOptions | None:
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
+    ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         """Resolve write options for header generation."""
         if write_options is None:
             return None
-        if isinstance(write_options, FlextLdifModelsConfig.WriteFormatOptions):
+        if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
         if isinstance(write_options, m.Ldif.WriteOptions):
-            return FlextLdifModelsConfig.WriteFormatOptions()
+            return FlextLdifModelsSettings.WriteFormatOptions()
         return None
 
     def _convert_write_options(
         self,
-        write_options: FlextLdifModelsConfig.WriteFormatOptions
+        write_options: FlextLdifModelsSettings.WriteFormatOptions
         | m.Ldif.WriteOptions
         | dict[str, object],
-    ) -> FlextLdifModelsConfig.WriteFormatOptions | m.Ldif.WriteOptions:
+    ) -> FlextLdifModelsSettings.WriteFormatOptions | m.Ldif.WriteOptions:
         """Convert write options to appropriate typed model."""
-        if isinstance(write_options, FlextLdifModelsConfig.WriteFormatOptions):
+        if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
         if isinstance(write_options, m.Ldif.WriteOptions):
             return write_options
         if isinstance(write_options, dict):
             try:
-                return FlextLdifModelsConfig.WriteFormatOptions.model_validate(
+                return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
                     write_options
                 )
             except Exception:
@@ -518,7 +518,7 @@ class FlextLdifServersBaseEntry(
     def _inject_write_options(
         self,
         entry: m.Ldif.Entry,
-        write_options: FlextLdifModelsConfig.WriteFormatOptions,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions,
     ) -> m.Ldif.Entry:
         """Inject write options into entry metadata."""
         write_options_typed = self._convert_write_options(write_options)
@@ -539,7 +539,7 @@ class FlextLdifServersBaseEntry(
             if isinstance(write_options_typed, m.Ldif.WriteOptions):
                 write_opts_for_meta = write_options_typed
             elif isinstance(
-                write_options_typed, FlextLdifModelsConfig.WriteFormatOptions
+                write_options_typed, FlextLdifModelsSettings.WriteFormatOptions
             ):
                 write_opts_for_meta = m.Ldif.WriteOptions.model_validate(
                     write_options_typed.model_dump(),
@@ -553,7 +553,7 @@ class FlextLdifServersBaseEntry(
     def write(
         self,
         entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None = None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
     ) -> FlextResult[str]:
         """Write Entry model(s) to LDIF string format.
 
@@ -575,7 +575,7 @@ class FlextLdifServersBaseEntry(
     def _write_entry_list(
         self,
         entries: list[m.Ldif.Entry],
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
     ) -> FlextResult[str]:
         """Write list of entries to LDIF."""
         opts = self._resolve_write_options_for_header(write_options)
@@ -597,7 +597,7 @@ class FlextLdifServersBaseEntry(
     def _write_single_entry(
         self,
         entry: m.Ldif.Entry,
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
     ) -> FlextResult[str]:
         """Write single entry to LDIF."""
         if write_options is not None:

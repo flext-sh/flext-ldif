@@ -120,22 +120,22 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         """
         # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
         # Implication: _parent_quirk is handled separately, not via Pydantic fields
-        # Business Rule: _schema_service is NOT a GeneralValueType, so it cannot be
-        # passed to FlextService.__init__ which expects only GeneralValueType kwargs.
+        # Business Rule: _schema_service is NOT a t.GeneralValueType, so it cannot be
+        # passed to FlextService.__init__ which expects only t.GeneralValueType kwargs.
         # Implication: _schema_service must be passed explicitly to Schema.__init__
-        # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
-        # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+        # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
+        # Implication: Filter kwargs to ensure type safety (int is not t.GeneralValueType, only str/float/bool/None)
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
             if k not in ("_parent_quirk", "_schema_service")
             and isinstance(v, (str, float, bool, type(None)))
         }
-        # Business Rule: _schema_service is NOT a GeneralValueType, so it cannot be
-        # passed to FlextService.__init__ which expects only GeneralValueType kwargs.
+        # Business Rule: _schema_service is NOT a t.GeneralValueType, so it cannot be
+        # passed to FlextService.__init__ which expects only t.GeneralValueType kwargs.
         # Implication: _schema_service must be stored directly on the instance after
         # super().__init__() using object.__setattr__.
-        # Call parent RFC.Schema.__init__ without _schema_service (it's not GeneralValueType)
+        # Call parent RFC.Schema.__init__ without _schema_service (it's not t.GeneralValueType)
         # Use explicit FlextService.__init__ call to avoid type checker confusion
 
         FlextService.__init__(self, **filtered_kwargs)
@@ -722,8 +722,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ) -> FlextResult[
         dict[
             str,
-            list[m.Ldif.SchemaAttribute]
-            | list[m.Ldif.SchemaObjectClass],
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.

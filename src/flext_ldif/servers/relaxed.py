@@ -1216,7 +1216,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"{FlextLdifServersRelaxed.Constants.LDIF_DN_PREFIX}{entry_data.dn.value}",
                 )
 
-                # Attributes
                 if entry_data.attributes and entry_data.attributes.attributes:
                     for (
                         attr_name,

@@ -547,9 +547,9 @@ class FlextLdifUtilitiesWriter:
                 attr_order = None
             else:
                 # Type narrowing: after isinstance check, extensions_raw is dict[str, t.MetadataAttributeValue]
-                # Business Rule: extensions_raw is dict[str, GeneralValueType] from metadata
+                # Business Rule: extensions_raw is dict[str, t.GeneralValueType] from metadata
                 # but we need dict[str, MetadataAttributeValue] for type safety.
-                # GeneralValueType includes recursive types, but metadata extensions
+                # t.GeneralValueType includes recursive types, but metadata extensions
                 # in practice only contain ScalarValue or Sequence[ScalarValue].
                 extensions_dict: dict[str, t.MetadataAttributeValue] = extensions_raw
                 if FlextRuntime.is_dict_like(extensions_dict):
@@ -572,7 +572,7 @@ class FlextLdifUtilitiesWriter:
             "_acl_attributes",
         }
 
-        # Type narrowing: ensure tuple elements are (str, GeneralValueType) for return type
+        # Type narrowing: ensure tuple elements are (str, t.GeneralValueType) for return type
         result: list[tuple[str, FlextTypes.GeneralValueType]] = []
         attr_order_list: list[object] = attr_order
         for key in attr_order_list:
@@ -599,7 +599,7 @@ class FlextLdifUtilitiesWriter:
             return set()
 
         base64_data = entry_data["_base64_attrs"]
-        # GeneralValueType only includes Sequence, not set
+        # t.GeneralValueType only includes Sequence, not set
         # Convert list/tuple to set[str]
         if isinstance(base64_data, (list, tuple)):
             return {str(item) for item in base64_data}

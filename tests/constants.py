@@ -25,6 +25,7 @@ from flext_tests.constants import FlextTestsConstants
 from flext_ldif import FlextLdif
 from flext_ldif.constants import c
 from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif.services.parser import FlextLdifParser
 
 
 class TestsFlextLdifConstants(FlextTestsConstants):
@@ -684,7 +685,6 @@ class Filters:
     OC_PERSON: Final[str] = "person"
     OC_DOMAIN: Final[str] = "domain"
 
-    # Attributes
     ATTR_MAIL: Final[str] = "mail"
     ATTR_SN: Final[str] = "sn"
     ATTR_CN: Final[str] = "cn"
@@ -788,7 +788,43 @@ class Syntax:
 class RfcTestHelpers:
     """RFC test helper utilities for LDIF testing."""
 
-    # Placeholder for RFC helper methods if needed
+    @staticmethod
+    def test_parse_ldif_content(
+        parser_service: object,
+        content: str,
+        expected_count: int,
+        server_type: str,
+    ) -> list[object]:
+        """Parse LDIF content and return entries.
+
+        Args:
+            parser_service: The parser service instance
+            content: LDIF content to parse
+            expected_count: Expected number of entries (for validation)
+            server_type: Server type for parsing
+
+        Returns:
+            List of parsed entries
+
+        """
+        if not isinstance(parser_service, FlextLdifParser):
+            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+
+        result = parser_service.parse_string(
+            content=content,
+            server_type=server_type,
+        )
+
+        if result.is_failure:
+            raise AssertionError(f"Parsing failed: {result.error}")
+
+        entries = result.value.entries
+        if len(entries) != expected_count:
+            raise AssertionError(
+                f"Expected {expected_count} entries, got {len(entries)}"
+            )
+
+        return list(entries)
 
 
 class TestDeduplicationHelpers:
@@ -813,9 +849,9 @@ class TestDeduplicationHelpers:
         service = FlextLdifEntries()
         entries = []
         for entry_data in entries_data:
-            dn: str = entry_data["dn"]  # type: ignore[assignment]
-            attrs: dict[str, object] = entry_data["attributes"]  # type: ignore[assignment]
-            result = service.create_entry(dn=dn, attributes=attrs)  # type: ignore[arg-type]
+            dn: str = entry_data["dn"]
+            attrs: dict[str, object] = entry_data["attributes"]
+            result = service.create_entry(dn=dn, attributes=attrs)
             if result.is_success:
                 entries.append(result.value)
         return entries
@@ -838,7 +874,7 @@ class TestDeduplicationHelpers:
 
         """
         assert isinstance(api, FlextLdif)
-        result = api.write(entries)  # type: ignore[arg-type]
+        result = api.write(entries)
         assert result.is_success, f"write() failed: {result.error}"
         ldif_string = result.value
         assert isinstance(ldif_string, str)

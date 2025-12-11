@@ -596,7 +596,7 @@ group = FlextLdifModels.Factory.create_group_entry(
 ### Global Configuration
 
 ```python
-from flext_ldif import FlextLdifConfig, initialize_ldif_config, get_ldif_config
+from flext_ldif import FlextLdifSettings, initialize_ldif_config, get_ldif_config
 
 # Initialize global configuration
 initialize_ldif_config({
@@ -631,7 +631,7 @@ All API operations return FlextResult for composable error handling:
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -1042,7 +1042,7 @@ openldap_acls = registry.get_acls("openldap")
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -1079,7 +1079,7 @@ if api_result.is_success:
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext

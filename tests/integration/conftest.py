@@ -549,7 +549,7 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("oid")
     assert quirk_result.is_success, (
-        f"OID quirk must be registered: {quirk_result.error_message}"
+        f"OID quirk must be registered: {quirk_result.error}"
     )
     return quirk_result.value
 
@@ -557,9 +557,9 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 @pytest.fixture
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
-    quirk_result = server.quirk("oud")
+    quirk_result = server.get_base_quirk("oud")
     assert quirk_result.is_success, (
-        f"OUD quirk must be registered: {quirk_result.error_message}"
+        f"OUD quirk must be registered: {quirk_result.error}"
     )
     return quirk_result.value
 

@@ -186,7 +186,7 @@ def test_large_file_processing_performance():
 @pytest.fixture
 def flext_ldif_api():
     """Configured FlextLdif instance for testing."""
-    config = FlextLdifConfig(
+    config = FlextLdifSettings(
         max_entries=1000,
         strict_validation=True,
         enable_observability=False  # Disable for testing

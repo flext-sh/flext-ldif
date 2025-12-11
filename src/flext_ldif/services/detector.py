@@ -27,9 +27,9 @@ from flext_ldif._models.results import (
 )
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.settings import FlextLdifSettings
 
 
 def _get_server_registry() -> FlextLdifServer:
@@ -188,7 +188,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
 
     @staticmethod
     def resolve_from_config(
-        config: FlextLdifConfig,
+        config: FlextLdifSettings,
         target_server_type: str | None = None,
     ) -> str:
         """Determine effective server type based on a prioritized configuration hierarchy.

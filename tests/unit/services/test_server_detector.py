@@ -12,23 +12,23 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_tests import tm
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.detector import FlextLdifDetector
+from flext_ldif.settings import FlextLdifSettings
 from tests import c, m, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-def _get_ldif_config() -> FlextLdifConfig:
-    """Get FlextLdifConfig instance from global config."""
-    config = FlextConfig.get_global_instance()
+def _get_ldif_config() -> FlextLdifSettings:
+    """Get FlextLdifSettings instance from global config."""
+    config = FlextSettings.get_global_instance()
     ldif_config = config.ldif
-    if not isinstance(ldif_config, FlextLdifConfig):
-        msg = f"Expected FlextLdifConfig, got {type(ldif_config)}"
+    if not isinstance(ldif_config, FlextLdifSettings):
+        msg = f"Expected FlextLdifSettings, got {type(ldif_config)}"
         raise TypeError(msg)
     return ldif_config
 

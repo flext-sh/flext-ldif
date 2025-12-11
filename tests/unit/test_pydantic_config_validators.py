@@ -1,7 +1,7 @@
-"""Tests for FlextLdifConfig Pydantic validators.
+"""Tests for FlextLdifSettings Pydantic validators.
 
 This module tests field validators (encoding, server_type, line_separator, version_string)
-and cross-field model validators for FlextLdifConfig using parametrized test scenarios
+and cross-field model validators for FlextLdifSettings using parametrized test scenarios
 to ensure proper validation of all configuration options.
 """
 
@@ -13,13 +13,13 @@ from typing import ClassVar, Literal, cast
 import pytest
 from pydantic import ValidationError
 
-from flext_ldif import FlextLdifConfig
+from flext_ldif import FlextLdifSettings
 from flext_ldif.constants import c as lib_c
 from tests import s
 
 
-class TestsTestFlextLdifConfigValidators(s):
-    """Comprehensive test suite for FlextLdifConfig Pydantic validators.
+class TestsTestFlextLdifSettingsValidators(s):
+    """Comprehensive test suite for FlextLdifSettings Pydantic validators.
 
     Tests field validators (encoding, server_type, line_separator, version_string)
     and cross-field model validators using parametrized test scenarios.
@@ -172,7 +172,7 @@ class TestsTestFlextLdifConfigValidators(s):
     ) -> None:
         """Test ldif_encoding field_validator with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifConfig(
+            config = FlextLdifSettings(
                 ldif_encoding=cast(
                     "lib_c.Ldif.LiteralTypes.EncodingLiteral",
                     encoding,
@@ -181,7 +181,7 @@ class TestsTestFlextLdifConfigValidators(s):
             assert config.ldif_encoding == encoding
         else:
             with pytest.raises(ValidationError) as exc_info:
-                FlextLdifConfig(
+                FlextLdifSettings(
                     ldif_encoding=encoding,
                 )
             error_str = str(exc_info.value).lower()
@@ -201,7 +201,7 @@ class TestsTestFlextLdifConfigValidators(s):
     ) -> None:
         """Test server_type field_validator with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifConfig(
+            config = FlextLdifSettings(
                 server_type=cast(
                     "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
                     server_type,
@@ -213,7 +213,7 @@ class TestsTestFlextLdifConfigValidators(s):
             assert config.server_type == expected_server_type
         else:
             with pytest.raises(ValidationError) as exc_info:
-                FlextLdifConfig(
+                FlextLdifSettings(
                     server_type=server_type,
                 )
             error_str = str(exc_info.value).lower()
@@ -233,13 +233,13 @@ class TestsTestFlextLdifConfigValidators(s):
     ) -> None:
         """Test ldif_line_separator field_validator (RFC 2849) with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifConfig(
+            config = FlextLdifSettings(
                 ldif_line_separator=line_separator,
             )
             assert config.ldif_line_separator == line_separator
         else:
             with pytest.raises(ValidationError) as exc_info:
-                FlextLdifConfig(
+                FlextLdifSettings(
                     ldif_line_separator=line_separator,
                 )
             error_str = str(exc_info.value).lower()
@@ -259,13 +259,13 @@ class TestsTestFlextLdifConfigValidators(s):
     ) -> None:
         """Test ldif_version_string field_validator (RFC 2849) with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifConfig(
+            config = FlextLdifSettings(
                 ldif_version_string=version_string,
             )
             assert config.ldif_version_string == version_string
         else:
             with pytest.raises(ValidationError) as exc_info:
-                FlextLdifConfig(
+                FlextLdifSettings(
                     ldif_version_string=version_string,
                 )
             error_str = str(exc_info.value).lower()
@@ -295,7 +295,7 @@ class TestsTestFlextLdifConfigValidators(s):
         Pydantic validates the value at runtime.
         """
         if should_succeed:
-            config = FlextLdifConfig(
+            config = FlextLdifSettings(
                 quirks_detection_mode=mode,
                 quirks_server_type=cast(
                     "lib_c.Ldif.LiteralTypes.ServerTypeLiteral | None",
@@ -306,7 +306,7 @@ class TestsTestFlextLdifConfigValidators(s):
             assert config.quirks_server_type == server_type
         else:
             with pytest.raises(ValidationError) as exc_info:
-                FlextLdifConfig(
+                FlextLdifSettings(
                     quirks_detection_mode=mode,
                     quirks_server_type=server_type,
                 )
@@ -317,5 +317,5 @@ class TestsTestFlextLdifConfigValidators(s):
 
 
 __all__ = [
-    "TestFlextLdifConfigValidators",
+    "TestFlextLdifSettingsValidators",
 ]

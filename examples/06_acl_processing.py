@@ -191,7 +191,6 @@ def execute_acl_service() -> None:
     )
     if entry_result.is_failure:
         return
-    entry_result.value
 
     acl_service = api.acl_service
 

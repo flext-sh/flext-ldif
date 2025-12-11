@@ -15,7 +15,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.settings import FlextLdifSettings
 from tests import c, m, s
 
 # =============================================================================
@@ -54,9 +54,9 @@ def writer() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def rfc_config() -> FlextLdifConfig:
+def rfc_config() -> FlextLdifSettings:
     """Create RFC-compliant configuration."""
-    return FlextLdifConfig(
+    return FlextLdifSettings(
         ldif_write_fold_long_lines=True,
         ldif_max_line_length=RFC2849_MAX_LINE_BYTES,
     )
@@ -72,7 +72,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
     """Test writer with actual algar-oud-mig production data.
 
     Validates RFC 2849 compliance using real production LDIF files.
-    Uses modern API (FlextLdifConfig) instead of deprecated WriteFormatOptions.
+    Uses modern API (FlextLdifSettings) instead of deprecated WriteFormatOptions.
     """
 
     # RFC 2849 compliance test data
@@ -91,7 +91,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
         scenario: str,
         test_type: WriterRfc2849TestType,
         writer: FlextLdifWriter,
-        rfc_config: FlextLdifConfig,
+        rfc_config: FlextLdifSettings,
     ) -> None:
         """Parametrized test for RFC 2849 compliance with real algar-oud-mig data.
 

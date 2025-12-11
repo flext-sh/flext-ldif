@@ -217,12 +217,7 @@ class FlextLdifUtilitiesDetection:
 
         @staticmethod
         def can_handle_in_set(
-            data: (
-                str
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | None
-            ),
+            data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
             items: frozenset[str],
         ) -> bool:
             """Check if data is in set (case-insensitive).
@@ -275,9 +270,7 @@ class FlextLdifUtilitiesDetection:
 
         def _can_handle_schema_item_by_pattern(
             self,
-            schema_item: (
-                str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
-            ),
+            schema_item: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
 
