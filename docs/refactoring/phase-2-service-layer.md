@@ -75,7 +75,7 @@ FlextLdifEntryService
 ├── validate_entry()
 └── transform_entry_for_write()
 
-FlextLdifServerConfig (replaces nested Constants)
+FlextLdifServerSettings (replaces nested Constants)
 ├── schema_patterns
 ├── acl_patterns
 ├── entry_patterns
@@ -83,14 +83,14 @@ FlextLdifServerConfig (replaces nested Constants)
 └── validation_rules
 
 FlextLdifServersRfc (uses services)
-├── config: FlextLdifServerConfig
+├── config: FlextLdifServerSettings
 ├── schema_service: FlextLdifSchemaService
 ├── acl_service: FlextLdifAclService
 ├── entry_service: FlextLdifEntryService
 └── delegate to services for all operations
 
 FlextLdifServersOud (extends FlextLdifServersRfc)
-├── config: OUD-specific FlextLdifServerConfig
+├── config: OUD-specific FlextLdifServerSettings
 └── services with OUD configuration
 ```
 

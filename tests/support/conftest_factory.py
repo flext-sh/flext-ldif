@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
+from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
@@ -174,7 +174,7 @@ class FlextLdifTestConftest:
         """Set test environment variables."""
         yield
         # Reset global config for test isolation
-        FlextConfig.reset_global_instance()
+        FlextSettings.reset_global_instance()
 
     def reset_flextldif_singleton(self) -> Generator[None]:
         """Reset FlextLdif singleton for test isolation.

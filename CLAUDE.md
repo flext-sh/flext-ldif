@@ -7,6 +7,43 @@
 
 ---
 
+## 🔒 FLOCK PROTOCOL - Multi-Agent File Coordination
+
+### Purpose
+Prevent simultaneous file modifications that cause merge conflicts and corrupted code in multi-agent development environment.
+
+### Protocol Overview
+**Flock (File Lock)** establishes exclusive access to files during modification operations.
+
+### Establishing a Flock
+1. **Check .token** for existing locks on target file
+2. **Write lock** to .token: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
+3. **Re-read file** after lock is established (other agents may have modified)
+4. **Make changes** to the re-read content
+5. **Test changes** ensure they work
+6. **Release lock**: Update .token with `RELEASE_[AGENT_NAME]_[TARGET_FILE]`
+
+### Lock Format
+```bash
+# Establish lock
+FLOCK_[AGENT_NAME]_[TARGET_FILE]
+
+# Example
+FLOCK_AGENT_PLAN_EXECUTOR_flext_ldif/models.py
+
+# Release lock
+RELEASE_[AGENT_NAME]_[TARGET_FILE]
+```
+
+### Critical Rules
+- **🔴 NEVER modify a file with active flock from another agent**
+- **🔄 ALWAYS re-read file after establishing your flock**
+- **⚡ RELEASE immediately after changes are complete and tested**
+- **🤝 COORDINATE with other agents if conflicts detected**
+- **📝 DOCUMENT your flock purpose in .token**
+
+---
+
 ## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
 
 ### Module Import Hierarchy (MANDATORY)

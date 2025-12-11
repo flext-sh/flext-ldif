@@ -22,15 +22,15 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.settings import FlextLdifSettings
 
 # Skip if flext_ldap not available (integration dependency)
 flext_ldap_config = pytest.importorskip("flext_ldap.config")
-FlextLdapConfig = flext_ldap_config.FlextLdapConfig
+FlextLdapSettings = flext_ldap_config.FlextLdapSettings
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -52,35 +52,35 @@ class TestRealLdapConfigurationFromEnv:
         self,
         flext_api: FlextLdif,
     ) -> None:
-        """Verify FlextLdifConfig loads from environment variables."""
+        """Verify FlextLdifSettings loads from environment variables."""
         # Configuration should be loaded from .env automatically
         root_config = flext_api.config
-        # FlextLdifConfig is accessed via .ldif namespace on FlextConfig
+        # FlextLdifSettings is accessed via .ldif namespace on FlextSettings
         ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
-        # If ldif namespace doesn't exist, try accessing FlextLdifConfig directly
+        # If ldif namespace doesn't exist, try accessing FlextLdifSettings directly
         if ldif_config is None:
-            ldif_config = FlextLdifConfig.get_instance()
+            ldif_config = FlextLdifSettings.get_instance()
 
         # Verify configuration values (from .env or defaults)
         assert ldif_config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
         assert isinstance(ldif_config.ldif_strict_validation, bool)
 
-        # max_workers is in root FlextConfig, not nested FlextLdifConfig
+        # max_workers is in root FlextSettings, not nested FlextLdifSettings
         # Access via super().config to get root config
-        root_config = FlextConfig.get_global_instance()
+        root_config = FlextSettings.get_global_instance()
         assert root_config.max_workers >= 1
 
-        # Verify LDAP-specific config from environment using FlextLdapConfig
-        # FlextLdapConfig may not have get_instance() - try direct instantiation or get_global_instance
+        # Verify LDAP-specific config from environment using FlextLdapSettings
+        # FlextLdapSettings may not have get_instance() - try direct instantiation or get_global_instance
         try:
-            ldap_config = FlextLdapConfig.get_instance()
+            ldap_config = FlextLdapSettings.get_instance()
         except AttributeError:
             # Try get_global_instance if available
             try:
-                ldap_config = FlextLdapConfig.get_global_instance()
+                ldap_config = FlextLdapSettings.get_global_instance()
             except AttributeError:
                 # Fallback: create instance directly (may use defaults)
-                ldap_config = FlextLdapConfig()
+                ldap_config = FlextLdapSettings()
 
         assert ldap_config.host is not None
         assert ldap_config.port > 0
@@ -91,8 +91,8 @@ class TestRealLdapConfigurationFromEnv:
         flext_api: FlextLdif,
     ) -> None:
         """Test dynamic worker calculation based on config and entry count."""
-        # max_workers is in root FlextConfig, not nested FlextLdifConfig
-        root_config = FlextConfig.get_global_instance()
+        # max_workers is in root FlextSettings, not nested FlextLdifSettings
+        root_config = FlextSettings.get_global_instance()
 
         # Verify max_workers is accessible from root config
         assert root_config.max_workers >= 1

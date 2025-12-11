@@ -176,6 +176,12 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             r containing entry with normalized DN
 
         """
+        # Type validation - ensure we received the correct type
+        if not isinstance(item, m.Ldif.Entry):
+            return r.fail(
+                f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}"
+            )
+
         if item.dn is None:
             return r.fail("Entry has no DN")
 

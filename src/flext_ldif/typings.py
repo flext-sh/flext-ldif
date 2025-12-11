@@ -16,15 +16,6 @@ from typing import Literal, TypeAlias, TypeVar
 
 from flext_core import FlextTypes
 
-# LaxStr compatibility for ldap3 integration
-LaxStr: TypeAlias = str | bytes | bytearray
-
-# Metadata type for processing context
-MetadataType: TypeAlias = dict[str, str | int | float | bool | list[str] | None]
-
-# Type aliases for models (to avoid circular imports)
-# Entry: TypeAlias = "m.Ldif.Entry"  # Forward reference to model
-
 
 class FlextLdifTypes(FlextTypes):
     """LDIF domain types extending flext-core FlextTypes.
@@ -32,6 +23,9 @@ class FlextLdifTypes(FlextTypes):
     Contains ONLY type definitions, no implementations.
     DRY Pattern: Base types defined first, then reused in complex types.
     """
+
+    # Inherit MetadataAttributeValue from FlextTypes for proper type checking
+    type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
 
     # =========================================================================
     # NAMESPACE: .Ldif - All LDIF domain types
@@ -60,6 +54,8 @@ class FlextLdifTypes(FlextTypes):
         # =========================================================================
         # COMPLEX TYPES (Built from basic types)
         # =========================================================================
+
+        MetadataType: TypeAlias = dict[str, str | int | float | bool | list[str] | None]
 
         # Entry attribute dict
         AttributesDict: TypeAlias = dict[str, list[AttributeValue]]

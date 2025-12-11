@@ -21,7 +21,7 @@ from flext_core import (
     t,
 )
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.entity import FlextModelsEntity
+from flext_core.models import m  # Import FlextModels as m
 from pydantic import (
     ConfigDict,
     Field,
@@ -35,12 +35,15 @@ from flext_ldif._models.base import (
     FlextLdifModelsBase,
     SchemaElement,
 )
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
-from flext_ldif.typings import LaxStr
+from flext_ldif.typings import FlextLdifTypes
+
+# Type aliases for clarity
+MetadataAttributeValue = FlextLdifTypes.MetadataAttributeValue
 
 u = FlextUtilities
 
@@ -58,7 +61,7 @@ class FlextLdifModelsDomains:
     # DOMAIN MODELS - Core LDIF entities
     # =========================================================================
 
-    class DN(FlextModelsEntity.Value):
+    class DN(m.Value):
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -620,7 +623,7 @@ class FlextLdifModelsDomains:
             str_strip_whitespace=True,
         )
 
-        attributes: dict[LaxStr, list[LaxStr]] = Field(
+        attributes: dict[str, list[str]] = Field(
             default_factory=dict,
             description="Attribute name to values list",
         )
@@ -640,7 +643,7 @@ class FlextLdifModelsDomains:
             """Return the number of attributes."""
             return len(self.attributes)
 
-        def __getitem__(self, key: LaxStr) -> list[LaxStr]:
+        def __getitem__(self, key: str) -> list[str]:
             """Get attribute values by name (case-sensitive LDAP).
 
             Args:
@@ -655,7 +658,7 @@ class FlextLdifModelsDomains:
             """
             return self.attributes[key]
 
-        def __setitem__(self, key: LaxStr, value: list[LaxStr]) -> None:
+        def __setitem__(self, key: str, value: list[str]) -> None:
             """Set attribute values by name.
 
             Args:
@@ -673,7 +676,7 @@ class FlextLdifModelsDomains:
         # Use: entry.attributes.keys() for iteration over attribute names
         # Use: entry.model_dump() for Pydantic default iteration behavior
 
-        def get(self, key: str, default: list[LaxStr] | None = None) -> list[LaxStr]:
+        def get(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values with optional default.
 
             Args:
@@ -692,9 +695,7 @@ class FlextLdifModelsDomains:
             # Return empty list by default (lenient processing)
             return []
 
-        def get_values(
-            self, key: str, default: list[LaxStr] | None = None
-        ) -> list[LaxStr]:
+        def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values as a list (same as get()).
 
             Args:
@@ -719,7 +720,7 @@ class FlextLdifModelsDomains:
             """
             return key in self.attributes
 
-        def iter_attributes(self) -> list[LaxStr]:
+        def iter_attributes(self) -> list[str]:
             """Get list of all attribute names.
 
             Returns:
@@ -728,7 +729,7 @@ class FlextLdifModelsDomains:
             """
             return list(self.attributes.keys())
 
-        def items(self) -> list[tuple[LaxStr, list[LaxStr]]]:
+        def items(self) -> list[tuple[str, list[str]]]:
             """Get attribute name-values pairs.
 
             Returns:
@@ -737,15 +738,15 @@ class FlextLdifModelsDomains:
             """
             return list(self.attributes.items())
 
-        def keys(self) -> KeysView[LaxStr]:
+        def keys(self) -> KeysView[str]:
             """Get attribute names."""
             return self.attributes.keys()
 
-        def values(self) -> ValuesView[list[LaxStr]]:
+        def values(self) -> ValuesView[list[str]]:
             """Get attribute values lists."""
             return self.attributes.values()
 
-        def add_attribute(self, key: LaxStr, values: LaxStr | list[LaxStr]) -> Self:
+        def add_attribute(self, key: str, values: str | list[str]) -> Self:
             """Add or update an attribute with values.
 
             Args:
@@ -777,7 +778,7 @@ class FlextLdifModelsDomains:
         def to_ldap3(
             self,
             exclude: list[str] | None = None,
-        ) -> dict[LaxStr, list[LaxStr]]:
+        ) -> dict[str, list[str]]:
             """Convert to ldap3-compatible attributes dict.
 
             Args:
@@ -824,9 +825,9 @@ class FlextLdifModelsDomains:
                     else:
                         normalized_dict[key] = [str(val)]
 
-                # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
+                # normalized_dict already has correct type dict[str, list[str]]
                 return FlextResult[FlextLdifModelsDomains.Attributes].ok(
-                    cls(attributes=cast("dict[LaxStr, list[LaxStr]]", normalized_dict)),
+                    cls(attributes=normalized_dict),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModelsDomains.Attributes].fail(
@@ -860,13 +861,19 @@ class FlextLdifModelsDomains:
                 msg = f"Attribute '{attribute_name}' not found in attributes"
                 raise ValueError(msg)
 
+            def _to_str(value: str) -> str:
+                """Convert str to str, handling byte representation if necessary."""
+                return value
+
             # Store metadata as typed dict
-            self.attribute_metadata[attribute_name] = {
+            self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
                 "deleted_at": u.Generators.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
-                "original_values": list(self.attributes[attribute_name]),
+                "original_values": [
+                    _to_str(v) for v in self.attributes[attribute_name]
+                ],
             }
 
         def get_active_attributes(self) -> dict[str, list[str]]:
@@ -879,13 +886,25 @@ class FlextLdifModelsDomains:
                 Dict of attribute_name -> values for active attributes only
 
             """
+
+            def _to_str(value: str) -> str:
+                """Convert str to str, handling byte representation if necessary."""
+                return value
+
+            def _convert_values(values: list[str]) -> list[str]:
+                """Convert list of str to list of str."""
+                return [_to_str(v) for v in values]
+
             if not self.attribute_metadata:
-                return dict(self.attributes)
+                return {
+                    _to_str(name): _convert_values(values)
+                    for name, values in self.attributes.items()
+                }
 
             return {
-                name: values
+                _to_str(name): _convert_values(values)
                 for name, values in self.attributes.items()
-                if self.attribute_metadata.get(name, {}).get("status", "active")
+                if self.attribute_metadata.get(str(name), {}).get("status", "active")
                 not in {"deleted", "hidden"}
             }
 
@@ -910,7 +929,7 @@ class FlextLdifModelsDomains:
                 if meta.get("status") == "deleted"
             }
 
-    class ErrorDetail(FlextModelsEntity.Value):
+    class ErrorDetail(m.Value):
         """Error detail information for failed operations."""
 
         model_config = ConfigDict(
@@ -1198,7 +1217,7 @@ class FlextLdifModelsDomains:
                 "dns_with_multiple_variants": multiple_variants,
             }
 
-    class QuirkCollection(FlextModelsEntity.Value):
+    class QuirkCollection(m.Value):
         """Collection of all quirks (Schema, ACL, Entry) for a single server type.
 
         Stores all three quirk types together for unified access and management.
@@ -1557,7 +1576,7 @@ class FlextLdifModelsDomains:
             """Check if original ACL format is available for name replacement."""
             return self.original_format is not None and len(self.original_format) > 0
 
-    class Entry(FlextModelsBase.ArbitraryTypesModel):
+    class Entry(m.Entity):
         """LDIF entry domain model.
 
         Implements p.Models.EntryProtocol through structural typing.
@@ -1639,10 +1658,8 @@ class FlextLdifModelsDomains:
             if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
 
-            # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
-            return FlextLdifModelsDomains.Attributes(
-                attributes=cast("dict[LaxStr, list[LaxStr]]", value)
-            )
+            # value is already dict[str, list[str]] from Mapping input
+            return FlextLdifModelsDomains.Attributes(attributes=value)
 
         # ===================================================================
         # REMAINING FIELDS
@@ -1679,7 +1696,7 @@ class FlextLdifModelsDomains:
 
             """
             if not isinstance(data, dict):
-                return data
+                return data  # type: ignore[unreachable]
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
             if data.get("metadata") is None:
@@ -1704,8 +1721,8 @@ class FlextLdifModelsDomains:
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=final_quirk_type_val,
                 )
-                # Cast to allow assignment - data dict accepts MetadataAttributeValue
-                data["metadata"] = cast("t.MetadataAttributeValue", metadata_obj)
+                # Cast to allow assignment - data dict accepts t.MetadataAttributeValue
+                data["metadata"] = cast("MetadataAttributeValue", metadata_obj)
 
             return data
 
@@ -2031,7 +2048,7 @@ class FlextLdifModelsDomains:
 
         def _check_objectclass_rule(
             self,
-            rules: FlextLdifModelsConfig.ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check objectClass requirement from server rules."""
@@ -2060,7 +2077,7 @@ class FlextLdifModelsDomains:
 
         def _check_naming_attr_rule(
             self,
-            rules: FlextLdifModelsConfig.ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check naming attribute requirement from server rules."""
@@ -2084,7 +2101,7 @@ class FlextLdifModelsDomains:
 
         def _check_binary_option_rule(
             self,
-            rules: FlextLdifModelsConfig.ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
         ) -> list[str]:
             """Check binary attribute option requirement from server rules."""
             violations: list[str] = []
@@ -2132,8 +2149,10 @@ class FlextLdifModelsDomains:
                 try:
                     # Use model_validate for proper type conversion and validation
                     # This handles ScalarValue -> specific types conversion automatically
-                    rules = FlextLdifModelsConfig.ServerValidationRules.model_validate(
-                        validation_rules,
+                    rules = (
+                        FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                            validation_rules,
+                        )
                     )
                 except Exception:
                     # If validation fails, skip server-specific validation
@@ -2141,7 +2160,7 @@ class FlextLdifModelsDomains:
                     return self
             elif isinstance(
                 validation_rules,
-                FlextLdifModelsConfig.ServerValidationRules,
+                FlextLdifModelsSettings.ServerValidationRules,
             ):
                 rules = validation_rules
             else:
@@ -2172,12 +2191,12 @@ class FlextLdifModelsDomains:
                     self.metadata.validation_results.model_copy(
                         update={
                             "server_specific_violations": server_violations,
-                            "validation_server_type": self.metadata.quirk_type or None,
+                            "validation_server_type": self.metadata.quirk_type or None,  # type: ignore[unreachable]
                         },
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                # server_violations is list[str], compatible with MetadataAttributeValue
+                # server_violations is list[str], compatible with t.MetadataAttributeValue
                 self.metadata.extensions["server_specific_violations"] = (
                     server_violations
                 )
@@ -2391,11 +2410,6 @@ class FlextLdifModelsDomains:
                 in validation_metadata as RFC violation.
 
             """
-            if attributes is None:
-                # Mypy false positive: raise is reachable when attributes is None
-                msg = "Attributes cannot be None (required per RFC 2849 § 2)"
-                raise ValueError(msg)
-
             if isinstance(attributes, dict):
                 # Lenient processing: Accept empty dict (violation captured in validation_metadata)
                 # Empty dict is valid Attributes (Pydantic allows it)
@@ -2408,21 +2422,14 @@ class FlextLdifModelsDomains:
                         values_list = [str(v) for v in attr_values]
                     else:
                         # Single value - convert to list
-                        # Mypy false positive: this branch is reachable when attr_values is not str or list
                         values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
-                # Cast justified: str vs LaxStr compatibility issue between dict and Mapping
-                return FlextLdifModelsDomains.Attributes(
-                    attributes=cast("dict[LaxStr, list[LaxStr]]", attrs_dict),
-                )
-
-            # Already Attributes instance
+                return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
             if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
-            # Should not reach here, but ensure return type
-            # Mypy false positive: raise is reachable when attributes is not dict or Attributes
+            # This else block should now be reachable and is valid
             msg = f"Attributes must be dict or Attributes, got {type(attributes).__name__}"
-            raise TypeError(msg)
+            raise ValueError(msg)
 
         @classmethod
         def _build_extension_kwargs(
@@ -2479,10 +2486,9 @@ class FlextLdifModelsDomains:
                     source_entry,
                     unconverted_attributes,
                 )
-                # Type narrowing: convert values to MetadataAttributeValue compatible types
-                ext_kwargs_typed: dict[str, t.MetadataAttributeValue] = {
-                    k: cast("t.MetadataAttributeValue", v)
-                    for k, v in ext_kwargs.items()
+                # Type narrowing: convert values to t.MetadataAttributeValue compatible types
+                ext_kwargs_typed: dict[str, MetadataAttributeValue] = {
+                    k: cast("MetadataAttributeValue", v) for k, v in ext_kwargs.items()
                 }
                 extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
                 return FlextLdifModelsDomains.QuirkMetadata(
@@ -3782,7 +3788,7 @@ class FlextLdifModelsDomains:
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, t.MetadataAttributeValue]
+                | dict[str, MetadataAttributeValue]
                 | None
             ) = None,
         ) -> Self:
@@ -3797,10 +3803,12 @@ class FlextLdifModelsDomains:
 
             """
             # Use Constants default for quirk_type if not provided
-            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+            # normalize_server_type guarantees valid literal value, but returns str
+            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
                 normalize_server_type(quirk_type)
                 if quirk_type is not None
-                else c.Ldif.ServerTypes.RFC.value
+                else c.Ldif.ServerTypes.RFC.value,
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
@@ -3892,7 +3900,7 @@ class FlextLdifModelsDomains:
                 ... )
 
             """
-            # values is list[str], compatible with MetadataAttributeValue
+            # values is list[str], compatible with t.MetadataAttributeValue
             self.removed_attributes[attribute_name] = values
             return self.track_attribute_transformation(
                 original_name=attribute_name,
@@ -3941,7 +3949,7 @@ class FlextLdifModelsDomains:
             self.original_strings[rfc_format.META_DN_ORIGINAL] = original_dn
             self.extensions[rfc_format.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
-                # escapes_applied is Sequence[str] | None, compatible with MetadataAttributeValue
+                # escapes_applied is Sequence[str] | None, compatible with t.MetadataAttributeValue
                 self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_applied
 
             # Add to conversion notes

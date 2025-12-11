@@ -12,19 +12,17 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from typing import overload
 
-from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif._models.base import FlextLdifModelsBase
-
-# Import moved from TYPE_CHECKING to avoid circular dependency issues
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
+from flext_ldif.typings import t
 
 # NOTE: Use TYPE_CHECKING imports for models to avoid circular imports
 # Models are accessed via facade in models.py as m.* for external use

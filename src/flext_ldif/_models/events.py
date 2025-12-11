@@ -17,7 +17,7 @@ from flext_core import FlextModels
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif.constants import c
 
 
@@ -219,7 +219,7 @@ class FlextLdifModelsEvents:
             ...,
             description="Number of entries after filtering",
         )
-        filter_criteria: list[FlextLdifModelsConfig.FilterCriteria] = Field(
+        filter_criteria: list[FlextLdifModelsSettings.FilterCriteria] = Field(
             default_factory=list,
             description="Filter criteria applied",
         )

@@ -15,7 +15,7 @@ from __future__ import annotations
 import codecs
 from typing import Self
 
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -23,15 +23,15 @@ from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 
 
-@FlextConfig.auto_register("ldif")
-class FlextLdifConfig(FlextConfig):
+@FlextSettings.auto_register("ldif")
+class FlextLdifSettings(FlextSettings):
     """Pydantic v2 configuration for LDIF operations (nested config pattern).
 
     **ARCHITECTURAL PATTERN**: BaseSettings Configuration
 
     This class provides:
     - Environment variable support via FLEXT_LDIF_* prefix
-    - Namespace registration (accessible via FlextConfig.get_namespace)
+    - Namespace registration (accessible via FlextSettings.get_namespace)
     - Pydantic v2 validation and type safety
     - Complete LDIF processing configuration
 
@@ -43,23 +43,23 @@ class FlextLdifConfig(FlextConfig):
 
     **Usage**:
     # Get direct instance
-    config = FlextLdifConfig()
+    config = FlextLdifSettings()
 
-    # Or via FlextConfig namespace
-    from flext_core import FlextConfig
+    # Or via FlextSettings namespace
+    from flext_core import FlextSettings
     ldif_config = (
-        FlextConfig.get_global_instance()
-        .get_namespace("ldif", FlextLdifConfig)
+        FlextSettings.get_global_instance()
+        .get_namespace("ldif", FlextLdifSettings)
     )
     """
 
     # Model configuration (disable str_strip_whitespace for LDIF fields
     # that need whitespace)
     # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
-    # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
+    # Use FlextSettings.resolve_env_file() to ensure all FLEXT configs use same .env
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
-        env_file=FlextConfig.resolve_env_file(),
+        env_file=FlextSettings.resolve_env_file(),
         env_file_encoding="utf-8",
         str_strip_whitespace=False,
         validate_assignment=True,
@@ -115,7 +115,7 @@ class FlextLdifConfig(FlextConfig):
         description="Chunk size for LDIF processing",
     )
 
-    # max_workers inherited from FlextConfig (use self.max_workers)
+    # max_workers inherited from FlextSettings (use self.max_workers)
     # Override to respect debug mode constraints
 
     # Memory and Performance Configuration - Fix default value
@@ -234,8 +234,8 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Development and Debug Configuration
-    # debug, trace inherited from FlextConfig (use self.debug, self.trace)
-    # log_verbosity inherited from FlextConfig
+    # debug, trace inherited from FlextSettings (use self.debug, self.trace)
+    # log_verbosity inherited from FlextSettings
     # (use self.log_verbosity for detailed logging)
 
     # =========================================================================
@@ -801,7 +801,7 @@ class FlextLdifConfig(FlextConfig):
 
             Note: Validations that require root config fields
             (max_workers, debug, trace)
-        should be performed at the root config level (e.g., client-aOudMigConfig).
+        should be performed at the root config level (e.g., client-aOudMigSettings).
         """
         # Validate analytics configuration
         if (
@@ -823,7 +823,7 @@ class FlextLdifConfig(FlextConfig):
         return self
 
     # =========================================================================
-    # UTILITY METHODS - Enhanced with FlextConfig integration
+    # UTILITY METHODS - Enhanced with FlextSettings integration
     # =========================================================================
 
     def get_effective_encoding(self) -> str:
@@ -841,8 +841,8 @@ class FlextLdifConfig(FlextConfig):
     # =========================================================================
     # PUBLIC API - Direct access to models (no wrappers)
     # =========================================================================
-    # WriteFormatOptions is deprecated - use FlextLdifConfig fields (ldif_write_*)
-    # Direct access via FlextLdifModelsConfig.WriteFormatOptions when needed
+    # WriteFormatOptions is deprecated - use FlextLdifSettings fields (ldif_write_*)
+    # Direct access via FlextLdifModelsSettings.WriteFormatOptions when needed
 
 
-__all__ = ["FlextLdifConfig"]
+__all__ = ["FlextLdifSettings"]

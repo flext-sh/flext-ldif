@@ -167,7 +167,7 @@ api = FlextLdif(config=config)
 Access additional configuration options:
 
 ```python
-from flext_ldif import FlextLdifConfig, get_ldif_config
+from flext_ldif import FlextLdifSettings, get_ldif_config
 
 # Get global configuration
 config = get_ldif_config()

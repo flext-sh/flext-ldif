@@ -10,7 +10,7 @@ from typing import Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import m
@@ -440,11 +440,11 @@ class FlextLdifUtilitiesEntry:
 
             # Preserve original values
             # Business Rule: LDIF attribute values are always ScalarValue or Sequence[ScalarValue]
-            # (never recursive GeneralValueType with nested Mappings).
-            # This method receives GeneralValueType from entry_attrs but converts to
+            # (never recursive t.GeneralValueType with nested Mappings).
+            # This method receives t.GeneralValueType from entry_attrs but converts to
             # MetadataAttributeValue for metadata storage (which only accepts ScalarValue).
             # Implication: Attribute values in LDIF are always primitive types, never nested structures.
-            # Type conversion: GeneralValueType -> MetadataAttributeValue is safe because
+            # Type conversion: t.GeneralValueType -> MetadataAttributeValue is safe because
             # LDIF attributes never contain nested Mappings in practice.
             # Business Rule: original_values must be list[str] for iteration in string building
             # Implication: Convert all values to list[str] format for consistent processing
@@ -491,7 +491,7 @@ class FlextLdifUtilitiesEntry:
     def matches_server_patterns(
         entry_dn: str,
         attributes: Mapping[str, FlextTypes.GeneralValueType],
-        config: FlextLdifModelsConfig.ServerPatternsConfig,
+        config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns.
 
@@ -507,7 +507,7 @@ class FlextLdifUtilitiesEntry:
             True if entry matches any pattern set
 
         Example:
-            config = FlextLdifModelsConfig.ServerPatternsConfig(
+            config = FlextLdifModelsSettings.ServerPatternsConfig(
                 dn_patterns=(("ou=users",), ("cn=REDACTED_LDAP_BIND_PASSWORD",)),
                 attr_prefixes=("orcl", "oracle"),
                 attr_names={"orclaci", "orclentrylevelaci"},
@@ -653,7 +653,7 @@ class FlextLdifUtilitiesEntry:
     def normalize_attributes_batch(
         attributes: t.Ldif.AttributesDict,
         *,
-        config: FlextLdifModelsConfig.AttributeNormalizeConfig | None = None,
+        config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
         **kwargs: object,
     ) -> t.Ldif.AttributesDict:
         """Batch normalize attributes from server format to RFC format.
@@ -690,7 +690,7 @@ class FlextLdifUtilitiesEntry:
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, object] and validates at runtime
-            config = FlextLdifModelsConfig.AttributeNormalizeConfig.model_validate(
+            config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
                 kwargs,
             )
 
@@ -774,7 +774,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_criteria(
         entry: m.Ldif.Entry,
-        config: FlextLdifModelsConfig.EntryCriteriaConfig | None = None,
+        config: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
         **kwargs: object,
     ) -> bool:
         """Check multiple entry criteria in one call.
@@ -802,7 +802,7 @@ class FlextLdifUtilitiesEntry:
             True if all specified criteria are met
 
         Examples:
-            >>> config = FlextLdifModelsConfig.EntryCriteriaConfig(
+            >>> config = FlextLdifModelsSettings.EntryCriteriaConfig(
             ...     is_schema=False,
             ...     objectclasses=["inetOrgPerson", "person"],
             ...     objectclass_mode="any",
@@ -815,7 +815,7 @@ class FlextLdifUtilitiesEntry:
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, object] and validates at runtime
-            config = FlextLdifModelsConfig.EntryCriteriaConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
 
         checks: list[bool] = []
 
@@ -862,7 +862,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def transform_batch(
         entries: Sequence[m.Ldif.Entry],
-        config: FlextLdifModelsConfig.EntryTransformConfig | None = None,
+        config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations.
@@ -883,7 +883,7 @@ class FlextLdifUtilitiesEntry:
             FlextResult containing list of transformed entries
 
         Examples:
-            >>> config = FlextLdifModelsConfig.EntryTransformConfig(
+            >>> config = FlextLdifModelsSettings.EntryTransformConfig(
             ...     normalize_attrs=True,
             ...     attr_case="lower",
             ...     remove_attrs=["userPassword", "pwdHistory"],
@@ -894,7 +894,7 @@ class FlextLdifUtilitiesEntry:
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, object] and validates at runtime
-            config = FlextLdifModelsConfig.EntryTransformConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
 
         def transform_entry(
             entry: m.Ldif.Entry,
@@ -979,7 +979,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def filter_batch(
         entries: Sequence[m.Ldif.Entry],
-        config: FlextLdifModelsConfig.EntryFilterConfig | None = None,
+        config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Filter entries based on criteria.
@@ -994,7 +994,7 @@ class FlextLdifUtilitiesEntry:
             FlextResult containing filtered entries
 
         Example:
-            >>> config = FlextLdifModelsConfig.EntryFilterConfig(
+            >>> config = FlextLdifModelsSettings.EntryFilterConfig(
             ...     objectclasses=["inetOrgPerson"],
             ...     exclude_schema=True,
             ... )
@@ -1010,13 +1010,13 @@ class FlextLdifUtilitiesEntry:
                 effective_is_schema = False
             kwargs["is_schema"] = effective_is_schema
             # Use model_validate which accepts dict[str, object] and validates at runtime
-            config = FlextLdifModelsConfig.EntryFilterConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
 
         filtered_list = u.Collection.filter(
             list(entries),
             predicate=lambda entry: FlextLdifUtilitiesEntry.matches_criteria(
                 entry,
-                config=FlextLdifModelsConfig.EntryCriteriaConfig(
+                config=FlextLdifModelsSettings.EntryCriteriaConfig(
                     objectclasses=config.objectclasses,
                     objectclass_mode=config.objectclass_mode,
                     required_attrs=config.required_attrs,

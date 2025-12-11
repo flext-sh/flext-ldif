@@ -145,7 +145,7 @@ class FlextLdifUtilitiesParsers:
                     attributes.update(comments)
 
                 # Create entry
-                # Entry field validators will coerce str -> DN and dict -> m.Ldif.Attributes
+                # Entry field validators will coerce str -> DN and dict -> m.Ldif.
                 # Convert types explicitly for mypy
                 dn_obj = dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN(value=dn)
                 attrs_obj = (

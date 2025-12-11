@@ -294,7 +294,7 @@ class FlextLdifStatistics(
         if batch_result.is_success and batch_result.value:
             batch_dict = batch_result.value
             results_raw = batch_dict.get("results", [])
-            # Type narrowing: results_raw is list[GeneralValueType] from batch dict
+            # Type narrowing: results_raw is list[t.GeneralValueType] from batch dict
             # extract_reason returns str | r[str], so results are str after unwrapping
             if not isinstance(results_raw, list):
                 return sorted(reasons)

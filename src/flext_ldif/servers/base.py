@@ -153,7 +153,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         # Type narrowing: self is FlextLdifServersBase instance
         parent_ref: FlextLdifServersBase = self
         # Business Rule: _parent_quirk must be set after instance creation using object.__setattr__
-        # Implication: Cannot pass _parent_quirk to __new__ because it's not GeneralValueType
+        # Implication: Cannot pass _parent_quirk to __new__ because it's not t.GeneralValueType
         # Create instances without _parent_quirk, then set it separately
         self._schema_quirk = self.Schema()
         object.__setattr__(self._schema_quirk, "_parent_quirk", parent_ref)

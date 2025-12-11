@@ -10,12 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from flext_core import r, t as core_t
-
-if TYPE_CHECKING:
-    from flext_ldif import m
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -25,19 +22,19 @@ from flext_ldif._models.shared import FlextLdifModelsBase
 from flext_ldif.constants import c
 
 # REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
-# _Entry = "m.Ldif.Entry"  # Use "m.Ldif.Entry" directly
-# _SchemaObjectClass = "m.Ldif.SchemaObjectClass"  # Use "m.Ldif.SchemaObjectClass" directly
-# _Acl = "m.Ldif.Acl"  # Use "m.Ldif.Acl" directly
+# _Entry = "FlextModelsEntity.Entry"  # Use "FlextModelsEntity.Entry" directly
+# _SchemaObjectClass = "FlextModelsBase.SchemaObjectClass"  # Use "FlextModelsBase.SchemaObjectClass" directly
+# _Acl = "FlextModelsBase.Acl"  # Use "FlextModelsBase.Acl" directly
 _QuirkMetadata = (
     core_t.Metadata
 )  # Use Metadata type from flext-core (this is from flext-core, not nested)
 
 
-class FlextLdifModelsConfig:
+class FlextLdifModelsSettings:
     """LDIF configuration models container class.
 
     This class acts as a namespace container for LDIF configuration models.
-    All nested classes are accessed via m.* in the main models.py.
+    All nested classes are accessed via FlextModelsBase.* in the main models.py.
     """
 
     # Configuration classes will be added here
@@ -49,7 +46,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = m.AclMetadataConfig(
+            config = FlextModelsBase.AclMetadataConfig(
                 line_breaks=[10, 20],
                 dn_spaces=True,
                 targetscope="subtree",
@@ -96,7 +93,7 @@ class FlextLdifModelsConfig:
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            parser_config = m.AciParserConfig(
+            parser_config = FlextModelsBase.AciParserConfig(
                 server_type="oud",
                 aci_prefix="aci:",
                 version_acl_pattern=Constants.ACL_VERSION_ACL_PATTERN,
@@ -190,7 +187,7 @@ class FlextLdifModelsConfig:
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            writer_config = m.AciWriterConfig(
+            writer_config = FlextModelsBase.AciWriterConfig(
                 aci_prefix="aci:",
                 version="3.0",
                 ...
@@ -250,7 +247,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.AciLineFormatConfig(
+            config = FlextLdifModelsSettings.AciLineFormatConfig(
                 name="test-acl",
                 target_clause="(targetattr=\"cn\")",
                 permissions_clause="allow (read,write)",
@@ -297,7 +294,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.ServerPatternsConfig(
+            config = FlextLdifModelsSettings.ServerPatternsConfig(
                 dn_patterns=(("ou=users",), ("cn=REDACTED_LDAP_BIND_PASSWORD",)),
                 attr_prefixes=("orcl", "oracle"),
                 attr_names={"orclaci", "orclentrylevelaci"},
@@ -341,7 +338,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.AttributeDenormalizeConfig(
+            config = FlextLdifModelsSettings.AttributeDenormalizeConfig(
                 case_mappings={"objectclass": "objectClass"},
                 boolean_mappings={"TRUE": "1", "FALSE": "0"},
             )
@@ -380,7 +377,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.AttributeNormalizeConfig(
+            config = FlextLdifModelsSettings.AttributeNormalizeConfig(
                 case_mappings={"objectClass": "objectclass"},
                 boolean_mappings={"1": "TRUE", "0": "FALSE"},
                 strip_operational=True,
@@ -424,7 +421,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.EntryCriteriaConfig(
+            config = FlextLdifModelsSettings.EntryCriteriaConfig(
                 objectclasses=["inetOrgPerson", "person"],
                 objectclass_mode="any",
                 required_attrs=["cn", "sn"],
@@ -470,7 +467,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.EntryTransformConfig(
+            config = FlextLdifModelsSettings.EntryTransformConfig(
                 normalize_dns=True,
                 normalize_attrs=True,
                 attr_case="lower",
@@ -520,7 +517,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.EntryFilterConfig(
+            config = FlextLdifModelsSettings.EntryFilterConfig(
                 objectclasses=["inetOrgPerson"],
                 exclude_schema=True,
             )
@@ -565,7 +562,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.TransformationTrackingConfig(
+            config = FlextLdifModelsSettings.TransformationTrackingConfig(
                 original_name="orcldasisenabled",
                 target_name="orcldasisenabled",
                 original_values=["1"],
@@ -614,7 +611,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsConfig.EntryParseMetadataConfig(
+            config = FlextLdifModelsSettings.EntryParseMetadataConfig(
                 quirk_type="oid",
                 original_entry_dn="cn=test,dc=example",
                 cleaned_dn="cn=test,dc=example",
@@ -739,7 +736,7 @@ class FlextLdifModelsConfig:
         Eliminates use of object and Any types in logging functions.
 
         Example:
-            extras = m.LogContextExtras(
+            extras = FlextModelsBase.LogContextExtras(
                 user_id="REDACTED_LDAP_BIND_PASSWORD",
                 session_id="abc123",
                 request_id="req-456",
@@ -848,7 +845,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Structured migration config with 6-file output and tracking",
         )
-        write_options: FlextLdifModelsConfig.WriteFormatOptions | None = Field(
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None = Field(
             default=None,
             description=(
                 "Write format options (line folding, removed attrs as comments)"
@@ -856,7 +853,7 @@ class FlextLdifModelsConfig:
         )
 
         # Categorized mode parameters (legacy)
-        categorization_rules: FlextLdifModelsConfig.CategoryRules | None = Field(
+        categorization_rules: FlextLdifModelsSettings.CategoryRules | None = Field(
             default=None,
             description="Entry categorization rules (enables categorized mode)",
         )
@@ -868,7 +865,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Category to filename mapping (categorized mode)",
         )
-        schema_whitelist_rules: FlextLdifModelsConfig.WhitelistRules | None = Field(
+        schema_whitelist_rules: FlextLdifModelsSettings.WhitelistRules | None = Field(
             default=None,
             description="Allowed schema elements whitelist (categorized mode)",
         )
@@ -1019,9 +1016,9 @@ class FlextLdifModelsConfig:
         requires_objectclass: bool
         requires_naming_attr: bool
         requires_binary_option: bool
-        encoding_rules: FlextLdifModelsConfig.EncodingRules
-        dn_case_rules: FlextLdifModelsConfig.DnCaseRules
-        acl_format_rules: FlextLdifModelsConfig.AclFormatRules
+        encoding_rules: FlextLdifModelsSettings.EncodingRules
+        dn_case_rules: FlextLdifModelsSettings.DnCaseRules
+        acl_format_rules: FlextLdifModelsSettings.AclFormatRules
         track_deletions: bool
         track_modifications: bool
         track_conversions: bool
@@ -1030,11 +1027,11 @@ class FlextLdifModelsConfig:
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
-            Use FlextLdifConfig fields (ldif_write_*) instead.
+            Use FlextLdifSettings fields (ldif_write_*) instead.
             This class will be removed in version 1.0.0.
 
         **Migration Guide**:
-            Replace WriteFormatOptions with FlextLdifConfig:
+            Replace WriteFormatOptions with FlextLdifSettings:
 
             .. code-block:: python
 
@@ -1043,10 +1040,10 @@ class FlextLdifModelsConfig:
                 result = ldif.write(entries, options=options)
 
                 # NEW (correct):
-                from flext_ldif import FlextLdifConfig
+                from flext_ldif import FlextLdifSettings
 
-                config = FlextConfig.get_global_instance().get_namespace(
-                    "ldif", FlextLdifConfig
+                config = FlextSettings.get_global_instance().get_namespace(
+                    "ldif", FlextLdifSettings
                 )
                 # Override if needed: config.ldif_write_fold_long_lines = True
                 result = ldif.write(entries)  # Uses config.ldif_write_* fields
@@ -1056,7 +1053,7 @@ class FlextLdifModelsConfig:
             - fold_long_lines → config.ldif_write_fold_long_lines
             - respect_attribute_order → config.ldif_write_respect_attribute_order
             - sort_attributes → config.ldif_write_sort_attributes
-            - (see FlextLdifConfig for complete list of ldif_write_* fields)
+            - (see FlextLdifSettings for complete list of ldif_write_* fields)
 
         Provides detailed control over the output format, including line width
         for folding, and whether to respect attribute ordering from metadata.
@@ -1446,7 +1443,7 @@ class FlextLdifModelsConfig:
         """Formatting options for LDIF parsing (VIEW MODEL).
 
         **Architecture**: This is a Pydantic VIEW MODEL that represents
-        parse format options. The SOURCE OF TRUTH is FlextLdifConfig fields
+        parse format options. The SOURCE OF TRUTH is FlextLdifSettings fields
         (ldif_parse_*). Use `config.to_parse_options()` to convert config to
         this model.
 
@@ -1454,10 +1451,10 @@ class FlextLdifModelsConfig:
             .. code-block:: python
 
                 # Config is source of truth
-                from flext_ldif import FlextLdifConfig
+                from flext_ldif import FlextLdifSettings
 
-                config = FlextConfig.get_global_instance().get_namespace(
-                    "ldif", FlextLdifConfig
+                config = FlextSettings.get_global_instance().get_namespace(
+                    "ldif", FlextLdifSettings
                 )
 
                 # Override specific fields if needed
@@ -1555,7 +1552,7 @@ class FlextLdifModelsConfig:
             default=c.Ldif.ServerTypes.RFC,
             description="Target LDAP server type (e.g., 'oid', 'oud', 'rfc')",
         )
-        migration_config: FlextLdifModelsConfig.MigrationConfig | None = Field(
+        migration_config: FlextLdifModelsSettings.MigrationConfig | None = Field(
             default=None,
             description=(
                 "Optional migration configuration for file organization and filtering"
@@ -1653,7 +1650,7 @@ class FlextLdifModelsConfig:
     class ConfigInfo(FlextModelsEntity.Value):
         """Configuration information for logging and introspection.
 
-        Structured representation of FlextLdifConfig for reporting and diagnostics.
+        Structured representation of FlextLdifSettings for reporting and diagnostics.
         """
 
         model_config = ConfigDict(frozen=True)
@@ -1723,17 +1720,13 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform attrs before parsing",
         )
         post_parse_hook: (
-            Callable[
-                ["m.Ldif.Entry"],
-                "m.Ldif.Entry",
-            ]
-            | None
+            Callable[[FlextModelsEntity.Entry], FlextModelsEntity.Entry] | None
         ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[["m.Ldif.Entry", str, str], None] | None
+            Callable[[FlextModelsEntity.Entry, str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1786,8 +1779,8 @@ class FlextLdifModelsConfig:
         )
         post_parse_hook: (
             Callable[
-                ["m.Ldif.Entry"],
-                "m.Ldif.Entry",
+                [FlextModelsEntity.Entry],
+                FlextModelsEntity.Entry,
             ]
             | None
         ) = Field(
@@ -1795,7 +1788,7 @@ class FlextLdifModelsConfig:
             description="Optional hook to transform entry after parsing",
         )
         preserve_metadata_hook: (
-            Callable[["m.Ldif.Entry", str, str], None] | None
+            Callable[[FlextModelsEntity.Entry, str, str], None] | None
         ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
@@ -1839,7 +1832,7 @@ class FlextLdifModelsConfig:
             description="Optional SUP transformation",
         )
         enrich_metadata_hook: (
-            Callable[["m.Ldif.SchemaObjectClass"], None] | None
+            Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None
         ) = Field(
             default=None,
             description="Optional metadata enrichment",
@@ -1912,7 +1905,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entry: "m.Ldif.Entry" = Field(
+        entry: FlextModelsEntity.Entry = Field(
             ...,
             description="Entry model to write",
         )
@@ -1920,22 +1913,22 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[["m.Ldif.Entry", list[str]], None] = (
+        write_attributes_hook: Callable[[FlextModelsEntity.Entry, list[str]], None] = (
             Field(
                 ...,
                 description="Core attributes writing",
             )
         )
         write_comments_hook: (
-            Callable[["m.Ldif.Entry", list[str]], None] | None
+            Callable[[FlextModelsEntity.Entry, list[str]], None] | None
         ) = Field(
             default=None,
             description="Optional comments writing",
         )
         transform_entry_hook: (
             Callable[
-                ["m.Ldif.Entry"],
-                "m.Ldif.Entry",
+                [FlextModelsEntity.Entry],
+                FlextModelsEntity.Entry,
             ]
             | None
         ) = Field(
@@ -1964,7 +1957,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entries: list["m.Ldif.Entry"] = Field(
+        entries: list[FlextModelsEntity.Entry] = Field(
             ...,
             description="List of entries to write",
         )
@@ -1972,7 +1965,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[["m.Ldif.Entry"], r[str]] = Field(
+        write_entry_hook: Callable[[FlextModelsEntity.Entry], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -2087,11 +2080,11 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        original_acl: "m.Ldif.Acl" = Field(
+        original_acl: FlextLdifModelsDomains.Acl = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: "m.Ldif.Acl" = Field(
+        converted_acl: FlextLdifModelsDomains.Acl = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2114,6 +2107,6 @@ class FlextLdifModelsConfig:
 
 
 # Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
-# Nested objects use full namespace ("m.Ldif.Entry", not aliases)
+# Nested objects use full namespace ("FlextModelsEntity.Entry", not aliases)
 # No string-quoted forward references - models work without rebuilding
 # No model_rebuild() calls needed - architectural requirement

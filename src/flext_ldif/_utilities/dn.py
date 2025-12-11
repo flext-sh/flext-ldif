@@ -18,7 +18,7 @@ from flext_core import (
     r,
 )
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -1091,7 +1091,7 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         i: int,
-        config: FlextLdifModelsConfig.RdnProcessingConfig,
+        config: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing.
 
@@ -1141,7 +1141,7 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         position: int,
-        config: FlextLdifModelsConfig.RdnProcessingConfig,
+        config: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
         """Advance position during RDN parsing and return new state.
 
@@ -1175,7 +1175,7 @@ class FlextLdifUtilitiesDN:
             rdn_len: int = len(rdn)
             position: int = 0
 
-            rdn_config = FlextLdifModelsConfig.RdnProcessingConfig(
+            rdn_config = FlextLdifModelsSettings.RdnProcessingConfig(
                 current_attr=current_attr,
                 current_val=current_val,
                 in_value=in_value,
@@ -1748,7 +1748,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _update_metadata_for_transformation(
         metadata: m.Ldif.QuirkMetadata,
-        config: FlextLdifModelsConfig.MetadataTransformationConfig,
+        config: FlextLdifModelsSettings.MetadataTransformationConfig,
     ) -> None:
         """Update metadata with transformation tracking."""
         if config.transformed_dn != config.original_dn:
@@ -1876,7 +1876,7 @@ class FlextLdifUtilitiesDN:
         else:
             metadata = m.Ldif.QuirkMetadata.create_for()
 
-        transform_config = FlextLdifModelsConfig.MetadataTransformationConfig(
+        transform_config = FlextLdifModelsSettings.MetadataTransformationConfig(
             original_dn=original_dn_str,
             transformed_dn=transformed_dn,
             source_dn=source_dn,

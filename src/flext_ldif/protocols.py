@@ -26,7 +26,7 @@ from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
-from flext_ldif.typings import MetadataType
+from flext_ldif.typings import t
 
 # =========================================================================
 # NAMESPACE CLASS
@@ -74,7 +74,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def metadata(self) -> MetadataType | object | None:
+            def metadata(self) -> t.Ldif.MetadataType | object | None:
                 """Optional metadata for processing context."""
                 ...
 
@@ -86,7 +86,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 deep: bool = False,
-                update: MetadataType | None = None,
+                update: t.Ldif.MetadataType | None = None,
             ) -> Self:
                 """Create a copy of the entry with optional updates."""
                 ...
@@ -114,7 +114,7 @@ class FlextLdifProtocols(FlextProtocols):
             target: Mapping[str, str]
             subject: Mapping[str, str]
             permissions: Mapping[str, bool]
-            metadata: MetadataType | None
+            metadata: t.Ldif.MetadataType | None
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
@@ -582,7 +582,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadataProtocol(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
-            validation_metadata: MetadataType | None
+            validation_metadata: t.Ldif.MetadataType | None
 
         # =========================================================================
         # UTILITY PROTOCOLS

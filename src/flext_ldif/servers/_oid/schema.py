@@ -130,12 +130,12 @@ class FlextLdifServersOidSchema(
             **kwargs: Passed to parent (must not include _parent_quirk or _schema_service)
 
         """
-        # Business Rule: _schema_service is NOT a GeneralValueType, so it cannot be
-        # passed to FlextService.__init__ which expects only GeneralValueType kwargs.
+        # Business Rule: _schema_service is NOT a t.GeneralValueType, so it cannot be
+        # passed to FlextService.__init__ which expects only t.GeneralValueType kwargs.
         # Implication: _schema_service must be stored directly on the instance after
         # super().__init__() using object.__setattr__.
         # Filter _schema_service and _parent_quirk from kwargs to avoid duplicate arguments
-        # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
+        # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
         # Implication: Filter kwargs to ensure type safety
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
@@ -1157,8 +1157,7 @@ class FlextLdifServersOidSchema(
     ) -> r[
         dict[
             str,
-            list[m.Ldif.SchemaAttribute]
-            | list[m.Ldif.SchemaObjectClass],
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.

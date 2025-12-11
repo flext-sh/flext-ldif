@@ -13,14 +13,14 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import c as lib_c
 from flext_ldif.protocols import p
+from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import FlextLdifUtilities
 from tests import c, m, s
 
@@ -29,13 +29,13 @@ class TestsFlextLdifWriterOptions(s):
     """Test all WriteFormatOptions and WriteOptions functionality."""
 
     writer_service: ClassVar[FlextLdifWriter]  # pytest fixture
-    config_instance: ClassVar[FlextConfig]  # pytest fixture
+    config_instance: ClassVar[FlextSettings]  # pytest fixture
 
 
 def config_to_write_options(
-    config: FlextLdifConfig,
+    config: FlextLdifSettings,
 ) -> m.WriteFormatOptions | m.WriteOptions:
-    """Convert FlextLdifConfig to WriteOptions or WriteFormatOptions."""
+    """Convert FlextLdifSettings to WriteOptions or WriteFormatOptions."""
     # Check if WriteFormatOptions fields are present
     has_format_options = any(
         hasattr(config, key) and getattr(config, key, None) is not None
@@ -78,7 +78,7 @@ def config_to_write_options(
 
 
 class WriterOption(StrEnum):
-    """Enum mapping WriteFormatOptions fields to FlextLdifConfig fields."""
+    """Enum mapping WriteFormatOptions fields to FlextLdifSettings fields."""
 
     LINE_WIDTH = "ldif_max_line_length"
     FOLD_LONG_LINES = "ldif_write_fold_long_lines"
@@ -114,10 +114,10 @@ CONFIG_TO_MODEL_FIELD_MAP = {
 
 
 class TestsFlextLdifWriterFormatOptions(s):
-    """Test all WriteFormatOptions functionality via FlextLdifConfig."""
+    """Test all WriteFormatOptions functionality via FlextLdifSettings."""
 
     writer_service: ClassVar[FlextLdifWriter]  # pytest fixture
-    config_instance: ClassVar[FlextConfig]  # pytest fixture
+    config_instance: ClassVar[FlextSettings]  # pytest fixture
     sample_entry: ClassVar[p.Entry]  # pytest fixture
     entry_with_metadata: ClassVar[p.Entry]  # pytest fixture
     entry_with_binary_data: ClassVar[p.Entry]  # pytest fixture
@@ -135,11 +135,11 @@ class TestsFlextLdifWriterFormatOptions(s):
         return FlextLdifWriter()
 
     @pytest.fixture
-    def config_instance(self) -> FlextConfig:
+    def config_instance(self) -> FlextSettings:
         """Create config instance for test isolation using modern API."""
         # Reset singleton for test isolation
-        FlextConfig.reset_global_instance()
-        return FlextConfig.get_global_instance()
+        FlextSettings.reset_global_instance()
+        return FlextSettings.get_global_instance()
 
     @pytest.fixture
     def sample_entry(self) -> p.Entry:
@@ -689,10 +689,10 @@ class TestsFlextLdifWriterFormatOptions(s):
         """Test writing to file with options."""
         output_file = tmp_path / "test_output.ldif"
 
-        FlextConfig.reset_global_instance()
-        config = FlextConfig.get_global_instance().get_namespace(
+        FlextSettings.reset_global_instance()
+        config = FlextSettings.get_global_instance().get_namespace(
             "ldif",
-            FlextLdifConfig,
+            FlextLdifSettings,
         )
         config.ldif_write_include_version_header = True
         config.ldif_write_include_timestamps = True
@@ -726,10 +726,10 @@ class TestsFlextLdifWriterFormatOptions(s):
         change the return type. When no output_path is provided, write() always
         returns a string, regardless of _output_target value.
         """
-        FlextConfig.reset_global_instance()
-        config = FlextConfig.get_global_instance().get_namespace(
+        FlextSettings.reset_global_instance()
+        config = FlextSettings.get_global_instance().get_namespace(
             "ldif",
-            FlextLdifConfig,
+            FlextLdifSettings,
         )
         config.ldif_write_normalize_attribute_names = True
         options = config_to_write_options(config)
@@ -801,10 +801,10 @@ class TestsFlextLdifWriterFormatOptions(s):
         sample_entry: p.Entry,
     ) -> None:
         """Test that options don't interfere with server type validation."""
-        FlextConfig.reset_global_instance()
-        config = FlextConfig.get_global_instance().get_namespace(
+        FlextSettings.reset_global_instance()
+        config = FlextSettings.get_global_instance().get_namespace(
             "ldif",
-            FlextLdifConfig,
+            FlextLdifSettings,
         )
         config.ldif_write_include_version_header = True
         options = config_to_write_options(config)

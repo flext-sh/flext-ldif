@@ -14,7 +14,7 @@ from typing import ClassVar
 import pytest
 from tests import s
 
-from flext_ldif import FlextLdifConfig, FlextLdifConstants, FlextLdifModels, services
+from flext_ldif import FlextLdifConstants, FlextLdifModels, FlextLdifSettings, services
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.statistics import FlextLdifStatistics
 
@@ -99,8 +99,8 @@ class TestsTestFlextLdifServiceAPIs(s):
                         f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS}"
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
-                    config = FlextLdifConfig()
-                    assert config is not None, "FlextLdifConfig should instantiate"
+                    config = FlextLdifSettings()
+                    assert config is not None, "FlextLdifSettings should instantiate"
 
     @pytest.fixture
     def dn_service(self) -> FlextLdifDn:
@@ -135,7 +135,7 @@ class TestsTestFlextLdifServiceAPIs(s):
             (ImportCheck.CONSTANTS, Constants.CONSTANT_SERVER_TYPES),
             (ImportCheck.UTILITIES_MODULE, Constants.MODULE_UTILITIES),
             (ImportCheck.SERVICES_MODULE, "services"),
-            (ImportCheck.CONFIGURATION, "FlextLdifConfig"),
+            (ImportCheck.CONFIGURATION, "FlextLdifSettings"),
         ],
     )
     def test_imports_available(

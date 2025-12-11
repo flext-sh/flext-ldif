@@ -315,7 +315,7 @@ api = FlextLdif(config=ConfigurationProfiles.enterprise())
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -334,7 +334,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdifConfig
+from flext_ldif import FlextLdifSettings
 
 # Register configuration in container
 container = FlextContainer.get_global()
@@ -355,7 +355,7 @@ if config_result.is_success:
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext

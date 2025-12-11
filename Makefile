@@ -164,7 +164,7 @@ ldif-validate: ## Validate LDIF files
 
 .PHONY: ldif-config
 ldif-config: ## Test LDIF configuration
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldif.config import FlextLdifConfig; print('LDIF config valid')"
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldif.settings import FlextLdifSettings; print('LDIF config valid')"
 
 .PHONY: ldif-operations
 ldif-operations: ldif-config ldif-parse ldif-validate ## Run all LDIF validations
@@ -257,6 +257,12 @@ clean-all: clean ## Deep clean including venv
 
 .PHONY: reset
 reset: clean-all setup ## Reset project
+
+# =============================================================================
+# LINT REPORTS (Multi-Agent Coordination)
+# =============================================================================
+# Include centralized lint-reports.mk from workspace root
+include ../lint-reports.mk
 
 # =============================================================================
 # DIAGNOSTICS

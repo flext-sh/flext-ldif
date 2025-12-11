@@ -13,7 +13,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
@@ -528,7 +528,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
 
     # === PARSER CONFIG FACTORY ===
     @staticmethod
-    def get_parser_config() -> FlextLdifModelsConfig.AciParserConfig:
+    def get_parser_config() -> FlextLdifModelsSettings.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing.
 
         Returns:
@@ -536,7 +536,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
 
         """
         constants = FlextLdifServersOudConstants
-        return FlextLdifModelsConfig.AciParserConfig(
+        return FlextLdifModelsSettings.AciParserConfig(
             server_type="oud",  # Use literal string for ServerTypeLiteral compatibility
             aci_prefix="aci:",
             version_acl_pattern=constants.ACL_VERSION_ACL_PATTERN,

@@ -215,7 +215,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.Types.BatchResultDict = batch_result.value
+        batch_data: core_t.BatchResultDict = batch_result.value
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
         # operation_fn returns r[Entry], so batch extracts .value and R = Entry
         raw_results = batch_data["results"]
@@ -267,7 +267,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.Types.BatchResultDict = batch_result.value
+        batch_data: core_t.BatchResultDict = batch_result.value
         # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
         raw_results = batch_data["results"]
         if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):

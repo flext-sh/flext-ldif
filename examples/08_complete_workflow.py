@@ -43,7 +43,7 @@ def railway_oriented_composition() -> None:
     """Demonstrate railway-oriented programming with FlextResult composition.
 
     Shows elegant chaining of operations with automatic error propagation.
-    Uses .env configuration automatically via FlextLdifConfig.
+    Uses .env configuration automatically via FlextLdifSettings.
     """
     api = FlextLdif.get_instance()
 
@@ -87,11 +87,11 @@ mail: railway@example.com
 def configuration_from_env_example() -> None:
     """Demonstrate automatic configuration loading from .env file.
 
-    FlextLdifConfig automatically loads from environment variables:
+    FlextLdifSettings automatically loads from environment variables:
     - FLEXT_LDIF_MAX_WORKERS
     - FLEXT_LDIF_STRICT_VALIDATION
     - FLEXT_LDIF_ENCODING
-    - And all other FlextLdifConfig fields
+    - And all other FlextLdifSettings fields
 
     No manual configuration needed - set values in .env file!
     """

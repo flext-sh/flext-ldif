@@ -14,9 +14,10 @@ from __future__ import annotations
 from collections.abc import Generator, ItemsView, KeysView, ValuesView
 from typing import ClassVar, overload
 
-from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from pydantic import ConfigDict
+
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsMetadata:

@@ -13,7 +13,7 @@ from typing import Literal, cast
 from flext_core import FlextLogger, r, u as u_core
 from flext_core.runtime import FlextRuntime
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.functional import FlextFunctional
 from flext_ldif.constants import c
@@ -394,7 +394,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModelsConfig.AclMetadataConfig,
+        config: FlextLdifModelsSettings.AclMetadataConfig,
     ) -> dict[str, t.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL.
 
@@ -770,7 +770,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_aci_line(
-        config: FlextLdifModelsConfig.AciLineFormatConfig,
+        config: FlextLdifModelsSettings.AciLineFormatConfig,
     ) -> str:
         r"""Format complete ACI line from components.
 
@@ -781,7 +781,7 @@ class FlextLdifUtilitiesACL:
             Formatted ACI line string
 
         Example:
-            config = FlextLdifModelsConfig.AciLineFormatConfig(
+            config = FlextLdifModelsSettings.AciLineFormatConfig(
                 name="test-acl",
                 target_clause="(targetattr=\"cn\")",
                 permissions_clause="allow (read,write)",
@@ -829,7 +829,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _extract_target_info(
         aci_content: str,
-        config: FlextLdifModelsConfig.AciParserConfig,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[list[str], str]:
         """Extract target attributes and DN from ACI content.
 
@@ -857,7 +857,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_subject_and_permissions(
         aci_content: str,
-        config: FlextLdifModelsConfig.AciParserConfig,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[str, str, dict[str, bool]]:
         """Build subject and permissions from ACI content.
 
@@ -943,7 +943,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        config: FlextLdifModelsConfig.AciParserConfig,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> r[m.Ldif.Acl]:
         """Parse ACI line using server-specific config Model.
 
@@ -955,7 +955,7 @@ class FlextLdifUtilitiesACL:
             r with parsed Acl model
 
         Example:
-            config = FlextLdifModelsConfig.AciParserConfig(
+            config = FlextLdifModelsSettings.AciParserConfig(
                 server_type=c.Ldif.ServerTypes.OUD,
                 version_acl_pattern=OudConstants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=OudConstants.ACL_TARGETATTR_PATTERN,
@@ -1032,7 +1032,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def write_aci(
         acl_data: m.Ldif.Acl,
-        config: FlextLdifModelsConfig.AciWriterConfig,
+        config: FlextLdifModelsSettings.AciWriterConfig,
     ) -> r[str]:
         """Write Acl model to ACI string using server-specific config Model.
 
@@ -1044,7 +1044,7 @@ class FlextLdifUtilitiesACL:
             r with formatted ACI string
 
         Example:
-            config = FlextLdifModelsConfig.AciWriterConfig(
+            config = FlextLdifModelsSettings.AciWriterConfig(
                 aci_prefix="aci: ",
                 version="3.0",
                 supported_permissions=OudConstants.SUPPORTED_PERMISSIONS,
@@ -1107,7 +1107,7 @@ class FlextLdifUtilitiesACL:
 
         # Format complete ACI
         acl_name = acl_data.name or "ACL"
-        format_config = FlextLdifModelsConfig.AciLineFormatConfig(
+        format_config = FlextLdifModelsSettings.AciLineFormatConfig(
             name=acl_name,
             target_clause=target_clause,
             permissions_clause=permissions_clause,
@@ -1551,7 +1551,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _parse_single_acl_with_config(
         acl_line: str,
-        config: FlextLdifModelsConfig.AciParserConfig,
+        config: FlextLdifModelsSettings.AciParserConfig,
         *,
         fail_fast: bool = False,
     ) -> m.Ldif.Acl | None:
@@ -1612,7 +1612,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_batch(
         acl_lines: Sequence[str],
-        config: FlextLdifModelsConfig.AciParserConfig,
+        config: FlextLdifModelsSettings.AciParserConfig,
         *,
         fail_fast: bool = False,
         skip_invalid: bool = True,
@@ -1629,7 +1629,7 @@ class FlextLdifUtilitiesACL:
             r containing list of parsed ACL objects
 
         Examples:
-            >>> config = FlextLdifModelsConfig.AciParserConfig(
+            >>> config = FlextLdifModelsSettings.AciParserConfig(
             ...     strict_mode=False,
             ...     preserve_comments=True,
             ... )

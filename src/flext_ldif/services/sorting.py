@@ -1000,9 +1000,7 @@ class FlextLdifSorting(
                 dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
                 if dn_value:
                     norm_result = u.Ldif.DN.norm(dn_value)
-                    normalized = (
-                        norm_result.value if norm_result.is_success else None
-                    )
+                    normalized = norm_result.value if norm_result.is_success else None
                     normalized_result = u.normalize_ldif(
                         normalized or dn_value,
                         case="lower",

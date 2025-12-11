@@ -27,7 +27,6 @@ from flext_core import d, e, h, r, x
 
 from flext_ldif.api import FlextLdif
 from flext_ldif.base import FlextLdifServiceBase, s
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants, c
 from flext_ldif.models import FlextLdifModels, m
 from flext_ldif.protocols import FlextLdifProtocols, p
@@ -40,6 +39,7 @@ from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.typings import FlextLdifTypes, t
 from flext_ldif.utilities import FlextLdifUtilities, u
 
@@ -49,7 +49,6 @@ __all__ = [
     # Classes (sorted alphabetically)
     "FlextLdif",
     "FlextLdifCategorization",
-    "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifConversion",
     "FlextLdifDetector",
@@ -60,6 +59,7 @@ __all__ = [
     "FlextLdifParser",
     "FlextLdifProtocols",
     "FlextLdifServiceBase",
+    "FlextLdifSettings",
     "FlextLdifSorting",
     "FlextLdifTypes",
     "FlextLdifUtilities",

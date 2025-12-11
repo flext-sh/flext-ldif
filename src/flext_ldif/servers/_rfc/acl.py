@@ -22,13 +22,14 @@ from __future__ import annotations
 
 from typing import Self, cast, overload
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, t, u
+from flext_core import FlextLogger, FlextResult, FlextTypes, u
 
 # Metadata access via m.Ldif namespace from models import
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.models import m
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

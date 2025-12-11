@@ -197,8 +197,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         """
         # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
         # Implication: _parent_quirk is handled separately, not via Pydantic fields
-        # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
-        # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+        # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
+        # Implication: Filter kwargs to ensure type safety (int is not t.GeneralValueType, only str/float/bool/None)
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
@@ -504,7 +504,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         """
         config_raw = FlextLdifServersOudConstants.get_parser_config()
         # Ensure config is m.Ldif.AciParserConfig (public facade)
-        # Business Rule: get_parser_config returns FlextLdifModelsConfig.AciParserConfig
+        # Business Rule: get_parser_config returns FlextLdifModelsSettings.AciParserConfig
         # but parse_aci expects m.Ldif.AciParserConfig
         config_dict = config_raw.model_dump()
         config = m.Ldif.AciParserConfig.model_validate(config_dict)
@@ -755,13 +755,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 if extensions and hasattr(extensions, "get")
                 else None
             )
-            # Business Rule: target_dict may be GeneralValueType or MetadataAttributeValue.
+            # Business Rule: target_dict may be t.GeneralValueType or MetadataAttributeValue.
             # We need MetadataDictMutable (dict[str, MetadataAttributeValue]) for type safety.
             # Implication: Convert and validate types explicitly.
             target_data: dict[str, t.MetadataAttributeValue] = {}
             if isinstance(target_dict, dict):
                 # Business Rule: Filter values to ensure MetadataAttributeValue compatibility.
-                # GeneralValueType may include nested Mappings, but MetadataDictMutable doesn't.
+                # t.GeneralValueType may include nested Mappings, but MetadataDictMutable doesn't.
                 # Implication: Convert values to MetadataAttributeValue-compatible types.
                 # Type narrowing: Filter to only ScalarValue or Sequence[ScalarValue] types.
                 target_data = {
@@ -872,7 +872,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                     else None
                 )
             target_perms_dict = target_perms_dict_raw
-            # Business Rule: target_perms_dict may be GeneralValueType or MetadataAttributeValue.
+            # Business Rule: target_perms_dict may be t.GeneralValueType or MetadataAttributeValue.
             # We need MetadataDictMutable (dict[str, MetadataAttributeValue]) for type safety.
             # Implication: Convert and validate types explicitly.
             if target_perms_dict and isinstance(target_perms_dict, dict):

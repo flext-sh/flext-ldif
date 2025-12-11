@@ -19,7 +19,7 @@ from flext_core import (
     FlextTypes,
 )
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
@@ -163,8 +163,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
         # Implication: _parent_quirk is handled separately, not via Pydantic fields
-        # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
-        # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+        # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
+        # Implication: Filter kwargs to ensure type safety (int is not t.GeneralValueType, only str/float/bool/None)
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
@@ -264,7 +264,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         oud_constants = FlextLdifServersOudConstants
         # Create ServerPatternsConfig from constants
-        patterns_config = FlextLdifModelsConfig.ServerPatternsConfig(
+        patterns_config = FlextLdifModelsSettings.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
             attr_prefixes=oud_constants.DETECTION_ATTRIBUTE_PREFIXES,
             attr_names=oud_constants.BOOLEAN_ATTRIBUTES,
@@ -375,8 +375,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     original_attribute_case[attr_name.lower()] = attr_name
 
         # Create OUD metadata using utility
-        FlextLdifModelsConfig.EntryParseMetadataConfig.model_rebuild()
-        metadata_config = FlextLdifModelsConfig.EntryParseMetadataConfig(
+        FlextLdifModelsSettings.EntryParseMetadataConfig.model_rebuild()
+        metadata_config = FlextLdifModelsSettings.EntryParseMetadataConfig(
             quirk_type="oud",
             original_entry_dn=entry_dn,
             cleaned_dn=entry.dn.value if entry.dn else entry_dn,

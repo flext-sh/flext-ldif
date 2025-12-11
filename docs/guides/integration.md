@@ -10,7 +10,7 @@ LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosyst
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -86,7 +86,7 @@ def process_ldif_with_memory_check(file_path: Path) -> FlextResult[t.Dict]:
 ```python
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -238,7 +238,7 @@ class client-aOUDMigrationService:
 ```python
 from flext_api import FlextAPIService
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -310,7 +310,7 @@ class LdifAPIService(FlextAPIService):
 ```python
 from flext_cli import FlextCliService
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -402,7 +402,7 @@ class LdifCLIService(FlextCliService):
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext

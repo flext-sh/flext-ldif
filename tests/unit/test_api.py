@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
 from flext_ldif import (
     FlextLdif,
-    FlextLdifConfig,
+    FlextLdifSettings,
 )
 from flext_ldif.constants import FlextLdifConstants, c as lib_c
 from flext_ldif.models import FlextLdifModels
@@ -861,9 +861,9 @@ class TestAPICoreProperties:
             assert hasattr(models, "Entry")
         elif scenario == CorePropertiesScenario.CONFIG:
             config = api.config
-            assert isinstance(config, FlextConfig)
-            ldif_config = config.get_namespace("ldif", FlextLdifConfig)
-            assert isinstance(ldif_config, FlextLdifConfig)
+            assert isinstance(config, FlextSettings)
+            ldif_config = config.get_namespace("ldif", FlextLdifSettings)
+            assert isinstance(ldif_config, FlextLdifSettings)
         elif scenario == CorePropertiesScenario.CONSTANTS:
             constants = api.constants
             assert constants is FlextLdifConstants
@@ -877,8 +877,8 @@ class TestAPICoreProperties:
             instance2 = FlextLdif.get_instance()
             assert instance1 is instance2
         elif scenario == CorePropertiesScenario.SINGLETON_WITH_CONFIG:
-            # get_instance() expects FlextLdifConfig | None, not FlextConfig
-            ldif_config = FlextLdifConfig()
+            # get_instance() expects FlextLdifSettings | None, not FlextSettings
+            ldif_config = FlextLdifSettings()
             instance = FlextLdif.get_instance(ldif_config)
             assert instance is not None
             assert isinstance(instance, FlextLdif)

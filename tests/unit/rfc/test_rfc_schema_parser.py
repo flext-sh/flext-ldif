@@ -213,6 +213,8 @@ SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
         entries = RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
             schema_content,
+            expected_count=1,
+            server_type="rfc",
         )
         assert len(entries) > 0
         assert entries[0].attributes is not None

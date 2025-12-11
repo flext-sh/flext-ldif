@@ -108,7 +108,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.api import FlextLdif
 
 # Configuration management
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.settings import FlextLdifSettings
 
 # Core processing (advanced usage)
 from flext_ldif.core import TLdif
@@ -120,7 +120,7 @@ from flext_ldif.core import TLdif
 # Simplified public interface
 from flext_ldif import (
     FlextLdif,           # Main application service
-    FlextLdifConfig,        # Configuration management
+    FlextLdifSettings,        # Configuration management
     FlextLdifModels,        # Unified domain models
 )
 ```

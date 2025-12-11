@@ -1071,7 +1071,7 @@ class FlextLdifConstants(FlextConstants):
         # =============================================================================
 
         class ConfigDefaults:
-            """Default values for FlextLdifConfig fields.
+            """Default values for FlextLdifSettings fields.
 
             Zero Tolerance: All Field(default=...) values MUST be defined here.
             """
@@ -1798,7 +1798,7 @@ class FlextLdifConstants(FlextConstants):
             # Cannot reference StrEnum members directly due to Python class scoping rules
             # (nested classes cannot reference sibling classes during class definition).
             # The string values are kept here to match StrEnum values exactly - DRY at doc level.
-            
+
             """Literal type matching ProcessingStage StrEnum values exactly."""
 
             """Literal type matching LdifHealthStatus StrEnum values exactly."""
@@ -1813,7 +1813,7 @@ class FlextLdifConstants(FlextConstants):
             - hide: Don't write attribute at all
             - comment: Write attribute as a comment (# attr: value)
             """
-            
+
             """Marker status for attribute processing metadata.
 
             NOTE: Matches AttributeMarkerStatus StrEnum values exactly.
@@ -1822,7 +1822,7 @@ class FlextLdifConstants(FlextConstants):
 
             # Additional Literal types consolidated from outside the class
             # These complement the ones above and are derived from Enums/StrEnums
-            
+
             """Category literals derived from Categories StrEnum."""
 
             """Change type literals derived from RFC constants."""
@@ -1888,33 +1888,33 @@ class FlextLdifConstants(FlextConstants):
             """Sorting strategy type literals derived from SortingStrategyType StrEnum."""
 
             # DictKeys StrEnum → Literal
-            
+
             """Dictionary key literals derived from DictKeys StrEnum."""
 
             # QuirkMetadataKeys StrEnum → Literal
-            
+
             """Quirk metadata key literals derived from QuirkMetadataKeys StrEnum."""
 
             # AclKeys StrEnum → Literal
-            
+
             """ACL key literals derived from AclKeys StrEnum."""
 
             # FilterTypes StrEnum → Literal
-            
+
             """Filter type enum literals derived from FilterTypes StrEnum."""
 
             # Modes StrEnum → Literal
-            
+
             """Mode literals derived from Modes StrEnum."""
 
             # Categories StrEnum → Literal (already defined above, skipping duplicate)
 
             # DataTypes StrEnum → Literal
-            
+
             """Data type literals derived from DataTypes StrEnum."""
 
             # ChangeType StrEnum → Literal
-            
+
             """Change type enum literals derived from ChangeType StrEnum."""
 
             # ServiceType StrEnum → Literal (complete list matching ServiceType StrEnum)
@@ -4215,98 +4215,100 @@ class FlextLdifConstants(FlextConstants):
             NONE = "none"
             ALPHABETICAL = "alphabetical"
             HIERARCHICAL = "hierarchical"
+
     class DnPrefixField(StrEnum):
         """Dn_Prefix field constants."""
 
-        PREFIX = 'dn:'
-        PREFIX_SHORT = 'dn'
+        PREFIX = "dn:"
+        PREFIX_SHORT = "dn"
 
     class SchemaKwField(StrEnum):
         """Schema_Kw field constants."""
 
-        NAME = 'NAME'
-        DESC = 'DESC'
+        NAME = "NAME"
+        DESC = "DESC"
 
     class AclBindIpField(StrEnum):
         """Acl_Bind_Ip field constants."""
 
-        IP_FULL = 'acl:vendor:bind_ip'
-        IP = 'bind_ip'
+        IP_FULL = "acl:vendor:bind_ip"
+        IP = "bind_ip"
 
     class PersonField(StrEnum):
         """Person field constants."""
 
-        PERSON = 'person'
+        PERSON = "person"
 
     class OrganizationalUnitField(StrEnum):
         """Organizational_Unit field constants."""
 
-        UNIT = 'organizationalUnit'
-        UNIT_LOWER = 'organizationalunit'
+        UNIT = "organizationalUnit"
+        UNIT_LOWER = "organizationalunit"
 
     class UserField(StrEnum):
         """User field constants."""
 
-        USER = 'user'
+        USER = "user"
 
     class GroupField(StrEnum):
         """Group field constants."""
 
-        GROUP = 'group'
+        GROUP = "group"
 
     class AudioField(StrEnum):
         """Audio field constants."""
 
-        AUDIO = 'audio'
-        AUDIO_OID = '1.3.6.1.4.1.1466.115.121.1.4'
+        AUDIO = "audio"
+        AUDIO_OID = "1.3.6.1.4.1.1466.115.121.1.4"
 
     class StrictField(StrEnum):
         """Strict field constants."""
 
-        STRICT = 'strict'
+        STRICT = "strict"
 
     class LenientField(StrEnum):
         """Lenient field constants."""
 
-        LENIENT = 'lenient'
+        LENIENT = "lenient"
 
     class SubtreeField(StrEnum):
         """Subtree field constants."""
 
-        SUBTREE = 'subtree'
+        SUBTREE = "subtree"
 
     class OnelevelField(StrEnum):
         """Onelevel field constants."""
 
-        ONELEVEL = 'onelevel'
+        ONELEVEL = "onelevel"
 
     class BaseField(StrEnum):
         """Base field constants."""
 
-        BASE = 'base'
-        BASE_OID = '1.3.6.1.4.1.1466.115.121.1'
+        BASE = "base"
+        BASE_OID = "1.3.6.1.4.1.1466.115.121.1"
 
     class AllField(StrEnum):
         """All field constants."""
 
-        ALL = 'all'
+        ALL = "all"
 
     class ObsoleteField(StrEnum):
         """Obsolete field constants."""
 
-        OBSOLETE = 'obsolete'
+        OBSOLETE = "obsolete"
 
     class AciField(StrEnum):
         """Aci field constants."""
 
-        ACI = 'aci'
-        ACI_OID = '1.3.6.1.4.1.1466.115.121.1.1'
+        ACI = "aci"
+        ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
+
     class AclWildcardField(StrEnum):
         """Acl_Wildcard field constants."""
-        
-        TYPE = 'all'
-        VALUE = '*'
-        
+
+        TYPE = "all"
+        VALUE = "*"
+
         class OutputFormat(StrEnum):
             """Output format options."""
 

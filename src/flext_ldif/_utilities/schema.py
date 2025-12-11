@@ -12,7 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -753,12 +753,12 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_attribute_basic_fields(
         attr_definition: str,
-    ) -> tuple[str, str, str | None]:
+    ) -> r[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from attribute definition."""
         oid = FlextLdifUtilitiesParser.extract_oid(attr_definition)
         if not oid:
             msg = "RFC attribute parsing failed: missing an OID"
-            raise ValueError(msg)
+            return r[tuple[str, str, str | None]].fail(msg)
 
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
@@ -773,7 +773,7 @@ class FlextLdifUtilitiesSchema:
             c.Ldif.LdifPatterns.SCHEMA_DESC,
         )
 
-        return oid, name, desc
+        return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
     def _extract_attribute_syntax(
@@ -899,7 +899,7 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> t.Ldif.ModelMetadata.ParsedAttributeDict:
+    ) -> r[t.Ldif.ModelMetadata.ParsedAttributeDict]:
         """Parse RFC 4512 attribute definition into structured data.
 
         Generic parsing method that extracts all fields from attribute definition.
@@ -931,9 +931,15 @@ class FlextLdifUtilitiesSchema:
 
         """
         # Extract basic fields
-        oid, name, desc = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
+        basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
+        if basic_fields_result.is_failure:
+            return r[t.Ldif.ModelMetadata.ParsedAttributeDict].fail(
+                basic_fields_result.error_message
+            )
+
+        oid, name, desc = basic_fields_result.value
 
         # Extract syntax and length
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
@@ -1014,7 +1020,7 @@ class FlextLdifUtilitiesSchema:
                 "syntax_validation": syntax_validation_converted,
             },
         )
-        return parsed_dict
+        return r[t.Ldif.ModelMetadata.ParsedAttributeDict].ok(parsed_dict)
 
     @staticmethod
     def _extract_objectclass_basic_fields(
@@ -1308,7 +1314,7 @@ class FlextLdifUtilitiesSchema:
             if not has_obsolete:
                 has_obsolete = bool(
                     attr_data.metadata.extensions.get(
-                        c.Ldif.MetadataKeys.OBSOLETE,
+                        c.Ldif.ObsoleteField.OBSOLETE,
                     ),
                 )
 
@@ -1420,7 +1426,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"DESC '{attr_data.desc}'")
 
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.MetadataKeys.OBSOLETE,
+            c.Ldif.ObsoleteField.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -1443,8 +1449,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute | FlextLdifModelsDomains.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -1827,7 +1832,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"DESC '{oc_data.desc}'")
 
         if oc_data.metadata and oc_data.metadata.extensions.get(
-            c.Ldif.MetadataKeys.OBSOLETE,
+            c.Ldif.ObsoleteField.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 

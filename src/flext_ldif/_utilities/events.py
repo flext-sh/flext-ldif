@@ -13,7 +13,7 @@ from flext_core import FlextTypes, t
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.protocols import FlextProtocols as p
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.events import FlextLdifModelsEvents
 
 
@@ -269,7 +269,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _process_extras(
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> dict[str, t.ScalarValue]:
         """Extract and filter extras into a dict of loggable context.
 
@@ -312,7 +312,7 @@ class FlextLdifUtilitiesEvents:
         logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent, log with context, and attach to logger context.
 
@@ -334,7 +334,7 @@ class FlextLdifUtilitiesEvents:
                 output_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
                 operation_duration_ms=1.2,
             )
-            extras = FlextLdifModelsConfig.LogContextExtras(user_id="REDACTED_LDAP_BIND_PASSWORD")
+            extras = FlextLdifModelsSettings.LogContextExtras(user_id="REDACTED_LDAP_BIND_PASSWORD")
             event = FlextLdifUtilities.Events.log_and_emit_dn_event(
                 logger=logger,
                 config=config,
@@ -374,7 +374,7 @@ class FlextLdifUtilitiesEvents:
         log_context: dict[str, t.ScalarValue],
         log_message: str,
         log_level: str = "info",
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras.
 
@@ -408,7 +408,7 @@ class FlextLdifUtilitiesEvents:
         logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.MigrationEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.MigrationEvent:
         """Create MigrationEvent, log with context, and attach to logger context.
 
@@ -475,7 +475,7 @@ class FlextLdifUtilitiesEvents:
         logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context.
 
@@ -542,7 +542,7 @@ class FlextLdifUtilitiesEvents:
         logger: p.Log.StructlogLogger,
         config: FlextLdifModelsEvents.SchemaEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.SchemaEvent:
         """Create SchemaEvent, log with context, and attach to logger context.
 

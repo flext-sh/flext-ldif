@@ -34,7 +34,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from pydantic import BaseModel, Field
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -42,9 +42,6 @@ from flext_ldif._models.processing import ProcessingResult as ProcessingResultMo
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.protocols import FlextLdifProtocols as p
-
-# ARCHITECTURE NOTE: models.py (Tier 1) imports from Tier 0 modules to define composite types
-# that combine protocols and type aliases (following user architecture rules)
 
 # Type aliases for LDIF domain - exposed via m.Ldif namespace
 LdifEntryAttributesDict = dict[str, list[str]]
@@ -115,16 +112,16 @@ class FlextLdifModels(FlextModels):
             """Model for entry processing metadata."""
 
         # Configuration models - real inheritance classes
-        class LogContextExtras(FlextLdifModelsConfig.LogContextExtras):
+        class LogContextExtras(FlextLdifModelsSettings.LogContextExtras):
             """Log context extras configuration."""
 
-        class AclMetadataConfig(FlextLdifModelsConfig.AclMetadataConfig):
+        class AclMetadataConfig(FlextLdifModelsSettings.AclMetadataConfig):
             """Configuration for ACL metadata extensions."""
 
-        class AciParserConfig(FlextLdifModelsConfig.AciParserConfig):
+        class AciParserConfig(FlextLdifModelsSettings.AciParserConfig):
             """ACI parser configuration."""
 
-        class AciWriterConfig(FlextLdifModelsConfig.AciWriterConfig):
+        class AciWriterConfig(FlextLdifModelsSettings.AciWriterConfig):
             """ACI writer configuration."""
 
         # Event models - real inheritance classes
@@ -215,13 +212,11 @@ class FlextLdifModels(FlextModels):
         # =========================================================================
         # DTO MODELS - Data transfer objects
         # =========================================================================
-        # Note: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
-        # exported from flext_ldif.__init__.py to avoid circular imports.
 
         # SearchConfig deleted (0 usages) - use proper typed models for LDAP search config
         # DiffItem and DiffResult deleted (0 usages) - use typed models for diff operations
 
-        class FilterCriteria(FlextLdifModelsConfig.FilterCriteria):
+        class FilterCriteria(FlextLdifModelsSettings.FilterCriteria):
             """Criteria for filtering LDIF entries.
 
             Supports multiple filter types:
@@ -240,14 +235,14 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class CategoryRules(FlextLdifModelsConfig.CategoryRules):
+        class CategoryRules(FlextLdifModelsSettings.CategoryRules):
             """Rules for entry categorization.
 
             Contains DN patterns and objectClass lists for each category.
             Replaces dict[str, str | list[str] | None] with type-safe Pydantic model.
             """
 
-        class WhitelistRules(FlextLdifModelsConfig.WhitelistRules):
+        class WhitelistRules(FlextLdifModelsSettings.WhitelistRules):
             """Whitelist rules for entry validation.
 
             Defines blocked objectClasses and validation rules.
@@ -505,16 +500,16 @@ class FlextLdifModels(FlextModels):
             """
 
         # Server validation rule models - exposed for test access
-        class ServerValidationRules(FlextLdifModelsConfig.ServerValidationRules):
+        class ServerValidationRules(FlextLdifModelsSettings.ServerValidationRules):
             """Server-specific validation rules."""
 
-        class EncodingRules(FlextLdifModelsConfig.EncodingRules):
+        class EncodingRules(FlextLdifModelsSettings.EncodingRules):
             """Encoding rules for LDIF processing."""
 
-        class DnCaseRules(FlextLdifModelsConfig.DnCaseRules):
+        class DnCaseRules(FlextLdifModelsSettings.DnCaseRules):
             """DN case handling rules."""
 
-        class AclFormatRules(FlextLdifModelsConfig.AclFormatRules):
+        class AclFormatRules(FlextLdifModelsSettings.AclFormatRules):
             """ACL format rules."""
 
         class FormatDetails(FlextLdifModelsDomains.FormatDetails):
@@ -575,7 +570,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
+        class WriteFormatOptions(FlextLdifModelsSettings.WriteFormatOptions):
             r"""Options for controlling LDIF write formatting.
 
             Configures how LDIF content is formatted during writing operations.
@@ -595,7 +590,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class WriteOutputOptions(FlextLdifModelsConfig.WriteOutputOptions):
+        class WriteOutputOptions(FlextLdifModelsSettings.WriteOutputOptions):
             """Options for controlling LDIF write output behavior.
 
             Configures output destinations and processing behavior for
@@ -733,17 +728,17 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class MigrateOptions(FlextLdifModelsConfig.MigrateOptions):
+        class MigrateOptions(FlextLdifModelsSettings.MigrateOptions):
             """Options for FlextLdif.migrate() operation.
 
             Consolidates 12+ optional parameters into single typed Model.
             Reduces migrate() signature from 16 parameters to 5 parameters.
             """
 
-        class SortConfig(FlextLdifModelsConfig.SortConfig):
+        class SortConfig(FlextLdifModelsSettings.SortConfig):
             """Configuration for entry sorting operations."""
 
-        class MigrationConfig(FlextLdifModelsConfig.MigrationConfig):
+        class MigrationConfig(FlextLdifModelsSettings.MigrationConfig):
             """Configuration for migration operations.
 
             Defines parameters for migrating LDIF content between different
@@ -760,7 +755,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class ParseFormatOptions(FlextLdifModelsConfig.ParseFormatOptions):
+        class ParseFormatOptions(FlextLdifModelsSettings.ParseFormatOptions):
             """Options for controlling LDIF parsing behavior.
 
             Configures how LDIF content is parsed from different sources
@@ -777,7 +772,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class MigrationPipelineParams(FlextLdifModelsConfig.MigrationPipelineParams):
+        class MigrationPipelineParams(FlextLdifModelsSettings.MigrationPipelineParams):
             """Parameters for migration pipeline operations.
 
             Defines the complete set of parameters for running migration
@@ -795,7 +790,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class ParserParams(FlextLdifModelsConfig.ParserParams):
+        class ParserParams(FlextLdifModelsSettings.ParserParams):
             """Parameters for LDIF parsing operations.
 
             Defines all parameters needed for parsing LDIF content.
@@ -810,7 +805,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class WriterParams(FlextLdifModelsConfig.WriterParams):
+        class WriterParams(FlextLdifModelsSettings.WriterParams):
             """Parameters for LDIF writing operations.
 
             Defines all parameters needed for writing LDIF content.
@@ -826,7 +821,7 @@ class FlextLdifModels(FlextModels):
 
             """
 
-        class ConfigInfo(FlextLdifModelsConfig.ConfigInfo):
+        class ConfigInfo(FlextLdifModelsSettings.ConfigInfo):
             """Information about configuration state.
 
             Contains current configuration details and metadata.
@@ -865,7 +860,7 @@ class FlextLdifModels(FlextModels):
             """
 
         class SchemaConversionPipelineConfig(
-            FlextLdifModelsConfig.SchemaConversionPipelineConfig
+            FlextLdifModelsSettings.SchemaConversionPipelineConfig
         ):
             """Configuration for schema conversion pipeline.
 
@@ -873,7 +868,7 @@ class FlextLdifModels(FlextModels):
             LDAP server types.
             """
 
-        class PermissionMappingConfig(FlextLdifModelsConfig.PermissionMappingConfig):
+        class PermissionMappingConfig(FlextLdifModelsSettings.PermissionMappingConfig):
             """Configuration for permission mapping operations.
 
             Defines how permissions are mapped between source and target
@@ -1288,14 +1283,14 @@ class FlextLdifModels(FlextModels):
             class WriteOptions(FlextLdifModelsDomains.WriteOptions):
                 """Write options model - exposed in results namespace for unified service access."""
 
-            class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
+            class WriteFormatOptions(FlextLdifModelsSettings.WriteFormatOptions):
                 """Write format options model - exposed in results namespace for unified service access."""
 
             # Additional domain and config models exposed for service access
             class Syntax(FlextLdifModelsDomains.Syntax):
                 """Syntax model - exposed in results namespace for unified service access."""
 
-            class SortConfig(FlextLdifModelsConfig.SortConfig):
+            class SortConfig(FlextLdifModelsSettings.SortConfig):
                 """Sort configuration model - exposed in results namespace for unified service access."""
 
             class DnEvent(FlextLdifModelsEvents.DnEvent):
@@ -1304,17 +1299,17 @@ class FlextLdifModels(FlextModels):
             class DnEventConfig(FlextLdifModelsEvents.DnEventConfig):
                 """DN event configuration model - exposed in results namespace for unified service access."""
 
-            class CategoryRules(FlextLdifModelsConfig.CategoryRules):
+            class CategoryRules(FlextLdifModelsSettings.CategoryRules):
                 """Category rules model - exposed in results namespace for unified service access."""
 
-            class WhitelistRules(FlextLdifModelsConfig.WhitelistRules):
+            class WhitelistRules(FlextLdifModelsSettings.WhitelistRules):
                 """Whitelist rules model - exposed in results namespace for unified service access."""
 
             class AclPermissions(FlextLdifModelsDomains.AclPermissions):
                 """ACL permissions model - exposed in results namespace for unified service access."""
 
             class FlexibleCategories(
-                FlextModelsCollections.Categories["Ldif.Entry"]
+                FlextModelsCollections.Categories["FlextLdifModels.Ldif.Entry"]
             ):
                 """Flexible categories model - exposed in results namespace for unified service access."""
 
@@ -1506,8 +1501,8 @@ class FlextLdifModels(FlextModels):
         class ProcessingConfig:
             """Processing configuration models namespace."""
 
-            EntryTransformConfig = FlextLdifModelsConfig.EntryTransformConfig
-            EntryFilterConfig = FlextLdifModelsConfig.EntryFilterConfig
+            EntryTransformConfig = FlextLdifModelsSettings.EntryTransformConfig
+            EntryFilterConfig = FlextLdifModelsSettings.EntryFilterConfig
             CaseFoldOption = c.Ldif.CaseFoldOption
 
             # Type aliases for common types

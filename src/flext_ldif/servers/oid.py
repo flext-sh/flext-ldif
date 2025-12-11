@@ -97,9 +97,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     ) -> FlextResult[
         dict[
             str,
-            list[m.Ldif.SchemaAttribute]
-            | list[m.Ldif.SchemaObjectClass]
-            | int,
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.
@@ -116,9 +114,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass]
-                    | int,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
             ].fail(
                 "Schema nested class not available",
@@ -132,9 +128,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Return schema extraction result with metadata
             converted_data: dict[
                 str,
-                list[m.Ldif.SchemaAttribute]
-                | list[m.Ldif.SchemaObjectClass]
-                | int,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ] = {
                 "attributes": data.get("attributes", []),
                 "objectclasses": data.get("objectclasses", []),
@@ -144,17 +138,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass]
-                    | int,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
             ].ok(converted_data)
         return FlextResult[
             dict[
                 str,
-                list[m.Ldif.SchemaAttribute]
-                | list[m.Ldif.SchemaObjectClass]
-                | int,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ]
         ].fail(
             result.error or "Failed to extract schemas",

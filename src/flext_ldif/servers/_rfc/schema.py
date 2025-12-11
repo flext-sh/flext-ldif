@@ -269,15 +269,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         def parse_parts_hook(
             definition: str,
         ) -> dict[str, str | bool | None]:
-            # Use FlextLdifUtilitiesSchema.parse_attribute which returns dict directly
+            # Use FlextLdifUtilitiesSchema.parse_attribute which returns FlextResult
             # Extract only the fields needed by ParsePartsHook
-            parsed = FlextLdifUtilitiesSchema.parse_attribute(definition)
+            parse_result = FlextLdifUtilitiesSchema.parse_attribute(definition)
+            if parse_result.is_failure:
+                # Return empty dict on failure (maintains existing behavior)
+                return {}
+            parsed = parse_result.value
             # Type narrowing: cast to expected type
             return cast("dict[str, str | bool | None]", parsed)
 
         # Use FlextLdifUtilitiesSchema.parse_attribute directly
         # (FlextLdifUtilities.Ldif.Parsers.Attribute.parse was removed to break circular imports)
-        parse_result_raw = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+        parse_result_temp = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+        if parse_result_temp.is_failure:
+            return parse_result_temp
+
+        parse_result_raw = parse_result_temp.value
         # Type narrowing: parse_attribute returns dict, convert to SchemaAttribute
         parse_result: FlextResult[m.Ldif.SchemaAttribute] = FlextResult[
             m.Ldif.SchemaAttribute
@@ -1010,12 +1018,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # For __call__, we need to handle multiple parameters differently
         # If attr_definition is provided, use it; otherwise use oc_definition
         # If attr_model is provided, use it; otherwise use oc_model
-        data: (
-            str
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | None
-        ) = None
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
         if attr_definition is not None:
             data = attr_definition
         elif oc_definition is not None:
@@ -1097,21 +1100,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             )
             oc_mod_raw = kwargs.get("oc_model")
             oc_mod: m.Ldif.SchemaObjectClass | None = (
-                oc_mod_raw
-                if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass)
-                else None
+                oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
             )
             op_raw = kwargs.get("operation")
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
             # Schema.execute() expects a single 'data' parameter
-            data: (
-                str
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | None
-            ) = None
+            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
             if attr_def is not None:
                 data = attr_def
             elif oc_def is not None:
@@ -1186,8 +1182,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> FlextResult[
         dict[
             str,
-            list[m.Ldif.SchemaAttribute]
-            | list[m.Ldif.SchemaObjectClass],
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u.
@@ -1243,8 +1238,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             # Use c.Ldif.DictKeys for type-safe dictionary keys
             schema_dict: dict[
                 str,
-                list[m.Ldif.SchemaAttribute]
-                | list[m.Ldif.SchemaObjectClass],
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
             ] = {
                 c.Ldif.DictKeys.ATTRIBUTES: attributes_parsed,
                 c.Ldif.DictKeys.OBJECTCLASS: objectclasses_parsed,
@@ -1252,8 +1246,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[
                 dict[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass],
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
                 ]
             ].ok(schema_dict)
 
@@ -1264,8 +1257,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[
                 dict[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass],
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
                 ]
             ].fail(
                 f"Schema extraction failed: {e}",

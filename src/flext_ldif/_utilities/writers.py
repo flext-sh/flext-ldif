@@ -18,7 +18,7 @@ from typing import Protocol
 import structlog
 from flext_core import FlextRuntime, r
 
-from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import m
 
@@ -122,7 +122,7 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write_entry_parts(
             entry: m.Ldif.Entry,
-            config: FlextLdifModelsConfig.EntryWriteConfig,
+            config: FlextLdifModelsSettings.EntryWriteConfig,
             lines: list[str],
         ) -> None:
             """Write entry parts (comments, DN, attributes)."""
@@ -146,7 +146,7 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write(
             *,
-            config: FlextLdifModelsConfig.EntryWriteConfig | None = None,
+            config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
             **kwargs: object,
         ) -> r[str]:
             """Write entry to LDIF string using hooks.
@@ -164,7 +164,7 @@ class FlextLdifUtilitiesWriters:
             # Use provided config or build from kwargs
             if config is None:
                 # Use model_validate which accepts dict[str, object] and validates at runtime
-                config = FlextLdifModelsConfig.EntryWriteConfig.model_validate(kwargs)
+                config = FlextLdifModelsSettings.EntryWriteConfig.model_validate(kwargs)
 
             try:
                 lines: list[str] = []
@@ -484,7 +484,7 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write(
             *,
-            config: FlextLdifModelsConfig.BatchWriteConfig | None = None,
+            config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
             **kwargs: object,
         ) -> r[str]:
             """Write multiple entries to LDIF string.
@@ -502,7 +502,7 @@ class FlextLdifUtilitiesWriters:
             # Use provided config or build from kwargs
             if config is None:
                 # Use model_validate which accepts dict[str, object] and validates at runtime
-                config = FlextLdifModelsConfig.BatchWriteConfig.model_validate(kwargs)
+                config = FlextLdifModelsSettings.BatchWriteConfig.model_validate(kwargs)
 
             try:
                 parts: list[str] = []

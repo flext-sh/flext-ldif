@@ -162,7 +162,7 @@ attrs = entry.attributes.to_ldap3()  # Direct
 **Properties to Remove**:
 
 - `@property def models()` → Import `FlextLdifModels` directly
-- `@property def config()` → Import `FlextLdifConfig` directly
+- `@property def config()` → Import `FlextLdifSettings` directly
 - `@property def constants()` → Import `FlextLdifConstants` directly
 - `@property def processors()` → Import `FlextProcessors` from flext-core
 

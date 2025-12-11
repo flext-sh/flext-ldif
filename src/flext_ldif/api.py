@@ -36,7 +36,6 @@ from typing import ClassVar, cast, override
 from flext_core import r
 from pydantic import BaseModel
 
-# Removed: from flext_ldif._models.domain import FlextLdifModelsDomains (use m.* instead)
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -114,7 +113,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         Business Rules:
             - Service instances are NOT created during init (lazy initialization)
-            - Configuration is inherited from FlextConfig namespace system
+            - Configuration is inherited from FlextSettings namespace system
             - Initialization is logged at INFO level for audit trail
 
         Audit Implications:
