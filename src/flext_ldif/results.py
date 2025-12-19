@@ -13,7 +13,9 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from typing import cast, overload
 
-from flext_core import FlextModels as m_core
+from flext_core._models.base import FlextModelsBase  # noqa: PLC2701
+from flext_core._models.collections import FlextModelsCollections  # noqa: PLC2701
+from flext_core._models.entity import FlextModelsEntity  # noqa: PLC2701
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif._models.base import FlextLdifModelsBase
@@ -22,11 +24,6 @@ from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.typings import t
-
-# Aliases for commonly used types
-FlextModelsBase = m_core.Value
-FlextModelsCollections = m_core.Bus
-FlextModelsEntity = m_core.Entity
 
 __all__ = [
     "DynamicCounts",
@@ -325,7 +322,7 @@ class _ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
             return value
         return None
 
-    def set_setting(self, key: str, value: str | int | bool) -> None:
+    def set_setting(self, key: str, value: str | int | bool) -> None:  # noqa: FBT001
         """Set a setting value."""
         self[key] = value
 
@@ -353,7 +350,7 @@ class _BooleanFlags(FlextLdifModelsBase):
         value = getattr(self, key, default)
         return bool(value) if isinstance(value, (bool, int)) else default
 
-    def set_flag(self, key: str, value: bool) -> None:
+    def set_flag(self, key: str, value: bool) -> None:  # noqa: FBT001
         """Set flag value for a key."""
         setattr(self, key, value)
 
@@ -1933,7 +1930,7 @@ class FlextLdifModelsResults:
         def get(
             self,
             key: str,
-            default: str | float | bool | None = None,
+            default: str | float | bool | None = None,  # noqa: FBT001
         ) -> str | int | float | bool | None:
             """Get attribute value with optional default (dict-style access)."""
             return getattr(self, key, default)
