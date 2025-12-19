@@ -331,9 +331,13 @@ class FlextLdif(FlextLdifServiceBase[object]):
         # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
-            if isinstance(entry, BaseModel):
-                entry_dict = entry.model_dump(mode="python")
-                entries_typed.append(m.Ldif.Entry.model_validate(entry_dict))
+            if isinstance(entry, m.Ldif.Entry):
+                # Already the correct type, use directly
+                entries_typed.append(entry)
+            elif isinstance(entry, BaseModel):
+                # Other Pydantic model, use JSON mode to exclude computed properties
+                entry_json = entry.model_dump_json()
+                entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         result = self.processing_service.process(

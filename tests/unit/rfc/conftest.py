@@ -54,9 +54,9 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
 
 
 @pytest.fixture
-def sample_schema_attribute() -> p.Ldif.SchemaAttribute:
+def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return p.Ldif.SchemaAttribute(
+    return m.Ldif.SchemaAttribute(
         oid=c.RFC.ATTR_OID_CN,
         name=c.RFC.ATTR_NAME_CN,
         desc=None,
@@ -76,9 +76,9 @@ def sample_schema_attribute() -> p.Ldif.SchemaAttribute:
 
 
 @pytest.fixture
-def sample_schema_objectclass() -> p.Ldif.SchemaObjectClass:
+def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return p.Ldif.SchemaObjectClass(
+    return m.Ldif.SchemaObjectClass(
         oid=c.RFC.OC_OID_PERSON,
         name=c.RFC.OC_NAME_PERSON,
         desc=None,
