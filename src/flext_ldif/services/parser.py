@@ -17,7 +17,7 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 
 class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):

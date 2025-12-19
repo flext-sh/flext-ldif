@@ -290,7 +290,7 @@ def _is_private_method_used(
     def_type: str,
     full_name: str,
     short_name: str,
-    all_refs: list[str],
+    all_refs: set[str],
 ) -> bool:
     """Check if private method is used within its class."""
     if def_type != "method":

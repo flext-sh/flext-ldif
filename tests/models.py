@@ -29,6 +29,10 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     # All parent models (Entry, SchemaEventConfig, etc.) are accessible via inheritance
 
 
+# Standardized short name for use in tests (same pattern as flext-core)
+m = TestsFlextLdifModels
+
 __all__ = [
     "TestsFlextLdifModels",
+    "m",
 ]

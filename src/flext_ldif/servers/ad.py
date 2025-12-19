@@ -21,7 +21,7 @@ import re
 from contextlib import suppress
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextUtilities as u
+from flext_core import FlextResult, u
 
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

@@ -375,7 +375,7 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testStructural",
             oid="1.2.3.4.6",
-            kind=lib_c.Schema.STRUCTURAL,
+            kind=lib_c.Ldif.STRUCTURAL,
             sup=None,
         )
         original_sup = oc.sup
@@ -417,14 +417,14 @@ class TestObjectClassUtilities:
             sup="orclpwdverifierprofile",
         )
         FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc)
-        assert oc.kind == lib_c.Schema.STRUCTURAL
+        assert oc.kind == lib_c.Ldif.STRUCTURAL
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.10",
-            kind=lib_c.Schema.STRUCTURAL,
+            kind=lib_c.Ldif.STRUCTURAL,
             sup="javanamingref",
         )
         FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc)
@@ -440,16 +440,16 @@ class TestObjectClassUtilities:
         )
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
             oc,
-            lib_c.Schema.STRUCTURAL,
+            lib_c.Ldif.STRUCTURAL,
         )
-        assert oc.kind == lib_c.Schema.STRUCTURAL
+        assert oc.kind == lib_c.Ldif.STRUCTURAL
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.12",
-            kind=lib_c.Schema.STRUCTURAL,
+            kind=lib_c.Ldif.STRUCTURAL,
             sup="someSuperior",
         )
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
@@ -463,12 +463,12 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.13",
-            kind=lib_c.Schema.STRUCTURAL,
+            kind=lib_c.Ldif.STRUCTURAL,
             sup="someSuperior",
         )
         original_kind = oc.kind
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
             oc,
-            lib_c.Schema.STRUCTURAL,
+            lib_c.Ldif.STRUCTURAL,
         )
         assert oc.kind == original_kind

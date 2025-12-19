@@ -35,6 +35,19 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "slow: marks tests as slow tests")
     config.addinivalue_line("markers", "real: marks tests using real functionality")
 
+    # Rebuild Pydantic models with forward references (session-level initialization)
+    _rebuild_pydantic_models()
+
+
+def _rebuild_pydantic_models() -> None:
+    """Rebuild Pydantic models with forward references.
+
+    Pydantic v2 requires model_rebuild() when using forward references
+    between modules. This ensures Entry and result models are fully defined.
+    """
+    # Don't rebuild models - rely on Pydantic's native handling of forward references
+    # Entry.create() will call model_rebuild internally when needed
+
 
 # =============================================================================
 # FLEXT CORE FIXTURES

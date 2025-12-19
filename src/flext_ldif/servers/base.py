@@ -34,19 +34,20 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import (
+    Any,
     ClassVar,
     Self,
     cast,
     overload,
 )
 
-from flext_core import FlextLogger, FlextUtilities as u, r, s
+from flext_core import FlextLogger, r, s, u
 from pydantic import ConfigDict
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
+from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
@@ -744,7 +745,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             # Cast to p.Ldif.Entry.EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
             entry_protocol: object = model
-            return cast("r[str]", self.entry_quirk.write(entry_protocol))
+            return cast("r[str]", cast("Any", self.entry_quirk).write(entry_protocol))
         if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
@@ -757,7 +758,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             # Cast to AclProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
             acl_protocol: object = model
-            return cast("r[str]", self.acl_quirk.write(acl_protocol))
+            return cast("r[str]", cast("Any", self.acl_quirk).write(acl_protocol))
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
 

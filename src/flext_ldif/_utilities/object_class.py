@@ -6,10 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
+from typing import cast
+
+from flext_core import FlextLogger, FlextResult as r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
+from flext_ldif.models import m
 
 
 class _SchemaConstants:
@@ -241,3 +245,50 @@ class FlextLdifUtilitiesObjectClass:
         """
         if superior_kind and schema_oc.kind != superior_kind:
             schema_oc.kind = superior_kind
+
+    @staticmethod
+    def parse(
+        definition: str,
+        server_type: str | None = None,
+        parse_parts_hook: callable | None = None,
+    ) -> r[m.Ldif.SchemaObjectClass]:
+        """Parse RFC 4512 objectClass definition into SchemaObjectClass model.
+
+        Args:
+            definition: RFC 4512 objectClass definition string
+            server_type: Server type for quirk handling (optional)
+            parse_parts_hook: Custom parsing hook (optional)
+
+        Returns:
+            FlextResult[SchemaObjectClass] with parsed model or error
+
+        """
+        try:
+            # Parse to dict first
+            parsed_dict = FlextLdifUtilitiesSchema.parse_objectclass(definition)
+
+            # Apply server-specific parsing hook if provided
+            if parse_parts_hook:
+                # Hook receives the definition and returns parsed dict
+                parsed_dict = parse_parts_hook(definition)
+
+            # Create the model
+            schema_oc = m.Ldif.SchemaObjectClass(
+                oid=cast("str", parsed_dict["oid"]),
+                name=cast("str", parsed_dict.get("name") or ""),
+                desc=cast("str | None", parsed_dict.get("desc")),
+                sup=cast("str | list[str] | None", parsed_dict.get("sup")),
+                kind=cast("str", parsed_dict["kind"]),
+                must=cast("list[str] | None", parsed_dict.get("must")),
+                may=cast("list[str] | None", parsed_dict.get("may")),
+            )
+
+            # Apply fixes based on server type
+            if server_type:
+                FlextLdifUtilitiesObjectClass.fix_missing_sup(schema_oc)
+                # Apply other fixes as needed
+
+            return r.ok(schema_oc)
+
+        except Exception as e:
+            return r.fail(f"Failed to parse objectClass definition: {e}")

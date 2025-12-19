@@ -22,7 +22,7 @@ from collections.abc import Callable, Mapping, Sequence
 from inspect import Parameter, signature
 from typing import Literal, cast, overload
 
-from flext_core import FlextUtilities as u_core, T, U
+from flext_core import T, U, u
 
 
 class FlextFunctional:
@@ -625,7 +625,7 @@ class FlextFunctional:
             None
 
         """
-        return u_core.mapper().get(data, key, default=default)
+        return u.mapper().get(data, key, default=default)
 
     gt = get
 
@@ -1202,7 +1202,7 @@ class FlextFunctional:
             for k in keys:
                 if isinstance(obj, Mapping):
                     # Type assertion: obj is Mapping, get() returns value or None
-                    value: object = u_core.mapper().get(obj, k)
+                    value: object = u.mapper().get(obj, k)
                     result_dict[k] = value
                 elif hasattr(obj, k):
                     attr_value: object = getattr(obj, k, None)
@@ -1246,7 +1246,7 @@ class FlextFunctional:
                     return None
                 if isinstance(obj, Mapping):
                     # mapper().get() returns the value or None
-                    map_result = u_core.mapper().get(obj, key)
+                    map_result = u.mapper().get(obj, key)
                     # If result is the key itself (string), it means key not found, return None
                     if map_result == key and isinstance(key, str):
                         return None

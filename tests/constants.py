@@ -826,6 +826,32 @@ class RfcTestHelpers:
 
         return list(entries)
 
+    @staticmethod
+    def test_entry_create_and_unwrap(
+        dn: str,
+        attributes: dict[str, object],
+    ) -> object:
+        """Create an entry and unwrap the result.
+
+        Args:
+            dn: Distinguished Name for the entry
+            attributes: Dictionary of attributes for the entry
+
+        Returns:
+            The unwrapped Entry instance
+
+        Raises:
+            AssertionError: If entry creation fails
+
+        """
+        from flext_ldif.models import m
+
+        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+        if result.is_failure:
+            raise AssertionError(f"Entry creation failed: {result.error}")
+
+        return result.value
+
 
 class TestDeduplicationHelpers:
     """Test helpers for deduplication functionality."""
@@ -935,6 +961,30 @@ class TestDeduplicationHelpers:
             must_contain=must_contain,
         )
 
+    @staticmethod
+    def quirk_parse_and_unwrap(
+        quirk: object,
+        content: str,
+        msg: str | None = None,
+    ) -> object:
+        """Parse using quirk and unwrap result.
+
+        Args:
+            quirk: Schema quirk instance with parse method
+            content: Content to parse
+            msg: Optional message for assertion
+
+        Returns:
+            Parsed result value
+
+        Raises:
+            AssertionError: If parsing fails
+
+        """
+        result = quirk.parse(content)
+        assert result.is_success, msg or f"quirk.parse() failed: {result.error}"
+        return result.value
+
 
 class TestCategorization:
     """Test categorization helpers."""
@@ -944,6 +994,7 @@ class TestCategorization:
 
 # Standardized short name for use in tests (same pattern as flext-core)
 c = TestsFlextLdifConstants
+Testsc = TestsFlextLdifConstants  # Alias for tests/__init__.py
 
 __all__ = [
     "Filters",

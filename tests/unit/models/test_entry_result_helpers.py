@@ -3,7 +3,11 @@
 Phase 1 of EntryResult-centric refactoring: Test new helper methods.
 """
 
-from tests import m, s
+from tests import (
+    RfcTestHelpers,
+    m,
+    s,
+)
 
 
 class TestsFlextLdifEntryResultHelpers(s):
@@ -19,7 +23,7 @@ class TestsFlextLdifEntryResultHelpers(s):
             "cn=user2,dc=example,dc=com",
             {"cn": ["user2"], "objectClass": ["person"]},
         )
-        result = m.EntryResult.from_entries(
+        result = m.Ldif.EntryResult.from_entries(
             [entry1, entry2],
             category="users",
         )
@@ -31,7 +35,7 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_empty_creates_empty_entry_result(self) -> None:
         """Test EntryResult.empty() factory method."""
-        result = m.EntryResult.empty()
+        result = m.Ldif.EntryResult.empty()
 
         # Verify empty categories
         assert len(result.entries_by_category) == 0
@@ -53,7 +57,7 @@ class TestsFlextLdifEntryResultHelpers(s):
         categories = m.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
-        result = m.EntryResult(
+        result = m.Ldif.EntryResult(
             entries_by_category=categories,
             statistics=m.Statistics(total_entries=2),
         )
@@ -78,7 +82,7 @@ class TestsFlextLdifEntryResultHelpers(s):
         categories = m.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
-        result = m.EntryResult(
+        result = m.Ldif.EntryResult(
             entries_by_category=categories,
             statistics=m.Statistics(total_entries=2),
         )
@@ -91,7 +95,7 @@ class TestsFlextLdifEntryResultHelpers(s):
 
     def test_get_category_with_default(self) -> None:
         """Test get_category() with default for missing category."""
-        result = m.EntryResult.empty()
+        result = m.Ldif.EntryResult.empty()
 
         # Missing category returns default
         entries = result.get_category("missing", default=[])
@@ -115,14 +119,14 @@ class TestsFlextLdifEntryResultHelpers(s):
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = m.EntryResult(
+        result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
             statistics=m.Statistics(total_entries=1),
         )
 
         categories2 = m.FlexibleCategories()
         categories2.add_entries("users", [entry2])
-        result2 = m.EntryResult(
+        result2 = m.Ldif.EntryResult(
             entries_by_category=categories2,
             statistics=m.Statistics(total_entries=1),
         )
@@ -152,14 +156,14 @@ class TestsFlextLdifEntryResultHelpers(s):
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = m.EntryResult(
+        result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
             statistics=m.Statistics(total_entries=1),
         )
 
         categories2 = m.FlexibleCategories()
         categories2.add_entries("groups", [entry2])
-        result2 = m.EntryResult(
+        result2 = m.Ldif.EntryResult(
             entries_by_category=categories2,
             statistics=m.Statistics(total_entries=1),
         )
@@ -181,12 +185,12 @@ class TestsFlextLdifEntryResultHelpers(s):
         # Use _FlexibleCategories directly for type safety
         categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = m.EntryResult(
+        result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
             statistics=m.Statistics(total_entries=1),
         )
 
-        result2 = m.EntryResult.empty()
+        result2 = m.Ldif.EntryResult.empty()
 
         # Merge should create new instance
         merged = result1.merge(result2)

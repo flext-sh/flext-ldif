@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from functools import wraps
-from typing import cast
+from typing import Any, cast
 
 from flext_core import FlextLogger, r
 
@@ -130,7 +130,8 @@ class FlextLdifUtilitiesDecorators:
         # Use runtime type check instead of protocol isinstance to avoid mypy issues
         if hasattr(result_value, "metadata") and hasattr(result_value, "model_fields"):
             # This is a Pydantic model with metadata field - assign directly
-            result_value.metadata = metadata
+            # Cast to Any to avoid type checker issues with dynamic attribute assignment
+            cast("Any", result_value).metadata = metadata
 
     @staticmethod
     def attach_parse_metadata(

@@ -512,7 +512,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         assert isinstance(acl_data, m.Acl)
         assert acl_data.get_acl_format() == c.AclFormats.ACI
         assert acl_data.raw_acl == acl_line
-        assert acl_data.server_type == c.LdapServers.APACHE_DIRECTORY
+        assert acl_data.server_type == c.Ldif.LdapServers.APACHE_DIRECTORY
 
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""

@@ -306,6 +306,14 @@ class FlextLdifConstants(FlextConstants):
                 IBM_TIVOLI = "tivoli"
                 RELAXED = "relaxed"
 
+            class OutputFormat(StrEnum):
+                """Output format options."""
+
+                LDIF = "ldif"
+                JSON = "json"
+                CSV = "csv"
+                YAML = "yaml"
+
             class ValidationStatus(StrEnum):
                 """Validation status values for LDIF entries.
 
@@ -2492,6 +2500,7 @@ class FlextLdifConstants(FlextConstants):
                 "schema_obsolete_position"  # Position of OBSOLETE in definition
                 # (for order preservation)
             )
+            OBSOLETE: Final[str] = "obsolete"  # OBSOLETE flag in metadata extensions
             SCHEMA_FIELD_ORDER: Final[str] = (
                 "schema_field_order"  # Original field order in definition
             )
@@ -3787,65 +3796,89 @@ class FlextLdifConstants(FlextConstants):
             # Mapping of human-readable name to OID
             NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
 
-            # Mapping of syntax names to type categories (immutable)
-            NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType({
-                "boolean": "boolean",
+            # Mapping of human-readable name to type category for validation
+            NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
                 "integer": "integer",
-                "dn": "dn",
+                "boolean": "boolean",
                 "distinguished_name": "dn",
                 "generalized_time": "time",
                 "utc_time": "time",
-                "utctime": "time",
-                "time_of_day": "time",
-                "dlexp_time": "time",
-                "audio": "binary",
                 "binary": "binary",
-                "certificate": "binary",
-                "certificate_list": "binary",
-                "certificate_pair": "binary",
-                "fax": "binary",
-                "jpeg": "binary",
                 "octet_string": "binary",
                 "directory_string": "string",
                 "ia5_string": "string",
                 "printable_string": "string",
-                "utf8_string": "string",
-                "unicode_string": "string",
-                "teletex_terminal_identifier": "string",
+                "numeric_string": "string",
                 "telephone_number": "string",
-                "facsimile_telephone_number": "string",
-                "guide": "string",
-                "enhanced_guide": "string",
-                "access_point": "string",
-                "attribute_type_description": "string",
+                "mail_preference": "string",
+                "other_mailbox": "string",
+                "postal_address": "string",
                 "country_string": "string",
-                "dn_with_binary": "string",
-                "dn_with_string": "string",
+                "dn_qualifier": "string",
+                "certificate": "binary",
+                "certificate_list": "binary",
+                "certificate_pair": "binary",
+                "supported_algorithm": "binary",
+                "dsa_quality": "string",
+                "data_quality_syntax": "binary",
+                "dsi_mods": "binary",
+                "entry_information_information": "binary",
+                "facsimile_telephone_number": "string",
+                "fax": "binary",
+                "jpeg": "binary",
+                "master_and_shadow_access_points": "dn",
+                "name_and_optional_uid": "string",
+                "name_forms": "string",
+                "nis_netgroup_triple": "string",
+                "object_class_description": "string",
+                "oid": "string",
+                "presentation_address": "binary",
+                "protocol_information": "binary",
+                "substring_assertion": "string",
+                "teletex_terminal_identifier": "string",
+                "telex_number": "string",
+                "unique_member": "dn",
+                "user_password": "binary",
+                "user_certificate": "binary",
+                "ca_certificate": "binary",
+                "authority_revocation_list": "binary",
+                "certificate_revocation_list": "binary",
+                "cross_certificate_pair": "binary",
+                "delta_revocation_list": "binary",
+                "dit_content_rule_description": "string",
+                "dit_structure_rule_description": "string",
+                "dse_type": "string",
                 "ldap_syntax_description": "string",
                 "matching_rule_description": "string",
                 "matching_rule_use_description": "string",
-                "name_and_optional_uid": "string",
                 "name_form_description": "string",
-                "numeric_string": "string",
-                "object_class_description": "string",
-                "oid": "string",
-                "other_mailbox": "string",
-                "postal_address": "string",
-                "protocol_information": "string",
-                "presentation_address": "string",
-                "telex_number": "string",
-                "teletex_number": "string",
-                "uui": "string",
-                "substring_assertion": "string",
-                "mhs_or_address": "string",
-                "aci": "string",
-                "delivery_method": "string",
-                "data_quality_syntax": "string",
-                "dit_content_rule_description": "string",
-                "dit_structure_rule_description": "string",
-                "modify_increment": "integer",
+                "subschema": "binary",
+                "access_point": "dn",
+                "attribute_type_description": "string",
+                "audio": "binary",
                 "bit_string": "string",
+                "aci": "string",
+                "utf8_string": "string",
+                "unicode_string": "string",
+                "uui": "string",
+            }
+
+            # Common syntax OIDs frequently used in LDAP schemas
+            COMMON_SYNTAXES: Final[frozenset[str]] = frozenset({
+                "1.3.6.1.4.1.1466.115.121.1.7",  # Boolean
+                "1.3.6.1.4.1.1466.115.121.1.12",  # Distinguished Name
+                "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
+                "1.3.6.1.4.1.1466.115.121.1.24",  # Generalized Time
+                "1.3.6.1.4.1.1466.115.121.1.26",  # IA5 String
+                "1.3.6.1.4.1.1466.115.121.1.27",  # Integer
+                "1.3.6.1.4.1.1466.115.121.1.36",  # Numeric String
+                "1.3.6.1.4.1.1466.115.121.1.38",  # OID
+                "1.3.6.1.4.1.1466.115.121.1.40",  # Octet String
+                "1.3.6.1.4.1.1466.115.121.1.44",  # Printable String
+                "1.3.6.1.4.1.1466.115.121.1.50",  # Telephone Number
             })
+
+            # Mapping of syntax names to type categories (immutable)
 
             # Service and initialization keys
             SERVICE_NAMES: Final[str] = "service_names"
@@ -4216,6 +4249,14 @@ class FlextLdifConstants(FlextConstants):
             ALPHABETICAL = "alphabetical"
             HIERARCHICAL = "hierarchical"
 
+        class ObsoleteField(StrEnum):
+            """Obsolete field constants."""
+
+            OBSOLETE = "obsolete"
+
+        # Import StrEnum for use in models
+        StrEnum = StrEnum
+
     class DnPrefixField(StrEnum):
         """Dn_Prefix field constants."""
 
@@ -4292,30 +4333,17 @@ class FlextLdifConstants(FlextConstants):
 
         ALL = "all"
 
-    class ObsoleteField(StrEnum):
-        """Obsolete field constants."""
-
-        OBSOLETE = "obsolete"
-
     class AciField(StrEnum):
         """Aci field constants."""
 
         ACI = "aci"
         ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
 
-    class AclWildcardField(StrEnum):
-        """Acl_Wildcard field constants."""
+        class AclWildcardField(StrEnum):
+            """Acl_Wildcard field constants."""
 
-        TYPE = "all"
-        VALUE = "*"
-
-        class OutputFormat(StrEnum):
-            """Output format options."""
-
-            LDIF = "ldif"
-            JSON = "json"
-            CSV = "csv"
-            YAML = "yaml"
+            TYPE = "all"
+            VALUE = "*"
 
     # =========================================================================
     # NAMESPACE ACCESS

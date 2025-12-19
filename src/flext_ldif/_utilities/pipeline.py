@@ -404,8 +404,10 @@ class ProcessingPipeline:
         # Add DN normalization if enabled
         if self._config.normalize_dns:
             # Convert Literal to StrEnum for type compatibility
-            case_fold_value = self._config.process_config.dn_config.case_fold
-            space_handling_value = self._config.process_config.dn_config.space_handling
+            case_fold_value = self._config.process_config.dn_config.case_fold or "none"
+            space_handling_value = (
+                self._config.process_config.dn_config.space_handling or "preserve"
+            )
 
             case_enum = c.Ldif.CaseFoldOption(case_fold_value)
             spaces_enum = m.Ldif.SpaceHandlingOption(space_handling_value)

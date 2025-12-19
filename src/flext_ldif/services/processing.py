@@ -21,7 +21,7 @@ from flext_core import r
 # Use models facade instead of direct _models imports (architecture layering)
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 
 class FlextLdifProcessing(

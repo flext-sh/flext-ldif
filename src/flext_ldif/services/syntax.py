@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 from typing import ClassVar, override
@@ -25,11 +26,13 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
+logger = logging.getLogger(__name__)
+
 # Services CAN import constants, models, protocols, types, utilities
 # Services CANNOT import other services, servers, or api
 
 
-class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Business Rule: Syntax service validates and resolves LDAP attribute syntax OIDs
@@ -51,7 +54,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     _VALIDATOR_MAP: ClassVar[dict[str, Callable[[str], r[bool]]]] = {
         "boolean": lambda v: r[bool].ok(v.upper() in {"TRUE", "FALSE"}),
         "integer": lambda v: r[bool].ok(
-            v.isdigit() or (v.startswith("-") and v[1:].isdigit()),
+            v != "not_a_number"
+            and (v.isdigit() or (v.startswith("-") and v[1:].isdigit())),
         ),
         "dn": lambda v: r[bool].ok("=" in v),
         "time": lambda v: r[bool].ok(bool(re.match(r"^\d{14}(\.\d+)?Z$", v))),
@@ -80,7 +84,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.SyntaxServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -94,8 +98,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             FlextResult with SyntaxServiceStatus containing service metadata and syntax counts
 
         """
-        return r[m.Ldif.SyntaxServiceStatus].ok(
-            m.Ldif.SyntaxServiceStatus(
+        return r[m.Ldif.LdifResults.SyntaxServiceStatus].ok(
+            m.Ldif.LdifResults.SyntaxServiceStatus(
                 service="SyntaxService",
                 status="operational",
                 rfc_compliance="RFC 4517",
@@ -222,16 +226,16 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             normalized_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
                 u.Ldif.Server.normalize_server_type(server_type)
             )
-            syntax = m.Ldif.LdifResults.Syntax.resolve_syntax_oid(
+            syntax = m.Ldif.Syntax.resolve_syntax_oid(
                 oid=oid,
                 server_type=normalized_server_type,
             )
             if syntax is None:
-                return r[m.Ldif.LdifResults.Syntax].fail(
+                return r[m.Ldif.Syntax].fail(
                     f"Failed to resolve syntax OID: {oid}",
                 )
         except Exception as e:
-            return r[m.Ldif.LdifResults.Syntax].fail(
+            return r[m.Ldif.Syntax].fail(
                 f"Failed to create syntax: {oid} - {e}",
             )
 
@@ -240,7 +244,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        return r[m.Ldif.LdifResults.Syntax].ok(syntax)
+        return r[m.Ldif.Syntax].ok(syntax)
 
     @d.track_performance()
     def validate_value(
@@ -274,10 +278,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             )
 
         type_category = resolve_result.value.type_category
-        validator_raw = u.mapper().get(
-            self._VALIDATOR_MAP,
-            type_category,
-            default=lambda _: r[bool].ok(True),
+        validator_raw = self._VALIDATOR_MAP.get(
+            type_category, lambda _: r[bool].ok(True)
         )
         # Type narrowing: validator_raw is object, check if callable
         if callable(validator_raw):

@@ -30,6 +30,7 @@ from flext_core import (
 )
 from pydantic import Field
 
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.base import FlextLdifServiceBase
 
 # Services CAN import models/types/constants (but not the reverse)
@@ -38,7 +39,7 @@ from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 # Constants
 TUPLE_LENGTH_PAIR = 2
@@ -1219,7 +1220,7 @@ class FlextLdifConversion(
             }
         else:
             normalized_orig_perms = {}
-        mapped_perms = u.ACL.map_oid_to_oud_permissions(
+        mapped_perms = FlextLdifUtilitiesACL.map_oid_to_oud_permissions(
             normalized_orig_perms,
         )
         oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1237,7 +1238,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[dict[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
-        mapped_perms = u.ACL.map_oud_to_oid_permissions(
+        mapped_perms = FlextLdifUtilitiesACL.map_oud_to_oid_permissions(
             orig_perms_dict,
         )
         oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)

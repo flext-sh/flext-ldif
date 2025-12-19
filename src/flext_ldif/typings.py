@@ -39,7 +39,7 @@ class FlextLdifTypes(FlextTypes):
         # =========================================================================
 
         # Basic value types
-        ValueType: TypeAlias = str | bytes | int | float | bool | None
+        ValueType: TypeAlias = str | bytes | int | float | bool | list[str] | None
         ValueList: TypeAlias = list[ValueType]
         AttributeValue: TypeAlias = str | bytes
 
@@ -79,6 +79,34 @@ class FlextLdifTypes(FlextTypes):
         # Processing types
         ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
         ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
+
+        # =========================================================================
+        # DOMAIN SUB-NAMESPACES (2-level maximum)
+        # =========================================================================
+
+        class Entry:
+            """Entry-related type definitions."""
+
+            # Entry component types
+            EntryDict: TypeAlias = dict[str, list[str]]
+            EntryAttributes: TypeAlias = dict[str, list[str]]
+            EntryMetadata: TypeAlias = dict[str, object]
+
+        class Attribute:
+            """Attribute-related type definitions."""
+
+            # Attribute component types
+            AttributeList: TypeAlias = list[str]
+            AttributeOptions: TypeAlias = dict[str, str]
+            AttributeMetadata: TypeAlias = dict[str, object]
+
+        class Schema:
+            """Schema-related type definitions."""
+
+            # Schema component types
+            SchemaDict: TypeAlias = dict[str, object]
+            SchemaElements: TypeAlias = dict[str, dict[str, object]]
+            SchemaMetadata: TypeAlias = dict[str, object]
 
         # =========================================================================
         # EXTENSIONS TYPES (Schema extensions and metadata)

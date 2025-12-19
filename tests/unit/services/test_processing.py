@@ -247,7 +247,7 @@ class TestsTestFlextLdifProcessing(s):
             entry_obj = entry.value
 
             # Add processing_stats to metadata to test line 228
-            entry_obj.metadata.processing_stats = m.EntryStatistics(
+            entry_obj.metadata.processing_stats = m.Ldif.EntryStatistics(
                 rejection_reason=None,
             )
 

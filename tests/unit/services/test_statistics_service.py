@@ -73,7 +73,7 @@ class TestsTestFlextLdifStatistics(s):
 
             entry = result.value
             if rejection_reason is not None and entry.metadata:
-                processing_stats = m.EntryStatistics(
+                processing_stats = m.Ldif.EntryStatistics(
                     rejection_reason=rejection_reason,
                 )
                 entry = entry.model_copy(

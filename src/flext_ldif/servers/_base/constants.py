@@ -15,6 +15,7 @@ from typing import ClassVar
 from flext_core import FlextLogger
 
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.constants import c
 
 # Removed: from flext_ldif.protocols import FlextLdifProtocols (use string literals or hasattr checks)
 
@@ -77,7 +78,7 @@ class FlextLdifServersBaseConstants(ABC):
 
 def _get_server_type_from_utilities(
     quirk_class: type[object],
-) -> str:
+) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type determined by inspecting class hierarchy via
@@ -93,8 +94,7 @@ def _get_server_type_from_utilities(
     # Business Rule: Access Server utility directly via FlextLdifUtilitiesServer
     # Implication: Direct access to avoid circular import with utilities.py
 
-    server_type_raw = FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
-    return str(server_type_raw)
+    return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
 
 def _get_priority_from_parent(parent: object | None) -> int:
@@ -158,7 +158,7 @@ class QuirkMethodsMixin:
 
     """
 
-    def _get_server_type(self) -> str:
+    def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__.
 
         Business Rule: Server type is determined by inspecting the class hierarchy

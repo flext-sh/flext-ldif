@@ -936,7 +936,7 @@ class FlextLdifUtilitiesSchema:
         )
         if basic_fields_result.is_failure:
             return r[t.Ldif.ModelMetadata.ParsedAttributeDict].fail(
-                basic_fields_result.error_message
+                basic_fields_result.error
             )
 
         oid, name, desc = basic_fields_result.value

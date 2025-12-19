@@ -180,7 +180,7 @@ class TestsFlextLdifCategorization(s):
                 {c.Names.CN: [c.Values.TEST]},
             )
             # Add processing_stats to entry
-            stats = m.EntryStatistics()
+            stats = m.Ldif.EntryStatistics()
             metadata = m.Ldif.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
@@ -385,7 +385,7 @@ class TestsFlextLdifCategorization(s):
             """Test categorize_entries() tracks category in metadata."""
             entry = TestCategorization.Factories.create_user_entry()
             # Add processing_stats
-            stats = m.EntryStatistics()
+            stats = m.Ldif.EntryStatistics()
             metadata = m.Ldif.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
@@ -416,7 +416,7 @@ class TestsFlextLdifCategorization(s):
             attrs.attributes.pop(c.Names.OBJECTCLASS, None)
             entry = entry.model_copy(update={"attributes": attrs})
             # Add processing_stats
-            stats = m.EntryStatistics()
+            stats = m.Ldif.EntryStatistics()
             metadata = m.Ldif.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
@@ -482,7 +482,7 @@ class TestsFlextLdifCategorization(s):
             """Test filter_by_base_dn() tracks filter results in metadata."""
             entry = TestCategorization.Factories.create_user_entry()
             # Add processing_stats
-            stats = m.EntryStatistics()
+            stats = m.Ldif.EntryStatistics()
             metadata = m.Ldif.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,

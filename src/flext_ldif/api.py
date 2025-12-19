@@ -332,7 +332,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             if isinstance(entry, BaseModel):
-                entry_dict = entry.model_dump(mode="json")
+                entry_dict = entry.model_dump(mode="python")
                 entries_typed.append(m.Ldif.Entry.model_validate(entry_dict))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
@@ -362,7 +362,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         server_type: str = "rfc"
         # Type narrowing: entry is object, convert to m.Ldif.Entry
         if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="json")
+            entry_dict = entry.model_dump(mode="python")
             entry_typed = m.Ldif.Entry.model_validate(entry_dict)
             result = self.acl_service.extract_acls_from_entry(
                 entry_typed,
@@ -407,7 +407,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         """
         # Type narrowing: entry is object, convert to m.Ldif.Entry
         if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="json")
+            entry_dict = entry.model_dump(mode="python")
             entry_typed = m.Ldif.Entry.model_validate(entry_dict)
             return FlextLdifEntries.get_entry_attributes(entry_typed)
         # Fallback: if not BaseModel, try direct conversion
@@ -431,7 +431,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         """
         # Type narrowing: entry is object, convert to m.Ldif.Entry
         if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="json")
+            entry_dict = entry.model_dump(mode="python")
             entry_typed = m.Ldif.Entry.model_validate(entry_dict)
             return FlextLdifEntries.get_entry_objectclasses(entry_typed)
         # Fallback: if not BaseModel, try direct conversion
@@ -652,8 +652,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
         # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
-            if isinstance(entry, BaseModel):
-                entry_dict = entry.model_dump(mode="json")
+            if isinstance(entry, m.Ldif.Entry):
+                entries_typed.append(entry)
+            elif isinstance(entry, BaseModel):
+                entry_dict = entry.model_dump(mode="python")
                 entries_typed.append(m.Ldif.Entry.model_validate(entry_dict))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))

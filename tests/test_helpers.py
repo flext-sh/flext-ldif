@@ -20,8 +20,8 @@ from flext_core.result import r
 from flext_tests import (
     FlextTestsFactories as tf_base,
     FlextTestsMatchers as tm_base,
-    FlextTestsTypes as tt_base,
     FlextTestsValidator as tv_base,
+    tt as tt_base,
 )
 
 from flext_ldif.protocols import p
@@ -652,9 +652,13 @@ class TestsFlextLdifFixtures(tf_base):
         return result
 
 
+# Alias for tests/__init__.py
+Teststt = TestsFlextLdifTypes
+
 __all__ = [
     "TestsFlextLdifFixtures",
     "TestsFlextLdifMatchers",
     "TestsFlextLdifTypes",
     "TestsFlextLdifValidators",
+    "Teststt",
 ]

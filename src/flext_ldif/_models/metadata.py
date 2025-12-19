@@ -15,7 +15,7 @@ from collections.abc import Generator, ItemsView, KeysView, ValuesView
 from typing import ClassVar, overload
 
 from flext_core._models.base import FlextModelsBase
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from flext_ldif.typings import t
 
@@ -48,6 +48,8 @@ class FlextLdifModelsMetadata:
         """
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
+        transformations: dict[str, object] | None = Field(default=None)
 
         def __init__(
             self,

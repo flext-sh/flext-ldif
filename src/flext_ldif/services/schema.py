@@ -26,7 +26,7 @@ from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 
 
-class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
+class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.LdifResults.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service.
 
     Business Rule: Schema service centralizes all schema-related operations using
@@ -182,15 +182,15 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.SchemaServiceStatus]):
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.SchemaServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return r[m.Ldif.SchemaServiceStatus].ok(
-            m.Ldif.SchemaServiceStatus(
+        return r[m.Ldif.LdifResults.SchemaServiceStatus].ok(
+            m.Ldif.LdifResults.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
                 status="operational",
