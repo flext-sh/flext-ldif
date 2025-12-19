@@ -323,7 +323,11 @@ class FlextLdifFixtures:
 
             """
             if fixtures_root is None:
-                fixtures_root = Path(__file__).parent.parent / "fixtures"
+                # CRITICAL: Use relative path from conftest.py location
+                # This works correctly regardless of working directory or parent conftest loading
+                # Pattern: tests/conftest.py → fixtures/ is tests/fixtures/
+                conftest_dir = Path(__file__).parent
+                fixtures_root = conftest_dir / "fixtures"
             self.fixtures_root: Final[Path] = fixtures_root
 
         def _get_fixture_path(
@@ -748,6 +752,6 @@ class FlextLdifFixtures:
             return self._loader.load_all(FlextLdifFixtures.ServerType.OPENLDAP)
 
 
-# Fixture paths (for backward compatibility)
-FIXTURES_DIR: Final[Path] = Path(__file__).parent.parent / "fixtures"
+# Fixture paths (for backward compatibility) - tests/conftest.py -> tests/fixtures/
+FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
 OID_FIXTURES_DIR: Final[Path] = FIXTURES_DIR / "oid"
