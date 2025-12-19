@@ -248,6 +248,110 @@ class FlextLdifModels(FlextModels):
         FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
 
         # Event models - real inheritance classes
+        class Events:
+            """Extended event models namespace."""
+
+            DnEvent = FlextLdifModelsEvents.DnEvent
+            DnEventConfig = FlextLdifModelsEvents.DnEventConfig
+            MigrationEvent = FlextLdifModelsEvents.MigrationEvent
+            MigrationEventConfig = FlextLdifModelsEvents.MigrationEventConfig
+            ConversionEvent = FlextLdifModelsEvents.ConversionEvent
+            ConversionEventConfig = FlextLdifModelsEvents.ConversionEventConfig
+            SchemaEvent = FlextLdifModelsEvents.SchemaEvent
+            SchemaEventConfig = FlextLdifModelsEvents.SchemaEventConfig
+            ParseEvent = FlextLdifModelsEvents.ParseEvent
+            WriteEvent = FlextLdifModelsEvents.WriteEvent
+            AclEvent = FlextLdifModelsEvents.AclEvent
+            CategoryEvent = FlextLdifModelsEvents.CategoryEvent
+            FilterEvent = FlextLdifModelsEvents.FilterEvent
+
+        # Configuration models - extended set
+        class Configuration:
+            """Extended configuration models namespace."""
+
+            EntryParseConfig = FlextLdifModelsSettings.EntryParseConfig
+            EntryParseMetadataConfig = FlextLdifModelsSettings.EntryParseMetadataConfig
+            EntryProcessingConfig = FlextLdifModelsSettings.EntryProcessingConfig
+            EntryTransformConfig = FlextLdifModelsSettings.EntryTransformConfig
+            EntryFilterConfig = FlextLdifModelsSettings.EntryFilterConfig
+            EntryWriteConfig = FlextLdifModelsSettings.EntryWriteConfig
+            ObjectClassParseConfig = FlextLdifModelsSettings.ObjectClassParseConfig
+            LdifContentParseConfig = FlextLdifModelsSettings.LdifContentParseConfig
+            ParserParams = FlextLdifModelsSettings.ParserParams
+            WriterParams = FlextLdifModelsSettings.WriterParams
+            ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
+            BatchWriteConfig = FlextLdifModelsSettings.BatchWriteConfig
+            AttributeNormalizeConfig = FlextLdifModelsSettings.AttributeNormalizeConfig
+            AttributeDenormalizeConfig = FlextLdifModelsSettings.AttributeDenormalizeConfig
+            RdnProcessingConfig = FlextLdifModelsSettings.RdnProcessingConfig
+            DnCaseRules = FlextLdifModelsSettings.DnCaseRules
+            EncodingRules = FlextLdifModelsSettings.EncodingRules
+            AclFormatRules = FlextLdifModelsSettings.AclFormatRules
+            MigrationPipelineParams = FlextLdifModelsSettings.MigrationPipelineParams
+            MigrationConfig = FlextLdifModelsSettings.MigrationConfig
+            ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
+            ServerPatternsConfig = FlextLdifModelsSettings.ServerPatternsConfig
+            AciLineFormatConfig = FlextLdifModelsSettings.AciLineFormatConfig
+            FilterCriteria = FlextLdifModelsSettings.FilterCriteria
+            MetadataTransformationConfig = FlextLdifModelsSettings.MetadataTransformationConfig
+            ConfigInfo = FlextLdifModelsSettings.ConfigInfo
+            PermissionMappingConfig = FlextLdifModelsSettings.PermissionMappingConfig
+            SchemaConversionPipelineConfig = FlextLdifModelsSettings.SchemaConversionPipelineConfig
+            MigrateOptions = FlextLdifModelsSettings.MigrateOptions
+
+        # Results models - extended set
+        class Results:
+            """Extended results models namespace."""
+
+            # Statistics results
+            Statistics = FlextLdifModelsResults.Statistics
+            StatisticsResult = FlextLdifModelsResults.StatisticsResult
+            StatisticsSummary = FlextLdifModelsResults.StatisticsSummary
+            EntriesStatistics = FlextLdifModelsResults.EntriesStatistics
+            MigrationSummary = FlextLdifModelsResults.MigrationSummary
+            CategorizedEntries = FlextLdifModelsResults.CategorizedEntries
+
+            # Analysis and detection results
+            AnalysisResult = FlextLdifModelsResults.AnalysisResult
+            EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
+            ServerDetectionResult = FlextLdifModelsResults.ServerDetectionResult
+
+            # Parsing and writing results
+            ParseResponse = FlextLdifModelsResults.ParseResponse
+            WriteResponse = FlextLdifModelsResults.WriteResponse
+
+            # Schema discovery and validation
+            SchemaDiscoveryResult = FlextLdifModelsResults.SchemaDiscoveryResult
+            SchemaBuilderResult = FlextLdifModelsResults.SchemaBuilderResult
+            SyntaxLookupResult = FlextLdifModelsResults.SyntaxLookupResult
+
+            # ACL-related results
+            AclResponse = FlextLdifModelsResults.AclResponse
+            AclEvaluationResult = FlextLdifModelsResults.AclEvaluationResult
+
+            # Migration results
+            MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
+            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+
+            # Validation results
+            ValidationResult = FlextLdifModelsResults.ValidationResult
+            ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
+            LdifValidationResult = FlextLdifModelsResults.LdifValidationResult
+
+            # Dynamic counts and categorization
+            DynamicCounts = FlextLdifModelsResults.DynamicCounts
+            FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
+
+            # Status models
+            ClientStatus = FlextLdifModelsResults.ClientStatus
+            ServiceStatus = FlextLdifModelsResults.ServiceStatus
+
+            # Additional utility result models
+            DictAccessibleValue = FlextLdifModelsResults.DictAccessibleValue
+            BooleanFlags = FlextLdifModelsResults.BooleanFlags
+            ConfigSettings = FlextLdifModelsResults.ConfigSettings
+            CategoryPaths = FlextLdifModelsResults.CategoryPaths
+            EventType = FlextLdifModelsResults.EventType
 
         # ═══════════════════════════════════════════════════════════════════════════
         # LdifResults - Alias namespace for backward compatibility with services
