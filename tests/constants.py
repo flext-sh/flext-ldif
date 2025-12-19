@@ -976,6 +976,8 @@ class TestDeduplicationHelpers:
         quirk: object,
         content: str,
         msg: str | None = None,
+        parse_method: str | None = None,
+        expected_type: type | None = None,
     ) -> object:
         """Parse using quirk and unwrap result.
 
@@ -983,17 +985,38 @@ class TestDeduplicationHelpers:
             quirk: Schema quirk instance with parse method
             content: Content to parse
             msg: Optional message for assertion
+            parse_method: Optional specific parse method name (e.g., 'parse_attribute')
+            expected_type: Optional expected type for validation
 
         Returns:
             Parsed result value
 
         Raises:
-            AssertionError: If parsing fails
+            AssertionError: If parsing fails or type doesn't match
 
         """
-        result = quirk.parse(content)
+        # Get the appropriate parse method
+        if parse_method:
+            method = getattr(quirk, parse_method, None)
+            if method is None:
+                raise AssertionError(f"Quirk has no method '{parse_method}'")
+            result = method(content)
+        else:
+            result = quirk.parse(content)
+
         assert result.is_success, msg or f"quirk.parse() failed: {result.error}"
-        return result.value
+
+        value = result.value
+        if expected_type is not None:
+            # For Protocol types, use duck typing check
+            if hasattr(expected_type, "__protocol_attrs__"):
+                # It's a Protocol, just return the value (structural typing)
+                pass
+            elif not isinstance(value, expected_type):
+                raise AssertionError(
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                )
+        return value
 
 
 class TestCategorization:

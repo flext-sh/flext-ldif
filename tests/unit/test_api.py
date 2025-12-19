@@ -272,7 +272,7 @@ objectClass: {c.Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
-    for i in range(5)
+    for i in range(100)
 ])
 
 MULTIPLE_VALUES_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
@@ -284,7 +284,15 @@ objectClass: {c.Names.PERSON}
 """
 
 MULTIPLE_ENTRIES_CONTENT = f"""dn: cn=user1, {c.DNs.EXAMPLE}
-cn: {c.Values.TEST}
+cn: user1
+objectClass: {c.Names.PERSON}
+
+dn: cn=user2, {c.DNs.EXAMPLE}
+cn: user2
+objectClass: {c.Names.PERSON}
+
+dn: cn=user3, {c.DNs.EXAMPLE}
+cn: user3
 objectClass: {c.Names.PERSON}
 """
 
@@ -395,7 +403,7 @@ class TestsFlextLdifAPIParsingOperations(s):
             input_type=InputType.STRING,
             server_type=lib_c.Ldif.ServerTypes.RFC,
             content=CHANGETYPE_CONTENT,
-            expected_count=2,
+            expected_count=3,
             description="Parse with changetype operations",
         ),
         ParsingScenario.NONEXISTENT_FILE: ParsingTestCase(
