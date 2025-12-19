@@ -229,6 +229,7 @@ class FlextLdifModels(FlextModels):
         WriteConfig = WriteConfig
         ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
         EntryResult = FlextLdifModelsResults.EntryResult
+        ParseResponse = FlextLdifModelsResults.ParseResponse
         WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
         WriteOutputOptions: TypeAlias = FlextLdifModelsSettings.WriteOutputOptions
         WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
@@ -555,8 +556,9 @@ class FlextLdifModels(FlextModels):
 # SEM quebra de codigo - mantem compatibilidade backward
 # =========================================================================
 
-# NOTE: NO model_rebuild() - Architectural fix: imports at top resolve forward refs
-# See: FlextModelsEntity imported in _models/domain.py, _models/results.py, models.py
+# Forward references resolved via imports at module top level
+# FlextModelsEntity imported at top of _models/domain.py and _models/results.py
+# This architectural approach avoids runtime model_rebuild() calls
 
 m = FlextLdifModels
 
