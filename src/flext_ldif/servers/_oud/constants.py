@@ -13,7 +13,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif._models.config import FlextLdifModelsSettings
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)

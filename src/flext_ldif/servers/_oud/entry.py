@@ -19,8 +19,8 @@ from flext_core import (
     FlextTypes,
 )
 
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -30,7 +30,7 @@ from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -375,7 +375,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     original_attribute_case[attr_name.lower()] = attr_name
 
         # Create OUD metadata using utility
-        FlextLdifModelsSettings.EntryParseMetadataConfig.model_rebuild()
         metadata_config = FlextLdifModelsSettings.EntryParseMetadataConfig(
             quirk_type="oud",
             original_entry_dn=entry_dn,

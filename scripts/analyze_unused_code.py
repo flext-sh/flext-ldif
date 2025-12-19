@@ -207,7 +207,7 @@ def _collect_server_classes() -> set[str]:
     return server_classes
 
 
-def _is_server_class_used(full_name: str, all_refs: list[str], file_path: Path) -> bool:
+def _is_server_class_used(full_name: str, all_refs: set[str], file_path: Path) -> bool:
     """Check if server class is used via imports or __init__.py exports."""
     # Check if referenced in code
     for ref in all_refs:
@@ -230,7 +230,7 @@ def _check_unused_definition(
     file_path: Path,
     lineno: int,
     server_classes: set[str],
-    all_refs: list[str],
+    all_refs: set[str],
 ) -> tuple[str, Path, int] | None:
     """Check if a definition is unused. Returns tuple if unused, None otherwise."""
     # Handle server classes specially

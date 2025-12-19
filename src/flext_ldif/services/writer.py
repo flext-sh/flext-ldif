@@ -26,7 +26,7 @@ from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 
 def _extract_pipe_value(
@@ -84,7 +84,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
-        result_raw = u.match(
+        result_raw = u.Ldif.match(
             format_options,
             (type(None), lambda _: m.Ldif.LdifResults.WriteFormatOptions()),
             (type, lambda t: t()),

@@ -10,18 +10,18 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Literal, cast
 
-from flext_core import FlextLogger, r, u as u_core
+from flext_core import FlextLogger, r, u
 from flext_core.runtime import FlextRuntime
 
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
 # Aliases for simplified usage - after all imports
-# u_core is imported from flext_core for core utilities (normalize, Collection, batch)
+# u is imported from flext_core for core utilities (normalize, Collection, batch)
 # Use FlextLdifUtilitiesACL directly instead of u.ACL to avoid circular import
 f = FlextFunctional  # Pure functional utilities (no circular import)
 # t is imported from flext_ldif.typings (FlextLdifTypes)
@@ -59,18 +59,45 @@ class FlextLdifUtilitiesACL:
 
         """
         # Start with RFC foundation
-        attrs = list(c.AclAttributeRegistry.RFC_FOUNDATION)
+        attrs = list(c.Ldif.AclAttributeRegistry.RFC_FOUNDATION)
 
         # Add server-specific quirks if server type provided
         if server_type:
             server_key = server_type.lower()
-            server_quirks = c.AclAttributeRegistry.SERVER_QUIRKS.get(
+            server_quirks = c.Ldif.AclAttributeRegistry.SERVER_QUIRKS.get(
                 server_key,
                 [],
             )
             attrs.extend(server_quirks)
 
         return attrs
+
+    @staticmethod
+    def is_acl_attribute(
+        attribute_name: str,
+        server_type: str | None = None,
+    ) -> bool:
+        """Check if attribute is an ACL attribute (case-insensitive).
+
+        Args:
+            attribute_name: Attribute name to check.
+            server_type: Server type for server-specific ACL attributes.
+
+        Returns:
+            True if attribute is an ACL attribute, False otherwise.
+
+        Example:
+            >>> is_acl_attribute("aci")
+            True
+            >>> is_acl_attribute("orclaci", "oid")
+            True
+            >>> is_acl_attribute("cn")
+            False
+
+        """
+        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes(server_type)
+        all_attrs_lower = {a.lower() for a in all_attrs}
+        return attribute_name.lower() in all_attrs_lower
 
     @staticmethod
     def split_acl_line(acl_line: str) -> tuple[str, str]:
@@ -217,7 +244,7 @@ class FlextLdifUtilitiesACL:
 
         # Simple native extraction with perfect type inference
         all_bind_rules: list[dict[str, str]] = []
-        for bind_type, pattern in u_core.mapper().to_dict(patterns).items():
+        for bind_type, pattern in u.mapper().to_dict(patterns).items():
             matches = re.findall(pattern, content, re.IGNORECASE)
             all_bind_rules.extend([
                 {"type": bind_type, "value": match} for match in matches
@@ -233,7 +260,7 @@ class FlextLdifUtilitiesACL:
         if not permission_map:
             return perm
         # When default is provided, mapper().get returns the value directly, not FlextResult
-        return u_core.mapper().get(permission_map, perm, default=perm)
+        return u.mapper().get(permission_map, perm, default=perm)
 
     @staticmethod
     def _process_permission_list(
@@ -361,12 +388,12 @@ class FlextLdifUtilitiesACL:
 
         first_rule = bind_rules_data[0]
         # When default is provided, mapper().get returns the value directly, not FlextResult
-        rule_type: str = u_core.mapper().get(first_rule, "type", default="")
-        rule_value: str = u_core.mapper().get(first_rule, "value", default="")
+        rule_type: str = u.mapper().get(first_rule, "type", default="")
+        rule_value: str = u.mapper().get(first_rule, "value", default="")
 
         # Check for special values first
         # When default is not provided, mapper().get may return RuntimeResult or value directly
-        special_match_raw = u_core.mapper().get(special_values, rule_value)
+        special_match_raw = u.mapper().get(special_values, rule_value)
         # Type narrowing: check if it's a RuntimeResult or direct value
         special_match: tuple[str, str] | None = None
         # Type narrowing: check if it's a RuntimeResult using isinstance
@@ -385,7 +412,7 @@ class FlextLdifUtilitiesACL:
 
         # Map the type
         # When default is provided, mapper().get returns the value directly
-        subject_type: str = u_core.mapper().get(
+        subject_type: str = u.mapper().get(
             subject_type_map, rule_type, default=rule_type
         )
         subject_type = subject_type if isinstance(subject_type, str) else rule_type
@@ -524,7 +551,7 @@ class FlextLdifUtilitiesACL:
         context["aci_content"] = aci_content
 
         # Native Python iteration - proper type narrowing for isinstance
-        for name, pattern_spec in u_core.mapper().to_dict(patterns).items():
+        for name, pattern_spec in u.mapper().to_dict(patterns).items():
             # Native isinstance provides proper type narrowing
             if isinstance(pattern_spec, tuple):
                 pattern, group = pattern_spec
@@ -572,9 +599,9 @@ class FlextLdifUtilitiesACL:
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
         # Simple native iteration - no complex FlextFunctional chains
-        for key, value_tuple in u_core.mapper().to_dict(special_values).items():
+        for key, value_tuple in u.mapper().to_dict(special_values).items():
             if (
-                u_core.normalize(rule_value, key)
+                u.normalize(rule_value, key)
                 and isinstance(value_tuple, tuple)
                 and len(value_tuple) == TUPLE_LENGTH_PAIR
                 and isinstance(value_tuple[0], str)
@@ -606,9 +633,9 @@ class FlextLdifUtilitiesACL:
         # Process each rule with native Python - clear type inference
         for rule in bind_rules_data:
             # When default is provided, mapper().get returns the value directly
-            rule_type_raw = u_core.mapper().get(rule, "type", default="")
+            rule_type_raw = u.mapper().get(rule, "type", default="")
             rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
-            rule_value = u_core.mapper().get(rule, "value", default="")
+            rule_value = u.mapper().get(rule, "value", default="")
             rule_value = rule_value if isinstance(rule_value, str) else ""
 
             # Check for special values first
@@ -621,7 +648,7 @@ class FlextLdifUtilitiesACL:
 
             # Check for mapped type
             # When default is not provided, mapper().get may return RuntimeResult or value directly
-            mapped_type_raw = u_core.mapper().get(subject_type_map, rule_type)
+            mapped_type_raw = u.mapper().get(subject_type_map, rule_type)
             # Type narrowing: check if it's a RuntimeResult or direct value
             mapped_type: str | None = None
             # Type narrowing: check if it's a RuntimeResult using isinstance
@@ -641,7 +668,7 @@ class FlextLdifUtilitiesACL:
         # Default fallback using first rule's value
         # When default is provided, mapper().get returns the value directly
         if bind_rules_data:
-            default_value = u_core.mapper().get(bind_rules_data[0], "value", default="")
+            default_value = u.mapper().get(bind_rules_data[0], "value", default="")
             default_value = default_value if isinstance(default_value, str) else ""
         else:
             default_value = ""
@@ -753,15 +780,15 @@ class FlextLdifUtilitiesACL:
         # Native Python: direct if-elif instead of f.switch()
         # When default is provided, mapper().get returns the value directly
         if subject_type == "self":
-            op = u_core.mapper().get(operators, "self", default="userdn")
+            op = u.mapper().get(operators, "self", default="userdn")
             op = op if isinstance(op, str) else "userdn"
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
-            op = u_core.mapper().get(operators, "anonymous", default="userdn")
+            op = u.mapper().get(operators, "anonymous", default="userdn")
             op = op if isinstance(op, str) else "userdn"
             return f'{op}="{anonymous_value}"'
         # Default case: format subject_value
-        op = u_core.mapper().get(operators, subject_type, default="userdn")
+        op = u.mapper().get(operators, subject_type, default="userdn")
         op = op if isinstance(op, str) else "userdn"
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
@@ -895,7 +922,7 @@ class FlextLdifUtilitiesACL:
         # Native Python: dict comprehension instead of f.map_dict()
         permissions_dict: dict[str, bool] = {
             k: bool(v) if isinstance(v, (bool, int, str)) else False
-            for k, v in u_core.mapper().to_dict(permissions_dict_raw).items()
+            for k, v in u.mapper().to_dict(permissions_dict_raw).items()
         }
         return subject_type, subject_value, permissions_dict
 
@@ -920,7 +947,7 @@ class FlextLdifUtilitiesACL:
                 group=1,
             )
 
-        extra_result = u_core.Collection.process(
+        extra_result = u.Collection.process(
             extra_patterns,
             processor=extract_extra,
             predicate=lambda _k, v: bool(v),
@@ -933,7 +960,7 @@ class FlextLdifUtilitiesACL:
                 # Native Python: dict comprehension with isinstance check
                 filtered_extensions: dict[str, str] = {
                     k: v
-                    for k, v in u_core.mapper().to_dict(extra_value).items()
+                    for k, v in u.mapper().to_dict(extra_value).items()
                     if isinstance(v, str)
                 }
                 if filtered_extensions:
@@ -1192,7 +1219,7 @@ class FlextLdifUtilitiesACL:
             """Filter rule config items based on extensions."""
             return bool(extensions.get(item[0]) if extensions else None)
 
-        process_result = u_core.Collection.process(
+        process_result = u.Collection.process(
             rule_config,
             processor=process_rule_config,
             predicate=rule_predicate,
@@ -1255,7 +1282,7 @@ class FlextLdifUtilitiesACL:
                 return bool(extensions.get(item[0]) if extensions else None)
             return False
 
-        process_result = u_core.Collection.process(
+        process_result = u.Collection.process(
             target_config,
             processor=process_target_config,
             predicate=predicate_func,
@@ -1529,7 +1556,7 @@ class FlextLdifUtilitiesACL:
             final_value = value if value is not None else default_value
             return name, final_value
 
-        process_result = u_core.Collection.process(
+        process_result = u.Collection.process(
             patterns,
             processor=extract_component_batch,
             on_error="skip",
@@ -1665,12 +1692,12 @@ class FlextLdifUtilitiesACL:
                 return result.value
             return result
 
-        batch_result = u_core.Collection.batch(
+        batch_result = u.Collection.batch(
             list(acl_lines),
             parse_single_acl_wrapper,
             on_error="collect" if not fail_fast else "fail",
         )
-        # u_core.Collection.batch returns FlextResult[BatchResultDict]
+        # u.Collection.batch returns FlextResult[BatchResultDict]
         if not batch_result.is_success:
             return r[list[m.Ldif.Acl]].fail(
                 batch_result.error or "ACL batch parse failed"
@@ -1757,12 +1784,12 @@ class FlextLdifUtilitiesACL:
             """Wrapper that returns T directly for batch compatibility."""
             return convert_single_permissions(permissions)
 
-        batch_result = u_core.Collection.batch(
+        batch_result = u.Collection.batch(
             list(permissions_list),
             convert_single_permissions_wrapper,
             on_error="fail",
         )
-        # u_core.Collection.batch returns FlextResult[BatchResultDict]
+        # u.Collection.batch returns FlextResult[BatchResultDict]
         if not batch_result.is_success:
             return r[list[dict[str, bool]]].fail(
                 batch_result.error or "Permissions batch convert failed"

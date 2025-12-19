@@ -12,22 +12,121 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext_core import r, t as core_t
+from flext_core import r
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field
 
-from flext_ldif._models.shared import FlextLdifModelsBase
+from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif._models.shared import Acl, SchemaObjectClass
 from flext_ldif.constants import c
 
-# REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
-# _Entry = "FlextModelsEntity.Entry"  # Use "FlextModelsEntity.Entry" directly
-# _SchemaObjectClass = "FlextModelsBase.SchemaObjectClass"  # Use "FlextModelsBase.SchemaObjectClass" directly
-# _Acl = "FlextModelsBase.Acl"  # Use "FlextModelsBase.Acl" directly
-_QuirkMetadata = (
-    core_t.Metadata
-)  # Use Metadata type from flext-core (this is from flext-core, not nested)
+# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED: if TYPE_CHECKING:
+# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED:     from flext_ldif._models.shared import Acl, SchemaObjectClass
+# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED:
+# TYPE_CHECKING REMOVED: # REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
+# TYPE_CHECKING REMOVED: # _Entry = "FlextModelsEntity.Entry"  # Use "FlextModelsEntity.Entry" directly
+# TYPE_CHECKING REMOVED: # _SchemaObjectClass = "FlextModelsBase.SchemaObjectClass"  # Use "FlextModelsBase.SchemaObjectClass" directly
+# TYPE_CHECKING REMOVED: # _Acl = "FlextModelsBase.Acl"  # Use "FlextModelsBase.Acl" directly
+# Type alias for QuirkMetadata
+_QuirkMetadata = FlextTypes.Metadata
+# TYPE_CHECKING REMOVED:
+
+
+# Configuration classes defined outside main class for type resolution
+class DnNormalizationConfig(FlextModelsEntity.Value):
+    """Configuration for DN normalization."""
+
+    case_sensitive: bool = Field(default=False)
+    remove_spaces: bool = Field(default=True)
+    case_fold: str | None = Field(default=None)
+    space_handling: str | None = Field(default=None)
+    escape_handling: str | None = Field(default=None)
+
+
+class AttrNormalizationConfig(FlextModelsEntity.Value):
+    """Configuration for attribute normalization."""
+
+    lowercase_keys: bool = Field(default=True)
+    sort_values: bool = Field(default=True)
+    sort_attributes: str | None = Field(default=None)
+    normalize_whitespace: bool = Field(default=True)
+
+
+class AclConversionConfig(FlextModelsEntity.Value):
+    """Configuration for ACL conversion operations."""
+
+    convert_aci: bool = Field(default=True)
+    preserve_original_aci: bool = Field(default=False)
+    map_server_specific: bool = Field(default=True)
+
+
+class ValidationConfig(FlextModelsEntity.Value):
+    """Configuration for validation operations."""
+
+    strict_mode: bool = Field(default=True)
+    validate_schema: bool = Field(default=True)
+    validate_acl: bool = Field(default=True)
+
+
+class MetadataConfig(FlextModelsEntity.Value):
+    """Configuration for metadata operations."""
+
+    include_timestamps: bool = Field(default=True)
+    include_processing_stats: bool = Field(default=True)
+    preserve_validation: bool = Field(default=False)
+
+
+class ProcessConfig(FlextModelsEntity.Value):
+    """Configuration for processing operations."""
+
+    batch_size: int = Field(default=100)
+    timeout_seconds: int = Field(default=300)
+    max_retries: int = Field(default=3)
+
+    # Processing pipeline configuration
+    source_server: str | None = Field(default=None)
+    target_server: str | None = Field(default=None)
+    dn_config: DnNormalizationConfig | None = Field(default=None)
+    attr_config: AttrNormalizationConfig | None = Field(default=None)
+    acl_config: AclConversionConfig | None = Field(default=None)
+    validation_config: ValidationConfig | None = Field(default=None)
+    metadata_config: MetadataConfig | None = Field(default=None)
+
+
+class TransformConfig(FlextModelsEntity.Value):
+    """Configuration for transformation operations."""
+
+    fail_fast: bool = Field(default=False)
+    preserve_order: bool = Field(default=True)
+    track_changes: bool = Field(default=False)
+    normalize_dns: bool = Field(default=False)
+    normalize_attrs: bool = Field(default=False)
+    process_config: ProcessConfig | None = Field(default=None)
+
+
+class FilterConfig(FlextModelsEntity.Value):
+    """Configuration for filtering operations."""
+
+    mode: str = Field(default="include")
+    case_sensitive: bool = Field(default=False)
+    include_metadata_matches: bool = Field(default=False)
+
+
+class WriteConfig(FlextModelsEntity.Value):
+    """Configuration for write operations."""
+
+    output_format: str = Field(default="ldif")
+    format: str = Field(default="ldif")  # Alias for output_format
+    line_width: int | None = Field(default=None)
+    fold_lines: bool = Field(default=True)
+    base64_attrs: list[str] | None = Field(default=None)
+    sort_by: str | None = Field(default=None)
+    attr_order: list[str] | None = Field(default=None)
+    include_metadata: bool = Field(default=False)
+    server: str | None = Field(default=None)
 
 
 class FlextLdifModelsSettings:
@@ -1831,9 +1930,7 @@ class FlextLdifModelsSettings:
             default=None,
             description="Optional SUP transformation",
         )
-        enrich_metadata_hook: (
-            Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None
-        ) = Field(
+        enrich_metadata_hook: Callable[[SchemaObjectClass], None] | None = Field(
             default=None,
             description="Optional metadata enrichment",
         )
@@ -2080,11 +2177,11 @@ class FlextLdifModelsSettings:
             validate_assignment=True,
         )
 
-        original_acl: FlextLdifModelsDomains.Acl = Field(
+        original_acl: Acl = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: FlextLdifModelsDomains.Acl = Field(
+        converted_acl: Acl = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2104,6 +2201,8 @@ class FlextLdifModelsSettings:
             default=False,
             description="Whether converted ACL has permissions",
         )
+
+    # ServerValidationRules is already defined above
 
 
 # Note: All type references use direct imports with runtime aliases (c, m, p, t, u)

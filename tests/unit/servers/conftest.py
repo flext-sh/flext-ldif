@@ -19,6 +19,7 @@ from tests.unit.quirks.servers.conftest import (
     real_parser_service,
     real_writer_service,
 )
+from tests.unit.servers.test_conversion_matrix import ConversionTestConstants
 
 
 @pytest.fixture(autouse=True)
@@ -50,8 +51,15 @@ def oud_fixtures() -> FlextLdifFixtures.OUD:
     return FlextLdifFixtures.get_oud()
 
 
+@pytest.fixture
+def conversion_constants() -> ConversionTestConstants:
+    """Provide ConversionTestConstants for tests."""
+    return ConversionTestConstants()
+
+
 __all__ = [
     "api",
+    "conversion_constants",
     "conversion_matrix",
     "oid_quirk",
     "oid_schema_quirk",

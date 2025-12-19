@@ -21,11 +21,11 @@ from flext_core import r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[m.Ldif.EntryAnalysisResult],
+    FlextLdifServiceBase[m.Ldif.LdifResults.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -138,8 +138,8 @@ class FlextLdifAnalysis(
             with contextlib.suppress(Exception):  # Skip errors like on_error="skip"
                 process_entry(entry)
 
-        return r[m.Ldif.EntryAnalysisResult].ok(
-            m.Ldif.EntryAnalysisResult(
+        return r[m.Ldif.LdifResults.EntryAnalysisResult].ok(
+            m.Ldif.LdifResults.EntryAnalysisResult(
                 total_entries=total_entries,
                 objectclass_distribution=m.Ldif.LdifResults.DynamicCounts(
                     **objectclass_distribution

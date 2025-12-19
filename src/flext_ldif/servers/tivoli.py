@@ -13,9 +13,9 @@ from typing import ClassVar
 
 from flext_core import (
     FlextResult,
-    FlextUtilities as u_core,
 )
 
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import (
@@ -328,7 +328,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
-                attr_name, content = u.ACL.split_acl_line(acl_line)
+                attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
                 _ = attr_name  # Unused but required for tuple unpacking
 
                 # Extract access type from brace content
@@ -491,7 +491,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_raw = u_core.mapper().get(
+            object_classes_raw = u.mapper().get(
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
             )
             object_classes = (
@@ -528,7 +528,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Get objectClasses directly from attributes (already list[str])
-                object_classes = u_core.mapper().get(
+                object_classes = u.mapper().get(
                     attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
                 )
 
@@ -551,7 +551,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add/update metadata attributes
-                processed_attributes[c.Ldif.MetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 # Check if entry is config entry using Constants markers
@@ -559,7 +559,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     marker in dn_lower
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
-                processed_attributes[c.Ldif.MetadataKeys.IS_CONFIG_ENTRY] = [
+                processed_attributes[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
                     str(is_config),
                 ]
                 # Update objectClass (already in list format)

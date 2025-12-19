@@ -31,6 +31,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
 
 # Standardized short name for use in tests (same pattern as flext-core)
 p = TestsFlextLdifProtocols
+Testsp = TestsFlextLdifProtocols  # Alias for tests/__init__.py
 
 __all__ = [
     "TestsFlextLdifProtocols",

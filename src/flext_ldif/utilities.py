@@ -29,15 +29,15 @@ from typing import Literal, Self, TypeGuard, overload
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextTypes as flext_core_types,
     FlextUtilities,
     r,
 )
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import t as flext_core_t
 from flext_core.utilities import ValidatorSpec
 
 # Local aliases for model types
-from flext_ldif._models.config import FlextLdifModelsSettings
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.configs import ProcessConfig
@@ -522,7 +522,9 @@ class FlextLdifUtilities(FlextUtilities):
             # Convert FlextLdifModelsDomains.Entry to m.Ldif.Entry using model_validate
             domain_entries = pipeline_result.value
             converted_entries: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(entry.model_dump())
+                m.Ldif.Entry.model_validate(
+                    entry.model_dump(exclude_computed_fields=True)
+                )
                 for entry in domain_entries
             ]
             return FlextLdifResult.ok(converted_entries)
@@ -1742,7 +1744,9 @@ class FlextLdifUtilities(FlextUtilities):
             # Convert dicts to Mapping[str, t.GeneralValueType] for u.merge()
             # Use list comprehension for better performance
             # Type narrowing: isinstance already guarantees Mapping[str, t.GeneralValueType]
-            _mappings_list: list[Mapping[str, flext_core_types.t.GeneralValueType]] = [
+            _mappings_list: list[
+                Mapping[str, flext_core_t.FlextTypes.GeneralValueType]
+            ] = [
                 dict_item
                 for dict_item in dicts
                 if isinstance(dict_item, (dict, Mapping))
@@ -2471,13 +2475,17 @@ class FlextLdifUtilities(FlextUtilities):
             if not dict_list:
                 return {}
             # Type narrowing: dict_item is Mapping[str, t.GeneralValueType] (filter already ensures dict type)
-            mappings: list[Mapping[str, flext_core_types.t.GeneralValueType]] = list(
-                dict_list,
+            mappings: list[Mapping[str, flext_core_t.FlextTypes.GeneralValueType]] = (
+                list(
+                    dict_list,
+                )
             )
             if not mappings:
                 return {}
             # Merge mappings sequentially (merge accepts 2 args, not variadic)
-            merged: dict[str, flext_core_types.t.GeneralValueType] = dict(mappings[0])
+            merged: dict[str, flext_core_t.FlextTypes.GeneralValueType] = dict(
+                mappings[0]
+            )
             for mapping in mappings[1:]:
                 merge_result = FlextUtilities.merge(
                     merged,
@@ -3003,7 +3011,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Use u.merge() for unified behavior
             # Type narrowing: dict[str, object] is compatible with Mapping[str, t.GeneralValueType]
             # t.GeneralValueType includes object, so no cast needed
-            mappings: list[Mapping[str, flext_core_types.t.GeneralValueType]] = [
+            mappings: list[Mapping[str, flext_core_t.FlextTypes.GeneralValueType]] = [
                 data,
                 updates,
             ]
@@ -3014,7 +3022,7 @@ class FlextLdifUtilities(FlextUtilities):
             )
             if merge_result.is_success and isinstance(merge_result.value, dict):
                 # Convert t.GeneralValueType values to object
-                merged_dict: dict[str, flext_core_types.t.GeneralValueType] = (
+                merged_dict: dict[str, flext_core_t.FlextTypes.GeneralValueType] = (
                     merge_result.value
                 )
                 # Type narrowing: t.GeneralValueType includes object, so no cast needed

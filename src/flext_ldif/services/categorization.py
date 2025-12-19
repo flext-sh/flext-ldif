@@ -27,7 +27,7 @@ from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif.utilities import u
 
 # Module-level constants
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100

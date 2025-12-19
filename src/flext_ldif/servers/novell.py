@@ -25,8 +25,8 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextUtilities as u_core
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextResult
+from flext_core.utilities import u
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -638,7 +638,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return True
 
             # objectClasses is already list[str] in
-            object_classes_raw = u_core.mapper().get(
+            object_classes_raw = u.mapper().get(
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
             )
             # Ensure object_classes is a list
@@ -665,7 +665,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in Attributes)
-                object_classes = u_core.mapper().get(
+                object_classes = u.mapper().get(
                     attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
                 )
 

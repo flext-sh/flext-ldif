@@ -10,7 +10,7 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
-from typing import TypedDict
+from typing import Literal, TypedDict, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
@@ -158,25 +158,25 @@ class FlextLdifUtilitiesParser:
         for match in x_pattern.finditer(definition):
             key = f"X-{match.group(1)}"
             value = match.group(2).strip()
-            extensions[key] = value
+            extensions[key] = [value]
 
         # Extract DESC (description) if present
         desc_pattern = re.compile(r"DESC\s+['\"]([^'\"]*)['\"]")
         desc_match = desc_pattern.search(definition)
         if desc_match:
-            extensions["DESC"] = desc_match.group(1)
+            extensions["DESC"] = [desc_match.group(1)]
 
         # Extract ORDERING if present
         ordering_pattern = re.compile(r"ORDERING\s+([A-Za-z0-9_-]+)")
         ordering_match = ordering_pattern.search(definition)
         if ordering_match:
-            extensions["ORDERING"] = ordering_match.group(1)
+            extensions["ORDERING"] = [ordering_match.group(1)]
 
         # Extract SUBSTR if present
         substr_pattern = re.compile(r"SUBSTR\s+([A-Za-z0-9_-]+)")
         substr_match = substr_pattern.search(definition)
         if substr_match:
-            extensions["SUBSTR"] = substr_match.group(1)
+            extensions["SUBSTR"] = [substr_match.group(1)]
 
         return extensions
 
@@ -711,13 +711,17 @@ class FlextLdifUtilitiesParser:
 
         # Track syntax OID validation
         if syntax:
-            metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
+            metadata_extensions["syntax_oid_valid"] = [
+                str(syntax_validation_error is None)
+            ]
             if syntax_validation_error:
-                metadata_extensions["syntax_validation_error"] = syntax_validation_error
+                metadata_extensions["syntax_validation_error"] = [
+                    syntax_validation_error
+                ]
 
         # Preserve original format
-        metadata_extensions["original_format"] = attr_definition.strip()
-        metadata_extensions["schema_original_string_complete"] = attr_definition
+        metadata_extensions["original_format"] = [attr_definition.strip()]
+        metadata_extensions["schema_original_string_complete"] = [attr_definition]
 
         # Resolve quirk type (default to "rfc" if not specified)
         # Use FlextLdifUtilitiesServer.normalize_server_type to ensure consistent format
@@ -730,7 +734,7 @@ class FlextLdifUtilitiesParser:
         # Create metadata
         if metadata_extensions:
             return m.Ldif.QuirkMetadata(
-                quirk_type=quirk_type,
+                quirk_type=cast("Literal['generic']", quirk_type),
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(
                     **metadata_extensions
                 ),
@@ -950,9 +954,9 @@ class FlextLdifUtilitiesParser:
                 oc_definition,
             )
 
-            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
+            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = [
                 oc_definition.strip()
-            )
+            ]
 
             metadata = (
                 m.Ldif.QuirkMetadata(

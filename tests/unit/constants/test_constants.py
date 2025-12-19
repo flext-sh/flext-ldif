@@ -284,7 +284,7 @@ class TestsTestFlextLdifConstants(s):
     )
     def test_ldap_server_constants(self, attr_name: str, expected_value: str) -> None:
         """Test LDAP server constant value."""
-        actual = getattr(c.LdapServers, attr_name)
+        actual = getattr(c.Ldif.LdapServers, attr_name)
         assert actual == expected_value
 
     # ════════════════════════════════════════════════════════════════════════

@@ -14,12 +14,12 @@ from typing import Literal, cast, overload
 
 from flext_core import (
     FlextTypes,
-    FlextUtilities as u,
     r,
+    u,
 )
 
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
 from flext_ldif.models import m
 

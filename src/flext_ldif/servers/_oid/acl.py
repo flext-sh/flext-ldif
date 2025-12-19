@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar, Literal, cast
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities as u_core
+from flext_core import FlextLogger, FlextResult, u
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -489,7 +489,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
         # Check for subject type by matching ACL_SUBJECT_PATTERNS keys
         # This identifies what kind of subject is present in the OID ACL
         for pattern_key, (_, subject_type, _) in (
-            u_core.mapper().to_dict(const.ACL_SUBJECT_PATTERNS).items()
+            u.mapper().to_dict(const.ACL_SUBJECT_PATTERNS).items()
         ):
             # Check if the pattern key (literal substring) is present in content
             if pattern_key.lower() in content.lower():
@@ -684,13 +684,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
 
         # Collect only allowed permissions, mapping to OID format
         allowed_perms: list[str] = []
-        for perm, allowed in u_core.mapper().to_dict(permissions).items():
+        for perm, allowed in u.mapper().to_dict(permissions).items():
             if allowed:
                 # Map internal name to OID format name
                 # mapper().get() returns the value directly, not a FlextResult
-                oid_perm_name = u_core.mapper().get(
-                    permission_names, perm, default=perm
-                )
+                oid_perm_name = u.mapper().get(permission_names, perm, default=perm)
                 allowed_perms.append(oid_perm_name)
 
         # Generate simple OID format: (perm1,perm2,perm3)
@@ -792,46 +790,42 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
         # MetadataKeys removed - use direct string keys
 
         # Generic extensions
-        # u_core.mapper().get() returns T | None directly, not FlextResult
-        acl_filter = u_core.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_FILTER
-        )
+        # u.mapper().get() returns T | None directly, not FlextResult
+        acl_filter = u.mapper().get(meta_extensions, c.Ldif.MetadataKeys.ACL_FILTER)
         if acl_filter:
             extensions.append(f"filter={acl_filter}")
 
-        acl_constraint = u_core.mapper().get(
+        acl_constraint = u.mapper().get(
             meta_extensions, c.Ldif.MetadataKeys.ACL_CONSTRAINT
         )
         if acl_constraint:
             extensions.append(f"added_object_constraint=({acl_constraint})")
 
         # Valued OID-specific extensions
-        bindmode = u_core.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_BINDMODE
-        )
+        bindmode = u.mapper().get(meta_extensions, c.Ldif.MetadataKeys.ACL_BINDMODE)
         if bindmode:
             extensions.append(f"bindmode=({bindmode})")
 
-        bind_ip_filter = u_core.mapper().get(
+        bind_ip_filter = u.mapper().get(
             meta_extensions, c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER
         )
         if bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")
 
-        constrain_to_added = u_core.mapper().get(
+        constrain_to_added = u.mapper().get(
             meta_extensions, c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
         )
         if constrain_to_added:
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
 
         # Boolean OID-specific extensions
-        deny_group_override = u_core.mapper().get(
+        deny_group_override = u.mapper().get(
             meta_extensions, c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
         )
         if deny_group_override:
             extensions.append("DenyGroupOverride")
 
-        append_to_all = u_core.mapper().get(
+        append_to_all = u.mapper().get(
             meta_extensions, c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL
         )
         if append_to_all:
@@ -894,12 +888,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             # Convert dict to normalized format
             # mapper().get() returns the value directly, not a FlextResult
             return {
-                "read": bool(u_core.mapper().get(permissions, "read", default=False)),
-                "write": bool(u_core.mapper().get(permissions, "write", default=False)),
-                "add": bool(u_core.mapper().get(permissions, "add", default=False)),
-                "delete": bool(
-                    u_core.mapper().get(permissions, "delete", default=False)
-                ),
+                "read": bool(u.mapper().get(permissions, "read", default=False)),
+                "write": bool(u.mapper().get(permissions, "write", default=False)),
+                "add": bool(u.mapper().get(permissions, "add", default=False)),
+                "delete": bool(u.mapper().get(permissions, "delete", default=False)),
                 "search": bool(permissions.get("search", False)),
                 "compare": bool(permissions.get("compare", False)),
                 "self_write": bool(permissions.get("self_write", False)),

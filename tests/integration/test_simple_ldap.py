@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable
 
+import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
@@ -12,6 +13,9 @@ from tests import GenericFieldsDict
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+@pytest.mark.skip(
+    reason="LDAP connection fixtures not implemented - requires real LDAP server"
+)
 def test_ldap_connection(ldap_connection: Connection) -> None:
     """Test basic LDAP connection."""
     assert ldap_connection.bound
@@ -19,6 +23,9 @@ def test_ldap_connection(ldap_connection: Connection) -> None:
     assert "dc=flext,dc=local" in ldap_connection.server.info.naming_contexts
 
 
+@pytest.mark.skip(
+    reason="LDAP connection fixtures not implemented - requires real LDAP server"
+)
 def test_simple_ldap_search(
     ldap_connection: Connection,
     ldap_container: GenericFieldsDict,
@@ -37,6 +44,9 @@ def test_simple_ldap_search(
     assert len(ldap_connection.entries) >= 1
 
 
+@pytest.mark.skip(
+    reason="LDAP connection fixtures not implemented - requires real LDAP server"
+)
 def test_create_and_export_entry(
     ldap_connection: Connection,
     ldap_container: GenericFieldsDict,

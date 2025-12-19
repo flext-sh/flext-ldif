@@ -243,14 +243,14 @@ class TestsFlextLdifAclProtocolCompliance(s):
         oid_acl: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID ACL implements Quirks.AclProtocol."""
-        assert isinstance(oid_acl, FlextLdifProtocols.Quirks.AclProtocol)
+        assert isinstance(oid_acl, FlextLdifProtocols.Ldif.AclProtocol)
 
     def test_oud_protocol_compliance(
         self,
         oud_acl: FlextLdifServersOud.Acl,
     ) -> None:
         """Test OUD ACL implements Quirks.AclProtocol."""
-        assert isinstance(oud_acl, FlextLdifProtocols.Quirks.AclProtocol)
+        assert isinstance(oud_acl, FlextLdifProtocols.Ldif.AclProtocol)
 
     def test_oid_class_constants(self) -> None:
         """Test OID ACL class variables are properly defined."""

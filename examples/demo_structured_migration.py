@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
 
 
 def main() -> None:
@@ -82,25 +82,13 @@ description: Application data entry
         # Write test LDIF
         (input_dir / "source.ldif").write_text(test_ldif)
 
-        # Configure write options
-        write_options = FlextLdifModels.WriteFormatOptions(
-            line_width=100,  # Set line width for folding
-            respect_attribute_order=True,  # Respect attribute order
-        )
-
-        # Create migration options combining config and write options
-        migrate_options = FlextLdifModels.MigrateOptions(
-            migration_config=write_options.model_dump(),
-            write_options=write_options,
-        )
-
-        # Execute migration
+        # Execute migration with basic options
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server="rfc",
             target_server="rfc",
-            options=migrate_options,
+            # Options can be passed via kwargs for simplicity
         )
 
         if result.is_failure:

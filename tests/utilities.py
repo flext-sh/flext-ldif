@@ -28,11 +28,16 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     # Test-specific utility extensions can be added here
     # All parent utilities are accessible via inheritance
 
+    # Aliases for frequently used nested utilities (tests use u.OID, not u.Ldif.OID)
+    OID = FlextLdifUtilities.Ldif.OID
+
 
 # Standardized short name for use in tests (same pattern as flext-core)
 u = TestsFlextLdifUtilities
+Testsu = TestsFlextLdifUtilities  # Alias for tests/__init__.py
 
 __all__ = [
     "TestsFlextLdifUtilities",
+    "Testsu",
     "u",
 ]

@@ -10,7 +10,7 @@ Tests comprehensive config integration with FlextLdif facade including:
 Scope: Integration testing of FlextLdifSettings through FlextLdif facade,
 server type behavior, parsing consistency, and filtering operations.
 
-Modules tested: flext_ldif, flext_ldif.config
+Modules tested: flext_ldif, flext_ldif.settings
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

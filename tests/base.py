@@ -47,16 +47,17 @@ class FlextLdifTestsServiceBase(flext_tests_s):
 
     """
 
+    @classmethod
     def create_entry(
-        self,
+        cls,
         dn: str,
-        attributes: dict[str, str | list[str]],
+        attributes: dict[str, str | list[str]] | None = None,
     ) -> p.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
             dn: Distinguished Name for the entry
-            attributes: Dictionary of attribute names to values
+            attributes: Dictionary of attribute names to values (defaults to empty dict)
 
         Returns:
             p.Entry: Real Entry instance
@@ -65,6 +66,8 @@ class FlextLdifTestsServiceBase(flext_tests_s):
             AssertionError: If entry creation fails
 
         """
+        if attributes is None:
+            attributes = {}
         service = FlextLdifEntries()
         result = service.create_entry(dn=dn, attributes=attributes)
         if not result.is_success:
@@ -72,8 +75,9 @@ class FlextLdifTestsServiceBase(flext_tests_s):
             raise AssertionError(msg)
         return result.value
 
+    @classmethod
     def create_entries(
-        self,
+        cls,
         entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
     ) -> list[p.Entry]:
         """Create multiple test entries.
@@ -85,7 +89,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
             list[p.Entry]: List of real Entry instances
 
         """
-        return list(starmap(self.create_entry, entries_data))
+        return list(starmap(cls.create_entry, entries_data))
 
 
 # Standardized short name for use in tests

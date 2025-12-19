@@ -15,7 +15,7 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextTypes,
-    FlextUtilities as u,
+    u,
 )
 from jinja2 import Environment
 
@@ -32,7 +32,7 @@ from flext_ldif.typings import t
 
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
-# u is already imported as FlextUtilities as u above
+# u is already imported as u above
 r = FlextResult  # Shared from flext-core
 
 # Constants

@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests import c, p
+from tests.constants import c
+from tests.protocols import p
 
 from flext_ldif import FlextLdif
 

@@ -13,13 +13,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 import structlog
 from flext_core import FlextRuntime, r
 
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m
 
 # Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
@@ -113,11 +113,12 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def get_dn_string(entry: m.Ldif.Entry) -> str:
             """Extract DN string from entry."""
-            if entry.dn is None:
+            dn = entry.dn
+            if dn is None:
                 return ""
-            if hasattr(entry.dn, "value"):
-                return entry.dn.value or (str(entry.dn) if entry.dn else "")
-            return str(entry.dn) if entry.dn else ""
+            if hasattr(dn, "value"):
+                return dn.value or str(dn) if dn else ""
+            return str(dn) if dn else ""
 
         @staticmethod
         def write_entry_parts(
@@ -169,24 +170,19 @@ class FlextLdifUtilitiesWriters:
             try:
                 lines: list[str] = []
                 # Type narrowing: config.entry is EntryProtocol, convert to Entry if needed
-                entry_raw = config.entry
+                entry_raw = cast("m.Ldif.Entry", config.entry)
                 # Check if it's already Entry model instance
                 if isinstance(entry_raw, FlextLdifModelsDomains.Entry):
                     entry = entry_raw
                 else:
                     # Convert EntryProtocol to Entry via model_validate
+                    entry_typed = cast("FlextLdifModelsDomains.Entry", entry_raw)
                     entry = FlextLdifModelsDomains.Entry.model_validate({
-                        "dn": (
-                            entry_raw.dn.value
-                            if hasattr(entry_raw.dn, "value")
-                            else str(entry_raw.dn)
-                            if entry_raw.dn
-                            else None
-                        ),
+                        "dn": (entry_typed.dn or None),
                         "attributes": (
-                            entry_raw.attributes.attributes
-                            if hasattr(entry_raw.attributes, "attributes")
-                            else entry_raw.attributes or None
+                            entry_typed.attributes.attributes
+                            if entry_typed.attributes
+                            else None
                         ),
                     })
 
@@ -199,23 +195,23 @@ class FlextLdifUtilitiesWriters:
                         entry = entry_transformed
                     else:
                         # Convert EntryProtocol to Entry via model_validate
+                        # Cast to Entry to resolve type checking issues
+                        entry_typed = cast(
+                            "FlextLdifModelsDomains.Entry", entry_transformed
+                        )
                         entry = FlextLdifModelsDomains.Entry.model_validate({
-                            "dn": (
-                                entry_transformed.dn.value
-                                if hasattr(entry_transformed.dn, "value")
-                                else str(entry_transformed.dn)
-                                if entry_transformed.dn
-                                else None
-                            ),
+                            "dn": (entry_typed.dn or None),
                             "attributes": (
-                                entry_transformed.attributes.attributes
-                                if hasattr(entry_transformed.attributes, "attributes")
-                                else entry_transformed.attributes or None
+                                entry_typed.attributes.attributes
+                                if entry_typed.attributes
+                                else None
                             ),
                         })
 
                 # Write entry parts
-                FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
+                FlextLdifUtilitiesWriters.Entry.write_entry_parts(
+                    cast("m.Ldif.Entry", entry), config, lines
+                )
 
                 # Join lines and return
                 ldif_str = "\n".join(lines) + "\n"
@@ -223,14 +219,15 @@ class FlextLdifUtilitiesWriters:
 
             except Exception as e:
                 # Type narrowing: config.entry is EntryProtocol, extract DN for error message
-                entry_for_error_raw = config.entry
+                entry_for_error_raw = cast("m.Ldif.Entry", config.entry)
                 # Extract DN string directly from EntryProtocol
                 dn_for_error: str | None = None
-                if entry_for_error_raw and entry_for_error_raw.dn:
-                    if hasattr(entry_for_error_raw.dn, "value"):
-                        dn_for_error = str(entry_for_error_raw.dn.value)
+                entry_dn = entry_for_error_raw.dn if entry_for_error_raw else None
+                if entry_for_error_raw and entry_dn:
+                    if hasattr(entry_dn, "value"):
+                        dn_for_error = str(entry_dn.value)
                     else:
-                        dn_for_error = str(entry_for_error_raw.dn)
+                        dn_for_error = str(entry_dn)
                 dn_error_raw = dn_for_error or ""
                 dn_error: str | None = dn_error_raw[:50] if dn_error_raw else None
                 logger.exception(
@@ -430,14 +427,14 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
             """Get DN string for error logging."""
-            if entry.dn is None:
+            dn_attr = entry.dn
+            if dn_attr is None:
                 return None
-            if hasattr(entry.dn, "value"):
-                dn_obj = entry.dn
-                value = getattr(dn_obj, "value", None)
+            if hasattr(dn_attr, "value"):
+                value = getattr(dn_attr, "value", None)
                 if value:
                     return str(value)[:50]
-            return str(entry.dn)[:50] if entry.dn else None
+            return str(dn_attr)[:50] if dn_attr else None
 
         @staticmethod
         def write_single_entry_with_stats(
@@ -521,26 +518,30 @@ class FlextLdifUtilitiesWriters:
                 # Convert EntryProtocol entries to Entry for type compatibility
                 entries_typed: list[FlextLdifModelsDomains.Entry] = []
                 for entry in config.entries:
+                    entry = cast("m.Ldif.Entry", entry)
                     # Check if it's already Entry model instance
                     if isinstance(entry, FlextLdifModelsDomains.Entry):
                         entries_typed.append(entry)
                     else:
                         # Convert EntryProtocol to Entry via model_validate
                         entries_typed.append(
-                            FlextLdifModelsDomains.Entry.model_validate({
-                                "dn": (
-                                    entry.dn.value
-                                    if hasattr(entry.dn, "value")
-                                    else str(entry.dn)
-                                    if entry.dn
-                                    else None
-                                ),
-                                "attributes": (
-                                    entry.attributes.attributes
-                                    if hasattr(entry.attributes, "attributes")
-                                    else entry.attributes or None
-                                ),
-                            }),
+                            cast(
+                                "m.Ldif.Entry",
+                                FlextLdifModelsDomains.Entry.model_validate({
+                                    "dn": (
+                                        entry.dn.value
+                                        if hasattr(entry.dn, "value")
+                                        else str(entry.dn)
+                                        if entry.dn
+                                        else None
+                                    ),
+                                    "attributes": (
+                                        entry.attributes.attributes
+                                        if hasattr(entry.attributes, "attributes")
+                                        else entry.attributes or None
+                                    ),
+                                }),
+                            )
                         )
 
                 # Write each entry using manual loop for clear type inference
@@ -548,7 +549,7 @@ class FlextLdifUtilitiesWriters:
                 for entry in entries_typed:
                     result = (
                         FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
-                            entry,
+                            cast("m.Ldif.Entry", entry),
                             config.write_entry_hook,
                             stats,
                         )

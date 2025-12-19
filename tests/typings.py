@@ -36,9 +36,11 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 
 # Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
+Testst = TestsFlextLdifTypes  # Alias for tests/__init__.py
 
 __all__ = [
     "GenericFieldsDict",
     "TestsFlextLdifTypes",
+    "Testst",
     "t",
 ]

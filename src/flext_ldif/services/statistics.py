@@ -20,22 +20,22 @@ from typing import override
 
 from flext_core import d, r
 
-# Removed: # Import removed - use m.* facade (use m.* instead)
-from flext_ldif._models.results import (
-    FlextLdifModelsResults,
-    _CategoryPaths,
-    _FlexibleCategories,
-)
-
 # Note: _DynamicCounts is accessed via facade (m.Ldif.LdifResults.DynamicCounts)
 # to maintain architecture layering
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
+
+# Removed: # Import removed - use m.* facade (use m.* instead)
+from flext_ldif.results import (
+    FlextLdifModelsResults,
+    _CategoryPaths,
+    _FlexibleCategories,
+)
 from flext_ldif.utilities import u
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus],
+    FlextLdifServiceBase[m.Ldif.LdifResults.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -61,7 +61,7 @@ class FlextLdifStatistics(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.StatisticsServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Business Rule: Service health check validates statistics generation
@@ -76,8 +76,8 @@ class FlextLdifStatistics(
             r containing service status (health check)
 
         """
-        return r[m.Ldif.StatisticsServiceStatus].ok(
-            m.Ldif.StatisticsServiceStatus(
+        return r[m.Ldif.LdifResults.StatisticsServiceStatus].ok(
+            m.Ldif.LdifResults.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[

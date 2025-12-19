@@ -31,7 +31,7 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Literal, Self, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
@@ -797,7 +797,10 @@ class FlextLdifServersBaseSchema(
         # Create metadata
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
         metadata = m.Ldif.QuirkMetadata(
-            quirk_type=quirk_type,
+            quirk_type=cast(
+                "Literal['oid', 'oud', 'openldap', 'openldap1', 'openldap2', 'ad', 'apache', 'ds389', 'rfc', 'relaxed', 'novell', 'ibm_tivoli', 'generic']",
+                quirk_type,
+            ),
             extensions=FlextLdifModelsMetadata.DynamicMetadata(**metadata_extensions)
             if metadata_extensions
             else FlextLdifModelsMetadata.DynamicMetadata(),

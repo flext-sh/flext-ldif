@@ -1,6 +1,7 @@
-"""Result and response models for LDIF operations.
+"""Result and response models for LDIF operations - Public API.
 
 This module contains result and response models for LDIF processing operations.
+All models are exported through FlextLdifModels facade in models.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,9 +25,10 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.typings import t
 
-# NOTE: Use TYPE_CHECKING imports for models to avoid circular imports
-# Models are accessed via facade in models.py as m.* for external use
-# Internal modules use TYPE_CHECKING to maintain type safety without circular deps
+__all__ = [
+    "DynamicCounts",
+    "FlextLdifModelsResults",
+]
 
 # =============================================================================
 # MODULE-LEVEL MODELS (defined before container for forward reference support)

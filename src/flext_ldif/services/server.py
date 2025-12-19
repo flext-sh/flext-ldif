@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from typing import cast
 
 from flext_core import FlextLogger, r
 
@@ -421,7 +422,7 @@ class FlextLdifServer:
             return None
         # Verify quirk_raw satisfies EntryQuirkProtocol via duck typing
         if hasattr(quirk_raw, "parse") and hasattr(quirk_raw, "write"):
-            return quirk_raw
+            return cast("p.Ldif.EntryQuirkProtocol", quirk_raw)
         return None
 
     def list_registered_servers(self) -> list[str]:

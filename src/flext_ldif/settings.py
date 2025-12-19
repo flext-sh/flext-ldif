@@ -151,8 +151,8 @@ class FlextLdifSettings(FlextSettings):
     )
 
     ldif_version_string: str = Field(
-        default="1",
-        description="LDIF version string",
+        default="version: 1",
+        description="LDIF version string (RFC 2849 format: 'version: 1')",
     )
 
     ldif_batch_size: int = Field(

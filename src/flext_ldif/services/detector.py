@@ -21,13 +21,13 @@ from typing import Protocol, override
 
 from flext_core import r
 
-from flext_ldif._models.results import (
-    FlextLdifModelsResults,
-    _ConfigSettings,
-)
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
+from flext_ldif.results import (
+    FlextLdifModelsResults,
+    _ConfigSettings,
+)
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.settings import FlextLdifSettings
 

@@ -38,7 +38,7 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
-from flext_ldif._models.config import FlextLdifModelsSettings
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 

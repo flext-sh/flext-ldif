@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
-from typing import ClassVar, Self, TypedDict, Unpack, cast
+from typing import Any, ClassVar, Literal, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
@@ -35,8 +35,9 @@ from flext_ldif._models.base import (
     FlextLdifModelsBase,
     SchemaElement,
 )
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._models.validation import ServerValidationRules
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
@@ -122,7 +123,7 @@ class FlextLdifModelsDomains:
                 # DN with UTF-8 characters in LDIF:
                 dn:: Y249am9zw6ksZGM9ZXhhbXBsZSxkYz1jb20=
                 # Decoded to: cn=josé,dc=example,dc=com
-                # entry.dn.was_base64_encoded → True
+                # entry.dn
 
             """
             if not self.metadata:
@@ -757,8 +758,14 @@ class FlextLdifModelsDomains:
                 Self for method chaining
 
             """
-            if isinstance(values, (str, bytes, bytearray)):
+            if isinstance(values, str):
                 values = [values]
+            elif isinstance(values, (bytes, bytearray)):
+                # Convert bytes to string for LDIF compatibility
+                if isinstance(values, (bytes, bytearray)):
+                    values = [values.decode("utf-8", errors="replace")]
+                else:
+                    values = [str(values)]
             self.attributes[key] = values
             return self
 
@@ -827,7 +834,12 @@ class FlextLdifModelsDomains:
 
                 # normalized_dict already has correct type dict[str, list[str]]
                 return FlextResult[FlextLdifModelsDomains.Attributes].ok(
-                    cls(attributes=normalized_dict),
+                    cls(
+                        attributes=cast(
+                            "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
+                            normalized_dict,
+                        )
+                    ),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModelsDomains.Attributes].fail(
@@ -1624,7 +1636,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: str | FlextLdifModelsDomains.DN | None,
+            value: str | dict[str, object] | FlextLdifModelsDomains.DN | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1638,13 +1650,20 @@ class FlextLdifModelsDomains:
             if isinstance(value, FlextLdifModelsDomains.DN):
                 return value
 
+            if isinstance(value, dict):
+                # Handle dict from model_dump()
+                return FlextLdifModelsDomains.DN(**cast("dict[str, Any]", value))
+
             return FlextLdifModelsDomains.DN(value=value)
 
         @field_validator("attributes", mode="before")
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: dict[str, list[str]] | FlextLdifModelsDomains.Attributes | None,
+            value: dict[str, list[str]]
+            | dict[str, object]
+            | FlextLdifModelsDomains.Attributes
+            | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
 
@@ -1658,8 +1677,17 @@ class FlextLdifModelsDomains:
             if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
 
+            if isinstance(value, dict) and "attributes" in value:
+                # Handle dict from model_dump()
+                return FlextLdifModelsDomains.Attributes(**value)
+
             # value is already dict[str, list[str]] from Mapping input
-            return FlextLdifModelsDomains.Attributes(attributes=value)
+            return FlextLdifModelsDomains.Attributes(
+                attributes=cast(
+                    "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
+                    value,
+                )
+            )
 
         # ===================================================================
         # REMAINING FIELDS
@@ -1696,7 +1724,7 @@ class FlextLdifModelsDomains:
 
             """
             if not isinstance(data, dict):
-                return data  # type: ignore[unreachable]
+                return data
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
             if data.get("metadata") is None:
@@ -2048,7 +2076,7 @@ class FlextLdifModelsDomains:
 
         def _check_objectclass_rule(
             self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
+            rules: ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check objectClass requirement from server rules."""
@@ -2077,7 +2105,7 @@ class FlextLdifModelsDomains:
 
         def _check_naming_attr_rule(
             self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
+            rules: ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check naming attribute requirement from server rules."""
@@ -2101,7 +2129,7 @@ class FlextLdifModelsDomains:
 
         def _check_binary_option_rule(
             self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
+            rules: ServerValidationRules,
         ) -> list[str]:
             """Check binary attribute option requirement from server rules."""
             violations: list[str] = []
@@ -2169,9 +2197,10 @@ class FlextLdifModelsDomains:
 
             # Collect violations from all rule checkers
             server_violations: list[str] = []
-            server_violations.extend(self._check_objectclass_rule(rules, dn_value))
-            server_violations.extend(self._check_naming_attr_rule(rules, dn_value))
-            server_violations.extend(self._check_binary_option_rule(rules))
+            rules_cast = cast("ServerValidationRules", rules)
+            server_violations.extend(self._check_objectclass_rule(rules_cast, dn_value))
+            server_violations.extend(self._check_naming_attr_rule(rules_cast, dn_value))
+            server_violations.extend(self._check_binary_option_rule(rules_cast))
 
             # ALWAYS store validation_server_type when rules were checked
             if self.metadata:
@@ -2191,7 +2220,7 @@ class FlextLdifModelsDomains:
                     self.metadata.validation_results.model_copy(
                         update={
                             "server_specific_violations": server_violations,
-                            "validation_server_type": self.metadata.quirk_type or None,  # type: ignore[unreachable]
+                            "validation_server_type": self.metadata.quirk_type or None,
                         },
                     )
                 )
@@ -2424,7 +2453,12 @@ class FlextLdifModelsDomains:
                         # Single value - convert to list
                         values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
-                return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
+                return FlextLdifModelsDomains.Attributes(
+                    attributes=cast(
+                        "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
+                        attrs_dict,
+                    )
+                )
             if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
             # This else block should now be reachable and is valid
@@ -2492,7 +2526,9 @@ class FlextLdifModelsDomains:
                 }
                 extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
                 return FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.GENERIC.value,
+                    quirk_type=cast(
+                        "Literal['generic']", c.Ldif.ServerTypes.GENERIC.value
+                    ),
                     extensions=extensions,
                 )
 
@@ -4075,6 +4111,56 @@ class FlextLdifModelsDomains:
                 for key, value in attribute_case.items():
                     self.original_attribute_case[key] = value
             return self
+
+    # Classes are already defined above
+
+
+class SchemaDiscovery(FlextLdifModelsBase):
+    """Schema discovery operation configuration and state.
+
+    Used to configure and track schema discovery operations across
+    LDAP directories and servers.
+    """
+
+    server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
+        default="rfc",
+        description="LDAP server type for discovery",
+    )
+    naming_contexts: list[str] = Field(
+        default_factory=list,
+        description="Naming contexts to discover schema from",
+    )
+    include_operational: bool = Field(
+        default=False,
+        description="Include operational attributes in discovery",
+    )
+    max_entries: int | None = Field(
+        default=None,
+        description="Maximum entries to sample for schema discovery",
+    )
+
+
+class SchemaLookup(FlextLdifModelsBase):
+    """Schema element lookup configuration and results.
+
+    Used for looking up specific schema elements by OID, name,
+    or other criteria across different LDAP servers.
+    """
+
+    search_term: str = Field(
+        description="Term to search for (OID, name, description)",
+    )
+    search_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
+        default="rfc",
+        description="Server type context for lookup",
+    )
+    element_type: str | None = Field(
+        default=None,
+        description="Type of element to lookup (attribute, objectclass, syntax)",
+    )
+
+
+# Circular dependencies resolved through proper module structure and forward references
 
 
 __all__ = ["FlextLdifModelsDomains"]

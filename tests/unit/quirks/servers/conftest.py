@@ -7,8 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests import c, m, p, t
 from tests.conftest import FlextLdifFixtures
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 from flext_ldif import (
     FlextLdif,
@@ -203,9 +206,9 @@ def write_options_with_allowed_oids() -> WriteOptionsWithAllowedOids:
 
 
 @pytest.fixture
-def acl_transformation_object() -> m.AttributeTransformation:
+def acl_transformation_object() -> m.Ldif.AttributeTransformation:
     """Provides a real AttributeTransformation object for tests."""
-    return m.AttributeTransformation(
+    return m.Ldif.AttributeTransformation(
         original_name="aci",
         original_values=["original aci"],
         target_name="aci",
@@ -234,7 +237,7 @@ def sample_entry_with_metadata() -> p.Entry:
             ],
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
-        entry_metadata=m.EntryMetadata(
+        entry_metadata=m.Ldif.EntryMetadata(
             write_options=m.WriteFormatOptions(),
         ),
     )

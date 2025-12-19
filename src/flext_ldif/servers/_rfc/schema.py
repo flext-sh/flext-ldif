@@ -333,7 +333,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         try:
             # Delegate parsing to centralized utility (SRP)
-            parsed = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+            parsed_result = self.parse_attribute(attr_definition)
+            if parsed_result.is_failure:
+                return parsed_result
+            parsed = (
+                parsed_result.value.model_dump()
+                if hasattr(parsed_result.value, "model_dump")
+                else {}
+            )
 
             # Extract syntax validation error from parsed result
             syntax_validation_error: str | None = None

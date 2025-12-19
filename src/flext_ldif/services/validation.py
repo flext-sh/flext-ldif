@@ -12,17 +12,17 @@ from typing import Self, override
 from flext_core import d, r, t
 from pydantic import Field
 
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.utilities import u
 
 # Services CAN import constants, models, protocols, types, utilities
 # Services CANNOT import other services, servers, or api
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[m.Ldif.ValidationServiceStatus],
+    FlextLdifServiceBase[m.Ldif.LdifResults.ValidationServiceStatus],
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
@@ -162,7 +162,7 @@ class FlextLdifValidation(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.ValidationServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -176,8 +176,8 @@ class FlextLdifValidation(
             FlextResult with ValidationServiceStatus containing service metadata
 
         """
-        return r[m.Ldif.ValidationServiceStatus].ok(
-            m.Ldif.ValidationServiceStatus(
+        return r[m.Ldif.LdifResults.ValidationServiceStatus].ok(
+            m.Ldif.LdifResults.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
                 rfc_compliance="RFC 2849, RFC 4512",
@@ -286,7 +286,7 @@ class FlextLdifValidation(
 
         """
         try:
-            is_valid = u.Attribute.validate_attribute_name(name)
+            is_valid = FlextLdifUtilitiesAttribute.validate_attribute_name(name)
             return r[bool].ok(is_valid)
 
         except Exception as e:
@@ -359,7 +359,7 @@ class FlextLdifValidation(
             max_len = (
                 max_length
                 if max_length is not None
-                else c.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                else c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
                 return r[bool].ok(False)

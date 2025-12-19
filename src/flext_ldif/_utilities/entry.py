@@ -6,11 +6,11 @@ SPDX-License-Identifier: MIT
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal
+from typing import Literal, cast
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
-from flext_ldif._models.config import FlextLdifModelsSettings
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import m
@@ -189,7 +189,10 @@ class FlextLdifUtilitiesEntry:
 
         mapped_result = u.Collection.map(
             list(attributes.items()),
-            mapper=normalize_attr_pair,
+            mapper=cast(
+                "Callable[[tuple[str, list[str | bytes]]], tuple[str, list[str]]]",
+                normalize_attr_pair,
+            ),
         )
         if isinstance(mapped_result, list):
             result = dict(mapped_result)
@@ -639,7 +642,7 @@ class FlextLdifUtilitiesEntry:
 
             mapped_values_result = u.Collection.map(
                 values,
-                mapper=transform_value_for_attr,
+                mapper=cast("Callable[[str | bytes], str]", transform_value_for_attr),
             )
             output_values: list[str] = (
                 mapped_values_result
@@ -722,7 +725,9 @@ class FlextLdifUtilitiesEntry:
                     return config.boolean_mappings[value]
                 return value
 
-            mapped_values_result = u.Collection.map(values, mapper=normalize_value)
+            mapped_values_result = u.Collection.map(
+                values, mapper=cast("Callable[[str | bytes], str]", normalize_value)
+            )
             output_values = (
                 mapped_values_result
                 if isinstance(mapped_values_result, list)
@@ -949,7 +954,9 @@ class FlextLdifUtilitiesEntry:
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.Ldif.Attributes. is compatible via inheritance
                 converted_attrs_update: dict[str, object] = {
-                    "attributes": m.Ldif.Attributes(attributes=converted),
+                    "attributes": m.Ldif.Attributes(
+                        attributes=cast("dict[str, list[str]]", converted)
+                    ),
                 }
                 current = current.model_copy(update=converted_attrs_update)
             if config.remove_attrs:

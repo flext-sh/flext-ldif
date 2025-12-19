@@ -31,10 +31,11 @@ from flext_core import (
     FlextTypes,
 )
 
-# Removed: from flext_ldif._collection.server import FlextLdifUtilitiesCollection (does not exist)
-from flext_ldif._models.config import FlextLdifModelsSettings
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+
+# Removed: from flext_ldif._collection.server import FlextLdifUtilitiesCollection (does not exist)
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -423,10 +424,10 @@ class FlextLdifUtilitiesMetadata:
                 target_metadata["transformations"] = existing_items
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
-                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
                     transformation_dict
                 ]
-                target_metadata.transformations = new_list
+                target_metadata.transformations = new_list_2
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
@@ -471,21 +472,20 @@ class FlextLdifUtilitiesMetadata:
                 # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
-                existing_items: list[Mapping[str, FlextTypes.ScalarValue]] = []
-                for item in transformations_obj:
-                    # Type narrowing: verify item is dict-like (Mapping-compatible)
-                    if isinstance(item, (dict, Mapping)):
-                        # item is dict/Mapping, compatible with Mapping[str, ScalarValue]
-                        existing_items.append(item)
+                existing_items.extend(
+                    item
+                    for item in transformations_obj
+                    if isinstance(item, (dict, Mapping))
+                )
                 existing_items.append(transformation_dict)
                 # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue
                 target_metadata["transformations"] = existing_items
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
-                new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
                     transformation_dict
                 ]
-                target_metadata.transformations = new_list
+                target_metadata.transformations = new_list_2
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
