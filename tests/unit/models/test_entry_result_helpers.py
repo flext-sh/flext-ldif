@@ -54,12 +54,12 @@ class TestsFlextLdifEntryResultHelpers(s):
         ).value
 
         # Use _FlexibleCategories directly for type safety
-        categories = m.FlexibleCategories()
+        categories = m.Ldif.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
         result = m.Ldif.EntryResult(
             entries_by_category=categories,
-            statistics=m.Statistics(total_entries=2),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=2),
         )
 
         all_entries = result.get_all_entries()
@@ -79,12 +79,12 @@ class TestsFlextLdifEntryResultHelpers(s):
         ).value
 
         # Use _FlexibleCategories directly for type safety
-        categories = m.FlexibleCategories()
+        categories = m.Ldif.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
         result = m.Ldif.EntryResult(
             entries_by_category=categories,
-            statistics=m.Statistics(total_entries=2),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=2),
         )
 
         users = result.get_category("users")
@@ -116,19 +116,19 @@ class TestsFlextLdifEntryResultHelpers(s):
             attributes={"cn": ["user2"]},
         ).value
 
-        # Use _FlexibleCategories directly for type safety
-        categories1 = m.FlexibleCategories()
+        # Use Ldif.FlexibleCategories for type safety
+        categories1 = m.Ldif.FlexibleCategories()
         categories1.add_entries("users", [entry1])
         result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
-            statistics=m.Statistics(total_entries=1),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=1),
         )
 
-        categories2 = m.FlexibleCategories()
+        categories2 = m.Ldif.FlexibleCategories()
         categories2.add_entries("users", [entry2])
         result2 = m.Ldif.EntryResult(
             entries_by_category=categories2,
-            statistics=m.Statistics(total_entries=1),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -154,18 +154,18 @@ class TestsFlextLdifEntryResultHelpers(s):
         ).value
 
         # Use _FlexibleCategories directly for type safety
-        categories1 = m.FlexibleCategories()
+        categories1 = m.Ldif.FlexibleCategories()
         categories1.add_entries("users", [entry1])
         result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
-            statistics=m.Statistics(total_entries=1),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=1),
         )
 
-        categories2 = m.FlexibleCategories()
+        categories2 = m.Ldif.FlexibleCategories()
         categories2.add_entries("groups", [entry2])
         result2 = m.Ldif.EntryResult(
             entries_by_category=categories2,
-            statistics=m.Statistics(total_entries=1),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -183,11 +183,11 @@ class TestsFlextLdifEntryResultHelpers(s):
         ).value
 
         # Use _FlexibleCategories directly for type safety
-        categories1 = m.FlexibleCategories()
+        categories1 = m.Ldif.FlexibleCategories()
         categories1.add_entries("users", [entry1])
         result1 = m.Ldif.EntryResult(
             entries_by_category=categories1,
-            statistics=m.Statistics(total_entries=1),
+            statistics=m.Ldif.LdifResults.Statistics(total_entries=1),
         )
 
         result2 = m.Ldif.EntryResult.empty()
