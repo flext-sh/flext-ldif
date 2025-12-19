@@ -13,9 +13,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from typing import cast, overload
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
+from flext_core import FlextModels as m_core
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif._models.base import FlextLdifModelsBase
@@ -24,6 +22,11 @@ from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.typings import t
+
+# Aliases for commonly used types
+FlextModelsBase = m_core.Value
+FlextModelsCollections = m_core.Bus
+FlextModelsEntity = m_core.Entity
 
 __all__ = [
     "DynamicCounts",
