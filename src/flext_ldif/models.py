@@ -555,30 +555,8 @@ class FlextLdifModels(FlextModels):
 # SEM quebra de codigo - mantem compatibilidade backward
 # =========================================================================
 
-# =========================================================================
-# PYDANTIC V2 FORWARD REFERENCE RESOLUTION
-# =========================================================================
-# Entry inherits from m.Entity (FlextModels.Entity) which has forward refs
-# that need to be resolved with actual class objects at runtime.
-
-from flext_core.models import m as _CoreModels
-
-# Build namespace with all types needed for Pydantic v2 forward ref resolution
-_model_rebuild_namespace = {
-    "FlextModelsEntity": _CoreModels.Entity,  # FlextModels.Entity class
-    "FlextModels": _CoreModels,
-    "DomainEvent": _CoreModels.DomainEvent,
-}
-
-try:
-    # Rebuild Entry model to resolve forward references to FlextModelsEntity
-    FlextLdifModels.Ldif.Entry.model_rebuild(
-        _types_namespace=_model_rebuild_namespace
-    )
-except Exception as e:
-    # If model_rebuild fails, log but don't crash (error will surface on instantiation)
-    import sys
-    print(f"Warning: Entry.model_rebuild() failed: {e}", file=sys.stderr)  # noqa: T201
+# NOTE: NO model_rebuild() - Architectural fix: imports at top resolve forward refs
+# See: FlextModelsEntity imported in _models/domain.py, _models/results.py, models.py
 
 m = FlextLdifModels
 
