@@ -46,6 +46,17 @@ class TestsFlextLdifConstants(FlextTestsConstants):
     # Usage: c.Ldif.ServerTypes.OID, c.RfcSyntaxOids, etc.
     Ldif = c.Ldif
 
+    # Create Schema namespace for test convenience
+    # Maps c.Schema.AUXILIARY and c.Schema.STRUCTURAL to c.Ldif.AclSubjectTypes constants
+    class Schema:
+        """Schema constants wrapper for test convenience."""
+
+        STRUCTURAL: str = c.Ldif.AclSubjectTypes.STRUCTURAL
+        AUXILIARY: str = c.Ldif.AclSubjectTypes.AUXILIARY
+        ABSTRACT: str = c.Ldif.AclSubjectTypes.ABSTRACT
+        ACTIVE: str = c.Ldif.AclSubjectTypes.ACTIVE
+        DEPRECATED: str = c.Ldif.AclSubjectTypes.DEPRECATED
+
     # =========================================================================
     # FIXTURE DIRECTORY CONSTANTS
     # =========================================================================

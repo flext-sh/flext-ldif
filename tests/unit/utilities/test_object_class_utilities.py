@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from tests import c, s
+from tests import c, m, s
 
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif.protocols import p
@@ -38,9 +38,9 @@ class TestsTestFlextLdifUtilitiesObjectClass(s):
         name: str,
         kind: str | None = None,
         sup: str | None = None,
-    ) -> p.Ldif.SchemaObjectClass:
+    ) -> m.Ldif.SchemaObjectClass:
         """Factory to create SchemaObjectClass for testing."""
-        return p.Ldif.SchemaObjectClass(
+        return m.Ldif.SchemaObjectClass(
             oid="1.2.3.4.5",
             name=name,
             kind=kind,

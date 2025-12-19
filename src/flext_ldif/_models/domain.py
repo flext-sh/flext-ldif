@@ -4163,5 +4163,9 @@ class SchemaLookup(FlextLdifModelsBase):
 
 # Circular dependencies resolved through proper module structure and forward references
 
+# Rebuild Entry model to resolve forward references from parent class (FlextModelsEntity.Entry)
+# The parent class has domain_events: list[FlextModelsEntity.DomainEvent] which needs resolution
+FlextLdifModelsDomains.Entry.model_rebuild()
+
 
 __all__ = ["FlextLdifModelsDomains"]
