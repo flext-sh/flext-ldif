@@ -178,6 +178,9 @@ class FlextLdifModels(FlextModels):
         class DnRegistry(FlextLdifModelsDomains.DnRegistry):
             """DN registry model."""
 
+        class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
+            """Error detail model."""
+
         ProcessingResult = ProcessingResult
 
         # ACL models - real inheritance classes

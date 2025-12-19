@@ -21,6 +21,7 @@ from flext_core import (
     t,
 )
 from flext_core._models.base import FlextModelsBase
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import FlextModels as m
 from pydantic import (
     ConfigDict,
@@ -4164,7 +4165,10 @@ class SchemaLookup(FlextLdifModelsBase):
 
 # Rebuild Entry model to resolve forward references from parent class (FlextModelsEntity.Entry)
 # The parent class has domain_events: list[FlextModelsEntity.DomainEvent] which needs resolution
-FlextLdifModelsDomains.Entry.model_rebuild()
+# NOTE: We pass _types_namespace to provide FlextModelsEntity for resolution
+FlextLdifModelsDomains.Entry.model_rebuild(
+    _types_namespace={"FlextModelsEntity": FlextModelsEntity}
+)
 
 
 __all__ = ["FlextLdifModelsDomains"]
