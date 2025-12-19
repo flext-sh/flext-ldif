@@ -44,8 +44,8 @@ _INVALID_ATTR_NAMES: Final[list[str]] = ["2invalid", "invalid-name", "invalid na
 _BOOLEAN_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
 _BOOLEAN_NAME: Final[str] = "Boolean"
 
-# Fixtures path
-FIXTURES_ROOT = Path(__file__).parent.parent.parent.parent / "fixtures"
+# Fixtures path - tests/unit/services/ -> tests/fixtures/
+FIXTURES_ROOT = Path(__file__).parent.parent.parent / "fixtures"
 
 
 # ════════════════════════════════════════════════════════════════════════════

@@ -48,7 +48,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         def load_oid_entries() -> list[p.Entry]:
             """Load real OID entries from fixture."""
             fixture_path = (
-                TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
+                TestsTestFlextLdifSortingWithRealLDIF.Fixtures._get_fixtures_dir()
                 / "oid"
                 / "oid_entries_fixtures.ldif"
             )
@@ -65,7 +65,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         def load_oid_schema() -> list[p.Entry]:
             """Load real OID schema from fixture."""
             fixture_path = (
-                TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
+                TestsTestFlextLdifSortingWithRealLDIF.Fixtures._get_fixtures_dir()
                 / "oid"
                 / "oid_schema_fixtures.ldif"
             )
@@ -82,7 +82,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         def load_oid_acl() -> list[p.Entry]:
             """Load real OID ACL from fixture."""
             fixture_path = (
-                TestsTestFlextLdifSortingWithRealLDIF.c.Fixtures._get_fixtures_dir()
+                TestsTestFlextLdifSortingWithRealLDIF.Fixtures._get_fixtures_dir()
                 / "oid"
                 / "oid_acl_fixtures.ldif"
             )
@@ -262,17 +262,17 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
     @pytest.fixture
     def oid_entries(self) -> list[p.Entry]:
         """Load real OID entries from fixture."""
-        return self.c.Fixtures.load_oid_entries()
+        return self.Fixtures.load_oid_entries()
 
     @pytest.fixture
     def oid_schema(self) -> list[p.Entry]:
         """Load real OID schema from fixture."""
-        return self.c.Fixtures.load_oid_schema()
+        return self.Fixtures.load_oid_schema()
 
     @pytest.fixture
     def oid_acl(self) -> list[p.Entry]:
         """Load real OID ACL from fixture."""
-        return self.c.Fixtures.load_oid_acl()
+        return self.Fixtures.load_oid_acl()
 
     @pytest.mark.parametrize(
         ("test_type", "fixture_type"),

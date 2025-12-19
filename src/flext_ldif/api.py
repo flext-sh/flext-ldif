@@ -365,16 +365,14 @@ class FlextLdif(FlextLdifServiceBase[object]):
         # Determine server type from entry metadata if available, else default to RFC
         server_type: str = "rfc"
         # Type narrowing: entry is object, convert to m.Ldif.Entry
-        if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="python")
-            entry_typed = m.Ldif.Entry.model_validate(entry_dict)
-            result = self.acl_service.extract_acls_from_entry(
-                entry_typed,
-                server_type,
-            )
-            return cast("r[object]", result)
-        # Fallback: if not BaseModel, try direct conversion
-        entry_typed = m.Ldif.Entry.model_validate(entry)
+        if isinstance(entry, m.Ldif.Entry):
+            entry_typed = entry
+        elif isinstance(entry, BaseModel):
+            # Other Pydantic model, use JSON mode to exclude computed properties
+            entry_json = entry.model_dump_json()
+            entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
+        else:
+            entry_typed = m.Ldif.Entry.model_validate(entry)
         result = self.acl_service.extract_acls_from_entry(
             entry_typed,
             server_type,
@@ -410,14 +408,13 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         """
         # Type narrowing: entry is object, convert to m.Ldif.Entry
-        if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="python")
-            entry_typed = m.Ldif.Entry.model_validate(entry_dict)
-            return FlextLdifEntries.get_entry_attributes(entry_typed)
-        # Fallback: if not BaseModel, try direct conversion
-        entry_typed = m.Ldif.Entry.model_validate(entry)
-        # Type narrowing: result is FlextResult[dict[str, list[str]]], convert to FlextResult[dict[str, list[str]]]
-        # (already compatible, but explicit for clarity)
+        if isinstance(entry, m.Ldif.Entry):
+            entry_typed = entry
+        elif isinstance(entry, BaseModel):
+            entry_json = entry.model_dump_json()
+            entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
+        else:
+            entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_attributes(entry_typed)
 
     def get_entry_objectclasses(
@@ -434,14 +431,13 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         """
         # Type narrowing: entry is object, convert to m.Ldif.Entry
-        if isinstance(entry, BaseModel):
-            entry_dict = entry.model_dump(mode="python")
-            entry_typed = m.Ldif.Entry.model_validate(entry_dict)
-            return FlextLdifEntries.get_entry_objectclasses(entry_typed)
-        # Fallback: if not BaseModel, try direct conversion
-        entry_typed = m.Ldif.Entry.model_validate(entry)
-        # Type narrowing: result is FlextResult[list[str]], convert to FlextResult[list[str]]
-        # (already compatible, but explicit for clarity)
+        if isinstance(entry, m.Ldif.Entry):
+            entry_typed = entry
+        elif isinstance(entry, BaseModel):
+            entry_json = entry.model_dump_json()
+            entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
+        else:
+            entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_objectclasses(entry_typed)
 
     def get_attribute_values(
@@ -659,8 +655,8 @@ class FlextLdif(FlextLdifServiceBase[object]):
             if isinstance(entry, m.Ldif.Entry):
                 entries_typed.append(entry)
             elif isinstance(entry, BaseModel):
-                entry_dict = entry.model_dump(mode="python")
-                entries_typed.append(m.Ldif.Entry.model_validate(entry_dict))
+                entry_json = entry.model_dump_json()
+                entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Type narrowing: server_type str to ServerTypeLiteral
