@@ -24,6 +24,7 @@ from flext_tests.constants import FlextTestsConstants
 
 from flext_ldif import FlextLdif
 from flext_ldif.constants import c
+from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
 
@@ -855,8 +856,6 @@ class RfcTestHelpers:
             AssertionError: If entry creation fails
 
         """
-        from flext_ldif.models import m
-
         result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
         if result.is_failure:
             raise AssertionError(f"Entry creation failed: {result.error}")

@@ -21,7 +21,6 @@ from flext_core import (
     t,
 )
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.entity import FlextModelsEntity  # Forward reference resolution
 from flext_core.models import m  # Import FlextModels as m
 from pydantic import (
     ConfigDict,
