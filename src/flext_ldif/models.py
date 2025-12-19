@@ -113,6 +113,9 @@ class FlextLdifModels(FlextModels):
     Bus = FlextModels.Bus
     Metadata = FlextModels.Metadata
 
+    # LDIF format option aliases for test convenience
+    ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
+
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextLdifModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
@@ -242,6 +245,9 @@ class FlextLdifModels(FlextModels):
             FlextLdifModelsSettings.TransformationTrackingConfig
         )
         SortConfig = FlextLdifModelsSettings.SortConfig
+
+        # Format options models (direct aliases for test convenience)
+        ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
 
         # Migration results (direct aliases for convenience)
         MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult

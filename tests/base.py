@@ -22,6 +22,7 @@ from flext_tests import s as flext_tests_s
 
 from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
+from tests.constants import TestsFlextLdifConstants
 
 
 class FlextLdifTestsServiceBase(flext_tests_s):
@@ -46,6 +47,9 @@ class FlextLdifTestsServiceBase(flext_tests_s):
                 unwrapped = self.assert_success(result)
 
     """
+
+    # Expose test constants for convenience in test methods (self.c.*)
+    c = TestsFlextLdifConstants
 
     @classmethod
     def create_entry(
