@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
-from typing import Literal, cast
+from typing import Literal
 
 from flext_core import FlextLogger, r, u
 from flext_core.runtime import FlextRuntime
@@ -442,9 +442,7 @@ class FlextLdifUtilitiesACL:
             ("action_type", config.action_type),
         ]
 
-        for key, value in extension_items:
-            if value is not None:
-                result[key] = cast("t.MetadataAttributeValue", value)
+        result.update({key: value for key, value in extension_items if value is not None})
 
         return result
 
@@ -1625,7 +1623,7 @@ class FlextLdifUtilitiesACL:
             errors_typed: list[tuple[int, str]] = []
             if isinstance(raw_errors, list):
                 errors_typed.extend([
-                    cast("tuple[int, str]", err)
+                    err
                     for err in raw_errors
                     if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR
                 ])
@@ -1827,11 +1825,7 @@ class FlextLdifUtilitiesACL:
             else None
         )
         if isinstance(raw_results, list):
-            results_typed.extend(
-                cast("dict[str, bool]", item)
-                for item in raw_results
-                if isinstance(item, dict)
-            )
+            results_typed.extend(item for item in raw_results if isinstance(item, dict))
         return r.ok(results_typed)
 
     @staticmethod

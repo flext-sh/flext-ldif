@@ -139,10 +139,9 @@ class FlextLdifUtilitiesMetadata:
                 # BaseModel satisfies Mapping structurally, so we can assign directly
                 # The protocol accepts Mapping, and BaseModel implements Mapping
                 metadata_obj = m.Metadata(attributes=metadata_dict)
-                # Type narrowing: m.Metadata implements Mapping[str, MetadataAttributeValue] structurally
-                # Protocol accepts Mapping, BaseModel implements Mapping, so assignment is valid
+                # Convert to dict for assignment to dict-typed field
                 if hasattr(model, "validation_metadata"):
-                    model.validation_metadata = metadata_obj
+                    model.validation_metadata = metadata_obj.model_dump()
         except (AttributeError, TypeError, ValueError):
             # Ignore if attribute cannot be set
             pass
@@ -1497,7 +1496,6 @@ class FlextLdifUtilitiesMetadata:
     def preserve_original_ldif_content(
         metadata: m.Ldif.QuirkMetadata | FlextLdifModelsMetadata.EntryMetadata,
         ldif_content: str,
-        **_extra: t.ScalarValue,
     ) -> None:
         """Preserve original LDIF content in metadata for round-trip.
 
@@ -1506,7 +1504,6 @@ class FlextLdifUtilitiesMetadata:
         Args:
             metadata: QuirkMetadata or EntryMetadata instance to update
             ldif_content: Original LDIF content
-            _extra: Additional keyword arguments (ignored)
 
         """
         # Business Rule: EntryMetadata uses extra="allow" for dynamic attributes
@@ -1522,7 +1519,7 @@ class FlextLdifUtilitiesMetadata:
     def build_acl_metadata_complete(
         quirk_type: str,
         _original_acl_format: str | None = None,
-        **_extra: t.ScalarValue,
+        **extra: t.ScalarValue,
     ) -> dict[str, str | int | bool]:
         """Build metadata for ACL parsing as a dictionary.
 
@@ -1531,7 +1528,7 @@ class FlextLdifUtilitiesMetadata:
         Args:
             quirk_type: Server type
             _original_acl_format: Original ACL format (unused)
-            _extra: Additional keyword arguments (stored in dict)
+            extra: Additional keyword arguments (stored in dict)
 
         Returns:
             Dictionary with quirk_type and source_server fields
@@ -1543,14 +1540,13 @@ class FlextLdifUtilitiesMetadata:
         }
         # Add any extra string/int/bool params using dict update
         result.update({
-            k: v for k, v in _extra.items() if isinstance(v, str | int | bool)
+            k: v for k, v in extra.items() if isinstance(v, str | int | bool)
         })
         return result
 
     @staticmethod
     def build_entry_metadata_extensions(
-        quirk_type: str,
-        **_extra: t.ScalarValue,
+        quirk_type: str
     ) -> dict[str, t.MetadataAttributeValue]:
         """Build metadata extensions for entry as a dictionary.
 
@@ -1560,7 +1556,6 @@ class FlextLdifUtilitiesMetadata:
 
         Args:
             quirk_type: Server type
-            _extra: Additional keyword arguments (ignored)
 
         Returns:
             Dictionary with quirk_type and source_server fields
@@ -1574,20 +1569,20 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_original_format_details(
         quirk_type: str,
-        **_extra: t.ScalarValue,
+        **extra: t.ScalarValue,
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation.
 
         Args:
             quirk_type: Server type (used for context, stored in trailing_info)
-            _extra: Additional keyword arguments (original_dn, cleaned_dn, etc.)
+            extra: Additional keyword arguments (original_dn, cleaned_dn, etc.)
 
         Returns:
             FormatDetails instance for QuirkMetadata.original_format_details
 
         """
         # Extract commonly used format details from extra kwargs
-        original_dn_line = _extra.get("original_dn_line")
+        original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
 
         return m.Ldif.FormatDetails(
@@ -1598,7 +1593,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_rfc_compliance_metadata(
         quirk_type: str,
-        **_extra: t.ScalarValue,
+        **extra: t.ScalarValue,
     ) -> dict[str, str | bool | list[str] | dict[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary.
 
@@ -1606,7 +1601,7 @@ class FlextLdifUtilitiesMetadata:
 
         Args:
             quirk_type: Server type
-            _extra: Additional keyword arguments (rfc_violations, attribute_conflicts, etc.)
+            extra: Additional keyword arguments (rfc_violations, attribute_conflicts, etc.)
 
         Returns:
             Dictionary with RFC compliance metadata
@@ -1617,12 +1612,12 @@ class FlextLdifUtilitiesMetadata:
             "source_server": quirk_type,
         }
         # Extract RFC-specific metadata from extra kwargs
-        if "rfc_violations" in _extra:
-            violations = _extra["rfc_violations"]
+        if "rfc_violations" in extra:
+            violations = extra["rfc_violations"]
             if isinstance(violations, list):
                 result["rfc_violations"] = violations
-        if "attribute_conflicts" in _extra:
-            conflicts = _extra["attribute_conflicts"]
+        if "attribute_conflicts" in extra:
+            conflicts = extra["attribute_conflicts"]
             if isinstance(conflicts, list):
                 result["has_attribute_conflicts"] = len(conflicts) > 0
         return result
@@ -1630,26 +1625,26 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def store_minimal_differences(
         metadata: m.Ldif.QuirkMetadata,
-        **_extra: t.ScalarValue,
+        **extra: t.ScalarValue,
     ) -> None:
         """Store minimal differences in metadata (stub).
 
         Args:
             metadata: QuirkMetadata instance
-            _extra: Additional keyword arguments (ignored)
+            extra: Additional keyword arguments (ignored)
 
         """
 
     @staticmethod
     def track_minimal_differences_in_metadata(
         metadata: m.Ldif.QuirkMetadata,
-        **_extra: t.ScalarValue,
+        **extra: t.ScalarValue,
     ) -> None:
         """Track minimal differences in metadata (stub).
 
         Args:
             metadata: QuirkMetadata instance
-            _extra: Additional keyword arguments (ignored)
+            extra: Additional keyword arguments (ignored)
 
         """
 

@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
-from typing import Any, ClassVar, Literal, Self, TypedDict, Unpack, cast
+from contextlib import suppress
+from datetime import datetime
+from typing import ClassVar, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
@@ -37,15 +39,13 @@ from flext_ldif._models.base import (
     SchemaElement,
 )
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._models.validation import ServerValidationRules
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
-from flext_ldif.typings import FlextLdifTypes
 
 # Type aliases for clarity
-MetadataAttributeValue = FlextLdifTypes.MetadataAttributeValue
+# Access types directly via composition - no aliases needed
 
 u = FlextUtilities
 
@@ -94,12 +94,16 @@ class FlextLdifModelsDomains:
         # DN is a frozen Value Object and cannot be modified
         # after construction
 
-        @computed_field
+        @property
         def components(self) -> list[str]:
             """Parse DN into individual RDN components.
 
             Returns:
                 List of RDN components (e.g., ['cn=test', 'ou=users', ...])
+
+            Note:
+                Using @property instead of @computed_field to avoid
+                serialization issues with extra="forbid" on round-trips.
 
             """
             if not self.value:
@@ -835,12 +839,7 @@ class FlextLdifModelsDomains:
 
                 # normalized_dict already has correct type dict[str, list[str]]
                 return FlextResult[FlextLdifModelsDomains.Attributes].ok(
-                    cls(
-                        attributes=cast(
-                            "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
-                            normalized_dict,
-                        )
-                    ),
+                    cls(attributes=normalized_dict),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModelsDomains.Attributes].fail(
@@ -1653,7 +1652,7 @@ class FlextLdifModelsDomains:
 
             if isinstance(value, dict):
                 # Handle dict from model_dump()
-                return FlextLdifModelsDomains.DN(**cast("dict[str, Any]", value))
+                return FlextLdifModelsDomains.DN(**value)
 
             return FlextLdifModelsDomains.DN(value=value)
 
@@ -1683,12 +1682,7 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.Attributes(**value)
 
             # value is already dict[str, list[str]] from Mapping input
-            return FlextLdifModelsDomains.Attributes(
-                attributes=cast(
-                    "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
-                    value,
-                )
-            )
+            return FlextLdifModelsDomains.Attributes(attributes=value)
 
         # ===================================================================
         # REMAINING FIELDS
@@ -1712,6 +1706,9 @@ class FlextLdifModelsDomains:
         ) -> dict[str, t.MetadataAttributeValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
+            Also handles datetime coercion from ISO strings for JSON round-trips.
+            This is necessary because strict=True doesn't auto-coerce strings to datetime.
+
             Pydantic v2 Context Pattern: Using model_validator with mode='before'
             to initialize fields before field validators run. This validator executes
             at instantiation time, when the module is fully loaded and FlextLdifModelsDomains
@@ -1721,11 +1718,19 @@ class FlextLdifModelsDomains:
                 data: Input data for model instantiation
 
             Returns:
-                Modified data with metadata field initialized if needed
+                Modified data with metadata field initialized and datetimes coerced
 
             """
             if not isinstance(data, dict):
                 return data
+
+            # Coerce ISO datetime strings to datetime objects for strict=True compatibility
+            # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
+            for dt_field in ("created_at", "updated_at"):
+                if dt_field in data and isinstance(data[dt_field], str):
+                    with suppress(ValueError):
+                        data[dt_field] = datetime.fromisoformat(data[dt_field])
+                    # Let Pydantic handle invalid datetime strings
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
             if data.get("metadata") is None:
@@ -1737,12 +1742,23 @@ class FlextLdifModelsDomains:
                 # If no quirk_type provided, use 'rfc' as safe default
                 quirk_type_value = data.get("quirk_type")
                 final_quirk_type_val: c.Ldif.LiteralTypes.ServerTypeLiteral
-                if isinstance(quirk_type_value, str):
-                    # Validate quirk_type is a valid ServerTypeLiteral
-                    final_quirk_type_val = cast(
-                        "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                        quirk_type_value,
-                    )
+                if isinstance(quirk_type_value, str) and quirk_type_value in {
+                    "oid",
+                    "oud",
+                    "openldap",
+                    "openldap1",
+                    "openldap2",
+                    "ad",
+                    "apache",
+                    "ds389",
+                    "rfc",
+                    "relaxed",
+                    "generic",
+                    "ibm_tivoli",
+                    "novell",
+                }:
+                    # quirk_type_value is validated as ServerTypeLiteral
+                    final_quirk_type_val = quirk_type_value
                 else:
                     # Use literal value directly for type safety
                     final_quirk_type_val = "rfc"
@@ -1750,8 +1766,8 @@ class FlextLdifModelsDomains:
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=final_quirk_type_val,
                 )
-                # Cast to allow assignment - data dict accepts t.MetadataAttributeValue
-                data["metadata"] = cast("MetadataAttributeValue", metadata_obj)
+                # metadata_obj is already MetadataAttributeValue type
+                data["metadata"] = metadata_obj
 
             return data
 
@@ -2178,10 +2194,8 @@ class FlextLdifModelsDomains:
                 try:
                     # Use model_validate for proper type conversion and validation
                     # This handles ScalarValue -> specific types conversion automatically
-                    rules = (
-                        FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                            validation_rules,
-                        )
+                    rules = ServerValidationRules.model_validate(
+                        validation_rules,
                     )
                 except Exception:
                     # If validation fails, skip server-specific validation
@@ -2189,7 +2203,7 @@ class FlextLdifModelsDomains:
                     return self
             elif isinstance(
                 validation_rules,
-                FlextLdifModelsSettings.ServerValidationRules,
+                ServerValidationRules,
             ):
                 rules = validation_rules
             else:
@@ -2198,10 +2212,10 @@ class FlextLdifModelsDomains:
 
             # Collect violations from all rule checkers
             server_violations: list[str] = []
-            rules_cast = cast("ServerValidationRules", rules)
-            server_violations.extend(self._check_objectclass_rule(rules_cast, dn_value))
-            server_violations.extend(self._check_naming_attr_rule(rules_cast, dn_value))
-            server_violations.extend(self._check_binary_option_rule(rules_cast))
+            # rules is already ServerValidationRules type
+            server_violations.extend(self._check_objectclass_rule(rules, dn_value))
+            server_violations.extend(self._check_naming_attr_rule(rules, dn_value))
+            server_violations.extend(self._check_binary_option_rule(rules))
 
             # ALWAYS store validation_server_type when rules were checked
             if self.metadata:
@@ -2454,12 +2468,7 @@ class FlextLdifModelsDomains:
                         # Single value - convert to list
                         values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
-                return FlextLdifModelsDomains.Attributes(
-                    attributes=cast(
-                        "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
-                        attrs_dict,
-                    )
-                )
+                return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
             if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
             # This else block should now be reachable and is valid
@@ -2522,14 +2531,10 @@ class FlextLdifModelsDomains:
                     unconverted_attributes,
                 )
                 # Type narrowing: convert values to t.MetadataAttributeValue compatible types
-                ext_kwargs_typed: dict[str, MetadataAttributeValue] = {
-                    k: cast("MetadataAttributeValue", v) for k, v in ext_kwargs.items()
-                }
+                ext_kwargs_typed: dict[str, t.MetadataAttributeValue] = dict(ext_kwargs)
                 extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
                 return FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=cast(
-                        "Literal['generic']", c.Ldif.ServerTypes.GENERIC.value
-                    ),
+                    quirk_type=c.Ldif.ServerTypes.GENERIC.value,
                     extensions=extensions,
                 )
 
@@ -3825,7 +3830,7 @@ class FlextLdifModelsDomains:
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, MetadataAttributeValue]
+                | dict[str, t.MetadataAttributeValue]
                 | None
             ) = None,
         ) -> Self:
@@ -3840,12 +3845,14 @@ class FlextLdifModelsDomains:
 
             """
             # Use Constants default for quirk_type if not provided
-            # normalize_server_type guarantees valid literal value, but returns str
-            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
+            # normalize_server_type guarantees valid literal value
+            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
                 normalize_server_type(quirk_type)
                 if quirk_type is not None
-                else c.Ldif.ServerTypes.RFC.value,
+                else cast(
+                    "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                    c.Ldif.ServerTypes.RFC.value,
+                )
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata

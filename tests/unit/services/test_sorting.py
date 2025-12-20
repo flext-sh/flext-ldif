@@ -89,32 +89,33 @@ class TestsTestFlextLdifSorting(s):
             """Extract DN value for sorting predicate."""
             return entry.dn.value if entry.dn else ""
 
-        def hierarchy_entries(self) -> list[p.Entry]:
+        @staticmethod
+        def hierarchy_entries() -> list[p.Entry]:
             """Create hierarchy test entries using factories and constants."""
             return [
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="uid=jdoe,ou=people,ou=users,dc=example,dc=com",
                     attributes={"uid": ["jdoe"], c.Names.OBJECTCLASS: [c.Names.PERSON]},
                 ),
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn=c.DNs.EXAMPLE,
                     attributes={"dc": ["example"], c.Names.OBJECTCLASS: ["domain"]},
                 ),
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="ou=users,dc=example,dc=com",
                     attributes={
                         "ou": ["users"],
                         c.Names.OBJECTCLASS: ["organizationalUnit"],
                     },
                 ),
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="ou=groups,dc=example,dc=com",
                     attributes={
                         "ou": ["groups"],
                         c.Names.OBJECTCLASS: ["organizationalUnit"],
                     },
                 ),
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="ou=people,ou=users,dc=example,dc=com",
                     attributes={
                         "ou": ["people"],
@@ -123,17 +124,18 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
-        def schema_entries(self) -> list[p.Entry]:
+        @staticmethod
+        def schema_entries() -> list[p.Entry]:
             """Create schema test entries using factories."""
             return [
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="cn=schema",
                     attributes={
                         c.Names.CN: ["schema"],
                         "objectClasses": ["( 2.5.6.6 NAME 'person' SUP top )"],
                     },
                 ),
-                self.create_entry(
+                TestsTestFlextLdifSorting.create_entry(
                     dn="cn=schema",
                     attributes={
                         c.Names.CN: ["schema"],
@@ -144,8 +146,8 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
+        @staticmethod
         def execute_sort_operation(
-            self,
             test_case: TestsTestFlextLdifSorting.TestCase,
             entries: list[p.Entry],
         ) -> FlextResult[list[p.Entry]]:
@@ -200,8 +202,8 @@ class TestsTestFlextLdifSorting(s):
                 sort_by=test_case.sort_by,
             ).execute()
 
+        @staticmethod
         def verify_sort_behavior(
-            self,
             test_case: TestsTestFlextLdifSorting.TestCase,
             sorted_entries: list[p.Entry],
         ) -> None:

@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_core import FlextSettings
 from flext_tests import tm
 
 from flext_ldif.constants import c as lib_c
+from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.settings import FlextLdifSettings
 from tests import c, m, s
@@ -24,13 +24,8 @@ from tests import c, m, s
 
 
 def _get_ldif_config() -> FlextLdifSettings:
-    """Get FlextLdifSettings instance from global config."""
-    config = FlextSettings.get_global_instance()
-    ldif_config = config.ldif
-    if not isinstance(ldif_config, FlextLdifSettings):
-        msg = f"Expected FlextLdifSettings, got {type(ldif_config)}"
-        raise TypeError(msg)
-    return ldif_config
+    """Get FlextLdifSettings instance for tests."""
+    return FlextLdifSettings()
 
 
 class DetectorTestData:
@@ -415,7 +410,7 @@ class TestsFlextLdifServerDetector(s):
             status_result = detector.execute()
             tm.ok(status_result)
             status = status_result.value
-            assert isinstance(status, m.ClientStatus)
+            assert isinstance(status, FlextLdifModelsResults.ClientStatus)
             assert status.config["service"] == "FlextLdifDetector"
             assert "detect_server_type" in status.services
 

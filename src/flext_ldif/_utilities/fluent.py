@@ -618,13 +618,9 @@ class EntryOps:
         return self
 
     def attach_metadata(
-        self,
-        **_metadata: str | float | bool | list[str] | None,
+        self
     ) -> Self:
         """Attach metadata to the entry.
-
-        Args:
-            **_metadata: Key-value pairs to attach as metadata (not yet implemented)
 
         Returns:
             Self for chaining

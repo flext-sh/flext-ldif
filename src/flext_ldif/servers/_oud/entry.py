@@ -1172,7 +1172,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         ldif_parts.append(result.value)
         # Use utilities for finalization (SRP: delegate to writer)
-        ldif_str = u.Writer.finalize_ldif_text(ldif_parts)
+        ldif_str = u.Ldif.Writer.finalize_ldif_text(ldif_parts)
         return FlextResult[str].ok(ldif_str)
 
     def _write_entry_as_comment(

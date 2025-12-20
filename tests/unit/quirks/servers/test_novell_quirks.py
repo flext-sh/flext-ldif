@@ -246,12 +246,14 @@ class TestNovellSchemaAttributeDetection:
 class TestNovellSchemaAttributeParsing:
     """Test schema attribute parsing."""
 
-    def test_parse_attribute_success(self) -> None:
+    def test_parse_attribute_success(
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
+    ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
-        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            quirk,
+            schema_quirk,
             attr_def,
             expected_oid="2.16.840.1.113719.1.1.4.1.501",
             expected_name="nspmPasswordPolicyDN",
@@ -260,22 +262,26 @@ class TestNovellSchemaAttributeParsing:
             expected_single_value=True,
         )
 
-    def test_parse_attribute_with_syntax_length(self) -> None:
+    def test_parse_attribute_with_syntax_length(
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
+    ) -> None:
         """Test parsing attribute with syntax length specification."""
-        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            quirk,
+            schema_quirk,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
             expected_length=256,
         )
 
-    def test_parse_attribute_missing_oid(self) -> None:
+    def test_parse_attribute_missing_oid(
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
+    ) -> None:
         """Test parsing attribute without OID fails."""
-        quirk = FlextLdifServersNovell.Schema()
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
-        result = quirk.parse_attribute(attr_def)
+        result = schema_quirk.parse_attribute(attr_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -353,9 +359,11 @@ class TestNovellSchemaObjectClassParsing:
         assert result.error is not None
         assert "missing an OID" in result.error
 
-    def test_write_attribute_to_rfc(self) -> None:
+    def test_write_attribute_to_rfc(
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
+    ) -> None:
         """Test writing attribute to RFC string format."""
-        quirk = FlextLdifServersNovell.Schema()
         attr_data = m.Ldif.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
@@ -364,7 +372,7 @@ class TestNovellSchemaObjectClassParsing:
             single_value=True,
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            quirk,
+            schema_quirk,
             attr_data,
             write_method="_write_attribute",
             must_contain=[
@@ -374,9 +382,11 @@ class TestNovellSchemaObjectClassParsing:
             ],
         )
 
-    def test_write_objectclass_to_rfc(self) -> None:
+    def test_write_objectclass_to_rfc(
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
+    ) -> None:
         """Test writing objectClass to RFC string format."""
-        quirk = FlextLdifServersNovell.Schema()
         oc_data = m.Ldif.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
@@ -386,7 +396,7 @@ class TestNovellSchemaObjectClassParsing:
             may=["loginDisabled"],
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            quirk,
+            schema_quirk,
             oc_data,
             write_method="_write_objectclass",
             must_contain=["2.16.840.1.113719.2.2.6.1", "ndsPerson", "STRUCTURAL"],
@@ -396,9 +406,11 @@ class TestNovellSchemaObjectClassParsing:
 class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
-    def test_acl_initialization(self) -> None:
+    def test_acl_initialization(
+        self,
+        novell_server: FlextLdifServersNovell,
+    ) -> None:
         """Test ACL quirk initialization."""
-        novell_server = FlextLdifServersNovell()
         novell_server.Acl()
 
 

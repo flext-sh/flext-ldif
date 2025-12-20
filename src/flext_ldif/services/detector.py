@@ -31,6 +31,8 @@ from flext_ldif.results import (
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.settings import FlextLdifSettings
 
+# Access types directly via composition - no type aliases needed
+
 
 def _get_server_registry() -> FlextLdifServer:
     """Get server registry instance."""
@@ -127,25 +129,30 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
             }
 
         """
-        if max_lines is None:
-            max_lines = (
-                FlextLdifUtilitiesServer.get_server_detection_default_max_lines()
-            )
-        if ldif_content is None:
-            if ldif_path is None:
+        # Python 3.13+ Advanced Features: Structural pattern matching for input validation
+        max_lines = (
+            max_lines
+            or FlextLdifUtilitiesServer.get_server_detection_default_max_lines()
+        )
+
+        match (ldif_path, ldif_content):
+            case (None, None):
                 return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
                     "Either ldif_path or ldif_content must be provided",
                 )
-            if not ldif_path.exists():
+            case (path, None) if not path.exists():
                 return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
-                    f"LDIF file not found: {ldif_path}",
+                    f"LDIF file not found: {path}",
                 )
-            try:
-                ldif_content = ldif_path.read_text(encoding="utf-8")
-            except UnicodeDecodeError as e:
-                return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
-                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
-                )
+            case (path, None):
+                try:
+                    ldif_content = path.read_text(encoding="utf-8")
+                except UnicodeDecodeError as e:
+                    return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                        f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
+                    )
+            case (_, content) if isinstance(content, str):
+                pass  # ldif_content is already provided
 
         lines = ldif_content.split("\n")
         content_sample = "\n".join(lines[:max_lines])
@@ -273,9 +280,9 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
             if detection_result.is_success:
                 result = detection_result.value
                 if isinstance(result, m.Ldif.LdifResults.ServerDetectionResult):
-                    return r.ok(result.detected_server_type)
+                    return r[str].ok(result.detected_server_type)
 
-        return r.ok("rfc")
+        return r[str].ok("rfc")
 
     def _update_server_scores(
         self,

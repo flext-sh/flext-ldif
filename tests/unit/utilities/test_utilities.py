@@ -50,7 +50,8 @@ class TestsTestFlextLdifServiceAPIs(s):
         MODULE_UTILITIES: str = "flext_ldif.utilities"
         SERVICE_DN: str = "FlextLdifDn"
         SERVICE_STATISTICS: str = "FlextLdifStatistics"
-        CONSTANT_SERVER_TYPES: str = "ServerTypes"
+        # FLEXT namespace: ServerTypes is inside Ldif namespace
+        CONSTANT_LDIF_NAMESPACE: str = "Ldif"
 
     class Helpers:
         """Helper methods organized as nested class."""
@@ -132,7 +133,7 @@ class TestsTestFlextLdifServiceAPIs(s):
         ("check_type", "check_target"),
         [
             (ImportCheck.MODELS, "FlextLdifModels"),
-            (ImportCheck.CONSTANTS, Constants.CONSTANT_SERVER_TYPES),
+            (ImportCheck.CONSTANTS, Constants.CONSTANT_LDIF_NAMESPACE),
             (ImportCheck.UTILITIES_MODULE, Constants.MODULE_UTILITIES),
             (ImportCheck.SERVICES_MODULE, "services"),
             (ImportCheck.CONFIGURATION, "FlextLdifSettings"),

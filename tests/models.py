@@ -28,6 +28,30 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     # Test-specific model extensions can be added here
     # All parent models (Entry, SchemaEventConfig, etc.) are accessible via inheritance
 
+    # Convenience aliases for ACL models (test-only shortcuts)
+    # Production code should use m.Ldif.Acl pattern
+    Acl = FlextLdifModels.Ldif.Acl
+    AclTarget = FlextLdifModels.Ldif.AclTarget
+    AclSubject = FlextLdifModels.Ldif.AclSubject
+    AclPermissions = FlextLdifModels.Ldif.AclPermissions
+    AclWriteMetadata = FlextLdifModels.Ldif.AclWriteMetadata
+
+    # Convenience aliases for schema models (test-only shortcuts)
+    Syntax = FlextLdifModels.Ldif.Syntax
+    SchemaAttribute = FlextLdifModels.Ldif.SchemaAttribute
+    SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
+
+    # Convenience aliases for format options (test-only shortcuts)
+    WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
+
+    # Service status models (direct aliases for test convenience)
+    ValidationServiceStatus = FlextLdifModels.Ldif.LdifResults.ValidationServiceStatus
+    SchemaServiceStatus = FlextLdifModels.Ldif.LdifResults.SchemaServiceStatus
+    StatisticsServiceStatus = FlextLdifModels.Ldif.LdifResults.StatisticsServiceStatus
+
+    # Result models (direct aliases for test convenience)
+    ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
+
 
 # Standardized short name for use in tests (same pattern as flext-core)
 m = TestsFlextLdifModels

@@ -461,18 +461,16 @@ class FlextFunctional:
             try:
                 processed = processor(item)
                 if isinstance(processed, (list, tuple)):
-                    # Type narrowing: processed is Sequence[U] after isinstance check
-                    # isinstance narrows to list | tuple, both are Sequence[U]
+                    # processed is Sequence[U] after isinstance check
+                    sequence_result = processed  # type: Sequence[U]
                     result.extend([
-                        sub_item for sub_item in processed if predicate(sub_item)
+                        sub_item for sub_item in sequence_result if predicate(sub_item)
                     ])
                 # Single value (not list/tuple), predicate checks it
-                # Type narrowing: isinstance(processed, (list, tuple)) is False
-                # so processed is U in this branch
                 elif predicate(processed):
                     # processed is U when not a sequence
-                    # Runtime check ensures type compatibility
-                    result.append(cast("U", processed))  # processed is U here
+                    single_result = processed  # type: U
+                    result.append(single_result)
             except Exception:
                 if on_error == "stop":
                     raise
@@ -543,14 +541,15 @@ class FlextFunctional:
         default_list = default if default is not None else []
 
         # Normalize value to Sequence[T] | None for or_
-        # isinstance narrows to list | tuple, both are Sequence[T]
         if isinstance(value, (list, tuple)):
+            # isinstance narrows to list | tuple, both are Sequence[T]
             value_seq: Sequence[T] | None = value
         elif value is None:
             value_seq = None
         else:
-            # Single value wrapped in list becomes Sequence[T]
-            value_seq = [cast("T", value)]
+            # Single value (T) wrapped in list becomes Sequence[T]
+            single_value: T = value
+            value_seq = [single_value]
 
         # Use or_ DSL for None handling
         extracted = cls.or_(value_seq, default=default_list)

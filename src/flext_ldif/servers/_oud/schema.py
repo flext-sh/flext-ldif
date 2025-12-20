@@ -8,13 +8,14 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextService, u
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -157,7 +158,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             FlextResult with boolean indicating validity
 
         """
-        oid_validation_result = u.OID.validate_format(oid)
+        oid_validation_result = u.Ldif.OID.validate_format(oid)
         if oid_validation_result.is_failure:
             return FlextResult[bool].fail(
                 f"OID validation failed: {oid_validation_result.error}",

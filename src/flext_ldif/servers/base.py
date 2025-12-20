@@ -34,10 +34,8 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import (
-    Any,
     ClassVar,
     Self,
-    cast,
     overload,
 )
 
@@ -163,58 +161,20 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         self._entry_quirk = self.Entry()
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
-    def __getattr__(
-        self,
-        name: str,
-    ) -> object:
-        """Delegate method calls to nested Schema, Acl, or Entry instances.
+    @property
+    def schema(self) -> object:
+        """Access to nested schema quirk instance."""
+        return self._schema_quirk
 
-        Business Rule: This delegation pattern enables calling schema/acl/entry
-        methods directly on the main server instance, providing a unified API.
-        The return type is `object` because getattr() returns arbitrary attributes.
+    @property
+    def acl(self) -> object:
+        """Access to nested acl quirk instance."""
+        return self._acl_quirk
 
-        Implication: Callers should cast the return value to the expected type
-        when calling specific methods. This maintains type safety at call sites
-        while allowing flexible delegation.
-
-        Args:
-            name: Method or attribute name to look up
-
-        Returns:
-            Method or attribute from nested instance (Schema, Acl, or Entry)
-
-        Raises:
-            AttributeError: If attribute not found in any nested instance
-
-        """
-        # Use object.__getattribute__ to avoid recursion when checking for nested quirks
-        # Try schema methods first (most common)
-        try:
-            schema_quirk = object.__getattribute__(self, "_schema_quirk")
-            if schema_quirk is not None and hasattr(schema_quirk, name):
-                return getattr(schema_quirk, name)
-        except AttributeError:
-            pass
-
-        # Try entry methods before acl (Entry has can_handle with different signature)
-        try:
-            entry_quirk = object.__getattribute__(self, "_entry_quirk")
-            if entry_quirk is not None and hasattr(entry_quirk, name):
-                return getattr(entry_quirk, name)
-        except AttributeError:
-            pass
-
-        # Try acl methods
-        try:
-            acl_quirk = object.__getattribute__(self, "_acl_quirk")
-            if acl_quirk is not None and hasattr(acl_quirk, name):
-                return getattr(acl_quirk, name)
-        except AttributeError:
-            pass
-
-        # Not found in any nested instance
-        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+    @property
+    def entry(self) -> object:
+        """Access to nested entry quirk instance."""
+        return self._entry_quirk
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -277,28 +237,6 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         """
         # Return via property which handles type conversion
         return self.schema_quirk
-
-    def acl(
-        self,
-    ) -> object:
-        """Get ACL quirk instance.
-
-        Returns:
-            ACL quirk instance
-
-        """
-        return self.acl_quirk
-
-    def entry(
-        self,
-    ) -> object:
-        """Get entry quirk instance.
-
-        Returns:
-            Entry quirk instance
-
-        """
-        return self.entry_quirk
 
     # =========================================================================
     # Server identification - accessed via descriptors (class + instance level)
@@ -643,7 +581,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         # Instantiate Entry nested class for parsing
         entry_class = getattr(type(self), "Entry", None)
         if not entry_class:
-            return r.fail("Entry nested class not available")
+            return r[str].fail("Entry nested class not available")
         entry_quirk = entry_class()
         entries_result: r[list[FlextLdifModelsDomains.Entry]] = entry_quirk.parse(
             ldif_text,
@@ -745,7 +683,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             # Cast to p.Ldif.Entry.EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
             entry_protocol: object = model
-            return cast("r[str]", cast("Any", self.entry_quirk).write(entry_protocol))
+            return self.entry.write(entry_protocol)
         if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
@@ -758,7 +696,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             # Cast to AclProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
             acl_protocol: object = model
-            return cast("r[str]", cast("Any", self.acl_quirk).write(acl_protocol))
+            return self.acl.write(acl_protocol)
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
 
@@ -972,11 +910,8 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             """
             method = getattr(registry_obj, "register_quirk", None)
             if method and callable(method):
-                # Type narrowing: method is callable, cast to expected signature
-                return cast(
-                    "Callable[[str, object], None]",
-                    method,
-                )
+                # method is already the correct callable type
+                return method
             return None
 
         def perform_registration(

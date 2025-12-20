@@ -30,8 +30,6 @@ from flext_ldif.constants import c
 # TYPE_CHECKING REMOVED: # _Entry = "FlextModelsEntity.Entry"  # Use "FlextModelsEntity.Entry" directly
 # TYPE_CHECKING REMOVED: # _SchemaObjectClass = "FlextModelsBase.SchemaObjectClass"  # Use "FlextModelsBase.SchemaObjectClass" directly
 # TYPE_CHECKING REMOVED: # _Acl = "FlextModelsBase.Acl"  # Use "FlextModelsBase.Acl" directly
-# Type alias for QuirkMetadata
-_QuirkMetadata = FlextTypes.Metadata
 # TYPE_CHECKING REMOVED:
 
 
@@ -136,7 +134,7 @@ class FlextLdifModelsSettings:
     All nested classes are accessed via FlextModelsBase.* in the main models.py.
     """
 
-    # Configuration classes will be added here
+    # Access configuration classes directly via composition - no aliases needed
 
     class AclMetadataConfig(FlextModelsEntity.Value):
         """Configuration for ACL metadata extensions.
@@ -1967,7 +1965,7 @@ class FlextLdifModelsSettings:
         build_metadata_hook: (
             Callable[
                 [str, Mapping[str, list[str]]],
-                _QuirkMetadata | None,
+                FlextTypes.Metadata | None,
             ]
             | None
         ) = Field(

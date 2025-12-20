@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, TypeAlias, TypeVar
 
-from flext_core import FlextTypes
+from flext_core import FlextResult as r, FlextTypes
 
 
 class FlextLdifTypes(FlextTypes):
@@ -59,6 +59,8 @@ class FlextLdifTypes(FlextTypes):
 
         # Entry attribute dict
         AttributesDict: TypeAlias = dict[str, list[AttributeValue]]
+        # Normalized attributes (always strings, no bytes)
+        NormalizedAttributesDict: TypeAlias = dict[str, list[str]]
 
         # Schema definition dicts
         SchemaAttributeDict: TypeAlias = dict[str, object]
@@ -139,8 +141,8 @@ class FlextLdifTypes(FlextTypes):
 
             # Basic callable types for decorators
             ParseMethodArg: TypeAlias = str
-            ParseMethodReturn: TypeAlias = object
-            ParseMethod: TypeAlias = Callable[[object, str], object]
+            ParseMethodReturn: TypeAlias = r[object]
+            ParseMethod: TypeAlias = Callable[[object, str], r[object]]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
 
             # Write method types

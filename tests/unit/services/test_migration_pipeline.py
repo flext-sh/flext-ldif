@@ -172,7 +172,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
 
         # Pipeline should succeed and create the output directory
         assert result.is_success
-        tf.assert_file_exists(nonexistent_output)
+        assert nonexistent_output.exists(), f"Output dir {nonexistent_output} not created"
 
     # ════════════════════════════════════════════════════════════════════════
     # EMPTY INPUT TESTS

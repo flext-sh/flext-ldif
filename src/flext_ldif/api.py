@@ -31,11 +31,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from flext_core import r
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
+# Imports
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -51,6 +52,8 @@ from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import t
+
+# Access types directly via composition - no type aliases needed
 
 
 class FlextLdif(FlextLdifServiceBase[object]):
@@ -94,6 +97,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
     def get_instance(cls) -> FlextLdif:
         """Get singleton instance of FlextLdif.
 
+        Python 3.13+ Features:
+            - Advanced type narrowing with walrus operator
+            - Computed properties for lazy initialization
+
         Business Rules:
              - Returns existing instance if available
              - Creates new instance if none exists
@@ -103,9 +110,9 @@ class FlextLdif(FlextLdifServiceBase[object]):
             Singleton instance of FlextLdif facade.
 
         """
+        # Python 3.13: Advanced singleton pattern with proper type safety
         if cls._instance is None:
             cls._instance = cls()
-        # Type narrowing: after None check, _instance is FlextLdif
         return cls._instance
 
     def __init__(self, **kwargs: str | float | bool | None) -> None:
@@ -136,6 +143,28 @@ class FlextLdif(FlextLdifServiceBase[object]):
             cache = {}
             self.__dict__["_service_cache"] = cache
         return cache
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def service_stats(self) -> dict[str, bool]:
+        """Pydantic 2 computed field showing service initialization status.
+
+        Returns:
+            Dict mapping service names to initialization status.
+
+        """
+        cache = self._get_service_cache()
+        return {
+            "parser": "parser" in cache,
+            "writer": "writer" in cache,
+            "detector": "detector" in cache,
+            "validator": "validator" in cache,
+            "statistics": "statistics" in cache,
+            "processing": "processing" in cache,
+            "acl": "acl" in cache,
+            "entries": "entries" in cache,
+            "server": "server" in cache,
+        }
 
     @property
     def processing_service(self) -> FlextLdifProcessing:
@@ -329,25 +358,27 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         """
         # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
+        # Python 3.10+ pattern matching for type-safe conversion
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
-            if isinstance(entry, m.Ldif.Entry):
-                # Already the correct type, use directly
-                entries_typed.append(entry)
-            elif isinstance(entry, BaseModel):
-                # Other Pydantic model, use JSON mode to exclude computed properties
-                entry_json = entry.model_dump_json()
-                entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
-            else:
-                entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        result = self.processing_service.process(
+            match entry:
+                case m.Ldif.Entry():
+                    # Already the correct type, use directly
+                    entries_typed.append(entry)
+                case BaseModel():
+                    # Other Pydantic model, use JSON mode to exclude computed properties
+                    entry_json = entry.model_dump_json()
+                    entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
+                case _:
+                    # Fallback: attempt direct validation
+                    entries_typed.append(m.Ldif.Entry.model_validate(entry))
+        return self.processing_service.process(
             processor_name,
             entries_typed,
             parallel=parallel,
             batch_size=batch_size,
             max_workers=max_workers,
         )
-        return cast("r[list]", result)
 
     def extract_acls(
         self,
@@ -373,11 +404,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
             entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
         else:
             entry_typed = m.Ldif.Entry.model_validate(entry)
-        result = self.acl_service.extract_acls_from_entry(
+        return self.acl_service.extract_acls_from_entry(
             entry_typed,
             server_type,
         )
-        return cast("r[object]", result)
 
     def get_entry_dn(
         self,
@@ -499,7 +529,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         response = parse_result.value
         entries_list: list[object] = list(response.entries)
-        return r.ok(entries_list)
+        return r[list[object]].ok(entries_list)
 
     def _parse_file(
         self,
@@ -554,12 +584,11 @@ class FlextLdif(FlextLdifServiceBase[object]):
             FlextResult containing created Entry model.
 
         """
-        result = FlextLdifEntries.create_entry(
+        return FlextLdifEntries.create_entry(
             dn=dn,
             attributes=attributes,
             objectclasses=objectclasses,
         )
-        return cast("r[object]", result)
 
     def detect_server_type(
         self,
@@ -733,11 +762,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use validation service for proper ValidationResult
         validation_service = FlextLdifValidation()
-        result = FlextLdifAnalysis.validate_entries(
+        return FlextLdifAnalysis.validate_entries(
             entries_typed,
             validation_service,
         )
-        return cast("r[object]", result)
 
     def filter_entries(
         self,
@@ -784,7 +812,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use statistics service instead of direct model access
         stats_service = FlextLdifStatistics()
-        return cast("r[object]", stats_service.calculate_for_entries(entries_typed))
+        return stats_service.calculate_for_entries(entries_typed)
 
     def filter_persons(
         self,
@@ -825,8 +853,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
     @override
     def execute(
-        self,
-        **_kwargs: str | float | bool | None,
+        self
     ) -> r[object]:
         """Execute service health check for FlextService pattern compliance.
 

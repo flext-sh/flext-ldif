@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from flext_core import r
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -25,7 +26,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import u
 
 
-class FlextLdifAcl(FlextLdifServiceBase[m.Ldif.LdifResults.AclResponse]):
+class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     """Direct ACL processing service using flext-core APIs.
 
     Business Rule: ACL service delegates directly to server-specific ACL quirks for

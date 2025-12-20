@@ -4254,8 +4254,7 @@ class FlextLdifConstants(FlextConstants):
 
             OBSOLETE = "obsolete"
 
-        # Import StrEnum for use in models
-        StrEnum = StrEnum
+        # Access StrEnum directly via composition - no aliases needed
 
     class DnPrefixField(StrEnum):
         """Dn_Prefix field constants."""
@@ -4339,11 +4338,11 @@ class FlextLdifConstants(FlextConstants):
         ACI = "aci"
         ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
 
-        class AclWildcardField(StrEnum):
-            """Acl_Wildcard field constants."""
+    class AclWildcardField(StrEnum):
+        """Acl_Wildcard field constants."""
 
-            TYPE = "all"
-            VALUE = "*"
+        TYPE = "all"
+        VALUE = "*"
 
     # =========================================================================
     # NAMESPACE ACCESS

@@ -279,15 +279,16 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Determine conversion type and get source/target format names
+        # Note: FlextLdifServersBase uses 'server_type' attribute, not 'server_name'
         source_format_raw = u.Ldif.match(
             source,
             (str, lambda s: s),
-            default=lambda src: getattr(src, "server_name", "unknown"),
+            default=lambda src: getattr(src, "server_type", "unknown"),
         )
         target_format_raw = u.Ldif.match(
             target,
             (str, lambda t: t),
-            default=lambda tgt: getattr(tgt, "server_name", "unknown"),
+            default=lambda tgt: getattr(tgt, "server_type", "unknown"),
         )
         # Type narrowing: u.match with (str, lambda) returns str (lambda returns str)
         # Runtime validation ensures correctness, type narrowing based on match pattern
@@ -323,7 +324,7 @@ class FlextLdifConversion(
         items_failed = 0 if result.is_success else 1
 
         # Create conversion event config using full namespace
-        conversion_config = m.ConversionEventConfig(
+        conversion_config = m.Ldif.Events.ConversionEventConfig(
             conversion_operation=conversion_operation,
             source_format=source_format,
             target_format=target_format,
@@ -847,8 +848,8 @@ class FlextLdifConversion(
         quirk_type: str,
     ) -> r[p.Ldif.SchemaQuirkProtocol]:
         """Get schema quirk safely with error handling."""
-        # DSL: Use u.try_ for safe execution
-        result = u.try_(
+        # DSL: Use u.Ldif.try_ for safe execution
+        result = u.Ldif.try_(
             lambda: _get_schema_quirk(quirk),
             default=None,
         )
@@ -869,7 +870,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _process_schema_conversion_pipeline(
-        config: m.Ldif.SchemaConversionPipelineConfig,
+        config: m.Ldif.Configuration.SchemaConversionPipelineConfig,
     ) -> r[
         m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
     ]:
@@ -946,7 +947,7 @@ class FlextLdifConversion(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available",
                 )
-            config = m.Ldif.SchemaConversionPipelineConfig(
+            config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: source_schema.write_attribute(attribute),
@@ -997,7 +998,7 @@ class FlextLdifConversion(
             if target_schema is None:
                 # target_schema_result already has the correct type, no cast needed
                 return target_schema_result
-            config = m.Ldif.SchemaConversionPipelineConfig(
+            config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: source_schema.write_objectclass(objectclass),
@@ -1587,9 +1588,9 @@ class FlextLdifConversion(
             server_type_attr = u.Ldif.maybe(get_server_type(source_quirk))
 
             # Use normalize_server_type directly - it handles aliases and validation
-            # Type narrowing: u.try_ with default=None returns str | None when lambda returns str | None
+            # Type narrowing: u.Ldif.try_ with default=None returns str | None when lambda returns str | None
             # normalize_server_type returns str, so source_server_type is str | None
-            source_server_type: str | None = u.try_(
+            source_server_type: str | None = u.Ldif.try_(
                 lambda: (
                     u.Ldif.Server.normalize_server_type(str(server_type_attr))
                     if isinstance(server_type_attr, str)
@@ -1675,8 +1676,8 @@ class FlextLdifConversion(
                 default="unknown",
             )
             # Use normalize_server_type directly - it handles aliases and validation
-            # Type narrowing: u.try_ with default=None returns str | None when lambda returns str | None
-            target_server_type: str | None = u.try_(
+            # Type narrowing: u.Ldif.try_ with default=None returns str | None when lambda returns str | None
+            target_server_type: str | None = u.Ldif.try_(
                 lambda: (
                     u.Ldif.Server.normalize_server_type(target_server_type_raw)
                     if isinstance(target_server_type_raw, str)

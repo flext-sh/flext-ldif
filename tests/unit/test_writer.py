@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.protocols import p
@@ -83,7 +84,7 @@ class TestFlextLdifWriterRfc(s):
             target_server_type="rfc",
         )
 
-        content = self.assert_success(
+        content = tm.ok(
             result,
             f"Write failed for scenario {scenario.value}",
         )

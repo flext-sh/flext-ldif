@@ -124,7 +124,7 @@ class TestsTestFlextLdifStatistics(s):
         def test_execute_returns_status(self) -> None:
             """Test execute returns service operational status."""
             result = FlextLdifStatistics().execute()
-            self.assert_success(result)
+            tm.ok(result)
             status = result.value
             assert status["service"] == "StatisticsService"
             assert status["status"] == "operational"
@@ -220,7 +220,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp/ldif"),
                 output_files=output_files_str,
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert isinstance(stats, m.StatisticsResult)
             assert stats.total_entries == expected_total
@@ -335,7 +335,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp/ldif"),
                 output_files={cat: f"{cat}.ldif" for cat in written_counts},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == expected_total
             assert stats.rejection_count == expected_rejected
@@ -420,7 +420,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp"),
                 output_files={"rejected": "rejected.ldif"},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.rejection_count == expected_count
             assert all(reason in stats.rejection_reasons for reason in expected_reasons)
@@ -469,7 +469,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=output_dir,
                 output_files=output_files_str,
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             for category, expected_path in expected_paths.items():
                 assert stats.output_files[category] == expected_path
@@ -486,7 +486,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 0
             assert stats.rejection_rate == 0.0
@@ -510,7 +510,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 2
             assert stats.rejection_count == 0
@@ -547,7 +547,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 1000
             assert stats.rejection_count == 900
@@ -571,7 +571,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=output_dir,
                 output_files={"users": "exported_users.ldif"},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.output_files["users"] == str(
                 output_dir / "exported_users.ldif",
@@ -599,7 +599,7 @@ class TestsTestFlextLdifStatistics(s):
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 10
             assert stats.rejection_count == 10
@@ -611,7 +611,7 @@ class TestsTestFlextLdifStatistics(s):
         def test_calculate_for_entries_empty_list(self) -> None:
             """Test calculate_for_entries with empty entry list."""
             result = FlextLdifStatistics().calculate_for_entries([])
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 0
             assert stats.object_class_distribution == {}
@@ -634,7 +634,7 @@ class TestsTestFlextLdifStatistics(s):
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 3
             assert stats.object_class_distribution["person"] == 2
@@ -700,7 +700,7 @@ class TestsTestFlextLdifStatistics(s):
                 entry2,
                 entry3,
             ])
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 3
             assert stats.server_type_distribution.get("oid") == 2
@@ -719,7 +719,7 @@ class TestsTestFlextLdifStatistics(s):
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 2
             assert stats.server_type_distribution == {}

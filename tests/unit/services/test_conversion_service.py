@@ -427,7 +427,7 @@ class TestsTestFlextLdifConversionService(s):
         result = conversion_service.batch_convert(rfc_quirk, rfc_quirk, [])
         assert result.is_success
         converted = result.value
-        tm.assert_length_zero(converted)
+        tm.assert_length_equals(converted, 0)
 
     def test_batch_convert_single_entry(
         self,
@@ -501,7 +501,7 @@ class TestsTestFlextLdifConversionService(s):
         )
         if result.is_success:
             converted = result.value
-            tm.assert_length_greater_or_equal(converted, 1)
+            assert len(converted) >= 1
         else:
             error_msg = result.error or ""
             assert "error" in error_msg.lower() or "validation" in error_msg.lower()
@@ -518,7 +518,7 @@ class TestsTestFlextLdifConversionService(s):
         assert conversion_service.dn_registry is not None
         assert isinstance(
             conversion_service.dn_registry,
-            m.DnRegistry,
+            m.Ldif.DnRegistry,
         )
 
     def test_dn_registry_tracks_dns(
@@ -613,7 +613,7 @@ class TestsTestFlextLdifConversionService(s):
         assert isinstance(result, dict)
         assert "entry" in result
         assert "attribute" in result
-        assert "objectClass" in result
+        assert "objectclass" in result
         assert "acl" in result
 
     def test_get_supported_conversions_oid(
@@ -626,7 +626,7 @@ class TestsTestFlextLdifConversionService(s):
         assert isinstance(result, dict)
         assert "entry" in result
         assert "attribute" in result
-        assert "objectClass" in result
+        assert "objectclass" in result
         assert "acl" in result
 
     def test_get_supported_conversions_oud(
@@ -639,7 +639,7 @@ class TestsTestFlextLdifConversionService(s):
         assert isinstance(result, dict)
         assert "entry" in result
         assert "attribute" in result
-        assert "objectClass" in result
+        assert "objectclass" in result
         assert "acl" in result
 
     # ────────────────────────────────────────────────────────────────────────

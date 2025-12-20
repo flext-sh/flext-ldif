@@ -359,7 +359,7 @@ class TestACLConversionWithRealFixtures:
         This validates that the OID fixture has orclaci and orclentrylevelaci
         attributes that can be parsed for conversion testing.
         """
-        oid_fixtures = tf.OID()
+        oid_fixtures = FlextLdifFixtures.OID()
         acl_content = oid_fixtures.acl()
 
         # Count OID ACL attributes

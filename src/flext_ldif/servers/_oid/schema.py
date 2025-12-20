@@ -672,7 +672,7 @@ class FlextLdifServersOidSchema(
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(
                     attr_data.metadata.model_dump(),
                 )
-                u.Metadata.preserve_schema_formatting(
+                u.Ldif.Metadata.preserve_schema_formatting(
                     metadata_public,
                     attr_definition,
                 )

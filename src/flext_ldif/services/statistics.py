@@ -22,20 +22,16 @@ from flext_core import d, r
 
 # Note: _DynamicCounts is accessed via facade (m.Ldif.LdifResults.DynamicCounts)
 # to maintain architecture layering
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 
-# Removed: # Import removed - use m.* facade (use m.* instead)
-from flext_ldif.results import (
-    FlextLdifModelsResults,
-    _CategoryPaths,
-    _FlexibleCategories,
-)
+# Access results via facade - no direct imports needed
 from flext_ldif.utilities import u
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[m.Ldif.LdifResults.StatisticsServiceStatus],
+    FlextLdifServiceBase[FlextLdifModelsResults.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -61,7 +57,7 @@ class FlextLdifStatistics(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.StatisticsServiceStatus]:
+    ) -> r[FlextLdifModelsResults.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Business Rule: Service health check validates statistics generation
@@ -76,8 +72,8 @@ class FlextLdifStatistics(
             r containing service status (health check)
 
         """
-        return r[m.Ldif.LdifResults.StatisticsServiceStatus].ok(
-            m.Ldif.LdifResults.StatisticsServiceStatus(
+        return r[FlextLdifModelsResults.StatisticsServiceStatus].ok(
+            FlextLdifModelsResults.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[
@@ -91,7 +87,7 @@ class FlextLdifStatistics(
 
     def generate_statistics(
         self,
-        categorized: _FlexibleCategories,
+        categorized: m.Ldif.LdifResults.FlexibleCategories,
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, str],
@@ -182,8 +178,8 @@ class FlextLdifStatistics(
             written_counts
         )
 
-        # Build output files paths as _CategoryPaths model
-        output_files_model = _CategoryPaths()
+        # Build output files paths as CategoryPaths model
+        output_files_model = m.Ldif.LdifResults.CategoryPaths()
         for category in written_counts:
             # Type narrowing: u.Ldif.take returns str when default is str
             path_str = str(

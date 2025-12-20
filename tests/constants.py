@@ -234,11 +234,14 @@ uid: testuser
         CN: Final[str] = "cn"
         SN: Final[str] = "sn"
         MAIL: Final[str] = "mail"
+        UID: Final[str] = "uid"
+        DN: Final[str] = "dn"
         OBJECTCLASS: Final[str] = "objectClass"
         PERSON: Final[str] = "person"
         TOP: Final[str] = "top"
         INETORGPERSON: Final[str] = "inetOrgPerson"  # Alias for backward compatibility
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"  # Matches source constants naming
+        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
 
     class General:
         """General test constants (from fixtures/general_constants.py)."""
@@ -862,6 +865,509 @@ class RfcTestHelpers:
 
         return result.value
 
+    @staticmethod
+    def test_quirk_schema_parse_and_assert_properties(
+        quirk: object,
+        schema_def: str,
+        *,
+        expected_oid: str | None = None,
+        expected_name: str | None = None,
+        expected_desc: str | None = None,
+        expected_syntax: str | None = None,
+        expected_single_value: bool | None = None,
+        expected_length: int | None = None,
+        expected_kind: str | None = None,
+        expected_sup: str | None = None,
+        expected_must: list[str] | None = None,
+        expected_may: list[str] | None = None,
+    ) -> object:
+        """Parse schema definition and assert properties.
+
+        Args:
+            quirk: Schema quirk instance
+            schema_def: Schema definition string (attribute or objectClass)
+            expected_oid: Expected OID
+            expected_name: Expected NAME
+            expected_desc: Expected DESC
+            expected_syntax: Expected SYNTAX (without length)
+            expected_single_value: Expected SINGLE-VALUE flag
+            expected_length: Expected syntax length (e.g., 256 from {256})
+            expected_kind: Expected KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
+            expected_sup: Expected SUP (superior class)
+            expected_must: Expected MUST attributes
+            expected_may: Expected MAY attributes
+
+        Returns:
+            The parsed schema object
+
+        Raises:
+            AssertionError: If parsing fails or properties don't match
+
+        """
+        # Determine parse method based on content
+        if "STRUCTURAL" in schema_def or "AUXILIARY" in schema_def or "ABSTRACT" in schema_def:
+            parse_method = getattr(quirk, "parse_objectclass", None)
+        else:
+            parse_method = getattr(quirk, "parse_attribute", None)
+
+        if parse_method is None:
+            parse_method = getattr(quirk, "parse", None)
+
+        if parse_method is None:
+            msg = "Quirk has no suitable parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(schema_def)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"Parsing failed: {result.error}")
+
+        value = result.value if hasattr(result, "value") else result
+
+        # Assert expected properties
+        if expected_oid is not None:
+            actual_oid = getattr(value, "oid", None)
+            if actual_oid != expected_oid:
+                raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+
+        if expected_name is not None:
+            actual_name = getattr(value, "name", None)
+            if actual_name != expected_name:
+                raise AssertionError(f"Expected NAME '{expected_name}', got '{actual_name}'")
+
+        if expected_desc is not None:
+            actual_desc = getattr(value, "desc", None)
+            if actual_desc != expected_desc:
+                raise AssertionError(f"Expected DESC '{expected_desc}', got '{actual_desc}'")
+
+        if expected_syntax is not None:
+            actual_syntax = getattr(value, "syntax", None)
+            if actual_syntax != expected_syntax:
+                raise AssertionError(
+                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
+                )
+
+        if expected_single_value is not None:
+            actual_sv = getattr(value, "single_value", None)
+            if actual_sv != expected_single_value:
+                raise AssertionError(
+                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
+                )
+
+        if expected_length is not None:
+            actual_length = getattr(value, "length", None)
+            if actual_length != expected_length:
+                raise AssertionError(
+                    f"Expected length {expected_length}, got {actual_length}"
+                )
+
+        if expected_kind is not None:
+            actual_kind = getattr(value, "kind", None)
+            if actual_kind != expected_kind:
+                raise AssertionError(
+                    f"Expected KIND '{expected_kind}', got '{actual_kind}'"
+                )
+
+        if expected_sup is not None:
+            actual_sup = getattr(value, "sup", None)
+            if actual_sup != expected_sup:
+                raise AssertionError(
+                    f"Expected SUP '{expected_sup}', got '{actual_sup}'"
+                )
+
+        if expected_must is not None:
+            actual_must = getattr(value, "must", None) or []
+            if list(actual_must) != expected_must:
+                raise AssertionError(
+                    f"Expected MUST {expected_must}, got {list(actual_must)}"
+                )
+
+        if expected_may is not None:
+            actual_may = getattr(value, "may", None) or []
+            if list(actual_may) != expected_may:
+                raise AssertionError(
+                    f"Expected MAY {expected_may}, got {list(actual_may)}"
+                )
+
+        return value
+
+    @staticmethod
+    def test_result_success_and_unwrap(
+        result: object,
+        expected_type: type | None = None,
+        expected_count: int | None = None,
+    ) -> object:
+        """Assert result is successful and unwrap its value.
+
+        Args:
+            result: FlextResult instance to check
+            expected_type: Optional expected type for the unwrapped value
+            expected_count: Optional expected count if value is a sequence
+
+        Returns:
+            The unwrapped value from the result
+
+        Raises:
+            AssertionError: If result is failure or type mismatch
+
+        """
+        # Check result has is_failure attribute (duck typing for FlextResult)
+        if not hasattr(result, "is_failure"):
+            raise TypeError(f"Expected FlextResult-like object, got {type(result)}")
+
+        if result.is_failure:
+            error = getattr(result, "error", "Unknown error")
+            raise AssertionError(f"Result is failure: {error}")
+
+        value = result.value
+        if expected_type is not None and not isinstance(value, expected_type):
+            raise AssertionError(
+                f"Expected {expected_type.__name__}, got {type(value).__name__}"
+            )
+
+        if expected_count is not None:
+            if not hasattr(value, "__len__"):
+                raise AssertionError(
+                    f"Cannot check count on {type(value).__name__} - not a sequence"
+                )
+            if len(value) != expected_count:
+                raise AssertionError(
+                    f"Expected count {expected_count}, got {len(value)}"
+                )
+
+        return value
+
+    @staticmethod
+    def test_create_entry_and_unwrap(
+        dn: str,
+        attributes: dict[str, object] | None = None,
+    ) -> object:
+        """Create an entry and unwrap the result.
+
+        Alias for test_entry_create_and_unwrap for naming consistency.
+
+        Args:
+            dn: Distinguished Name for the entry
+            attributes: Dictionary of attributes for the entry
+
+        Returns:
+            The unwrapped Entry instance
+
+        Raises:
+            AssertionError: If entry creation fails
+
+        """
+        if attributes is None:
+            attributes = {}
+        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+        if result.is_failure:
+            raise AssertionError(f"Entry creation failed: {result.error}")
+
+        return result.value
+
+    @staticmethod
+    def test_create_schema_attribute_and_unwrap(
+        oid: str,
+        name: str,
+        desc: str | None = None,
+        syntax: str | None = None,
+        *,
+        single_value: bool = False,
+    ) -> object:
+        """Create a schema attribute and unwrap the result.
+
+        Args:
+            oid: Object Identifier
+            name: Attribute name
+            desc: Description
+            syntax: Syntax OID
+            single_value: Single value flag
+
+        Returns:
+            The unwrapped SchemaAttribute instance
+
+        Raises:
+            AssertionError: If creation fails
+
+        """
+        return m.Ldif.SchemaAttribute(
+            oid=oid,
+            name=name,
+            desc=desc,
+            syntax=syntax,
+            single_value=single_value,
+        )
+
+    @staticmethod
+    def test_create_schema_objectclass_and_unwrap(
+        oid: str,
+        name: str,
+        desc: str | None = None,
+        kind: str = "STRUCTURAL",
+        sup: str | None = None,
+        must: list[str] | None = None,
+        may: list[str] | None = None,
+    ) -> object:
+        """Create a schema objectClass and unwrap the result.
+
+        Args:
+            oid: Object Identifier
+            name: ObjectClass name
+            desc: Description
+            kind: Kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+            sup: Superior class
+            must: Required attributes
+            may: Optional attributes
+
+        Returns:
+            The unwrapped SchemaObjectClass instance
+
+        Raises:
+            AssertionError: If creation fails
+
+        """
+        return m.Ldif.SchemaObjectClass(
+            oid=oid,
+            name=name,
+            desc=desc,
+            kind=kind,
+            sup=sup,
+            must=must or [],
+            may=may or [],
+        )
+
+    @staticmethod
+    def test_quirk_parse_success_and_unwrap(
+        quirk: object,
+        content: str,
+        parse_method: str | None = None,
+    ) -> object:
+        """Parse using quirk and assert success.
+
+        Args:
+            quirk: Schema quirk instance
+            content: Content to parse
+            parse_method: Optional specific parse method name
+
+        Returns:
+            The parsed value
+
+        Raises:
+            AssertionError: If parsing fails
+
+        """
+        if parse_method:
+            method = getattr(quirk, parse_method, None)
+            if method is None:
+                raise AssertionError(f"Quirk has no method '{parse_method}'")
+            result = method(content)
+        else:
+            result = quirk.parse(content)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            error = getattr(result, "error", "Unknown error")
+            raise AssertionError(f"Parsing failed: {error}")
+
+        return result.value if hasattr(result, "value") else result
+
+    @staticmethod
+    def test_schema_quirk_parse_and_assert(
+        quirk: object,
+        content: str,
+        expected_oid: str | None = None,
+        expected_name: str | None = None,
+    ) -> object:
+        """Parse schema content and assert properties.
+
+        Args:
+            quirk: Schema quirk instance
+            content: Schema definition content
+            expected_oid: Expected OID
+            expected_name: Expected name
+
+        Returns:
+            The parsed schema object
+
+        Raises:
+            AssertionError: If parsing fails or properties don't match
+
+        """
+        # Determine parse method based on content
+        if "STRUCTURAL" in content or "AUXILIARY" in content or "ABSTRACT" in content:
+            parse_method = getattr(quirk, "parse_objectclass", None)
+        else:
+            parse_method = getattr(quirk, "parse_attribute", None)
+
+        if parse_method is None:
+            parse_method = getattr(quirk, "parse", None)
+
+        if parse_method is None:
+            msg = "Quirk has no suitable parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(content)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"Parsing failed: {result.error}")
+
+        value = result.value if hasattr(result, "value") else result
+
+        if expected_oid is not None:
+            actual_oid = getattr(value, "oid", None)
+            if actual_oid != expected_oid:
+                raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+
+        if expected_name is not None:
+            actual_name = getattr(value, "name", None)
+            if actual_name != expected_name:
+                raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+
+        return value
+
+    @staticmethod
+    def test_create_schema_attribute_from_dict(
+        data: dict[str, object],
+    ) -> object:
+        """Create a schema attribute from dictionary.
+
+        Args:
+            data: Dictionary with attribute properties
+
+        Returns:
+            The SchemaAttribute instance
+
+        """
+        return m.Ldif.SchemaAttribute(
+            oid=str(data.get("oid", "")),
+            name=str(data.get("name", "")),
+            desc=data.get("desc"),
+            syntax=data.get("syntax"),
+            single_value=bool(data.get("single_value")),
+        )
+
+    @staticmethod
+    def test_create_schema_objectclass_from_dict(
+        data: dict[str, object],
+    ) -> object:
+        """Create a schema objectClass from dictionary.
+
+        Args:
+            data: Dictionary with objectClass properties
+
+        Returns:
+            The SchemaObjectClass instance
+
+        """
+        must = data.get("must", [])
+        may = data.get("may", [])
+        return m.Ldif.SchemaObjectClass(
+            oid=str(data.get("oid", "")),
+            name=str(data.get("name", "")),
+            desc=data.get("desc"),
+            kind=str(data.get("kind", "STRUCTURAL")),
+            sup=data.get("sup"),
+            must=list(must) if must else [],
+            may=list(may) if may else [],
+        )
+
+    @staticmethod
+    def test_schema_parse_attribute(
+        schema_quirk: object,
+        attr_def: str,
+        expected_oid: str,
+        expected_name: str,
+    ) -> object:
+        """Parse attribute definition and validate expected properties.
+
+        Args:
+            schema_quirk: Schema quirk instance
+            attr_def: Attribute definition string
+            expected_oid: Expected OID
+            expected_name: Expected name
+
+        Returns:
+            The parsed SchemaAttribute instance
+
+        Raises:
+            AssertionError: If parsing fails or properties don't match
+
+        """
+        # Get parse method
+        parse_method = getattr(schema_quirk, "_parse_attribute", None)
+        if parse_method is None:
+            parse_method = getattr(schema_quirk, "parse_attribute", None)
+
+        if parse_method is None:
+            msg = "Schema quirk has no attribute parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(attr_def)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"Attribute parsing failed: {result.error}")
+
+        value = result.value if hasattr(result, "value") else result
+
+        # Validate expected properties
+        actual_oid = getattr(value, "oid", None)
+        if actual_oid != expected_oid:
+            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+
+        actual_name = getattr(value, "name", None)
+        if actual_name != expected_name:
+            raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+
+        return value
+
+    @staticmethod
+    def test_schema_parse_objectclass(
+        schema_quirk: object,
+        oc_def: str,
+        expected_oid: str,
+        expected_name: str,
+    ) -> object:
+        """Parse objectClass definition and validate expected properties.
+
+        Args:
+            schema_quirk: Schema quirk instance
+            oc_def: ObjectClass definition string
+            expected_oid: Expected OID
+            expected_name: Expected name
+
+        Returns:
+            The parsed SchemaObjectClass instance
+
+        Raises:
+            AssertionError: If parsing fails or properties don't match
+
+        """
+        # Get parse method
+        parse_method = getattr(schema_quirk, "_parse_objectclass", None)
+        if parse_method is None:
+            parse_method = getattr(schema_quirk, "parse_objectclass", None)
+
+        if parse_method is None:
+            msg = "Schema quirk has no objectClass parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(oc_def)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"ObjectClass parsing failed: {result.error}")
+
+        value = result.value if hasattr(result, "value") else result
+
+        # Validate expected properties
+        actual_oid = getattr(value, "oid", None)
+        if actual_oid != expected_oid:
+            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+
+        actual_name = getattr(value, "name", None)
+        if actual_name != expected_name:
+            raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+
+        return value
+
 
 class TestDeduplicationHelpers:
     """Test helpers for deduplication functionality."""
@@ -1017,6 +1523,242 @@ class TestDeduplicationHelpers:
                     f"Expected {expected_type.__name__}, got {type(value).__name__}"
                 )
         return value
+
+    @staticmethod
+    def quirk_write_and_unwrap(
+        quirk: object,
+        data: object,
+        msg: str | None = None,
+        write_method: str | None = None,
+        must_contain: list[str] | None = None,
+    ) -> str:
+        """Write using quirk and unwrap result.
+
+        Args:
+            quirk: Schema quirk instance with write method
+            data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
+            msg: Optional message for assertion
+            write_method: Optional specific write method name (e.g., '_write_attribute')
+            must_contain: Optional list of strings that must appear in output
+
+        Returns:
+            Written string result
+
+        Raises:
+            AssertionError: If writing fails or must_contain strings not found
+
+        """
+        # Get the appropriate write method
+        if write_method:
+            method = getattr(quirk, write_method, None)
+            if method is None:
+                raise AssertionError(f"Quirk has no method '{write_method}'")
+            result = method(data)
+        else:
+            method = getattr(quirk, "write", None)
+            if method is None:
+                msg = "Quirk has no write method"
+                raise AssertionError(msg)
+            result = method(data)
+
+        # Handle FlextResult or direct string
+        if hasattr(result, "is_success"):
+            assert result.is_success, msg or f"quirk.write() failed: {result.error}"
+            output = result.value
+        else:
+            output = result
+
+        assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
+
+        # Check must_contain strings
+        if must_contain:
+            for substring in must_contain:
+                if substring not in output:
+                    raise AssertionError(
+                        f"'{substring}' not found in output: {output[:200]}..."
+                    )
+
+        return output
+
+    @staticmethod
+    def helper_convert_and_assert_strings(
+        conversion_matrix: object,
+        source_quirk: object,
+        target_quirk: object,
+        conversion_type: str,
+        data: str,
+        must_contain: list[str] | None = None,
+        expected_type: type | None = None,
+    ) -> str:
+        """Convert data between quirks and assert result.
+
+        Args:
+            conversion_matrix: FlextLdifConversion instance
+            source_quirk: Source server quirk
+            target_quirk: Target server quirk
+            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
+            data: Data to convert (string)
+            must_contain: List of strings that must appear in output
+            expected_type: Expected type for validation (default: str)
+
+        Returns:
+            Converted string result
+
+        Raises:
+            AssertionError: If conversion fails or validation fails
+
+        """
+        # Get convert method
+        convert_method = getattr(conversion_matrix, "convert", None)
+        if convert_method is None:
+            raise AssertionError("conversion_matrix has no convert method")
+
+        # Perform conversion
+        result = convert_method(
+            source=source_quirk,
+            target=target_quirk,
+            data=data,
+            model_type=conversion_type,
+        )
+
+        # Check result
+        if hasattr(result, "is_success"):
+            assert result.is_success, f"convert() failed: {result.error}"
+            output = result.value
+        else:
+            output = result
+
+        # Type check
+        if expected_type is not None and not isinstance(output, expected_type):
+            raise AssertionError(
+                f"Expected {expected_type.__name__}, got {type(output).__name__}"
+            )
+
+        # Check must_contain strings
+        if must_contain and isinstance(output, str):
+            for substring in must_contain:
+                if substring not in output:
+                    raise AssertionError(
+                        f"'{substring}' not found in output: {output[:200]}..."
+                    )
+
+        return output
+
+    @staticmethod
+    def helper_get_supported_conversions_and_assert(
+        conversion_matrix: object,
+        quirk: object,
+        must_have_keys: list[str] | None = None,
+        expected_support: dict[str, bool] | None = None,
+    ) -> dict[str, bool]:
+        """Get supported conversions and assert result.
+
+        Args:
+            conversion_matrix: FlextLdifConversion instance
+            quirk: Server quirk to check support for
+            must_have_keys: List of keys that must appear in result
+            expected_support: Dict of expected key:bool values
+
+        Returns:
+            Dict of supported conversion types
+
+        Raises:
+            AssertionError: If result doesn't have expected keys or values
+
+        """
+        # Get supported conversions method
+        get_support_method = getattr(
+            conversion_matrix, "get_supported_conversions", None
+        )
+        if get_support_method is None:
+            raise AssertionError("conversion_matrix has no get_supported_conversions")
+
+        # Get supported conversions
+        result = get_support_method(quirk)
+
+        # Handle FlextResult
+        if hasattr(result, "is_success"):
+            assert result.is_success, f"get_supported_conversions failed: {result.error}"
+            support_dict = result.value
+        else:
+            support_dict = result
+
+        assert isinstance(support_dict, dict), (
+            f"Expected dict, got {type(support_dict).__name__}"
+        )
+
+        # Check must_have_keys
+        if must_have_keys:
+            for key in must_have_keys:
+                assert key in support_dict, f"Missing key '{key}' in support dict"
+
+        # Check expected_support values
+        if expected_support:
+            for key, expected_value in expected_support.items():
+                if key in support_dict:
+                    assert support_dict[key] == expected_value, (
+                        f"Expected {key}={expected_value}, got {support_dict[key]}"
+                    )
+
+        return support_dict
+
+    @staticmethod
+    def helper_batch_convert_and_assert(
+        conversion_matrix: object,
+        source_quirk: object,
+        target_quirk: object,
+        conversion_type: str,
+        items: list[object],
+        expected_count: int | None = None,
+    ) -> list[object]:
+        """Batch convert items and assert result.
+
+        Args:
+            conversion_matrix: FlextLdifConversion instance
+            source_quirk: Source server quirk
+            target_quirk: Target server quirk
+            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
+            items: List of items to convert
+            expected_count: Expected number of results (default: len(items))
+
+        Returns:
+            List of converted items
+
+        Raises:
+            AssertionError: If conversion fails or count doesn't match
+
+        """
+        # Get batch_convert method
+        batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
+        if batch_convert_method is None:
+            raise AssertionError("conversion_matrix has no batch_convert method")
+
+        # Perform batch conversion
+        result = batch_convert_method(
+            source=source_quirk,
+            target=target_quirk,
+            items=items,
+            model_type=conversion_type,
+        )
+
+        # Handle FlextResult
+        if hasattr(result, "is_success"):
+            assert result.is_success, f"batch_convert() failed: {result.error}"
+            converted_items = result.value
+        else:
+            converted_items = result
+
+        assert isinstance(converted_items, list), (
+            f"Expected list, got {type(converted_items).__name__}"
+        )
+
+        # Check expected count
+        if expected_count is not None:
+            assert len(converted_items) == expected_count, (
+                f"Expected {expected_count} items, got {len(converted_items)}"
+            )
+
+        return converted_items
 
 
 class TestCategorization:

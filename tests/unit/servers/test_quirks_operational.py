@@ -15,7 +15,6 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
@@ -26,8 +25,6 @@ from tests import c, p, s, tf
 T = TypeVar("T")
 
 extract_oid = FlextLdifUtilitiesParser.extract_oid
-extract_attributes = FlextLdifUtilitiesSchema.extract_attributes_from_lines
-extract_objectclasses = FlextLdifUtilitiesSchema.extract_objectclasses_from_lines
 
 
 # Test scenario enums
@@ -78,18 +75,34 @@ def extract_schema_data(
     fixtures: tf.OID,
     data_type: FixtureType,
 ) -> list[str]:
-    """Extract schema data from fixtures."""
+    """Extract schema data from fixtures.
+
+    Returns raw definition strings from LDIF content for testing.
+    """
     try:
         schema = fixtures.schema()
     except AttributeError:
         pytest.skip(f"Schema fixture not available for {data_type.name}")
 
+    # Extract raw definition strings from LDIF content
+    lines: list[str] = []
     if data_type == FixtureType.ATTRIBUTES:
-        return extract_attributes(schema)
-    if data_type == FixtureType.OBJECTCLASSES:
-        return extract_objectclasses(schema)
-    msg = f"Unknown data type: {data_type}"
-    raise ValueError(msg)
+        # Extract attributetypes lines
+        for raw_line in schema.split("\n"):
+            line = raw_line.strip()
+            if line.lower().startswith("attributetypes:"):
+                lines.append(line.split(":", 1)[1].strip())
+    elif data_type == FixtureType.OBJECTCLASSES:
+        # Extract objectclasses lines
+        for raw_line in schema.split("\n"):
+            line = raw_line.strip()
+            if line.lower().startswith("objectclasses:"):
+                lines.append(line.split(":", 1)[1].strip())
+    else:
+        msg = f"Unknown data type: {data_type}"
+        raise ValueError(msg)
+
+    return lines
 
 
 # Validator class

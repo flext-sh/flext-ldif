@@ -11,7 +11,6 @@ import flext_ldif.servers as servers_package
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -321,11 +320,8 @@ class FlextLdifServer:
 
         """
         normalized = self._normalize_server_type(server_type)
-        base: FlextLdifServersBase | None = u.mapper().get(
-            self._bases,
-            normalized,
-            default=None,
-        )
+        # Use direct dict.get() - u.mapper().get() has type inference issues
+        base: FlextLdifServersBase | None = self._bases.get(normalized)
         if base is None:
             return r[FlextLdifServersBase].fail(
                 f"No base found for server type: {server_type}",

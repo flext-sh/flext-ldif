@@ -33,7 +33,7 @@ from flext_core import FlextModels, FlextTypes
 from flext_core._models.base import FlextModelsBase
 
 # Third-party imports
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
@@ -181,8 +181,6 @@ class FlextLdifModels(FlextModels):
         class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
             """Error detail model."""
 
-        ProcessingResult = ProcessingResult
-
         # ACL models - real inheritance classes
         class AclPermissions(FlextLdifModelsDomains.AclPermissions):
             """ACL permissions model."""
@@ -214,14 +212,12 @@ class FlextLdifModels(FlextModels):
         EntryStatistics: TypeAlias = FlextLdifModelsDomains.EntryStatistics
 
         # Type aliases for compatibility
-        _QuirkMetadata = FlextTypes.Metadata
 
         # Configuration models - direct references
         ServerType = c.Ldif.ServerTypes
         SpaceHandlingOption = c.Ldif.SpaceHandlingOption
         EscapeHandlingOption = c.Ldif.EscapeHandlingOption
         SortOption = c.Ldif.SortOption
-        StrEnum: TypeAlias = c.Ldif.StrEnum
         OutputFormat: TypeAlias = c.Ldif.Domain.OutputFormat
         # ObsoleteField: TypeAlias = c.Ldif.ObsoleteField  # Commented out due to import issues
         DnNormalizationConfig = DnNormalizationConfig
@@ -232,7 +228,6 @@ class FlextLdifModels(FlextModels):
         ProcessConfig: TypeAlias = ProcessConfig
         TransformConfig = TransformConfig
         FilterConfig = FilterConfig
-        WriteConfig = WriteConfig
         ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
         EntryResult = FlextLdifModelsResults.EntryResult
         ParseResponse = FlextLdifModelsResults.ParseResponse
@@ -385,36 +380,15 @@ class FlextLdifModels(FlextModels):
             StatisticsSummary = FlextLdifModelsResults.StatisticsSummary
             EntriesStatistics = FlextLdifModelsResults.EntriesStatistics
 
-            # Service status classes defined locally to avoid import issues
-            class StatisticsServiceStatus(BaseModel):
-                """Basic StatisticsServiceStatus to avoid import issues."""
-
-                service: str = Field(default="statistics")
-                status: str = Field(default="unknown")
-
-            class SchemaServiceStatus(BaseModel):
-                """Basic SchemaServiceStatus to avoid import issues."""
-
-                service: str = Field(default="schema")
-                status: str = Field(default="unknown")
-
-            class SyntaxServiceStatus(BaseModel):
-                """Basic SyntaxServiceStatus to avoid import issues."""
-
-                service: str = Field(default="syntax")
-                status: str = Field(default="unknown")
-
-            class ValidationServiceStatus(BaseModel):
-                """Basic ValidationServiceStatus to avoid import issues."""
-
-                service: str = Field(default="validation")
-                status: str = Field(default="unknown")
-
-            class EntryAnalysisResult(BaseModel):
-                """Basic EntryAnalysisResult to avoid import issues."""
-
-                entry_dn: str = Field(default="")
-                analysis: dict = Field(default_factory=dict)
+            # Service status aliases from _models/results.py
+            StatisticsServiceStatus = FlextLdifModelsResults.StatisticsServiceStatus
+            SchemaServiceStatus = FlextLdifModelsResults.SchemaServiceStatus
+            SyntaxServiceStatus = FlextLdifModelsResults.SyntaxServiceStatus
+            ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
+            EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
+            ServiceStatus = FlextLdifModelsResults.ServiceStatus
+            CategoryPaths = FlextLdifModelsResults.CategoryPaths
+            Syntax = FlextLdifModelsDomains.Syntax
 
             # Parsing and writing results
             ParseResponse = FlextLdifModelsResults.ParseResponse
@@ -562,7 +536,7 @@ class FlextLdifModels(FlextModels):
                 total_servers: int = Field(default=0)
                 quirks_by_server: dict[
                     str,
-                    FlextLdifModels.Ldif.QuirksByServerDict,
+                    FlextLdifModels.Ldif.Types.QuirksByServerDict,
                 ] = Field(default_factory=dict)
                 server_priorities: dict[str, int] = Field(default_factory=dict)
 

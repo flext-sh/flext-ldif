@@ -31,6 +31,7 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import ClassVar
@@ -445,8 +446,41 @@ class FlextLdifServersBaseEntry(
             FlextResult with LDIF string or fail(message)
 
         """
-        _ = entry_data  # Explicitly mark as intentionally unused in base
-        return FlextResult.fail("Must be implemented by subclass")
+        # Basic RFC 2849 LDIF writing implementation
+        # ASCII printable range limit (0-127)
+        ascii_printable_limit = 127
+        lines: list[str] = []
+
+        # Write DN
+        if entry_data.dn:
+            lines.append(f"dn: {entry_data.dn.value}")
+        else:
+            return FlextResult.fail("Entry DN is None")
+
+        # Write attributes
+        if hasattr(entry_data, "attributes") and entry_data.attributes:
+            for attr_name, values in entry_data.attributes.items():
+                if isinstance(values, list):
+                    for value in values:
+                        # Simple encoding - for production this would be more complex
+                        str_value = str(value)
+                        if any(ord(c) > ascii_printable_limit for c in str_value):
+                            # Base64 encode for non-ASCII
+                            encoded = base64.b64encode(
+                                str_value.encode("utf-8")
+                            ).decode("ascii")
+                            lines.append(f"{attr_name}:: {encoded}")
+                        else:
+                            lines.append(f"{attr_name}: {str_value}")
+                else:
+                    str_value = str(values)
+                    lines.append(f"{attr_name}: {str_value}")
+
+        # Add blank line after entry
+        lines.append("")
+
+        ldif_content = "\n".join(lines)
+        return FlextResult.ok(ldif_content)
 
     def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models.

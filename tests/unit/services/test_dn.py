@@ -101,8 +101,10 @@ class TestsFlextLdifDnService(s):
     )
 
     COMPARISON_DATA: ClassVar[tuple[tuple[str, str, int], ...]] = (
-        (c.DNs.TEST_USER, f"CN={c.Values.TEST},{c.DNs.EXAMPLE}".upper(), 0),
-        (c.DNs.TEST_USER, c.DNs.TEST_GROUP, -1),
+        # Same DN, different case - should be equal (0)
+        (c.DNs.TEST_USER, c.DNs.TEST_USER.upper(), 0),
+        # testuser > testgroup alphabetically - should be 1
+        (c.DNs.TEST_USER, c.DNs.TEST_GROUP, 1),
     )
 
     RDN_PARSING_DATA: ClassVar[tuple[tuple[str, bool, int], ...]] = (
@@ -143,9 +145,9 @@ class TestsFlextLdifDnService(s):
         )
 
     @classmethod
-    def create_registry_with_dns(cls, *dns: str) -> m.DnRegistry:
+    def create_registry_with_dns(cls, *dns: str) -> m.Ldif.DnRegistry:
         """Factory method to create registry with multiple c.DNs."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         for dn in dns:
             registry.register_dn(dn)
         return registry
@@ -336,13 +338,13 @@ class TestsFlextLdifDnService(s):
 
     def test_register_dn(self) -> None:
         """Register DN and get canonical case."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         canonical = registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         assert canonical == f"CN={c.Values.ADMIN},DC=Example,DC=Com"
 
     def test_get_canonical_dn(self) -> None:
         """Get canonical DN for variant case."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         canonical = registry.get_canonical_dn(
             f"cn={c.Values.ADMIN.lower()},dc=example,dc=com",
@@ -351,14 +353,14 @@ class TestsFlextLdifDnService(s):
 
     def test_registry_has_dn(self) -> None:
         """Check if DN is registered."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         assert registry.has_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
         assert not registry.has_dn(f"cn=unknown,{c.DNs.EXAMPLE}")
 
     def test_registry_case_variants(self) -> None:
         """Get all case variants for DN."""
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         registry.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         registry.register_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
         registry.register_dn(f"cn={c.Values.ADMIN.upper()},dc=EXAMPLE,dc=COM")
@@ -376,7 +378,7 @@ class TestsFlextLdifDnService(s):
         assert is_consistent
 
         # Test 2: Same DN registered with multiple case variants - inconsistent (False)
-        registry2 = m.DnRegistry()
+        registry2 = m.Ldif.DnRegistry()
         registry2.register_dn(f"CN={c.Values.ADMIN},DC=Example,DC=Com")
         # Register the SAME DN with different case
         registry2.register_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
@@ -462,7 +464,7 @@ class TestsFlextLdifDnService(s):
             f"cn={c.Values.ADMIN.upper()},{c.DNs.EXAMPLE}",
         ]
 
-        registry = m.DnRegistry()
+        registry = m.Ldif.DnRegistry()
         for dn in source_dns:
             registry.register_dn(dn)
 

@@ -333,7 +333,7 @@ class TestsFlextLdifWriterFormatOptions(s):
         # Convert target_server to proper type
         server_type: lib_c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
         if isinstance(target_server, str):
-            normalized = lib_c.normalize_server_type(target_server)
+            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(target_server)
             if normalized is not None:
                 server_type = normalized
         result = writer.write(

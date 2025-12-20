@@ -6,6 +6,8 @@ entry statistics, quality metrics, and validation results.
 
 from __future__ import annotations
 
+from flext_tests import tm
+
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.validation import FlextLdifValidation
@@ -43,7 +45,7 @@ class TestsTestFlextLdifAnalysis(s):
             """Test analyze with empty entry list."""
             service = FlextLdifAnalysis()
             result = service.analyze([])
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 0
             assert stats.objectclass_distribution == {}
@@ -61,7 +63,7 @@ class TestsTestFlextLdifAnalysis(s):
             entry = entry_result.value
 
             result = service.analyze([entry])
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 1
             oc_dist = stats.objectclass_distribution.model_dump()
@@ -91,7 +93,7 @@ class TestsTestFlextLdifAnalysis(s):
             entries.append(group_result.value)
 
             result = service.analyze(entries)
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 4
             oc_dist = stats.objectclass_distribution.model_dump()
@@ -112,7 +114,7 @@ class TestsTestFlextLdifAnalysis(s):
             entry = entry_result.value
 
             result = service.analyze([entry])
-            self.assert_success(result)
+            tm.ok(result)
             stats = result.value
             assert stats.total_entries == 1
             assert stats.objectclass_distribution == {}
@@ -125,7 +127,7 @@ class TestsTestFlextLdifAnalysis(s):
             service = FlextLdifAnalysis()
             validation_service = FlextLdifValidation()
             result = service.validate_entries([], validation_service)
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             assert report.is_valid is True
             assert report.total_entries == 0
@@ -149,7 +151,7 @@ class TestsTestFlextLdifAnalysis(s):
                 entries.append(entry_result.value)
 
             result = service.validate_entries(entries, validation_service)
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             assert report.is_valid is True
             assert report.total_entries == 2
@@ -174,7 +176,7 @@ class TestsTestFlextLdifAnalysis(s):
             entry = entry_result.value
 
             result = service.validate_entries([entry], validation_service)
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             assert report.is_valid is False
             assert report.total_entries == 1
@@ -200,7 +202,7 @@ class TestsTestFlextLdifAnalysis(s):
             entry = entry_result.value
 
             result = service.validate_entries([entry], validation_service)
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             # Validation service may accept objectClass names that are RFC-compliant format
             # even if they don't exist in schema. Check if validation actually fails.
@@ -244,7 +246,7 @@ class TestsTestFlextLdifAnalysis(s):
                 [valid_entry_result.value, invalid_entry_result.value],
                 validation_service,
             )
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             assert report.is_valid is False
             assert report.total_entries == 2
@@ -271,7 +273,7 @@ class TestsTestFlextLdifAnalysis(s):
                 entries.append(entry_result.value)
 
             result = service.validate_entries(entries, validation_service)
-            self.assert_success(result)
+            tm.ok(result)
             report = result.value
             assert len(report.errors) <= 100
 

@@ -15,6 +15,7 @@ from pydantic import ValidationError
 
 from flext_ldif import FlextLdifSettings
 from flext_ldif.constants import c as lib_c
+from flext_ldif.utilities import FlextLdifUtilities
 from tests import s
 
 
@@ -342,7 +343,7 @@ class TestsTestFlextLdifSettings(s):
         def test_server_type_valid(self, server_type: str) -> None:
             """Test valid server_type values."""
             # Normalize and cast: use normalize_server_type to ensure valid ServerTypeLiteral
-            normalized = lib_c.normalize_server_type(server_type)
+            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(server_type)
             config = FlextLdifSettings(server_type=normalized)
             assert config.server_type == normalized
 

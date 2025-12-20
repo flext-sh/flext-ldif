@@ -13,6 +13,7 @@ from typing import override
 from flext_core import r
 from pydantic import PrivateAttr
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -20,7 +21,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import u
 
 
-class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
+class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]):
     """Parse LDIF sources using server-specific entry quirks.
 
     Business Rule: Parser service uses server-specific entry quirks for LDIF parsing.
@@ -55,7 +56,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
         self,
         content: str,
         server_type: str | None = None,
-    ) -> r[m.Ldif.LdifResults.ParseResponse]:
+    ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF content from a string using the requested server type.
 
         Business Rule: String parsing normalizes server type to canonical form before
@@ -140,7 +141,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
         path: Path,
         server_type: str | None = None,
         encoding: str = "utf-8",
-    ) -> r[m.Ldif.LdifResults.ParseResponse]:
+    ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override.
 
         Business Rule: File parsing reads content using specified encoding (defaults to UTF-8
@@ -172,7 +173,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
         self,
         results: list[tuple[str, dict[str, list[str]]]],
         server_type: str | None = None,
-    ) -> r[m.Ldif.LdifResults.ParseResponse]:
+    ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first.
 
         Business Rule: LDAP3 results are converted to RFC 2849 LDIF format before parsing.
@@ -216,11 +217,11 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
             on_error="skip",
         )
         if batch_result.is_success:
-            # FlextLdifUtilities.process returns r[list[R]] when input is list, so value is list[list[str]]
+            # u.Collection.batch returns BatchResult dict with 'results' key
             processed_value = batch_result.value
-            if isinstance(processed_value, list):
-                # Type narrowing: processed_value is list[list[str]] after isinstance check
-                processed_list: list[list[str]] = processed_value
+            if isinstance(processed_value, dict) and "results" in processed_value:
+                # Extract results from BatchResult dict
+                processed_list: list[list[str]] = processed_value["results"]
                 for entry_lines in processed_list:
                     if isinstance(entry_lines, list):
                         ldif_lines.extend(entry_lines)
@@ -234,7 +235,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
         self,
         source: str | Path,
         server_type: str | None = None,
-    ) -> r[m.Ldif.LdifResults.ParseResponse]:
+    ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF from either raw text or a filesystem path.
 
         Business Rule: Unified parse method routes to appropriate parsing method based on
@@ -260,7 +261,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.LdifResults.ParseResponse]):
         return self.parse_string(source, server_type)
 
     @override
-    def execute(self) -> r[m.Ldif.LdifResults.ParseResponse]:
+    def execute(self) -> r[FlextLdifModelsResults.ParseResponse]:
         """Guard against invoking the service without input data.
 
         Business Rule: Parser service requires explicit input data via parse methods.

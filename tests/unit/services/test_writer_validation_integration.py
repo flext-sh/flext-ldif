@@ -11,6 +11,8 @@ from typing import ClassVar, Literal
 
 import pytest
 
+from flext_tests import tm
+
 from flext_ldif import FlextLdifWriter
 from flext_ldif.protocols import p
 from flext_ldif.services.validation import FlextLdifValidation
@@ -136,7 +138,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
     ) -> None:
         """Test attribute name validation with parameterized test cases."""
         result = validation_service.validate_attribute_name(attr_name)
-        self.assert_success(
+        tm.ok(
             result,
             f"Validation should succeed for '{attr_name}'",
         )
@@ -168,7 +170,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
             ),
         )
 
-        unwrapped = self.assert_success(result, "Write should succeed")
+        unwrapped = tm.ok(result, "Write should succeed")
         output = t.ResultExtractors.extract_content(unwrapped)
         self.Helpers.assert_ldif_output_contains(
             output,
@@ -192,7 +194,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
             ),
         )
 
-        unwrapped = self.assert_success(result, "Write should succeed")
+        unwrapped = tm.ok(result, "Write should succeed")
         output = t.ResultExtractors.extract_content(unwrapped)
         assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
 
@@ -228,7 +230,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
             format_options=m.WriteFormatOptions(fold_long_lines=False),
         )
 
-        unwrapped = self.assert_success(result, "Write should succeed")
+        unwrapped = tm.ok(result, "Write should succeed")
         output = t.ResultExtractors.extract_content(unwrapped)
         for i in range(1, self.Constants.BATCH_COUNT + 1):
             assert f"{self.Constants.TEST_USER_PREFIX}{i}" in output

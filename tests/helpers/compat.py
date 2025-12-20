@@ -223,13 +223,54 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: p.SchemaProtocol,
+        quirk: p.SchemaProtocol | object,
         content: str,
         msg: str | None = None,
-    ) -> r[list[p.Entry]]:
-        """Parse using quirk - use service methods."""
-        result = quirk.parse(content)
-        return tm.ok(result, msg=msg)
+        parse_method: str | None = None,
+        expected_type: type | None = None,
+    ) -> object:
+        """Parse using quirk - use service methods.
+
+        Args:
+            quirk: Schema quirk instance with parse method
+            content: Content to parse
+            msg: Optional message for assertion
+            parse_method: Optional specific parse method name (e.g., 'parse_attribute')
+            expected_type: Optional expected type for validation
+
+        Returns:
+            Parsed result value
+
+        """
+        # Get the appropriate parse method
+        if parse_method:
+            method = getattr(quirk, parse_method, None)
+            if method is None:
+                raise AssertionError(f"Quirk has no method '{parse_method}'")
+            result = method(content)
+        else:
+            result = quirk.parse(content)
+
+        # Handle FlextResult
+        if hasattr(result, "is_failure"):
+            if result.is_failure:
+                error = getattr(result, "error", "Unknown error")
+                raise AssertionError(msg or f"quirk.parse() failed: {error}")
+            value = result.value
+        else:
+            value = result
+
+        # Validate type if specified
+        if expected_type is not None:
+            # Check for Protocol (has __protocol_attrs__)
+            if hasattr(expected_type, "__protocol_attrs__"):
+                pass  # Protocol, use structural typing
+            elif not isinstance(value, expected_type):
+                raise AssertionError(
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                )
+
+        return value
 
     @staticmethod
     def quirk_write_and_unwrap(

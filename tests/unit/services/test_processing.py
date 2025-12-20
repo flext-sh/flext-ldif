@@ -6,6 +6,8 @@ LDIF entries with custom processors and validation rules.
 
 from __future__ import annotations
 
+from flext_tests import tm
+
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.processing import FlextLdifProcessing
 from tests import m, s
@@ -42,7 +44,7 @@ class TestsTestFlextLdifProcessing(s):
             """Test process with empty entry list."""
             service = FlextLdifProcessing()
             result = service.process("transform", [])
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert processed == []
 
@@ -64,7 +66,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry2.is_success
 
             result = service.process("transform", [entry1.value, entry2.value])
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 2
             # ProcessingResult is a Pydantic model, access attributes directly
@@ -88,7 +90,7 @@ class TestsTestFlextLdifProcessing(s):
                 entries.append(entry_result.value)
 
             result = service.process("transform", entries, parallel=True, max_workers=2)
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 5
             # ProcessingResult is a Pydantic model, access attributes directly
@@ -107,7 +109,7 @@ class TestsTestFlextLdifProcessing(s):
             assert entry.is_success
 
             result = service.process("validate", [entry.value])
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 1
             # ProcessingResult is a Pydantic model with dn and attributes
@@ -131,7 +133,7 @@ class TestsTestFlextLdifProcessing(s):
                 entries.append(entry_result.value)
 
             result = service.process("validate", entries, parallel=True, max_workers=3)
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 3
             # ProcessingResult is a Pydantic model with dn and attributes
@@ -172,7 +174,7 @@ class TestsTestFlextLdifProcessing(s):
                 entries.append(entry_result.value)
 
             result = service.process("transform", entries, batch_size=3)
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 10
 
@@ -191,7 +193,7 @@ class TestsTestFlextLdifProcessing(s):
                 entries.append(entry_result.value)
 
             result = service.process("transform", entries, parallel=True, max_workers=8)
-            self.assert_success(result)
+            tm.ok(result)
             processed = result.value
             assert len(processed) == 5
 

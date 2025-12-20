@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping, Sequence
-from typing import cast, overload
+from typing import overload
 
 from flext_core._models.base import FlextModelsBase  # noqa: PLC2701
 from flext_core._models.collections import FlextModelsCollections  # noqa: PLC2701
@@ -2171,10 +2171,7 @@ class FlextLdifModelsResults:
                     FlextLdifModelsDomains.Entry(
                         dn=FlextLdifModelsDomains.DN(value=dn_value),
                         attributes=FlextLdifModelsDomains.Attributes(
-                            attributes=cast(
-                                "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
-                                attrs_dict,
-                            ),
+                            attributes=attrs_dict,
                         ),
                     ),
                 )

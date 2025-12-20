@@ -73,7 +73,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
@@ -124,7 +124,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
@@ -169,7 +169,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
@@ -211,7 +211,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
@@ -252,7 +252,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
@@ -294,7 +294,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
         result = pipeline.execute()
-        self.assert_success(result)
+        tm.ok(result)
 
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
