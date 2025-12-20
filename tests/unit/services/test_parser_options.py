@@ -206,8 +206,8 @@ sn:"""
             content: str | Path | list[tuple[str, dict[str, list[str]]]],
             input_source: Literal["string", "file", "ldap3"] = "string",
             server_type: str = "rfc",
-            format_options: m.ParseFormatOptions | None = None,
-        ) -> m.ParseResponse:
+            format_options: m.Ldif.ParseFormatOptions | None = None,
+        ) -> m.Ldif.ParseResponse:
             """Parse content and assert success, returning response.
 
             Reduces 5-7 lines of repetitive parsing code per test.
@@ -245,47 +245,50 @@ sn:"""
                     source=parse_source,
                     server_type=server_type,
                 )
-            response_obj = s().assert_success(result, "Parse should succeed")
-            assert isinstance(response_obj, m.ParseResponse)
+            response_obj = s().assert_success(result)
+            assert isinstance(response_obj, m.Ldif.ParseResponse)
             return response_obj
 
     class Validators:
         """Nested class for validation functions."""
 
         @staticmethod
-        def has_schema_entries(response: m.ParseResponse) -> None:
+        def has_schema_entries(response: m.Ldif.ParseResponse) -> None:
             """Validate schema entries exist."""
             # Check for schema entries directly in entries (more reliable than statistics)
             schema_entries = [
                 e for e in response.entries if "schema" in str(e.dn).lower()
             ]
-            tm.assert_length_non_zero(
+            tm.assert_length_greater_than(
                 schema_entries,
+                0,
                 "Should have at least one schema entry",
             )
             # Also check that we have data entries (non-schema)
             data_entries = [
                 e for e in response.entries if "schema" not in str(e.dn).lower()
             ]
-            tm.assert_length_non_zero(
+            tm.assert_length_greater_than(
                 data_entries,
+                0,
                 "Should have at least one data entry",
             )
 
         @staticmethod
-        def no_schema_entries(response: m.ParseResponse) -> None:
+        def no_schema_entries(response: m.Ldif.ParseResponse) -> None:
             """Validate no schema entries."""
             # Check directly in entries (more reliable than statistics)
             [e for e in response.entries if "schema" in str(e.dn).lower()]
             # When auto_parse_schema=False, schema entries may still be parsed but not categorized
             # So we just verify entries were parsed successfully
-            tm.assert_length_non_zero(
+            tm.assert_length_greater_than(
                 response.entries,
+                0,
                 "Should have parsed entries",
             )
 
         @staticmethod
-        def has_acl_attributes(response: m.ParseResponse) -> None:
+        def has_acl_attributes(response: m.Ldif.ParseResponse) -> None:
             """Validate ACL attributes exist in entries."""
             acl_entries = [
                 e
@@ -299,11 +302,11 @@ sn:"""
                     )
                 )
             ]
-            tm.assert_length_non_zero(acl_entries)
+            tm.assert_length_greater_than(acl_entries, 0)
 
         @staticmethod
         def attribute_order_preserved(
-            response: m.ParseResponse,
+            response: m.Ldif.ParseResponse,
         ) -> None:
             """Validate attribute order is preserved."""
             for entry in response.entries:
@@ -311,11 +314,11 @@ sn:"""
                     attribute_order = entry.metadata.extensions.get("attribute_order")
                     if attribute_order:
                         assert isinstance(attribute_order, list)
-                        tm.assert_length_non_zero(attribute_order)
+                        tm.assert_length_greater_than(attribute_order, 0)
 
         @staticmethod
         def attribute_order_not_preserved(
-            response: m.ParseResponse,
+            response: m.Ldif.ParseResponse,
         ) -> None:
             """Validate attribute order is not preserved."""
             for entry in response.entries:
@@ -324,7 +327,7 @@ sn:"""
                     assert attribute_order is None
 
         @staticmethod
-        def normalized_dns(response: m.ParseResponse) -> None:
+        def normalized_dns(response: m.Ldif.ParseResponse) -> None:
             """Validate DNs are normalized."""
             for entry in response.entries:
                 dn_str = str(entry.dn.value)
@@ -333,10 +336,10 @@ sn:"""
         @staticmethod
         def parse_errors_within_limit(
             limit: int,
-        ) -> Callable[[m.ParseResponse], None]:
+        ) -> Callable[[m.Ldif.ParseResponse], None]:
             """Create validator for parse errors within limit."""
 
-            def validator(response: m.ParseResponse) -> None:
+            def validator(response: m.Ldif.ParseResponse) -> None:
                 assert response.statistics.parse_errors <= limit
 
             return validator
@@ -374,7 +377,7 @@ sn:"""
             option_name
         ]
         fixture_method = getattr(self.Fixtures, fixture_name)
-        options = m.ParseFormatOptions(**{option_name: enabled})
+        options = m.Ldif.ParseFormatOptions(**{option_name: enabled})
         response_obj = self.Helpers.parse_and_assert(
             parser_service,
             fixture_method(),
@@ -386,7 +389,7 @@ sn:"""
         elif not enabled and validator_disabled_name:
             validator_disabled = getattr(self.Validators, validator_disabled_name)
             validator_disabled(response_obj)
-        tm.assert_length_non_zero(response_obj.entries)
+        tm.assert_length_greater_than(response_obj.entries, 0)
 
     @pytest.mark.parametrize(
         ("strict", "expected_errors"),
@@ -403,7 +406,7 @@ sn:"""
         Note: Current parser implementation does not support format_options.
         This test verifies basic parsing behavior with invalid LDIF content.
         """
-        ldif = self.c.Fixtures.invalid_ldif()
+        ldif = self.Fixtures.invalid_ldif()
 
         result = parser_service.parse(
             source=ldif,
@@ -413,7 +416,7 @@ sn:"""
         if result.is_success:
             response = result.value
             # Parser may succeed but filter out invalid entries
-            tm.assert_length_greater_or_equal(response.entries, 0)
+            assert len(response.entries) >= 0
         else:
             error_msg = result.error or ""
             assert "validation" in error_msg.lower() or "error" in error_msg.lower()
@@ -433,7 +436,7 @@ sn:"""
         Note: Current parser implementation does not support format_options.
         This test verifies basic parsing behavior with LDIF containing errors.
         """
-        ldif = self.c.Fixtures.ldif_with_errors(3)
+        ldif = self.Fixtures.ldif_with_errors(3)
 
         result = parser_service.parse(
             source=ldif,
@@ -443,7 +446,7 @@ sn:"""
         if result.is_success:
             response = result.value
             # Parser may succeed but filter out invalid entries
-            tm.assert_length_greater_or_equal(response.entries, 0)
+            assert len(response.entries) >= 0
 
     def test_combined_options(
         self,
@@ -456,7 +459,7 @@ sn:"""
         Statistics categorization (schema_entries, data_entries) is not
         currently implemented based on format_options.
         """
-        options = m.ParseFormatOptions(
+        options = m.Ldif.ParseFormatOptions(
             auto_parse_schema=True,
             auto_extract_acls=True,
             preserve_attribute_order=True,
@@ -468,11 +471,11 @@ sn:"""
         )
         response_obj = self.Helpers.parse_and_assert(
             parser_service,
-            self.c.Fixtures.ldif_with_schema(),
+            self.Fixtures.ldif_with_schema(),
             format_options=options,
         )
         # Verify entries were parsed successfully
-        tm.assert_length_non_zero(response_obj.entries)
+        tm.assert_length_greater_than(response_obj.entries, 0)
         # Check for schema entries directly in entries (more reliable than statistics)
         schema_entries = [
             e for e in response_obj.entries if "schema" in str(e.dn).lower()
@@ -500,10 +503,10 @@ sn:"""
         tmp_path: Path,
     ) -> None:
         """Test parsing from file with options."""
-        ldif_content = self.c.Fixtures.basic_entry("cn=file-test,dc=example,dc=com")
+        ldif_content = self.Fixtures.basic_entry("cn=file-test,dc=example,dc=com")
         ldif_file = tmp_path / "test.ldif"
         _ = ldif_file.write_text(ldif_content, encoding="utf-8")
-        options = m.ParseFormatOptions(
+        options = m.Ldif.ParseFormatOptions(
             validate_entries=True,
             normalize_dns=True,
         )
@@ -521,8 +524,8 @@ sn:"""
         parser_service: FlextLdifParser,
     ) -> None:
         """Test parsing from ldap3 results with options."""
-        ldap3_results = self.c.Fixtures.ldap3_results()
-        options = m.ParseFormatOptions(
+        ldap3_results = self.Fixtures.ldap3_results()
+        options = m.Ldif.ParseFormatOptions(
             include_operational_attrs=False,
             validate_entries=True,
             normalize_dns=True,
@@ -567,7 +570,7 @@ sn:"""
         response_obj = self.Helpers.parse_and_assert(
             parser_service,
             ldif,
-            format_options=None if expected_entries > 0 else m.ParseFormatOptions(),
+            format_options=None if expected_entries > 0 else m.Ldif.ParseFormatOptions(),
         )
         assert response_obj.statistics.parse_errors == expected_errors
         tm.assert_length_equals(response_obj.entries, expected_entries)
@@ -577,11 +580,13 @@ sn:"""
         parser_service: FlextLdifParser,
     ) -> None:
         """Test that invalid server type is properly rejected."""
-        ldif = self.c.Fixtures.basic_entry()
+        ldif = self.Fixtures.basic_entry()
 
         result = parser_service.parse(
             source=ldif,
             server_type="nonexistent_server_type",
         )
 
-        _ = self.assert_failure(result, expected_error="server type")
+        # assert_failure returns error message, validate it contains expected text
+        error_msg = self.assert_failure(result)
+        assert "server type" in error_msg.lower(), f"Expected 'server type' in: {error_msg}"

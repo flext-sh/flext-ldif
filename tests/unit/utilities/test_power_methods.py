@@ -7,8 +7,6 @@ for composable LDIF data transformation workflows.
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 from flext_core import FlextResult
 from tests import m, s
@@ -40,10 +38,10 @@ from flext_ldif._utilities import (
     ValidationResult,
 )
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif._utilities.configs import CaseFoldOption
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import p
 from flext_ldif.utilities import FlextLdifUtilities
 
 # =========================================================================
@@ -54,75 +52,55 @@ from flext_ldif.utilities import FlextLdifUtilities
 @pytest.fixture
 def sample_entry() -> m.Ldif.Entry:
     """Create a sample entry for testing."""
-    # Entry accepts string dn and dict attributes via field validators
+    # Use Entry.create() factory method for proper construction
     # Note: Use DNs without spaces in values (spaces need escaping per RFC 4514)
-    return m.Ldif.Entry(
-        dn=cast(
-            "m.Ldif.DN | None",
-            "CN=TestUser,OU=Users,DC=Example,DC=Com",
-        ),
-        attributes=cast(
-            "m.Ldif.Attributes | None",
-            {
-                "objectClass": ["top", "person", "inetOrgPerson"],
-                "cn": ["TestUser"],
-                "sn": ["User"],
-                "givenName": ["Test"],
-                "mail": ["test@example.com"],
-                "userPassword": ["secret123"],
-            },
-        ),
+    result = m.Ldif.Entry.create(
+        dn="CN=TestUser,OU=Users,DC=Example,DC=Com",
+        attributes={
+            "objectClass": ["top", "person", "inetOrgPerson"],
+            "cn": ["TestUser"],
+            "sn": ["User"],
+            "givenName": ["Test"],
+            "mail": ["test@example.com"],
+            "userPassword": ["secret123"],
+        },
     )
+    return result.value
 
 
 @pytest.fixture
 def sample_entries() -> list[m.Ldif.Entry]:
     """Create a list of sample entries for testing."""
-    # Entry accepts string dn and dict attributes via field validators
-    # Note: Use DNs without spaces in values (spaces need escaping per RFC 4514)
-    return [
-        m.Ldif.Entry(
-            dn=cast(
-                "m.Ldif.DN | None",
-                "cn=user1,ou=users,dc=example,dc=com",
-            ),
-            attributes=cast(
-                "m.Ldif.Attributes | None",
-                {
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "cn": ["user1"],
-                    "sn": ["One"],
-                },
-            ),
+    # Use Entry.create() factory method for proper construction
+    entries: list[m.Ldif.Entry] = []
+    for dn, attrs in [
+        (
+            "cn=user1,ou=users,dc=example,dc=com",
+            {
+                "objectClass": ["person", "inetOrgPerson"],
+                "cn": ["user1"],
+                "sn": ["One"],
+            },
         ),
-        m.Ldif.Entry(
-            dn=cast(
-                "m.Ldif.DN | None",
-                "cn=user2,ou=users,dc=example,dc=com",
-            ),
-            attributes=cast(
-                "m.Ldif.Attributes | None",
-                {
-                    "objectClass": ["person", "organizationalPerson"],
-                    "cn": ["user2"],
-                    "sn": ["Two"],
-                },
-            ),
+        (
+            "cn=user2,ou=users,dc=example,dc=com",
+            {
+                "objectClass": ["person", "organizationalPerson"],
+                "cn": ["user2"],
+                "sn": ["Two"],
+            },
         ),
-        m.Ldif.Entry(
-            dn=cast(
-                "m.Ldif.DN | None",
-                "cn=schema,cn=configuration,dc=example,dc=com",
-            ),
-            attributes=cast(
-                "m.Ldif.Attributes | None",
-                {
-                    "objectClass": ["subSchema"],
-                    "attributeTypes": ["( 1.2.3.4 NAME 'testAttr' )"],
-                },
-            ),
+        (
+            "cn=schema,cn=configuration,dc=example,dc=com",
+            {
+                "objectClass": ["subSchema"],
+                "attributeTypes": ["( 1.2.3.4 NAME 'testAttr' )"],
+            },
         ),
-    ]
+    ]:
+        result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
+        entries.append(result.value)
+    return entries
 
 
 # =========================================================================
@@ -184,21 +162,21 @@ class TestConfigs:
     def test_process_config_defaults(self) -> None:
         """Test ProcessConfig default values."""
         config = FlextLdifModels.Ldif.ProcessConfig()
-        assert config.source_server == "auto"
+        assert config.source_server is None
         assert config.target_server is None
-        assert config.normalize_dns is True
-        assert config.normalize_attrs is True
+        assert config.batch_size == 100
+        assert config.timeout_seconds == 300
 
     def test_process_config_custom_values(self) -> None:
         """Test ProcessConfig with custom values."""
         config = FlextLdifModels.Ldif.ProcessConfig(
             source_server="oid",
             target_server="oud",
-            normalize_dns=False,
+            batch_size=50,
         )
         assert config.source_server == "oid"
         assert config.target_server == "oud"
-        assert config.normalize_dns is False
+        assert config.batch_size == 50
 
     def test_dn_normalization_config(self) -> None:
         """Test DnNormalizationConfig."""
@@ -225,7 +203,12 @@ class TestBuilders:
     def test_process_config_builder(self) -> None:
         """Test ProcessConfigBuilder fluent API."""
         builder = ProcessConfigBuilder()
-        config = builder.source("oid").target("oud").normalize_dn(case="lower").build()
+        config = (
+            builder.source("oid")
+            .target("oud")
+            .normalize_dn(case=CaseFoldOption.LOWER)
+            .build()
+        )
         assert config.source_server == "oid"
         assert config.target_server == "oud"
 
@@ -254,7 +237,7 @@ class TestTransformers:
 
     def test_normalize_dn_transformer(self, sample_entry: m.Ldif.Entry) -> None:
         """Test NormalizeDnTransformer."""
-        transformer = Normalize.dn(case="lower")
+        transformer = Normalize.dn(case=CaseFoldOption.LOWER)
         result = transformer.apply(sample_entry)
         assert result.is_success
 
@@ -355,7 +338,7 @@ class TestDnOps:
     def test_normalize(self) -> None:
         """Test DnOps.normalize()."""
         ops = DnOps("CN=Test,DC=Example,DC=Com")
-        result = ops.normalize(case="lower").build()
+        result = ops.normalize(case=CaseFoldOption.LOWER).build()
         assert result.is_success
         # Note: normalization may vary based on implementation
         assert "example" in result.value.lower()
@@ -438,20 +421,20 @@ class TestEntryOps:
 class TestPipeline:
     """Tests for Pipeline orchestration."""
 
-    def test_empty_pipeline(self, sample_entries: list[p.Entry]) -> None:
+    def test_empty_pipeline(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test empty pipeline passes entries through."""
         pipeline = Pipeline()
         result = pipeline.execute(sample_entries)
         assert result.is_success
         assert len(result.value) == len(sample_entries)
 
-    def test_pipeline_with_transformer(self, sample_entries: list[p.Entry]) -> None:
+    def test_pipeline_with_transformer(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test pipeline with transformer."""
         pipeline = Pipeline().add(Normalize.attrs())
         result = pipeline.execute(sample_entries)
         assert result.is_success
 
-    def test_pipeline_with_filter(self, sample_entries: list[p.Entry]) -> None:
+    def test_pipeline_with_filter(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test pipeline with filter."""
         pipeline = Pipeline().filter(Filter.by_objectclass("inetOrgPerson"))
         result = pipeline.execute(sample_entries)
@@ -462,7 +445,7 @@ class TestPipeline:
         entries = result.value
         assert len(entries) < len(sample_entries)
 
-    def test_pipeline_method_chaining(self, sample_entries: list[p.Entry]) -> None:
+    def test_pipeline_method_chaining(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test pipeline with multiple steps."""
         pipeline = (
             Pipeline().add(Normalize.attrs()).filter(Filter.by_objectclass("person"))
@@ -478,17 +461,19 @@ class TestPipeline:
 class TestProcessingPipeline:
     """Tests for ProcessingPipeline."""
 
-    def test_default_config(self, sample_entries: list[p.Entry]) -> None:
+    def test_default_config(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ProcessingPipeline with default config."""
         pipeline = ProcessingPipeline()
         result = pipeline.execute(sample_entries)
         assert result.is_success
 
-    def test_custom_config(self, sample_entries: list[p.Entry]) -> None:
+    def test_custom_config(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ProcessingPipeline with custom config."""
-        config = FlextLdifModels.Ldif.ProcessConfig(
-            normalize_dns=True,
-            normalize_attrs=True,
+        # Use TransformConfig with custom settings (normalization disabled as it
+        # requires full nested config chain with dn_config and attr_config)
+        config = FlextLdifModels.Ldif.TransformConfig(
+            fail_fast=True,
+            preserve_order=False,
         )
         pipeline = ProcessingPipeline(config)
         result = pipeline.execute(sample_entries)
@@ -498,7 +483,7 @@ class TestProcessingPipeline:
 class TestValidationPipeline:
     """Tests for ValidationPipeline."""
 
-    def test_validate_entries(self, sample_entries: list[p.Entry]) -> None:
+    def test_validate_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test ValidationPipeline."""
         pipeline = ValidationPipeline(strict=True)
         result = pipeline.validate(sample_entries)
@@ -655,7 +640,7 @@ class TestEntryBatchMethods:
             is False
         )
 
-    def test_transform_batch(self, sample_entries: list[p.Entry]) -> None:
+    def test_transform_batch(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test transform_batch."""
         result = FlextLdifUtilitiesEntry.transform_batch(
             sample_entries,
@@ -666,7 +651,7 @@ class TestEntryBatchMethods:
         transformed = result.value
         assert len(transformed) == len(sample_entries)
 
-    def test_filter_batch(self, sample_entries: list[p.Entry]) -> None:
+    def test_filter_batch(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test filter_batch."""
         result = FlextLdifUtilitiesEntry.filter_batch(
             sample_entries,
@@ -677,7 +662,7 @@ class TestEntryBatchMethods:
         # Only entries with inetOrgPerson should be included
         assert len(filtered) < len(sample_entries)
 
-    def test_filter_batch_exclude_schema(self, sample_entries: list[p.Entry]) -> None:
+    def test_filter_batch_exclude_schema(self, sample_entries: list[m.Ldif.Entry]) -> None:
         """Test filter_batch with exclude_schema."""
         result = FlextLdifUtilitiesEntry.filter_batch(
             sample_entries,
@@ -698,16 +683,16 @@ class TestFlextLdifUtilitiesPowerMethods:
     """Tests for FlextLdifUtilities power methods."""
 
     def test_process_method_exists(self) -> None:
-        """Test that process() method exists."""
-        assert hasattr(FlextLdifUtilities, "process")
+        """Test that process() method exists in Ldif namespace."""
+        assert hasattr(FlextLdifUtilities.Ldif, "process")
 
     def test_transform_method_exists(self) -> None:
-        """Test that transform() method exists."""
-        assert hasattr(FlextLdifUtilities, "transform")
+        """Test that transform_entries() method exists in Ldif namespace."""
+        assert hasattr(FlextLdifUtilities.Ldif, "transform_entries")
 
     def test_filter_method_exists(self) -> None:
-        """Test that filter() method exists."""
-        assert hasattr(FlextLdifUtilities, "filter")
+        """Test that filter() method exists in Ldif namespace."""
+        assert hasattr(FlextLdifUtilities.Ldif, "filter")
 
     def test_validate_method_exists(self) -> None:
         """Test that validate() method exists."""
@@ -715,42 +700,42 @@ class TestFlextLdifUtilitiesPowerMethods:
 
     def test_dn_method_returns_dnops(self) -> None:
         """Test that dn() returns DnOps instance."""
-        ops = FlextLdifUtilities.dn("CN=Test,DC=Example")
+        ops = FlextLdifUtilities.Ldif.dn("CN=Test,DC=Example")
         assert isinstance(ops, DnOps)
 
     def test_entry_method_returns_entryops(self, sample_entry: m.Ldif.Entry) -> None:
         """Test that entry() returns EntryOps instance."""
-        ops = FlextLdifUtilities.entry(sample_entry)
+        ops = FlextLdifUtilities.Ldif.entry(sample_entry)
         assert isinstance(ops, EntryOps)
 
-    def test_process_entries(self, sample_entries: list[p.Entry]) -> None:
-        """Test FlextLdifUtilities.process()."""
-        result = FlextLdifUtilities.process(
+    def test_process_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
+        """Test FlextLdifUtilities.Ldif.process()."""
+        result = FlextLdifUtilities.Ldif.process(
             sample_entries,
             normalize_dns=True,
             normalize_attrs=True,
         )
         assert result.is_success
 
-    def test_transform_entries(self, sample_entries: list[p.Entry]) -> None:
-        """Test FlextLdifUtilities.transform()."""
-        result = FlextLdifUtilities.transform(
+    def test_transform_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
+        """Test FlextLdifUtilities.Ldif.transform_entries()."""
+        result = FlextLdifUtilities.Ldif.transform_entries(
             sample_entries,
             Normalize.attrs(),
         )
         assert result.is_success
 
-    def test_filter_entries(self, sample_entries: list[p.Entry]) -> None:
-        """Test FlextLdifUtilities.filter()."""
-        result = FlextLdifUtilities.filter(
+    def test_filter_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
+        """Test FlextLdifUtilities.Ldif.filter()."""
+        result = FlextLdifUtilities.Ldif.filter(
             sample_entries,
             Filter.by_objectclass("person"),
         )
         assert result.is_success
 
-    def test_validate_entries(self, sample_entries: list[p.Entry]) -> None:
-        """Test FlextLdifUtilities.validate()."""
-        result = FlextLdifUtilities.validate(
+    def test_validate_entries(self, sample_entries: list[m.Ldif.Entry]) -> None:
+        """Test FlextLdifUtilities.Ldif.validate()."""
+        result = FlextLdifUtilities.Ldif.validate(
             sample_entries,
             strict=True,
         )

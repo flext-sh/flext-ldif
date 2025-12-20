@@ -43,7 +43,7 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
         assert len(user_functions) == 0, "typings.py must not contain functions"
 
     def test_only_required_imports(self) -> None:
-        """typings.py must only import from flext_core and public flext_ldif modules."""
+        """typings.py must only import from flext_core (Tier 0 architecture rule)."""
         project_root = Path(
             __file__
         ).parent.parent.parent  # tests/unit/test_typings.py -> project root
@@ -58,17 +58,21 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
             and "flext_ldif" in node.module
         ]
 
-        # Only public modules should be imported (no _models/ internal imports)
-        # typings.py imports from flext_ldif.protocols (and possibly others)
-        assert "flext_ldif.protocols" in flext_ldif_imports, (
-            "typings.py must import from flext_ldif.protocols"
-        )
-        # Verify no internal imports
+        # typings.py is Tier 0 - it should NOT import from other flext_ldif modules
+        # This is correct architecture: typings.py is pure type definitions
+        # Verify no internal imports (no _models, _utilities, services, etc.)
         internal_imports = [
             imp for imp in flext_ldif_imports if "_" in imp.split(".")[-1]
         ]
         assert len(internal_imports) == 0, (
             f"typings.py must not import from internal modules: {internal_imports}"
+        )
+        # Also verify no imports from services or higher tiers
+        service_imports = [
+            imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
+        ]
+        assert len(service_imports) == 0, (
+            f"typings.py must not import from services/api: {service_imports}"
         )
 
 
@@ -122,45 +126,42 @@ class TestsFlextLdifCommonDictionaryTypes(s):
 class TestEntryTypes:
     """Test Entry namespace type definitions with REAL data."""
 
-    def test_entry_create_data_with_real_ldif_entry(self) -> None:
-        """EntryCreateData must accept real LDIF entry data."""
-        data: t_ldif.Entry.EntryCreateData = {
-            c.Names.DN: f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}",
-            c.Names.OBJECTCLASS: [
-                c.Names.INETORGPERSON,
-                "organizationalPerson",
-                c.Names.PERSON,
-                c.Names.TOP,
-            ],
-            c.Names.CN: "John Doe",
-            c.Names.SN: "Doe",
-            "givenName": "John",
-            c.Names.MAIL: "john@example.com",
-            c.Names.UID: "jdoe",
-            "userPassword": "{SSHA}encrypted_password_here",
+    def test_entry_dict_with_real_ldif_entry(self) -> None:
+        """EntryDict must accept real LDIF entry data structure."""
+        # EntryDict is the standard entry structure with dn and attributes
+        data: t_ldif.Ldif.Entry.EntryDict = {
+            "dn": f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}",
+            "attributes": {
+                c.Names.OBJECTCLASS: [
+                    c.Names.INETORGPERSON,
+                    "organizationalPerson",
+                    c.Names.PERSON,
+                    c.Names.TOP,
+                ],
+                c.Names.CN: ["John Doe"],
+                c.Names.SN: ["Doe"],
+                "givenName": ["John"],
+                c.Names.MAIL: ["john@example.com"],
+                c.Names.UID: ["jdoe"],
+            },
         }
-        assert data[c.Names.DN] == f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}"
-        # Type narrowing: EntryCreateData values can be ScalarValue | list[str] | dict[str, list[str]]
-        objectclass_value = data[c.Names.OBJECTCLASS]
-        assert isinstance(objectclass_value, list), "objectClass must be a list"
-        assert len(objectclass_value) == 4
+        assert data["dn"] == f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}"
+        attributes = data["attributes"]
+        assert isinstance(attributes, dict)
+        assert len(attributes[c.Names.OBJECTCLASS]) == 4
 
-    def test_entry_create_data_with_nested_structures(self) -> None:
-        """EntryCreateData must support nested structures from LDIF."""
-        # EntryCreateData nested dicts must be dict[str, list[str]], not dict[str, str]
-        data: t_ldif.Entry.EntryCreateData = {
-            c.Names.DN: f"cn=REDACTED_LDAP_BIND_PASSWORD,{c.DNs.EXAMPLE}",
-            "permissions": ["read", "write"],
-            "metadata": {
-                "source": ["oid"],
-                "imported": ["true"],
-            },  # dict[str, list[str]]
-            "attributes_count": "12",
+    def test_entry_dict_with_nested_structures(self) -> None:
+        """EntryDict must support standard entry structure from LDIF."""
+        # EntryDict has dn and attributes keys
+        data: t_ldif.Ldif.Entry.EntryDict = {
+            "dn": f"cn=REDACTED_LDAP_BIND_PASSWORD,{c.DNs.EXAMPLE}",
+            "attributes": {
+                "permissions": ["read", "write"],
+                "metadata": ["source=oid", "imported=true"],
+            },
         }
-        assert isinstance(data["permissions"], list)
-        # Type narrowing: metadata is dict[str, list[str]]
-        metadata_value = data["metadata"]
-        assert isinstance(metadata_value, dict)
+        assert isinstance(data["attributes"]["permissions"], list)
+        assert "dn" in data
 
 
 class TestModelsNamespace:
@@ -280,11 +281,10 @@ class TestRemovalOfOverEngineering:
 
     REMOVED_ENTRY: ClassVar[list[str]] = [
         "EntryConfiguration",
-        "EntryAttributes",
         "EntryValidation",
         "EntryTransformation",
-        "EntryMetadata",
         "EntryProcessing",
+        # Note: EntryAttributes and EntryMetadata still exist and are used
     ]
 
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
@@ -318,18 +318,18 @@ class TestPhase1StandardizationResults:
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple patterns should be kept in CommonDict."""
-        # CommonDict exists at both root level and Ldif namespace
-        assert hasattr(t_ldif.CommonDict, attr) or hasattr(t_ldif.Ldif.CommonDict, attr)
+        # CommonDict exists in Ldif namespace only (proper architecture)
+        assert hasattr(t_ldif.Ldif.CommonDict, attr)
 
-    def test_entry_create_data_exists(self) -> None:
-        """EntryCreateData should exist in Entry namespace."""
-        assert hasattr(t_ldif.Ldif.Entry, "EntryCreateData")
+    def test_entry_dict_exists(self) -> None:
+        """EntryDict should exist in Entry namespace."""
+        assert hasattr(t_ldif.Ldif.Entry, "EntryDict")
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
         attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {"cn": ["test"]}
         dist: t_ldif.Ldif.CommonDict.DistributionDict = {"type": 100}
-        entry_data: t_ldif.Ldif.Entry.EntryCreateData = {"dn": "cn=test"}
+        entry_data: t_ldif.Ldif.Entry.EntryDict = {"dn": "cn=test", "attributes": {}}
 
         assert isinstance(attr_dict, dict)
         assert isinstance(dist, dict)

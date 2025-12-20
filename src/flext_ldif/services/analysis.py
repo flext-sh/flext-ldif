@@ -18,6 +18,7 @@ from typing import override
 
 from flext_core import r
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
@@ -25,7 +26,7 @@ from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[m.Ldif.LdifResults.EntryAnalysisResult],
+    FlextLdifServiceBase[FlextLdifModelsResults.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -63,7 +64,7 @@ class FlextLdifAnalysis(
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.EntryAnalysisResult]:
+    ) -> r[m.Ldif.Results.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class.
 
         Business Rule: Analysis service does not support generic execute() operation.
@@ -78,14 +79,14 @@ class FlextLdifAnalysis(
             r.fail() with error message directing to correct usage
 
         """
-        return r[m.Ldif.EntryAnalysisResult].fail(
+        return r[m.Ldif.Results.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
     @staticmethod
     def analyze(
         entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.EntryAnalysisResult]:
+    ) -> r[m.Ldif.Results.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
         Business Rule: Entry analysis generates comprehensive statistics including

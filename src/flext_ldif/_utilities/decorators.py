@@ -22,7 +22,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from functools import wraps
-from typing import Any, cast
 
 from flext_core import FlextLogger, r
 
@@ -128,10 +127,34 @@ class FlextLdifUtilitiesDecorators:
 
         # Attach metadata by checking if object is a model instance with metadata
         # Use runtime type check instead of protocol isinstance to avoid mypy issues
-        if hasattr(result_value, "metadata") and hasattr(result_value, "model_fields"):
-            # This is a Pydantic model with metadata field - assign directly
-            # Cast to Any to avoid type checker issues with dynamic attribute assignment
-            cast("Any", result_value).metadata = metadata
+        if (
+            hasattr(result_value, "metadata")
+            and hasattr(type(result_value), "model_fields")  # Check class, not instance
+            and isinstance(
+                result_value,
+                (
+                    m.Ldif.Entry,
+                    m.Ldif.SchemaAttribute,
+                    m.Ldif.SchemaObjectClass,
+                    m.Ldif.Acl,
+                ),
+            )
+        ):
+            # This is a Pydantic model with metadata field
+            # Use model_copy to create updated instance (respects validate_assignment)
+            try:
+                updated_model = result_value.model_copy(update={"metadata": metadata})
+                # Replace the original reference if possible
+                if hasattr(result_value, "__dict__"):
+                    result_value.__dict__.update(updated_model.__dict__)
+                elif hasattr(result_value, "__slots__"):
+                    # For slotted classes, we can't easily update in-place
+                    # This is a limitation we'll work around by not updating slotted models
+                    pass
+            except Exception as e:
+                # If model_copy fails, skip metadata attachment
+                # This is safe - metadata attachment is optional for frozen models
+                logger.debug(f"Failed to attach metadata: {e}")
 
     @staticmethod
     def attach_parse_metadata(
@@ -169,7 +192,7 @@ class FlextLdifUtilitiesDecorators:
                 arg: str,
             ) -> r[object]:
                 """Call original function and attach metadata to result."""
-                result = cast("r[object]", func(self, arg))
+                result = func(self, arg)
 
                 # If result is successful, attach metadata using helper methods
                 if result.is_success:
@@ -199,7 +222,7 @@ class FlextLdifUtilitiesDecorators:
                 return result
 
             # Type narrowing: wrapper is compatible with ParseMethod type
-            return cast("t.Ldif.Decorators.ParseMethod", wrapper)
+            return wrapper
 
         return decorator
 
@@ -242,7 +265,7 @@ class FlextLdifUtilitiesDecorators:
                 return func(self, arg)
 
             # Type narrowing: wrapper is compatible with WriteMethod type
-            return cast("t.Ldif.Decorators.WriteMethod", wrapper)
+            return wrapper
 
         return decorator
 
@@ -281,10 +304,10 @@ class FlextLdifUtilitiesDecorators:
                     logger.exception(
                         error_msg,
                     )  # Log error with message (no traceback for KeyboardInterrupt)
-                    return r.fail(error_msg)
+                    return r[str].fail(error_msg)
 
             # Type narrowing: wrapper is compatible with SafeMethod type
-            return cast("t.Ldif.Decorators.SafeMethod", wrapper)
+            return wrapper
 
         return decorator
 

@@ -49,7 +49,7 @@ class FlextLdifModelsMetadata:
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
-        transformations: dict[str, object] | None = Field(default=None)
+        transformations: list[object] | None = Field(default=None)
 
         def __init__(
             self,

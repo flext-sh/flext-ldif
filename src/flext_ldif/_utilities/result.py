@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import IO, Self, cast, overload
+from typing import IO, Self, overload
 
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -109,10 +109,10 @@ class FlextLdifResult[T]:
             # RuntimeResult is compatible with FlextResult interface
             # Convert by creating new FlextResult with same value/error
             if inner.is_success:
-                inner_result = r.ok(inner.value)
+                inner_result = r[T].ok(inner.value)
             else:
                 error_msg = inner.error if hasattr(inner, "error") else str(inner)
-                inner_result = r.fail(error_msg)
+                inner_result = r[T].fail(error_msg)
         else:
             inner_result = inner
         self._inner = inner_result
@@ -132,7 +132,7 @@ class FlextLdifResult[T]:
             FlextLdifResult containing the success value
 
         """
-        return cls(r.ok(value))
+        return cls(r[T].ok(value))
 
     @classmethod
     def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
@@ -357,7 +357,7 @@ class FlextLdifResult[T]:
         if hasattr(transformer, "apply"):
             apply_method = getattr(transformer, "apply", None)
             if apply_method is not None and callable(apply_method):
-                transform_result = apply_method(self.value)
+                transform_result: T | FlextResult[T] = apply_method(self.value)
                 if isinstance(transform_result, FlextResult):
                     return FlextLdifResult.from_result(transform_result)
                 return FlextLdifResult.ok(transform_result)
@@ -535,7 +535,7 @@ class FlextLdifResult[T]:
             filtered_elements = [item for item in value if matches_func(item)]
             # Type narrowing: filtered_elements is always list[E] where E is element type
             # This preserves the original sequence type while filtering elements
-            return FlextLdifResult(r.ok(cast("T", filtered_elements)))
+            return FlextLdifResult(r[T].ok(filtered_elements))
 
         # Handle single value - return if matches, fail otherwise
         if matches_func(value):

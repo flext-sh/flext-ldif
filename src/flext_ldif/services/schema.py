@@ -15,6 +15,7 @@ from typing import Self, override
 from flext_core import r
 from pydantic import PrivateAttr
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
@@ -26,7 +27,7 @@ from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 
 
-class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.LdifResults.SchemaServiceStatus]):
+class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service.
 
     Business Rule: Schema service centralizes all schema-related operations using
@@ -182,15 +183,15 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.LdifResults.SchemaServiceStatu
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.SchemaServiceStatus]:
+    ) -> r[FlextLdifModelsResults.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return r[m.Ldif.LdifResults.SchemaServiceStatus].ok(
-            m.Ldif.LdifResults.SchemaServiceStatus(
+        return r[FlextLdifModelsResults.SchemaServiceStatus].ok(
+            FlextLdifModelsResults.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
                 status="operational",
@@ -236,8 +237,12 @@ class FlextLdifSchema(FlextLdifServiceBase[m.Ldif.LdifResults.SchemaServiceStatu
             if not attr_definition or not attr_definition.strip():
                 return r.fail("Attribute definition is empty")
 
-            # Use utilities for RFC parsing - parse_attribute returns dict directly
-            parsed_dict = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+            # Use utilities for RFC parsing - parse_attribute returns FlextResult
+            parse_result = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+            if parse_result.is_failure:
+                return r.fail(f"Parse failed: {parse_result.error}")
+
+            parsed_dict = dict(parse_result.value)
 
             # Extract metadata_extensions before model_validate (not a direct field)
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})

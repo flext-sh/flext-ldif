@@ -402,7 +402,7 @@ class ProcessingPipeline:
         pipeline = Pipeline()
 
         # Add DN normalization if enabled
-        if self._config.normalize_dns:
+        if self._config.normalize_dns and self._config.process_config is not None:
             # Convert Literal to StrEnum for type compatibility
             case_fold_value = self._config.process_config.dn_config.case_fold or "none"
             space_handling_value = (

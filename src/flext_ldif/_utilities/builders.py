@@ -30,8 +30,20 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Literal, Self, cast
+from enum import StrEnum
+from typing import Literal, Self
 
+from flext_ldif._models.settings import (
+    AclConversionConfig,
+    AttrNormalizationConfig,
+    DnNormalizationConfig,
+    FilterConfig,
+    MetadataConfig,
+    ProcessConfig,
+    TransformConfig,
+    ValidationConfig,
+    WriteConfig,
+)
 from flext_ldif.constants import c
 from flext_ldif.models import m
 
@@ -76,15 +88,15 @@ class ProcessConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._source_server: m.Ldif.ServerType = m.Ldif.ServerType.RFC
-        self._target_server: m.Ldif.ServerType | None = None
-        self._dn_config: object | None = None
-        self._attr_config: object | None = None
-        self._acl_config: object | None = None
-        self._validation_config: object | None = None
-        self._metadata_config: object | None = None
+        self._source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC
+        self._target_server: c.Ldif.ServerTypes | None = None
+        self._dn_config: DnNormalizationConfig | None = None
+        self._attr_config: AttrNormalizationConfig | None = None
+        self._acl_config: AclConversionConfig | None = None
+        self._validation_config: ValidationConfig | None = None
+        self._metadata_config: MetadataConfig | None = None
 
-    def source(self, server: m.Ldif.ServerType) -> Self:
+    def source(self, server: c.Ldif.ServerTypes) -> Self:
         """Set the source server type.
 
         Args:
@@ -97,7 +109,7 @@ class ProcessConfigBuilder:
         self._source_server = server
         return self
 
-    def target(self, server: m.Ldif.ServerType) -> Self:
+    def target(self, server: c.Ldif.ServerTypes) -> Self:
         """Set the target server type.
 
         Args:
@@ -113,9 +125,9 @@ class ProcessConfigBuilder:
     def normalize_dn(
         self,
         *,
-        case: c.Ldif.StrEnum | None = None,
-        spaces: m.Ldif.SpaceHandlingOption | None = None,
-        escapes: m.Ldif.EscapeHandlingOption | None = None,
+        case: StrEnum | None = None,
+        spaces: c.Ldif.SpaceHandlingOption | None = None,
+        escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization.
 
@@ -131,25 +143,19 @@ class ProcessConfigBuilder:
         # Create config with values in constructor to avoid frozen model issues
         config_kwargs = {}
         if case is not None:
-            config_kwargs["case_fold"] = cast(
-                "Literal['none', 'lower', 'upper']", case.value
-            )
+            config_kwargs["case_fold"] = case
         if spaces is not None:
-            config_kwargs["space_handling"] = cast(
-                "Literal['preserve', 'trim', 'normalize']", spaces.value
-            )
+            config_kwargs["space_handling"] = spaces
         if escapes is not None:
-            config_kwargs["escape_handling"] = cast(
-                "Literal['preserve', 'unescape', 'normalize']", escapes.value
-            )
+            config_kwargs["escape_handling"] = escapes
 
-        self._dn_config = m.Ldif.DnNormalizationConfig(**config_kwargs)
+        self._dn_config = DnNormalizationConfig.model_validate(config_kwargs)
         return self
 
     def normalize_attrs(
         self,
         *,
-        sort_attributes: m.Ldif.SortOption | None = None,
+        sort_attributes: c.Ldif.SortOption | None = None,
         sort_values: bool = True,
         normalize_whitespace: bool = True,
     ) -> Self:
@@ -166,18 +172,14 @@ class ProcessConfigBuilder:
         """
         # Create config with values in constructor to avoid frozen model issues
         config_kwargs: dict[str, object] = {
+            "lowercase_keys": lowercase,
             "sort_values": sort_values,
             "normalize_whitespace": normalize_whitespace,
         }
         if sort_attributes is not None:
-            config_kwargs["sort_attributes"] = cast(
-                "Literal['none', 'alphabetical', 'hierarchical']", sort_attributes.value
-            )
+            config_kwargs["sort_attributes"] = sort_attributes
 
-        self._attr_config = cast(
-            "m.Ldif.AttrNormalizationConfig",
-            m.Ldif.AttrNormalizationConfig(**cast("dict[str, Any]", config_kwargs)),
-        )
+        self._attr_config = AttrNormalizationConfig.model_validate(config_kwargs)
         return self
 
     def acl_conversion(
@@ -199,7 +201,7 @@ class ProcessConfigBuilder:
 
         """
         # Create config with values in constructor to avoid frozen model issues
-        self._acl_config = m.Ldif.AclConversionConfig(
+        self._acl_config = AclConversionConfig(
             convert_aci=convert_aci,
             preserve_original_aci=preserve_original_aci,
             map_server_specific=map_server_specific,
@@ -225,7 +227,7 @@ class ProcessConfigBuilder:
 
         """
         # Create config with values in constructor to avoid frozen model issues
-        self._validation_config = m.Ldif.ValidationConfig(
+        self._validation_config = ValidationConfig(
             strict_mode=strict_rfc,
             validate_schema=allow_server_quirks,
             validate_acl=validate_dn_format,
@@ -251,7 +253,7 @@ class ProcessConfigBuilder:
 
         """
         # Create config with values in constructor to avoid frozen model issues
-        self._metadata_config = m.Ldif.MetadataConfig(
+        self._metadata_config = MetadataConfig(
             include_timestamps=preserve_original,
             include_processing_stats=preserve_tracking,
             preserve_validation=preserve_validation,
@@ -297,7 +299,7 @@ class ProcessConfigBuilder:
         self._convert_acls = enabled
         return self
 
-    def build(self) -> m.Ldif.ProcessConfig:
+    def build(self) -> ProcessConfig:
         """Build the ProcessConfig.
 
         Returns:
@@ -305,22 +307,14 @@ class ProcessConfigBuilder:
 
         """
         # Create config with all values in constructor to avoid frozen model issues
-        return m.Ldif.ProcessConfig(
+        return ProcessConfig(
             source_server=self._source_server,
-            target_server=self._target_server
-            or cast("m.Ldif.ServerType", m.Ldif.ServerType.RFC),
-            dn_config=cast("m.Ldif.DnNormalizationConfig | None", self._dn_config)
-            or m.Ldif.DnNormalizationConfig(),
-            attr_config=cast("m.Ldif.AttrNormalizationConfig | None", self._attr_config)
-            or m.Ldif.AttrNormalizationConfig(),
-            acl_config=cast("m.Ldif.AclConversionConfig | None", self._acl_config)
-            or m.Ldif.AclConversionConfig(),
-            validation_config=cast(
-                "m.Ldif.ValidationConfig | None", self._validation_config
-            )
-            or m.Ldif.ValidationConfig(),
-            metadata_config=cast("m.Ldif.MetadataConfig | None", self._metadata_config)
-            or m.Ldif.MetadataConfig(),
+            target_server=self._target_server or c.Ldif.ServerTypes.RFC,
+            dn_config=self._dn_config or DnNormalizationConfig.model_validate({}),
+            attr_config=self._attr_config or AttrNormalizationConfig.model_validate({}),
+            acl_config=self._acl_config or AclConversionConfig.model_validate({}),
+            validation_config=self._validation_config or ValidationConfig.model_validate({}),
+            metadata_config=self._metadata_config or MetadataConfig.model_validate({}),
         )
 
 
@@ -390,7 +384,7 @@ class TransformConfigBuilder:
         self._track_changes = enabled
         return self
 
-    def build(self) -> m.Ldif.TransformConfig:
+    def build(self) -> TransformConfig:
         """Build the TransformConfig.
 
         Returns:
@@ -398,7 +392,7 @@ class TransformConfigBuilder:
 
         """
         # Create config with all values at construction time (frozen model)
-        return m.Ldif.TransformConfig(
+        return TransformConfig(
             fail_fast=self._fail_fast,
             preserve_order=self._preserve_order,
             track_changes=self._track_changes,
@@ -465,7 +459,7 @@ class FilterConfigBuilder:
         self._include_metadata_matches = enabled
         return self
 
-    def build(self) -> m.Ldif.FilterConfig:
+    def build(self) -> FilterConfig:
         """Build the FilterConfig.
 
         Returns:
@@ -473,7 +467,7 @@ class FilterConfigBuilder:
 
         """
         # Create config with all values at construction time (frozen model)
-        return m.Ldif.FilterConfig(
+        return FilterConfig(
             mode=self._mode,
             case_sensitive=self._case_sensitive,
             include_metadata_matches=self._include_metadata_matches,
@@ -517,10 +511,10 @@ class WriteConfigBuilder:
         self._line_width: int = 76
         self._fold_lines: bool = True
         self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
-        self._sort_by: m.Ldif.SortOption = m.Ldif.SortOption.ALPHABETICAL
+        self._sort_by: c.Ldif.SortOption = c.Ldif.SortOption.ALPHABETICAL
         self._attr_order: Sequence[str] | None = None
         self._include_metadata: bool = False
-        self._server: m.Ldif.ServerType | None = None
+        self._server: c.Ldif.ServerTypes | None = None
 
     def format(self, fmt: m.Ldif.OutputFormat) -> Self:
         """Set output format.
@@ -574,7 +568,7 @@ class WriteConfigBuilder:
         self._base64_attrs = attrs
         return self
 
-    def sort_by(self, field: m.Ldif.SortOption) -> Self:
+    def sort_by(self, field: c.Ldif.SortOption) -> Self:
         """Set sorting field.
 
         Args:
@@ -613,7 +607,7 @@ class WriteConfigBuilder:
         self._include_metadata = enabled
         return self
 
-    def server(self, server: m.Ldif.ServerType) -> Self:
+    def server(self, server: c.Ldif.ServerTypes) -> Self:
         """Set target server for formatting.
 
         Args:
@@ -626,7 +620,7 @@ class WriteConfigBuilder:
         self._server = server
         return self
 
-    def build(self) -> m.Ldif.WriteConfig:
+    def build(self) -> WriteConfig:
         """Build the WriteConfig.
 
         Returns:
@@ -634,7 +628,7 @@ class WriteConfigBuilder:
 
         """
         # Create config with all values at construction time (frozen model)
-        return m.Ldif.WriteConfig(
+        return WriteConfig(
             format=self._format,  # format is alias for output_format
             line_width=self._line_width,
             fold_lines=self._fold_lines,

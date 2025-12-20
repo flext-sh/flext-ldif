@@ -26,11 +26,17 @@ class ConversionTestConstants:
 
     OUD_ATTRIBUTE_ORCLGUID: Final[str] = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )"
     OID_ATTRIBUTE_ORCLGUID: Final[str] = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )"
+    OID_ATTRIBUTE_ORCLDBNAME: Final[str] = (
+        "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' DESC 'Database Name' )"
+    )
     OUD_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
         "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
     )
     OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
         "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+    )
+    OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+        "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
     )
 
 

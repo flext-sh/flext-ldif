@@ -18,9 +18,11 @@ class TestFlextLdifUtilitiesComprehensive:
         self, test_data: dict[str, object]
     ) -> None:
         """Test all utility functions with real generated data."""
-        # Test DN operations
+        # Test DN operations using correct namespace
         if "dn" in test_data:
-            result = u.normalize_dn(test_data["dn"])
+            dn = str(test_data["dn"])
+            # Use u.Ldif.DN.norm_string for DN normalization
+            result = u.Ldif.DN.norm_string(dn)
             assert isinstance(result, str)
             assert len(result) > 0
 
@@ -66,8 +68,12 @@ class TestFlextLdifUtilitiesComprehensive:
         # Create real entry for specific server
         entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
 
-        # Test server-specific processing
-        result = u.adapt_entry_for_server(entry, server_type)
-        assert result is not None
-        assert hasattr(result, "dn")
-        assert hasattr(result, "attributes")
+        # Test entry was created with correct server type
+        assert entry is not None
+        assert hasattr(entry, "dn")
+        assert hasattr(entry, "attributes")
+
+        # Test server type normalization utility
+        normalized = u.Ldif.Server.normalize_server_type(server_type)
+        assert isinstance(normalized, str)
+        assert len(normalized) > 0

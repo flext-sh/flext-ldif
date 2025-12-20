@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Self, cast, overload
+from typing import Self, overload
 
 from flext_core import (
     FlextLogger,
@@ -275,9 +275,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             if parse_result.is_failure:
                 # Return empty dict on failure (maintains existing behavior)
                 return {}
-            parsed = parse_result.value
-            # Type narrowing: cast to expected type
-            return cast("dict[str, str | bool | None]", parsed)
+            # parsed is already the correct type
+            return parse_result.value
 
         # Use FlextLdifUtilitiesSchema.parse_attribute directly
         # (FlextLdifUtilities.Ldif.Parsers.Attribute.parse was removed to break circular imports)
@@ -287,9 +286,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         parse_result_raw = parse_result_temp.value
         # Type narrowing: parse_attribute returns dict, convert to SchemaAttribute
+        # Filter out metadata fields that are not part of SchemaAttribute model
+        # (metadata_extensions and syntax_validation are tracked separately)
+        model_fields = {
+            k: v
+            for k, v in parse_result_raw.items()
+            if k not in {"metadata_extensions", "syntax_validation"}
+        }
         parse_result: FlextResult[m.Ldif.SchemaAttribute] = FlextResult[
             m.Ldif.SchemaAttribute
-        ].ok(m.Ldif.SchemaAttribute.model_validate(parse_result_raw))
+        ].ok(m.Ldif.SchemaAttribute.model_validate(model_fields))
 
         # Invoke post-parse hook for server-specific customization
         if parse_result.is_failure:
@@ -550,9 +556,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ) -> dict[str, str | list[str] | None]:
             # Use FlextLdifUtilitiesSchema.parse_objectclass which returns dict directly
             # Extract only the fields needed by ParsePartsHook
-            parsed = FlextLdifUtilitiesSchema.parse_objectclass(definition)
-            # Type narrowing: cast to expected type
-            return cast("dict[str, str | list[str] | None]", parsed)
+            # parsed is already the correct type
+            return FlextLdifUtilitiesSchema.parse_objectclass(definition)
 
         # DSL: Use config-based parse signature
         # ObjectClass.parse accepts config=None with **kwargs
@@ -1036,10 +1041,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             data = oc_model
 
         result = self.execute(data=data, operation=operation)
-        unwrapped = result.value
-        # Type narrowing: unwrapped is SchemaAttribute | SchemaObjectClass | str
-        # Cast to satisfy protocol return type
-        return cast("t.Ldif.SchemaModelOrString", unwrapped)
+        # unwrapped is already SchemaModelOrString type
+        return result.value
 
     def __new__(
         cls,

@@ -13,6 +13,8 @@ from typing import Final
 import pytest
 
 from flext_ldif.services.dn import FlextLdifDn
+from flext_tests import tm
+
 from tests import c, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
@@ -136,7 +138,7 @@ class TestsFlextLdifDnService(s):
                 operation="normalize",
             )
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             normalized = str(unwrapped)
             assert "cn=test" in normalized.lower()
             assert "dc=example" in normalized.lower()
@@ -158,10 +160,7 @@ class TestsFlextLdifDnService(s):
             service = DnTestFactory.create_service()
             result = service.parse(dn)
 
-            unwrapped = self.assert_success(
-                result,
-                f"Failed to parse {test_case}: {dn}",
-            )
+            unwrapped = tm.ok(result)
             components = list(unwrapped)
             assert len(components) == expected_count, (
                 f"Expected {expected_count} components for {test_case} ({dn}), "
@@ -214,10 +213,7 @@ class TestsFlextLdifDnService(s):
             service = DnTestFactory.create_service()
             result = service.validate_dn(dn)
 
-            unwrapped = self.assert_success(
-                result,
-                f"Validation failed for {test_case}: {dn}",
-            )
+            unwrapped = tm.ok(result)
             assert unwrapped is True, f"Expected True for valid DN {test_case}"
 
         @pytest.mark.parametrize(
@@ -233,10 +229,7 @@ class TestsFlextLdifDnService(s):
             service = DnTestFactory.create_service()
             result = service.validate_dn(invalid_dn)
 
-            unwrapped = self.assert_success(
-                result,
-                f"Validation method should succeed for {test_case}",
-            )
+            unwrapped = tm.ok(result)
             assert unwrapped is False, f"Expected False for invalid DN {test_case}"
 
     class TestNormalization:
@@ -256,10 +249,7 @@ class TestsFlextLdifDnService(s):
             service = DnTestFactory.create_service()
             result = service.norm(input_dn)
 
-            unwrapped = self.assert_success(
-                result,
-                f"Normalization failed for {test_case}: {input_dn}",
-            )
+            unwrapped = tm.ok(result)
             normalized = str(unwrapped)
             assert normalized == expected_output, (
                 f"Expected '{expected_output}', got '{normalized}' for {test_case}"
@@ -280,7 +270,7 @@ class TestsFlextLdifDnService(s):
 
             # Test with very long DN
             result = service.parse(DnTestData.LONG_DN_PREFIX)
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             components = list(unwrapped)
             assert len(components) == 3
 
@@ -290,13 +280,13 @@ class TestsFlextLdifDnService(s):
 
             # Test with empty string - validation result depends on implementation
             result = service.validate_dn("")
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             # Empty string may be considered valid by ldap3 parser
             assert isinstance(unwrapped, bool)
 
             # Test with very long valid DN
             result = service.validate_dn(DnTestData.LONG_DN_PREFIX)
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is True
 
         def test_normalize_dn_edge_cases(self) -> None:
@@ -312,7 +302,7 @@ class TestsFlextLdifDnService(s):
             # Test with already normalized DN
             normalized_dn = "cn=test,dc=example,dc=com"
             result = service.norm(normalized_dn)
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert str(unwrapped) == normalized_dn
 
     class TestReusability:
@@ -324,15 +314,15 @@ class TestsFlextLdifDnService(s):
 
             # First operation
             result1 = service.parse("cn=test,dc=example,dc=com")
-            unwrapped1 = self.assert_success(result1)
+            unwrapped1 = tm.ok(result1)
 
             # Second operation with different DN
             result2 = service.parse("cn=user,dc=example,dc=com")
-            unwrapped2 = self.assert_success(result2)
+            unwrapped2 = tm.ok(result2)
 
             # Third operation
             result3 = service.validate_dn("cn=valid,dc=example,dc=com")
-            unwrapped3 = self.assert_success(result3)
+            unwrapped3 = tm.ok(result3)
 
             # All results should be independent
             components1 = list(unwrapped1)
@@ -365,7 +355,7 @@ class TestsFlextLdifDnService(s):
             # 3. dc=example
             # 4. dc=com
             result = service.parse_components(DnTestData.MULTIVALUED_RDN)
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
 
             components = list(unwrapped)
             # Four RDN components as comma-separated parts
@@ -403,28 +393,28 @@ class TestsFlextLdifDnService(s):
             """Test execute with parse operation."""
             service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="parse")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_validate(self) -> None:
             """Test execute with validate operation."""
             service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="validate")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_clean(self) -> None:
             """Test execute with clean operation."""
             service = FlextLdifDn(dn="  cn=test , dc=example ", operation="clean")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_escape(self) -> None:
             """Test execute with escape operation."""
             service = FlextLdifDn(dn="test,value", operation="escape")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_escape_hex(self) -> None:
@@ -435,14 +425,14 @@ class TestsFlextLdifDnService(s):
                 escape_mode="hex",
             )
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_unescape(self) -> None:
             """Test execute with unescape operation."""
             service = FlextLdifDn(dn=r"test\,value", operation="unescape")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_compare(self) -> None:
@@ -453,7 +443,7 @@ class TestsFlextLdifDnService(s):
                 operation="compare",
             )
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
         def test_execute_compare_missing_other_dn(self) -> None:
@@ -468,7 +458,7 @@ class TestsFlextLdifDnService(s):
             """Test execute with parse_rdn operation."""
             service = FlextLdifDn(dn="cn=test+ou=people", operation="parse_rdn")
             result = service.execute()
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, str)
 
     class TestInstanceMethods:
@@ -583,13 +573,13 @@ class TestsFlextLdifDnService(s):
                 "cn=test,dc=example,dc=com",
                 "CN=TEST,DC=EXAMPLE,DC=COM",
             )
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, int)
 
         def test_parse_rdn_classmethod(self) -> None:
             """Test parse_rdn classmethod."""
             result = FlextLdifDn.parse_rdn("cn=test+ou=people")
-            unwrapped = self.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, list)
 
     class TestHexEscape:

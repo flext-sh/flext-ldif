@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, cast
+from typing import Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
@@ -85,7 +85,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> t.Ldif.AttributesDict:
+    ) -> t.Ldif.NormalizedAttributesDict:
         """Convert boolean attribute values between formats.
 
         Args:
@@ -102,7 +102,7 @@ class FlextLdifUtilitiesEntry:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
-            normalized_result: t.Ldif.AttributesDict = {}
+            normalized_result: t.Ldif.NormalizedAttributesDict = {}
             for attr_name in attributes:
                 # Type-safe access - get values with explicit type
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
@@ -124,7 +124,7 @@ class FlextLdifUtilitiesEntry:
                     normalized_result[attr_name] = [str(raw_values)]
             return normalized_result
 
-        result: t.Ldif.AttributesDict = {}
+        result: dict[str, list[str]] = {}
 
         for attr_name in attributes:
             # Type-safe access - get values with explicit type
@@ -182,22 +182,11 @@ class FlextLdifUtilitiesEntry:
             """Get normalized attribute name."""
             return case_map.get(attr_name.lower(), attr_name)
 
-        def normalize_attr_pair(item: tuple[str, list[str]]) -> tuple[str, list[str]]:
-            """Normalize attribute name."""
-            attr_name, values = item
-            return (get_normalized_name(attr_name), values)
-
-        mapped_result = u.Collection.map(
-            list(attributes.items()),
-            mapper=cast(
-                "Callable[[tuple[str, list[str | bytes]]], tuple[str, list[str]]]",
-                normalize_attr_pair,
-            ),
-        )
-        if isinstance(mapped_result, list):
-            result = dict(mapped_result)
-        else:
-            result = {get_normalized_name(k): v for k, v in attributes.items()}
+        # Create normalized attributes dict
+        result: t.Ldif.AttributesDict = {}
+        for attr_name, values in attributes.items():
+            normalized_name = get_normalized_name(attr_name)
+            result[normalized_name] = values
         return result
 
     @staticmethod
@@ -631,24 +620,18 @@ class FlextLdifUtilitiesEntry:
                 output_name = attr_name_mappings.get(output_name, output_name)
             return output_name
 
-        result: t.Ldif.AttributesDict = {}
+        result: dict[str, list[str]] = {}
         for attr_name, values in attributes.items():
             output_name = get_output_name(attr_name)
-            # Transform values using u.map with closure-safe function
-
-            def transform_value_for_attr(value: str, name: str = attr_name) -> str:
-                """Transform value for specific attribute (default parameter avoids closure)."""
-                return transform_value(name, value)
-
-            mapped_values_result = u.Collection.map(
-                values,
-                mapper=cast("Callable[[str | bytes], str]", transform_value_for_attr),
-            )
-            output_values: list[str] = (
-                mapped_values_result
-                if isinstance(mapped_values_result, list)
-                else values
-            )
+            # Transform values - ensure they are strings first
+            output_values: list[str] = []
+            for value in values:
+                if isinstance(value, str):
+                    transformed = transform_value(attr_name, value)
+                    output_values.append(transformed)
+                else:
+                    # Skip non-string values or convert as needed
+                    output_values.append(str(value))
             result[output_name] = output_values
         return result
 
@@ -725,14 +708,13 @@ class FlextLdifUtilitiesEntry:
                     return config.boolean_mappings[value]
                 return value
 
-            mapped_values_result = u.Collection.map(
-                values, mapper=cast("Callable[[str | bytes], str]", normalize_value)
-            )
-            output_values = (
-                mapped_values_result
-                if isinstance(mapped_values_result, list)
-                else values
-            )
+            # Apply normalization to each value
+            output_values: list[str] = []
+            for value in values:
+                if isinstance(value, str):
+                    output_values.append(normalize_value(value))
+                else:
+                    output_values.append(str(value))
 
             result[output_name] = output_values
 
@@ -954,9 +936,7 @@ class FlextLdifUtilitiesEntry:
                 # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.Ldif.Attributes. is compatible via inheritance
                 converted_attrs_update: dict[str, object] = {
-                    "attributes": m.Ldif.Attributes(
-                        attributes=cast("dict[str, list[str]]", converted)
-                    ),
+                    "attributes": m.Ldif.Attributes(attributes=converted),
                 }
                 current = current.model_copy(update=converted_attrs_update)
             if config.remove_attrs:
@@ -1034,7 +1014,7 @@ class FlextLdifUtilitiesEntry:
         )
         filtered = filtered_list if isinstance(filtered_list, list) else list(entries)
 
-        return r.ok(filtered)
+        return r[list[m.Ldif.Entry]].ok(filtered)
 
 
 __all__ = [

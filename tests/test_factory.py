@@ -33,8 +33,10 @@ class FlextLdifTestFactory:
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
 
+        # Use Attributes.create() which returns FlextResult
+        attrs_result = m.Ldif.Attributes.create(attributes)
         return m.Ldif.Entry(
-            dn=dn, attributes=m.Ldif.AttributesDict(attributes), server_type=server_type
+            dn=dn, attributes=attrs_result.value, server_type=server_type
         )
 
     @staticmethod

@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
 from flext_core import FlextUtilities
 
@@ -78,11 +77,8 @@ class FlextLdifUtilitiesServer:
                 return None
             server_type = getattr(constants, "SERVER_TYPE", None)
             if server_type is not None:
-                # Type narrowing: server_type is from ClassVar[ServerTypeLiteral]
-                return cast(
-                    "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    server_type,
-                )
+                # server_type is already ServerTypeLiteral
+                return server_type
         except (AttributeError, ImportError):
             pass
         return None
@@ -110,11 +106,8 @@ class FlextLdifUtilitiesServer:
         # Fallback: validate and return derived type
         if server_type_lower in _VALID_SERVER_TYPES:
             # Type narrowing: server_type_lower is in valid server types
-            # Cast to ServerTypeLiteral for type compatibility
-            return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                server_type_lower,
-            )
+            # server_type_lower is already compatible
+            return server_type_lower
         return None
 
     @staticmethod
@@ -345,6 +338,14 @@ class FlextLdifUtilitiesServer:
             "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
             "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
             "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
+            "novell_edirectory": c.Ldif.ServerTypes.NOVELL.value,
+            "novelledirectory": c.Ldif.ServerTypes.NOVELL.value,
+            "edirectory": c.Ldif.ServerTypes.NOVELL.value,
+            "apache_directory": c.Ldif.ServerTypes.APACHE.value,
+            "apachedirectory": c.Ldif.ServerTypes.APACHE.value,
+            "apacheds": c.Ldif.ServerTypes.APACHE.value,
+            "389ds": c.Ldif.ServerTypes.DS389.value,
+            "389directory": c.Ldif.ServerTypes.DS389.value,
         }
         # Check alias map first
         if server_type_lower in alias_map:

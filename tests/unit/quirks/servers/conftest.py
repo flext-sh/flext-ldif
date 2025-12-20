@@ -179,32 +179,6 @@ def sample_write_options() -> m.WriteFormatOptions:
     return m.WriteFormatOptions()
 
 
-class WriteOptionsWithAllowedOids:
-    """Real wrapper for WriteFormatOptions with allowed_schema_oids attribute.
-
-    This is a real class (not a mock) that wraps WriteFormatOptions
-    and provides allowed_schema_oids as a real attribute.
-    """
-
-    def __init__(self) -> None:
-        """Initialize with real WriteFormatOptions and allowed_schema_oids."""
-        self._options = m.WriteFormatOptions()
-        self.allowed_schema_oids = frozenset(["1.2.3.4"])
-
-    def __getattr__(self, name: str) -> object:
-        """Delegate all other attributes to the real WriteFormatOptions."""
-        return getattr(self._options, name)
-
-
-@pytest.fixture
-def write_options_with_allowed_oids() -> WriteOptionsWithAllowedOids:
-    """Provides WriteFormatOptions with allowed_schema_oids for tests.
-
-    Creates a real wrapper object (not a mock) that provides allowed_schema_oids.
-    """
-    return WriteOptionsWithAllowedOids()
-
-
 @pytest.fixture
 def acl_transformation_object() -> m.Ldif.AttributeTransformation:
     """Provides a real AttributeTransformation object for tests."""

@@ -28,7 +28,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import cast
 
 from flext_core import r
 
@@ -504,9 +503,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
 
         # Create new entry with converted attributes
         # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        new_attributes = FlextLdifModelsDomains.Attributes(
-            attributes=cast("dict[str, list[str]]", converted_attrs)
-        )
+        new_attributes = FlextLdifModelsDomains.Attributes(attributes=converted_attrs)
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 

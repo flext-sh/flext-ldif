@@ -592,7 +592,7 @@ class FlextLdifProtocols(FlextProtocols):
         class TransformerProtocol[T](Protocol):
             """Protocol for transformers in pipelines."""
 
-            def apply(self, item: T) -> FlextResult[T]:
+            def apply(self, item: T) -> T | FlextResult[T]:
                 """Apply the transformation."""
                 ...
 
@@ -719,36 +719,33 @@ class FlextLdifProtocols(FlextProtocols):
         # NAMESPACE ALIASES (for FlextLdifProtocols.Ldif.* access)
         # =========================================================================
 
-        # Core protocols
-        Entry = EntryProtocol  # PRIMARY protocol for LDIF entries
-        SchemaAttribute = SchemaAttributeProtocol
-        SchemaObjectClass = SchemaObjectClassProtocol
-        Acl = AclProtocol
-        WriteFormatOptions = WriteFormatOptionsProtocol
-
-        # Quirk protocols
-        # Quirks namespace for backward compatibility
-        class Quirks:
-            """Quirks namespace containing all protocol definitions."""
-
-            # These will be set after class definition
-
-        # Utility protocols
-        ModelWithValidationMetadata = ModelWithValidationMetadataProtocol
+        # Access protocols directly via composition - no aliases needed
 
         # Nested constants class (for compatibility)
         class Constants:
             """Constants namespace for protocol access."""
 
+        # Quirks namespace for backward compatibility with tests
+        # Note: Protocol aliases must be added after class definition
+        # because nested class can't reference sibling protocols directly
+        class Quirks:
+            """Quirks namespace containing quirk protocol aliases."""
 
-# Define Quirks protocols after class definition
-Quirks_SchemaProtocol = FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-Quirks_AclProtocol = FlextLdifProtocols.Ldif.AclQuirkProtocol
-Quirks_EntryProtocol = FlextLdifProtocols.Ldif.EntryQuirkProtocol
-Quirks_QuirksPort = FlextLdifProtocols.Ldif.EntryQuirkProtocol
 
-# Update Quirks class attributes (removed due to type checking issues)
-# These assignments cause mypy errors but are not essential for functionality
+# Define Quirks protocol aliases after class definition
+# These are added to Quirks namespace for test compatibility
+FlextLdifProtocols.Ldif.Quirks.SchemaProtocol = FlextLdifProtocols.Ldif.SchemaQuirkProtocol
+FlextLdifProtocols.Ldif.Quirks.AclProtocol = FlextLdifProtocols.Ldif.AclQuirkProtocol
+FlextLdifProtocols.Ldif.Quirks.EntryProtocol = FlextLdifProtocols.Ldif.EntryQuirkProtocol
+FlextLdifProtocols.Ldif.Quirks.QuirksPort = FlextLdifProtocols.Ldif.QuirksPortProtocol
+
+# Add direct Quirks alias for test compatibility
+FlextLdifProtocols.Quirks = FlextLdifProtocols.Ldif.Quirks
+
+# Short name aliases for Schema protocols (without Protocol suffix)
+# These provide backward compatibility for tests using p.Ldif.SchemaAttribute
+FlextLdifProtocols.Ldif.SchemaAttribute = FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+FlextLdifProtocols.Ldif.SchemaObjectClass = FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
 
 # Runtime aliases
 p = FlextLdifProtocols

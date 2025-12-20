@@ -192,15 +192,26 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         assert "Parse failed" in result.error
 
     def test_attach_parse_metadata_decorator_with_entry(self) -> None:
-        """Test attach_parse_metadata decorator with Entry result."""
+        """Test attach_parse_metadata decorator with Entry result.
+
+        Note: The decorator expects single-argument parse methods.
+        The LDIF content is passed as a single string argument.
+        """
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.attach_parse_metadata("rfc")
             def parse_entry(
                 self,
-                dn: str,
-                attrs: dict[str, list[str]],
+                ldif_content: str,
             ) -> FlextResult[p.Entry]:
+                # Parse LDIF content - simple format: "dn|attr1=val1|attr2=val2"
+                parts = ldif_content.split("|")
+                dn = parts[0] if parts else "cn=test"
+                attrs: dict[str, list[str]] = {}
+                for part in parts[1:]:
+                    if "=" in part:
+                        key, val = part.split("=", 1)
+                        attrs[key] = [val]
                 entry = m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn),
                     attributes=m.Ldif.Attributes.create(attrs).value,
@@ -208,10 +219,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
                 return FlextResult.ok(entry)
 
         quirk = TestQuirk()
-        result = quirk.parse_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
+        # Use single-argument format expected by decorator
+        result = quirk.parse_entry("cn=test,dc=example,dc=com|cn=test")
 
         assert result.is_success
         entry = result.value
@@ -390,12 +399,16 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         assert entry.metadata.extensions.get("server_type") is None
 
     def test_attach_parse_metadata_with_acl_result(self) -> None:
-        """Test attach_parse_metadata decorator with ACL result."""
+        """Test attach_parse_metadata decorator with ACL result.
+
+        Note: Acl model is frozen (immutable), so the decorator cannot
+        directly assign metadata. The decorator gracefully skips this.
+        """
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.attach_parse_metadata("oud")
-            def parse_acl(self, acl_str: str) -> FlextResult[m.Acl]:
-                acl = m.Acl(
+            def parse_acl(self, acl_str: str) -> FlextResult[m.Ldif.Acl]:
+                acl = m.Ldif.Acl(
                     raw_acl=acl_str,
                 )
                 return FlextResult.ok(acl)
@@ -405,10 +418,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         assert result.is_success
         acl = result.value
-        # ACL may have metadata by default or it may be attached by decorator
-        # The decorator checks isinstance for Acl, so it should attach metadata
-        # But the check in _attach_metadata_if_present may prevent it if metadata already exists
-        # We verify the decorator executed successfully
+        # Verify the ACL was returned correctly
+        # Decorator gracefully skips metadata for frozen models
         assert acl.raw_acl == "access to *"
 
     def test_safe_parse_with_keyboard_interrupt(self) -> None:

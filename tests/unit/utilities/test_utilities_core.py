@@ -152,7 +152,7 @@ class TestDnObjectClassMethods:
             sup=None,
         )
 
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(obj)
+        FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(obj)
         assert obj.sup == "top"
 
     def test_fix_kind_mismatch(self) -> None:
@@ -165,7 +165,7 @@ class TestDnObjectClassMethods:
             kind="AUXILIARY",
         )
 
-        FlextLdifUtilities.ObjectClass.fix_kind_mismatch(obj)
+        FlextLdifUtilities.Ldif.ObjectClass.fix_kind_mismatch(obj)
         assert obj.kind == "STRUCTURAL"
 
     def test_ensure_sup_for_auxiliary(self) -> None:
@@ -178,7 +178,7 @@ class TestDnObjectClassMethods:
             sup=None,
         )
 
-        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(obj)
+        FlextLdifUtilities.Ldif.ObjectClass.ensure_sup_for_auxiliary(obj)
         assert obj.sup == "top"
 
 
@@ -188,12 +188,12 @@ class TestAttributeFixer:
 
     def test_normalize_name_basic(self) -> None:
         """Test basic attribute name normalization."""
-        result = FlextLdifUtilities.Schema.normalize_name("testAttr_name;binary")
+        result = FlextLdifUtilities.Ldif.Schema.normalize_name("testAttr_name;binary")
         assert result == "testAttr-name"
 
     def test_normalize_name_with_custom_replacements(self) -> None:
         """Test name normalization with custom replacements."""
-        result = FlextLdifUtilities.Schema.normalize_name(
+        result = FlextLdifUtilities.Ldif.Schema.normalize_name(
             "test_attr_name",
             char_replacements={"_": "-"},
         )
@@ -201,22 +201,22 @@ class TestAttributeFixer:
 
     def test_normalize_name_none(self) -> None:
         """Test normalizing None."""
-        result = FlextLdifUtilities.Schema.normalize_name(None)
+        result = FlextLdifUtilities.Ldif.Schema.normalize_name(None)
         assert result is None
 
     def test_normalize_matching_rules_empty(self) -> None:
         """Test normalizing empty matching rules."""
-        result = FlextLdifUtilities.Schema.normalize_matching_rules(None)
+        result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules(None)
         assert result == (None, None)
 
     def test_normalize_matching_rules_equality_only(self) -> None:
         """Test normalizing matching rules with equality rule only."""
-        result = FlextLdifUtilities.Schema.normalize_matching_rules("caseIgnoreMatch")
+        result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules("caseIgnoreMatch")
         assert result == ("caseIgnoreMatch", None)
 
     def test_normalize_matching_rules_both(self) -> None:
         """Test normalizing matching rules with both equality and substr."""
-        result = FlextLdifUtilities.Schema.normalize_matching_rules(
+        result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules(
             "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch",
         )
@@ -230,32 +230,34 @@ class TestLdifParser:
     def test_extract_extensions_empty(self) -> None:
         """Test extracting extensions from empty schema definition."""
         definition = ""
-        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
+        result = FlextLdifUtilities.Ldif.LdifParser.extract_extensions(definition)
         assert result == {}
 
     def test_extract_extensions_with_x_extension(self) -> None:
         """Test extracting X- extensions from schema definition."""
         definition = "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
-        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
-        assert result.get("X-CUSTOM") == "value"
-        assert result.get("X-OTHER") == "data"
+        result = FlextLdifUtilities.Ldif.LdifParser.extract_extensions(definition)
+        # extract_extensions returns lists for multi-valued extensions
+        assert result.get("X-CUSTOM") == ["value"]
+        assert result.get("X-OTHER") == ["data"]
 
     def test_extract_extensions_with_desc(self) -> None:
         """Test extracting DESC from schema definition."""
         definition = "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
-        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
-        assert result.get("DESC") == "Test attribute"
+        result = FlextLdifUtilities.Ldif.LdifParser.extract_extensions(definition)
+        # extract_extensions returns lists for multi-valued extensions
+        assert result.get("DESC") == ["Test attribute"]
 
     def test_parse_ldif_lines_empty(self) -> None:
         """Test parsing empty LDIF content."""
         content = ""
-        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.Ldif.LdifParser.parse_ldif_lines(content)
         assert result == []
 
     def test_parse_ldif_lines_single_entry(self) -> None:
         """Test parsing single LDIF entry."""
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
-        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.Ldif.LdifParser.parse_ldif_lines(content)
         assert len(result) == 1
         dn, attrs = result[0]
         assert dn == "cn=test,dc=example,dc=com"
@@ -274,7 +276,7 @@ class TestLdifParser:
             "cn: test2\n"
             "objectClass: person\n"
         )
-        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.Ldif.LdifParser.parse_ldif_lines(content)
         assert len(result) == 2, f"Expected 2 entries but got {len(result)}: {result}"
 
         # First entry
@@ -292,7 +294,7 @@ class TestLdifParser:
     def test_unfold_lines_basic(self) -> None:
         """Test unfolding RFC 2849 folded lines."""
         content = "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
-        result = FlextLdifUtilities.LdifParser.unfold_lines(content)
+        result = FlextLdifUtilities.Ldif.LdifParser.unfold_lines(content)
         assert any("withfoldedcontinuation" in line for line in result)
 
 
@@ -303,20 +305,20 @@ class TestAclParser:
     def test_parse_oid_format(self) -> None:
         """Test parsing OID ACL format."""
         acl_line = 'orclaci: ( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
-        result = FlextLdifUtilities.ACL.parser(acl_line)
+        result = FlextLdifUtilities.Ldif.ACL.parser(acl_line)
         assert result is not None
         assert result.get("format") == "oid"
 
     def test_parse_oud_format(self) -> None:
         """Test parsing OUD ACL format."""
         acl_line = "aci: targetattr=*"
-        result = FlextLdifUtilities.ACL.parser(acl_line)
+        result = FlextLdifUtilities.Ldif.ACL.parser(acl_line)
         assert result is not None
         assert result.get("format") == "oud"
 
     def test_parse_empty_acl(self) -> None:
         """Test parsing empty ACL."""
-        result = FlextLdifUtilities.ACL.parser("")
+        result = FlextLdifUtilities.Ldif.ACL.parser("")
         assert result is None
 
 
@@ -348,13 +350,13 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="orcldAsAttrCategory",
             oid="1.2.3.4.5",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup=None,
         )
         assert oc.sup is None
 
-        # Fix should add SUP
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(oc, _server_type="oid")
+        # Fix should add SUP (fix_missing_sup only takes schema_oc argument)
+        FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == "top"
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
@@ -362,12 +364,12 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.5",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup="top",
         )
         original_sup = oc.sup
 
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(oc)
+        FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == original_sup
 
     def test_fix_missing_sup_structural_ignored(self) -> None:
@@ -375,12 +377,12 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testStructural",
             oid="1.2.3.4.6",
-            kind=lib_c.Ldif.STRUCTURAL,
+            kind=lib_c.Ldif.SchemaKind.STRUCTURAL,
             sup=None,
         )
         original_sup = oc.sup
 
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(oc)
+        FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == original_sup
 
     def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
@@ -388,10 +390,10 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.7",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup=None,
         )
-        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(oc)
+        FlextLdifUtilities.Ldif.ObjectClass.ensure_sup_for_auxiliary(oc)
         assert oc.sup == "top"
 
     def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
@@ -399,10 +401,10 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.8",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup=None,
         )
-        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(
+        FlextLdifUtilities.Ldif.ObjectClass.ensure_sup_for_auxiliary(
             oc,
             default_sup="custom",
         )
@@ -413,62 +415,62 @@ class TestObjectClassUtilities:
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.9",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup="orclpwdverifierprofile",
         )
-        FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc)
-        assert oc.kind == lib_c.Ldif.STRUCTURAL
+        FlextLdifUtilities.Ldif.ObjectClass.fix_kind_mismatch(oc)
+        assert oc.kind == lib_c.Ldif.SchemaKind.STRUCTURAL
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.10",
-            kind=lib_c.Ldif.STRUCTURAL,
+            kind=lib_c.Ldif.SchemaKind.STRUCTURAL,
             sup="javanamingref",
         )
-        FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc)
-        assert oc.kind == lib_c.Schema.AUXILIARY
+        FlextLdifUtilities.Ldif.ObjectClass.fix_kind_mismatch(oc)
+        assert oc.kind == lib_c.Ldif.SchemaKind.AUXILIARY
 
     def test_align_kind_with_superior_structural(self) -> None:
         """Test aligning kind with STRUCTURAL superior."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.11",
-            kind=lib_c.Schema.AUXILIARY,
+            kind=lib_c.Ldif.SchemaKind.AUXILIARY,
             sup="someSuperior",
         )
-        FlextLdifUtilities.ObjectClass.align_kind_with_superior(
+        FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
             oc,
-            lib_c.Ldif.STRUCTURAL,
+            lib_c.Ldif.SchemaKind.STRUCTURAL,
         )
-        assert oc.kind == lib_c.Ldif.STRUCTURAL
+        assert oc.kind == lib_c.Ldif.SchemaKind.STRUCTURAL
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.12",
-            kind=lib_c.Ldif.STRUCTURAL,
+            kind=lib_c.Ldif.SchemaKind.STRUCTURAL,
             sup="someSuperior",
         )
-        FlextLdifUtilities.ObjectClass.align_kind_with_superior(
+        FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
             oc,
-            lib_c.Schema.AUXILIARY,
+            lib_c.Ldif.SchemaKind.AUXILIARY,
         )
-        assert oc.kind == lib_c.Schema.AUXILIARY
+        assert oc.kind == lib_c.Ldif.SchemaKind.AUXILIARY
 
     def test_align_kind_with_superior_no_conflict(self) -> None:
         """Test that matching kinds are not changed."""
         oc = m.Ldif.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.13",
-            kind=lib_c.Ldif.STRUCTURAL,
+            kind=lib_c.Ldif.SchemaKind.STRUCTURAL,
             sup="someSuperior",
         )
         original_kind = oc.kind
-        FlextLdifUtilities.ObjectClass.align_kind_with_superior(
+        FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
             oc,
-            lib_c.Ldif.STRUCTURAL,
+            lib_c.Ldif.SchemaKind.STRUCTURAL,
         )
         assert oc.kind == original_kind

@@ -38,7 +38,6 @@ class TestsTestFlextLdifConstants(s):
     FORMAT_CONSTANTS: ClassVar[dict[str, object]] = {
         "DN_ATTRIBUTE": "dn",
         "ATTRIBUTE_SEPARATOR": ":",
-        "DN_PREFIX": "dn:",
         "MAX_LINE_LENGTH": 78,
         "MIN_BUFFER_SIZE": 1024,
         "CONTENT_PREVIEW_LENGTH": 100,
@@ -54,40 +53,41 @@ class TestsTestFlextLdifConstants(s):
     }
 
     PROCESSING_CONSTANTS: ClassVar[dict[str, object]] = {
-        "LdifProcessing.MIN_WORKERS_FOR_PARALLEL": 2,
-        "LdifProcessing.MAX_WORKERS_LIMIT": 16,
-        "LdifProcessing.PERFORMANCE_MIN_WORKERS": 4,
-        "LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE": 1000,
-        "MIN_ANALYTICS_CACHE_SIZE": 100,
-        "MAX_ANALYTICS_CACHE_SIZE": 10000,
-        "MIN_ENTRIES": 1000,
-        "MIN_MEMORY_MB": 64,
-        "PERFORMANCE_MEMORY_MB_THRESHOLD": 512,
-        "DEBUG_MAX_WORKERS": 2,
-        "SMALL_ENTRY_COUNT_THRESHOLD": 100,
-        "MEDIUM_ENTRY_COUNT_THRESHOLD": 1000,
-        "MIN_ATTRIBUTE_PARTS": 2,
+        "Ldif.LdifProcessing.MIN_WORKERS_FOR_PARALLEL": 2,
+        "Ldif.LdifProcessing.MAX_WORKERS_LIMIT": 16,
+        "Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS": 4,
+        "Ldif.LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE": 1000,
+        "Ldif.LdifProcessing.MIN_ANALYTICS_CACHE_SIZE": 100,
+        "Ldif.LdifProcessing.MAX_ANALYTICS_CACHE_SIZE": 10000,
+        "Ldif.LdifProcessing.MIN_ENTRIES": 1000,
+        "Ldif.LdifProcessing.MIN_MEMORY_MB": 64,
+        "Ldif.LdifProcessing.PERFORMANCE_MEMORY_MB_THRESHOLD": 512,
+        "Ldif.LdifProcessing.DEBUG_MAX_WORKERS": 2,
+        "Ldif.LdifProcessing.SMALL_ENTRY_COUNT_THRESHOLD": 100,
+        "Ldif.LdifProcessing.MEDIUM_ENTRY_COUNT_THRESHOLD": 1000,
+        "Ldif.LdifProcessing.MIN_ATTRIBUTE_PARTS": 2,
     }
 
-    SUPPORTED_ENCODINGS: ClassVar[list[str]] = ["utf-8", "utf-16", "ascii"]
+    # SUPPORTED_ENCODINGS list removed - Encoding is a StrEnum
+    ENCODING_MEMBERS: ClassVar[list[str]] = ["UTF8", "UTF16", "ASCII"]
 
     VALIDATION_CONSTANTS: ClassVar[dict[str, object]] = {
-        "LdifValidation.MIN_DN_COMPONENTS": 1,
-        "LdifValidation.MAX_DN_LENGTH": 2048,
-        "LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
-        "LdifValidation.MAX_VALUES_PER_ATTRIBUTE": 100,
-        "LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH": 10000,
-        "LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH": 1,
-        "LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH": 127,
-        "LdifValidation.MIN_URL_LENGTH": 1,
-        "LdifValidation.MAX_URL_LENGTH": 2048,
-        "LdifValidation.MIN_ENCODING_LENGTH": 1,
-        "LdifValidation.MAX_ENCODING_LENGTH": 50,
+        "Ldif.LdifValidation.MIN_DN_COMPONENTS": 1,
+        "Ldif.LdifValidation.MAX_DN_LENGTH": 2048,
+        "Ldif.LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
+        "Ldif.LdifValidation.MAX_VALUES_PER_ATTRIBUTE": 100,
+        "Ldif.LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH": 10000,
+        "Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH": 1,
+        "Ldif.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH": 127,
+        "Ldif.LdifValidation.MIN_URL_LENGTH": 1,
+        "Ldif.LdifValidation.MAX_URL_LENGTH": 2048,
+        "Ldif.LdifValidation.MIN_ENCODING_LENGTH": 1,
+        "Ldif.LdifValidation.MAX_ENCODING_LENGTH": 50,
     }
 
     QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
-        "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
-        "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
+        "Ldif.QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
+        "Ldif.QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
     }
 
     LDAP_SERVERS: ClassVar[dict[str, str]] = {
@@ -97,24 +97,11 @@ class TestsTestFlextLdifConstants(s):
         "ORACLE_OUD": "oud",
     }
 
-    REQUIRED_FEATURES: ClassVar[list[str]] = [
-        "base64_encoding",
-        "line_continuation",
-        "url_references",
-        "comments",
-        "change_records",
-    ]
-
-    OPTIONAL_FEATURES: ClassVar[list[str]] = [
-        "language_tags",
-        "large_entries",
-        "binary_data",
-    ]
+    # REQUIRED_FEATURES and OPTIONAL_FEATURES removed - RfcCompliance doesn't have these
+    # Only MODERATE exists in RfcCompliance
 
     COMPLIANCE_MODES: ClassVar[dict[str, str]] = {
-        "STRICT": "strict",
         "MODERATE": "moderate",
-        "LENIENT": "lenient",
     }
 
     ENUM_TEST_CASES: ClassVar[list[tuple[str, str, str]]] = [
@@ -146,10 +133,10 @@ class TestsTestFlextLdifConstants(s):
     NAMESPACE_GROUPS: ClassVar[list[str]] = [
         "Encoding",
         "Format",
-        "Processing",
+        "LdifProcessing",
         "LdifGeneralValidation",
         "Acl",
-        "Schema",
+        "LdifFormatting",
     ]
 
     # ════════════════════════════════════════════════════════════════════════
@@ -198,35 +185,36 @@ class TestsTestFlextLdifConstants(s):
 
     def test_debug_workers_less_than_max(self) -> None:
         """Test debug workers is less than max workers limit."""
-        assert c.Ldif.DEBUG_MAX_WORKERS <= c.LdifProcessing.MAX_WORKERS_LIMIT
+        assert (
+            c.Ldif.LdifProcessing.DEBUG_MAX_WORKERS
+            <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        )
 
     def test_performance_workers_less_than_max(self) -> None:
         """Test performance workers is less than max workers limit."""
         assert (
-            c.LdifProcessing.PERFORMANCE_MIN_WORKERS
-            <= c.LdifProcessing.MAX_WORKERS_LIMIT
+            c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS
+            <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
         )
 
     # ════════════════════════════════════════════════════════════════════════
-    # ENCODING CONSTANTS TESTS (4 tests)
+    # ENCODING CONSTANTS TESTS (3 tests)
     # ════════════════════════════════════════════════════════════════════════
 
     def test_default_encoding_is_utf8(self) -> None:
         """Test default encoding is utf-8."""
         assert c.Ldif.DEFAULT_ENCODING == "utf-8"
 
-    def test_supported_encodings_is_frozenset(self) -> None:
-        """Test supported encodings is a frozenset."""
-        assert isinstance(c.Ldif.SUPPORTED_ENCODINGS, frozenset)
+    def test_encoding_is_strenum(self) -> None:
+        """Test Encoding is a StrEnum with expected members."""
+        # Encoding is a StrEnum, not a set
+        assert isinstance(c.Ldif.Encoding.UTF8, str)
+        assert c.Ldif.Encoding.UTF8 == "utf-8"
 
-    def test_default_in_supported_encodings(self) -> None:
-        """Test default encoding is in supported encodings set."""
-        assert c.Ldif.DEFAULT_ENCODING in c.Ldif.SUPPORTED_ENCODINGS
-
-    @pytest.mark.parametrize("encoding", SUPPORTED_ENCODINGS)
-    def test_supported_encodings_contains(self, encoding: str) -> None:
-        """Test encoding is in supported encodings."""
-        assert encoding in c.Ldif.SUPPORTED_ENCODINGS
+    @pytest.mark.parametrize("encoding_name", ENCODING_MEMBERS)
+    def test_encoding_members_exist(self, encoding_name: str) -> None:
+        """Test encoding member exists in Encoding enum."""
+        assert hasattr(c.Ldif.Encoding, encoding_name)
 
     # ════════════════════════════════════════════════════════════════════════
     # VALIDATION CONSTANTS TESTS (1 test)
@@ -259,20 +247,30 @@ class TestsTestFlextLdifConstants(s):
     # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
-        "object_class",
-        ["person", "organizationalPerson", "inetOrgPerson"],
+        ("attr_name", "expected_value"),
+        [
+            ("INET_ORG_PERSON", "inetOrgPerson"),
+            ("ORGANIZATIONAL_PERSON", "organizationalPerson"),
+        ],
     )
-    def test_ldap_person_classes(self, object_class: str) -> None:
-        """Test object class is in LDAP person classes."""
-        assert object_class in c.Ldif.ObjectClasses.LDAP_PERSON_CLASSES
+    def test_person_object_classes(
+        self, attr_name: str, expected_value: str
+    ) -> None:
+        """Test person object class constants."""
+        assert getattr(c.Ldif.ObjectClasses, attr_name) == expected_value
 
     @pytest.mark.parametrize(
-        "object_class",
-        ["groupOfNames", "groupOfUniqueNames"],
+        ("attr_name", "expected_value"),
+        [
+            ("GROUP_OF_NAMES", "groupOfNames"),
+            ("GROUP_OF_UNIQUE_NAMES", "groupOfUniqueNames"),
+        ],
     )
-    def test_ldap_group_classes(self, object_class: str) -> None:
-        """Test object class is in LDAP group classes."""
-        assert object_class in c.Ldif.ObjectClasses.LDAP_GROUP_CLASSES
+    def test_group_object_classes(
+        self, attr_name: str, expected_value: str
+    ) -> None:
+        """Test group object class constants."""
+        assert getattr(c.Ldif.ObjectClasses, attr_name) == expected_value
 
     # ════════════════════════════════════════════════════════════════════════
     # LDAP SERVER CONSTANTS TESTS (1 test)
@@ -288,18 +286,8 @@ class TestsTestFlextLdifConstants(s):
         assert actual == expected_value
 
     # ════════════════════════════════════════════════════════════════════════
-    # RFC COMPLIANCE CONSTANTS TESTS (3 tests)
+    # RFC COMPLIANCE CONSTANTS TESTS (1 test)
     # ════════════════════════════════════════════════════════════════════════
-
-    @pytest.mark.parametrize("feature", REQUIRED_FEATURES)
-    def test_required_features(self, feature: str) -> None:
-        """Test feature is in required features."""
-        assert feature in c.Ldif.RfcCompliance.REQUIRED_FEATURES
-
-    @pytest.mark.parametrize("feature", OPTIONAL_FEATURES)
-    def test_optional_features(self, feature: str) -> None:
-        """Test feature is in optional features."""
-        assert feature in c.Ldif.RfcCompliance.OPTIONAL_FEATURES
 
     @pytest.mark.parametrize(
         ("attr_name", "expected_value"),
@@ -336,26 +324,30 @@ class TestsTestFlextLdifConstants(s):
     @pytest.mark.parametrize("group_name", NAMESPACE_GROUPS)
     def test_constant_groups_accessible(self, group_name: str) -> None:
         """Test constant group is accessible."""
-        assert hasattr(FlextLdifConstants, group_name)
+        assert hasattr(c.Ldif, group_name)
 
     @pytest.mark.parametrize("group_name", NAMESPACE_GROUPS)
     def test_constant_groups_are_classes(self, group_name: str) -> None:
         """Test constant group is a class."""
-        group = getattr(FlextLdifConstants, group_name)
+        group = getattr(c.Ldif, group_name)
         assert isinstance(group, type)
 
     def test_constant_values_are_reasonable(self) -> None:
         """Test that constant values are within reasonable ranges."""
-        # Encoding
-        assert c.Ldif.DEFAULT_ENCODING in c.Ldif.SUPPORTED_ENCODINGS
+        # Encoding (Encoding is a StrEnum, not a set with SUPPORTED_ENCODINGS)
+        assert c.Ldif.DEFAULT_ENCODING == "utf-8"
+        assert c.Ldif.Encoding.UTF8 == "utf-8"
 
         # Format
         assert 40 < c.Ldif.LdifFormatting.MAX_LINE_WIDTH < 200
 
         # Processing
-        assert c.LdifProcessing.MAX_WORKERS_LIMIT > 0
-        assert c.Ldif.DEBUG_MAX_WORKERS <= c.LdifProcessing.MAX_WORKERS_LIMIT
-        assert c.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
+        assert c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT > 0
+        assert (
+            c.Ldif.LdifProcessing.DEBUG_MAX_WORKERS
+            <= c.Ldif.LdifProcessing.MAX_WORKERS_LIMIT
+        )
+        assert c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
         assert c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
