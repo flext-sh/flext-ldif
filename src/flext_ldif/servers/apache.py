@@ -385,7 +385,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
                     metadata.extensions = FlextLdifModelsMetadata.DynamicMetadata()
-                metadata.extensions[c.Ldif.MetadataKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
                 )
 

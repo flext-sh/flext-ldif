@@ -160,7 +160,7 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, value: str | bytes | float | bool | list[str] | None) -> None:
+            def __init__(self, *, value: str | bytes | float | bool | list[str] | None) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:

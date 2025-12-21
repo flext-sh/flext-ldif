@@ -1340,7 +1340,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if bind_ip_filter:
-            current_extensions[c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
+            current_extensions[c.Ldif.QuirkMetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
 
         constrain_to_added = FlextLdifUtilitiesACL.extract_component(
             acl_value,
