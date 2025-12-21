@@ -584,10 +584,10 @@ class FlextLdifSorting(
                     action_attempted="sort_entry_attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
                     entry_index=0,  # Index not available in batch context
-                    total_entries=u.Collection.count(entries),
+                    total_entries=u.count(entries),
                     error=str(error_msg),
                     error_type=type(result.error).__name__ if result.error else None,
-                    attributes_count=u.Collection.count(original_attrs),
+                    attributes_count=u.count(original_attrs),
                     consequence="Entry attributes were not sorted",
                 )
                 error_text = f"Attribute sort failed: {error_msg}"
@@ -706,7 +706,7 @@ class FlextLdifSorting(
                             else [acl_values_raw_normalized]
                         )
                     ]
-                    if u.Collection.count(acl_values) > 1:
+                    if u.count(acl_values) > 1:
                         sorted_acl: list[str] = [
                             str(item)
                             for item in sorted(acl_values, key=lambda x: str(x).lower())
@@ -1152,7 +1152,7 @@ class FlextLdifSorting(
                 self.logger.debug(
                     "Sorted entry attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
-                    attributes_count=u.Collection.count(original_attr_order),
+                    attributes_count=u.count(original_attr_order),
                 )
 
         return r[m.Ldif.Entry].ok(new_entry)
@@ -1232,9 +1232,9 @@ class FlextLdifSorting(
                 self.logger.debug(
                     "Sorted entry attributes by custom order",
                     entry_dn=str(entry.dn) if entry.dn else None,
-                    attributes_count=u.Collection.count(original_attr_order),
-                    ordered_count=u.Collection.count(ordered_attrs),
-                    remaining_count=u.Collection.count(remaining_attrs),
+                    attributes_count=u.count(original_attr_order),
+                    ordered_count=u.count(ordered_attrs),
+                    remaining_count=u.count(remaining_attrs),
                 )
 
         return r[m.Ldif.Entry].ok(new_entry)

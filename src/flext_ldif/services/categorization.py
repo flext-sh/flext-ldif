@@ -1040,7 +1040,7 @@ class FlextLdifCategorization(
             if cat_entries:
                 # Type narrowing: cat_entries is list[Entry], u.count accepts list
                 entries_count: int = (
-                    u.Collection.count(cat_entries)
+                    u.count(cat_entries)
                     if isinstance(cat_entries, list)
                     else 0
                 )
@@ -1127,9 +1127,9 @@ class FlextLdifCategorization(
                     logger.info(
                         "Applied base DN filter",
                         category=category,
-                        total_entries=u.Collection.count(entries),
-                        kept_entries=u.Collection.count(included_updated),
-                        rejected_entries=u.Collection.count(excluded_updated),
+                        total_entries=u.count(entries),
+                        kept_entries=u.count(included_updated),
+                        rejected_entries=u.count(excluded_updated),
                     )
             else:
                 # Convert to list[m.Ldif.Entry] for _FlexibleCategories
@@ -1196,10 +1196,10 @@ class FlextLdifCategorization(
                 # filtered is already list[m.Ldif.Entry] after None check
                 logger.info(
                     "Applied schema OID whitelist filter",
-                    total_entries=u.Collection.count(schema_entries),
-                    filtered_entries=u.Collection.count(filtered),
-                    removed_entries=u.Collection.count(schema_entries)
-                    - u.Collection.count(filtered),
+                    total_entries=u.count(schema_entries),
+                    filtered_entries=u.count(filtered),
+                    removed_entries=u.count(schema_entries)
+                    - u.count(filtered),
                 )
                 return r[list[m.Ldif.Entry]].ok(filtered)
 

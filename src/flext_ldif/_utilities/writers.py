@@ -169,17 +169,12 @@ class FlextLdifUtilitiesWriters:
 
             try:
                 lines: list[str] = []
-                # config.entry is FlextModelsEntity.Entry (flext_core base type)
-                # Cast to m.Ldif.Entry for flext-ldif-specific operations
-                entry_raw = config.entry
-                entry = cast(m.Ldif.Entry, entry_raw)
+                # config.entry is the correct Entry type
+                entry = config.entry
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
-                    # transform_entry_hook returns FlextModelsEntity.Entry
-                    entry_transformed = config.transform_entry_hook(entry)
-                    # Cast result to m.Ldif.Entry
-                    entry = cast(m.Ldif.Entry, entry_transformed)
+                    entry = config.transform_entry_hook(entry)
 
                 # Write entry parts (expects m.Ldif.Entry)
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -491,31 +486,12 @@ class FlextLdifUtilitiesWriters:
                     total_entries=len(config.entries),
                 )
 
-                # Convert EntryProtocol entries to Entry for type compatibility
-                entries_typed: list[FlextLdifModelsDomains.Entry] = []
-                for entry in config.entries:
-                    # Check if it's already Entry model instance
-                    if isinstance(entry, FlextLdifModelsDomains.Entry):
-                        entries_typed.append(entry)
-                    else:
-                        # Convert EntryProtocol to Entry via model_validate
-                        dn_value = (
-                            entry.dn.value
-                            if hasattr(entry.dn, "value")
-                            else str(entry.dn)
-                            if entry.dn
-                            else None
-                        )
-                        attrs_value = (
-                            entry.attributes.attributes
-                            if hasattr(entry.attributes, "attributes")
-                            else entry.attributes or None
-                        )
-                        converted_entry = FlextLdifModelsDomains.Entry.model_validate({
-                            "dn": dn_value,
-                            "attributes": attrs_value,
-                        })
-                        entries_typed.append(converted_entry)
+                # Convert flext_core.Entry entries to m.Ldif.Entry for type compatibility
+                entries_typed: list[m.Ldif.Entry] = []
+                for entry_raw in config.entries:
+                    # config.entries are flext_core.Entry instances, cast to m.Ldif.Entry
+                    entry = cast(m.Ldif.Entry, entry_raw)
+                    entries_typed.append(entry)
 
                 # Write each entry using manual loop for clear type inference
                 # (avoiding complex generic type inference issues with u.Collection.batch)

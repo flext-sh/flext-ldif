@@ -542,7 +542,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def evaluate_predicate[T](
-            predicate: Callable[[str, T], bool] | Callable[[T], bool],
+            predicate: object,
             key: str,
             value: T,
         ) -> bool:
@@ -561,21 +561,23 @@ class FlextLdifUtilities(FlextUtilities):
                 except (TypeError, ValueError):
                     # Fallback: try as 1-arg predicate
                     try:
-                        result = FlextLdifUtilities.Ldif.call_processor_single_arg(
-                            predicate, value
-                        )
-                        if isinstance(result, bool):
-                            return result
+                        # Runtime call to predicate as 1-arg
+                        call_1arg = getattr(predicate, '__call__', None)
+                        if call_1arg is not None:
+                            result = call_1arg(value)
+                            if isinstance(result, bool):
+                                return result
                     except (TypeError, ValueError):
                         pass
             else:
                 # TypeGuard ensures predicate is Callable[[T], bool]
                 try:
-                    result = FlextLdifUtilities.Ldif.call_processor_single_arg(
-                        predicate, value
-                    )
-                    if isinstance(result, bool):
-                        return result
+                    # Runtime call to predicate
+                    call_fn = getattr(predicate, '__call__', None)
+                    if call_fn is not None:
+                        result = call_fn(value)
+                        if isinstance(result, bool):
+                            return result
                 except (TypeError, ValueError):
                     pass
             return True

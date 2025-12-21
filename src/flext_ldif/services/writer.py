@@ -231,8 +231,8 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         response = m.Ldif.LdifResults.WriteResponse(
             content=ldif_content,
             statistics=m.Ldif.LdifResults.Statistics(
-                total_entries=u.Collection.count(entries),
-                processed_entries=u.Collection.count(entries),
+                total_entries=u.count(entries),
+                processed_entries=u.count(entries),
             ),
         )
 
