@@ -731,21 +731,23 @@ class FlextLdifProtocols(FlextProtocols):
         class Quirks:
             """Quirks namespace containing quirk protocol aliases."""
 
-
-# Define Quirks protocol aliases after class definition
-# These are added to Quirks namespace for test compatibility
-FlextLdifProtocols.Ldif.Quirks.SchemaProtocol = FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.AclProtocol = FlextLdifProtocols.Ldif.AclQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.EntryProtocol = FlextLdifProtocols.Ldif.EntryQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.QuirksPort = FlextLdifProtocols.Ldif.QuirksPortProtocol
+            # Protocol aliases for test compatibility
+            SchemaProtocol = FlextLdifProtocols.Ldif.SchemaQuirkProtocol
+            AclProtocol = FlextLdifProtocols.Ldif.AclQuirkProtocol
+            EntryProtocol = FlextLdifProtocols.Ldif.EntryQuirkProtocol
+            QuirksPort = FlextLdifProtocols.Ldif.QuirksPortProtocol
 
 # Add direct Quirks alias for test compatibility
 FlextLdifProtocols.Quirks = FlextLdifProtocols.Ldif.Quirks
 
 # Short name aliases for Schema protocols (without Protocol suffix)
 # These provide backward compatibility for tests using p.Ldif.SchemaAttribute
-FlextLdifProtocols.Ldif.SchemaAttribute = FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-FlextLdifProtocols.Ldif.SchemaObjectClass = FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+FlextLdifProtocols.Ldif.SchemaAttribute = (
+    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+)
+FlextLdifProtocols.Ldif.SchemaObjectClass = (
+    FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+)
 
 # Runtime aliases
 p = FlextLdifProtocols

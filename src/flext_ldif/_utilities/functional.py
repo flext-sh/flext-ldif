@@ -468,11 +468,10 @@ class FlextFunctional:
                     ])
                 # Single value (not list/tuple), predicate checks it
                 elif predicate(processed):
-                    # processed is U when not a sequence
-                    single_result = processed  # type: U
-                    result.append(single_result)
+                    # processed is U when not a sequence - cast to ensure type safety
+                    result.append(cast("U", processed))
             except Exception:
-                if _on_error== "stop":
+                if on_error == "stop":
                     raise
                 # "skip" and "collect" both continue processing
         return result
@@ -548,8 +547,7 @@ class FlextFunctional:
             value_seq = None
         else:
             # Single value (T) wrapped in list becomes Sequence[T]
-            single_value: T = value
-            value_seq = [single_value]
+            value_seq = [cast("T", value)]
 
         # Use or_ DSL for None handling
         extracted = cls.or_(value_seq, default=default_list)

@@ -2167,7 +2167,9 @@ class FlextLdifUtilitiesDN:
                 return dn
 
         on_error_mode = "fail" if fail_fast else "skip"
-        batch_result = u.Collection.batch(list(dns), replace_dn, _on_error=on_error_mode)
+        batch_result = u.Collection.batch(
+            list(dns), replace_dn, _on_error=on_error_mode
+        )
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value

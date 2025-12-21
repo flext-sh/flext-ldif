@@ -290,11 +290,15 @@ class FlextLdifUtilitiesObjectClass:
             # Extract and validate required fields with type narrowing
             oid_value = parsed_dict.get("oid")
             if not isinstance(oid_value, str):
-                return r[m.Ldif.SchemaObjectClass].fail("Missing or invalid 'oid' field")
+                return r[m.Ldif.SchemaObjectClass].fail(
+                    "Missing or invalid 'oid' field"
+                )
 
             kind_value = parsed_dict.get("kind")
             if not isinstance(kind_value, str):
-                return r[m.Ldif.SchemaObjectClass].fail("Missing or invalid 'kind' field")
+                return r[m.Ldif.SchemaObjectClass].fail(
+                    "Missing or invalid 'kind' field"
+                )
 
             # Extract optional fields with type narrowing
             name_value = parsed_dict.get("name")

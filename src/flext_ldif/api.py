@@ -852,9 +852,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         return self.filter_entries(entries, is_person)
 
     @override
-    def execute(
-        self
-    ) -> r[object]:
+    def execute(self) -> r[object]:
         """Execute service health check for FlextService pattern compliance.
 
         Business Rules:
