@@ -1680,61 +1680,34 @@ class FlextLdifUtilitiesACL:
 
         # Use u.Collection.batch which returns TypedDict directly
         # Convert parse_single_acl to return T | r[T] format expected by batch
-        def parse_single_acl_wrapper(
-            acl_line: str,
-        ) -> r[m.Ldif.Acl] | m.Ldif.Acl:
-            """Wrapper that returns T | r[T] for batch compatibility."""
-            result = parse_single_acl(acl_line)
-            if result.is_success:
-                return result.value
-            return result
+        # Direct iteration instead of u.Collection.batch
+        results: list[m.Ldif.Acl | r[m.Ldif.Acl]] = []
+        errors: list[tuple[int, str]] = []
+        for i, acl_line in enumerate(acl_lines):
+            try:
+                result = parse_single_acl(acl_line)
+                if result.is_success:
+                    results.append(result.value)
+                else:
+                    if fail_fast:
+                        return r[list[m.Ldif.Acl]].fail(
+                            result.error or f"Failed to parse ACL line {i}"
+                        )
+                    errors.append((i, result.error or f"Failed to parse ACL line {i}"))
+            except Exception as exc:
+                if fail_fast:
+                    return r[list[m.Ldif.Acl]].fail(f"Exception parsing ACL line {i}: {exc}")
+                errors.append((i, f"Exception parsing ACL line {i}: {exc}"))
 
-        batch_result = u.Collection.batch(
-            list(acl_lines),
-            parse_single_acl_wrapper,
-            _on_error="collect" if not fail_fast else "fail",
-        )
-        # u.Collection.batch returns FlextResult[BatchResultDict]
-        if not batch_result.is_success:
-            return r[list[m.Ldif.Acl]].fail(
-                batch_result.error or "ACL batch parse failed"
-            )
-
-        # Type narrowing: batch_result.value is BatchResultDict when success
-        # Handle both dict and RuntimeResult cases
-        batch_result_value = batch_result.value
-        if not isinstance(batch_result_value, dict):
-            # If value is RuntimeResult, extract its value
-            if hasattr(batch_result_value, "value"):
-                batch_result_dict = (
-                    batch_result_value.value
-                    if isinstance(batch_result_value.value, dict)
-                    else {}
-                )
-            else:
-                batch_result_dict = {}
-        else:
-            batch_result_dict = batch_result_value
-
-        if (
-            isinstance(batch_result_dict, dict)
-            and batch_result_dict.get("error_count", 0) > 0
-        ):
-            errors = batch_result_dict.get("errors", [])
-            error_msg = errors[0][1] if errors else "ACL batch parse failed"
+        if errors and fail_fast:
+            error_msg = errors[0][1]
             return r[list[m.Ldif.Acl]].fail(error_msg)
 
-        # Native Python: extract needed fields directly (avoids f.pick type issues)
+        # Process results and handle errors
         batch_data_dict: dict[str, object] = {
-            "results": batch_result_dict.get("results")
-            if isinstance(batch_result_dict, dict)
-            else None,
-            "errors": batch_result_dict.get("errors")
-            if isinstance(batch_result_dict, dict)
-            else None,
-            "error_count": batch_result_dict.get("error_count", 0)
-            if isinstance(batch_result_dict, dict)
-            else 0,
+            "results": results,
+            "errors": errors,
+            "error_count": len(errors),
         }
         return FlextLdifUtilitiesACL._process_batch_results(
             batch_data_dict,
@@ -1773,59 +1746,19 @@ class FlextLdifUtilitiesACL:
                 return FlextLdifUtilitiesACL.map_oud_to_oid_permissions(permissions)
             return permissions
 
-        # Use u.Collection.batch which returns TypedDict directly
-        # Convert convert_single_permissions to return T | r[T] format expected by batch
-        def convert_single_permissions_wrapper(
-            permissions: dict[str, bool],
-        ) -> dict[str, bool]:
-            """Wrapper that returns T directly for batch compatibility."""
-            return convert_single_permissions(permissions)
-
-        batch_result = u.Collection.batch(
-            list(permissions_list),
-            convert_single_permissions_wrapper,
-            _on_error="fail",
-        )
-        # u.Collection.batch returns FlextResult[BatchResultDict]
-        if not batch_result.is_success:
-            return r[list[dict[str, bool]]].fail(
-                batch_result.error or "Permissions batch convert failed"
-            )
-
-        # Type narrowing: batch_result.value is BatchResultDict when success
-        # Handle both dict and RuntimeResult cases
-        batch_result_value = batch_result.value
-        if not isinstance(batch_result_value, dict):
-            # If value is RuntimeResult, extract its value
-            if hasattr(batch_result_value, "value"):
-                batch_result_dict = (
-                    batch_result_value.value
-                    if isinstance(batch_result_value.value, dict)
-                    else {}
+        # Direct iteration instead of u.Collection.batch
+        converted_list: list[dict[str, bool]] = []
+        for permissions in permissions_list:
+            try:
+                converted = convert_single_permissions(permissions)
+                if isinstance(converted, dict):
+                    converted_list.append(converted)
+            except Exception as exc:
+                return r[list[dict[str, bool]]].fail(
+                    f"Permissions conversion failed: {exc}"
                 )
-            else:
-                batch_result_dict = {}
-        else:
-            batch_result_dict = batch_result_value
 
-        if (
-            isinstance(batch_result_dict, dict)
-            and batch_result_dict.get("error_count", 0) > 0
-        ):
-            errors = batch_result_dict.get("errors", [])
-            error_msg = errors[0][1] if errors else "Permissions batch convert failed"
-            return r[list[dict[str, bool]]].fail(error_msg)
-
-        # Native Python: extract and filter results
-        results_typed: list[dict[str, bool]] = []
-        raw_results = (
-            batch_result_dict.get("results")
-            if isinstance(batch_result_dict, dict)
-            else None
-        )
-        if isinstance(raw_results, list):
-            results_typed.extend(item for item in raw_results if isinstance(item, dict))
-        return r.ok(results_typed)
+        return r[list[dict[str, bool]]].ok(converted_list)
 
     @staticmethod
     def validate_batch(

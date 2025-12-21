@@ -210,6 +210,7 @@ class FlextLdifModels(FlextModels):
         FormatDetails: TypeAlias = FlextLdifModelsDomains.FormatDetails
         SchemaFormatDetails: TypeAlias = FlextLdifModelsDomains.SchemaFormatDetails
         EntryStatistics: TypeAlias = FlextLdifModelsDomains.EntryStatistics
+        DNStatistics: TypeAlias = FlextLdifModelsDomains.DNStatistics
 
         # Type aliases for compatibility
 
@@ -246,17 +247,19 @@ class FlextLdifModels(FlextModels):
 
         # Format options models (direct aliases for test convenience)
         ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
+        MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
+        PermissionMappingConfig: TypeAlias = FlextLdifModelsSettings.PermissionMappingConfig
 
         # Migration results (direct aliases for convenience)
-        MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+        MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
         FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
 
         # Event models - real inheritance classes
         class Events:
             """Extended event models namespace."""
 
-            DnEvent = FlextLdifModelsEvents.DnEvent
-            DnEventConfig = FlextLdifModelsEvents.DnEventConfig
+            DnEvent: TypeAlias = FlextLdifModelsEvents.DnEvent
+            DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
             MigrationEvent = FlextLdifModelsEvents.MigrationEvent
             MigrationEventConfig = FlextLdifModelsEvents.MigrationEventConfig
             ConversionEvent = FlextLdifModelsEvents.ConversionEvent
@@ -301,7 +304,7 @@ class FlextLdifModels(FlextModels):
             ConfigInfo = FlextLdifModelsSettings.ConfigInfo
             PermissionMappingConfig = FlextLdifModelsSettings.PermissionMappingConfig
             SchemaConversionPipelineConfig = FlextLdifModelsSettings.SchemaConversionPipelineConfig
-            MigrateOptions = FlextLdifModelsSettings.MigrateOptions
+            MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
 
         # Results models - extended set
         class Results:
@@ -318,7 +321,7 @@ class FlextLdifModels(FlextModels):
             # Analysis and detection results
             AnalysisResult = FlextLdifModelsResults.AnalysisResult
             EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
-            ServerDetectionResult = FlextLdifModelsResults.ServerDetectionResult
+            ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
 
             # Parsing and writing results
             ParseResponse = FlextLdifModelsResults.ParseResponse
@@ -335,7 +338,7 @@ class FlextLdifModels(FlextModels):
 
             # Migration results
             MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
-            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+            MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
 
             # Validation results
             ValidationResult = FlextLdifModelsResults.ValidationResult
@@ -382,9 +385,9 @@ class FlextLdifModels(FlextModels):
 
             # Service status aliases from _models/results.py
             StatisticsServiceStatus = FlextLdifModelsResults.StatisticsServiceStatus
-            SchemaServiceStatus = FlextLdifModelsResults.SchemaServiceStatus
-            SyntaxServiceStatus = FlextLdifModelsResults.SyntaxServiceStatus
-            ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
+            SchemaServiceStatus: TypeAlias = FlextLdifModelsResults.SchemaServiceStatus
+            SyntaxServiceStatus: TypeAlias = FlextLdifModelsResults.SyntaxServiceStatus
+            ValidationServiceStatus: TypeAlias = FlextLdifModelsResults.ValidationServiceStatus
             EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
             ServiceStatus = FlextLdifModelsResults.ServiceStatus
             CategoryPaths = FlextLdifModelsResults.CategoryPaths
@@ -403,7 +406,7 @@ class FlextLdifModels(FlextModels):
 
             # Migration results
             MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
-            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+            MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
 
             # Validation results
             ValidationResult = FlextLdifModelsResults.ValidationResult
@@ -414,7 +417,7 @@ class FlextLdifModels(FlextModels):
             DynamicCounts = FlextLdifModelsResults.DynamicCounts
 
             # Analysis and detection results
-            ServerDetectionResult = FlextLdifModelsResults.ServerDetectionResult
+            ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
             AnalysisResult = FlextLdifModelsResults.AnalysisResult
             EntryResult = FlextLdifModelsResults.EntryResult
 

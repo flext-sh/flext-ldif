@@ -20,6 +20,7 @@ from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.shared import Acl, SchemaObjectClass
 from flext_ldif.constants import c
 
