@@ -2000,7 +2000,7 @@ class FlextLdifModelsSettings:
             validate_assignment=True,
         )
 
-        entry: FlextModelsEntity.Entry = Field(
+        entry: FlextLdifModelsDomains.Entry = Field(
             ...,
             description="Entry model to write",
         )

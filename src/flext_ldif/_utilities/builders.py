@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Literal, Self, cast
+from typing import Literal, Self
 
 from flext_ldif._models.settings import (
     AclConversionConfig,
@@ -641,9 +641,9 @@ class WriteConfigBuilder:
             format=self._format.value,  # format is alias for output_format
             line_width=self._line_width,
             fold_lines=self._fold_lines,
-            base64_attrs=cast("list[str] | None", base64_attrs_value),
+            base64_attrs=base64_attrs_value,
             sort_by=self._sort_by.value,
-            attr_order=cast("list[str] | None", attr_order_value),
+            attr_order=attr_order_value,
             include_metadata=self._include_metadata,
             server=self._server,
         )

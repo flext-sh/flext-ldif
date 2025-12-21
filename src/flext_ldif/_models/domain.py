@@ -3843,10 +3843,7 @@ class FlextLdifModelsDomains:
             default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
                 normalize_server_type(quirk_type)
                 if quirk_type is not None
-                else cast(
-                    "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    c.Ldif.ServerTypes.RFC.value,
-                )
+                else c.Ldif.ServerTypes.RFC.value
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
