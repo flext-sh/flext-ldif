@@ -682,7 +682,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=server_type_lit,
                 )
-                metadata.extensions[c.Ldif.MetadataKeys.IS_CONFIG_ENTRY] = any(
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
                     marker in dn_lower
                     for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
                 )
