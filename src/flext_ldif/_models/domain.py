@@ -214,7 +214,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls(value=dn)
+                return cls(value=dn)  # type: ignore[call-arg]
 
             return dn
 
@@ -1650,7 +1650,7 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.DN.model_validate(value)
 
             if isinstance(value, str):
-                return FlextLdifModelsDomains.DN(value=value)
+                return FlextLdifModelsDomains.DN(value=value)  # type: ignore[call-arg]
 
             return FlextLdifModelsDomains.DN(value="")
 
@@ -3851,7 +3851,7 @@ class FlextLdifModelsDomains:
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
             elif isinstance(extensions, dict):
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**{k: v for k, v in extensions.items() if isinstance(v, (str, int, float, bool))})
+                extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
             else:
                 extensions_model = extensions
             return cls(

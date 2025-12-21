@@ -162,12 +162,9 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
     @property
-    def schema_instance(self) -> object:
+    def schema(self) -> object:
         """Access to nested schema quirk instance."""
         return self._schema_quirk
-
-    # Note: Pydantic's schema() classmethod is not overridden
-    # Use schema_instance property to access nested schema quirk
 
     @property
     def acl(self) -> object:
@@ -1034,10 +1031,8 @@ class _PriorityDescriptor:
 # happens at module import time, not instance creation time.
 # Use setattr to set class-level descriptors on Pydantic models
 # Note: setattr works here because we're setting on the class, not an instance
-# Type: ignore for descriptor assignments - descriptors are set at class level,
-# not instance level, bypassing Pydantic's type validation
-setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
+FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
+FlextLdifServersBase.priority = _PriorityDescriptor(0)
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

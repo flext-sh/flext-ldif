@@ -534,7 +534,7 @@ class FlextLdifResult[T]:
             # Filter elements - result is always a list for type consistency
             filtered_elements: list[object] = [item for item in value if matches_func(item)]
             # Type narrowing: filtered_elements is the filtered sequence of type T
-            return FlextLdifResult(r.ok(filtered_elements))
+            return FlextLdifResult(r.ok(filtered_elements))  # type: ignore[arg-type]
 
         # Handle single value - return if matches, fail otherwise
         if matches_func(value):

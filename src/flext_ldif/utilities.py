@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from typing import Any, cast
 
 import inspect
 from collections.abc import (
@@ -25,7 +24,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Literal, Self, TypeGuard, overload
+from typing import Any, Literal, Self, TypeGuard, cast, overload
 
 from flext_core import (
     FlextLogger,
@@ -148,6 +147,10 @@ class FlextLdifUtilities(FlextUtilities):
             entry = u.Entry.create("cn=test", attrs={"cn": ["test"]})
 
         """
+
+        # Type alias for variadic callable (Python 3.13+ compatible)
+        # Use p.VariadicCallable from protocols to avoid Any
+        type VariadicCallable[T] = p.VariadicCallable[T]
 
         class ConvBuilder:
             """Conversion builder for type-safe value conversion (DSL pattern).
@@ -499,7 +502,7 @@ class FlextLdifUtilities(FlextUtilities):
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
                     # Cast between compatible ProcessConfig types
-                    transform_config.process_config = cast(Any, process_config)
+                    transform_config.process_config = cast("Any", process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
@@ -510,7 +513,7 @@ class FlextLdifUtilities(FlextUtilities):
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
                     # Cast between compatible ProcessConfig types
-                    transform_config.process_config = cast(Any, config)
+                    transform_config.process_config = cast("Any", config)
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
@@ -561,7 +564,7 @@ class FlextLdifUtilities(FlextUtilities):
                     try:
                         # Runtime call to predicate as 1-arg
                         if callable(predicate):
-                            result = cast(Any, predicate)(value)
+                            result = cast("Any", predicate)(value)
                             if isinstance(result, bool):
                                 return result
                     except (TypeError, ValueError):
@@ -570,7 +573,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[T], bool]
                 try:
                     # Runtime call to predicate
-                    result = cast(Any, predicate)(value)
+                    result = cast("Any", predicate)(value)
                     if isinstance(result, bool):
                         return result
                 except (TypeError, ValueError):
@@ -677,9 +680,9 @@ class FlextLdifUtilities(FlextUtilities):
                     continue
                 # Type narrowing: use TypeGuard to narrow union type
                 if FlextLdifUtilities.Ldif.is_two_arg_processor(processor_func):
-                    result_item = cast(Any, processor_func)(key, value)
+                    result_item = cast("Any", processor_func)(key, value)
                 else:
-                    result_item = cast(Any, processor_func)(value)
+                    result_item = cast("Any", processor_func)(value)
                 results.append(result_item)
             return results
 
@@ -936,11 +939,11 @@ class FlextLdifUtilities(FlextUtilities):
                 | Sequence[m.Ldif.Entry]
             ),
             predicate_or_filter1: (
-                FlextLdifUtilities.Ldif.Callable[[object], bool]
+                FlextLdifUtilities.Ldif.VariadicCallable[bool]
                 | EntryFilter[m.Ldif.Entry]
             ),
             *filters: EntryFilter[m.Ldif.Entry],
-            mapper: FlextLdifUtilities.Ldif.Callable[R] | None = None,
+            mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
             mode: Literal["all", "any"] = "all",
         ) -> (
             list[T]
@@ -976,7 +979,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Base class filter - delegate to FlextUtilitiesCollection.filter when not EntryFilter
             if not isinstance(predicate_or_filter1, EntryFilter):
                 # Type already narrowed by isinstance check
-                predicate: FlextLdifUtilities.Ldif.Callable[[object], bool] = (
+                predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool] = (
                     predicate_or_filter1
                 )
 
@@ -1031,27 +1034,19 @@ class FlextLdifUtilities(FlextUtilities):
                 | Mapping[str, T]
                 | Sequence[m.Ldif.Entry]
             ),
-            predicate: FlextLdifUtilities.Ldif.Callable[[object], bool],
-            mapper: FlextLdifUtilities.Ldif.Callable[R] | None,
+            predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool],
+            mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None,
         ) -> list[T] | list[R] | dict[str, T] | dict[str, R]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
                 # Type narrowing: items_or_entries is list[object] | tuple[object, ...]
                 items_list: list[object] | tuple[object, ...] = items_or_entries
-                if mapper is None:
-                    result_list = FlextUtilities.Collection.filter(
-                        items_list,
-                        predicate,
-                    )
-                else:
-                    # mapper is Callable[R], compatible with Callable[t.GeneralValueType]
-                    # t.GeneralValueType is a wide union type that includes R
-                    result_list = FlextUtilities.Collection.filter(
-                        items_list,
-                        predicate,
-                        mapper=mapper,
-                    )
-                # Type narrowing: result_list is list[T] | list[R] from Collection.filter
+                # Collection.filter does not support mapper parameter - just filter
+                result_list = FlextUtilities.Collection.filter(
+                    items_list,
+                    predicate,
+                )
+                # Type narrowing: result_list is list[T] from Collection.filter
                 return result_list
             if isinstance(items_or_entries, (dict, Mapping)):
                 # Type narrowing: items_or_entries is dict[str, object] | Mapping[str, object]
@@ -1062,7 +1057,7 @@ class FlextLdifUtilities(FlextUtilities):
                         predicate,
                     )
                 else:
-                    # mapper is Callable[R], compatible with Callable[t.GeneralValueType]
+                    # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
                     # t.GeneralValueType is a wide union type that includes R
                     result_dict = FlextUtilities.Collection.filter(
                         items_dict,
@@ -1079,7 +1074,7 @@ class FlextLdifUtilities(FlextUtilities):
                     predicate,
                 )
             else:
-                # mapper is Callable[R], compatible with Callable[t.GeneralValueType]
+                # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
                 # t.GeneralValueType is a wide union type that includes R
                 result_single = FlextUtilities.Collection.filter(
                     items_single_list,
@@ -1439,7 +1434,7 @@ class FlextLdifUtilities(FlextUtilities):
         def zip_with(
             cls,
             *sequences: Sequence[t.GeneralValueType],
-            combiner: FlextLdifUtilities.Ldif.Callable[t.GeneralValueType]
+            combiner: FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]
             | None = None,
         ) -> list[t.GeneralValueType]:
             """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
@@ -2099,9 +2094,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def curry(
             cls,
-            fn: Callable[t.GeneralValueType],
+            fn: VariadicCallable[t.GeneralValueType],
             *args: t.GeneralValueType,
-        ) -> Callable[t.GeneralValueType]:
+        ) -> VariadicCallable[t.GeneralValueType]:
             """Curry function (mnemonic: cy).
 
             Args:
@@ -2152,8 +2147,8 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type narrowing: result is t.GeneralValueType
                 return result
 
-            # Type narrowing: curried has signature compatible with Callable[t.GeneralValueType]
-            # Return type already declared as Callable[t.GeneralValueType]
+            # Type narrowing: curried has signature compatible with VariadicCallable[t.GeneralValueType]
+            # Return type already declared as VariadicCallable[t.GeneralValueType]
             return curried
 
         # Mnemonic helper
@@ -2748,7 +2743,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def apply(
             cls,
-            fn: FlextLdifUtilities.Ldif.Callable[t.GeneralValueType] | object,
+            fn: FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType] | object,
             *args: t.GeneralValueType,
             **kwargs: t.GeneralValueType,
         ) -> t.GeneralValueType:
@@ -2767,7 +2762,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             if callable(fn):
-                fn_callable: FlextLdifUtilities.Ldif.Callable[
+                fn_callable: FlextLdifUtilities.Ldif.VariadicCallable[
                     t.GeneralValueType
                 ] = fn
                 # Convert args and kwargs to compatible types for VariadicCallable

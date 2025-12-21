@@ -266,10 +266,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse(attr_definition)
                     if server_result.is_success:
-                        parsed_value = server_result.value
-                        # Type narrowing: check if it's SchemaAttribute
-                        if isinstance(parsed_value, m.Ldif.SchemaAttribute):
-                            attr_domain = parsed_value
+                        attr_domain = server_result.value
 
             # Type narrowing: attr_domain is already m.Ldif.SchemaAttribute
             attr: m.Ldif.SchemaAttribute = attr_domain
@@ -350,10 +347,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse(oc_definition)
                     if server_result.is_success:
-                        parsed_value = server_result.value
-                        # Type narrowing: check if it's SchemaObjectClass
-                        if isinstance(parsed_value, m.Ldif.SchemaObjectClass):
-                            oc_domain = parsed_value
+                        oc_domain = server_result.value
 
             # Type narrowing: oc_domain is already m.Ldif.SchemaObjectClass
             oc: m.Ldif.SchemaObjectClass = oc_domain

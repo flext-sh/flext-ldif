@@ -117,14 +117,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
         # Extract entries from server response
         raw_entries = parse_result.value
 
-        # Convert to expected type
-        # raw_entries can be m.Ldif.Entry or str (error message)
-        if isinstance(raw_entries, str):
-            # Parse method returned error string
-            return r[str].fail(f"Parse method returned error: {raw_entries}")
-
-        # raw_entries is m.Ldif.Entry
-        entries: list[m.Ldif.Entry] = [raw_entries]
+        # Convert to expected type (m.Ldif.Entry should be compatible with m.Ldif.Entry)
+        entries: list[m.Ldif.Entry] = list(raw_entries)
 
         # Create response with minimal metadata
         # Use facade LdifResults.Statistics for LDIF-specific statistics
