@@ -870,29 +870,38 @@ class FlextLdifConversion(
 
     @staticmethod
     def _process_schema_conversion_pipeline(
-        config: m.Ldif.Configuration.SchemaConversionPipelineConfig,
+        config: object,
     ) -> r[
         m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
     ]:
         """Process schema conversion pipeline (write->parse)."""
-        write_result = config.write_method(config.source_schema)
+        # Type narrowing: config is SchemaConversionPipelineConfig with required attributes
+        if not (hasattr(config, 'write_method') and hasattr(config, 'source_schema')):
+            return r.fail("Invalid config: missing write_method or source_schema")
+        write_result = getattr(config, 'write_method')(getattr(config, 'source_schema'))
         # Extract value from result: r.value if r.is_success else None
         write_value = write_result.value if write_result.is_success else None
+        item_name = getattr(config, 'item_name', 'item')
         if write_value is None:
             return FlextResult.fail(
-                f"Failed to write {config.item_name} in source format: {u.err(write_result)}",
+                f"Failed to write {item_name} in source format: {u.err(write_result)}",
             )
 
         ldif_result = FlextLdifConversion._validate_ldif_string(
             write_value,
-            config.item_name,
+            item_name,
         )
         ldif_string = ldif_result.value if ldif_result.is_success else None
         if ldif_string is None:
             # Return the failed result directly - type checker knows it's r[ConvertibleModelUnion]
             return ldif_result
 
-        parse_result = config.parse_method(config.target_schema, ldif_string)
+        # Type narrowing: get parse_method and target_schema from config
+        parse_method = getattr(config, 'parse_method', None)
+        target_schema = getattr(config, 'target_schema', None)
+        if parse_method is None or target_schema is None:
+            return r.fail("Invalid config: missing parse_method or target_schema")
+        parse_result = parse_method(target_schema, ldif_string)
         # Extract value from result: r.value if r.is_success else None
         parsed_value = parse_result.value if parse_result.is_success else None
         if parsed_value is None:

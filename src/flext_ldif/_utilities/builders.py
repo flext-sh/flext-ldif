@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
 from flext_ldif._models.settings import (
     AclConversionConfig,

@@ -1666,7 +1666,7 @@ class FlextLdifUtilities(FlextUtilities):
             predicate: Callable[[T], bool] | None = None,
         ) -> int:
             """Count items (generalized: uses count from base, mnemonic: ct)."""
-            return FlextUtilities.Collection.count(items, predicate=predicate)
+            return FlextUtilities.count(items, predicate=predicate)
 
         ct = count
 

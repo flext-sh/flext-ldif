@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
 from flext_core import FlextUtilities
 
@@ -106,8 +107,10 @@ class FlextLdifUtilitiesServer:
         # Fallback: validate and return derived type
         if server_type_lower in _VALID_SERVER_TYPES:
             # Type narrowing: server_type_lower is in valid server types
-            # server_type_lower is already compatible
-            return server_type_lower
+            # Cast to literal since we validated it's in valid types
+            return cast(
+                "c.Ldif.LiteralTypes.ServerTypeLiteral", server_type_lower
+            )
         return None
 
     @staticmethod
