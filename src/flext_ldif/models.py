@@ -412,7 +412,6 @@ class FlextLdifModels(FlextModels):
             ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
             LdifValidationResult: TypeAlias = FlextLdifModelsResults.LdifValidationResult
 
-
             # Analysis and detection results
             ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
             AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult

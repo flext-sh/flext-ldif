@@ -190,10 +190,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
             FlextResult containing service status
 
         """
+        server_type_lit: c.Ldif.ServerTypes = c.Ldif.ServerTypes(self._server_type)
         return r[FlextLdifModelsResults.SchemaServiceStatus].ok(
             FlextLdifModelsResults.SchemaServiceStatus(
                 service="SchemaService",
-                server_type=self._server_type,
+                server_type=server_type_lit.value,
                 status="operational",
                 rfc_compliance="RFC 4512",
                 operations=[
@@ -315,14 +316,22 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
 
             # Build SchemaObjectClass from parsed dict
+            oid_value = str(parsed_dict["oid"]) if parsed_dict["oid"] else ""
+            name_value = str(parsed_dict.get("name") or parsed_dict["oid"])
+            desc_value = str(parsed_dict.get("desc")) if parsed_dict.get("desc") else None
+            sup_value = parsed_dict.get("sup")
+            kind_value = str(parsed_dict.get("kind", "STRUCTURAL"))
+            must_value = parsed_dict.get("must")
+            may_value = parsed_dict.get("may")
+
             oc_domain = m.Ldif.SchemaObjectClass(
-                oid=parsed_dict["oid"],
-                name=parsed_dict.get("name") or parsed_dict["oid"],
-                desc=parsed_dict.get("desc"),
-                sup=parsed_dict.get("sup"),
-                kind=parsed_dict.get("kind", "STRUCTURAL"),
-                must=parsed_dict.get("must"),
-                may=parsed_dict.get("may"),
+                oid=oid_value,
+                name=name_value,
+                desc=desc_value,
+                sup=sup_value,
+                kind=kind_value,
+                must=must_value,
+                may=may_value,
                 metadata=m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=m.Ldif.DynamicMetadata(**metadata_extensions),

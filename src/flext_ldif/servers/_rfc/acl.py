@@ -183,7 +183,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             server_type=server_type_value,
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type=server_type_value,
-                extensions=m.Ldif.DynamicMetadata(**{"original_format": acl_line}),
+                extensions=m.Ldif.DynamicMetadata(original_format=acl_line),
             ),
         )
         return FlextResult.ok(acl_model)

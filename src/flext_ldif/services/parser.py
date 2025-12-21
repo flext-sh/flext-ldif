@@ -8,7 +8,7 @@ wrapped in ``FlextResult`` to keep error handling explicit.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
+from typing import Callable, cast, override
 
 from flext_core import r
 from pydantic import PrivateAttr
@@ -102,11 +102,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
         # Type narrowing: entry_quirk_raw has parse method
-        entry_quirk: object = entry_quirk_raw
-
-        # Direct call to entry quirk parse method
-        # Type assertion: entry_quirk has parse method that accepts str
-        parse_method = entry_quirk.parse
+        # Direct call to entry quirk parse method using cast for type safety
+        parse_method = cast("Callable[[str], r[m.Ldif.Entry | str]]", getattr(entry_quirk_raw, "parse"))
         if not callable(parse_method):
             return r.fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
@@ -221,7 +218,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             processed_value = batch_result.value
             if isinstance(processed_value, dict) and "results" in processed_value:
                 # Extract results from BatchResult dict
-                processed_list: list[list[str]] = processed_value["results"]
+                processed_list: list[list[str]] = cast("list[list[str]]", processed_value["results"])
                 for entry_lines in processed_list:
                     if isinstance(entry_lines, list):
                         ldif_lines.extend(entry_lines)
