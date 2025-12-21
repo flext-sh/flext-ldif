@@ -24,7 +24,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Any, Literal, Self, TypeGuard, cast, overload
+from typing import Literal, Self, TypeGuard, cast, overload
 
 from flext_core import (
     FlextLogger,
@@ -413,6 +413,35 @@ class FlextLdifUtilities(FlextUtilities):
                 """Filter entries based on criteria."""
                 return FlextLdifUtilitiesEntry.filter_batch(entries, config, **kwargs)
 
+            @staticmethod
+            def matches_server_patterns(
+                entry_dn: str,
+                attributes: Mapping[str, t.GeneralValueType],
+                config: FlextLdifModelsSettings.ServerPatternsConfig,
+            ) -> bool:
+                """Check if entry matches server-specific patterns."""
+                return FlextLdifUtilitiesEntry.matches_server_patterns(
+                    entry_dn, attributes, config
+                )
+
+            @staticmethod
+            def analyze_differences(
+                entry_attrs: Mapping[str, t.GeneralValueType],
+                converted_attrs: t.Ldif.AttributesDict,
+                original_dn: str,
+                cleaned_dn: str,
+                normalize_attr_fn: Callable[[str], str] | None = None,
+            ) -> tuple[
+                dict[str, t.MetadataAttributeValue],
+                dict[str, dict[str, t.MetadataAttributeValue]],
+                dict[str, t.MetadataAttributeValue],
+                dict[str, str],
+            ]:
+                """Analyze DN and attribute differences for round-trip support."""
+                return FlextLdifUtilitiesEntry.analyze_differences(
+                    entry_attrs, converted_attrs, original_dn, cleaned_dn, normalize_attr_fn
+                )
+
         class Events(FlextLdifUtilitiesEvents):
             """Event utilities for LDIF operations."""
 
@@ -501,8 +530,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # Cast between compatible ProcessConfig types
-                    transform_config.process_config = cast("Any", process_config)
+                    # INTENTIONAL CAST: ProcessConfig assignment across compatible types
+                    transform_config.process_config = cast("object", process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = TransformConfig()
@@ -512,8 +541,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # Cast between compatible ProcessConfig types
-                    transform_config.process_config = cast("Any", config)
+                    # INTENTIONAL CAST: ProcessConfig assignment across compatible types
+                    transform_config.process_config = cast("object", config)
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
@@ -563,8 +592,9 @@ class FlextLdifUtilities(FlextUtilities):
                     # Fallback: try as 1-arg predicate
                     try:
                         # Runtime call to predicate as 1-arg
+                        # INTENTIONAL CAST: predicate is verified callable above
                         if callable(predicate):
-                            result = cast("Any", predicate)(value)
+                            result = cast("Callable[[object], bool]", predicate)(value)
                             if isinstance(result, bool):
                                 return result
                     except (TypeError, ValueError):
@@ -573,7 +603,8 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[T], bool]
                 try:
                     # Runtime call to predicate
-                    result = cast("Any", predicate)(value)
+                    # INTENTIONAL CAST: predicate type is object but guaranteed callable
+                    result = cast("Callable[[object], bool]", predicate)(value)
                     if isinstance(result, bool):
                         return result
                 except (TypeError, ValueError):
@@ -678,11 +709,16 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 ):
                     continue
-                # Type narrowing: use TypeGuard to narrow union type
+                # Type narrowing: TypeGuard check determines arg count
+                # INTENTIONAL CAST: TypeGuard narrows but Python/mypy can't express
+                # "if is_two_arg then Callable[[str,T],R] else Callable[[T],R]"
+                # Phase 5.C item: Replace with Protocol-based callable types
                 if FlextLdifUtilities.Ldif.is_two_arg_processor(processor_func):
-                    result_item = cast("Any", processor_func)(key, value)
+                    result_item = cast("Callable[[str, object], object]", processor_func)(
+                        key, value
+                    )
                 else:
-                    result_item = cast("Any", processor_func)(value)
+                    result_item = cast("Callable[[object], object]", processor_func)(value)
                 results.append(result_item)
             return results
 
