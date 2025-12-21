@@ -144,8 +144,8 @@ class FlextLdif(FlextLdifServiceBase[object]):
             self.__dict__["_service_cache"] = cache
         return cache
 
-    @computed_field  # type: ignore[prop-decorator]
     @property
+    @computed_field
     def service_stats(self) -> dict[str, bool]:
         """Pydantic 2 computed field showing service initialization status.
 

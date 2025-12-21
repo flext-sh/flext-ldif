@@ -956,11 +956,23 @@ class FlextLdifConversion(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available",
                 )
+            # Type narrowing: verify schema quirks have attribute methods
+            if not (hasattr(source_schema, 'write_attribute') and hasattr(target_schema, 'parse_attribute')):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Schema quirks missing attribute conversion methods")
+
+            write_attr = getattr(source_schema, 'write_attribute')
+            parse_attr = getattr(target_schema, 'parse_attribute')
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
-                write_method=lambda _s: source_schema.write_attribute(attribute),
-                parse_method=lambda _t, ldif: target_schema.parse_attribute(ldif),
+                write_method=lambda _s: write_attr(attribute),
+                parse_method=lambda _t, ldif: parse_attr(ldif),
                 item_name="attribute",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
@@ -1007,11 +1019,24 @@ class FlextLdifConversion(
             if target_schema is None:
                 # target_schema_result already has the correct type, no cast needed
                 return target_schema_result
+
+            # Type narrowing: verify schema quirks have objectclass methods
+            if not (hasattr(source_schema, 'write_objectclass') and hasattr(target_schema, 'parse_objectclass')):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Schema quirks missing objectclass conversion methods")
+
+            write_oc = getattr(source_schema, 'write_objectclass')
+            parse_oc = getattr(target_schema, 'parse_objectclass')
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
-                write_method=lambda _s: source_schema.write_objectclass(objectclass),
-                parse_method=lambda _t, ldif: target_schema.parse_objectclass(ldif),
+                write_method=lambda _s: write_oc(objectclass),
+                parse_method=lambda _t, ldif: parse_oc(ldif),
                 item_name="objectclass",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)

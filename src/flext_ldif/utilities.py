@@ -1042,14 +1042,14 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type narrowing: items_or_entries is list[object] | tuple[object, ...]
                 items_list: list[object] | tuple[object, ...] = items_or_entries
                 if mapper is None:
-                    result_list = FlextUtilities.Collection.filter(
+                    result_list = FlextUtilities.filter(
                         items_list,
                         predicate,
                     )
                 else:
                     # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
                     # t.GeneralValueType is a wide union type that includes R
-                    result_list = FlextUtilities.Collection.filter(
+                    result_list = FlextUtilities.filter(
                         items_list,
                         predicate,
                         mapper=mapper,
@@ -1060,14 +1060,14 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type narrowing: items_or_entries is dict[str, object] | Mapping[str, object]
                 items_dict: dict[str, object] | Mapping[str, object] = items_or_entries
                 if mapper is None:
-                    result_dict = FlextUtilities.Collection.filter(
+                    result_dict = FlextUtilities.filter(
                         items_dict,
                         predicate,
                     )
                 else:
                     # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
                     # t.GeneralValueType is a wide union type that includes R
-                    result_dict = FlextUtilities.Collection.filter(
+                    result_dict = FlextUtilities.filter(
                         items_dict,
                         predicate,
                         mapper=mapper,
@@ -1077,14 +1077,14 @@ class FlextLdifUtilities(FlextUtilities):
             # Single item case - wrap in list
             items_single_list: list[object] = [items_or_entries]
             if mapper is None:
-                result_single = FlextUtilities.Collection.filter(
+                result_single = FlextUtilities.filter(
                     items_single_list,
                     predicate,
                 )
             else:
                 # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
                 # t.GeneralValueType is a wide union type that includes R
-                result_single = FlextUtilities.Collection.filter(
+                result_single = FlextUtilities.filter(
                     items_single_list,
                     predicate,
                     mapper=mapper,
