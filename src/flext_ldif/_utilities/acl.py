@@ -1000,7 +1000,7 @@ class FlextLdifUtilitiesACL:
             config.aci_prefix,
         )
         if not is_valid:
-            return r.fail(
+            return r[str].fail(
                 f"Not a valid ACI format: {config.aci_prefix}",
             )
 
@@ -1050,13 +1050,13 @@ class FlextLdifUtilitiesACL:
             metadata=m.Ldif.QuirkMetadata.create_for(
                 config.server_type,
                 extensions=(
-                    FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+                    FlextLdifModelsMetadata.DynamicMetadata(**{k: v for k, v in extensions.items() if isinstance(v, (str, int, float, bool))})
                     if extensions
                     else None
                 ),
             ),
         )
-        return r.ok(acl_model)
+        return r[str].ok(acl_model)
 
     @staticmethod
     def write_aci(
@@ -1094,7 +1094,7 @@ class FlextLdifUtilitiesACL:
         # Build permissions clause
         # Type narrowed: acl_data is concrete Acl model with permissions object
         if not acl_data.permissions:
-            return r.fail("ACL has no permissions")
+            return r[str].fail("ACL has no permissions")
         perm_candidates = [
             "read",
             "write",
@@ -1118,7 +1118,7 @@ class FlextLdifUtilitiesACL:
             config.supported_permissions,
         )
         if not permissions_clause:
-            return r.fail("No supported permissions")
+            return r[str].fail("No supported permissions")
 
         # Build bind rule
         # Type narrowed: acl_data is concrete Acl model with subject object
@@ -1145,7 +1145,7 @@ class FlextLdifUtilitiesACL:
             aci_prefix=config.aci_prefix,
         )
         aci_line = FlextLdifUtilitiesACL.format_aci_line(format_config)
-        return r.ok(aci_line)
+        return r[str].ok(aci_line)
 
     @staticmethod
     def extract_bind_rules_from_extensions(
@@ -1635,8 +1635,8 @@ class FlextLdifUtilitiesACL:
                 error_msgs = FlextLdifUtilitiesACL._format_batch_errors(
                     errors_typed,
                 )
-                return r.fail(f"Parse errors: {'; '.join(error_msgs)}")
-        return r.ok(results_typed)
+                return r[str].fail(f"Parse errors: {'; '.join(error_msgs)}")
+        return r[str].ok(results_typed)
 
     @staticmethod
     def parse_batch(
@@ -1680,8 +1680,8 @@ class FlextLdifUtilitiesACL:
                 fail_fast=fail_fast,
             )
             if acl_result is None:
-                return r.fail("Failed to parse ACL line")
-            return r.ok(acl_result)
+                return r[str].fail("Failed to parse ACL line")
+            return r[str].ok(acl_result)
 
         # Use u.Collection.batch which returns TypedDict directly
         # Convert parse_single_acl to return T | r[T] format expected by batch
@@ -1825,7 +1825,7 @@ class FlextLdifUtilitiesACL:
                 if not result_tuple[1]:  # is_valid is False
                     break
 
-        return r.ok(results)
+        return r[str].ok(results)
 
 
 __all__ = [

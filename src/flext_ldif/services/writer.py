@@ -160,12 +160,12 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
             entry_quirk = self._server.entry(effective_server_type)
         except ValueError as e:
             # Invalid server type - return error instead of raising
-            return r.fail(
+            return r[str].fail(
                 f"Invalid server type: {effective_server_type}. {e!s}",
             )
 
         if entry_quirk is None:
-            return r.fail(
+            return r[str].fail(
                 f"No entry quirk found for server type: {effective_server_type}",
             )
 
@@ -176,7 +176,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         write_result = entry_quirk.write(entries, options)
 
         if write_result.is_failure:
-            return r.fail(write_result.error or "LDIF writing failed")
+            return r[str].fail(write_result.error or "LDIF writing failed")
 
         # Convert protocol result to concrete FlextResult (unwrap and re-wrap)
         return r[str].ok(write_result.value)
@@ -214,7 +214,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         # First get the LDIF string
         string_result = self.write_to_string(entries, server_type, format_options)
         if string_result.is_failure:
-            return r.fail(
+            return r[str].fail(
                 string_result.error or "Failed to generate LDIF content",
             )
 
@@ -224,7 +224,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         try:
             path.write_text(ldif_content, encoding="utf-8")
         except (OSError, UnicodeEncodeError) as e:
-            return r.fail(f"Failed to write LDIF file {path}: {e}")
+            return r[str].fail(f"Failed to write LDIF file {path}: {e}")
 
         # Create response with basic statistics
         # Use facade LdifResults.Statistics for LDIF-specific statistics
@@ -236,7 +236,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
             ),
         )
 
-        return r.ok(response)
+        return r[str].ok(response)
 
     def write(
         self,
@@ -282,8 +282,8 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
                 format_options,
             )
             if file_result.is_failure:
-                return r.fail(file_result.error or "File write failed")
-            return r.ok(file_result.value)
+                return r[str].fail(file_result.error or "File write failed")
+            return r[str].ok(file_result.value)
         # Return string
         string_result = self.write_to_string(
             entries,
@@ -291,8 +291,8 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
             format_options,
         )
         if string_result.is_failure:
-            return r.fail(string_result.error or "String write failed")
-        return r.ok(string_result.value)
+            return r[str].fail(string_result.error or "String write failed")
+        return r[str].ok(string_result.value)
 
     def execute(
         self,
@@ -376,15 +376,15 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
 
         # Convert result to WriteResponse format
         if write_result.is_failure:
-            return r.fail(write_result.error)
+            return r[str].fail(write_result.error)
 
         result_value = write_result.value
         if isinstance(result_value, m.Ldif.LdifResults.WriteResponse):
-            return r.ok(result_value)
+            return r[str].ok(result_value)
 
         # Convert string result to WriteResponse
         # Use facade LdifResults.Statistics for LDIF-specific statistics
-        return r.ok(
+        return r[str].ok(
             m.Ldif.LdifResults.WriteResponse(
                 content=str(result_value),
                 statistics=m.Ldif.LdifResults.Statistics(

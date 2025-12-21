@@ -230,7 +230,7 @@ class FlextLdifModels(FlextModels):
         TransformConfig: TypeAlias = TransformConfig
         FilterConfig = FilterConfig
         ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
-        EntryResult = FlextLdifModelsResults.EntryResult
+        EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
         ParseResponse = FlextLdifModelsResults.ParseResponse
         WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
         WriteOutputOptions: TypeAlias = FlextLdifModelsSettings.WriteOutputOptions

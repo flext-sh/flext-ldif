@@ -95,7 +95,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             )
         except (ValueError, TypeError) as e:
             # Invalid server type validation error
-            return r.fail(f"Invalid server type: {server_type} - {e}")
+            return r[str].fail(f"Invalid server type: {server_type} - {e}")
 
         # Get ACL quirk for normalized server type
         # If "openldap" (generic) was requested, try "openldap1" (legacy format) first
@@ -112,9 +112,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                 acl_quirk = self._server.acl(normalized_server_type)
         except ValueError as e:
             # Invalid server type validation error
-            return r.fail(str(e))
+            return r[str].fail(str(e))
         if acl_quirk is None:
-            return r.fail(
+            return r[str].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
 
@@ -156,7 +156,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Get ACL quirk for server type
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
-            return r.fail(
+            return r[str].fail(
                 f"No ACL quirk found for server type: {server_type}",
             )
 
@@ -203,7 +203,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         if not acl_attr_name:
             # Server has no ACL attributes
             # Statistics is a PEP 695 type alias - use the underlying class directly
-            return r.ok(
+            return r[str].ok(
                 m.Ldif.LdifResults.AclResponse(
                     acls=[],
                     statistics=m.Ldif.LdifResults.Statistics(
@@ -221,7 +221,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         if not acl_values:
             # No ACL values found
             # Statistics is a PEP 695 type alias - use the underlying class directly
-            return r.ok(
+            return r[str].ok(
                 m.Ldif.LdifResults.AclResponse(
                     acls=[],
                     statistics=m.Ldif.LdifResults.Statistics(
@@ -269,7 +269,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             ),
         )
 
-        return r.ok(response)
+        return r[str].ok(response)
 
     @staticmethod
     def extract_acl_entries(
@@ -288,7 +288,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         """
         if not entries:
-            return r.ok([])
+            return r[str].ok([])
 
         # Use default ACL attributes if not specified
         if acl_attributes is None:
@@ -326,7 +326,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             if entry is not None
         ]
 
-        return r.ok(acl_entries)
+        return r[str].ok(acl_entries)
 
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
@@ -373,7 +373,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # Empty ACL list - evaluation fails (no permissions granted)
         if not acls:
-            return r.ok(
+            return r[str].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=False,
                     matched_acl=None,
@@ -391,7 +391,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # If no permissions required, evaluation passes trivially
         if not required_perms:
-            return r.ok(
+            return r[str].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=acls[0] if acls else None,
@@ -408,7 +408,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         found = u.find(acls, predicate=acl_grants_all)
 
         if found is not None:
-            return r.ok(
+            return r[str].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=found,
@@ -417,7 +417,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             )
 
         # No ACL grants all required permissions
-        return r.ok(
+        return r[str].ok(
             m.Ldif.LdifResults.AclEvaluationResult(
                 granted=False,
                 matched_acl=None,

@@ -3851,7 +3851,7 @@ class FlextLdifModelsDomains:
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
             elif isinstance(extensions, dict):
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+                extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**{k: v for k, v in extensions.items() if isinstance(v, (str, int, float, bool))})
             else:
                 extensions_model = extensions
             return cls(

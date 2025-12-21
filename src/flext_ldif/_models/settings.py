@@ -21,7 +21,7 @@ from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.shared import Acl, SchemaObjectClass
+from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
 
 # TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED: if TYPE_CHECKING:
@@ -2180,11 +2180,11 @@ class FlextLdifModelsSettings:
             validate_assignment=True,
         )
 
-        original_acl: Acl = Field(
+        original_acl: FlextLdifModelsDomains.Acl = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: Acl = Field(
+        converted_acl: FlextLdifModelsDomains.Acl = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )

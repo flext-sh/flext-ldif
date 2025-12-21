@@ -330,7 +330,7 @@ class FlextLdifUtilitiesDecorators:
             @FlextLdifUtilitiesDecorators.safe_parse("OID attribute parsing")
             def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
                 # Parse logic - exceptions automatically caught
-                return r.ok(parsed_attr)
+                return r[str].ok(parsed_attr)
 
         """
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
@@ -353,7 +353,7 @@ class FlextLdifUtilitiesDecorators:
             @FlextLdifUtilitiesDecorators.safe_write("OID attribute writing")
             def _write_attribute(self, attr: SchemaAttribute) -> r[str]:
                 # Write logic - exceptions automatically caught
-                return r.ok(ldif_str)
+                return r[str].ok(ldif_str)
 
         """
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)

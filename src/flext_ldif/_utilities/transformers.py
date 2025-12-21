@@ -88,7 +88,7 @@ class EntryTransformer[T](ABC):
         for item in items:
             result = self.apply(item)
             if result.is_failure:
-                return r.fail(result.error or "Transform failed")
+                return r[str].fail(result.error or "Transform failed")
             results.append(result.value)
         return r[list[T]].ok(results)
 
@@ -145,8 +145,8 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
-            return r.fail(f"Invalid DN: {', '.join(all_errors)}")
-        return r.ok(True)  # Validation passed
+            return r[str].fail(f"Invalid DN: {', '.join(all_errors)}")
+        return r[str].ok(True)  # Validation passed
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""
@@ -178,12 +178,12 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         """
         # Type validation - ensure we received the correct type
         if not isinstance(item, m.Ldif.Entry):
-            return r.fail(
+            return r[str].fail(
                 f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}"
             )
 
         if item.dn is None:
-            return r.fail("Entry has no DN")
+            return r[str].fail("Entry has no DN")
 
         # Get DN string value
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
@@ -203,7 +203,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         # Normalize DN
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if norm_result.is_failure:
-            return r.fail(norm_result.error)
+            return r[str].fail(norm_result.error)
 
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
@@ -214,7 +214,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r.ok(updated_entry)
+        return r[str].ok(updated_entry)
 
 
 class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -261,7 +261,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.attributes is None:
-            return r.fail("Entry has no attributes")
+            return r[str].fail("Entry has no attributes")
 
         # Get attributes dict
         attrs = (
@@ -304,7 +304,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             update_dict: dict[str, object] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
 
-        return r.ok(item)
+        return r[str].ok(item)
 
 
 class Normalize:
@@ -409,7 +409,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.dn is None:
-            return r.fail("Entry has no DN")
+            return r[str].fail("Entry has no DN")
 
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
 
@@ -430,7 +430,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r.ok(updated_entry)
+        return r[str].ok(updated_entry)
 
 
 class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -477,7 +477,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         # convert_boolean_attributes expects attributes dict and boolean_attr_names set
         # Common LDAP boolean attributes that may need format conversion
         if item.attributes is None:
-            return r.ok(item)
+            return r[str].ok(item)
 
         attrs_dict = item.attributes.attributes
         # Common boolean attribute names in LDAP (case-insensitive matching)
@@ -507,7 +507,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r.ok(updated_entry)
+        return r[str].ok(updated_entry)
 
 
 class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -545,7 +545,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.attributes is None:
-            return r.fail("Entry has no attributes")
+            return r[str].fail("Entry has no attributes")
 
         attrs = (
             item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
@@ -579,7 +579,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r.ok(updated_entry)
+        return r[str].ok(updated_entry)
 
 
 class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -616,7 +616,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             list(self._attributes),
         )
 
-        return r.ok(updated_entry)
+        return r[str].ok(updated_entry)
 
 
 class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -655,7 +655,7 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
         result = self._func(item)
         if isinstance(result, r):
             return result
-        return r.ok(result)
+        return r[str].ok(result)
 
 
 class Transform:
