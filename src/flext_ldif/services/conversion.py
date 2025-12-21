@@ -1369,40 +1369,37 @@ class FlextLdifConversion(
             normalized_target=str(normalized_target),
         )
 
-        # switch() already calls the lambda, so result is the Acl result
-        # Type narrowing: result is m.Ldif.Acl from the lambdas above
-        return u.switch(
-            mapping_type,
-            {
-                "oid_to_oud": lambda _: FlextLdifConversion._apply_oid_to_oud_mapping(
-                    config.orig_perms_dict,
-                    config.converted_acl,
-                    self._perms_dict_to_model,
-                ),
-                "oud_to_oid": lambda _: FlextLdifConversion._apply_oud_to_oid_mapping(
-                    config.orig_perms_dict,
-                    config.converted_acl,
-                    self._perms_dict_to_model,
-                ),
-                "preserve_original": lambda _: (
-                    config.converted_acl.model_copy(
-                        update={
-                            "permissions": (
-                                config.original_acl.permissions.model_copy(deep=True)
-                                if config.original_acl.permissions
-                                and hasattr(
-                                    config.original_acl.permissions,
-                                    "model_copy",
-                                )
-                                else None
-                            ),
-                        },
-                        deep=True,
-                    )
-                ),
-            },
-            default=lambda _: config.converted_acl,
-        )
+        # Apply permission mapping based on mapping type
+        # Type narrowing: result is m.Ldif.Acl from the mapping
+        if mapping_type == "oid_to_oud":
+            return FlextLdifConversion._apply_oid_to_oud_mapping(
+                config.orig_perms_dict,
+                config.converted_acl,
+                self._perms_dict_to_model,
+            )
+        elif mapping_type == "oud_to_oid":
+            return FlextLdifConversion._apply_oud_to_oid_mapping(
+                config.orig_perms_dict,
+                config.converted_acl,
+                self._perms_dict_to_model,
+            )
+        elif mapping_type == "preserve_original":
+            return config.converted_acl.model_copy(
+                update={
+                    "permissions": (
+                        config.original_acl.permissions.model_copy(deep=True)
+                        if config.original_acl.permissions
+                        and hasattr(
+                            config.original_acl.permissions,
+                            "model_copy",
+                        )
+                        else None
+                    ),
+                },
+                deep=True,
+            )
+        else:
+            return config.converted_acl
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""
@@ -1474,13 +1471,12 @@ class FlextLdifConversion(
 
         extensions_raw = get_extensions(acl.metadata)
         if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
-            conv_ext_raw_typed = u.as_type(
+            # model_dump() returns dict, cast to expected type
+            conv_ext_raw_typed = cast(
+                dict[str, t.MetadataAttributeValue],
                 extensions_raw.model_dump(),
-                target="dict",
-                default={},
             )
-            # conv_ext_raw_typed is already dict[str, t.MetadataAttributeValue] compatible
-            return dict(conv_ext_raw_typed)
+            return conv_ext_raw_typed
 
         return {}
 
@@ -1563,16 +1559,13 @@ class FlextLdifConversion(
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
         conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = conv_ext
         orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = orig_ext
-        merge_result = u.merge_dicts(conv_ext_typed, orig_ext_typed)
-        merged_ext_raw = (
-            merge_result.value
-            if merge_result.is_success
-            else None
-            if isinstance(merge_result, r) and merge_result.is_success
-            else conv_ext
-        )
+        # Merge dicts: conv_ext_typed overrides orig_ext_typed
+        merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}
         # merged_ext_raw is already dict[str, t.MetadataAttributeValue] compatible
-        merged_ext: dict[str, t.MetadataAttributeValue] = dict(merged_ext_raw)
+        merged_ext: dict[str, t.MetadataAttributeValue] = cast(
+            dict[str, t.MetadataAttributeValue],
+            merged_ext_raw,
+        )
 
         if not merged_ext or not get_metadata(acl_step1) or not acl_step1.metadata:
             return acl_step1
@@ -2336,7 +2329,7 @@ class FlextLdifConversion(
                 error_details=error_details or None,
             )
             _ = u.Ldif.Events.log_and_emit_conversion_event(
-                logger=logger,
+                logger=cast(Any, logger),
                 config=conversion_config,
                 log_level="warning" if errors else "info",
             )
@@ -2402,7 +2395,7 @@ class FlextLdifConversion(
                 ],
             )
             _ = u.Ldif.Events.log_and_emit_conversion_event(
-                logger=logger,
+                logger=cast(Any, logger),
                 config=conversion_config,
                 log_level="error",
             )

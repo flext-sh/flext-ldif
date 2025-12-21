@@ -203,11 +203,9 @@ class FlextLdifAnalysis(
         # Process entries using u.Collection.map() - u.batch_process() doesn't exist
         # Map each entry through validation function, collecting results
         validation_results = u.Collection.map(entries, validate_entry)
-        # Count valid entries (True values)
-        valid_count = u.count(
-            validation_results,
-            predicate=lambda r: r is True,
-        )
+        # Count valid entries (True values) by filtering first
+        valid_results = [r for r in validation_results if r is True]
+        valid_count = u.count(valid_results)
 
         total_entries = u.count(entries)
         invalid_count = total_entries - valid_count

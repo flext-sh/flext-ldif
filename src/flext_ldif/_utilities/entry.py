@@ -545,7 +545,7 @@ class FlextLdifUtilitiesEntry:
         boolean_mappings: dict[str, str] | None = None,
         attr_name_mappings: dict[str, str] | None = None,
         value_transformations: dict[str, dict[str, str]] | None = None,
-    ) -> t.Ldif.AttributesDict:
+    ) -> t.Ldif.NormalizedAttributesDict:
         """Batch denormalize attributes for output.
 
         Inverse of normalization - converts RFC-normalized attributes back to
@@ -673,7 +673,7 @@ class FlextLdifUtilitiesEntry:
                 kwargs,
             )
 
-        result: t.Ldif.AttributesDict = {}
+        result: dict[str, list[str | bytes]] = {}
 
         operational_lower = (
             {a.lower() for a in config.operational_attrs}
@@ -702,7 +702,7 @@ class FlextLdifUtilitiesEntry:
                 return value
 
             # Apply normalization to each value
-            output_values: list[str] = []
+            output_values: list[str | bytes] = []
             for value in values:
                 if isinstance(value, str):
                     output_values.append(normalize_value(value))

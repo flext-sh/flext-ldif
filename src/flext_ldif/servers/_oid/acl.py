@@ -1272,7 +1272,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
                     attributes=target_attrs or [],
                 ),
                 subject=m.Ldif.AclSubject(
-                    subject_type=subject_type_literal,
+                    subject_type=cast("c.Ldif.LiteralTypes.AclSubjectTypeLiteral", subject_type_literal),
                     subject_value=rfc_subject_value,
                 ),
                 permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
