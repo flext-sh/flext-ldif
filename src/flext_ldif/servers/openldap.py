@@ -243,8 +243,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOpenldap()
-            if quirk.schema.can_handle_attribute(attr_def):
-                result = quirk.schema.parse(attr_def)
+            if quirk.schema_quirk.can_handle_attribute(attr_def):
+                result = quirk.schema_quirk.parse(attr_def)
 
         """
 

@@ -51,8 +51,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     Example:
         quirk = FlextLdifServersOid()
-        if quirk.schema.can_handle_attribute(attr_def):
-            result = quirk.schema._parse_attribute(attr_def)
+        if quirk.schema_quirk.can_handle_attribute(attr_def):
+            result = quirk.schema_quirk._parse_attribute(attr_def)
             if result.is_success:
                 parsed_attr = result.value
 

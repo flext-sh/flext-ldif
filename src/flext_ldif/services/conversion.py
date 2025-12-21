@@ -1562,8 +1562,12 @@ class FlextLdifConversion(
         orig_ext = self._get_extensions_dict(original_acl)
 
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
-        conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = conv_ext
-        orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = orig_ext
+        conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
+            Mapping[str, FlextTypes.GeneralValueType], conv_ext
+        )
+        orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
+            Mapping[str, FlextTypes.GeneralValueType], orig_ext
+        )
         # Merge dicts: conv_ext_typed overrides orig_ext_typed
         merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}
         # merged_ext_raw is already dict[str, t.MetadataAttributeValue] compatible
