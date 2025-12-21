@@ -721,7 +721,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
-                server_type_lit: Literal["openldap1"] = FlextLdifServersOpenldap1.Constants.SERVER_TYPE.value
+                server_type_lit: Literal["openldap1"] = "openldap1"
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=server_type_lit,
                 )

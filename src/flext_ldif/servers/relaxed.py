@@ -225,15 +225,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 attribute = parent_result.value
 
                 if not attribute.metadata:
-                    # Build extensions dict first, then create DynamicMetadata
-                    extensions_dict: dict[str, object] = {
-                        "original_format": attr_definition.strip(),
-                        "schema_source_server": "relaxed",
-                    }
+                    # Build extensions dict with proper type for DynamicMetadata
                     attribute.metadata = FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type=self._get_server_type(),
                         extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            **extensions_dict
+                            original_format=attr_definition.strip(),
+                            schema_source_server="relaxed",
                         ),
                     )
                 else:
@@ -271,15 +268,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 name = name_match.group(1) if name_match else oid
 
                 # Return minimal attribute with relaxed metadata
-                # Build extensions dict first, then create DynamicMetadata
-                relaxed_extensions_dict: dict[str, object] = {
-                    "original_format": attr_definition.strip(),
-                    "schema_source_server": "relaxed",
-                }
                 metadata = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=self._get_server_type(),
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                        **relaxed_extensions_dict
+                        original_format=attr_definition.strip(),
+                        schema_source_server="relaxed",
                     ),
                 )
 
@@ -352,15 +345,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             if not objectclass.metadata:
-                # Build extensions dict first, then create DynamicMetadata
-                oc_extensions_dict: dict[str, object] = {
-                    "original_format": original_definition.strip(),
-                    "schema_source_server": "relaxed",
-                }
+                # Build DynamicMetadata with proper type
                 objectclass.metadata = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=self._get_server_type(),
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                        **oc_extensions_dict
+                        original_format=original_definition.strip(),
+                        schema_source_server="relaxed",
                     ),
                 )
             else:
