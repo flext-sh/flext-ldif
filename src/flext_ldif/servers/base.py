@@ -34,8 +34,10 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import (
+    Any,
     ClassVar,
     Self,
+    cast,
     overload,
 )
 
@@ -461,9 +463,10 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         kwargs: object,
     ) -> str | None:
         """Extract and validate operation parameter."""
-        if "operation" not in kwargs:
+        kwargs_dict = cast(dict[str, object], kwargs)
+        if "operation" not in kwargs_dict:
             return None
-        raw = kwargs["operation"]
+        raw = kwargs_dict["operation"]
         if raw is None:
             return None
         if raw == "parse":
@@ -668,10 +671,9 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         """
         # Use isinstance for proper type narrowing and direct method calls
         if isinstance(model, FlextLdifModelsDomains.Entry):
-            # Cast to p.Ldif.Entry.EntryProtocol after isinstance check for type narrowing
-            # Mypy needs explicit narrowing for complex union types
-            entry_protocol: object = model
-            return self.entry.write(entry_protocol)
+            # Cast entry to Any to call write() method on object type
+            entry_quirk = cast(Any, self.entry)
+            return entry_quirk.write(model)
         if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
@@ -681,10 +683,9 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_objectclass(model)
         if isinstance(model, FlextLdifModelsDomains.Acl):
-            # Cast to AclProtocol after isinstance check for type narrowing
-            # Mypy needs explicit narrowing for complex union types
-            acl_protocol: object = model
-            return self.acl.write(acl_protocol)
+            # Cast acl to Any to call write() method on object type
+            acl_quirk = cast(Any, self.acl)
+            return acl_quirk.write(model)
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
 
@@ -1017,10 +1018,10 @@ class _PriorityDescriptor:
 # class and instance access. Descriptors implement __get__ returning str/int,
 # satisfying the type annotations above. This is a class-level assignment that
 # happens at module import time, not instance creation time.
-# Use setattr to set class-level descriptors on Pydantic models
-# Note: setattr works here because we're setting on the class, not an instance
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+# Use cast to inform mypy that we're intentionally assigning descriptors
+# Note: This bypasses Pydantic's field validation at the class level
+setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
+setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

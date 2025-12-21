@@ -551,7 +551,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add/update metadata attributes
-                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 # Check if entry is config entry using Constants markers
@@ -559,7 +559,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     marker in dn_lower
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
-                processed_attributes[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
+                processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
                     str(is_config),
                 ]
                 # Update objectClass (already in list format)

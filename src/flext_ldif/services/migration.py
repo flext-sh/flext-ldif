@@ -120,8 +120,8 @@ class FlextLdifMigrationPipeline(
                 }
             )
             # Create TransformConfig with ProcessConfig
-            transform_config_base = m.Ldif.TransformConfig()
-            config = m.Ldif.TransformConfig(
+            transform_config_base = TransformConfig()
+            config = TransformConfig(
                 **transform_config_base.model_dump(),
                 process_config=process_config,
             )

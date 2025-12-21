@@ -1141,7 +1141,7 @@ class FlextLdifConversion(
         # Protocols are runtime_checkable, so isinstance checks work
         # Type check: acl satisfies AclProtocol via structural typing
         if hasattr(acl, "write") and hasattr(acl, "parse"):
-            write_result = cast(Any, source_acl).write(acl)
+            write_result = cast("Any", source_acl).write(acl)
         else:
             return FlextResult.fail(
                 f"ACL model does not satisfy AclProtocol: {type(acl).__name__}",
@@ -1166,7 +1166,7 @@ class FlextLdifConversion(
         target_acl: object,
     ) -> r[m.Ldif.Acl]:
         """Parse ACL from LDIF string."""
-        parse_result = cast(Any, target_acl).parse(ldif_string)
+        parse_result = cast("Any", target_acl).parse(ldif_string)
         # Extract value from result: r.value if r.is_success else None
         converted_acl_raw = parse_result.value if parse_result.is_success else None
         if converted_acl_raw is None:
@@ -1563,10 +1563,10 @@ class FlextLdifConversion(
 
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
         conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            Mapping[str, FlextTypes.GeneralValueType], conv_ext
+            "Mapping[str, FlextTypes.GeneralValueType]", conv_ext
         )
         orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            Mapping[str, FlextTypes.GeneralValueType], orig_ext
+            "Mapping[str, FlextTypes.GeneralValueType]", orig_ext
         )
         # Merge dicts: conv_ext_typed overrides orig_ext_typed
         merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}

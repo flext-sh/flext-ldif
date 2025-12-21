@@ -1388,7 +1388,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def extract_write_options(
         entry_data: m.Ldif.Entry | FlextLdifModelsDomains.Entry,
-    ) -> m.Ldif.WriteFormatOptions | None:
+    ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         """Extract write options from entry metadata.
 
         Retrieves WriteFormatOptions from entry.metadata.write_options if present.
@@ -1426,7 +1426,7 @@ class FlextLdifUtilitiesMetadata:
         if key not in extras:
             return None
         opt = extras.get(key)
-        if isinstance(opt, m.Ldif.WriteFormatOptions):
+        if isinstance(opt, FlextLdifModelsSettings.WriteFormatOptions):
             return opt
         return None
 

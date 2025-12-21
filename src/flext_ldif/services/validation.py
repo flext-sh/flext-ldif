@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self, cast, override
+from typing import Self, override
 
 from flext_core import d, r, t
 from pydantic import Field

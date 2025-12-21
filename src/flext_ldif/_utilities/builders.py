@@ -508,7 +508,7 @@ class WriteConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._format: m.Ldif.OutputFormat = m.Ldif.OutputFormat.LDIF
+        self._format: c.Ldif.Domain.OutputFormat = c.Ldif.Domain.OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True
         self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
@@ -517,7 +517,7 @@ class WriteConfigBuilder:
         self._include_metadata: bool = False
         self._server: c.Ldif.ServerTypes | None = None
 
-    def format(self, fmt: m.Ldif.OutputFormat) -> Self:
+    def format(self, fmt: c.Ldif.Domain.OutputFormat) -> Self:
         """Set output format.
 
         Args:

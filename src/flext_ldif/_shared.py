@@ -57,7 +57,7 @@ def normalize_server_type(server_type: str) -> c.Ldif.LiteralTypes.ServerTypeLit
     for server_enum in c.Ldif.ServerTypes.__members__.values():
         if server_enum.value == server_type_lower:
             # Return the enum member's value which is already a ServerTypeLiteral
-            return cast("c.Ldif.LiteralTypes.ServerTypeLiteral", server_enum.value)
+            return server_enum.value
     # Not found
     # ServerTypes is a StrEnum, iterate over enum members
     valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]

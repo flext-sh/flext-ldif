@@ -40,7 +40,7 @@ from flext_core.utilities import ValidatorSpec
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.configs import ProcessConfig
+from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
@@ -494,7 +494,7 @@ class FlextLdifUtilities(FlextUtilities):
                     }
                 )
                 # Create TransformConfig with ProcessConfig
-                transform_config = m.Ldif.TransformConfig()
+                transform_config = TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
                         update={"process_config": process_config}
@@ -505,7 +505,7 @@ class FlextLdifUtilities(FlextUtilities):
                     transform_config.process_config = cast("Any", process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
-                transform_config = m.Ldif.TransformConfig()
+                transform_config = TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
                         update={"process_config": config}
@@ -689,8 +689,8 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def process_list_items[T, R](
             items: list[T] | tuple[T, ...],
-            processor_func: Callable[[T], R],
-            predicate: Callable[[T], bool] | None,
+            processor_func: Callable[[T], R] | Callable[[object], R],
+            predicate: Callable[[T], bool] | Callable[[object], bool] | None,
             on_error: str,
         ) -> r[list[R]]:
             """Process list/tuple items."""
@@ -1643,7 +1643,11 @@ class FlextLdifUtilities(FlextUtilities):
             predicate: Callable[[T], bool] | None = None,
         ) -> int:
             """Count items (generalized: uses count from base, mnemonic: ct)."""
-            return FlextUtilities.count(items, predicate=predicate)
+            if predicate is not None:
+                # Filter items using predicate, then count
+                filtered_items = [item for item in items if predicate(item)]
+                return FlextUtilities.count(filtered_items)
+            return FlextUtilities.count(items)
 
         ct = count
 
@@ -2697,10 +2701,11 @@ class FlextLdifUtilities(FlextUtilities):
             """Try using FlextUtilities.try_() (mnemonic: tr)."""
             # Use getattr to avoid mypy attr-defined error if method doesn't exist
             try_method = getattr(FlextUtilities, "try_", None)
-            if try_method:
-                # Type narrowing: result is object | None, return type is T | None
-                # Runtime validation ensures correctness, type checker accepts object as compatible
-                return try_method(func, default=default, catch=catch)
+            if try_method and callable(try_method):
+                # Type narrowing: try_method is callable, execute it
+                result = try_method(func, default=default, catch=catch)
+                # Result should be T | None from FlextUtilities.try_()
+                return cast("T | None", result)
             # Fallback: manual try/except
             try:
                 return func()

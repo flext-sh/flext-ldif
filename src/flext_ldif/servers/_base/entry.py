@@ -42,6 +42,7 @@ from pydantic import Field
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif._models.domain import FlextLdifModelsDomains
 
 logger = FlextLogger(__name__)
 
@@ -524,20 +525,20 @@ class FlextLdifServersBaseEntry(
             return None
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, m.Ldif.WriteOptions):
+        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return FlextLdifModelsSettings.WriteFormatOptions()
         return None
 
     def _convert_write_options(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
-        | m.Ldif.WriteOptions
+        | FlextLdifModelsDomains.WriteOptions
         | dict[str, object],
-    ) -> FlextLdifModelsSettings.WriteFormatOptions | m.Ldif.WriteOptions:
+    ) -> FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions:
         """Convert write options to appropriate typed model."""
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, m.Ldif.WriteOptions):
+        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
         if isinstance(write_options, dict):
             try:
@@ -545,7 +546,7 @@ class FlextLdifServersBaseEntry(
                     write_options
                 )
             except Exception:
-                return m.Ldif.WriteOptions.model_validate(write_options)
+                return FlextLdifModelsDomains.WriteOptions.model_validate(write_options)
         msg = f"Expected WriteFormatOptions | WriteOptions | dict, got {type(write_options)}"
         raise TypeError(msg)
 
@@ -569,13 +570,13 @@ class FlextLdifServersBaseEntry(
                 update={"write_options": new_write_opts},
             )
         else:
-            write_opts_for_meta: m.Ldif.WriteOptions | None = None
-            if isinstance(write_options_typed, m.Ldif.WriteOptions):
+            write_opts_for_meta: FlextLdifModelsDomains.WriteOptions | None = None
+            if isinstance(write_options_typed, FlextLdifModelsDomains.WriteOptions):
                 write_opts_for_meta = write_options_typed
             elif isinstance(
                 write_options_typed, FlextLdifModelsSettings.WriteFormatOptions
             ):
-                write_opts_for_meta = m.Ldif.WriteOptions.model_validate(
+                write_opts_for_meta = FlextLdifModelsDomains.WriteOptions.model_validate(
                     write_options_typed.model_dump(),
                 )
             updated_metadata = m.Ldif.QuirkMetadata(
