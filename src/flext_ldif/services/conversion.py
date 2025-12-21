@@ -1377,13 +1377,13 @@ class FlextLdifConversion(
                 config.converted_acl,
                 self._perms_dict_to_model,
             )
-        elif mapping_type == "oud_to_oid":
+        if mapping_type == "oud_to_oid":
             return FlextLdifConversion._apply_oud_to_oid_mapping(
                 config.orig_perms_dict,
                 config.converted_acl,
                 self._perms_dict_to_model,
             )
-        elif mapping_type == "preserve_original":
+        if mapping_type == "preserve_original":
             return config.converted_acl.model_copy(
                 update={
                     "permissions": (
@@ -1398,8 +1398,7 @@ class FlextLdifConversion(
                 },
                 deep=True,
             )
-        else:
-            return config.converted_acl
+        return config.converted_acl
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""
@@ -1473,7 +1472,7 @@ class FlextLdifConversion(
         if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
             # model_dump() returns dict, cast to expected type
             conv_ext_raw_typed = cast(
-                dict[str, t.MetadataAttributeValue],
+                "dict[str, t.MetadataAttributeValue]",
                 extensions_raw.model_dump(),
             )
             return conv_ext_raw_typed
@@ -1563,7 +1562,7 @@ class FlextLdifConversion(
         merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}
         # merged_ext_raw is already dict[str, t.MetadataAttributeValue] compatible
         merged_ext: dict[str, t.MetadataAttributeValue] = cast(
-            dict[str, t.MetadataAttributeValue],
+            "dict[str, t.MetadataAttributeValue]",
             merged_ext_raw,
         )
 
@@ -2329,7 +2328,7 @@ class FlextLdifConversion(
                 error_details=error_details or None,
             )
             _ = u.Ldif.Events.log_and_emit_conversion_event(
-                logger=cast(Any, logger),
+                logger=cast("Any", logger),
                 config=conversion_config,
                 log_level="warning" if errors else "info",
             )
@@ -2395,7 +2394,7 @@ class FlextLdifConversion(
                 ],
             )
             _ = u.Ldif.Events.log_and_emit_conversion_event(
-                logger=cast(Any, logger),
+                logger=cast("Any", logger),
                 config=conversion_config,
                 log_level="error",
             )

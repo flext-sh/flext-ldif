@@ -418,7 +418,9 @@ class FlextLdifCategorization(
                 rejected_dns_preview=sample_rejected_dns,
             )
 
-        return r[list[m.Ldif.Entry]].ok(validated)
+        return r[list[m.Ldif.Entry]].ok(
+            cast(list[m.Ldif.Entry], validated)
+        )
 
     def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition.
@@ -987,9 +989,10 @@ class FlextLdifCategorization(
         batch_data = batch_result.value if batch_result.is_success else None
         if batch_data is not None:
             for result_item in batch_data["results"]:
-                if result_item is not None:
+                if result_item is not None and isinstance(result_item, tuple):
                     # Type narrowing: result_item is tuple[str, m.Ldif.Entry] after processing
-                    category, entry_to_append = result_item
+                    result_tuple = cast(tuple[str, m.Ldif.Entry], result_item)
+                    category, entry_to_append = result_tuple
                     if category == _cat("rejected"):
                         self._rejection_tracker["categorization_rejected"].append(
                             entry_to_append,
@@ -1099,10 +1102,10 @@ class FlextLdifCategorization(
                 _cat("groups"),
                 _cat("acl"),
             }:
-                # entries is list[m.Ldif.Entry] from categories.items()
+                # entries from categories.items() needs cast to m.Ldif.Entry
                 # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    list(entries),
+                    cast(list[m.Ldif.Entry], list(entries)),
                     self._base_dn,
                 )
                 # Track filter results in metadata
@@ -1235,11 +1238,12 @@ class FlextLdifCategorization(
         # excluded_entries must be list[m.Ldif.Entry] to match filtered type
         excluded_entries: list[m.Ldif.Entry] = []
 
-        filterable_categories = {
-            # Categories enum valuesHIERARCHY,
-            # Categories enum valuesUSERS,
-            # Categories enum valuesGROUPS,
-            # Categories enum valuesACL,
+        filterable_categories: dict[str, bool] = {
+            # Categories enum values to filter
+            _cat("hierarchy"): True,
+            _cat("users"): True,
+            _cat("groups"): True,
+            _cat("acl"): True,
         }
 
         # Categories is Categories[Entry], use .items() directly (not u.pairs which requires dict/Mapping)
@@ -1249,9 +1253,9 @@ class FlextLdifCategorization(
                 continue
 
             if category in filterable_categories:
-                # entries is list[m.Ldif.Entry] from categories.items()
+                # entries from categories.items() needs cast to list[m.Ldif.Entry]
                 # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
-                entries_list = list(entries) if isinstance(entries, list) else []
+                entries_list = cast(list[m.Ldif.Entry], list(entries))
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     base_dn,
