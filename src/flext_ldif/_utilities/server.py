@@ -79,7 +79,7 @@ class FlextLdifUtilitiesServer:
             server_type = getattr(constants, "SERVER_TYPE", None)
             if server_type is not None:
                 # server_type is already ServerTypeLiteral
-                return server_type
+                return cast(c.Ldif.LiteralTypes.ServerTypeLiteral, server_type)
         except (AttributeError, ImportError):
             pass
         return None

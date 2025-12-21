@@ -79,7 +79,6 @@ from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -573,11 +572,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[T], bool]
                 try:
                     # Runtime call to predicate
-                    call_fn = getattr(predicate, '__call__', None)
-                    if call_fn is not None:
-                        result = call_fn(value)
-                        if isinstance(result, bool):
-                            return result
+                    result = predicate(value)
+                    if isinstance(result, bool):
+                        return result
                 except (TypeError, ValueError):
                     pass
             return True

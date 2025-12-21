@@ -456,10 +456,10 @@ class FlextLdifModels(FlextModels):
                 Contains ATTRIBUTES and OBJECTCLASS keys from extract_schemas_from_ldif().
                 """
 
-                ATTRIBUTES: list[FlextLdifModels.Ldif.SchemaAttribute] = Field(
+                ATTRIBUTES: list[SchemaAttribute] = Field(
                     default_factory=list,
                 )
-                OBJECTCLASS: list[FlextLdifModels.Ldif.SchemaObjectClass] = Field(
+                OBJECTCLASS: list[SchemaObjectClass] = Field(
                     default_factory=list,
                 )
 
