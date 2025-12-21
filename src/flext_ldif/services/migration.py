@@ -16,7 +16,7 @@ from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
 from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._utilities.configs import TransformConfig
+from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
 from flext_ldif._utilities.pipeline import ProcessingPipeline
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -113,7 +113,7 @@ class FlextLdifMigrationPipeline(
             target_type = m.Ldif.ServerType(self.target_server_type)
             # Use model_copy to update server types (Pydantic v2 pattern)
 
-            config_base = m.Ldif.ProcessConfig()
+            config_base = ProcessConfig()
             process_config = config_base.model_copy(
                 update={
                     "source_server": source_type,

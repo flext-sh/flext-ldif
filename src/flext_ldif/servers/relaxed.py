@@ -573,8 +573,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             # Build metadata
             extensions = u.Ldif.LdifParser.extract_extensions(oc_definition)
-            extensions["original_format"] = oc_definition.strip()
-            extensions["schema_source_server"] = "relaxed"
+            extensions["original_format"] = [oc_definition.strip()]
+            extensions["schema_source_server"] = ["relaxed"]
 
             metadata = FlextLdifModelsDomains.QuirkMetadata(
                 quirk_type=self._get_server_type(),
