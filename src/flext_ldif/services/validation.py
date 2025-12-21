@@ -12,6 +12,7 @@ from typing import Self, override
 from flext_core import d, r, t
 from pydantic import Field
 
+from flext_ldif._models.results import _BooleanFlags
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
@@ -248,7 +249,6 @@ class FlextLdifValidation(
                 result[name] = obj_result.value
 
         # Create ValidationBatchResult from validation results
-        from flext_ldif._models.results import _BooleanFlags
         results_flags = _BooleanFlags(**result)
         return m.Ldif.ValidationBatchResult(results=results_flags)
 

@@ -1317,10 +1317,10 @@ class FlextLdifConversion(
         """
         if config is None:
             # Build config from keyword arguments with proper types
-            # Cast Acl types for PermissionMappingConfig (both are the same class)
+            # Both m.Ldif.Acl and shared.Acl are compatible at runtime
             config = m.Ldif.PermissionMappingConfig(
-                original_acl=cast(m.Ldif.Acl, original_acl),
-                converted_acl=cast(m.Ldif.Acl, converted_acl),
+                original_acl=cast(Any, original_acl),
+                converted_acl=cast(Any, converted_acl),
                 orig_perms_dict=orig_perms_dict or {},
                 source_server_type=source_server_type,
                 target_server_type=target_server_type,
@@ -1374,20 +1374,22 @@ class FlextLdifConversion(
         # Type narrowing: result is m.Ldif.Acl from the mapping
         converted_acl_typed = cast(m.Ldif.Acl, config.converted_acl)
         if mapping_type == "oid_to_oud":
-            return FlextLdifConversion._apply_oid_to_oud_mapping(
+            result_typed = FlextLdifConversion._apply_oid_to_oud_mapping(
                 config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
+            return cast(m.Ldif.Acl, result_typed)
         if mapping_type == "oud_to_oid":
-            return FlextLdifConversion._apply_oud_to_oid_mapping(
+            result_typed = FlextLdifConversion._apply_oud_to_oid_mapping(
                 config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
+            return cast(m.Ldif.Acl, result_typed)
         if mapping_type == "preserve_original":
             original_acl_typed = cast(m.Ldif.Acl, config.original_acl)
-            return converted_acl_typed.model_copy(
+            result_typed = converted_acl_typed.model_copy(
                 update={
                     "permissions": (
                         original_acl_typed.permissions.model_copy(deep=True)
@@ -1401,7 +1403,8 @@ class FlextLdifConversion(
                 },
                 deep=True,
             )
-        return converted_acl_typed
+            return cast(m.Ldif.Acl, result_typed)
+        return cast(m.Ldif.Acl, converted_acl_typed)
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""
