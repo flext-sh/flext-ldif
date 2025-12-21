@@ -500,14 +500,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Business Rule: Normalize single string values to list format
         # This ensures consistent return type (always list[str]) regardless of input format
         # Implication: Single-value objectClass attributes are wrapped in list for consistency
-        # Type narrowing: match always returns r[list[str]] because default is not None
-        match_result: r[list[str]] = FlextFunctional.match(
+        match_result = FlextFunctional.match(
             objectclasses,
-            (str, lambda s: r.ok([s])),
-            (list, lambda lst: r.ok(list(lst))),
-            default=r.fail(f"Invalid objectclasses type: {type(objectclasses)}"),
+            (str, lambda s: r[list[str]].ok([s])),
+            (list, lambda lst: r[list[str]].ok(list(lst))),
+            default=r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}"),
         )
-        return match_result
+        return match_result or r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}")
 
     @staticmethod
     def create_entry(
@@ -696,14 +695,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             # Fallback: convert to string
             value: str | list[str] = str(value_raw)
 
-        # Type narrowing: match always returns r[list[str]] because default is not None
-        match_result: r[list[str]] = FlextFunctional.match(
+        match_result = FlextFunctional.match(
             value,
-            (str, lambda s: r.ok([s])),
-            (list, lambda v: r.ok(list(v))),
-            default=r.ok([str(value)]),
+            (str, lambda s: r[list[str]].ok([s])),
+            (list, lambda v: r[list[str]].ok(list(v))),
+            default=r[list[str]].ok([str(value)]),
         )
-        return match_result
+        return match_result or r[list[str]].ok([str(value)])
 
     @staticmethod
     def _normalize_string_value(value: str) -> r[str]:
@@ -719,15 +717,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not value or (isinstance(value, (list, dict, str)) and len(value) == 0):
             return r[str].fail("Cannot normalize empty list")
         first = value[0]
-        # Type narrowing: match always returns r[str] because default is not None
-        match_result: r[str] = FlextFunctional.match(
+        match_result = FlextFunctional.match(
             first,
             (str, FlextLdifEntries._normalize_string_value),
-            default=lambda f: r.ok(str(f))
+            default=lambda f: r[str].ok(str(f))
             if f is not None
-            else r.fail("Cannot normalize empty list"),
+            else r[str].fail("Cannot normalize empty list"),
         )
-        return match_result
+        return match_result or r[str].fail("Cannot normalize empty list")
 
     @staticmethod
     def normalize_attribute_value(
@@ -744,14 +741,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """
         if value is None:
             return r[str].fail("Cannot normalize None value")
-        # Type narrowing: match always returns r[str] because default is not None
-        match_result: r[str] = FlextFunctional.match(
+        match_result = FlextFunctional.match(
             value,
             (str, FlextLdifEntries._normalize_string_value),
             (list, FlextLdifEntries._normalize_list_value),
-            default=r.fail(f"Cannot normalize value of type {type(value)}"),
+            default=r[str].fail(f"Cannot normalize value of type {type(value)}"),
         )
-        return match_result
+        return match_result or r[str].fail(f"Cannot normalize value of type {type(value)}")
 
     def get_normalized_attribute(
         self,
