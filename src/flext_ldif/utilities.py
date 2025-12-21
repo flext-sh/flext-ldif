@@ -24,7 +24,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Literal, Self, TypeGuard, overload
+from typing import Literal, Self, TypeAlias, TypeGuard, cast, overload
 
 from flext_core import (
     FlextLogger,
@@ -160,7 +160,7 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, value: t.Ldif.ValueType) -> None:
+            def __init__(self, value: str | bytes | int | float | bool | list[str] | None) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:
@@ -168,7 +168,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 """
                 self._value = value
-                self._default: t.Ldif.ValueType | None = None
+                self._default: str | bytes | int | float | bool | list[str] | None | None = None
                 self._target_type: str | None = None
                 self._safe_mode = False
 
@@ -201,7 +201,7 @@ class FlextLdifUtilities(FlextUtilities):
                 self._safe_mode = True
                 return self
 
-            def build(self) -> t.Ldif.ValueType:
+            def build(self) -> str | bytes | int | float | bool | list[str] | None:
                 """Build and return the converted value using parent utilities."""
                 if self._value is None:
                     return self._default
@@ -498,21 +498,21 @@ class FlextLdifUtilities(FlextUtilities):
                 transform_config = m.Ldif.TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": process_config}
+                        update={"process_config": cast(FlextLdifModelsSettings.ProcessConfig, process_config)}
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = process_config
+                    transform_config.process_config = cast(FlextLdifModelsSettings.ProcessConfig, process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": config}
+                        update={"process_config": cast(FlextLdifModelsSettings.ProcessConfig | None, config)}
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = config
+                    transform_config.process_config = cast(FlextLdifModelsSettings.ProcessConfig | None, config)
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
@@ -709,9 +709,9 @@ class FlextLdifUtilities(FlextUtilities):
                     result_item = processor_func(item)
                     results.append(result_item)
                 except Exception as e:
-                    if _on_error == "fail":
+                    if on_error == "fail":
                         return r.fail(f"Processing failed: {e}")
-                    if _on_error == "skip":
+                    if on_error == "skip":
                         continue
                     errors.append(str(e))
             return r.ok(results)
@@ -1378,7 +1378,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextUtilities.Reliability.pipe(
                     value,
                     *operations_list,
-                    _on_error=on_error,
+                    on_error=on_error,
                 )
 
             # LDIF-specific pipe using flow()
@@ -3504,9 +3504,9 @@ class FlextLdifUtilities(FlextUtilities):
                     else:
                         result.append(processed)
                 except Exception:
-                    if _on_error == "fail":
+                    if on_error == "fail":
                         raise
-                    if _on_error == "return":
+                    if on_error == "return":
                         return result
                     # skip: continue
             return result

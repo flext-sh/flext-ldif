@@ -947,24 +947,23 @@ class FlextLdifUtilitiesACL:
                 group=1,
             )
 
-        extra_result = u.Collection.process(
-            extra_patterns,
-            processor=extract_extra,
-            predicate=lambda _k, v: bool(v),
-            _on_error="skip",
-        )
-        if extra_result.is_success and extra_result.value:
-            # Type guard: ensure value is dict before accessing .items()
-            extra_value = extra_result.value
-            if isinstance(extra_value, dict):
-                # Native Python: dict comprehension with isinstance check
-                filtered_extensions: dict[str, str] = {
-                    k: v
-                    for k, v in u.mapper().to_dict(extra_value).items()
-                    if isinstance(v, str)
-                }
-                if filtered_extensions:
-                    extensions = dict(extensions, **filtered_extensions)
+        # Direct iteration instead of u.Collection.process
+        extra_dict: dict[str, str | None] = {}
+        for k, v in extra_patterns.items():
+            if bool(v):  # Apply predicate
+                result = extract_extra(k, v)
+                if result is not None:
+                    extra_dict[k] = result
+
+        if extra_dict:
+            # Native Python: dict comprehension with isinstance check
+            filtered_extensions: dict[str, str] = {
+                k: v
+                for k, v in extra_dict.items()
+                if isinstance(v, str)
+            }
+            if filtered_extensions:
+                extensions = dict(extensions, **filtered_extensions)
         return extensions
 
     @staticmethod
@@ -1219,18 +1218,17 @@ class FlextLdifUtilitiesACL:
             """Filter rule config items based on extensions."""
             return bool(extensions.get(item[0]) if extensions else None)
 
-        process_result = u.Collection.process(
-            rule_config,
-            processor=process_rule_config,
-            predicate=rule_predicate,
-            _on_error="skip",
-        )
-        if not process_result.is_success or process_result.value is None:
-            return []
-        raw_value = process_result.value
-        if not isinstance(raw_value, list):
-            return []
-        result: list[str] = [rule for rule in raw_value if rule is not None]
+        # Direct iteration instead of u.Collection.process
+        result: list[str] = []
+        for item in rule_config:
+            try:
+                if rule_predicate(item):  # Apply predicate
+                    processed = process_rule_config(item)
+                    if processed is not None:
+                        result.append(processed)
+            except Exception:
+                # Skip items that fail processing
+                continue
         return result
 
     @staticmethod
@@ -1282,18 +1280,17 @@ class FlextLdifUtilitiesACL:
                 return bool(extensions.get(item[0]) if extensions else None)
             return False
 
-        process_result = u.Collection.process(
-            target_config,
-            processor=process_target_config,
-            predicate=predicate_func,
-            _on_error="skip",
-        )
-        if not process_result.is_success or process_result.value is None:
-            return []
-        raw_value = process_result.value
-        if not isinstance(raw_value, list):
-            return []
-        result: list[str] = [part for part in raw_value if part is not None]
+        # Direct iteration instead of u.Collection.process
+        result: list[str] = []
+        for item in target_config:
+            try:
+                if predicate_func(item):  # Apply predicate
+                    processed = process_target_config(item)
+                    if processed is not None:
+                        result.append(processed)
+            except Exception:
+                # Skip items that fail processing
+                continue
         return result
 
     @staticmethod
@@ -1556,16 +1553,16 @@ class FlextLdifUtilitiesACL:
             final_value = value if value is not None else default_value
             return name, final_value
 
-        process_result = u.Collection.process(
-            patterns,
-            processor=extract_component_batch,
-            _on_error="skip",
-        )
-        if not process_result.is_success or not isinstance(process_result.value, dict):
-            return {}
-
-        # Extract pairs from the process result
-        result_dict = process_result.value
+        # Direct iteration instead of u.Collection.process
+        result_dict: dict[str, tuple[str, object]] = {}
+        for key, pattern in patterns.items():
+            try:
+                result = extract_component_batch(key, pattern)
+                if result is not None:
+                    result_dict[key] = result
+            except Exception:
+                # Skip components that fail extraction
+                continue
 
         # Build result dict from pairs - extract second element from tuple values
         final_result: dict[str, object] = {}
