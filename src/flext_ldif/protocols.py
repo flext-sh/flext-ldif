@@ -487,6 +487,34 @@ class FlextLdifProtocols(FlextProtocols):
                 """Write schema definition."""
                 ...
 
+            def parse_attribute(
+                self,
+                attr_definition: str,
+            ) -> FlextResult:
+                """Parse individual attribute definition."""
+                ...
+
+            def write_attribute(
+                self,
+                attribute: object,
+            ) -> FlextResult[str]:
+                """Write individual attribute definition."""
+                ...
+
+            def parse_objectclass(
+                self,
+                oc_definition: str,
+            ) -> FlextResult:
+                """Parse individual objectClass definition."""
+                ...
+
+            def write_objectclass(
+                self,
+                objectclass: object,
+            ) -> FlextResult[str]:
+                """Write individual objectClass definition."""
+                ...
+
         @runtime_checkable
         class AclQuirkProtocol(Protocol):
             """Protocol for ACL quirk implementations."""
