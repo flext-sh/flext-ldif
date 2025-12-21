@@ -16,7 +16,7 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from flext_core import FlextResult
 
@@ -721,8 +721,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
+                server_type_lit: Literal["openldap1"] = FlextLdifServersOpenldap1.Constants.SERVER_TYPE.value
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
+                    quirk_type=server_type_lit,
                 )
                 metadata.extensions[c.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
 

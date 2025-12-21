@@ -102,9 +102,6 @@ class FlextLdifUtilitiesDN:
     def is_lutf1_char(char: str) -> bool:
         """Check if char is valid LUTF1 (lead char) per RFC 4514.
 
-        LUTF1 = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
-        (excludes NUL, SPACE, DQUOTE, SHARP, PLUS, COMMA, SEMI, LANGLE, RANGLE, ESC)
-
         Uses c.Ldif.Format.DN_LUTF1_EXCLUDE for exclusion set.
 
         Args:
@@ -129,9 +126,6 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def is_tutf1_char(char: str) -> bool:
         """Check if char is valid TUTF1 (trail char) per RFC 4514.
-
-        TUTF1 = %x01-1F / %x21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
-        (excludes NUL, SPACE, and special chars but allows SHARP)
 
         Uses c.Ldif.Format.DN_TUTF1_EXCLUDE for exclusion set.
 

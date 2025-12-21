@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
+from typing import Literal, cast
 
 from flext_core import FlextUtilities
 
@@ -310,7 +310,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def normalize_server_type(
         server_type: str,
-    ) -> str:
+    ) -> Literal["oid", "oud", "openldap", "openldap1", "openldap2", "ad", "apache", "ds389", "rfc", "relaxed", "novell", "ibm_tivoli", "generic"]:
         """Normalize server type string to canonical ServerTypes enum value.
 
         Converts aliases and variations to canonical short form:
@@ -353,7 +353,7 @@ class FlextLdifUtilitiesServer:
         # Check alias map first
         if server_type_lower in alias_map:
             # alias_map values are guaranteed valid ServerTypeLiterals
-            return alias_map[server_type_lower]  # Returns str value from enum
+            return cast("c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower])
         # Check if it's already a canonical value
         # ServerTypes is a StrEnum, iterate over enum members
         for server_enum in c.Ldif.ServerTypes.__members__.values():

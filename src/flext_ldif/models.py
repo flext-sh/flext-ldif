@@ -252,7 +252,7 @@ class FlextLdifModels(FlextModels):
 
         # Migration results (direct aliases for convenience)
         MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
-        FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+        FlexibleCategories: TypeAlias = _FlexibleCategories
 
         # Event models - real inheritance classes
         class Events:
@@ -347,7 +347,7 @@ class FlextLdifModels(FlextModels):
 
             # Dynamic counts and categorization
             DynamicCounts = FlextLdifModelsResults.DynamicCounts
-            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+            FlexibleCategories: TypeAlias = _FlexibleCategories
 
             # Status models
             ClientStatus = FlextLdifModelsResults.ClientStatus
@@ -422,7 +422,7 @@ class FlextLdifModels(FlextModels):
             EntryResult = FlextLdifModelsResults.EntryResult
 
             # Categorization results
-            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+            FlexibleCategories: TypeAlias = _FlexibleCategories
 
             # Domain models
             # Entry and Syntax are defined as classes above

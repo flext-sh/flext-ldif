@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar, Literal, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -655,6 +655,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         try:
             # Build minimal ACL model for ds-privilege-name
             # This format doesn't have traditional target/subject/permissions
+            server_type_oud: Literal["oud"] = FlextLdifServersOudConstants.SERVER_TYPE
             acl_model = m.Ldif.Acl(
                 name=privilege_name,  # Use privilege name as ACL name
                 target=None,  # No target in ds-privilege-name format
@@ -665,7 +666,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 raw_acl=privilege_name,  # Raw ACL string
                 validation_violations=[],  # No validation issues
                 metadata=m.Ldif.QuirkMetadata(
-                    quirk_type=FlextLdifServersOudConstants.SERVER_TYPE,  # OUD quirk type from Constants
+                    quirk_type=server_type_oud,  # OUD quirk type from Constants
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(**{
                         # Use Constants for metadata keys instead of hardcoded strings
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
