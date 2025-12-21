@@ -442,7 +442,9 @@ class FlextLdifUtilitiesACL:
             ("action_type", config.action_type),
         ]
 
-        result.update({key: value for key, value in extension_items if value is not None})
+        result.update({
+            key: value for key, value in extension_items if value is not None
+        })
 
         return result
 

@@ -207,9 +207,7 @@ class FlextLdifUtilitiesWriters:
                         })
 
                 # Write entry parts
-                FlextLdifUtilitiesWriters.Entry.write_entry_parts(
-                    entry, config, lines
-                )
+                FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
 
                 # Join lines and return
                 ldif_str = "\n".join(lines) + "\n"

@@ -905,7 +905,11 @@ class RfcTestHelpers:
 
         """
         # Determine parse method based on content
-        if "STRUCTURAL" in schema_def or "AUXILIARY" in schema_def or "ABSTRACT" in schema_def:
+        if (
+            "STRUCTURAL" in schema_def
+            or "AUXILIARY" in schema_def
+            or "ABSTRACT" in schema_def
+        ):
             parse_method = getattr(quirk, "parse_objectclass", None)
         else:
             parse_method = getattr(quirk, "parse_attribute", None)
@@ -928,17 +932,23 @@ class RfcTestHelpers:
         if expected_oid is not None:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
-                raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+                raise AssertionError(
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                )
 
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
-                raise AssertionError(f"Expected NAME '{expected_name}', got '{actual_name}'")
+                raise AssertionError(
+                    f"Expected NAME '{expected_name}', got '{actual_name}'"
+                )
 
         if expected_desc is not None:
             actual_desc = getattr(value, "desc", None)
             if actual_desc != expected_desc:
-                raise AssertionError(f"Expected DESC '{expected_desc}', got '{actual_desc}'")
+                raise AssertionError(
+                    f"Expected DESC '{expected_desc}', got '{actual_desc}'"
+                )
 
         if expected_syntax is not None:
             actual_syntax = getattr(value, "syntax", None)
@@ -1215,12 +1225,16 @@ class RfcTestHelpers:
         if expected_oid is not None:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
-                raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
+                raise AssertionError(
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                )
 
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
-                raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+                raise AssertionError(
+                    f"Expected name '{expected_name}', got '{actual_name}'"
+                )
 
         return value
 
@@ -1315,7 +1329,9 @@ class RfcTestHelpers:
 
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
-            raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+            raise AssertionError(
+                f"Expected name '{expected_name}', got '{actual_name}'"
+            )
 
         return value
 
@@ -1364,7 +1380,9 @@ class RfcTestHelpers:
 
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
-            raise AssertionError(f"Expected name '{expected_name}', got '{actual_name}'")
+            raise AssertionError(
+                f"Expected name '{expected_name}', got '{actual_name}'"
+            )
 
         return value
 
@@ -1611,7 +1629,8 @@ class TestDeduplicationHelpers:
         # Get convert method
         convert_method = getattr(conversion_matrix, "convert", None)
         if convert_method is None:
-            raise AssertionError("conversion_matrix has no convert method")
+            msg = "conversion_matrix has no convert method"
+            raise AssertionError(msg)
 
         # Perform conversion
         result = convert_method(
@@ -1671,14 +1690,17 @@ class TestDeduplicationHelpers:
             conversion_matrix, "get_supported_conversions", None
         )
         if get_support_method is None:
-            raise AssertionError("conversion_matrix has no get_supported_conversions")
+            msg = "conversion_matrix has no get_supported_conversions"
+            raise AssertionError(msg)
 
         # Get supported conversions
         result = get_support_method(quirk)
 
         # Handle FlextResult
         if hasattr(result, "is_success"):
-            assert result.is_success, f"get_supported_conversions failed: {result.error}"
+            assert result.is_success, (
+                f"get_supported_conversions failed: {result.error}"
+            )
             support_dict = result.value
         else:
             support_dict = result
@@ -1731,7 +1753,8 @@ class TestDeduplicationHelpers:
         # Get batch_convert method
         batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
         if batch_convert_method is None:
-            raise AssertionError("conversion_matrix has no batch_convert method")
+            msg = "conversion_matrix has no batch_convert method"
+            raise AssertionError(msg)
 
         # Perform batch conversion
         result = batch_convert_method(

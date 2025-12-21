@@ -214,7 +214,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls(value=dn)
+                return cls.model_validate({"value": dn})
 
             return dn
 
@@ -765,12 +765,7 @@ class FlextLdifModelsDomains:
             """
             if isinstance(values, str):
                 values = [values]
-            elif isinstance(values, (bytes, bytearray)):
-                # Convert bytes to string for LDIF compatibility
-                if isinstance(values, (bytes, bytearray)):
-                    values = [values.decode("utf-8", errors="replace")]
-                else:
-                    values = [str(values)]
+            # values is already list[str] or converted
             self.attributes[key] = values
             return self
 
@@ -1654,7 +1649,7 @@ class FlextLdifModelsDomains:
                 # Handle dict from model_dump()
                 return FlextLdifModelsDomains.DN(**value)
 
-            return FlextLdifModelsDomains.DN(value=value)
+            return FlextLdifModelsDomains.DN.model_validate({"value": value})
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -1682,7 +1677,9 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.Attributes(**value)
 
             # value is already dict[str, list[str]] from Mapping input
-            return FlextLdifModelsDomains.Attributes(attributes=value)
+            return FlextLdifModelsDomains.Attributes(
+                attributes=cast("dict[str, list[str]]", value)
+            )
 
         # ===================================================================
         # REMAINING FIELDS
@@ -1721,15 +1718,12 @@ class FlextLdifModelsDomains:
                 Modified data with metadata field initialized and datetimes coerced
 
             """
-            if not isinstance(data, dict):
-                return data
-
             # Coerce ISO datetime strings to datetime objects for strict=True compatibility
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
             for dt_field in ("created_at", "updated_at"):
                 if dt_field in data and isinstance(data[dt_field], str):
                     with suppress(ValueError):
-                        data[dt_field] = datetime.fromisoformat(data[dt_field])
+                        data[dt_field] = datetime.fromisoformat(str(data[dt_field]))
                     # Let Pydantic handle invalid datetime strings
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
@@ -1758,7 +1752,7 @@ class FlextLdifModelsDomains:
                     "novell",
                 }:
                     # quirk_type_value is validated as ServerTypeLiteral
-                    final_quirk_type_val = quirk_type_value
+                    final_quirk_type_val = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", quirk_type_value)
                 else:
                     # Use literal value directly for type safety
                     final_quirk_type_val = "rfc"
@@ -2235,7 +2229,7 @@ class FlextLdifModelsDomains:
                     self.metadata.validation_results.model_copy(
                         update={
                             "server_specific_violations": server_violations,
-                            "validation_server_type": self.metadata.quirk_type or None,
+                            "validation_server_type": self.metadata.quirk_type,
                         },
                     )
                 )

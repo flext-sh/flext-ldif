@@ -173,13 +173,12 @@ class ProcessConfigBuilder:
 
         """
         # Create config with values in constructor to avoid frozen model issues
-        config_kwargs: dict[str, object] = {
-            "lowercase_keys": lowercase_keys,
+        config_kwargs = {
             "sort_values": sort_values,
             "normalize_whitespace": normalize_whitespace,
+            "lowercase_keys": lowercase_keys,
+            "sort_attributes": sort_attributes,
         }
-        if sort_attributes is not None:
-            config_kwargs["sort_attributes"] = sort_attributes
 
         self._attr_config = AttrNormalizationConfig.model_validate(config_kwargs)
         return self
@@ -386,7 +385,7 @@ class TransformConfigBuilder:
         self._track_changes = enabled
         return self
 
-    def build(self) -> TransformConfig:
+    def build(self):
         """Build the TransformConfig.
 
         Returns:
@@ -461,7 +460,7 @@ class FilterConfigBuilder:
         self._include_metadata_matches = enabled
         return self
 
-    def build(self) -> FilterConfig:
+    def build(self):
         """Build the FilterConfig.
 
         Returns:
@@ -630,15 +629,23 @@ class WriteConfigBuilder:
 
         """
         # Create config with all values at construction time (frozen model)
+        # Convert types to match WriteConfig expectations
+        base64_attrs_value = (
+            list(self._base64_attrs) if isinstance(self._base64_attrs, (list, tuple)) else None
+        )
+        attr_order_value = (
+            list(self._attr_order) if self._attr_order is not None else None
+        )
+
         return WriteConfig(
-            format=self._format,  # format is alias for output_format
+            format=self._format.value,  # format is alias for output_format
             line_width=self._line_width,
             fold_lines=self._fold_lines,
-            base64_attrs=self._base64_attrs,
-            sort_by=self._sort_by,
-            attr_order=self._attr_order,
+            base64_attrs=cast("list[str] | None", base64_attrs_value),
+            sort_by=self._sort_by.value,
+            attr_order=cast("list[str] | None", attr_order_value),
             include_metadata=self._include_metadata,
-            server=self._server,
+            server=self._server.value if self._server else None,
         )
 
 

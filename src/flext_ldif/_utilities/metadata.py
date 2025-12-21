@@ -1546,7 +1546,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_metadata_extensions(
-        quirk_type: str
+        quirk_type: str,
     ) -> dict[str, t.MetadataAttributeValue]:
         """Build metadata extensions for entry as a dictionary.
 

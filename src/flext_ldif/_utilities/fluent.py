@@ -617,9 +617,7 @@ class EntryOps:
         self._entry = result.value
         return self
 
-    def attach_metadata(
-        self
-    ) -> Self:
+    def attach_metadata(self) -> Self:
         """Attach metadata to the entry.
 
         Returns:
