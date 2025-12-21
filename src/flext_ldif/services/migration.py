@@ -18,7 +18,7 @@ from pydantic import PrivateAttr
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.pipeline import ProcessingPipeline
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import m, TransformConfig
+from flext_ldif.models import m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
 
@@ -120,8 +120,8 @@ class FlextLdifMigrationPipeline(
                 }
             )
             # Create TransformConfig with ProcessConfig
-            transform_config_base = TransformConfig()
-            config = TransformConfig(
+            transform_config_base = m.TransformConfig()
+            config = m.TransformConfig(
                 **transform_config_base.model_dump(),
                 process_config=process_config,
             )

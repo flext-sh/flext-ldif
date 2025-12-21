@@ -699,12 +699,14 @@ class FlextLdifUtilities(FlextUtilities):
             for item in items:
                 if predicate is not None:
                     try:
-                        if not predicate(item):
+                        # Cast to single-arg callable for this call (handles 2-arg via try/except)
+                        if not cast("Callable[[object], bool]", predicate)(item):
                             continue
                     except TypeError:
                         continue
                 try:
-                    result_item = processor_func(item)
+                    # Cast to single-arg callable for this call (handles 2-arg via try/except)
+                    result_item = cast("Callable[[object], R]", processor_func)(item)
                     results.append(result_item)
                 except Exception as e:
                     if on_error == "fail":
@@ -879,8 +881,8 @@ class FlextLdifUtilities(FlextUtilities):
             # Single item processing
             try:
                 # Process single items through processor_func
-                # Processor function accepts various types
-                result_item = processor_func(items)
+                # Processor function accepts various types - cast to single-arg version
+                result_item = cast("Callable[[object], object]", processor_func)(items)
                 return r[str].ok([result_item])
             except Exception as e:
                 return r[str].fail(f"Processing failed: {e}")

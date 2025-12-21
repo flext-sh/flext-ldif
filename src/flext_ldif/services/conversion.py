@@ -1247,8 +1247,9 @@ class FlextLdifConversion(
         perms_to_model: Callable[[dict[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
-        # map_dict expects dict[str, object], orig_perms_dict is dict[str, bool] which is compatible
-        orig_perms_dict_typed: dict[str, object] = orig_perms_dict
+        # map_dict expects dict[str, object], orig_perms_dict is dict[str, bool]
+        # Use cast for dict invariance (dict[str, bool] -> dict[str, object])
+        orig_perms_dict_typed: dict[str, object] = cast(dict[str, object], orig_perms_dict)
         normalized_orig_perms_raw = u.Ldif.map_dict(
             orig_perms_dict_typed,
             mapper=lambda k, v: (
