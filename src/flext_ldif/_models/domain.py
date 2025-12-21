@@ -214,7 +214,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls.model_validate({"value": dn})
+                return cls(value=dn)
 
             return dn
 
@@ -1649,7 +1649,7 @@ class FlextLdifModelsDomains:
                 # Handle dict from model_dump()
                 return FlextLdifModelsDomains.DN(**value)
 
-            return FlextLdifModelsDomains.DN.model_validate({"value": value})
+            return FlextLdifModelsDomains.DN(value=value)
 
         @field_validator("attributes", mode="before")
         @classmethod
