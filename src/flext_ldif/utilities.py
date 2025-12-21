@@ -982,10 +982,14 @@ class FlextLdifUtilities(FlextUtilities):
                 predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool] = (
                     predicate_or_filter1
                 )
+                # Wrap VariadicCallable to make compatible with Callable[[object], bool]
+
+                def predicate_callable(item: object) -> bool:
+                    return predicate(item)
 
                 return FlextLdifUtilities.Ldif.filter_base_class(
                     items_or_entries,
-                    predicate,
+                    predicate_callable,
                     mapper,
                 )
 
@@ -1034,55 +1038,36 @@ class FlextLdifUtilities(FlextUtilities):
                 | Mapping[str, T]
                 | Sequence[m.Ldif.Entry]
             ),
-            predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool],
-            mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None,
+            predicate: Callable[[object], bool],
+            _mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None,
         ) -> list[T] | list[R] | dict[str, T] | dict[str, R]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
                 # Type narrowing: items_or_entries is list[object] | tuple[object, ...]
                 items_list: list[object] | tuple[object, ...] = items_or_entries
                 # Collection.filter does not support mapper parameter - just filter
-                result_list = FlextUtilities.Collection.filter(
+                # Type narrowing: result is list[T] from Collection.filter
+                return FlextUtilities.Collection.filter(
                     items_list,
                     predicate,
                 )
-                # Type narrowing: result_list is list[T] from Collection.filter
-                return result_list
             if isinstance(items_or_entries, (dict, Mapping)):
                 # Type narrowing: items_or_entries is dict[str, object] | Mapping[str, object]
                 items_dict: dict[str, object] | Mapping[str, object] = items_or_entries
-                if mapper is None:
-                    result_dict = FlextUtilities.Collection.filter(
-                        items_dict,
-                        predicate,
-                    )
-                else:
-                    # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
-                    # t.GeneralValueType is a wide union type that includes R
-                    result_dict = FlextUtilities.Collection.filter(
-                        items_dict,
-                        predicate,
-                        mapper=mapper,
-                    )
-                # Type narrowing: result_dict is dict[str, T] | dict[str, R] from Collection.filter
-                return result_dict
+                # Collection.filter does not support mapper parameter - just filter
+                # Type narrowing: result is dict[str, T] from Collection.filter
+                return FlextUtilities.Collection.filter(
+                    items_dict,
+                    predicate,
+                )
             # Single item case - wrap in list
             items_single_list: list[object] = [items_or_entries]
-            if mapper is None:
-                result_single = FlextUtilities.Collection.filter(
-                    items_single_list,
-                    predicate,
-                )
-            else:
-                # mapper is VariadicCallable[R], compatible with VariadicCallable[t.GeneralValueType]
-                # t.GeneralValueType is a wide union type that includes R
-                result_single = FlextUtilities.Collection.filter(
-                    items_single_list,
-                    predicate,
-                    mapper=mapper,
-                )
-            # Type narrowing: result_single is list[T] | list[R] from Collection.filter
-            return result_single
+            # Collection.filter does not support mapper parameter - just filter
+            # Type narrowing: result is list[T] from Collection.filter
+            return FlextUtilities.Collection.filter(
+                items_single_list,
+                predicate,
+            )
 
         @staticmethod
         def filter_ldif_entries(

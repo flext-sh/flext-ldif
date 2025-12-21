@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from flext_core import r
 from pydantic import BaseModel, computed_field
@@ -39,6 +39,7 @@ from pydantic import BaseModel, computed_field
 # Imports
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.analysis import FlextLdifAnalysis
@@ -206,9 +207,9 @@ class FlextLdif(FlextLdifServiceBase[object]):
         return FlextLdifModelsDomains
 
     @property
-    def constants(self) -> type[object]:
+    def constants(self) -> type[c.__class__]:
         """Get constants (use string literals instead)."""
-        return type[object]
+        return c.__class__
 
     @property
     def parser(self) -> FlextLdifParser:
@@ -343,7 +344,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
-    ) -> r[list]:
+    ) -> r[list[object]]:
         """Process entries using processing service.
 
         Args:
@@ -404,10 +405,11 @@ class FlextLdif(FlextLdifServiceBase[object]):
             entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
         else:
             entry_typed = m.Ldif.Entry.model_validate(entry)
-        return self.acl_service.extract_acls_from_entry(
+        result = self.acl_service.extract_acls_from_entry(
             entry_typed,
             server_type,
         )
+        return cast("r[object]", result)
 
     def get_entry_dn(
         self,

@@ -162,7 +162,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
     @property
-    def schema(self) -> object:
+    def schema_quirk(self) -> object:
         """Access to nested schema quirk instance."""
         return self._schema_quirk
 

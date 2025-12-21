@@ -565,8 +565,6 @@ class FlextLdifUtilitiesDN:
             if process_result.is_failure:
                 return r[str].fail(f"Failed to parse DN components from '{dn_str}'")
             parsed_list = process_result.value
-            if not isinstance(parsed_list, list):
-                return r[str].fail(f"Unexpected parse result type from '{dn_str}'")
             tuple_length = 2
             result = [
                 item
@@ -632,8 +630,6 @@ class FlextLdifUtilitiesDN:
                     f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
             normalized_list = process_result.value
-            if not isinstance(normalized_list, list):
-                return r[str].fail(f"Unexpected normalize result type from '{dn_str}'")
             filtered_str = u.Collection.filter(
                 normalized_list,
                 predicate=lambda x: isinstance(x, str),
