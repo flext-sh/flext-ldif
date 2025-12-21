@@ -574,8 +574,8 @@ class FlextLdifSorting(
                 result = self._sort_entry_attributes_alphabetically(entry)
 
             if result.is_failure:
-                # Use u.err() for unified error extraction (DSL pattern)
-                error_msg = u.err(result)
+                # Extract error directly from FlextResult
+                error_msg = result.error or "Unknown error"
                 original_attrs = (
                     list(entry.attributes.attributes.keys()) if entry.attributes else []
                 )
@@ -597,7 +597,7 @@ class FlextLdifSorting(
             # Extract value from result with default fallback
             sorted_entry_raw = result.value if result.is_success else None
             if sorted_entry_raw is None:
-                error_msg = u.err(result, default="Unknown error")
+                error_msg = result.error or "Unknown error"
                 error_text = f"Attribute sort failed: {error_msg}"
                 raise ValueError(error_text)
             # Type narrowing: unwrap_or(, default=None) on r[Entry] returns Entry
@@ -722,7 +722,7 @@ class FlextLdifSorting(
         )
         if batch_result.is_failure:
             return r[list[m.Ldif.Entry]].fail(
-                u.err(batch_result, default="ACL sort failed"),
+                batch_result.error or "ACL sort failed",
             )
         # Extract results from batch result with explicit type narrowing
         batch_data = batch_result.value
@@ -780,10 +780,9 @@ class FlextLdifSorting(
             if "," in dn_value:
                 parent_dn = dn_value.split(",", 1)[1]
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                # Use u.val for unified result unwrapping (DSL pattern)
-                # Type narrowing: unwrap_or returns str | None
-                parent_normalized = (
-                    parent_norm_result.unwrap_or(default=None)
+                # Extract value directly from FlextResult
+                parent_normalized: str | None = (
+                    parent_norm_result.value
                     if parent_norm_result.is_success
                     else None
                 )
@@ -886,10 +885,9 @@ class FlextLdifSorting(
                 # Check if parent exists in entry list
                 parent_dn = dn_value.split(",", 1)[1]
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                # Use u.val for unified result unwrapping (DSL pattern)
-                # Type narrowing: unwrap_or returns str | None
-                parent_normalized = (
-                    parent_norm_result.unwrap_or(default=None)
+                # Extract value directly from FlextResult
+                parent_normalized: str | None = (
+                    parent_norm_result.value
                     if parent_norm_result.is_success
                     else None
                 )
@@ -1182,10 +1180,10 @@ class FlextLdifSorting(
             """Check if key is not in order."""
             return pair[0] not in order
 
-        ordered = u.Collection.map(
-            [key for key in order if key_in_attrs(key)],
-            mapper=map_to_pair,
-        )
+        # Build ordered pairs directly instead of using Collection.map
+        ordered: list[tuple[str, list[str]]] = [
+            map_to_pair(key) for key in order if key_in_attrs(key)
+        ]
         remaining = sorted(
             [item for item in attrs_dict.items() if key_not_in_order(item)],
             key=lambda x: x[0].lower(),

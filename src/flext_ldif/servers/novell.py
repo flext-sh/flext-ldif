@@ -456,10 +456,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         attributes=attributes,  # Novell: extracted from rights segments
                     ),
                     subject=m.Ldif.AclSubject(
-                        # Business Rule: Novell eDirectory uses "trustee" concept which maps to "dn"
-                        # Trustee is a DN string, so use "dn" as subject_type for AclSubject
+                        # Business Rule: Novell eDirectory uses "trustee" concept
+                        # Trustee is a DN string - use "user" as the subject_type
                         # Implication: Remote auditing can track trustee DNs via subject_value
-                        subject_type="dn",
+                        subject_type="user",
                         subject_value=(
                             trustee
                             or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN
@@ -638,7 +638,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return True
 
             # objectClasses is already list[str] in
-            object_classes_raw = u.mapper().get(
+            object_classes_raw: list[str] = u.mapper().get(
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
             )
             # Ensure object_classes is a list
@@ -665,7 +665,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in Attributes)
-                object_classes = u.mapper().get(
+                object_classes: list[str] = u.mapper().get(
                     attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
                 )
 

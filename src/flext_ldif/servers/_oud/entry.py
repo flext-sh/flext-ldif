@@ -19,6 +19,7 @@ from flext_core import (
     FlextTypes,
 )
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
@@ -661,12 +662,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def update_metadata_with_commented_acls(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: FlextLdifModelsDomains.QuirkMetadata,
         acl_attribute_names: list[str],
         commented_acl_values: dict[str, list[str]],
         hidden_attrs: set[str],
         entry_attributes_dict: dict[str, list[str]],
-    ) -> m.Ldif.QuirkMetadata:
+    ) -> FlextLdifModelsDomains.QuirkMetadata:
         """Update metadata with commented ACL information.
 
         Args:
@@ -680,13 +681,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Updated metadata with ACL information
 
         """
-        # Type narrowing: ensure metadata is m.Ldif.QuirkMetadata (public facade)
-        # Business Rule: Always use public m.Ldif.QuirkMetadata, not internal m.Ldif.QuirkMetadata
-        metadata_typed: m.Ldif.QuirkMetadata = (
-            m.Ldif.QuirkMetadata.model_validate(metadata.model_dump())
-            if not isinstance(metadata, m.Ldif.QuirkMetadata)
-            else metadata
-        )
+        # Type narrowing: ensure metadata is usable as QuirkMetadata
+        # Business Rule: Accept both internal and facade QuirkMetadata types
+        metadata_typed: FlextLdifModelsDomains.QuirkMetadata = metadata
         current_extensions: dict[str, t.MetadataAttributeValue] = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
@@ -1691,6 +1688,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         if entry.metadata:
             # Get current extensions as dict
+            current_extensions: dict[str, t.MetadataAttributeValue]
             if isinstance(
                 entry.metadata.extensions,
                 FlextLdifModelsMetadata.DynamicMetadata,
@@ -1698,16 +1696,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 current_extensions_dict = entry.metadata.extensions.model_dump(
                     exclude_unset=True,
                 )
-                current_extensions: dict[str, t.MetadataAttributeValue] = (
-                    current_extensions_dict
-                )
+                current_extensions = current_extensions_dict
             elif isinstance(entry.metadata.extensions, dict):
                 # Type narrowing: dict is compatible with dict[str, t.MetadataAttributeValue]
-                current_extensions: dict[str, t.MetadataAttributeValue] = (
-                    entry.metadata.extensions
-                )
+                current_extensions = entry.metadata.extensions
             else:
-                current_extensions: dict[str, t.MetadataAttributeValue] = {}
+                current_extensions = {}
             # Merge and create new entry
             current_extensions.update(acl_metadata_extensions)
             merged_extensions = FlextLdifModelsMetadata.DynamicMetadata(
@@ -2274,7 +2268,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             else:
                 entry_attrs[str(k)] = [str(v)]
 
-        result = self._parse_entry(dn, entry_attrs)
+        result = self.parse_entry(dn, entry_attrs)
         if result.is_success:
             entry = result.value
             original_dn = dn
@@ -2372,7 +2366,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry: Entry model with potential rejection metadata
 
         """
-        if entry.metadata.extensions and isinstance(entry.metadata.extensions, dict):
+        if (
+            entry.metadata
+            and entry.metadata.extensions
+            and isinstance(entry.metadata.extensions, dict)
+        ):
             rejection_reason = entry.metadata.extensions.get("rejection_reason")
             if rejection_reason:
                 comment_lines.append(f"# [REJECTION] {rejection_reason}")

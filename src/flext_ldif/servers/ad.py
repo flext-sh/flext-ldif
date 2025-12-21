@@ -23,7 +23,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult, u
 
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -303,8 +303,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                FlextLdifUtilitiesSchema.fix_missing_sup(oc_data)
-                FlextLdifUtilitiesSchema.fix_kind_mismatch(oc_data)
+                FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
+                FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
@@ -539,13 +539,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
 
-            raw_object_classes_result = u.mapper().get(
+            # u.mapper().get() returns value directly (or default if key not found)
+            raw_object_classes: list[str] = u.mapper().get(
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
-            )
-            raw_object_classes = (
-                raw_object_classes_result.value
-                if raw_object_classes_result.is_success
-                else []
             )
             object_classes = (
                 raw_object_classes

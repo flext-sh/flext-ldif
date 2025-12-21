@@ -780,7 +780,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = acl_line  # Relaxed mode accepts everything, parameter not used
             return True
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
+        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse ACL with best-effort approach.
 
             Args:
@@ -791,7 +791,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             if not acl_line or not acl_line.strip():
-                return FlextResult[FlextLdifModelsDomains.Acl].fail(
+                return FlextResult[m.Ldif.Acl].fail(
                     "ACL line cannot be empty"
                 )
             try:
@@ -808,9 +808,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             update=cast(
                                 "dict[str, object]",
                                 {
-                                    "metadata": FlextLdifModelsDomains.QuirkMetadata(
+                                    "metadata": m.Ldif.QuirkMetadata(
                                         quirk_type=self._get_server_type(),
-                                        extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
+                                        extensions=m.Ldif.DynamicMetadata.model_validate({
                                             "original_format": acl_line.strip(),
                                         }),
                                     ),
@@ -821,7 +821,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         # Update existing metadata using model_copy
                         updated_extensions = (
                             acl.metadata.extensions
-                            or FlextLdifModelsMetadata.DynamicMetadata()
+                            or m.Ldif.DynamicMetadata()
                         )
                         updated_metadata = acl.metadata.model_copy(
                             update={
@@ -835,41 +835,41 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                 {"metadata": updated_metadata},
                             ),
                         )
-                    return FlextResult[FlextLdifModelsDomains.Acl].ok(updated_acl)
+                    return FlextResult[m.Ldif.Acl].ok(updated_acl)
                 # Create minimal Acl model with relaxed parsing
-                acl_extensions_dict: dict[str, object] = {
-                    "original_format": acl_line.strip(),
-                }
-                acl = FlextLdifModelsDomains.Acl(
+                relaxed_acl = m.Ldif.Acl(
                     name=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
                     target=m.Ldif.AclTarget(
                         target_dn=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
                         attributes=[],
                     ),
                     subject=m.Ldif.AclSubject(
-                        subject_type=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_TYPE,
+                        subject_type=cast(
+                            "c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
+                            FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_TYPE,
+                        ),
                         subject_value=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
                     ),
-                    permissions=FlextLdifModelsDomains.AclPermissions(),
+                    permissions=m.Ldif.AclPermissions(),
                     raw_acl=acl_line,
-                    metadata=FlextLdifModelsDomains.QuirkMetadata(
+                    metadata=m.Ldif.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            **acl_extensions_dict
-                        ),
+                        extensions=m.Ldif.DynamicMetadata.model_validate({
+                            "original_format": acl_line.strip(),
+                        }),
                     ),
                 )
-                return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
+                return FlextResult[m.Ldif.Acl].ok(relaxed_acl)
             except Exception as e:
                 logger.debug(
                     "Relaxed ACL parse failed",
                     error=str(e),
                 )
-                return FlextResult[FlextLdifModelsDomains.Acl].fail(
+                return FlextResult[m.Ldif.Acl].fail(
                     f"Failed to parse ACL: {e}",
                 )
 
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
             """Write ACL to RFC format - stringify in relaxed mode.
 
             Args:
@@ -958,12 +958,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             # In relaxed mode, pass through entry unchanged
-            return FlextResult[FlextLdifModelsDomains.Entry].ok(entry)
+            return FlextResult[m.Ldif.Entry].ok(entry)
 
         def can_handle(
             self,
             entry_dn: str,
-            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Accept any entry in relaxed mode.
 
@@ -983,7 +983,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: dict[str, list[str | bytes]],
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        ) -> FlextResult[m.Ldif.Entry]:
             """Parse entry with best-effort approach.
 
             Args:
@@ -994,18 +994,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 FlextResult with parsed Entry object
 
             """
-            # Business Rule: _parse_entry signature matches parent (dict[str, list[str | bytes]])
-            # Implication: entry_attrs is already in correct format, pass directly to parent
-            # Try parent's _parse_entry first
-            parent_result = super()._parse_entry(entry_dn, entry_attrs)
-            if parent_result.is_success:
-                return parent_result
-
-            # Best-effort: create Entry with raw data if RFC parsing fails
-            logger.debug(
-                "RFC entry parse failed, using relaxed mode: %s",
-                parent_result.error,
-            )
+            # Relaxed mode: Create Entry directly with best-effort approach
+            # Note: No parent _parse_entry exists - this is a relaxed-only method
             try:
                 # Validate DN
                 if not entry_dn or not entry_dn.strip():
@@ -1066,35 +1056,32 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     original_attribute_case=FlextLdifModelsMetadata.DynamicMetadata(
                         **original_attribute_case,
                     ),
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata.model_validate({
+                    extensions=m.Ldif.DynamicMetadata.model_validate({
                         "server_type": "relaxed",
-                        "rfc_parse_failed": True,
-                        "rfc_error": str(parent_result.error)
-                        if parent_result.error
-                        else None,
+                        "relaxed_mode": True,
                     }),
                 )
 
-                entry = FlextLdifModelsDomains.Entry(
+                entry = m.Ldif.Entry(
                     dn=effective_dn,
                     attributes=ldif_attrs,
                     metadata=metadata,
                 )
-                return FlextResult[FlextLdifModelsDomains.Entry].ok(entry)
+                return FlextResult[m.Ldif.Entry].ok(entry)
             except Exception as e:
                 logger.debug(
                     "Relaxed entry creation failed",
                     error=str(e),
                     error_type=type(e).__name__,
                 )
-                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                return FlextResult[m.Ldif.Entry].fail(
                     f"Failed to parse entry: {e}",
                 )
 
         def _parse_content(
             self,
             ldif_content: str,
-        ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        ) -> FlextResult[list[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal).
 
             Override RFC implementation with relaxed mode fallback for broken LDIF.
@@ -1130,7 +1117,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _adapted_parse_entry_relaxed(
             self,
             entry_content: str,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        ) -> FlextResult[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content).
 
             Adapt _parse_entry signature to match Content.parse expectations.
@@ -1169,7 +1156,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _write_entry(
             self,
-            entry_data: FlextLdifModelsDomains.Entry,
+            entry_data: m.Ldif.Entry,
         ) -> FlextResult[str]:
             """Write Entry model to RFC-compliant LDIF string format (internal).
 

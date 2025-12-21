@@ -20,10 +20,10 @@ from flext_core import (
 from jinja2 import Environment
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
-from flext_ldif._models.settings import FlextLdifModelsSettings
 
 # REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
 # REMOVED: Type aliases para objetos nested - use m.* ou FlextLdifModelsDomains.* diretamente

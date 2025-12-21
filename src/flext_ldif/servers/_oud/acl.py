@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
@@ -655,13 +656,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         try:
             # Build minimal ACL model for ds-privilege-name
             # This format doesn't have traditional target/subject/permissions
-            server_type_oud: Literal["oud"] = FlextLdifServersOudConstants.SERVER_TYPE
+            # Cast to Literal type for model compatibility
+            server_type_oud = cast(
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                FlextLdifServersOudConstants.SERVER_TYPE,
+            )
             acl_model = m.Ldif.Acl(
                 name=privilege_name,  # Use privilege name as ACL name
                 target=None,  # No target in ds-privilege-name format
                 subject=None,  # No subject in ds-privilege-name format
                 permissions=None,  # No traditional read/write/add permissions
-                server_type=FlextLdifServersOudConstants.SERVER_TYPE,  # OUD server type from Constants
+                server_type=server_type_oud,  # OUD server type from Constants
                 raw_line=privilege_name,  # Original line
                 raw_acl=privilege_name,  # Raw ACL string
                 validation_violations=[],  # No validation issues
@@ -945,11 +950,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
 
         # Check metadata bridge for self_write promotion
         # Type narrowing: acl_data.metadata is m.Ldif.QuirkMetadata | None
-        extensions = acl_data.metadata.extensions if acl_data.metadata else None
+        meta_extensions = acl_data.metadata.extensions if acl_data.metadata else None
         if (
-            extensions
-            and hasattr(extensions, "get")
-            and extensions.get("self_write_to_write")
+            meta_extensions
+            and hasattr(meta_extensions, "get")
+            and meta_extensions.get("self_write_to_write")
             and FlextLdifServersOudConstants.PERMISSION_SELF_WRITE in ops
             and "write" not in filtered_ops
         ):

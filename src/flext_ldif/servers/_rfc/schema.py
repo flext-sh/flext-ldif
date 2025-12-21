@@ -1162,13 +1162,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         """
         # Find parent server class that has Constants
-        # Iterate through MRO to find the server class (not nested Schema/Acl/Entry)
-        server_type_value: str = "generic"
-        for cls in type(self).__mro__:
-            # Check if this class has a Constants nested class
-            if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
-                server_type_value = cls.Constants.SERVER_TYPE.value
-                break
+        # Use _get_server_type which returns the correct Literal type
+        server_type_value = self._get_server_type()
 
         # Build extensions with original_format
         all_extensions: t.Ldif.MetadataDictMutable = {

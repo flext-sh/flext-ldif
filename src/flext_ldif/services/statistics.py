@@ -147,9 +147,12 @@ class FlextLdifStatistics(
         # Access rejected entries directly from categorized dict
         # u.Ldif.take() doesn't work correctly with _FlexibleCategories Pydantic models
         rejected_key = "rejected"
-        # Type narrowing: categorized.get returns list[m.Ldif.Entry]
-        rejected_entries_raw: list[m.Ldif.Entry] = (
-            categorized.get(rejected_key, []) if hasattr(categorized, "get") else []
+        # Type narrowing: categorized.get returns list[Entry] - cast to facade type
+        from typing import cast
+
+        rejected_entries_raw: list[m.Ldif.Entry] = cast(
+            "list[m.Ldif.Entry]",
+            categorized.get(rejected_key, []) if hasattr(categorized, "get") else [],
         )
         # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
         # Use named function instead of lambda (DSL pattern)
@@ -180,13 +183,13 @@ class FlextLdifStatistics(
 
         # Build output files paths as CategoryPaths model
         # Use the real class, not the TypeAlias
-        output_files_model = FlextLdifModelsResults._CategoryPaths()
+        output_files_model = FlextLdifModelsResults.CategoryPaths()
         for category in written_counts:
-            # Type narrowing: u.Ldif.take returns str when default is str
-            path_str = str(
-                output_dir
-                / u.Ldif.take(output_files, category, default=f"{category}.ldif"),
-            )
+            # Get filename from output_files or use default
+            filename = u.Ldif.take(output_files, category, default=f"{category}.ldif")
+            # Type narrowing: filename is always str since we provide default
+            filename_str = filename if filename is not None else f"{category}.ldif"
+            path_str = str(output_dir / filename_str)
             setattr(output_files_model, category, path_str)
 
         return r[FlextLdifModelsResults.StatisticsResult].ok(
