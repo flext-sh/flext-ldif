@@ -1702,8 +1702,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, t.MetadataAttributeValue],
-        ) -> dict[str, t.MetadataAttributeValue]:
+            data: dict[str, t.MetadataAttributeValue] | list[t.MetadataAttributeValue],
+        ) -> dict[str, t.MetadataAttributeValue] | list[t.MetadataAttributeValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -1714,13 +1714,20 @@ class FlextLdifModelsDomains:
             at instantiation time, when the module is fully loaded and FlextLdifModelsDomains
             is in scope.
 
+            Note: When validating Sequence[Entry] fields, Pydantic may pass list data.
+            We return non-dict data unchanged for Pydantic's sequence validator to handle.
+
             Args:
-                data: Input data for model instantiation
+                data: Input data for model instantiation (dict for Entry, list for sequences)
 
             Returns:
                 Modified data with metadata field initialized and datetimes coerced
 
             """
+            # Guard: Return non-dict data for Pydantic sequence validation
+            if not isinstance(data, dict):
+                return data
+
             # Coerce ISO datetime strings to datetime objects for strict=True compatibility
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
             for dt_field in ("created_at", "updated_at"):

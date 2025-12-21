@@ -21,7 +21,6 @@ from typing import Self
 from flext_core import FlextTypes, r
 
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif._utilities.functional import FlextFunctional
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
 from flext_ldif.utilities import u
@@ -315,15 +314,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             first_dn = value_list[0] if value_list else ""
             return r[str].ok(str(first_dn))
 
-        # Type narrowing: match returns r[str] | None, use or to ensure r[str]
-        match_result = FlextFunctional.match(
-            dn_value_raw,
-            (type(None), handle_none),
-            (str, handle_str),
-            (list, handle_list),
-            default=r[str].fail("DN value has unexpected type"),
-        )
-        return match_result or r[str].fail("DN value has unexpected type")
+        # Type-based dispatch with explicit isinstance checks
+        if dn_value_raw is None:
+            return handle_none(None)
+        if isinstance(dn_value_raw, str):
+            return handle_str(dn_value_raw)
+        if isinstance(dn_value_raw, list):
+            return handle_list(dn_value_raw)
+        return r[str].fail("DN value has unexpected type")
 
     @staticmethod
     def _extract_dn_from_object(dn_val_raw: object) -> r[str]:
@@ -334,10 +332,11 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             # Type narrowing: object with 'value' attribute, extract it
             dn_value_raw_obj = u.mapper().get(dn_val_raw, "value")
             # Type narrowing: value attribute is str | list[str] | None
+            dn_value_extracted: str | list[str] | None
             if isinstance(dn_value_raw_obj, (str, list)):
-                dn_value_extracted: str | list[str] = dn_value_raw_obj
+                dn_value_extracted = dn_value_raw_obj
             else:
-                dn_value_extracted: str | list[str] | None = None
+                dn_value_extracted = None
             return FlextLdifEntries._extract_dn_from_value(dn_value_extracted)
         if isinstance(dn_val_raw, str):
             return r[str].ok(dn_val_raw)
@@ -500,13 +499,11 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Business Rule: Normalize single string values to list format
         # This ensures consistent return type (always list[str]) regardless of input format
         # Implication: Single-value objectClass attributes are wrapped in list for consistency
-        match_result = FlextFunctional.match(
-            objectclasses,
-            (str, lambda s: r[list[str]].ok([s])),
-            (list, lambda lst: r[list[str]].ok(list(lst))),
-            default=r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}"),
-        )
-        return match_result or r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}")
+        if isinstance(objectclasses, str):
+            return r[list[str]].ok([objectclasses])
+        if isinstance(objectclasses, list):
+            return r[list[str]].ok(list(objectclasses))
+        return r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}")
 
     @staticmethod
     def create_entry(
@@ -689,19 +686,19 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[str].fail(f"Attribute '{attribute_name}' not found")
 
         # Type narrowing: attribute values are str | list[str]
+        attr_value: str | list[str]
         if isinstance(value_raw, (str, list)):
-            value: str | list[str] = value_raw
+            attr_value = value_raw
         else:
             # Fallback: convert to string
-            value: str | list[str] = str(value_raw)
+            attr_value = str(value_raw)
 
-        match_result = FlextFunctional.match(
-            value,
-            (str, lambda s: r[list[str]].ok([s])),
-            (list, lambda v: r[list[str]].ok(list(v))),
-            default=r[list[str]].ok([str(value)]),
-        )
-        return match_result or r[list[str]].ok([str(value)])
+        # Type-based normalization to list[str]
+        if isinstance(attr_value, str):
+            return r[list[str]].ok([attr_value])
+        if isinstance(attr_value, list):
+            return r[list[str]].ok(list(attr_value))
+        return r[list[str]].ok([str(attr_value)])
 
     @staticmethod
     def _normalize_string_value(value: str) -> r[str]:
@@ -717,14 +714,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not value or (isinstance(value, (list, dict, str)) and len(value) == 0):
             return r[str].fail("Cannot normalize empty list")
         first = value[0]
-        match_result = FlextFunctional.match(
-            first,
-            (str, FlextLdifEntries._normalize_string_value),
-            default=lambda f: r[str].ok(str(f))
-            if f is not None
-            else r[str].fail("Cannot normalize empty list"),
-        )
-        return match_result or r[str].fail("Cannot normalize empty list")
+        # Type-based dispatch for first element
+        if isinstance(first, str):
+            return FlextLdifEntries._normalize_string_value(first)
+        if first is not None:
+            return r[str].ok(str(first))
+        return r[str].fail("Cannot normalize empty list")
 
     @staticmethod
     def normalize_attribute_value(
@@ -741,13 +736,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """
         if value is None:
             return r[str].fail("Cannot normalize None value")
-        match_result = FlextFunctional.match(
-            value,
-            (str, FlextLdifEntries._normalize_string_value),
-            (list, FlextLdifEntries._normalize_list_value),
-            default=r[str].fail(f"Cannot normalize value of type {type(value)}"),
-        )
-        return match_result or r[str].fail(f"Cannot normalize value of type {type(value)}")
+        # Type-based dispatch for normalization
+        if isinstance(value, str):
+            return FlextLdifEntries._normalize_string_value(value)
+        if isinstance(value, list):
+            return FlextLdifEntries._normalize_list_value(value)
+        return r[str].fail(f"Cannot normalize value of type {type(value)}")
 
     def get_normalized_attribute(
         self,

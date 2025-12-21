@@ -739,7 +739,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE).
 

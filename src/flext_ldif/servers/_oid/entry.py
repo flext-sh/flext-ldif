@@ -21,6 +21,7 @@ from functools import reduce
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
@@ -429,7 +430,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         """
         # When default is provided, mapper().get returns the value directly
-        object_classes = u.mapper().get(converted_attributes, "objectClass", default=[])
+        object_classes: list[str] = u.mapper().get(
+            converted_attributes, "objectClass", default=[]
+        )
         object_classes_lower = {oc.lower() for oc in object_classes}
 
         # Python 3.13: Set operations and list comprehensions
@@ -660,7 +663,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # Extract from nested structure: CONVERTED_ATTRIBUTES[CONVERSION_BOOLEAN_CONVERSIONS]
         if isinstance(converted_attrs_data, dict):
             # When default is provided, mapper().get returns the value directly
-            boolean_conversions_obj = u.mapper().get(
+            boolean_conversions_obj: dict[str, object] = u.mapper().get(
                 converted_attrs_data, mk.CONVERSION_BOOLEAN_CONVERSIONS, default={}
             )
             # Type-safe extraction: rebuild with proper typing
@@ -1026,13 +1029,18 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         generic_metadata = FlextLdifUtilitiesMetadata.build_entry_metadata_extensions(
             "oid",  # quirk_type - required first positional argument
-            entry_dn=original_dn,
-            original_attributes=original_attributes_str,
-            processed_attributes=processed_attributes_str,
-            server_type="oid",
-            metadata_keys=metadata_keys_str,
-            operational_attributes=operational_attributes_str,
         )
+        # Add additional metadata fields
+        generic_metadata["entry_dn"] = original_dn
+        if original_attributes_str:
+            generic_metadata["original_attributes"] = original_attributes_str
+        if processed_attributes_str:
+            generic_metadata["processed_attributes"] = processed_attributes_str
+        generic_metadata["server_type"] = "oid"
+        if metadata_keys_str:
+            generic_metadata["metadata_keys"] = metadata_keys_str
+        if operational_attributes_str:
+            generic_metadata["operational_attributes"] = operational_attributes_str
         # OID-specific: conversions, target DN, format message
         mk = c.Ldif.MetadataKeys
         # Store boolean conversions and attribute name conversions
@@ -1254,13 +1262,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             # Step 1: Convert boolean attributes OID → RFC
             logger.debug(
                 "_hook_post_parse_entry attributes",
-                attributes=list(entry.attributes.attributes.keys()),
+                attributes=",".join(entry.attributes.attributes.keys()),
             )
             converted_attributes, converted_attrs, boolean_conversions = (
                 self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
             )
-            logger.debug("converted_attrs: %s", converted_attrs)
-            logger.debug("boolean_conversions: %s", boolean_conversions)
+            logger.debug("converted_attrs", attrs=",".join(converted_attrs))
+            logger.debug("boolean_conversions", count=len(boolean_conversions))
 
             # Step 2: Normalize attribute names OID → RFC (orclaci → aci)
             normalized_attributes: dict[str, list[str]] = {}

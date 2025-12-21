@@ -19,12 +19,12 @@ when 389 Directory Server-specific LDIF format requirements are identified.
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 from flext_core import FlextResult, u
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -305,8 +305,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                FlextLdifUtilitiesSchema.fix_missing_sup(oc_data)
-                FlextLdifUtilitiesSchema.fix_kind_mismatch(oc_data)
+                FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
+                FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
@@ -644,13 +644,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             # Use lowercase objectClass key for normalized attributes
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
-            object_classes_result = u.mapper().get(
+            # u.mapper().get() returns value directly (or default if key not found)
+            object_classes_raw: list[str] = u.mapper().get(
                 normalized_attrs, objectclass_key, default=[]
             )
-            object_classes_raw = (
-                object_classes_result.value if object_classes_result.is_success else []
-            )
-            object_classes = (
+            object_classes: list[str] = (
                 object_classes_raw
                 if isinstance(object_classes_raw, (list, tuple))
                 else [object_classes_raw]
@@ -677,10 +675,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
 
-                # Store metadata in extensions
-                server_type_lit: Literal["ds389"] = FlextLdifServersDs389.Constants.SERVER_TYPE.value
+                # Store metadata in extensions - use centralized constant
+                # StrEnum .value is already the correct Literal type
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=server_type_lit,
+                    quirk_type=c.Ldif.ServerTypes.DS389.value,
                 )
                 metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
                     marker in dn_lower

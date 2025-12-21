@@ -16,7 +16,7 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Literal
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 
@@ -576,14 +576,16 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 elif first_who_lower == "authenticated":
                     subject_type = "authenticated"
                 else:
-                    # Default to userdn for DN-based subjects
-                    subject_type = "userdn"
+                    # Default to user for DN-based subjects
+                    subject_type = "user"
 
                 # Build Acl model
                 # Note: ACL_ATTRIBUTE_NAME is OpenLDAP 1.x format from Constants
-                acl_extensions_dict: dict[str, object] = {
-                    "original_format": acl_line,
-                }
+                # Use model_construct for DynamicMetadata to bypass validation
+                acl_extensions = FlextLdifModelsMetadata.DynamicMetadata.model_construct(
+                    _fields_set={"original_format"},
+                    original_format=acl_line,
+                )
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
                     target=m.Ldif.AclTarget(
@@ -597,9 +599,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     permissions=permissions,
                     metadata=m.Ldif.QuirkMetadata.create_for(
                         quirk_type=self._get_server_type(),
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            **acl_extensions_dict
-                        ),
+                        extensions=acl_extensions,
                     ),
                     raw_acl=acl_line,
                 )
@@ -677,7 +677,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -721,9 +721,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
-                server_type_lit: Literal["openldap1"] = "openldap1"
+                # StrEnum .value is already the correct Literal type
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=server_type_lit,
+                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1.value,
                 )
                 metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
 

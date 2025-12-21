@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import cast
 
 from flext_core import r
@@ -129,7 +130,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             return r[m.Ldif.Acl].fail(parse_result.error or "ACL parsing failed")
 
         # Extract and rewrap as FlextResult[Acl]
-        return r[m.Ldif.Acl].ok(parse_result.value)
+        # parse_result.value is AclProtocol - cast to concrete Acl type
+        parsed_acl = cast("m.Ldif.Acl", parse_result.value)
+        return r[m.Ldif.Acl].ok(parsed_acl)
 
     def write_acl(
         self,
@@ -165,7 +168,11 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Direct call to ACL quirk write method
         # Quirk protocol returns FlextProtocols.Result[str]
         # Convert to FlextResult[str] for service method return type
-        write_result = acl_quirk.write(acl)
+        # Cast m.Ldif.Acl to protocol-compatible type for write method
+        from flext_ldif.protocols import p
+
+        acl_proto = cast("p.Ldif.AclProtocol", acl)
+        write_result = acl_quirk.write(acl_proto)
 
         if write_result.is_failure:
             return r[str].fail(write_result.error or "ACL writing failed")
@@ -251,19 +258,25 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             )
             return r[m.Ldif.Acl].fail(parse_result.error or "Failed to parse ACL")
 
+        # Cast function to expected type for batch() - it expects Callable[[object], object]
+        batch_func = cast("Callable[[object], object]", parse_single_acl)
         batch_result = u.batch(
-            list(acl_values),
-            parse_single_acl,
+            cast("list[object]", list(acl_values)),
+            batch_func,
             on_error="skip",
         )
         if batch_result.is_success:
             results_raw = batch_result.value.get("results", [])
-            acls = [acl for acl in results_raw if acl is not None]
+            # Cast results to expected ACL type
+            acls = [cast("m.Ldif.Acl", acl) for acl in results_raw if acl is not None]
 
         # Create response
         # Statistics is a PEP 695 type alias - use the underlying class directly
+        # Import internal model type for AclResponse compatibility
+        from flext_ldif._models.domain import FlextLdifModelsDomains
+
         response = m.Ldif.LdifResults.AclResponse(
-            acls=acls,
+            acls=cast("list[FlextLdifModelsDomains.Acl]", acls),
             statistics=m.Ldif.LdifResults.Statistics(
                 processed_entries=1,
                 acls_extracted=len(acls),
@@ -315,13 +328,15 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                     return r[m.Ldif.Entry].ok(entry)
             return r[m.Ldif.Entry].fail("Entry has no ACL attributes")
 
+        # Cast function and list to expected types for batch()
+        batch_func = cast("Callable[[object], object]", filter_entry)
         batch_result = u.batch(
-            entries,
-            filter_entry,
+            cast("list[object]", entries),
+            batch_func,
             on_error="skip",
         )
         acl_entries: list[m.Ldif.Entry] = [
-            entry
+            cast("m.Ldif.Entry", entry)
             for entry in (
                 batch_result.value.get("results", []) if batch_result.is_success else []
             )
@@ -400,10 +415,12 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Find ACL that grants all required permissions
         def acl_grants_all(acl: m.Ldif.Acl) -> bool:
             """Check if ACL grants all required permissions."""
-            return all(getattr(acl.permissions, p, False) for p in required_perms)
+            return all(getattr(acl.permissions, perm, False) for perm in required_perms)
 
         # find() returns object | None, cast to expected type
-        found_raw = u.find(acls, predicate=acl_grants_all)
+        # Cast predicate to expected type for find()
+        predicate_func = cast("Callable[[object], bool]", acl_grants_all)
+        found_raw = u.find(cast("list[object]", acls), predicate=predicate_func)
 
         if found_raw is not None:
             found_acl = cast("m.Ldif.Acl", found_raw)

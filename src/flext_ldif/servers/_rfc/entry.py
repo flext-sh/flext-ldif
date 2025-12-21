@@ -153,13 +153,18 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[str].fail(f"Invalid attributes: {attributes}")
 
         try:
-            entry = m.Ldif.Entry(dn=dn.strip(), attributes=attributes or {})
+            entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=dn.strip()),
+                attributes=m.Ldif.Attributes(attributes=attributes or {}),
+            )
             return r[str].ok(entry)
         except Exception as e:
             return r[str].fail(f"Failed to create entry {dn}: {e}")
 
-    def validate(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+    def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance.
+
+        Note: Named validate_entry to avoid conflict with Pydantic's validate method.
 
         Args:
             entry: Entry to validate

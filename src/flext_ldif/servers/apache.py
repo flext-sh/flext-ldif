@@ -5,7 +5,7 @@ from __future__ import annotations
 # Copyright (c) 2025 FLEXT Team. All rights reserved.
 # SPDX-License-Identifier: MIT
 import re
-from typing import ClassVar, override
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -239,14 +239,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                u.Ldif.ObjectClass.fix_missing_sup(
-                    oc_data,
-                    _server_type=self._get_server_type(),
-                )
-                u.Ldif.ObjectClass.fix_kind_mismatch(
-                    oc_data,
-                    _server_type=self._get_server_type(),
-                )
+                u.Ldif.ObjectClass.fix_missing_sup(oc_data)
+                u.Ldif.ObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
@@ -343,7 +337,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Inherits entry handling from RFC base - no override needed.
         """
 
-        @override
         def _parse_entry(
             self,
             entry_dn: str,
@@ -367,7 +360,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             # Implication: Apache quirks maintain RFC compliance while adding server-specific
             # metadata and transformations. This ensures compatibility with standard LDIF tools
             # while enabling Apache-specific optimizations.
-            base_result = super()._parse_entry(entry_dn, entry_attrs)
+            # Convert bytes to strings in attributes
+            str_attrs: dict[str, list[str]] = {
+                k: [v.decode() if isinstance(v, bytes) else v for v in vals]
+                for k, vals in entry_attrs.items()
+            }
+            base_result = super().parse_entry(entry_dn, str_attrs)
             if base_result.is_failure:
                 return base_result
 
