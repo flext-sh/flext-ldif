@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Literal, Self, TypeGuard, override
+from typing import ClassVar, Self, TypeGuard, override
 
 from flext_core import (
     FlextLogger,
