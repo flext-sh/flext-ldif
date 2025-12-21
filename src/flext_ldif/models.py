@@ -419,6 +419,7 @@ class FlextLdifModels(FlextModels):
 
             # Categorization results
             FlexibleCategories: TypeAlias = _FlexibleCategories
+            DynamicCounts = FlextLdifModelsResults.DynamicCounts
 
             # Domain models
             # Entry and Syntax are defined as classes above

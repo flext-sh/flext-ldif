@@ -1902,7 +1902,7 @@ class FlextLdifConversion(
             parsed_attr = parse_result.value if parse_result.is_success else None
             if parsed_attr is None:
                 return r[m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str].fail(
-                    u.err(parse_result),
+                    parse_result.error or "Failed to parse source attribute",
                 )
 
             # Use u.map() for unified result pipeline (DSL pattern)
@@ -2069,7 +2069,7 @@ class FlextLdifConversion(
                 return r[
                     m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
                 ].fail(
-                    u.err(parse_result) or "Failed to parse source objectClass",
+                    parse_result.error or "Failed to parse source objectClass",
                 )
 
             write_result = self._write_objectclass_to_rfc(source, parsed_oc)
