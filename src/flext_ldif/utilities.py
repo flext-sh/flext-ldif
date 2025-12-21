@@ -501,7 +501,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = process_config
+                    # Cast between compatible ProcessConfig types
+                    transform_config.process_config = cast(Any, process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
@@ -511,7 +512,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = config
+                    # Cast between compatible ProcessConfig types
+                    transform_config.process_config = cast(Any, config)
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
@@ -562,7 +564,7 @@ class FlextLdifUtilities(FlextUtilities):
                     try:
                         # Runtime call to predicate as 1-arg
                         if callable(predicate):
-                            result = predicate(value)
+                            result = cast(Any, predicate)(value)
                             if isinstance(result, bool):
                                 return result
                     except (TypeError, ValueError):
@@ -571,7 +573,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[T], bool]
                 try:
                     # Runtime call to predicate
-                    result = predicate(value)
+                    result = cast(Any, predicate)(value)
                     if isinstance(result, bool):
                         return result
                 except (TypeError, ValueError):
@@ -678,9 +680,9 @@ class FlextLdifUtilities(FlextUtilities):
                     continue
                 # Type narrowing: use TypeGuard to narrow union type
                 if FlextLdifUtilities.Ldif.is_two_arg_processor(processor_func):
-                    result_item = processor_func(key, value)
+                    result_item = cast(Any, processor_func)(key, value)
                 else:
-                    result_item = processor_func(value)
+                    result_item = cast(Any, processor_func)(value)
                 results.append(result_item)
             return results
 

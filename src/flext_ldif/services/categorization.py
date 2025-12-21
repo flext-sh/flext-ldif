@@ -419,7 +419,7 @@ class FlextLdifCategorization(
             )
 
         return r[list[m.Ldif.Entry]].ok(
-            cast(list[m.Ldif.Entry], validated)
+            cast("list[m.Ldif.Entry]", validated)
         )
 
     def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
@@ -991,7 +991,7 @@ class FlextLdifCategorization(
             for result_item in batch_data["results"]:
                 if result_item is not None and isinstance(result_item, tuple):
                     # Type narrowing: result_item is tuple[str, m.Ldif.Entry] after processing
-                    result_tuple = cast(tuple[str, m.Ldif.Entry], result_item)
+                    result_tuple = cast("tuple[str, m.Ldif.Entry]", result_item)
                     category, entry_to_append = result_tuple
                     if category == _cat("rejected"):
                         self._rejection_tracker["categorization_rejected"].append(
@@ -1105,7 +1105,7 @@ class FlextLdifCategorization(
                 # entries from categories.items() needs cast to m.Ldif.Entry
                 # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    cast(list[m.Ldif.Entry], list(entries)),
+                    cast("list[m.Ldif.Entry]", list(entries)),
                     self._base_dn,
                 )
                 # Track filter results in metadata
@@ -1255,7 +1255,7 @@ class FlextLdifCategorization(
             if category in filterable_categories:
                 # entries from categories.items() needs cast to list[m.Ldif.Entry]
                 # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
-                entries_list = cast(list[m.Ldif.Entry], list(entries))
+                entries_list = cast("list[m.Ldif.Entry]", list(entries))
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     base_dn,
