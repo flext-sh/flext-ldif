@@ -949,7 +949,7 @@ class FlextLdifUtilitiesACL:
             extra_patterns,
             processor=extract_extra,
             predicate=lambda _k, v: bool(v),
-            on_error="skip",
+            _on_error="skip",
         )
         if extra_result.is_success and extra_result.value:
             # Type guard: ensure value is dict before accessing .items()
@@ -1221,7 +1221,7 @@ class FlextLdifUtilitiesACL:
             rule_config,
             processor=process_rule_config,
             predicate=rule_predicate,
-            on_error="skip",
+            _on_error="skip",
         )
         if not process_result.is_success or process_result.value is None:
             return []
@@ -1284,7 +1284,7 @@ class FlextLdifUtilitiesACL:
             target_config,
             processor=process_target_config,
             predicate=predicate_func,
-            on_error="skip",
+            _on_error="skip",
         )
         if not process_result.is_success or process_result.value is None:
             return []
@@ -1557,7 +1557,7 @@ class FlextLdifUtilitiesACL:
         process_result = u.Collection.process(
             patterns,
             processor=extract_component_batch,
-            on_error="skip",
+            _on_error="skip",
         )
         if not process_result.is_success or not isinstance(process_result.value, dict):
             return {}
@@ -1693,7 +1693,7 @@ class FlextLdifUtilitiesACL:
         batch_result = u.Collection.batch(
             list(acl_lines),
             parse_single_acl_wrapper,
-            on_error="collect" if not fail_fast else "fail",
+            _on_error="collect" if not fail_fast else "fail",
         )
         # u.Collection.batch returns FlextResult[BatchResultDict]
         if not batch_result.is_success:
@@ -1785,7 +1785,7 @@ class FlextLdifUtilitiesACL:
         batch_result = u.Collection.batch(
             list(permissions_list),
             convert_single_permissions_wrapper,
-            on_error="fail",
+            _on_error="fail",
         )
         # u.Collection.batch returns FlextResult[BatchResultDict]
         if not batch_result.is_success:

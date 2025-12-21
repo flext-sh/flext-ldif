@@ -158,6 +158,7 @@ class ProcessConfigBuilder:
         sort_attributes: c.Ldif.SortOption | None = None,
         sort_values: bool = True,
         normalize_whitespace: bool = True,
+        lowercase_keys: bool = False,
     ) -> Self:
         """Configure attribute normalization.
 
@@ -165,6 +166,7 @@ class ProcessConfigBuilder:
             sort_attributes: How to sort attributes (alphabetical, hierarchical, none)
             sort_values: Sort attribute values
             normalize_whitespace: Normalize whitespace in values
+            lowercase_keys: Convert attribute keys to lowercase
 
         Returns:
             Self for method chaining
@@ -172,7 +174,7 @@ class ProcessConfigBuilder:
         """
         # Create config with values in constructor to avoid frozen model issues
         config_kwargs: dict[str, object] = {
-            "lowercase_keys": lowercase,
+            "lowercase_keys": lowercase_keys,
             "sort_values": sort_values,
             "normalize_whitespace": normalize_whitespace,
         }

@@ -228,7 +228,7 @@ class FlextLdifProcessing(
         batch_result = u.Collection.process(
             entries,
             processor_func,
-            on_error="collect",
+            _on_error="collect",
         )
         if batch_result.is_failure:
             return r[list[m.Ldif.ProcessingResult]].fail(

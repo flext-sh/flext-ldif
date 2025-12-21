@@ -608,7 +608,7 @@ class FlextLdifSorting(
         batch_result = u.Collection.batch(
             entries,
             sort_entry,
-            on_error="fail",
+            _on_error="fail",
         )
         # u.Collection.batch returns r[BatchResultDict] - unwrap to access dict
         if batch_result.is_failure:
@@ -724,7 +724,7 @@ class FlextLdifSorting(
         batch_result = u.Collection.batch(
             entries,
             sort_acl_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_failure:
             return r[list[m.Ldif.Entry]].fail(

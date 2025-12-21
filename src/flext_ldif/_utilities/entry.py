@@ -407,7 +407,7 @@ class FlextLdifUtilitiesEntry:
         case_mappings_result = u.Collection.process(
             [str(attr) for attr in entry_attrs],
             processor=extract_case_mapping,
-            on_error="skip",
+            _on_error="skip",
         )
         # Filter out None results and convert to dict
         original_attribute_case: dict[str, str] = {}
@@ -949,7 +949,7 @@ class FlextLdifUtilitiesEntry:
         batch_result = u.Collection.batch(
             list(entries),
             transform_entry,
-            on_error="fail" if config.fail_fast else "collect",
+            _on_error="fail" if config.fail_fast else "collect",
         )
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Transform batch failed")
