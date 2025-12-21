@@ -227,7 +227,7 @@ class FlextLdifModels(FlextModels):
         ValidationConfig = ValidationConfig
         MetadataConfig = MetadataConfig
         ProcessConfig: TypeAlias = ProcessConfig
-        TransformConfig = TransformConfig
+        TransformConfig: TypeAlias = TransformConfig
         FilterConfig = FilterConfig
         ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
         EntryResult = FlextLdifModelsResults.EntryResult
@@ -252,7 +252,7 @@ class FlextLdifModels(FlextModels):
 
         # Migration results (direct aliases for convenience)
         MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
-        FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
+        FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
 
         # Event models - real inheritance classes
         class Events:
@@ -320,7 +320,7 @@ class FlextLdifModels(FlextModels):
 
             # Analysis and detection results
             AnalysisResult = FlextLdifModelsResults.AnalysisResult
-            EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
+            EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
             ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
 
             # Parsing and writing results
@@ -347,7 +347,7 @@ class FlextLdifModels(FlextModels):
 
             # Dynamic counts and categorization
             DynamicCounts = FlextLdifModelsResults.DynamicCounts
-            FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
+            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
 
             # Status models
             ClientStatus = FlextLdifModelsResults.ClientStatus
@@ -388,10 +388,10 @@ class FlextLdifModels(FlextModels):
             SchemaServiceStatus: TypeAlias = FlextLdifModelsResults.SchemaServiceStatus
             SyntaxServiceStatus: TypeAlias = FlextLdifModelsResults.SyntaxServiceStatus
             ValidationServiceStatus: TypeAlias = FlextLdifModelsResults.ValidationServiceStatus
-            EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
+            EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
             ServiceStatus = FlextLdifModelsResults.ServiceStatus
             CategoryPaths = FlextLdifModelsResults.CategoryPaths
-            Syntax = FlextLdifModelsDomains.Syntax
+            Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
 
             # Parsing and writing results
             ParseResponse = FlextLdifModelsResults.ParseResponse
@@ -402,7 +402,7 @@ class FlextLdifModels(FlextModels):
             # Schema discovery
             SchemaDiscoveryResult = FlextLdifModelsResults.SchemaDiscoveryResult
             SchemaBuilderResult = FlextLdifModelsResults.SchemaBuilderResult
-            SyntaxLookupResult = FlextLdifModelsResults.SyntaxLookupResult
+            SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
 
             # Migration results
             MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
@@ -422,19 +422,19 @@ class FlextLdifModels(FlextModels):
             EntryResult = FlextLdifModelsResults.EntryResult
 
             # Categorization results
-            FlexibleCategories = FlextLdifModelsResults.FlexibleCategories
+            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
 
             # Domain models
             # Entry and Syntax are defined as classes above
 
             # Event models
-            DnEvent = FlextLdifModelsEvents.DnEvent
-            DnEventConfig = FlextLdifModelsEvents.DnEventConfig
+            DnEvent: TypeAlias = FlextLdifModelsEvents.DnEvent
+            DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
 
             # Categorization models
             CategoryRules = FlextLdifModelsSettings.CategoryRules
             WhitelistRules = FlextLdifModelsSettings.WhitelistRules
-            SortConfig = FlextLdifModelsSettings.SortConfig
+            SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
 
             # Events namespace for nested access (m.Ldif.LdifResults.Events.*)
             class Events:
