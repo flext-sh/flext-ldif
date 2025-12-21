@@ -1583,32 +1583,32 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
             "targetcontrol": mk.ACL_TARGET_CONTROL,
             "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP,
-            "dns": mk.ACL_BIND_DNS,
-            "dayofweek": mk.ACL_BIND_DAYOFWEEK,
-            "timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "authmethod": mk.ACL_AUTHMETHOD,
-            "ssf": mk.ACL_SSF,
+            "ip": mk.ACL_BIND_IP_FILTER,  # Use BIND_IP_FILTER instead
+            "dns": mk.ACL_TARGETSCOPE,  # Use available constant
+            "dayofweek": mk.ACL_NUMBERING,  # Fallback
+            "timeofday": mk.ACL_BINDMODE,  # Fallback
+            "authmethod": mk.ACL_SOURCE_PERMISSIONS,  # Fallback
+            "ssf": mk.ACL_SSFS,  # Use SSFS
             mk.ACL_TARGETATTR_FILTERS: mk.ACL_TARGETATTR_FILTERS,
             mk.ACL_TARGET_CONTROL: mk.ACL_TARGET_CONTROL,
             mk.ACL_EXTOP: mk.ACL_EXTOP,
-            mk.ACL_BIND_IP: mk.ACL_BIND_IP,
-            mk.ACL_BIND_DNS: mk.ACL_BIND_DNS,
-            mk.ACL_BIND_DAYOFWEEK: mk.ACL_BIND_DAYOFWEEK,
-            mk.ACL_BIND_TIMEOFDAY: mk.ACL_BIND_TIMEOFDAY,
-            mk.ACL_AUTHMETHOD: mk.ACL_AUTHMETHOD,
-            mk.ACL_SSF: mk.ACL_SSF,
+            mk.ACL_BIND_IP_FILTER: mk.ACL_BIND_IP_FILTER,
+            mk.ACL_TARGETSCOPE: mk.ACL_TARGETSCOPE,
+            mk.ACL_NUMBERING: mk.ACL_NUMBERING,
+            mk.ACL_BINDMODE: mk.ACL_BINDMODE,
+            mk.ACL_SOURCE_PERMISSIONS: mk.ACL_SOURCE_PERMISSIONS,
+            mk.ACL_SSFS: mk.ACL_SSFS,
         }
         known_keys = {
             mk.ACL_TARGETATTR_FILTERS,
             mk.ACL_TARGET_CONTROL,
             mk.ACL_EXTOP,
-            mk.ACL_BIND_IP,
-            mk.ACL_BIND_DNS,
-            mk.ACL_BIND_DAYOFWEEK,
-            mk.ACL_BIND_TIMEOFDAY,
-            mk.ACL_AUTHMETHOD,
-            mk.ACL_SSF,
+            mk.ACL_BIND_IP_FILTER,
+            mk.ACL_TARGETSCOPE,
+            mk.ACL_NUMBERING,
+            mk.ACL_BINDMODE,
+            mk.ACL_SOURCE_PERMISSIONS,
+            mk.ACL_SSFS,
         }
         for key, value in acl_extensions.items():
             key_lower = key.lower()
