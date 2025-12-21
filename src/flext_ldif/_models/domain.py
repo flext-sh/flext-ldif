@@ -214,7 +214,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls(value=dn)  # type: ignore[call-arg]
+                return cls(value=dn)
 
             return dn
 
@@ -1650,7 +1650,7 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.DN.model_validate(value)
 
             if isinstance(value, str):
-                return FlextLdifModelsDomains.DN(value=value)  # type: ignore[call-arg]
+                return FlextLdifModelsDomains.DN(value=value)
 
             return FlextLdifModelsDomains.DN(value="")
 
