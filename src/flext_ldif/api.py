@@ -373,13 +373,14 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 case _:
                     # Fallback: attempt direct validation
                     entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        return self.processing_service.process(
+        result = self.processing_service.process(
             processor_name,
             entries_typed,
             parallel=parallel,
             batch_size=batch_size,
             max_workers=max_workers,
         )
+        return cast("r[list[object]]", result)
 
     def extract_acls(
         self,
@@ -765,10 +766,11 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use validation service for proper ValidationResult
         validation_service = FlextLdifValidation()
-        return FlextLdifAnalysis.validate_entries(
+        result = FlextLdifAnalysis.validate_entries(
             entries_typed,
             validation_service,
         )
+        return cast("r[object]", result)
 
     def filter_entries(
         self,
@@ -815,7 +817,8 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use statistics service instead of direct model access
         stats_service = FlextLdifStatistics()
-        return stats_service.calculate_for_entries(entries_typed)
+        result = stats_service.calculate_for_entries(entries_typed)
+        return cast("r[object]", result)
 
     def filter_persons(
         self,

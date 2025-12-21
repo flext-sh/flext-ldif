@@ -393,14 +393,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         filtered_kwargs: dict[str, str | float | bool | None] = {}
         execute_kwargs: dict[str, str | int | bool | list[str] | None] = {}
         for k, v in kwargs.items():
-            value: (
-                bool
-                | dict[str, bool | int | list[str] | str | None]
-                | int
-                | list[str]
-                | str
-                | None
-            ) = v
+            value = v
             if isinstance(value, (str, float, bool, type(None))):
                 filtered_kwargs[k] = value
             # For execute params, allow str, int, bool, None, or list[str]
@@ -433,7 +426,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         kwargs: object,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
-        if "ldif_text" not in kwargs:
+        if not isinstance(kwargs, dict) or "ldif_text" not in kwargs:
             return None
         raw = kwargs["ldif_text"]
         if raw is None or isinstance(raw, str):
@@ -446,7 +439,7 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         kwargs: object,
     ) -> list[FlextLdifModelsDomains.Entry] | None:
         """Extract and validate entries parameter."""
-        if "entries" not in kwargs:
+        if not isinstance(kwargs, dict) or "entries" not in kwargs:
             return None
         raw = kwargs["entries"]
         if raw is None:
