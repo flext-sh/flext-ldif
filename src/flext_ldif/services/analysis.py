@@ -221,7 +221,6 @@ class FlextLdifAnalysis(
         )
 
     @staticmethod
-    @staticmethod
     def _validate_entry_dn(
         entry: m.Ldif.Entry,
     ) -> tuple[bool, str, list[str]]:

@@ -20,9 +20,8 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.constants import c
 from flext_ldif.models import m
-
-# Removed: from flext_ldif.constants import c (prohibited in services/)
 # Use FlextLdifUtilitiesServer helpers or direct string literals
 from flext_ldif.services.server import FlextLdifServer
 

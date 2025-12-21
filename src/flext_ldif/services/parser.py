@@ -7,8 +7,9 @@ wrapped in ``FlextResult`` to keep error handling explicit.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, cast, override
+from typing import cast, override
 
 from flext_core import r
 from pydantic import PrivateAttr

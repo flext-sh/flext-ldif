@@ -43,6 +43,7 @@ class DnNormalizationConfig(FlextModelsEntity.Value):
     case_fold: str | None = Field(default=None)
     space_handling: str | None = Field(default=None)
     escape_handling: str | None = Field(default=None)
+    validate_before: bool = Field(default=True)
 
 
 class AttrNormalizationConfig(FlextModelsEntity.Value):
@@ -52,6 +53,9 @@ class AttrNormalizationConfig(FlextModelsEntity.Value):
     sort_values: bool = Field(default=True)
     sort_attributes: str | None = Field(default=None)
     normalize_whitespace: bool = Field(default=True)
+    case_fold_names: bool = Field(default=True)
+    trim_values: bool = Field(default=True)
+    remove_empty: bool = Field(default=False)
 
 
 class AclConversionConfig(FlextModelsEntity.Value):
