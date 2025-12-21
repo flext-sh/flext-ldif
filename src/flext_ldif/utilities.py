@@ -530,8 +530,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # INTENTIONAL CAST: ProcessConfig assignment across compatible types
-                    transform_config.process_config = cast("object", process_config)
+                    # INTENTIONAL CAST: model_copy returned type differs from input type
+                    transform_config.process_config = cast("ProcessConfig", process_config)
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = TransformConfig()
@@ -541,8 +541,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # INTENTIONAL CAST: ProcessConfig assignment across compatible types
-                    transform_config.process_config = cast("object", config)
+                    # INTENTIONAL CAST: config is ProcessConfig but type narrowing needed
+                    transform_config.process_config = cast("ProcessConfig", config)
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
