@@ -179,7 +179,8 @@ class FlextLdifStatistics(
         )
 
         # Build output files paths as CategoryPaths model
-        output_files_model = m.Ldif.LdifResults.CategoryPaths()
+        # Use the real class, not the TypeAlias
+        output_files_model = FlextLdifModelsResults._CategoryPaths()
         for category in written_counts:
             # Type narrowing: u.Ldif.take returns str when default is str
             path_str = str(
@@ -234,12 +235,12 @@ class FlextLdifStatistics(
         )
 
         # Build object_class_distribution as DynamicCounts model
-        obj_class_model = m.Ldif.LdifResults.DynamicCounts()
+        obj_class_model = FlextLdifModelsResults.DynamicCounts()
         for class_name, count in object_class_distribution.items():
             obj_class_model.set_count(class_name, count)
 
         # Build server_type_distribution as DynamicCounts model
-        server_type_model = m.Ldif.LdifResults.DynamicCounts()
+        server_type_model = FlextLdifModelsResults.DynamicCounts()
         for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
 
@@ -247,7 +248,7 @@ class FlextLdifStatistics(
         # server_type_distribution dict should have the counts
         if not server_type_distribution:
             # If empty, create empty model
-            server_type_model = m.Ldif.LdifResults.DynamicCounts()
+            server_type_model = FlextLdifModelsResults.DynamicCounts()
 
         # Create EntriesStatistics - ensure we pass the populated models
         entries_stats = FlextLdifModelsResults.EntriesStatistics(

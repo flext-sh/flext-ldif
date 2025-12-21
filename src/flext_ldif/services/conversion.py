@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, TypeGuard, override
+from typing import Any, ClassVar, Self, TypeGuard, cast, override
 
 from flext_core import (
     FlextLogger,
@@ -349,7 +349,7 @@ class FlextLdifConversion(
             else [],
         )
         _ = u.Ldif.Events.log_and_emit_conversion_event(
-            logger=logger,
+            logger=cast("Any", logger),  # FlextLogger compatible with StructlogLogger protocol
             config=conversion_config,
             log_level="info" if result.is_success else "error",
         )
@@ -447,17 +447,20 @@ class FlextLdifConversion(
         if not boolean_conversions:
             return analysis
         # Type narrowing: boolean_conversions is FlextTypes.GeneralValueType
-        boolean_conv_typed: FlextTypes.GeneralValueType = boolean_conversions
-        if not isinstance(boolean_conv_typed, dict):
+        if not isinstance(boolean_conversions, dict):
             return analysis
+        boolean_conv_typed: dict[str, object] = cast("dict[str, object]", boolean_conversions)
 
         def process_conversion(
             item: tuple[str, object],
         ) -> tuple[str, dict[str, str]]:
             """Process single conversion info."""
             attr_name, conv_info = item
-            # Type narrowing: conv_info is FlextTypes.GeneralValueType
-            conv_info_typed: FlextTypes.GeneralValueType = conv_info
+            # Type narrowing: conv_info is object from batch, need isinstance check
+            if not isinstance(conv_info, dict):
+                conv_info_typed = cast("dict[str, object]", conv_info)
+            else:
+                conv_info_typed = conv_info
             # Type narrowing: batch expects R | r[R], so return tuple directly
             # Skip invalid items by returning empty dict (batch will filter via post_validate if needed)
             if not isinstance(conv_info_typed, dict):
@@ -507,8 +510,11 @@ class FlextLdifConversion(
         results_list_raw = (
             batch_data.get("results", []) if isinstance(batch_data, dict) else []
         )
-        # Type narrowing: results_list_raw is list[tuple[str, dict[str, str]]] after isinstance checks
-        results_list: list[tuple[str, dict[str, str]]] = results_list_raw
+        # Type narrowing: results_list_raw is list[object] from batch, cast after validation
+        results_list: list[tuple[str, dict[str, str]]] = cast(
+            "list[tuple[str, dict[str, str]]]",
+            results_list_raw,
+        )
 
         # Filter and reduce to dict
         # Type narrowing: process_conversion now always returns tuple[str, dict[str, str]]
@@ -527,9 +533,9 @@ class FlextLdifConversion(
         reduced_raw = u.Ldif.reduce_dict(filtered_results)
         # evolve expects dict[str, object], so cast both analysis and reduced_raw
         # Type narrowing: analysis is dict[str, object]
-        analysis_obj: dict[str, object] = analysis
+        analysis_obj: dict[str, object] = cast("dict[str, object]", analysis)
         # Type narrowing: evolved_raw is dict[str, dict[str, str]]
-        return u.Ldif.evolve(analysis_obj, reduced_raw)
+        return cast("dict[str, dict[str, str]]", u.Ldif.evolve(analysis_obj, reduced_raw))
 
     @staticmethod
     def _analyze_attribute_case(
@@ -622,10 +628,11 @@ class FlextLdifConversion(
         # Type narrowing: evolve and map_dict expect dict[str, object]
         # conversion_analysis is already dict[str, str | dict[str, str | t.MetadataAttributeValue]]
         # which is compatible with dict[str, object]
-        acc_typed: dict[str, object] = conversion_analysis
+        acc_typed: dict[str, object] = cast("dict[str, object]", conversion_analysis)
         # boolean_analysis is dict[str, dict[str, str]] which is compatible with dict[str, object]
-        boolean_analysis_typed: dict[str, object] = (
-            boolean_analysis if isinstance(boolean_analysis, dict) else {}
+        boolean_analysis_typed: dict[str, object] = cast(
+            "dict[str, object]",
+            boolean_analysis if isinstance(boolean_analysis, dict) else {},
         )
 
         # Apply boolean analysis
@@ -646,8 +653,9 @@ class FlextLdifConversion(
             target_server_str,
         )
         # attr_case_analysis is dict[str, str] which is compatible with dict[str, object]
-        attr_case_typed: dict[str, object] = (
-            attr_case_analysis if isinstance(attr_case_analysis, dict) else {}
+        attr_case_typed: dict[str, object] = cast(
+            "dict[str, object]",
+            attr_case_analysis if isinstance(attr_case_analysis, dict) else {},
         )
         acc_typed = u.Ldif.evolve(acc_typed, attr_case_typed)
 
@@ -657,15 +665,19 @@ class FlextLdifConversion(
             target_server_str,
         )
         # dn_format_analysis is dict[str, dict[str, t.MetadataAttributeValue]] which is compatible with dict[str, object]
-        dn_format_typed: dict[str, object] = (
-            dn_format_analysis if isinstance(dn_format_analysis, dict) else {}
+        dn_format_typed: dict[str, object] = cast(
+            "dict[str, object]",
+            dn_format_analysis if isinstance(dn_format_analysis, dict) else {},
         )
         acc_typed = u.Ldif.evolve(acc_typed, dn_format_typed)
 
         # Type narrowing: final result is dict[str, str | dict[str, str | t.MetadataAttributeValue]]
         # acc_typed is dict[str, object] which is compatible with the return type
         if isinstance(acc_typed, dict):
-            return acc_typed
+            return cast(
+                "dict[str, str | dict[str, str | t.MetadataAttributeValue]]",
+                acc_typed,
+            )
         return {}
 
     def _update_entry_metadata(
@@ -1087,20 +1099,16 @@ class FlextLdifConversion(
         # Use structural checks only (hasattr) to avoid pyright Protocol overlap warnings
         # Runtime behavior: Structural typing ensures correct implementation
         required_methods = ("parse", "write")
-        if not u.all_(
-            *(
-                hasattr(source_acl, method) and callable(getattr(source_acl, method))
-                for method in required_methods
-            ),
+        if not all(
+            hasattr(source_acl, method) and callable(getattr(source_acl, method))
+            for method in required_methods
         ):
             return FlextResult.fail(
                 f"Source ACL quirk {source_class.__name__} missing required AclProtocol methods",
             )
-        if not u.all_(
-            *(
-                hasattr(target_acl, method) and callable(getattr(target_acl, method))
-                for method in required_methods
-            ),
+        if not all(
+            hasattr(target_acl, method) and callable(getattr(target_acl, method))
+            for method in required_methods
         ):
             return FlextResult.fail(
                 f"Target ACL quirk {target_class.__name__} missing required AclProtocol methods",
@@ -1197,15 +1205,9 @@ class FlextLdifConversion(
     @staticmethod
     def _normalize_permission_key(key: str) -> str:
         """Normalize permission key for mapping."""
-        switch_result = u.switch(
-            key,
-            {"self_write": "selfwrite"},
-            default=key,
-        )
-        # Type narrowing: switch returns object, but we know it's str
-        if isinstance(switch_result, str):
-            return switch_result
-        return str(switch_result) if switch_result is not None else key
+        # Replace u.switch() with dict.get()
+        normalized = {"self_write": "selfwrite"}.get(key, key)
+        return normalized if isinstance(normalized, str) else key
 
     @staticmethod
     def _build_permissions_dict(
@@ -1419,11 +1421,9 @@ class FlextLdifConversion(
         )
         return bool(
             converted_acl.permissions
-            and u.any_(
-                *(
-                    getattr(converted_acl.permissions, field, False)
-                    for field in permission_fields
-                ),
+            and any(
+                getattr(converted_acl.permissions, field, False)
+                for field in permission_fields
             ),
         )
 

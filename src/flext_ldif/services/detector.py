@@ -162,7 +162,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
         patterns_found = self._extract_patterns(content_sample)
 
         # Convert dict to DynamicCounts model (supports extra fields via Pydantic)
-        scores_model = m.Ldif.LdifResults.DynamicCounts(**scores_dict)
+        scores_model = FlextLdifModelsResults.DynamicCounts(**scores_dict)
 
         detection_result = m.Ldif.LdifResults.ServerDetectionResult(
             detected_server_type=detected_type,

@@ -238,15 +238,15 @@ class FlextLdifModels(FlextModels):
         WriteConfig: TypeAlias = WriteConfig
 
         # Categorization and filtering models (direct aliases for convenience)
-        CategoryRules = FlextLdifModelsSettings.CategoryRules
-        WhitelistRules = FlextLdifModelsSettings.WhitelistRules
-        TransformationTrackingConfig = (
+        CategoryRules: TypeAlias = FlextLdifModelsSettings.CategoryRules
+        WhitelistRules: TypeAlias = FlextLdifModelsSettings.WhitelistRules
+        TransformationTrackingConfig: TypeAlias = (
             FlextLdifModelsSettings.TransformationTrackingConfig
         )
-        SortConfig = FlextLdifModelsSettings.SortConfig
+        SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
 
         # Format options models (direct aliases for test convenience)
-        ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
+        ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
         MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
         PermissionMappingConfig: TypeAlias = FlextLdifModelsSettings.PermissionMappingConfig
 
@@ -373,53 +373,53 @@ class FlextLdifModels(FlextModels):
             """
 
             # ACL-related results
-            AclResponse = FlextLdifModelsResults.AclResponse
-            AclEvaluationResult = FlextLdifModelsResults.AclEvaluationResult
+            AclResponse: TypeAlias = FlextLdifModelsResults.AclResponse
+            AclEvaluationResult: TypeAlias = FlextLdifModelsResults.AclEvaluationResult
             AclPermissions: TypeAlias = FlextLdifModelsDomains.AclPermissions
 
             # Statistics results
-            Statistics = FlextLdifModelsResults.Statistics
-            StatisticsResult = FlextLdifModelsResults.StatisticsResult
-            StatisticsSummary = FlextLdifModelsResults.StatisticsSummary
-            EntriesStatistics = FlextLdifModelsResults.EntriesStatistics
+            Statistics: TypeAlias = FlextLdifModelsResults.Statistics
+            StatisticsResult: TypeAlias = FlextLdifModelsResults.StatisticsResult
+            StatisticsSummary: TypeAlias = FlextLdifModelsResults.StatisticsSummary
+            EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
 
             # Service status aliases from _models/results.py
-            StatisticsServiceStatus = FlextLdifModelsResults.StatisticsServiceStatus
+            StatisticsServiceStatus: TypeAlias = FlextLdifModelsResults.StatisticsServiceStatus
             SchemaServiceStatus: TypeAlias = FlextLdifModelsResults.SchemaServiceStatus
             SyntaxServiceStatus: TypeAlias = FlextLdifModelsResults.SyntaxServiceStatus
             ValidationServiceStatus: TypeAlias = FlextLdifModelsResults.ValidationServiceStatus
             EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
-            ServiceStatus = FlextLdifModelsResults.ServiceStatus
-            CategoryPaths = FlextLdifModelsResults.CategoryPaths
+            ServiceStatus: TypeAlias = FlextLdifModelsResults.ServiceStatus
+            CategoryPaths: TypeAlias = FlextLdifModelsResults.CategoryPaths
             Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
 
             # Parsing and writing results
-            ParseResponse = FlextLdifModelsResults.ParseResponse
-            WriteResponse = FlextLdifModelsResults.WriteResponse
+            ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
+            WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
             WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
-            WriteFormatOptions = FlextLdifModelsSettings.WriteFormatOptions
+            WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
 
             # Schema discovery
-            SchemaDiscoveryResult = FlextLdifModelsResults.SchemaDiscoveryResult
-            SchemaBuilderResult = FlextLdifModelsResults.SchemaBuilderResult
+            SchemaDiscoveryResult: TypeAlias = FlextLdifModelsResults.SchemaDiscoveryResult
+            SchemaBuilderResult: TypeAlias = FlextLdifModelsResults.SchemaBuilderResult
             SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
 
             # Migration results
-            MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
+            MigrationEntriesResult: TypeAlias = FlextLdifModelsResults.MigrationEntriesResult
             MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
 
             # Validation results
-            ValidationResult = FlextLdifModelsResults.ValidationResult
-            ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
-            LdifValidationResult = FlextLdifModelsResults.LdifValidationResult
+            ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
+            ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
+            LdifValidationResult: TypeAlias = FlextLdifModelsResults.LdifValidationResult
 
             # Dynamic counts model
-            DynamicCounts = FlextLdifModelsResults.DynamicCounts
+            DynamicCounts: TypeAlias = FlextLdifModelsResults.DynamicCounts
 
             # Analysis and detection results
             ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
-            AnalysisResult = FlextLdifModelsResults.AnalysisResult
-            EntryResult = FlextLdifModelsResults.EntryResult
+            AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult
+            EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
 
             # Categorization results
             FlexibleCategories: TypeAlias = _FlexibleCategories
@@ -432,8 +432,8 @@ class FlextLdifModels(FlextModels):
             DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
 
             # Categorization models
-            CategoryRules = FlextLdifModelsSettings.CategoryRules
-            WhitelistRules = FlextLdifModelsSettings.WhitelistRules
+            CategoryRules: TypeAlias = FlextLdifModelsSettings.CategoryRules
+            WhitelistRules: TypeAlias = FlextLdifModelsSettings.WhitelistRules
             SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
 
             # Events namespace for nested access (m.Ldif.LdifResults.Events.*)

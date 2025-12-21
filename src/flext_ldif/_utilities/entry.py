@@ -408,8 +408,8 @@ class FlextLdifUtilitiesEntry:
                 if result is not None:
                     key, value = result
                     original_attribute_case[key] = value
-            except Exception:
-                # Skip attributes that fail case mapping extraction
+            except (ValueError, TypeError, AttributeError):
+                # Skip attributes that fail case mapping extraction due to data issues
                 continue
 
         # Analyze attribute differences

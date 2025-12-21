@@ -214,7 +214,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls(value=dn)
+                return cls(value=dn)  # type: ignore[call-arg]
 
             return dn
 
@@ -1649,7 +1649,10 @@ class FlextLdifModelsDomains:
                 # Handle dict from model_dump()
                 return FlextLdifModelsDomains.DN.model_validate(value)
 
-            return FlextLdifModelsDomains.DN(value=value)
+            if isinstance(value, str):
+                return FlextLdifModelsDomains.DN(value=value)  # type: ignore[call-arg]
+
+            return FlextLdifModelsDomains.DN(value="")  # type: ignore[unreachable]
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -1752,7 +1755,7 @@ class FlextLdifModelsDomains:
                     "novell",
                 }:
                     # quirk_type_value is validated as ServerTypeLiteral
-                    final_quirk_type_val = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", quirk_type_value)
+                    final_quirk_type_val = quirk_type_value
                 else:
                     # Use literal value directly for type safety
                     final_quirk_type_val = "rfc"
@@ -2458,14 +2461,12 @@ class FlextLdifModelsDomains:
                         values_list: list[str] = [str(attr_values)]
                     elif isinstance(attr_values, list):
                         values_list = [str(v) for v in attr_values]
-                    else:
-                        # Single value - convert to list
-                        values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
                 return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
             if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
-            # This else block should now be reachable and is valid
+
+            # This should not be reached with proper type annotations
             msg = f"Attributes must be dict or Attributes, got {type(attributes).__name__}"
             raise ValueError(msg)
 

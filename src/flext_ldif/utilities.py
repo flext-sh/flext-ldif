@@ -159,7 +159,7 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, value: str | bytes | float | bool | list[str] | None) -> None:
+            def __init__(self, *, value: str | bytes | float | list[str] | None) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:
@@ -561,9 +561,8 @@ class FlextLdifUtilities(FlextUtilities):
                     # Fallback: try as 1-arg predicate
                     try:
                         # Runtime call to predicate as 1-arg
-                        call_1arg = getattr(predicate, '__call__', None)
-                        if call_1arg is not None:
-                            result = call_1arg(value)
+                        if callable(predicate):
+                            result = predicate(value)
                             if isinstance(result, bool):
                                 return result
                     except (TypeError, ValueError):

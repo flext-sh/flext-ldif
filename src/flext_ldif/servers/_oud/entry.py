@@ -247,7 +247,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         **Utilities Used**:
 
-        - ``u.Entry.matches_server_patterns()`` - Pattern matching
+        - ``u.Ldif.Entry.matches_server_patterns()`` - Pattern matching
 
         **RFC Override**: Extends RFC (RFC returns True for all entries as fallback).
 
@@ -271,7 +271,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             keyword_patterns=oud_constants.KEYWORD_PATTERNS,
         )
         return (
-            u.Entry.matches_server_patterns(
+            u.Ldif.Entry.matches_server_patterns(
                 entry_dn,
                 attributes,
                 patterns_config,
@@ -282,7 +282,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     # ===== _parse_entry - SIMPLIFIED VIA HOOK-BASED ARCHITECTURE =====
     # NOTE: _process_oud_attributes REMOVED - RFC base + hooks handles this
     # NOTE: _build_and_populate_roundtrip_metadata REMOVED - RFC base handles this
-    # NOTE: _analyze_oud_entry_differences REMOVED - use u.Entry.analyze_differences
+    # NOTE: _analyze_oud_entry_differences REMOVED - use u.Ldif.Entry.analyze_differences
     # NOTE: _store_oud_minimal_differences REMOVED - use FlextLdifUtilitiesMetadata.store_minimal_differences
     # NOTE: parse_entry now calls RFC base + populates OUD metadata (2025-01)
 
@@ -397,7 +397,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Check if entry is a schema entry - delegate to utility."""
         # Convert domain model to facade model for utility compatibility
         facade_entry = m.Ldif.Entry.model_validate(entry.model_dump())
-        return u.Entry.is_schema_entry(facade_entry, strict=False)
+        return u.Ldif.Entry.is_schema_entry(facade_entry, strict=False)
 
     def _add_original_entry_comments(
         self,
@@ -2287,7 +2287,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 for k, v in parsed_attrs.items()
             }
             dn_differences, attribute_differences, original_attrs_complete, _ = (
-                u.Entry.analyze_differences(
+                u.Ldif.Entry.analyze_differences(
                     entry_attrs=original_entry_dict,
                     converted_attrs=converted_attrs,
                     original_dn=original_dn,

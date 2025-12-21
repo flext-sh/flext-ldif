@@ -166,7 +166,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             # Try RFC-compliant extraction first
-            oid = u.LdifParser.extract_oid(attr_definition)
+            oid = u.Ldif.LdifParser.extract_oid(attr_definition)
             if oid:
                 return oid
 
@@ -397,7 +397,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             # Try standard extraction first
-            oid = u.LdifParser.extract_oid(definition)
+            oid = u.Ldif.LdifParser.extract_oid(definition)
             if oid:
                 return oid
 
@@ -543,12 +543,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
             # Extract basic fields
-            name = u.LdifParser.extract_optional_field(
+            name = u.Ldif.LdifParser.extract_optional_field(
                 oc_definition,
                 r"\bNAME\s+(?:'([^']+)'|\(([^)]+)\))\b",
                 default=oid,
             )
-            desc = u.LdifParser.extract_optional_field(
+            desc = u.Ldif.LdifParser.extract_optional_field(
                 oc_definition,
                 r"\bDESC\s+'([^']+)'\b",
             )
@@ -572,7 +572,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             must, may = self._extract_must_may_from_objectclass(oc_definition)
 
             # Build metadata
-            extensions = u.LdifParser.extract_extensions(oc_definition)
+            extensions = u.Ldif.LdifParser.extract_extensions(oc_definition)
             extensions["original_format"] = oc_definition.strip()
             extensions["schema_source_server"] = "relaxed"
 
@@ -1131,7 +1131,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
             # Use generalized parser with relaxed configuration
-            return u.Parsers.Content.parse(
+            return u.Ldif.Parsers.Content.parse(
                 ldif_content=ldif_content,
                 server_type=self._get_server_type(),
                 parse_entry_hook=self._adapted_parse_entry_relaxed,
