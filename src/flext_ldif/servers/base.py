@@ -1031,8 +1031,10 @@ class _PriorityDescriptor:
 # happens at module import time, not instance creation time.
 # Use setattr to set class-level descriptors on Pydantic models
 # Note: setattr works here because we're setting on the class, not an instance
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+# Type: ignore for descriptor assignments - descriptors are set at class level,
+# not instance level, bypassing Pydantic's type validation
+setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
+setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed
