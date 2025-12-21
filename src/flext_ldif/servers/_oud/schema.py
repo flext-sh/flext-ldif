@@ -97,8 +97,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ::
 
         quirk = FlextLdifServersOud()
-        if quirk.schema.can_handle_attribute(attr_def):
-            result = quirk.schema.parse(attr_def)
+        if quirk.schema_quirk.can_handle_attribute(attr_def):
+            result = quirk.schema_quirk.parse(attr_def)
             if result.is_success:
                 parsed_attr = result.value
                 # X-ORIGIN available in parsed_attr.x_origin

@@ -207,9 +207,9 @@ class FlextLdif(FlextLdifServiceBase[object]):
         return FlextLdifModelsDomains
 
     @property
-    def constants(self) -> type[c.__class__]:
+    def constants(self) -> object:
         """Get constants (use string literals instead)."""
-        return c.__class__
+        return c
 
     @property
     def parser(self) -> FlextLdifParser:
@@ -586,11 +586,12 @@ class FlextLdif(FlextLdifServiceBase[object]):
             FlextResult containing created Entry model.
 
         """
-        return FlextLdifEntries.create_entry(
+        result = FlextLdifEntries.create_entry(
             dn=dn,
             attributes=attributes,
             objectclasses=objectclasses,
         )
+        return cast("r[object]", result)
 
     def detect_server_type(
         self,
