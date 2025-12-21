@@ -2023,8 +2023,8 @@ class FlextLdifModelsSettings:
         )
         transform_entry_hook: (
             Callable[
-                [FlextModelsEntity.Entry],
-                FlextModelsEntity.Entry,
+                [FlextLdifModelsDomains.Entry],
+                FlextLdifModelsDomains.Entry,
             ]
             | None
         ) = Field(

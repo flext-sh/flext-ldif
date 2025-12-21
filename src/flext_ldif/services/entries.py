@@ -207,21 +207,25 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return FlextLdifEntries.remove_operational_attributes(entry)
 
         # Type annotation helps mypy infer T = Entry, R = Entry
-        # When operation returns r[Entry], batch extracts .value, so R = Entry
+        # Direct iteration instead of u.Collection.batch
         operation_fn: Callable[
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
         ] = remove_op_attrs_wrapper
-        batch_result = u.Collection.batch(entries, operation_fn, _on_error="fail")
-        if not batch_result.is_success:
-            return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.BatchResultDict = batch_result.value
-        # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
-        # operation_fn returns r[Entry], so batch extracts .value and R = Entry
-        raw_results = batch_data["results"]
-        if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):
-            return r.fail("All results should be Entry instances")
-        results: list[m.Ldif.Entry] = raw_results  # Type narrowed by check
+        results: list[m.Ldif.Entry] = []
+        for entry in entries:
+            try:
+                result = operation_fn(entry)
+                # Handle both direct return and FlextResult return
+                if isinstance(result, r):
+                    if result.is_success and isinstance(result.value, m.Ldif.Entry):
+                        results.append(result.value)
+                    else:
+                        return r.fail(result.error or f"Failed to process entry")
+                elif isinstance(result, m.Ldif.Entry):
+                    results.append(result)
+            except Exception as exc:
+                return r.fail(f"Batch processing failed: {exc}")
         return r.ok(results)
 
     def remove_attributes_batch(
@@ -258,21 +262,27 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             """Wrapper for remove_attributes."""
             return FlextLdifEntries.remove_attributes(entry, attributes)
 
+        # Direct iteration instead of u.Collection.batch
         # Type annotation helps mypy infer T = Entry, R = Entry
-        # When operation returns r[Entry], batch extracts .value, so R = Entry
+        # When operation returns r[Entry], we extract .value, so R = Entry
         operation_fn: Callable[
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
         ] = remove_attrs_wrapper
-        batch_result = u.Collection.batch(entries, operation_fn, _on_error="fail")
-        if not batch_result.is_success:
-            return r.fail(batch_result.error or "Batch processing failed")
-        batch_data: core_t.BatchResultDict = batch_result.value
-        # Type narrowing: batch() returns BatchResultDict with results: list[R] where R = Entry
-        raw_results = batch_data["results"]
-        if not all(isinstance(item, m.Ldif.Entry) for item in raw_results):
-            return r.fail("All results should be Entry instances")
-        results: list[m.Ldif.Entry] = raw_results  # Type narrowed by check
+        results: list[m.Ldif.Entry] = []
+        for entry in entries:
+            try:
+                result = operation_fn(entry)
+                # Handle both direct return and FlextResult return
+                if isinstance(result, r):
+                    if result.is_success and isinstance(result.value, m.Ldif.Entry):
+                        results.append(result.value)
+                    else:
+                        return r.fail(result.error or "Failed to process entry")
+                elif isinstance(result, m.Ldif.Entry):
+                    results.append(result)
+            except Exception as exc:
+                return r.fail(f"Batch processing failed: {exc}")
         return r.ok(results)
 
     @staticmethod
@@ -472,16 +482,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Implication: This handles entries with "objectClass", "objectclass", "OBJECTCLASS", etc.
         # Type narrowing: u.find expects predicate: Callable[[T], bool] | Callable[[str, T], bool]
         # where T = tuple[str, list[str]] for list of items
-        # Use Callable[[tuple[str, list[str]]], bool] signature
-        def match_objectclass(kv: tuple[str, list[str]]) -> bool:
-            """Match objectClass attribute case-insensitively."""
-            # Use str.lower() instead of u.normalize_ldif
-            return kv[0].lower() == "objectclass"
+        # Direct iteration instead of u.Collection.find
+        # Use str.lower() for case-insensitive comparison
+        found_kv: tuple[str, str | list[str]] | None = None
+        for attr_name, attr_value in attributes.items():
+            if attr_name.lower() == "objectclass":
+                found_kv = (attr_name, attr_value)
+                break
 
-        found_kv = u.Collection.find(
-            list(attributes.items()),
-            predicate=match_objectclass,
-        )
         # Type narrowing: found_kv is tuple[str, str | list[str]] | None
         if not found_kv:
             return r.fail("Entry is missing objectClass attribute")

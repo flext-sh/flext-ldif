@@ -2157,22 +2157,23 @@ class FlextLdifModelsResults:
                 dn_value = (
                     entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
                 )
-                attrs_dict = (
-                    dict(entry.attributes.attributes)
-                    if hasattr(entry.attributes, "attributes")
-                    else dict(entry.attributes)
-                    if isinstance(entry.attributes, Mapping)
-                    else {}
-                )
+                attrs_dict: dict[str, list[str]] = {}
+                if hasattr(entry.attributes, "attributes"):
+                    raw_attrs = entry.attributes.attributes
+                    if isinstance(raw_attrs, dict):
+                        for k, v in raw_attrs.items():
+                            if isinstance(k, str) and isinstance(v, list):
+                                attrs_dict[str(k)] = [str(x) for x in v if x is not None]
+                elif isinstance(entry.attributes, Mapping):
+                    for k, v in entry.attributes.items():
+                        if isinstance(k, str) and isinstance(v, list):
+                            attrs_dict[str(k)] = [str(x) for x in v if x is not None]
 
                 converted_entries.append(
                     FlextLdifModelsDomains.Entry(
                         dn=FlextLdifModelsDomains.DN(value=dn_value),
                         attributes=FlextLdifModelsDomains.Attributes(
-                            attributes=cast(
-                                "dict[str | bytes | bytearray, list[str | bytes | bytearray]]",
-                                attrs_dict,
-                            ),
+                            attributes=attrs_dict
                         ),
                     ),
                 )

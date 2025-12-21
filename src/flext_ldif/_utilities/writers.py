@@ -111,7 +111,7 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_dn_string(entry: m.Ldif.Entry) -> str:
+        def get_dn_string(entry: FlextLdifModelsDomains.Entry) -> str:
             """Extract DN string from entry."""
             dn = entry.dn
             if dn is None:
@@ -122,7 +122,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entry_parts(
-            entry: m.Ldif.Entry,
+                entry: FlextLdifModelsDomains.Entry,
             config: FlextLdifModelsSettings.EntryWriteConfig,
             lines: list[str],
         ) -> None:
@@ -170,11 +170,11 @@ class FlextLdifUtilitiesWriters:
             try:
                 lines: list[str] = []
                 # config.entry is the correct Entry type
-                entry = config.entry
+                entry: FlextLdifModelsDomains.Entry = config.entry
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
-                    entry = config.transform_entry_hook(entry)
+                    entry = config.transform_entry_hook(entry)  # Returns core Entry, assign to domain Entry
 
                 # Write entry parts (expects m.Ldif.Entry)
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -187,7 +187,7 @@ class FlextLdifUtilitiesWriters:
                 # Type narrowing: config.entry is flext_core.Entry, extract DN for error message
                 entry_for_error_raw = config.entry
                 # Cast to m.Ldif.Entry to access dn attribute
-                entry_for_error = cast(m.Ldif.Entry, entry_for_error_raw)
+                entry_for_error = cast("m.Ldif.Entry", entry_for_error_raw)
                 # Extract DN string
                 dn_for_error: str | None = None
                 try:
@@ -490,7 +490,7 @@ class FlextLdifUtilitiesWriters:
                 entries_typed: list[m.Ldif.Entry] = []
                 for entry_raw in config.entries:
                     # config.entries are flext_core.Entry instances, cast to m.Ldif.Entry
-                    entry = cast(m.Ldif.Entry, entry_raw)
+                    entry = cast("m.Ldif.Entry", entry_raw)
                     entries_typed.append(entry)
 
                 # Write each entry using manual loop for clear type inference

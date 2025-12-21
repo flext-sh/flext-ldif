@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Self, overload
+from typing import Literal, Self, overload
 
 from flext_core import (
     FlextLogger,
@@ -598,7 +598,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         metadata_extensions: dict[str, list[str] | str | bool | None],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
-        server_type: str = "rfc"
+        server_type: Literal["rfc"] = "rfc"
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=server_type,
             extensions=m.Ldif.DynamicMetadata(**metadata_extensions)

@@ -604,29 +604,23 @@ class FlextLdifSorting(
             # Return entry with sorted attributes directly
             return sorted_entry_raw
 
-        # Use u.batch for unified batch processing (DSL pattern)
-        batch_result = u.Collection.batch(
-            entries,
-            sort_entry,
-            _on_error="fail",
-        )
-        # u.Collection.batch returns r[BatchResultDict] - unwrap to access dict
-        if batch_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(
-                batch_result.error or "Attribute sort failed",
-            )
-        # Type narrowing: batch_result.value is BatchResultDict after is_failure check
-        batch_data = batch_result.value
-        if batch_data.get("error_count", 0) > 0:
-            errors = batch_data.get("errors", [])
-            error_msg = errors[0][1] if errors else "Attribute sort failed"
-            return r[list[m.Ldif.Entry]].fail(error_msg)
-        # Extract results from batch result with explicit type narrowing
-        processed_raw = batch_data.get("results", [])
-        # Loop-based narrowing for mypy compatibility (list comp breaks type inference)
-        processed: list[m.Ldif.Entry] = [
-            item for item in processed_raw if isinstance(item, m.Ldif.Entry)
-        ]
+        # Direct iteration instead of u.Collection.batch
+        processed: list[m.Ldif.Entry] = []
+        for entry in entries:
+            try:
+                result = sort_entry(entry)
+                # Handle both direct return and FlextResult return
+                if isinstance(result, r):
+                    if result.is_success and isinstance(result.value, m.Ldif.Entry):
+                        processed.append(result.value)
+                    else:
+                        return r[list[m.Ldif.Entry]].fail(
+                            result.error or "Attribute sort failed"
+                        )
+                elif isinstance(result, m.Ldif.Entry):
+                    processed.append(result)
+            except Exception as exc:
+                return r[list[m.Ldif.Entry]].fail(f"Attribute sort failed: {exc}")
         return r[list[m.Ldif.Entry]].ok(processed)
 
     @staticmethod
