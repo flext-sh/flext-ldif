@@ -689,8 +689,8 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def process_list_items[T, R](
             items: list[T] | tuple[T, ...],
-            processor_func: Callable[[T], R] | Callable[[object], R],
-            predicate: Callable[[T], bool] | Callable[[object], bool] | None,
+            processor_func: Callable[[T], R] | Callable[[str, T], R],
+            predicate: Callable[[T], bool] | Callable[[str, T], bool] | None,
             on_error: str,
         ) -> r[list[R]]:
             """Process list/tuple items."""

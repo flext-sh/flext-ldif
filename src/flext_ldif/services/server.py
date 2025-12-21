@@ -376,7 +376,7 @@ class FlextLdifServer:
             return None
         # Verify quirk_raw satisfies SchemaProtocol via duck typing (has parse and write methods)
         if hasattr(quirk_raw, "parse") and hasattr(quirk_raw, "write"):
-            return quirk_raw
+            return cast("p.Ldif.SchemaQuirkProtocol", quirk_raw)
         return None
 
     def acl(self, server_type: str) -> p.Ldif.AclQuirkProtocol | None:
