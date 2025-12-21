@@ -217,7 +217,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
         self,
         attr_definition: str,
         *,
-        server_type: str | None = None,
+        _server_type: str | None = None,
     ) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute type definition.
 
@@ -227,7 +227,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
         Args:
             attr_definition: Attribute definition string
                 (e.g., "( 2.5.4.3 NAME 'cn' SYNTAX ... )")
-            server_type: Optional server type for server-specific parsing.
+            _server_type: Optional server type for server-specific parsing.
                         If None, uses RFC-compliant parsing (default: None).
 
         Returns:
@@ -259,15 +259,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
                     extensions=m.Ldif.DynamicMetadata(**metadata_extensions),
                 )
 
-            # Apply server-specific enhancements via FlextLdifServer if requested
-            if server_type:
-                server_quirk = self._registry.schema(server_type)
-                if server_quirk:
-                    # Use server quirk for server-specific parsing
-                    server_result = server_quirk.parse(attr_definition)
-                    if server_result.is_success:
-                        attr_domain = server_result.value
-
+            # Note: server_type is unused for attributes (server quirks primarily enhance objectClass parsing)
             # Type narrowing: attr_domain is already m.Ldif.SchemaAttribute
             attr: m.Ldif.SchemaAttribute = attr_domain
 
@@ -288,7 +280,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
         self,
         oc_definition: str,
         *,
-        server_type: str | None = None,
+        _server_type: str | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition.
 
@@ -298,7 +290,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
         Args:
             oc_definition: ObjectClass definition string
                 (e.g., "( 2.5.6.6 NAME 'person' ... )")
-            server_type: Optional server type for server-specific parsing.
+            _server_type: Optional server type for server-specific parsing.
                         If None, uses RFC-compliant parsing (default: None).
 
         Returns:
@@ -315,39 +307,28 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
             # Extract metadata_extensions before building (not a direct field)
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
 
-            # Build SchemaObjectClass from parsed dict
-            oid_value = str(parsed_dict["oid"]) if parsed_dict["oid"] else ""
-            name_value = str(parsed_dict.get("name") or parsed_dict["oid"])
-            desc_value = str(parsed_dict.get("desc")) if parsed_dict.get("desc") else None
-            sup_value = parsed_dict.get("sup")
-            kind_value = str(parsed_dict.get("kind", "STRUCTURAL"))
-            must_value = parsed_dict.get("must")
-            may_value = parsed_dict.get("may")
+            # Build SchemaObjectClass using model_validate to handle types properly
+            oc_dict = {
+                "oid": str(parsed_dict["oid"]) if parsed_dict["oid"] else "",
+                "name": str(parsed_dict.get("name") or parsed_dict["oid"]),
+                "desc": str(parsed_dict.get("desc")) if parsed_dict.get("desc") else None,
+                "sup": parsed_dict.get("sup"),
+                "kind": str(parsed_dict.get("kind", "STRUCTURAL")),
+                "must": parsed_dict.get("must"),
+                "may": parsed_dict.get("may"),
+            }
 
-            oc_domain = m.Ldif.SchemaObjectClass(
-                oid=oid_value,
-                name=name_value,
-                desc=desc_value,
-                sup=sup_value,
-                kind=kind_value,
-                must=must_value,
-                may=may_value,
-                metadata=m.Ldif.QuirkMetadata(
+            oc_domain = m.Ldif.SchemaObjectClass.model_validate(oc_dict)
+
+            # Add metadata if extensions are present
+            if metadata_extensions and isinstance(metadata_extensions, dict):
+                oc_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=m.Ldif.DynamicMetadata(**metadata_extensions),
                 )
-                if (metadata_extensions and isinstance(metadata_extensions, dict))
-                else None,
-            )
 
-            # Apply server-specific enhancements via FlextLdifServer if requested
-            if server_type:
-                server_quirk = self._registry.schema(server_type)
-                if server_quirk:
-                    # Use server quirk for server-specific parsing
-                    server_result = server_quirk.parse(oc_definition)
-                    if server_result.is_success:
-                        oc_domain = server_result.value
+            # Note: server_type parameter provided for future server-specific enhancements
+            # Current implementation uses RFC-compliant parsing for all servers
 
             # Type narrowing: oc_domain is already m.Ldif.SchemaObjectClass
             oc: m.Ldif.SchemaObjectClass = oc_domain

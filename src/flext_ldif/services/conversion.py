@@ -923,8 +923,9 @@ class FlextLdifConversion(
         # Extract value from result: r.value if r.is_success else None
         parsed_value = parse_result.value if parse_result.is_success else None
         if parsed_value is None:
+            item_name = getattr(config, 'item_name', 'unknown')
             return FlextResult.fail(
-                f"Failed to parse {config.item_name} in target format: {u.err(parse_result)}",
+                f"Failed to parse {item_name} in target format: {u.err(parse_result)}",
             )
         # Type narrowing: parsed_value is already ConvertibleModelUnion
         return r[
@@ -1140,7 +1141,7 @@ class FlextLdifConversion(
         # Protocols are runtime_checkable, so isinstance checks work
         # Type check: acl satisfies AclProtocol via structural typing
         if hasattr(acl, "write") and hasattr(acl, "parse"):
-            write_result = source_acl.write(acl)
+            write_result = cast(Any, source_acl).write(acl)
         else:
             return FlextResult.fail(
                 f"ACL model does not satisfy AclProtocol: {type(acl).__name__}",
@@ -1165,7 +1166,7 @@ class FlextLdifConversion(
         target_acl: object,
     ) -> r[m.Ldif.Acl]:
         """Parse ACL from LDIF string."""
-        parse_result = target_acl.parse(ldif_string)
+        parse_result = cast(Any, target_acl).parse(ldif_string)
         # Extract value from result: r.value if r.is_success else None
         converted_acl_raw = parse_result.value if parse_result.is_success else None
         if converted_acl_raw is None:
