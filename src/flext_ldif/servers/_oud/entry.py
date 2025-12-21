@@ -1741,7 +1741,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Map source keys to destination MetadataKeys
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP,
+            "ip": mk.ACL_BIND_IP_FILTER,
             "dns": mk.ACL_BIND_DNS,
             "dayofweek": mk.ACL_BIND_DAYOFWEEK,
             "timeofday": mk.ACL_BIND_TIMEOFDAY,
@@ -1785,7 +1785,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         mk = c.Ldif.MetadataKeys
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP,
+            "ip": mk.ACL_BIND_IP_FILTER,
             "dns": mk.ACL_BIND_DNS,
             "dayofweek": mk.ACL_BIND_DAYOFWEEK,
             "timeofday": mk.ACL_BIND_TIMEOFDAY,

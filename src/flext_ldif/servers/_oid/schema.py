@@ -847,14 +847,14 @@ class FlextLdifServersOidSchema(
 
         # Apply transformations with model_copy
         # Use specific type for model_copy update
-        update_dict: dict[str, object] = {
+        matchers_dict: dict[str, object] = {
             "equality": oid_equality,
             "substr": oid_substr,
             "ordering": oid_ordering,
             "syntax": oid_syntax,
             "metadata": oid_metadata,
         }
-        attr_copy = attr_copy.model_copy(update=update_dict)
+        attr_copy = attr_copy.model_copy(update=matchers_dict)
 
         # Call parent RFC writer with OID-denormalized attribute
         return super()._write_attribute(attr_copy)
