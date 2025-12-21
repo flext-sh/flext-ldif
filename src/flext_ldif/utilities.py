@@ -177,16 +177,16 @@ class FlextLdifUtilities(FlextUtilities):
                 self._target_type = "to_str"
                 return self
 
-            def int(self, default: int = 0) -> Self:
+            def to_int(self, default: int = 0) -> Self:
                 """Convert to int."""
                 self._default = default
-                self._target_type = "int"
+                self._target_type = "to_int"
                 return self
 
-            def bool(self, *, default: bool = False) -> Self:
+            def to_bool(self, *, default: bool = False) -> Self:
                 """Convert to bool."""
                 self._default = default
-                self._target_type = "bool"
+                self._target_type = "to_bool"
                 return self
 
             def str_list(self, default: list[str] | None = None) -> Self:
@@ -219,7 +219,7 @@ class FlextLdifUtilities(FlextUtilities):
                         # Type narrowing: self._default is list[str] after isinstance check
                         list_default = self._default
                     return FlextUtilities.to_str_list(self._value, default=list_default)
-                if self._target_type == "int":
+                if self._target_type == "to_int":
                     if self._safe_mode:
                         try:
                             # Type narrowing: ensure value is compatible with int()
@@ -236,7 +236,7 @@ class FlextLdifUtilities(FlextUtilities):
                     if isinstance(self._value, float):
                         return int(self._value)
                     return self._default
-                if self._target_type == "bool":
+                if self._target_type == "to_bool":
                     if isinstance(self._value, bool):
                         return self._value
                     if isinstance(self._value, str):
@@ -1834,10 +1834,10 @@ class FlextLdifUtilities(FlextUtilities):
                 conv_result = conv_builder.to_str(default=str_default).build()
             elif target_type == "int":  # String comparison for target_type
                 int_default = default if isinstance(default, int) else 0
-                conv_result = conv_builder.int(default=int_default).build()
+                conv_result = conv_builder.to_int(default=int_default).build()
             elif target_type == "bool":  # String comparison for target_type
                 bool_default = default if isinstance(default, bool) else False
-                conv_result = conv_builder.bool(default=bool_default).build()
+                conv_result = conv_builder.to_bool(default=bool_default).build()
             elif target_type == "list":  # String comparison for target_type
                 list_default = default if isinstance(default, list) else []
                 conv_result = conv_builder.str_list(default=list_default).build()
@@ -1959,12 +1959,12 @@ class FlextLdifUtilities(FlextUtilities):
                 )
             if target_type is int:
                 int_default = default if isinstance(default, int) else 0
-                return cls.conv(value).int(default=int_default).safe().build()
+                return cls.conv(value).to_int(default=int_default).safe().build()
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
                 return (
                     FlextLdifUtilities.Ldif.conv(value)
-                    .bool(default=bool_default)
+                    .to_bool(default=bool_default)
                     .safe()
                     .build()
                 )
@@ -3326,7 +3326,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def conv(value: t.GeneralValueType) -> FlextLdifUtilities.Ldif.ConvBuilder:
             """Create conversion builder (DSL entry point)."""
-            return FlextLdifUtilities.Ldif.ConvBuilder(value)
+            return FlextLdifUtilities.Ldif.ConvBuilder(value=value)
 
         @staticmethod
         def all_(*args: object) -> bool:
