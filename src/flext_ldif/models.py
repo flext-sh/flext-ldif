@@ -201,16 +201,16 @@ class FlextLdifModels(FlextModels):
         class QuirkMetadata(FlextLdifModelsDomains.QuirkMetadata):
             """Quirk metadata model."""
 
-        # Schema models - real inheritance classes
-        SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute
-        SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass
-        Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
-        Attributes: TypeAlias = FlextLdifModelsDomains.Attributes
-        ProcessingResult: TypeAlias = ProcessingResult
-        FormatDetails: TypeAlias = FlextLdifModelsDomains.FormatDetails
-        SchemaFormatDetails: TypeAlias = FlextLdifModelsDomains.SchemaFormatDetails
-        EntryStatistics: TypeAlias = FlextLdifModelsDomains.EntryStatistics
-        DNStatistics: TypeAlias = FlextLdifModelsDomains.DNStatistics
+        # Schema models - direct class references (NOT TypeAlias - mypy incompatibility)
+        SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute
+        SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass
+        Syntax = FlextLdifModelsDomains.Syntax
+        Attributes = FlextLdifModelsDomains.Attributes
+        ProcessingResult = ProcessingResult
+        FormatDetails = FlextLdifModelsDomains.FormatDetails
+        SchemaFormatDetails = FlextLdifModelsDomains.SchemaFormatDetails
+        EntryStatistics = FlextLdifModelsDomains.EntryStatistics
+        DNStatistics = FlextLdifModelsDomains.DNStatistics
 
         # Type aliases for compatibility
 
@@ -219,23 +219,23 @@ class FlextLdifModels(FlextModels):
         SpaceHandlingOption = c.Ldif.SpaceHandlingOption
         EscapeHandlingOption = c.Ldif.EscapeHandlingOption
         SortOption = c.Ldif.SortOption
-        OutputFormat: TypeAlias = c.Ldif.Domain.OutputFormat
+        OutputFormat = c.Ldif.Domain.OutputFormat
         # ObsoleteField: TypeAlias = c.Ldif.ObsoleteField  # Commented out due to import issues
         DnNormalizationConfig = DnNormalizationConfig
         AttrNormalizationConfig = AttrNormalizationConfig
         AclConversionConfig = AclConversionConfig
         ValidationConfig = ValidationConfig
         MetadataConfig = MetadataConfig
-        ProcessConfig: TypeAlias = ProcessConfig
-        TransformConfig: TypeAlias = TransformConfig
+        ProcessConfig = ProcessConfig
+        TransformConfig = TransformConfig
         FilterConfig = FilterConfig
-        ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
+        ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
         EntryResult = FlextLdifModelsResults.EntryResult
         ParseResponse = FlextLdifModelsResults.ParseResponse
-        WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
-        WriteOutputOptions: TypeAlias = FlextLdifModelsSettings.WriteOutputOptions
-        WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
-        WriteConfig: TypeAlias = WriteConfig
+        WriteOptions = FlextLdifModelsDomains.WriteOptions
+        WriteOutputOptions = FlextLdifModelsSettings.WriteOutputOptions
+        WriteFormatOptions = FlextLdifModelsSettings.WriteFormatOptions
+        WriteConfig = WriteConfig
 
         # Categorization and filtering models (direct aliases for convenience)
         CategoryRules = FlextLdifModelsSettings.CategoryRules

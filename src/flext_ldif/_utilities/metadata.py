@@ -426,7 +426,7 @@ class FlextLdifUtilitiesMetadata:
                 new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
                     transformation_dict
                 ]
-                target_metadata.transformations = new_list  # type: ignore[assignment]_2
+                target_metadata.transformations = new_list_2  # type: ignore[assignment]
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
@@ -481,10 +481,7 @@ class FlextLdifUtilitiesMetadata:
                 target_metadata["transformations"] = existing_items
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
-                new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
-                    transformation_dict
-                ]
-                target_metadata.transformations = new_list  # type: ignore[assignment]_2
+                target_metadata.transformations = [transformation_dict]
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:

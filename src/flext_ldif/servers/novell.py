@@ -687,7 +687,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add metadata attributes
-                processed_attributes[c.Ldif.MetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
