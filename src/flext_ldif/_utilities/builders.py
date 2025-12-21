@@ -385,7 +385,7 @@ class TransformConfigBuilder:
         self._track_changes = enabled
         return self
 
-    def build(self):
+    def build(self) -> TransformConfig:
         """Build the TransformConfig.
 
         Returns:
@@ -460,7 +460,7 @@ class FilterConfigBuilder:
         self._include_metadata_matches = enabled
         return self
 
-    def build(self):
+    def build(self) -> FilterConfig:
         """Build the FilterConfig.
 
         Returns:
