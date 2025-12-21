@@ -419,7 +419,6 @@ class FlextLdifCategorization(
             )
 
         return r[list[m.Ldif.Entry]].ok(
-            cast("list[m.Ldif.Entry]", validated)
         )
 
     def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
@@ -1105,7 +1104,6 @@ class FlextLdifCategorization(
                 # entries from categories.items() needs cast to m.Ldif.Entry
                 # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    cast("list[m.Ldif.Entry]", list(entries)),
                     self._base_dn,
                 )
                 # Track filter results in metadata

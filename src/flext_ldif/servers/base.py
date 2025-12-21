@@ -162,9 +162,12 @@ class FlextLdifServersBase(s[FlextLdifModelsDomains.Entry], ABC):
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
     @property
-    def schema(self) -> object:
+    def schema_instance(self) -> object:
         """Access to nested schema quirk instance."""
         return self._schema_quirk
+
+    # Note: Pydantic's schema() classmethod is not overridden
+    # Use schema_instance property to access nested schema quirk
 
     @property
     def acl(self) -> object:
