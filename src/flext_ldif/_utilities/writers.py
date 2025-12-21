@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 import structlog
 from flext_core import FlextRuntime, r
@@ -169,34 +169,19 @@ class FlextLdifUtilitiesWriters:
 
             try:
                 lines: list[str] = []
-                # config.entry is already Entry type
+                # config.entry is FlextModelsEntity.Entry (flext_core base type)
+                # Cast to m.Ldif.Entry for flext-ldif-specific operations
                 entry_raw = config.entry
-                # Check if it's already Entry model instance
-                if isinstance(entry_raw, FlextLdifModelsDomains.Entry):
-                    entry = entry_raw
-                else:
-                    # Convert EntryProtocol to Entry via model_validate
-                    entry_typed = entry_raw
-                    entry = FlextLdifModelsDomains.Entry.model_validate({
-                        "dn": (entry_typed.dn or None),
-                        "attributes": (
-                            entry_typed.attributes.attributes
-                            if entry_typed.attributes
-                            else None
-                        ),
-                    })
+                entry = cast(m.Ldif.Entry, entry_raw)
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
-                    # transform_entry_hook accepts EntryProtocol (entry satisfies it structurally)
+                    # transform_entry_hook returns FlextModelsEntity.Entry
                     entry_transformed = config.transform_entry_hook(entry)
-                    # Transform hook returns Entry
-                    entry = entry_transformed
-                else:
-                    # No transformation hook - entry stays as is
-                    pass
+                    # Cast result to m.Ldif.Entry
+                    entry = cast(m.Ldif.Entry, entry_transformed)
 
-                # Write entry parts
+                # Write entry parts (expects m.Ldif.Entry)
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
 
                 # Join lines and return
@@ -204,16 +189,21 @@ class FlextLdifUtilitiesWriters:
                 return r[str].ok(ldif_str)
 
             except Exception as e:
-                # Type narrowing: config.entry is EntryProtocol, extract DN for error message
+                # Type narrowing: config.entry is flext_core.Entry, extract DN for error message
                 entry_for_error_raw = config.entry
-                # Extract DN string directly from EntryProtocol
+                # Cast to m.Ldif.Entry to access dn attribute
+                entry_for_error = cast(m.Ldif.Entry, entry_for_error_raw)
+                # Extract DN string
                 dn_for_error: str | None = None
-                entry_dn = entry_for_error_raw.dn if entry_for_error_raw else None
-                if entry_for_error_raw and entry_dn:
-                    if hasattr(entry_dn, "value"):
-                        dn_for_error = str(entry_dn.value)
-                    else:
-                        dn_for_error = str(entry_dn)
+                try:
+                    entry_dn = entry_for_error.dn if entry_for_error else None
+                    if entry_for_error and entry_dn:
+                        if hasattr(entry_dn, "value"):
+                            dn_for_error = str(entry_dn.value)
+                        else:
+                            dn_for_error = str(entry_dn)
+                except (AttributeError, TypeError):
+                    dn_for_error = None
                 dn_error_raw = dn_for_error or ""
                 dn_error: str | None = dn_error_raw[:50] if dn_error_raw else None
                 logger.exception(
