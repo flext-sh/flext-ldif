@@ -178,12 +178,17 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         )
 
         # RFC passthrough: store the raw line in the model.
+        # Use model_construct for DynamicMetadata to bypass Pydantic v2 validation
+        extensions_meta = m.Ldif.DynamicMetadata.model_construct(
+            _fields_set={"original_format"},
+            original_format=acl_line,
+        )
         acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type=server_type_value,
-                extensions=m.Ldif.DynamicMetadata(**{"original_format": acl_line}),
+                extensions=extensions_meta,
             ),
         )
         return FlextResult.ok(acl_model)

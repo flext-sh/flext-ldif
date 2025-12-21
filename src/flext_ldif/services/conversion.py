@@ -34,6 +34,7 @@ from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.base import FlextLdifServiceBase
 
 # Services CAN import models/types/constants (but not the reverse)
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -696,7 +697,7 @@ class FlextLdifConversion(
         if not get_metadata(current_entry):
             # Cast validated_quirk_type (str) to Literal for QuirkMetadata
             quirk_type_literal = cast(
-                t.LiteralTypes.ServerTypeLiteral, validated_quirk_type
+                c.Ldif.LiteralTypes.ServerTypeLiteral, validated_quirk_type
             )
             metadata_obj = m.Ldif.QuirkMetadata(quirk_type=quirk_type_literal)
             # metadata_obj is m.Ldif.QuirkMetadata which is t.MetadataAttributeValue
@@ -915,8 +916,8 @@ class FlextLdifConversion(
         )
         ldif_string = ldif_result.value if ldif_result.is_success else None
         if ldif_string is None:
-            # Return the failed result directly - type checker knows it's r[ConvertibleModelUnion]
-            return ldif_result
+            # Propagate error with correct type - use ldif_result.error to get error msg
+            return FlextResult.fail(ldif_result.error or "LDIF validation failed")
 
         # Type narrowing: get parse_method and target_schema from config
         parse_method = getattr(config, 'parse_method', None)
@@ -958,8 +959,10 @@ class FlextLdifConversion(
                 source_schema_result.value if source_schema_result.is_success else None
             )
             if source_schema is None:
-                # Return the failed result directly - type checker knows it's r[ConvertibleModelUnion]
-                return source_schema_result
+                # Propagate error with correct type
+                return FlextResult.fail(
+                    source_schema_result.error or "Source schema not available"
+                )
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 target_quirk,
@@ -1029,8 +1032,10 @@ class FlextLdifConversion(
                 source_schema_result.value if source_schema_result.is_success else None
             )
             if source_schema is None:
-                # Return the failed result directly - type checker knows it's r[ConvertibleModelUnion]
-                return source_schema_result
+                # Propagate error with correct type
+                return FlextResult.fail(
+                    source_schema_result.error or "Source schema not available"
+                )
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 target_quirk,

@@ -14,6 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import r
 
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -381,13 +383,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                 ),
             )
 
-        # Build list of required permission names using u.filter
+        # Build list of required permission names
         perm_names = ["read", "write", "delete", "add", "search", "compare"]
-        filtered = u.filter(
-            perm_names,
-            predicate=lambda p: getattr(required, p, False),
-        )
-        required_perms = filtered if isinstance(filtered, list) else []
+        required_perms = [p for p in perm_names if getattr(required, p, False)]
 
         # If no permissions required, evaluation passes trivially
         if not required_perms:
@@ -404,15 +402,16 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             """Check if ACL grants all required permissions."""
             return all(getattr(acl.permissions, p, False) for p in required_perms)
 
-        # find() returns T | None for list input (no tuple since return_key=False default)
-        found = u.find(acls, predicate=acl_grants_all)
+        # find() returns object | None, cast to expected type
+        found_raw = u.find(acls, predicate=acl_grants_all)
 
-        if found is not None:
+        if found_raw is not None:
+            found_acl = cast("m.Ldif.Acl", found_raw)
             return r[str].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=True,
-                    matched_acl=found,
-                    message=f"ACL '{found.name}' grants required permissions: {required_perms}",
+                    matched_acl=found_acl,
+                    message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
                 ),
             )
 

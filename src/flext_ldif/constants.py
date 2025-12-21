@@ -1294,6 +1294,38 @@ class FlextLdifConstants(FlextConstants):
             # OBJECTCLASS REQUIREMENTS
             # =============================================================================
 
+            # Servers that strictly require objectClass attribute
+            OBJECTCLASS_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
+                "oid",
+                "oud",
+                "ad",
+                "389ds",
+                "novell_edirectory",
+                "ibm_tivoli",
+            ])
+
+            # =============================================================================
+            # NAMING ATTRIBUTE (RDN) REQUIREMENTS
+            # =============================================================================
+
+            # Servers that require naming attribute in attributes
+            NAMING_ATTR_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
+                "oid",
+                "oud",
+                "ad",
+            ])
+
+            # =============================================================================
+            # BINARY OPTION REQUIREMENTS
+            # =============================================================================
+
+            # Servers that require ;binary option for binary attributes
+            BINARY_OPTION_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
+                "openldap",
+                "oid",
+                "oud",
+            ])
+
             # =============================================================================
             # SCHEMA ENTRY DETECTION PATTERNS
             # =============================================================================
