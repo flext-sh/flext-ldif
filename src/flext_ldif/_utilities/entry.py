@@ -337,15 +337,12 @@ class FlextLdifUtilitiesEntry:
             return entry
 
         attrs_to_remove = {attr.lower() for attr in attributes}
-        filtered_dict = u.Collection.filter(
-            entry.attributes.attributes,
-            predicate=lambda k, _: k.lower() not in attrs_to_remove,
-        )
-        filtered = (
-            filtered_dict
-            if isinstance(filtered_dict, dict)
-            else entry.attributes.attributes
-        )
+        # Direct iteration instead of u.Collection.filter
+        filtered: dict[str, object] = {
+            k: v
+            for k, v in entry.attributes.attributes.items()
+            if k.lower() not in attrs_to_remove
+        }
 
         result = m.Ldif.Entry.create(
             dn=entry.dn,
@@ -402,22 +399,18 @@ class FlextLdifUtilitiesEntry:
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
 
-        # Process attribute names to extract case mappings
-        # Note: u.Collection.process predicate filters INPUT items, not OUTPUT - filter after
-        case_mappings_result = u.Collection.process(
-            [str(attr) for attr in entry_attrs],
-            processor=extract_case_mapping,
-            _on_error="skip",
-        )
-        # Filter out None results and convert to dict
+        # Direct iteration instead of u.Collection.process
+        # Extract case mappings from attribute names
         original_attribute_case: dict[str, str] = {}
-        if case_mappings_result.is_success and isinstance(
-            case_mappings_result.value,
-            list,
-        ):
-            # Filter None values from processor output, then convert to dict
-            filtered_mappings = [m for m in case_mappings_result.value if m is not None]
-            original_attribute_case = dict(filtered_mappings)
+        for attr_name in entry_attrs:
+            try:
+                result = extract_case_mapping(attr_name)
+                if result is not None:
+                    key, value = result
+                    original_attribute_case[key] = value
+            except Exception:
+                # Skip attributes that fail case mapping extraction
+                continue
 
         # Analyze attribute differences
         attribute_differences: dict[
@@ -735,11 +728,12 @@ class FlextLdifUtilitiesEntry:
         objectclasses: Sequence[str],
         mode: Literal["any", "all"],
     ) -> bool:
-        """Check objectClass criteria using u.Collection.filter()."""
-        matching_ocs = u.Collection.filter(
-            list(objectclasses),
-            predicate=lambda oc: FlextLdifUtilitiesEntry.has_objectclass(entry, oc),
-        )
+        """Check objectClass criteria."""
+        # Direct iteration instead of u.Collection.filter
+        matching_ocs: list[str] = [
+            oc for oc in objectclasses
+            if FlextLdifUtilitiesEntry.has_objectclass(entry, oc)
+        ]
         return (
             bool(matching_ocs)
             if mode == "any"
@@ -946,22 +940,24 @@ class FlextLdifUtilitiesEntry:
                 )
             return current
 
-        batch_result = u.Collection.batch(
-            list(entries),
-            transform_entry,
-            _on_error="fail" if config.fail_fast else "collect",
-        )
-        if batch_result.is_failure:
-            return r.fail(batch_result.error or "Transform batch failed")
-        batch_data = batch_result.value
-        # Type narrowing: batch_data["results"] is object, check if list
-        results_raw = batch_data.get("results", [])
-        if isinstance(results_raw, list):
-            filtered: list[m.Ldif.Entry] = [
-                item for item in results_raw if isinstance(item, m.Ldif.Entry)
-            ]
-            return r[list[m.Ldif.Entry]].ok(filtered)
-        return r[list[m.Ldif.Entry]].fail("Batch results is not a list")
+        # Direct iteration instead of u.Collection.batch
+        transformed_list: list[m.Ldif.Entry] = []
+        errors: list[tuple[int, str]] = []
+        for i, entry in enumerate(entries):
+            try:
+                result = transform_entry(entry)
+                if isinstance(result, m.Ldif.Entry):
+                    transformed_list.append(result)
+            except Exception as exc:
+                if config.fail_fast:
+                    return r[list[m.Ldif.Entry]].fail(f"Transform failed at entry {i}: {exc}")
+                errors.append((i, f"Transform failed at entry {i}: {exc}"))
+
+        if errors and config.fail_fast:
+            error_msg = errors[0][1]
+            return r[list[m.Ldif.Entry]].fail(error_msg)
+
+        return r[list[m.Ldif.Entry]].ok(transformed_list)
 
     @staticmethod
     def filter_batch(
@@ -999,9 +995,10 @@ class FlextLdifUtilitiesEntry:
             # Use model_validate which accepts dict[str, object] and validates at runtime
             config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
 
-        filtered_list = u.Collection.filter(
-            list(entries),
-            predicate=lambda entry: FlextLdifUtilitiesEntry.matches_criteria(
+        # Direct iteration instead of u.Collection.filter
+        filtered: list[m.Ldif.Entry] = [
+            entry for entry in entries
+            if FlextLdifUtilitiesEntry.matches_criteria(
                 entry,
                 config=FlextLdifModelsSettings.EntryCriteriaConfig(
                     objectclasses=config.objectclasses,
@@ -1010,9 +1007,8 @@ class FlextLdifUtilitiesEntry:
                     dn_pattern=config.dn_pattern,
                     is_schema=config.is_schema if not config.exclude_schema else False,
                 ),
-            ),
-        )
-        filtered = filtered_list if isinstance(filtered_list, list) else list(entries)
+            )
+        ]
 
         return r[list[m.Ldif.Entry]].ok(filtered)
 

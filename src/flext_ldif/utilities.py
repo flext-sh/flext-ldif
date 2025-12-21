@@ -498,21 +498,21 @@ class FlextLdifUtilities(FlextUtilities):
                 transform_config = m.Ldif.TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": cast(FlextLdifModelsSettings.ProcessConfig, process_config)}
+                        update={"process_config": process_config}
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = cast(FlextLdifModelsSettings.ProcessConfig, process_config)
+                    transform_config.process_config = process_config
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = m.Ldif.TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": cast(FlextLdifModelsSettings.ProcessConfig | None, config)}
+                        update={"process_config": config}
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    transform_config.process_config = cast(FlextLdifModelsSettings.ProcessConfig | None, config)
+                    transform_config.process_config = config
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
