@@ -1707,22 +1707,19 @@ class FlextLdifUtilitiesDN:
         target_dn: str,
     ) -> dict[str, list[str]]:
         """Transform DN-valued attributes using u.map()."""
-
-        def map_attr(k: str, v: list[str]) -> list[str]:
-            """Map attribute: transform DN values if needed."""
-            if k.lower() in dn_attributes:
-                return [
-                    FlextLdifUtilitiesDN.transform_dn_attribute(
-                        val,
-                        source_dn,
-                        target_dn,
-                    )
-                    for val in v
-                ]
-            return v
-
-        mapped = u.Collection.map(attrs, mapper=map_attr)
-        return mapped if isinstance(mapped, dict) else attrs
+        return {
+            k: [
+                FlextLdifUtilitiesDN.transform_dn_attribute(
+                    val,
+                    source_dn,
+                    target_dn,
+                )
+                for val in v
+            ]
+            if k.lower() in dn_attributes
+            else v
+            for k, v in attrs.items()
+        }
 
     @staticmethod
     def _get_changed_attr_names(
@@ -1730,14 +1727,12 @@ class FlextLdifUtilitiesDN:
         transformed: dict[str, list[str]],
         dn_attributes: set[str],
     ) -> list[str]:
-        """Get list of attribute names that changed using u.Collection.filter()."""
-        filtered_dict = u.Collection.filter(
-            transformed,
-            predicate=lambda k, v: (
-                k.lower() in dn_attributes and v != original.get(k, [])
-            ),
-        )
-        return list(filtered_dict.keys()) if isinstance(filtered_dict, dict) else []
+        """Get list of attribute names that changed using dict comprehension."""
+        return [
+            k
+            for k, v in transformed.items()
+            if k.lower() in dn_attributes and v != original.get(k, [])
+        ]
 
     @staticmethod
     def _update_metadata_for_transformation(

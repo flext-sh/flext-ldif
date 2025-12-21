@@ -406,8 +406,7 @@ class FlextLdifUtilitiesMetadata:
         if "transformations" not in target_metadata:
             # Create new list with transformation
             # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
-            new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-            target_metadata.transformations = new_list  # type: ignore[assignment]
+            target_metadata.transformations = [transformation_dict]
         else:
             transformations_obj = target_metadata["transformations"]
             if isinstance(transformations_obj, list):
@@ -426,7 +425,7 @@ class FlextLdifUtilitiesMetadata:
                 new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
                     transformation_dict
                 ]
-                target_metadata.transformations = new_list  # type: ignore[assignment]_2
+                target_metadata.transformations = new_list_2
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
@@ -464,7 +463,7 @@ class FlextLdifUtilitiesMetadata:
             # Create new list with transformation
             # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
             new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
-            target_metadata.transformations = new_list  # type: ignore[assignment]
+            target_metadata.transformations = new_list_2
         else:
             transformations_obj = target_metadata["transformations"]
             if isinstance(transformations_obj, list):
@@ -484,7 +483,7 @@ class FlextLdifUtilitiesMetadata:
                 new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
                     transformation_dict
                 ]
-                target_metadata.transformations = new_list  # type: ignore[assignment]_2
+                target_metadata.transformations = new_list_2
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
