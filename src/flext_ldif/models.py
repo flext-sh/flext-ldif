@@ -390,7 +390,6 @@ class FlextLdifModels(FlextModels):
             ValidationServiceStatus: TypeAlias = FlextLdifModelsResults.ValidationServiceStatus
             EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
             ServiceStatus: TypeAlias = FlextLdifModelsResults.ServiceStatus
-            CategoryPaths: TypeAlias = FlextLdifModelsResults.CategoryPaths
             Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
 
             # Parsing and writing results
@@ -413,8 +412,6 @@ class FlextLdifModels(FlextModels):
             ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
             LdifValidationResult: TypeAlias = FlextLdifModelsResults.LdifValidationResult
 
-            # Dynamic counts model
-            DynamicCounts: TypeAlias = FlextLdifModelsResults.DynamicCounts
 
             # Analysis and detection results
             ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
@@ -456,10 +453,10 @@ class FlextLdifModels(FlextModels):
                 Contains ATTRIBUTES and OBJECTCLASS keys from extract_schemas_from_ldif().
                 """
 
-                ATTRIBUTES: list[SchemaAttribute] = Field(
+                ATTRIBUTES: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
                     default_factory=list,
                 )
-                OBJECTCLASS: list[SchemaObjectClass] = Field(
+                OBJECTCLASS: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
                     default_factory=list,
                 )
 
