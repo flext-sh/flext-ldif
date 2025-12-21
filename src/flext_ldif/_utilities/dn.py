@@ -2106,7 +2106,7 @@ class FlextLdifUtilitiesDN:
             is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
             return (dn, is_valid, dn_errors)
 
-        batch_result = u.Collection.batch(list(dns), validate_dn, on_error="skip")
+        batch_result = u.Collection.batch(list(dns), validate_dn, _on_error="skip")
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Validation failed")
         batch_data = batch_result.value
@@ -2167,7 +2167,7 @@ class FlextLdifUtilitiesDN:
                 return dn
 
         on_error_mode = "fail" if fail_fast else "skip"
-        batch_result = u.Collection.batch(list(dns), replace_dn, on_error=on_error_mode)
+        batch_result = u.Collection.batch(list(dns), replace_dn, _on_error=on_error_mode)
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value

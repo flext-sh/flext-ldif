@@ -212,7 +212,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
         ] = remove_op_attrs_wrapper
-        batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
+        batch_result = u.Collection.batch(entries, operation_fn, _on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
         batch_data: core_t.BatchResultDict = batch_result.value
@@ -264,7 +264,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
         ] = remove_attrs_wrapper
-        batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
+        batch_result = u.Collection.batch(entries, operation_fn, _on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
         batch_data: core_t.BatchResultDict = batch_result.value
