@@ -725,7 +725,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=server_type_lit,
                 )
-                metadata.extensions[c.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
+                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
 
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,

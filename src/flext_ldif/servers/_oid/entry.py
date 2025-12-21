@@ -354,7 +354,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     # Format: "TRUE_VALUE/FALSE_VALUE" (matches utility expectations)
                     original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
                     converted_format_str = (
-                        f"{c.BooleanFormats.TRUE_RFC}/{c.BooleanFormats.FALSE_RFC}"
+                        f"{c.Ldif.BooleanFormats.TRUE_RFC}/{c.Ldif.BooleanFormats.FALSE_RFC}"
                     )
                     # Use standardized nested metadata keys (DRY: avoid hardcoding)
                     mk_conv = c.Ldif.MetadataKeys

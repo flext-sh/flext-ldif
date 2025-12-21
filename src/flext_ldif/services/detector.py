@@ -140,11 +140,11 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
                 return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
                     "Either ldif_path or ldif_content must be provided",
                 )
-            case (path, None) if not path.exists():
+            case (path, None) if path is not None and not path.exists():
                 return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
                     f"LDIF file not found: {path}",
                 )
-            case (path, None):
+            case (path, None) if path is not None:
                 try:
                     ldif_content = path.read_text(encoding="utf-8")
                 except UnicodeDecodeError as e:
@@ -154,6 +154,8 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
             case (_, content) if isinstance(content, str):
                 pass  # ldif_content is already provided
 
+        # Type narrowing - after match, ldif_content is guaranteed to be str
+        assert ldif_content is not None, "ldif_content must be set by match cases above"
         lines = ldif_content.split("\n")
         content_sample = "\n".join(lines[:max_lines])
 
