@@ -646,7 +646,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return m.Ldif.WriteOptions.model_validate(write_opts_dict)
 
         # Handle Pydantic model with model_dump (WriteFormatOptions or internal WriteOptions)
-        # Business Rule: Always convert to public m.Ldif.WriteOptions, not internal m.Ldif.WriteOptions
+        # Business Rule: Always convert to public FlextLdifModelsDomains.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
         if hasattr(write_opts, "model_dump"):
             write_opts_dict_raw = write_opts.model_dump()
             filtered_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}

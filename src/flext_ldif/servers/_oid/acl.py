@@ -807,7 +807,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             extensions.append(f"bindmode=({bindmode})")
 
         bind_ip_filter = u.mapper().get(
-            meta_extensions, c.Ldif.QuirkMetadataKeys.ACL_BIND_IP_FILTER
+            meta_extensions, c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER
         )
         if bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")

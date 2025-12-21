@@ -1267,8 +1267,8 @@ class FlextLdifCategorization(
                 excluded_updated = [
                     FlextLdifCategorization._mark_entry_rejected(
                         entry,
-                        # RejectionCategory enum values - use direct stringsBASE_DN_FILTER,
-                        f"DN not under base DN: {base_dn}",
+                        category="BASE_DN_FILTER",
+                        reason=f"DN not under base DN: {base_dn}",
                     )
                     for entry in excluded
                 ]

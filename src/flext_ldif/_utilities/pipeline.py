@@ -382,14 +382,14 @@ class ProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: m.Ldif.TransformConfig | None = None) -> None:
+    def __init__(self, config: TransformConfig | None = None) -> None:
         """Initialize processing pipeline.
 
         Args:
             config: Processing configuration (uses defaults if None)
 
         """
-        self._config = config or m.Ldif.TransformConfig()
+        self._config = config or TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
@@ -450,7 +450,7 @@ class ProcessingPipeline:
         return self._pipeline.execute(entries)
 
     @property
-    def config(self) -> m.Ldif.TransformConfig:
+    def config(self) -> TransformConfig:
         """Get the processing configuration."""
         return self._config
 

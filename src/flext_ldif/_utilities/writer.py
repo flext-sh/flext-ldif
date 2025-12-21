@@ -23,6 +23,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
+from flext_ldif._models.settings import FlextLdifModelsSettings
 
 # REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
 # REMOVED: Type aliases para objetos nested - use m.* ou FlextLdifModelsDomains.* diretamente
@@ -918,7 +919,7 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         attr_values: list[str],
         entry_metadata: m.Ldif.QuirkMetadata,
-        output_options: m.Ldif.WriteOutputOptions,
+        output_options: FlextLdifModelsSettings.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Apply output visibility options based on attribute status.
 
@@ -1023,7 +1024,7 @@ class FlextLdifUtilitiesWriter:
     def _handle_removed_attribute(
         attr_name: str,
         attr_values: list[str],
-        output_options: m.Ldif.WriteOutputOptions,
+        output_options: FlextLdifModelsSettings.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle already-removed attributes (extracted to reduce complexity)."""
         if output_options.show_removed_attributes:
@@ -1035,7 +1036,7 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         attr_values: list[str],
         status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
-        output_options: m.Ldif.WriteOutputOptions,
+        output_options: FlextLdifModelsSettings.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
         # Use full path to avoid type resolution issues

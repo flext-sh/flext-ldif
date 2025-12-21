@@ -1340,7 +1340,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if bind_ip_filter:
-            current_extensions[c.Ldif.QuirkMetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
+            current_extensions[c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
 
         constrain_to_added = FlextLdifUtilitiesACL.extract_component(
             acl_value,
@@ -1572,7 +1572,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         original_line: str,
         current_attrs: set[str],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
         *,
         write_empty_values: bool,
     ) -> bool:
@@ -1661,7 +1661,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ldif_lines: list[str],
         entry_data: m.Ldif.Entry,
         original_attr_lines_complete: list[str],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
     ) -> set[str]:
         """Write original attribute lines preserving exact formatting.
 
