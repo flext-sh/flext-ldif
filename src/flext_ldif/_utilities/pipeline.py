@@ -35,6 +35,7 @@ from typing import Self
 
 from flext_core import r
 
+from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize

@@ -1365,8 +1365,9 @@ class FlextLdifUtilities(FlextUtilities):
                     # dict[str, object] is compatible with ConfigurationDict (dict[str, t.GeneralValueType])
                     flow_ops.append(op)
                 elif callable(op):
-                    # Type narrowing: op is Callable[[object], object] after callable check
-                    flow_ops.append(op)
+                    # Type narrowing: Convert to object-based callable for flow()
+                    # Callable[[GeneralValueType], GeneralValueType] can be used where Callable[[object], object] is expected
+                    flow_ops.append(op)  # type: ignore[arg-type]
             # Type narrowing: flow returns t.GeneralValueType
             return FlextUtilities.Reliability.flow(value, *flow_ops)
 
