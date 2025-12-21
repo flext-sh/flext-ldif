@@ -895,7 +895,7 @@ class FlextLdifConversion(
         """Process schema conversion pipeline (write->parse)."""
         # Type narrowing: config is SchemaConversionPipelineConfig with required attributes
         if not (hasattr(config, 'write_method') and hasattr(config, 'source_schema')):
-            return r.fail("Invalid config: missing write_method or source_schema")
+            return r[str].fail("Invalid config: missing write_method or source_schema")
         write_result = getattr(config, 'write_method')(getattr(config, 'source_schema'))
         # Extract value from result: r.value if r.is_success else None
         write_value = write_result.value if write_result.is_success else None
@@ -918,7 +918,7 @@ class FlextLdifConversion(
         parse_method = getattr(config, 'parse_method', None)
         target_schema = getattr(config, 'target_schema', None)
         if parse_method is None or target_schema is None:
-            return r.fail("Invalid config: missing parse_method or target_schema")
+            return r[str].fail("Invalid config: missing parse_method or target_schema")
         parse_result = parse_method(target_schema, ldif_string)
         # Extract value from result: r.value if r.is_success else None
         parsed_value = parse_result.value if parse_result.is_success else None
@@ -1119,7 +1119,7 @@ class FlextLdifConversion(
 
         if isinstance(source_acl, object) and isinstance(target_acl, object):
             return FlextResult.ok((source_acl, target_acl))
-        return r.fail("ACL quirks do not satisfy AclProtocol")
+        return r[str].fail("ACL quirks do not satisfy AclProtocol")
 
     @staticmethod
     def _write_acl_to_string(
@@ -1157,7 +1157,7 @@ class FlextLdifConversion(
         if not ldif_string or not ldif_string.strip():
             return FlextResult.fail("Write operation returned empty ACL LDIF")
 
-        return r.ok(ldif_string)
+        return r[str].ok(ldif_string)
 
     @staticmethod
     def _parse_acl_from_string(
@@ -1180,7 +1180,7 @@ class FlextLdifConversion(
             return FlextResult.fail(
                 f"Expected m.Ldif.Acl, got {type(converted_acl_raw).__name__}",
             )
-        return r.ok(converted_acl)
+        return r[str].ok(converted_acl)
 
     @staticmethod
     def _perms_dict_to_model(
@@ -1741,7 +1741,7 @@ class FlextLdifConversion(
             )
 
             # Return converted ACL with correct server_type
-            return r.ok(converted_acl)
+            return r[str].ok(converted_acl)
 
         except Exception as e:
             traceback.format_exc()
@@ -1849,7 +1849,7 @@ class FlextLdifConversion(
                 else r.ok(fallback)
             )
         except TypeError:
-            return r.ok(fallback)
+            return r[str].ok(fallback)
 
     def _write_attribute_to_rfc(
         self,
@@ -1858,9 +1858,9 @@ class FlextLdifConversion(
     ) -> r[str | m.Ldif.SchemaAttribute | t.MetadataAttributeValue]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
-            return r.ok(source_attr)
+            return r[str].ok(source_attr)
         if not isinstance(source_attr, m.Ldif.SchemaAttribute):
-            return r.ok(source_attr)
+            return r[str].ok(source_attr)
 
         source_quirk = self._resolve_quirk(source)
         # Type narrowing: source_quirk is FlextLdifServersBase, source_attr is m.Ldif.SchemaAttribute
@@ -1903,7 +1903,7 @@ class FlextLdifConversion(
 
             # Use u.when() for conditional type check (DSL pattern)
             if not isinstance(rfc_value, str):
-                return r.ok(rfc_value)
+                return r[str].ok(rfc_value)
 
             # Use u.map() for unified result handling (DSL pattern)
             target_parse_result = self._parse_target_attribute(target, rfc_value)
@@ -1949,7 +1949,7 @@ class FlextLdifConversion(
                 return r[m.Ldif.SchemaAttribute].ok(attr_domain)
             # parse_result already has correct type
             return parse_result
-        return r.fail("parse_attribute requires string data")
+        return r[str].fail("parse_attribute requires string data")
 
     def _parse_target_attribute(
         self,
@@ -2122,7 +2122,7 @@ class FlextLdifConversion(
                 return r[m.Ldif.SchemaObjectClass].ok(oc_domain)
             # parse_result already has correct type
             return parse_result
-        return r.fail("parse_objectclass requires string data")
+        return r[str].fail("parse_objectclass requires string data")
 
     def _parse_target_objectclass(
         self,

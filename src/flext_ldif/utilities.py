@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from typing import Any, cast
 
 import inspect
 from collections.abc import (
@@ -708,11 +709,11 @@ class FlextLdifUtilities(FlextUtilities):
                     results.append(result_item)
                 except Exception as e:
                     if on_error == "fail":
-                        return r.fail(f"Processing failed: {e}")
+                        return r[str].fail(f"Processing failed: {e}")
                     if on_error == "skip":
                         continue
                     errors.append(str(e))
-            return r.ok(results)
+            return r[str].ok(results)
 
         @staticmethod
         @overload
@@ -836,7 +837,7 @@ class FlextLdifUtilities(FlextUtilities):
                         _normalize_dns=normalize_dns,
                         _normalize_attrs=normalize_attrs,
                     )
-                return r.fail("Invalid entry sequence type")
+                return r[str].fail("Invalid entry sequence type")
 
             items: (
                 object
@@ -851,7 +852,7 @@ class FlextLdifUtilities(FlextUtilities):
                 processor_normalized, ProcessConfig
             ):
                 msg = "processor is required for base class process"
-                return r.fail(msg)
+                return r[str].fail(msg)
             processor_func = processor_normalized
 
             if isinstance(items, dict):
@@ -863,7 +864,7 @@ class FlextLdifUtilities(FlextUtilities):
                     exclude_keys,
                 )
                 # Type narrowing: results is list[R] from process_dict_items
-                return r.ok(results)
+                return r[str].ok(results)
             if isinstance(items, (list, tuple)):
                 # Adapt predicate to match process_list_items signature
                 # process_list_items expects Callable[[T], bool] | None
@@ -881,9 +882,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # Process single items through processor_func
                 # Processor function accepts various types
                 result_item = processor_func(items)
-                return r.ok([result_item])
+                return r[str].ok([result_item])
             except Exception as e:
-                return r.fail(f"Processing failed: {e}")
+                return r[str].fail(f"Processing failed: {e}")
 
         @staticmethod
         def transform_entries(
@@ -1168,13 +1169,13 @@ class FlextLdifUtilities(FlextUtilities):
                 # Convert RuntimeResult to FlextResult if needed
                 if isinstance(validate_result, FlextRuntime.RuntimeResult):
                     if validate_result.is_success:
-                        return r.ok(validate_result.value)
+                        return r[str].ok(validate_result.value)
                     error_msg = (
                         validate_result.error
                         if hasattr(validate_result, "error")
                         else str(validate_result)
                     )
-                    return r.fail(error_msg)
+                    return r[str].fail(error_msg)
                 return validate_result
 
             # LDIF-specific validate with entries
@@ -1206,13 +1207,13 @@ class FlextLdifUtilities(FlextUtilities):
             # Convert RuntimeResult to FlextResult if needed
             if isinstance(validate_result, FlextRuntime.RuntimeResult):
                 if validate_result.is_success:
-                    return r.ok(validate_result.value)
+                    return r[str].ok(validate_result.value)
                 error_msg = (
                     validate_result.error
                     if hasattr(validate_result, "error")
                     else str(validate_result)
                 )
-                return r.fail(error_msg)
+                return r[str].fail(error_msg)
             return validate_result
 
         @classmethod

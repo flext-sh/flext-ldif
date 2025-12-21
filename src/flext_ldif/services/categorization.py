@@ -708,15 +708,15 @@ class FlextLdifCategorization(
         """
         # Type narrowing: check if rules is already CategoryRules
         if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
-            return r.ok(rules)
+            return r[str].ok(rules)
         if isinstance(rules, dict):
             try:
                 # model_validate is a Pydantic method, type checker should recognize it
                 validated_rules = m.Ldif.LdifResults.CategoryRules.model_validate(rules)
-                return r.ok(validated_rules)
+                return r[str].ok(validated_rules)
             except Exception as e:
-                return r.fail(f"Invalid category rules: {e}")
-        return r.ok(self._categorization_rules)
+                return r[str].fail(f"Invalid category rules: {e}")
+        return r[str].ok(self._categorization_rules)
 
     def _match_entry_to_category(
         self,
@@ -1267,8 +1267,8 @@ class FlextLdifCategorization(
                 excluded_updated = [
                     FlextLdifCategorization._mark_entry_rejected(
                         entry,
-                        # RejectionCategory enum values - use direct stringsBASE_DN_FILTER,
-                        f"DN not under base DN: {base_dn}",
+                        category="BASE_DN_FILTER",
+                        reason=f"DN not under base DN: {base_dn}",
                     )
                     for entry in excluded
                 ]

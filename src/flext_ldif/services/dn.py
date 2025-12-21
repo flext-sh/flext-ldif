@@ -155,7 +155,7 @@ class FlextLdifDn(
 
         handler: Callable[[], r[str]] | None = handlers.get(self.operation)
         if not handler:
-            return r.fail(f"Unknown operation: {self.operation}")
+            return r[str].fail(f"Unknown operation: {self.operation}")
 
         return handler()
 
@@ -167,7 +167,7 @@ class FlextLdifDn(
 
         """
         if not self.other_dn:
-            return r.fail("other_dn required for compare operation")
+            return r[str].fail("other_dn required for compare operation")
         return self._parser.compare_operation(self.dn, self.other_dn)
 
     @override
@@ -406,7 +406,7 @@ class FlextLdifDn(
     def norm(self, dn: str | None) -> r[str]:
         """Instance method shortcut for normalize."""
         if dn is None:
-            return r.fail("DN cannot be None")
+            return r[str].fail("DN cannot be None")
         return self.normalize(dn)
 
     def esc(self, value: str) -> str:
@@ -623,7 +623,7 @@ class FlextLdifDn(
         def clean_operation(dn: str) -> r[str]:
             """Clean DN operation (internal)."""
             cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
-            return r.ok(cleaned)
+            return r[str].ok(cleaned)
 
         @staticmethod
         def escape_operation(dn: str, escape_mode: str) -> r[str]:
@@ -632,13 +632,13 @@ class FlextLdifDn(
                 escaped = FlextLdifDn.Normalizer.hex_escape(dn)
             else:
                 escaped = FlextLdifDn.Normalizer.escape_dn_value(dn)
-            return r.ok(escaped)
+            return r[str].ok(escaped)
 
         @staticmethod
         def unescape_operation(dn: str) -> r[str]:
             """Unescape DN operation (internal)."""
             unescaped = FlextLdifDn.Normalizer.unescape_dn_value(dn)
-            return r.ok(unescaped)
+            return r[str].ok(unescaped)
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED CASE REGISTRY CLASS

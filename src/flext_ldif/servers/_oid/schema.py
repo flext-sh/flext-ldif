@@ -281,13 +281,13 @@ class FlextLdifServersOidSchema(
             # Step 4: Transform caseIgnoreSubstringsMatch (EQUALITY → SUBSTR)
             attr = self._transform_case_ignore_substrings(attr)
 
-            return r.ok(attr)
+            return r[str].ok(attr)
 
         except Exception as e:
             logger.exception(
                 "OID post-parse attribute hook failed",
             )
-            return r.fail(
+            return r[str].fail(
                 f"OID post-parse attribute hook failed: {e}",
             )
 
@@ -409,13 +409,13 @@ class FlextLdifServersOidSchema(
             if update_dict:
                 oc = oc.model_copy(update=update_dict)
 
-            return r.ok(oc)
+            return r[str].ok(oc)
 
         except Exception as e:
             logger.exception(
                 "OID post-parse objectclass hook failed",
             )
-            return r.fail(
+            return r[str].fail(
                 f"OID post-parse objectclass hook failed: {e}",
             )
 

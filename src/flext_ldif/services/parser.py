@@ -84,41 +84,47 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            return r.fail(f"Invalid server type: {effective_server_type_raw} - {e}")
+            return r[str].fail(f"Invalid server type: {effective_server_type_raw} - {e}")
 
         try:
             entry_quirk_raw = self._server.entry(effective_server_type)
         except ValueError as e:
             # Invalid server type validation error
-            return r.fail(str(e))
+            return r[str].fail(str(e))
         if entry_quirk_raw is None:
-            return r.fail(
+            return r[str].fail(
                 f"No entry quirk found for server type: {effective_server_type}",
             )
 
         # Type narrowing: entry_quirk_raw is EntryProtocol (structural typing)
         # Use hasattr to check for parse method (structural typing check)
         if not hasattr(entry_quirk_raw, "parse"):
-            return r.fail(
+            return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
         # Type narrowing: entry_quirk_raw has parse method
         # Direct call to entry quirk parse method using cast for type safety
         parse_method = cast("Callable[[str], r[m.Ldif.Entry | str]]", getattr(entry_quirk_raw, "parse"))
         if not callable(parse_method):
-            return r.fail(
+            return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
             )
         parse_result = parse_method(content)
 
         if parse_result.is_failure:
-            return r.fail(parse_result.error or "LDIF parsing failed")
+            return r[str].fail(parse_result.error or "LDIF parsing failed")
 
         # Extract entries from server response
         raw_entries = parse_result.value
 
-        # Convert to expected type (m.Ldif.Entry should be compatible with m.Ldif.Entry)
-        entries: list[m.Ldif.Entry] = list(raw_entries)
+        # Convert to expected type
+        # raw_entries can be m.Ldif.Entry or str (error message)
+        if isinstance(raw_entries, str):
+            # Parse method returned error string
+            return r[str].fail(f"Parse method returned error: {raw_entries}")
+
+        # raw_entries is m.Ldif.Entry
+        entries: list[m.Ldif.Entry] = [raw_entries]
 
         # Create response with minimal metadata
         # Use facade LdifResults.Statistics for LDIF-specific statistics
@@ -132,7 +138,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             detected_server_type=effective_server_type,
         )
 
-        return r.ok(response)
+        return r[str].ok(response)
 
     def parse_ldif_file(
         self,
@@ -162,7 +168,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             # Read file content directly
             content = path.read_text(encoding=encoding)
         except (OSError, UnicodeDecodeError) as e:
-            return r.fail(f"Failed to read LDIF file {path}: {e}")
+            return r[str].fail(f"Failed to read LDIF file {path}: {e}")
 
         # Delegate to string parsing
         return self.parse_string(content, server_type)
@@ -273,7 +279,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             r.fail() with error message directing to correct usage
 
         """
-        return r.fail(
+        return r[str].fail(
             "FlextLdifParser requires input data to parse. "
             "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
         )
