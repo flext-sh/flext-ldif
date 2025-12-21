@@ -578,7 +578,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             metadata = FlextLdifModelsDomains.QuirkMetadata(
                 quirk_type=self._get_server_type(),
-                extensions=FlextLdifModelsMetadata.DynamicMetadata(**{k: v for k, v in extensions.items() if isinstance(v, (str, int, float, bool))}),
+                extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions),
             )
 
             # Use name if available, otherwise use OID

@@ -642,9 +642,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[]
             )
             # Ensure object_classes is a list
-            object_classes: list[str] = []
             if isinstance(object_classes_raw, (list, tuple)):
-                object_classes = [str(item) for item in object_classes_raw]
+                object_classes: list[str] = [str(item) for item in object_classes_raw]
+            else:
+                object_classes = []
             return bool(
                 any(
                     str(oc).lower()

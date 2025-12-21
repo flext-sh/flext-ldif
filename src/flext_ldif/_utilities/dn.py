@@ -2045,6 +2045,7 @@ class FlextLdifUtilitiesDN:
         if fail_fast:
             batch_result = u.Collection.batch(
                 list(dns),
+                cast("Callable[[str], r[str] | str]", normalize_dn),
                 _on_error="fail",
             )
             if batch_result.is_failure:
@@ -2056,6 +2057,7 @@ class FlextLdifUtilitiesDN:
 
         batch_result = u.Collection.batch(
             list(dns),
+            cast("Callable[[str], r[str] | str]", normalize_dn),
             _on_error="skip",
         )
         if batch_result.is_failure:
