@@ -443,9 +443,11 @@ class FlextLdifUtilitiesACL:
         ]
 
         # Filter and add valid metadata values
-        for key, value in extension_items:
-            if value is not None and isinstance(value, (str, int, float, bool, list, dict, type(None))):
-                result[key] = value
+        result.update({
+            key: value
+            for key, value in extension_items
+            if value is not None and isinstance(value, (str, int, float, bool, list, dict, type(None)))
+        })
 
         return result
 
@@ -1563,8 +1565,8 @@ class FlextLdifUtilitiesACL:
                 result = extract_component_batch(key, pattern)
                 if result is not None:
                     result_dict[key] = result
-            except Exception:
-                # Skip components that fail extraction
+            except (ValueError, TypeError, AttributeError):
+                # Skip components that fail extraction due to data issues
                 continue
 
         # Build result dict from pairs - extract second element from tuple values

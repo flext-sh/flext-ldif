@@ -171,7 +171,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         if not is_valid_oud_oid and oid.endswith("-oid"):
             # Check if base OID (without -oid suffix) is valid
             base_oid = oid[:-4]
-            base_validation = u.OID.validate_format(base_oid)
+            base_validation = u.Ldif.OID.validate_format(base_oid)
             if base_validation.is_success:
                 is_valid_oud_oid = base_validation.value
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self, cast, override
+from typing import Self, override
 
 from flext_core import d, r, t
 from pydantic import Field
@@ -248,7 +248,7 @@ class FlextLdifValidation(
                 result[name] = obj_result.value
 
         # Create ValidationBatchResult from validation results
-        return m.Ldif.ValidationBatchResult(results=cast("m.Ldif._BooleanFlags", result))
+        return m.Ldif.ValidationBatchResult(results=result)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.

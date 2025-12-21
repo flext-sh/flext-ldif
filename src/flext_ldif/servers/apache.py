@@ -239,11 +239,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.value
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                u.ObjectClass.fix_missing_sup(
+                u.Ldif.ObjectClass.fix_missing_sup(
                     oc_data,
                     _server_type=self._get_server_type(),
                 )
-                u.ObjectClass.fix_kind_mismatch(
+                u.Ldif.ObjectClass.fix_kind_mismatch(
                     oc_data,
                     _server_type=self._get_server_type(),
                 )
