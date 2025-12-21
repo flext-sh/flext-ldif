@@ -214,7 +214,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
         batch_result = u.Collection.batch(
             results,
             convert_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_success:
             # u.Collection.batch returns BatchResult dict with 'results' key

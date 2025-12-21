@@ -252,7 +252,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         batch_result = u.batch(
             list(acl_values),
             parse_single_acl,
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_success:
             results_raw = batch_result.value.get("results", [])
@@ -316,7 +316,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         batch_result = u.batch(
             entries,
             filter_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         acl_entries: list[m.Ldif.Entry] = [
             entry

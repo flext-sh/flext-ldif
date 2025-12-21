@@ -386,7 +386,7 @@ class FlextLdifCategorization(
         batch_result = u.Collection.batch(
             entries,
             validate_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         # Extract value from result with default fallback
         batch_data = batch_result.value if batch_result.is_success else None
@@ -981,7 +981,7 @@ class FlextLdifCategorization(
         batch_result = u.Collection.batch(
             entries,
             categorize_single_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         # Extract value from result with default fallback
         batch_data = batch_result.value if batch_result.is_success else None

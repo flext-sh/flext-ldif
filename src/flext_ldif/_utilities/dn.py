@@ -566,7 +566,7 @@ class FlextLdifUtilitiesDN:
                 components,
                 processor=parse_component,
                 predicate=lambda comp: "=" in comp,
-                on_error="skip",
+                _on_error="skip",
             )
             if process_result.is_failure:
                 return r.fail(f"Failed to parse DN components from '{dn_str}'")
@@ -631,7 +631,7 @@ class FlextLdifUtilitiesDN:
                 components,
                 processor=normalize_component,
                 predicate=lambda comp: "=" in comp,
-                on_error="skip",
+                _on_error="skip",
             )
             if process_result.is_failure:
                 return r.fail(
@@ -1604,7 +1604,7 @@ class FlextLdifUtilitiesDN:
         batch_result = u.Collection.batch(
             list(entries),
             transform_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_failure:
             return entries
@@ -1772,7 +1772,7 @@ class FlextLdifUtilitiesDN:
         u.Collection.process(
             config.transformed_attr_names,
             processor=track_attr,
-            on_error="skip",
+            _on_error="skip",
         )
         metadata.add_conversion_note(
             operation="basedn_transform",
@@ -1938,7 +1938,7 @@ class FlextLdifUtilitiesDN:
         batch_result = u.Collection.batch(
             list(entries),
             transform_entry,
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_success:
             batch_data = batch_result.value
@@ -2057,7 +2057,7 @@ class FlextLdifUtilitiesDN:
             batch_result = u.Collection.batch(
                 list(dns),
                 cast("Callable[[str], r[str] | str]", normalize_dn),
-                on_error="fail",
+                _on_error="fail",
             )
             if batch_result.is_failure:
                 return r.fail(batch_result.error or "Normalization failed")
@@ -2069,7 +2069,7 @@ class FlextLdifUtilitiesDN:
         batch_result = u.Collection.batch(
             list(dns),
             cast("Callable[[str], r[str] | str]", normalize_dn),
-            on_error="skip",
+            _on_error="skip",
         )
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Normalization failed")

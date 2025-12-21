@@ -472,7 +472,7 @@ class FlextFunctional:
                     single_result = processed  # type: U
                     result.append(single_result)
             except Exception:
-                if on_error == "stop":
+                if _on_error== "stop":
                     raise
                 # "skip" and "collect" both continue processing
         return result

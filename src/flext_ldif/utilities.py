@@ -707,9 +707,9 @@ class FlextLdifUtilities(FlextUtilities):
                     result_item = processor_func(item)
                     results.append(result_item)
                 except Exception as e:
-                    if on_error == "fail":
+                    if _on_error== "fail":
                         return r.fail(f"Processing failed: {e}")
-                    if on_error == "skip":
+                    if _on_error== "skip":
                         continue
                     errors.append(str(e))
             return r.ok(results)
@@ -1376,7 +1376,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextUtilities.Reliability.pipe(
                     value,
                     *operations_list,
-                    on_error=on_error,
+                    _on_error=on_error,
                 )
 
             # LDIF-specific pipe using flow()
@@ -3510,9 +3510,9 @@ class FlextLdifUtilities(FlextUtilities):
                     else:
                         result.append(processed)
                 except Exception:
-                    if on_error == "fail":
+                    if _on_error== "fail":
                         raise
-                    if on_error == "return":
+                    if _on_error== "return":
                         return result
                     # skip: continue
             return result

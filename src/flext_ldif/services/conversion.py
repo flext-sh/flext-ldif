@@ -489,7 +489,7 @@ class FlextLdifConversion(
         batch_result = u.Collection.batch(
             pairs_list,
             process_conversion,
-            on_error="skip",
+            _on_error="skip",
         )
 
         # Extract results from batch result dict

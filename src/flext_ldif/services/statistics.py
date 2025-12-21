@@ -230,7 +230,7 @@ class FlextLdifStatistics(
         _ = u.Collection.batch(
             list(entries),
             process_entry,
-            on_error="skip",
+            _on_error="skip",
         )
 
         # Build object_class_distribution as DynamicCounts model
@@ -284,7 +284,7 @@ class FlextLdifStatistics(
         batch_result = u.Collection.batch(
             rejected_entries,
             extract_reason,
-            on_error="skip",
+            _on_error="skip",
         )
         # u.Collection.batch returns FlextResult[BatchResultDict]
         if batch_result.is_success and batch_result.value:
