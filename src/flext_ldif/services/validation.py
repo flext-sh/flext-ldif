@@ -248,7 +248,7 @@ class FlextLdifValidation(
                 result[name] = obj_result.value
 
         # Create ValidationBatchResult from validation results
-        return m.Ldif.ValidationBatchResult(results=result)
+        return m.Ldif.ValidationBatchResult(results=cast("m.Ldif._BooleanFlags", result))
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.

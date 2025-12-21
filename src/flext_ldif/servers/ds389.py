@@ -19,7 +19,7 @@ when 389 Directory Server-specific LDIF format requirements are identified.
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from flext_core import FlextResult, u
 
@@ -678,8 +678,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Store metadata in extensions
+                server_type_lit: Literal["ds389"] = FlextLdifServersDs389.Constants.SERVER_TYPE.value
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=FlextLdifServersDs389.Constants.SERVER_TYPE,
+                    quirk_type=server_type_lit,
                 )
                 metadata.extensions[c.Ldif.MetadataKeys.IS_CONFIG_ENTRY] = any(
                     marker in dn_lower

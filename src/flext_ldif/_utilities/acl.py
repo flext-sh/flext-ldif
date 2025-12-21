@@ -442,9 +442,10 @@ class FlextLdifUtilitiesACL:
             ("action_type", config.action_type),
         ]
 
-        result.update({
-            key: value for key, value in extension_items if value is not None
-        })
+        # Filter and add valid metadata values
+        for key, value in extension_items:
+            if value is not None and isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                result[key] = value
 
         return result
 

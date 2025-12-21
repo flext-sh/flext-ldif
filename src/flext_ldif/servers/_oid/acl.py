@@ -1230,7 +1230,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             # Create ACL model with parsed data (Python 3.13: cleaner dict creation)
             # Use RFC name (aci) for Entry model (OID → RFC conversion)
             # Use literal directly for type safety
-            server_type: str = "oid"
+            server_type: Literal["oid"] = "oid"
 
             # Architecture: Filter permissions to RFC-compliant only
             # Server-specific permissions (like OID's "none") are preserved in metadata.extensions

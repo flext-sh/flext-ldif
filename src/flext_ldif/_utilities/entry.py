@@ -338,7 +338,7 @@ class FlextLdifUtilitiesEntry:
 
         attrs_to_remove = {attr.lower() for attr in attributes}
         # Direct iteration instead of u.Collection.filter
-        filtered: dict[str, object] = {
+        filtered: dict[str, list[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove

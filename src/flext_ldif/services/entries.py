@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from flext_core import FlextTypes, r, t as core_t
+from flext_core import FlextTypes, r
 
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.functional import FlextFunctional
@@ -221,7 +221,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     if result.is_success and isinstance(result.value, m.Ldif.Entry):
                         results.append(result.value)
                     else:
-                        return r.fail(result.error or f"Failed to process entry")
+                        return r.fail(result.error or "Failed to process entry")
                 elif isinstance(result, m.Ldif.Entry):
                     results.append(result)
             except Exception as exc:

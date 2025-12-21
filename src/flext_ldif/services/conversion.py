@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, override
+from typing import ClassVar, Literal, Self, TypeGuard, override
 
 from flext_core import (
     FlextLogger,
@@ -50,6 +50,15 @@ TUPLE_LENGTH_PAIR = 2
 
 # Module-level logger
 logger = FlextLogger(__name__)
+
+
+def _is_schema_quirk_protocol(obj: object) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
+    """TypeGuard to check if object satisfies SchemaQuirkProtocol."""
+    return (
+        hasattr(obj, "parse")
+        and hasattr(obj, "write")
+        and hasattr(obj, "write_attribute")
+    )
 
 
 def _get_schema_quirk(
@@ -94,14 +103,11 @@ def _get_schema_from_attribute(
     if hasattr(quirk, "schema_quirk"):
         schema = quirk.schema_quirk
         # schema_quirk always returns SchemaProtocol, never None
-        # Use structural typing: check if schema has Schema methods
-        # isinstance with nested classes doesn't work with mypy
-        if not hasattr(schema, "parse") or not hasattr(schema, "write_attribute"):
-            msg = f"Expected Schema quirk, got {type(schema)}"
-            raise TypeError(msg)
-        # schema satisfies SchemaProtocol via structural typing
-        # Type narrowing: schema has parse and write_attribute methods, satisfies SchemaProtocol
-        return schema
+        # Use TypeGuard for proper type narrowing
+        if _is_schema_quirk_protocol(schema):
+            return schema
+        msg = f"Expected Schema quirk, got {type(schema)}"
+        raise TypeError(msg)
     msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
     raise TypeError(msg)
 
