@@ -694,7 +694,11 @@ class FlextLdifConversion(
         # Step 1: Ensure metadata exists
         current_entry = entry
         if not get_metadata(current_entry):
-            metadata_obj = m.Ldif.QuirkMetadata(quirk_type=validated_quirk_type)
+            # Cast validated_quirk_type (str) to Literal for QuirkMetadata
+            quirk_type_literal = cast(
+                t.LiteralTypes.ServerTypeLiteral, validated_quirk_type
+            )
+            metadata_obj = m.Ldif.QuirkMetadata(quirk_type=quirk_type_literal)
             # metadata_obj is m.Ldif.QuirkMetadata which is t.MetadataAttributeValue
             current_entry = current_entry.model_copy(
                 update={"metadata": metadata_obj},
@@ -1376,22 +1380,20 @@ class FlextLdifConversion(
         # Type narrowing: result is m.Ldif.Acl from the mapping
         converted_acl_typed = cast("m.Ldif.Acl", config.converted_acl)
         if mapping_type == "oid_to_oud":
-            result_typed = FlextLdifConversion._apply_oid_to_oud_mapping(
+            return FlextLdifConversion._apply_oid_to_oud_mapping(
                 config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
-            return cast("m.Ldif.Acl", result_typed)
         if mapping_type == "oud_to_oid":
-            result_typed = FlextLdifConversion._apply_oud_to_oid_mapping(
+            return FlextLdifConversion._apply_oud_to_oid_mapping(
                 config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
-            return cast("m.Ldif.Acl", result_typed)
         if mapping_type == "preserve_original":
             original_acl_typed = cast("m.Ldif.Acl", config.original_acl)
-            result_typed = converted_acl_typed.model_copy(
+            return converted_acl_typed.model_copy(
                 update={
                     "permissions": (
                         original_acl_typed.permissions.model_copy(deep=True)
@@ -1405,8 +1407,7 @@ class FlextLdifConversion(
                 },
                 deep=True,
             )
-            return cast("m.Ldif.Acl", result_typed)
-        return cast("m.Ldif.Acl", converted_acl_typed)
+        return converted_acl_typed
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""

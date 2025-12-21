@@ -490,7 +490,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_attribute(
                 self,
                 attr_definition: str,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Parse individual attribute definition."""
                 ...
 
@@ -504,7 +504,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_objectclass(
                 self,
                 oc_definition: str,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Parse individual objectClass definition."""
                 ...
 

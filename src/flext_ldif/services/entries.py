@@ -315,15 +315,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             first_dn = value_list[0] if value_list else ""
             return r[str].ok(str(first_dn))
 
-        # Type narrowing: match always returns r[str] because default is not None
-        match_result: r[str] = FlextFunctional.match(
+        # Type narrowing: match returns r[str] | None, use or to ensure r[str]
+        match_result = FlextFunctional.match(
             dn_value_raw,
             (type(None), handle_none),
             (str, handle_str),
             (list, handle_list),
-            default=r.fail("DN value has unexpected type"),
+            default=r[str].fail("DN value has unexpected type"),
         )
-        return match_result
+        return match_result or r[str].fail("DN value has unexpected type")
 
     @staticmethod
     def _extract_dn_from_object(dn_val_raw: object) -> r[str]:

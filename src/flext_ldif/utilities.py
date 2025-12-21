@@ -1339,8 +1339,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pipe_ldif(
             value: t.GeneralValueType,
-            *ops: dict[str, t.GeneralValueType]
-            | Callable[[t.GeneralValueType], t.GeneralValueType],
+            *ops: dict[str, t.GeneralValueType] | Callable[[object], object],
             on_error: str = "stop",
         ) -> t.GeneralValueType | r[t.GeneralValueType]:
             """LDIF-specific pipe - supports dict operations via flow()."""
@@ -1365,9 +1364,8 @@ class FlextLdifUtilities(FlextUtilities):
                     # dict[str, object] is compatible with ConfigurationDict (dict[str, t.GeneralValueType])
                     flow_ops.append(op)
                 elif callable(op):
-                    # Type narrowing: Convert to object-based callable for flow()
-                    # Callable[[GeneralValueType], GeneralValueType] can be used where Callable[[object], object] is expected
-                    flow_ops.append(op)  # type: ignore[arg-type]
+                    # Type narrowing: op is Callable[[object], object] after callable check
+                    flow_ops.append(op)
             # Type narrowing: flow returns t.GeneralValueType
             return FlextUtilities.Reliability.flow(value, *flow_ops)
 
@@ -1375,8 +1373,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pp(
             value: t.GeneralValueType,
-            *ops: dict[str, t.GeneralValueType]
-            | Callable[[t.GeneralValueType], t.GeneralValueType],
+            *ops: dict[str, t.GeneralValueType] | Callable[[object], object],
         ) -> t.GeneralValueType:
             """Alias for pipe_ldif (mnemonic: pp)."""
             return FlextLdifUtilities.Ldif.pipe_ldif(value, *ops)
