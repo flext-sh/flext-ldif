@@ -53,13 +53,13 @@ class FlextLdifModelsMetadata:
 
         def __init__(
             self,
-            **kwargs: object,
+            **kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize DynamicMetadata with arbitrary keyword arguments.
 
             Args:
                 **kwargs: Arbitrary key-value pairs stored as extra fields.
-                          Values are validated by Pydantic.
+                          Values must be compatible with MetadataAttributeValue.
 
             Example:
                 meta = DynamicMetadata(original_format="test", custom_field=123)
