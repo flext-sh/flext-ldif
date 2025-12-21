@@ -422,75 +422,7 @@ class FlextLdifUtilitiesMetadata:
                 target_metadata["transformations"] = existing_items
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
-<<<<<<< HEAD
                 target_metadata.transformations = [transformation_dict]
-=======
-                new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
-                    transformation_dict
-                ]
-                target_metadata.transformations = new_list_2  # type: ignore[assignment]
->>>>>>> refs/remotes/origin/main
-
-        # Set conversion path if not already set
-        if "conversion_path" not in target_metadata:
-            source_server = transformation.server or "unknown"
-            target_metadata["conversion_path"] = f"{source_server}->..."
-
-        # Update target model metadata
-        FlextLdifUtilitiesMetadata._set_model_metadata(target_model, target_metadata)
-
-        return target_model
-        source_metadata = FlextLdifUtilitiesMetadata._extract_source_metadata(
-            source_model,
-        )
-        if source_metadata is None:
-            return target_model
-
-        target_metadata = FlextLdifUtilitiesMetadata._get_or_create_target_metadata(
-            target_model,
-        )
-
-        # Copy violations from source to target
-        FlextLdifUtilitiesMetadata._copy_violations_to_target(
-            source_metadata,
-            target_metadata,
-        )
-
-        # Add transformation to history
-        transformation_dict = (
-            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value(
-                transformation,
-            )
-        )
-
-        if "transformations" not in target_metadata:
-            # Create new list with transformation
-            # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
-            target_metadata.transformations = [transformation_dict]
-        else:
-            transformations_obj = target_metadata["transformations"]
-            if isinstance(transformations_obj, list):
-                # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
-                # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
-                # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
-                existing_items.extend(
-                    item
-                    for item in transformations_obj
-                    if isinstance(item, (dict, Mapping))
-                )
-                existing_items.append(transformation_dict)
-                # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue
-                target_metadata["transformations"] = existing_items
-            else:
-                # Create new list if current value is not a list (should not happen for transformations)
-<<<<<<< HEAD
-                new_list_2: list[Mapping[str, FlextTypes.ScalarValue]] = [
-                    transformation_dict
-                ]
-                target_metadata.transformations = new_list_2
-=======
-                target_metadata.transformations = [transformation_dict]
->>>>>>> refs/remotes/origin/main
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:

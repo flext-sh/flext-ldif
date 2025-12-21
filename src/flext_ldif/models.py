@@ -229,13 +229,8 @@ class FlextLdifModels(FlextModels):
         ProcessConfig = ProcessConfig
         TransformConfig = TransformConfig
         FilterConfig = FilterConfig
-<<<<<<< HEAD
         ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
         EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
-=======
-        ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
-        EntryResult = FlextLdifModelsResults.EntryResult
->>>>>>> refs/remotes/origin/main
         ParseResponse = FlextLdifModelsResults.ParseResponse
         WriteOptions = FlextLdifModelsDomains.WriteOptions
         WriteOutputOptions = FlextLdifModelsSettings.WriteOutputOptions
