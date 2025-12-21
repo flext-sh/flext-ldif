@@ -190,21 +190,11 @@ class FlextLdifUtilitiesWriters:
                 if config.transform_entry_hook:
                     # transform_entry_hook accepts EntryProtocol (entry satisfies it structurally)
                     entry_transformed = config.transform_entry_hook(entry)
-                    # Check if transformed result is already Entry model instance
-                    if isinstance(entry_transformed, FlextLdifModelsDomains.Entry):
-                        entry = entry_transformed
-                    else:
-                        # Convert EntryProtocol to Entry via model_validate
-                        # entry_transformed is already Entry type
-                        entry_typed = entry_transformed
-                        entry = FlextLdifModelsDomains.Entry.model_validate({
-                            "dn": (entry_typed.dn or None),
-                            "attributes": (
-                                entry_typed.attributes.attributes
-                                if entry_typed.attributes
-                                else None
-                            ),
-                        })
+                    # Transform hook returns Entry
+                    entry = entry_transformed
+                else:
+                    # No transformation hook - entry stays as is
+                    pass
 
                 # Write entry parts
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
