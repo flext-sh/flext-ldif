@@ -33,7 +33,7 @@ from flext_core import (
     r,
 )
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t as flext_core_t
+from flext_core.typings import t
 from flext_core.utilities import ValidatorSpec
 
 # Local aliases for model types
@@ -707,9 +707,9 @@ class FlextLdifUtilities(FlextUtilities):
                     result_item = processor_func(item)
                     results.append(result_item)
                 except Exception as e:
-                    if _on_error== "fail":
+                    if _on_error == "fail":
                         return r.fail(f"Processing failed: {e}")
-                    if _on_error== "skip":
+                    if _on_error == "skip":
                         continue
                     errors.append(str(e))
             return r.ok(results)
@@ -1744,9 +1744,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Convert dicts to Mapping[str, t.GeneralValueType] for u.merge()
             # Use list comprehension for better performance
             # Type narrowing: isinstance already guarantees Mapping[str, t.GeneralValueType]
-            _mappings_list: list[
-                Mapping[str, flext_core_t.FlextTypes.GeneralValueType]
-            ] = [
+            _mappings_list: list[Mapping[str, t.GeneralValueType]] = [
                 dict_item
                 for dict_item in dicts
                 if isinstance(dict_item, (dict, Mapping))
@@ -2475,17 +2473,13 @@ class FlextLdifUtilities(FlextUtilities):
             if not dict_list:
                 return {}
             # Type narrowing: dict_item is Mapping[str, t.GeneralValueType] (filter already ensures dict type)
-            mappings: list[Mapping[str, flext_core_t.FlextTypes.GeneralValueType]] = (
-                list(
-                    dict_list,
-                )
+            mappings: list[Mapping[str, t.GeneralValueType]] = list(
+                dict_list,
             )
             if not mappings:
                 return {}
             # Merge mappings sequentially (merge accepts 2 args, not variadic)
-            merged: dict[str, flext_core_t.FlextTypes.GeneralValueType] = dict(
-                mappings[0]
-            )
+            merged: dict[str, t.GeneralValueType] = dict(mappings[0])
             for mapping in mappings[1:]:
                 merge_result = FlextUtilities.merge(
                     merged,
@@ -3011,7 +3005,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Use u.merge() for unified behavior
             # Type narrowing: dict[str, object] is compatible with Mapping[str, t.GeneralValueType]
             # t.GeneralValueType includes object, so no cast needed
-            mappings: list[Mapping[str, flext_core_t.FlextTypes.GeneralValueType]] = [
+            mappings: list[Mapping[str, t.GeneralValueType]] = [
                 data,
                 updates,
             ]
@@ -3022,9 +3016,7 @@ class FlextLdifUtilities(FlextUtilities):
             )
             if merge_result.is_success and isinstance(merge_result.value, dict):
                 # Convert t.GeneralValueType values to object
-                merged_dict: dict[str, flext_core_t.FlextTypes.GeneralValueType] = (
-                    merge_result.value
-                )
+                merged_dict: dict[str, t.GeneralValueType] = merge_result.value
                 # Type narrowing: t.GeneralValueType includes object, so no cast needed
                 return dict(merged_dict)
             return {**data, **updates}  # Fallback
@@ -3510,9 +3502,9 @@ class FlextLdifUtilities(FlextUtilities):
                     else:
                         result.append(processed)
                 except Exception:
-                    if _on_error== "fail":
+                    if _on_error == "fail":
                         raise
-                    if _on_error== "return":
+                    if _on_error == "return":
                         return result
                     # skip: continue
             return result
