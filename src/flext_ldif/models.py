@@ -39,7 +39,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult
-from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._models.results import FlextLdifModelsResults, _FlexibleCategories
 from flext_ldif._models.settings import (
     AclConversionConfig,
     AttrNormalizationConfig,
