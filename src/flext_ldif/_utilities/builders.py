@@ -645,7 +645,7 @@ class WriteConfigBuilder:
             sort_by=self._sort_by.value,
             attr_order=cast("list[str] | None", attr_order_value),
             include_metadata=self._include_metadata,
-            server=self._server.value if self._server else None,
+            server=self._server,
         )
 
 
