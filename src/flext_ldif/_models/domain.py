@@ -1647,7 +1647,7 @@ class FlextLdifModelsDomains:
 
             if isinstance(value, dict):
                 # Handle dict from model_dump()
-                return FlextLdifModelsDomains.DN(**value)
+                return FlextLdifModelsDomains.DN.model_validate(value)
 
             return FlextLdifModelsDomains.DN(value=value)
 

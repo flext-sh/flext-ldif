@@ -24,7 +24,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Literal, Self, TypeAlias, TypeGuard, cast, overload
+from typing import Literal, Self, TypeGuard, overload
 
 from flext_core import (
     FlextLogger,
@@ -160,7 +160,7 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, value: str | bytes | int | float | bool | list[str] | None) -> None:
+            def __init__(self, value: str | bytes | float | bool | list[str] | None) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:
@@ -168,7 +168,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 """
                 self._value = value
-                self._default: str | bytes | int | float | bool | list[str] | None | None = None
+                self._default: str | bytes | int | float | bool | list[str] | None = None
                 self._target_type: str | None = None
                 self._safe_mode = False
 

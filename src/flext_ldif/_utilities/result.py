@@ -533,10 +533,8 @@ class FlextLdifResult[T]:
         if isinstance(value, Sequence) and not isinstance(value, str):
             # Filter elements - result is always a list for type consistency
             filtered_elements: list[object] = [item for item in value if matches_func(item)]
-            # Type narrowing: filtered_elements is always list[E] where E is element type
-            # This preserves the original sequence type while filtering elements
-            # Cast is safe here because we filtered value (which is T) with matching predicate
-            return FlextLdifResult(r[list[object]].ok(filtered_elements))
+            # Type narrowing: filtered_elements is the filtered sequence of type T
+            return FlextLdifResult(r.ok(filtered_elements))  # type: ignore[arg-type]
 
         # Handle single value - return if matches, fail otherwise
         if matches_func(value):

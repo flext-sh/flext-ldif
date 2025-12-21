@@ -374,13 +374,11 @@ class FlextLdifUtilitiesDN:
         if not dn_str or "=" not in dn_str:
             return dn_str  # Return as-is if invalid (legacy method - returns str not r)
         components = FlextLdifUtilitiesDN.split(dn_str)
-        # Direct iteration instead of u.Collection.map
-        normalized: list[str] = []
-        for comp in components:
-            norm_comp = FlextLdifUtilitiesDN.norm_component(comp)
-            if norm_comp:
-                normalized.append(norm_comp)
-        return ",".join(normalized if normalized else components)
+        normalized = u.Collection.map(
+            components,
+            mapper=FlextLdifUtilitiesDN.norm_component,
+        )
+        return ",".join(normalized if isinstance(normalized, list) else components)
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -393,9 +391,8 @@ class FlextLdifUtilitiesDN:
             attr, _, value = comp.partition("=")
             return bool(attr.strip() and value.strip())
 
-        # Direct iteration instead of u.Collection.filter
-        valid_count = sum(1 for comp in components if is_valid_component(comp))
-        return valid_count == len(components)
+        filtered = u.Collection.filter(components, is_valid_component)
+        return isinstance(filtered, list) and len(filtered) == len(components)
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -565,14 +562,23 @@ class FlextLdifUtilitiesDN:
                 attr, _, value = comp.partition("=")
                 return (attr.strip(), value.strip())
 
-            # Direct iteration instead of u.Collection.process
-            result: list[tuple[str, str]] = []
-            for comp in components:
-                if "=" in comp:
-                    parsed = parse_component(comp)
-                    if parsed and isinstance(parsed, tuple) and len(parsed) == 2:
-                        result.append(parsed)
-
+            process_result = u.Collection.process(
+                components,
+                processor=parse_component,
+                predicate=lambda comp: "=" in comp,
+                _on_error="skip",
+            )
+            if process_result.is_failure:
+                return r.fail(f"Failed to parse DN components from '{dn_str}'")
+            parsed_list = process_result.value
+            if not isinstance(parsed_list, list):
+                return r.fail(f"Unexpected parse result type from '{dn_str}'")
+            tuple_length = 2
+            result = [
+                item
+                for item in parsed_list
+                if isinstance(item, tuple) and len(item) == tuple_length
+            ]
             return (
                 r.ok(result)
                 if result
@@ -621,17 +627,32 @@ class FlextLdifUtilitiesDN:
                 # RFC 4514 normalization: lowercase attribute TYPE, preserve value case
                 return f"{attr.strip().lower()}={value.strip()}"
 
-            # Direct iteration instead of u.Collection.process
-            normalized_list: list[str] = []
-            for comp in components:
-                if "=" in comp:
-                    normalized_comp = normalize_component(comp)
-                    if normalized_comp and isinstance(normalized_comp, str):
-                        normalized_list.append(normalized_comp)
-
+            process_result = u.Collection.process(
+                components,
+                processor=normalize_component,
+                predicate=lambda comp: "=" in comp,
+                _on_error="skip",
+            )
+            if process_result.is_failure:
+                return r.fail(
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
+                )
+            normalized_list = process_result.value
+            if not isinstance(normalized_list, list):
+                return r.fail(f"Unexpected normalize result type from '{dn_str}'")
+            filtered_str = u.Collection.filter(
+                normalized_list,
+                predicate=lambda x: isinstance(x, str),
+            )
+            # Ensure we have a list of strings for join
+            normalized: list[str] = [
+                str(item)
+                for item in (filtered_str if isinstance(filtered_str, list) else [])
+                if item is not None
+            ]
             return (
-                r.ok(",".join(normalized_list))
-                if normalized_list
+                r.ok(",".join(normalized))
+                if normalized
                 else r.fail(
                     f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
@@ -959,8 +980,12 @@ class FlextLdifUtilitiesDN:
             return char
 
         enumerated = list(enumerate(value))
-        # Direct iteration instead of u.Collection.map
-        mapped = [escape_char(item) for item in enumerated]
+        mapped_result = u.Collection.map(enumerated, mapper=escape_char)
+        mapped = (
+            mapped_result
+            if isinstance(mapped_result, list)
+            else [escape_char(item) for item in enumerated]
+        )
         return "".join(mapped)
 
     @staticmethod
@@ -1576,21 +1601,19 @@ class FlextLdifUtilitiesDN:
                 },
             )
 
-        # Direct iteration instead of u.Collection.batch
-        transformed_entries: list[m.Ldif.Entry] = []
-        for entry in entries:
-            try:
-                result = transform_entry(entry)
-                # Handle both direct return and FlextResult return
-                if isinstance(result, r):
-                    if result.is_success and isinstance(result.value, m.Ldif.Entry):
-                        transformed_entries.append(result.value)
-                elif isinstance(result, m.Ldif.Entry):
-                    transformed_entries.append(result)
-            except Exception:
-                # Skip entries that fail transformation
-                continue
-        return transformed_entries if transformed_entries else entries
+        batch_result = u.Collection.batch(
+            list(entries),
+            transform_entry,
+            _on_error="skip",
+        )
+        if batch_result.is_failure:
+            return entries
+        batch_data = batch_result.value
+        # Type narrowing: batch_data["results"] is object, check if list
+        results_raw = batch_data.get("results", [])
+        if isinstance(results_raw, list):
+            return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
+        return entries
 
     @staticmethod
     def transform_ldif_files_in_directory(
@@ -1660,8 +1683,10 @@ class FlextLdifUtilitiesDN:
                             return f"{attr_name}: {transformed_value}"
                         return line
 
-                    # Direct iteration instead of u.Collection.map
-                    transformed_lines = [transform_line(line) for line in lines]
+                    mapped_result = u.Collection.map(lines, mapper=transform_line)
+                    transformed_lines = (
+                        mapped_result if isinstance(mapped_result, list) else lines
+                    )
 
                     transformed_content = "\n".join(transformed_lines)
                     ldif_file.write_text(transformed_content, encoding="utf-8")
@@ -1702,11 +1727,8 @@ class FlextLdifUtilitiesDN:
                 ]
             return v
 
-        # Direct iteration instead of u.Collection.map
-        mapped_dict: dict[str, list[str]] = {}
-        for k, v in attrs.items():
-            mapped_dict[k] = map_attr(k, v)
-        return mapped_dict
+        mapped = u.Collection.map(attrs, mapper=map_attr)
+        return mapped if isinstance(mapped, dict) else attrs
 
     @staticmethod
     def _get_changed_attr_names(
@@ -1714,13 +1736,14 @@ class FlextLdifUtilitiesDN:
         transformed: dict[str, list[str]],
         dn_attributes: set[str],
     ) -> list[str]:
-        """Get list of attribute names that changed."""
-        # Direct iteration instead of u.Collection.filter
-        changed_attrs: list[str] = [
-            k for k, v in transformed.items()
-            if k.lower() in dn_attributes and v != original.get(k, [])
-        ]
-        return changed_attrs
+        """Get list of attribute names that changed using u.Collection.filter()."""
+        filtered_dict = u.Collection.filter(
+            transformed,
+            predicate=lambda k, v: (
+                k.lower() in dn_attributes and v != original.get(k, [])
+            ),
+        )
+        return list(filtered_dict.keys()) if isinstance(filtered_dict, dict) else []
 
     @staticmethod
     def _update_metadata_for_transformation(
@@ -1746,13 +1769,11 @@ class FlextLdifUtilitiesDN:
                 reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
             )
 
-        # Direct iteration instead of u.Collection.process
-        for attr_name in config.transformed_attr_names:
-            try:
-                track_attr(attr_name)
-            except Exception:
-                # Skip attributes that fail tracking
-                continue
+        u.Collection.process(
+            config.transformed_attr_names,
+            processor=track_attr,
+            _on_error="skip",
+        )
         metadata.add_conversion_note(
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
@@ -1914,17 +1935,18 @@ class FlextLdifUtilitiesDN:
                 target_dn,
             )
 
-        # Direct iteration instead of u.Collection.batch
-        transformed_entries: list[m.Ldif.Entry] = []
-        for entry in entries:
-            try:
-                result = transform_entry(entry)
-                if isinstance(result, m.Ldif.Entry):
-                    transformed_entries.append(result)
-            except Exception:
-                # Skip entries that fail transformation
-                continue
-        return transformed_entries if transformed_entries else entries
+        batch_result = u.Collection.batch(
+            list(entries),
+            transform_entry,
+            _on_error="skip",
+        )
+        if batch_result.is_success:
+            batch_data = batch_result.value
+            # Type narrowing: batch_data["results"] is object, check if list
+            results_raw = batch_data.get("results", [])
+            if isinstance(results_raw, list):
+                return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
+        return entries
 
     # =========================================================================
     # BATCH METHODS - Power Method Support
@@ -2031,29 +2053,28 @@ class FlextLdifUtilitiesDN:
                 return r.ok(dn.upper())
             return r.ok(dn)
 
-        # Direct iteration instead of u.Collection.batch
         if fail_fast:
-            # With fail_fast: first error aborts processing
-            normalized_list: list[str] = []
-            for dn in dns:
-                norm_result = normalize_dn(dn)
-                if norm_result.is_failure:
-                    return r.fail(norm_result.error or f"Failed to normalize: {dn}")
-                if isinstance(norm_result.value, str):
-                    normalized_list.append(norm_result.value)
-            return r.ok(normalized_list)
+            batch_result = u.Collection.batch(
+                list(dns),
+                cast("Callable[[str], r[str] | str]", normalize_dn),
+                _on_error="fail",
+            )
+            if batch_result.is_failure:
+                return r.fail(batch_result.error or "Normalization failed")
+            batch_data = batch_result.value
+            return r.ok([
+                item for item in batch_data["results"] if isinstance(item, str)
+            ])
 
-        # Without fail_fast: skip errors and continue
-        normalized_list = []
-        for dn in dns:
-            try:
-                norm_result = normalize_dn(dn)
-                if norm_result.is_success and isinstance(norm_result.value, str):
-                    normalized_list.append(norm_result.value)
-            except Exception:
-                # Skip DNs that fail normalization
-                continue
-        return r.ok(normalized_list)
+        batch_result = u.Collection.batch(
+            list(dns),
+            cast("Callable[[str], r[str] | str]", normalize_dn),
+            _on_error="skip",
+        )
+        if batch_result.is_failure:
+            return r.fail(batch_result.error or "Normalization failed")
+        batch_data = batch_result.value
+        return r.ok([item for item in batch_data["results"] if isinstance(item, str)])
 
     @staticmethod
     def validate_batch(
@@ -2085,17 +2106,16 @@ class FlextLdifUtilitiesDN:
             is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
             return (dn, is_valid, dn_errors)
 
-        # Direct iteration instead of u.Collection.batch
-        results: list[tuple[str, bool, list[str]]] = []
-        for dn in dns:
-            try:
-                result = validate_dn(dn)
-                if isinstance(result, tuple) and len(result) == 3:
-                    results.append(result)
-            except Exception:
-                # Skip DNs that fail validation
-                continue
-
+        batch_result = u.Collection.batch(list(dns), validate_dn, _on_error="skip")
+        if batch_result.is_failure:
+            return r.fail(batch_result.error or "Validation failed")
+        batch_data = batch_result.value
+        tuple_length = 3
+        results = [
+            item
+            for item in batch_data["results"]
+            if isinstance(item, tuple) and len(item) == tuple_length
+        ]
         if not collect_errors:
             invalid_results = [item for item in results if not item[1]]
             if invalid_results:
@@ -2146,29 +2166,14 @@ class FlextLdifUtilitiesDN:
                     raise
                 return dn
 
-        # Direct iteration instead of u.Collection.batch
-        if fail_fast:
-            # With fail_fast: first error aborts processing
-            results: list[str] = []
-            for dn in dns:
-                try:
-                    result = replace_dn(dn)
-                    if isinstance(result, str):
-                        results.append(result)
-                except Exception as exc:
-                    return r.fail(f"Failed to replace base in DN: {exc}")
-            return r.ok(results)
-
-        # Without fail_fast: skip errors and continue
-        results = []
-        for dn in dns:
-            try:
-                result = replace_dn(dn)
-                if isinstance(result, str):
-                    results.append(result)
-            except Exception:
-                # Skip DNs that fail replacement
-                continue
+        on_error_mode = "fail" if fail_fast else "skip"
+        batch_result = u.Collection.batch(
+            list(dns), replace_dn, _on_error=on_error_mode
+        )
+        if batch_result.is_failure:
+            return r.fail(batch_result.error or "Base replacement failed")
+        batch_data = batch_result.value
+        results = [item for item in batch_data["results"] if isinstance(item, str)]
         return r.ok(results)
 
     @staticmethod

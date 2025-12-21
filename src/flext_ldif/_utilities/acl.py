@@ -1226,8 +1226,9 @@ class FlextLdifUtilitiesACL:
                     processed = process_rule_config(item)
                     if processed is not None:
                         result.append(processed)
-            except Exception:
-                # Skip items that fail processing
+            except Exception as e:
+                # Log and skip items that fail processing
+                logger.debug(f"Skipping ACL rule processing due to error: {e}")
                 continue
         return result
 
@@ -1288,8 +1289,9 @@ class FlextLdifUtilitiesACL:
                     processed = process_target_config(item)
                     if processed is not None:
                         result.append(processed)
-            except Exception:
-                # Skip items that fail processing
+            except Exception as e:
+                # Log and skip items that fail processing
+                logger.debug(f"Skipping ACL rule processing due to error: {e}")
                 continue
         return result
 
