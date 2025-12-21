@@ -204,12 +204,12 @@ class FlextLdifAnalysis(
         # Map each entry through validation function, collecting results
         validation_results = u.Collection.map(entries, validate_entry)
         # Count valid entries (True values)
-        valid_count = u.Collection.count(
+        valid_count = u.count(
             validation_results,
             predicate=lambda r: r is True,
         )
 
-        total_entries = u.Collection.count(entries)
+        total_entries = u.count(entries)
         invalid_count = total_entries - valid_count
 
         return r[m.Ldif.LdifResults.ValidationResult].ok(

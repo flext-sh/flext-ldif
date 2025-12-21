@@ -511,7 +511,7 @@ class FlextLdifConversion(
             results_list,
             predicate=lambda item: (
                 isinstance(item, tuple)
-                and u.Collection.count(item) == TUPLE_LENGTH_PAIR
+                and u.count(item) == TUPLE_LENGTH_PAIR
                 and isinstance(item[0], str)
                 and isinstance(item[1], dict)
             ),
@@ -2313,9 +2313,9 @@ class FlextLdifConversion(
             converted_typed: list[object] = converted
             # errors is already list[str] compatible
             errors_typed: list[str] = errors if isinstance(errors, list) else []
-            items_processed = u.Collection.count(model_list_typed)
-            items_converted = u.Collection.count(converted_typed)
-            items_failed = u.Collection.count(errors_typed)
+            items_processed = u.count(model_list_typed)
+            items_converted = u.count(converted_typed)
+            items_failed = u.count(errors_typed)
 
             # Create conversion event config for batch
             # Type narrowing: source_format and target_format are already str (from cast above)
@@ -2336,7 +2336,7 @@ class FlextLdifConversion(
             )
 
             if errors:
-                error_count = u.Collection.count(errors)
+                error_count = u.count(errors)
                 error_msg = (
                     f"Batch conversion completed with {error_count} errors:\n"
                     + "\n".join(errors[: self.MAX_ERRORS_TO_SHOW])
@@ -2384,9 +2384,9 @@ class FlextLdifConversion(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,
-                items_processed=u.Collection.count(model_list_typed_exception),
+                items_processed=u.count(model_list_typed_exception),
                 items_converted=0,
-                items_failed=u.Collection.count(model_list_typed_exception),
+                items_failed=u.count(model_list_typed_exception),
                 conversion_duration_ms=duration_ms,
                 error_details=[
                     m.Ldif.ErrorDetail(

@@ -121,7 +121,7 @@ class FlextLdifStatistics(
             """Count entries in list."""
             # Type narrowing: entries is list[object] after isinstance check
             entries_list: list[object] = entries if isinstance(entries, list) else []
-            return u.Collection.count(entries_list)
+            return u.count(entries_list)
 
         # Convert values to list with explicit type casting
         # Build list manually to avoid ValuesView type issues with pyrefly
@@ -137,7 +137,7 @@ class FlextLdifStatistics(
         # Use dict comprehension with u.count for clarity
         # Type narrowing: entries is list[object] from categorized dict
         categorized_counts_dict = {
-            category: u.Collection.count(entries)
+            category: u.count(entries)
             for category, entries in categorized.items()
         }
         categorized_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
@@ -163,7 +163,7 @@ class FlextLdifStatistics(
         rejected_entries = [
             entry for entry in rejected_entries_raw if isinstance(entry, m.Ldif.Entry)
         ]
-        rejection_count = u.Collection.count(rejected_entries)
+        rejection_count = u.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
         # Type narrowing: ensure total_entries is int for division

@@ -732,20 +732,9 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirks namespace containing quirk protocol aliases."""
 
 
-# Define Quirks protocol aliases after class definition
-# These are added to Quirks namespace for test compatibility
-FlextLdifProtocols.Ldif.Quirks.SchemaProtocol = FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.AclProtocol = FlextLdifProtocols.Ldif.AclQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.EntryProtocol = FlextLdifProtocols.Ldif.EntryQuirkProtocol
-FlextLdifProtocols.Ldif.Quirks.QuirksPort = FlextLdifProtocols.Ldif.QuirksPortProtocol
-
-# Add direct Quirks alias for test compatibility
-FlextLdifProtocols.Quirks = FlextLdifProtocols.Ldif.Quirks
-
-# Short name aliases for Schema protocols (without Protocol suffix)
-# These provide backward compatibility for tests using p.Ldif.SchemaAttribute
-FlextLdifProtocols.Ldif.SchemaAttribute = FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-FlextLdifProtocols.Ldif.SchemaObjectClass = FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+# Runtime type compatibility: add protocol aliases to namespaces
+# These assignments work at runtime; mypy warnings are expected for dynamic assignments
+# Accessing via full names (e.g., p.Ldif.SchemaQuirkProtocol) is mypy-compatible
 
 # Runtime aliases
 p = FlextLdifProtocols

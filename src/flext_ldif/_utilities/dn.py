@@ -374,11 +374,13 @@ class FlextLdifUtilitiesDN:
         if not dn_str or "=" not in dn_str:
             return dn_str  # Return as-is if invalid (legacy method - returns str not r)
         components = FlextLdifUtilitiesDN.split(dn_str)
-        normalized = u.Collection.map(
-            components,
-            mapper=FlextLdifUtilitiesDN.norm_component,
-        )
-        return ",".join(normalized if isinstance(normalized, list) else components)
+        # Direct iteration instead of u.Collection.map
+        normalized: list[str] = []
+        for comp in components:
+            norm_comp = FlextLdifUtilitiesDN.norm_component(comp)
+            if norm_comp:
+                normalized.append(norm_comp)
+        return ",".join(normalized if normalized else components)
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -391,8 +393,9 @@ class FlextLdifUtilitiesDN:
             attr, _, value = comp.partition("=")
             return bool(attr.strip() and value.strip())
 
-        filtered = u.Collection.filter(components, is_valid_component)
-        return isinstance(filtered, list) and len(filtered) == len(components)
+        # Direct iteration instead of u.Collection.filter
+        valid_count = sum(1 for comp in components if is_valid_component(comp))
+        return valid_count == len(components)
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -562,23 +565,14 @@ class FlextLdifUtilitiesDN:
                 attr, _, value = comp.partition("=")
                 return (attr.strip(), value.strip())
 
-            process_result = u.Collection.process(
-                components,
-                processor=parse_component,
-                predicate=lambda comp: "=" in comp,
-                _on_error="skip",
-            )
-            if process_result.is_failure:
-                return r.fail(f"Failed to parse DN components from '{dn_str}'")
-            parsed_list = process_result.value
-            if not isinstance(parsed_list, list):
-                return r.fail(f"Unexpected parse result type from '{dn_str}'")
-            tuple_length = 2
-            result = [
-                item
-                for item in parsed_list
-                if isinstance(item, tuple) and len(item) == tuple_length
-            ]
+            # Direct iteration instead of u.Collection.process
+            result: list[tuple[str, str]] = []
+            for comp in components:
+                if "=" in comp:
+                    parsed = parse_component(comp)
+                    if parsed and isinstance(parsed, tuple) and len(parsed) == 2:
+                        result.append(parsed)
+
             return (
                 r.ok(result)
                 if result
@@ -627,32 +621,17 @@ class FlextLdifUtilitiesDN:
                 # RFC 4514 normalization: lowercase attribute TYPE, preserve value case
                 return f"{attr.strip().lower()}={value.strip()}"
 
-            process_result = u.Collection.process(
-                components,
-                processor=normalize_component,
-                predicate=lambda comp: "=" in comp,
-                _on_error="skip",
-            )
-            if process_result.is_failure:
-                return r.fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'",
-                )
-            normalized_list = process_result.value
-            if not isinstance(normalized_list, list):
-                return r.fail(f"Unexpected normalize result type from '{dn_str}'")
-            filtered_str = u.Collection.filter(
-                normalized_list,
-                predicate=lambda x: isinstance(x, str),
-            )
-            # Ensure we have a list of strings for join
-            normalized: list[str] = [
-                str(item)
-                for item in (filtered_str if isinstance(filtered_str, list) else [])
-                if item is not None
-            ]
+            # Direct iteration instead of u.Collection.process
+            normalized_list: list[str] = []
+            for comp in components:
+                if "=" in comp:
+                    normalized_comp = normalize_component(comp)
+                    if normalized_comp and isinstance(normalized_comp, str):
+                        normalized_list.append(normalized_comp)
+
             return (
-                r.ok(",".join(normalized))
-                if normalized
+                r.ok(",".join(normalized_list))
+                if normalized_list
                 else r.fail(
                     f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
@@ -980,12 +959,8 @@ class FlextLdifUtilitiesDN:
             return char
 
         enumerated = list(enumerate(value))
-        mapped_result = u.Collection.map(enumerated, mapper=escape_char)
-        mapped = (
-            mapped_result
-            if isinstance(mapped_result, list)
-            else [escape_char(item) for item in enumerated]
-        )
+        # Direct iteration instead of u.Collection.map
+        mapped = [escape_char(item) for item in enumerated]
         return "".join(mapped)
 
     @staticmethod
