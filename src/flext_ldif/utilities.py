@@ -2579,11 +2579,12 @@ class FlextLdifUtilities(FlextUtilities):
             for k, v in d_dict.items():
                 if k not in acc_dict:
                     acc_dict[k] = v
-                elif isinstance(acc_dict[k], dict) and isinstance(v, dict):
-                    # Type narrowing: isinstance ensures dict[str, object] compatibility
-                    acc_nested: dict[str, object] = acc_dict[k]
-                    v_nested: dict[str, object] = v
-                    acc_dict[k] = cls.defaults_deep(acc_nested, v_nested)
+                else:
+                    # Get current value and check if both are dicts for deep merge
+                    current = acc_dict[k]
+                    if isinstance(current, dict) and isinstance(v, dict):
+                        # Type narrowed by isinstance - both are dict[str, object]
+                        acc_dict[k] = cls.defaults_deep(current, v)
             return acc_dict
 
         @classmethod
