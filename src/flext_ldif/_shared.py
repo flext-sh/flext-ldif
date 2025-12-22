@@ -50,7 +50,7 @@ def normalize_server_type(server_type: str) -> c.Ldif.LiteralTypes.ServerTypeLit
     if server_type_lower in alias_map:
         # alias_map values are guaranteed valid ServerTypeLiterals
         return cast(
-            "c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower]
+            "c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower],
         )
     # Check if it's already a canonical value
     # ServerTypes is a StrEnum, iterate over enum members

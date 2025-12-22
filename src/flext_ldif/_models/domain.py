@@ -1449,7 +1449,7 @@ class FlextLdifModelsDomains:
                 or self.permissions is not None
             )
             if acl_is_defined and not FlextUtilities.Guards.is_string_non_empty(
-                self.raw_acl
+                self.raw_acl,
             ):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
@@ -1681,7 +1681,7 @@ class FlextLdifModelsDomains:
 
             # value is already dict[str, list[str]] from Mapping input
             return FlextLdifModelsDomains.Attributes(
-                attributes=cast("dict[str, list[str]]", value)
+                attributes=cast("dict[str, list[str]]", value),
             )
 
         # ===================================================================
@@ -4173,7 +4173,7 @@ class SchemaLookup(FlextLdifModelsBase):
 # The parent class has domain_events: list[FlextModelsEntity.DomainEvent] which needs resolution
 # NOTE: We pass _types_namespace to provide FlextModelsEntity for resolution
 FlextLdifModelsDomains.Entry.model_rebuild(
-    _types_namespace={"FlextModelsEntity": FlextModelsEntity}
+    _types_namespace={"FlextModelsEntity": FlextModelsEntity},
 )
 
 

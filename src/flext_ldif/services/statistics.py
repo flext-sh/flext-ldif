@@ -178,7 +178,7 @@ class FlextLdifStatistics(
         # Build written counts as DynamicCounts model
         # Create model with values using model_validate for frozen models
         written_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
-            written_counts
+            written_counts,
         )
 
         # Build output files paths as CategoryPaths model

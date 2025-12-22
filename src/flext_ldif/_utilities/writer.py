@@ -326,7 +326,7 @@ class FlextLdifUtilitiesWriter:
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
         if attr_data.metadata and u.mapper().get(
-            attr_data.metadata.extensions, c.Ldif.MetadataKeys.COLLECTIVE
+            attr_data.metadata.extensions, c.Ldif.MetadataKeys.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -346,7 +346,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{attr_data.desc}'")
 
         if attr_data.metadata and u.mapper().get(
-            attr_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
+            attr_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -426,7 +426,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{oc_data.desc}'")
 
         if oc_data.metadata and u.mapper().get(
-            oc_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
+            oc_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -662,7 +662,7 @@ class FlextLdifUtilitiesWriter:
         mapped_attr_name = attr_name
         if attribute_case_map:
             mapped_attr_name = u.mapper().get(
-                attribute_case_map, attr_name.lower(), default=attr_name
+                attribute_case_map, attr_name.lower(), default=attr_name,
             )
 
         # Determine prefix
@@ -1113,13 +1113,13 @@ class FlextLdifUtilitiesWriter:
         """
         # Check for minimal differences using both possible keys
         attr_diff = u.mapper().get(
-            minimal_differences_attrs, attr_name
+            minimal_differences_attrs, attr_name,
         ) or u.mapper().get(minimal_differences_attrs, f"attribute_{attr_name}")
 
         # Check if attr_diff is a dict-like object and has differences
         if FlextRuntime.is_dict_like(attr_diff):
             has_diff_result = u.mapper().get(
-                attr_diff, c.Ldif.MetadataKeys.HAS_DIFFERENCES
+                attr_diff, c.Ldif.MetadataKeys.HAS_DIFFERENCES,
             )
             if has_diff_result:
                 original_attr_str = u.mapper().get(attr_diff, "original")
@@ -1161,7 +1161,7 @@ class FlextLdifUtilitiesWriter:
             # Type narrowing: attr_values is list-like but not Sequence, try iter()
             # Check if it's iterable but not a string/bytes
             if hasattr(attr_values, "__iter__") and not isinstance(
-                attr_values, (str, bytes)
+                attr_values, (str, bytes),
             ):
                 # Type narrowing: attr_values has __iter__, safe to iterate
                 # Use cast to help mypy understand it's iterable
@@ -1333,11 +1333,11 @@ class FlextLdifUtilitiesWriter:
 
         """
         include_changetype = bool(
-            u.mapper().get(changetype_config, "include_changetype")
+            u.mapper().get(changetype_config, "include_changetype"),
         )
         changetype_value = u.mapper().get(changetype_config, "changetype_value")
         fold_long_lines = bool(
-            u.mapper().get(changetype_config, "fold_long_lines", default=True)
+            u.mapper().get(changetype_config, "fold_long_lines", default=True),
         )
         width_raw = u.mapper().get(changetype_config, "width", default=76)
         width = int(width_raw) if isinstance(width_raw, int | str) else 76
@@ -1391,7 +1391,7 @@ class FlextLdifUtilitiesWriter:
         config = {**(format_config or {}), **kwargs}
         format_type = str(u.mapper().get(config, "format_type", default="add"))
         modify_operation = str(
-            u.mapper().get(config, "modify_operation", default="add")
+            u.mapper().get(config, "modify_operation", default="add"),
         )
         include_changetype = bool(u.mapper().get(config, "include_changetype"))
         changetype_value = u.mapper().get(config, "changetype_value")

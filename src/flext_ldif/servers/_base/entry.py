@@ -468,7 +468,7 @@ class FlextLdifServersBaseEntry(
                         if any(ord(c) > ascii_printable_limit for c in str_value):
                             # Base64 encode for non-ASCII
                             encoded = base64.b64encode(
-                                str_value.encode("utf-8")
+                                str_value.encode("utf-8"),
                             ).decode("ascii")
                             lines.append(f"{attr_name}:: {encoded}")
                         else:
@@ -543,7 +543,7 @@ class FlextLdifServersBaseEntry(
         if isinstance(write_options, dict):
             try:
                 return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
-                    write_options
+                    write_options,
                 )
             except Exception:
                 return FlextLdifModelsDomains.WriteOptions.model_validate(write_options)
@@ -574,7 +574,7 @@ class FlextLdifServersBaseEntry(
             if isinstance(write_options_typed, FlextLdifModelsDomains.WriteOptions):
                 write_opts_for_meta = write_options_typed
             elif isinstance(
-                write_options_typed, FlextLdifModelsSettings.WriteFormatOptions
+                write_options_typed, FlextLdifModelsSettings.WriteFormatOptions,
             ):
                 write_opts_for_meta = FlextLdifModelsDomains.WriteOptions.model_validate(
                     write_options_typed.model_dump(),

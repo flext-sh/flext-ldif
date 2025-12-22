@@ -299,7 +299,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     x_oid=None,
                 )
                 return FlextResult[FlextLdifModelsDomains.SchemaAttribute].ok(
-                    attr_domain
+                    attr_domain,
                 )
             except Exception as e:
                 logger.debug(
@@ -792,7 +792,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             if not acl_line or not acl_line.strip():
                 return FlextResult[m.Ldif.Acl].fail(
-                    "ACL line cannot be empty"
+                    "ACL line cannot be empty",
                 )
             try:
                 # Try parent's parse method first (RFC format)
@@ -1150,7 +1150,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     attrs[key].append(value)
             if not dn:
                 return FlextResult[FlextLdifModelsDomains.Entry].fail(
-                    "No DN found in entry"
+                    "No DN found in entry",
                 )
             return self._parse_entry(dn, attrs)
 

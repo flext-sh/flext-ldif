@@ -109,7 +109,7 @@ class FlextLdifUtilitiesServer:
             # Type narrowing: server_type_lower is in valid server types
             # Cast to literal since we validated it's in valid types
             return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral", server_type_lower
+                "c.Ldif.LiteralTypes.ServerTypeLiteral", server_type_lower,
             )
         return None
 

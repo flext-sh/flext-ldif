@@ -305,7 +305,7 @@ class FlextLdifUtilitiesMetadata:
             k: v
             for k, v in metadata.items()
             if isinstance(
-                v, (str, int, float, bool, type(None), list, dict, Sequence, Mapping)
+                v, (str, int, float, bool, type(None), list, dict, Sequence, Mapping),
             )
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)
@@ -1258,7 +1258,7 @@ class FlextLdifUtilitiesMetadata:
             # Create new metadata if None
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 FlextLdifUtilitiesServer.normalize_server_type(
-                    c.Ldif.ServerTypes.RFC.value
+                    c.Ldif.ServerTypes.RFC.value,
                 ),
             )
         # updated_stats is m.Ldif.EntryStatistics (FlextLdifModelsDomains.EntryStatistics)

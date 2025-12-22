@@ -10,6 +10,7 @@ from typing import ClassVar, TypedDict, cast
 
 import pytest
 
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from tests import m, s
 
 
@@ -67,9 +68,11 @@ class TestDnCaseRegistry(s):
         """Test internal structures are initialized correctly."""
         assert hasattr(registry, "_registry")
         assert hasattr(registry, "_case_variants")
-        assert isinstance(registry._registry, m.Ldif.DynamicMetadata)
+        # Check for base class (internal DynamicMetadata) since facade inherits from it
+        assert isinstance(registry._registry, FlextLdifModelsMetadata.DynamicMetadata)
         assert isinstance(registry._case_variants, dict)
-        assert len(registry._registry.model_dump()) == 0
+        # Use exclude_none to only count actual entries, not default None fields
+        assert len(registry._registry.model_dump(exclude_none=True)) == 0
         assert len(registry._case_variants) == 0
 
     # ════════════════════════════════════════════════════════════════════════

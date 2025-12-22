@@ -615,7 +615,7 @@ class FlextLdifSorting(
                         processed.append(result.value)
                     else:
                         return r[list[m.Ldif.Entry]].fail(
-                            result.error or "Attribute sort failed"
+                            result.error or "Attribute sort failed",
                         )
                 elif isinstance(result, m.Ldif.Entry):
                     processed.append(result)

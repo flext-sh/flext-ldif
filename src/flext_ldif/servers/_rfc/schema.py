@@ -283,7 +283,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         parse_result_temp = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
         if parse_result_temp.is_failure:
             return FlextResult[m.Ldif.SchemaAttribute].fail(
-                parse_result_temp.error or "Failed to parse attribute"
+                parse_result_temp.error or "Failed to parse attribute",
             )
 
         parse_result_raw = parse_result_temp.value

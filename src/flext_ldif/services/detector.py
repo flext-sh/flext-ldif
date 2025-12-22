@@ -465,7 +465,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus
             "apache_directory",
         ):
             server_literal = FlextLdifUtilitiesServer.normalize_server_type(
-                server_type_str
+                server_type_str,
             )
             constants = self._get_server_constants(server_literal)
             if constants:

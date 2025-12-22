@@ -291,13 +291,13 @@ class FlextLdifUtilitiesObjectClass:
             oid_value = parsed_dict.get("oid")
             if not isinstance(oid_value, str):
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    "Missing or invalid 'oid' field"
+                    "Missing or invalid 'oid' field",
                 )
 
             kind_value = parsed_dict.get("kind")
             if not isinstance(kind_value, str):
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    "Missing or invalid 'kind' field"
+                    "Missing or invalid 'kind' field",
                 )
 
             # Extract optional fields with type narrowing
@@ -343,5 +343,5 @@ class FlextLdifUtilitiesObjectClass:
 
         except Exception as e:
             return r[m.Ldif.SchemaObjectClass].fail(
-                f"Failed to parse objectClass definition: {e}"
+                f"Failed to parse objectClass definition: {e}",
             )

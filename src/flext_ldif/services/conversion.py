@@ -401,11 +401,11 @@ class FlextLdifConversion(
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
             if isinstance(model_instance, m.Ldif.SchemaAttribute):
                 return FlextLdifConversion._convert_schema_attribute(
-                    source_quirk, target_quirk, model_instance
+                    source_quirk, target_quirk, model_instance,
                 )
             if isinstance(model_instance, m.Ldif.SchemaObjectClass):
                 return FlextLdifConversion._convert_schema_objectclass(
-                    source_quirk, target_quirk, model_instance
+                    source_quirk, target_quirk, model_instance,
                 )
             if isinstance(model_instance, m.Ldif.Acl):
                 return self._convert_acl(source_quirk, target_quirk, model_instance)
@@ -697,7 +697,7 @@ class FlextLdifConversion(
         if not get_metadata(current_entry):
             # Cast validated_quirk_type (str) to Literal for QuirkMetadata
             quirk_type_literal = cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral", validated_quirk_type
+                "c.Ldif.LiteralTypes.ServerTypeLiteral", validated_quirk_type,
             )
             metadata_obj = m.Ldif.QuirkMetadata(quirk_type=quirk_type_literal)
             # metadata_obj is m.Ldif.QuirkMetadata which is t.MetadataAttributeValue
@@ -899,12 +899,12 @@ class FlextLdifConversion(
     ]:
         """Process schema conversion pipeline (write->parse)."""
         # Type narrowing: config is SchemaConversionPipelineConfig with required attributes
-        if not (hasattr(config, 'write_method') and hasattr(config, 'source_schema')):
+        if not (hasattr(config, "write_method") and hasattr(config, "source_schema")):
             return r[str].fail("Invalid config: missing write_method or source_schema")
-        write_result = getattr(config, 'write_method')(getattr(config, 'source_schema'))
+        write_result = config.write_method(config.source_schema)
         # Extract value from result: r.value if r.is_success else None
         write_value = write_result.value if write_result.is_success else None
-        item_name = getattr(config, 'item_name', 'item')
+        item_name = getattr(config, "item_name", "item")
         if write_value is None:
             return FlextResult.fail(
                 f"Failed to write {item_name} in source format: {u.err(write_result)}",
@@ -920,15 +920,15 @@ class FlextLdifConversion(
             return FlextResult.fail(ldif_result.error or "LDIF validation failed")
 
         # Type narrowing: get parse_method and target_schema from config
-        parse_method = getattr(config, 'parse_method', None)
-        target_schema = getattr(config, 'target_schema', None)
+        parse_method = getattr(config, "parse_method", None)
+        target_schema = getattr(config, "target_schema", None)
         if parse_method is None or target_schema is None:
             return r[str].fail("Invalid config: missing parse_method or target_schema")
         parse_result = parse_method(target_schema, ldif_string)
         # Extract value from result: r.value if r.is_success else None
         parsed_value = parse_result.value if parse_result.is_success else None
         if parsed_value is None:
-            item_name = getattr(config, 'item_name', 'unknown')
+            item_name = getattr(config, "item_name", "unknown")
             return FlextResult.fail(
                 f"Failed to parse {item_name} in target format: {u.err(parse_result)}",
             )
@@ -961,7 +961,7 @@ class FlextLdifConversion(
             if source_schema is None:
                 # Propagate error with correct type
                 return FlextResult.fail(
-                    source_schema_result.error or "Source schema not available"
+                    source_schema_result.error or "Source schema not available",
                 )
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
@@ -983,7 +983,7 @@ class FlextLdifConversion(
                     or "Target schema quirk error: Schema not available",
                 )
             # Type narrowing: verify schema quirks have attribute methods
-            if not (hasattr(source_schema, 'write_attribute') and hasattr(target_schema, 'parse_attribute')):
+            if not (hasattr(source_schema, "write_attribute") and hasattr(target_schema, "parse_attribute")):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -991,8 +991,8 @@ class FlextLdifConversion(
                     | m.Ldif.Acl
                 ].fail("Schema quirks missing attribute conversion methods")
 
-            write_attr = getattr(source_schema, 'write_attribute')
-            parse_attr = getattr(target_schema, 'parse_attribute')
+            write_attr = source_schema.write_attribute
+            parse_attr = target_schema.parse_attribute
 
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
@@ -1034,7 +1034,7 @@ class FlextLdifConversion(
             if source_schema is None:
                 # Propagate error with correct type
                 return FlextResult.fail(
-                    source_schema_result.error or "Source schema not available"
+                    source_schema_result.error or "Source schema not available",
                 )
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
@@ -1047,11 +1047,11 @@ class FlextLdifConversion(
             if target_schema is None:
                 # Propagate error with correct type
                 return FlextResult.fail(
-                    target_schema_result.error or "Target schema not available"
+                    target_schema_result.error or "Target schema not available",
                 )
 
             # Type narrowing: verify schema quirks have objectclass methods
-            if not (hasattr(source_schema, 'write_objectclass') and hasattr(target_schema, 'parse_objectclass')):
+            if not (hasattr(source_schema, "write_objectclass") and hasattr(target_schema, "parse_objectclass")):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1059,8 +1059,8 @@ class FlextLdifConversion(
                     | m.Ldif.Acl
                 ].fail("Schema quirks missing objectclass conversion methods")
 
-            write_oc = getattr(source_schema, 'write_objectclass')
-            parse_oc = getattr(target_schema, 'parse_objectclass')
+            write_oc = source_schema.write_objectclass
+            parse_oc = target_schema.parse_objectclass
 
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
@@ -1570,10 +1570,10 @@ class FlextLdifConversion(
 
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
         conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]", conv_ext
+            "Mapping[str, FlextTypes.GeneralValueType]", conv_ext,
         )
         orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]", orig_ext
+            "Mapping[str, FlextTypes.GeneralValueType]", orig_ext,
         )
         # Merge dicts: conv_ext_typed overrides orig_ext_typed
         merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}
@@ -1927,7 +1927,7 @@ class FlextLdifConversion(
             if target_parse_result.is_failure:
                 # Return failure with correct union return type
                 return r[m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue].fail(
-                    target_parse_result.error or "Failed to parse target attribute"
+                    target_parse_result.error or "Failed to parse target attribute",
                 )
             # Type narrowing: when is_failure is False, value is guaranteed to be m.Ldif.SchemaAttribute
             parsed_value: m.Ldif.SchemaAttribute = target_parse_result.value
@@ -1964,7 +1964,7 @@ class FlextLdifConversion(
                 return r[m.Ldif.SchemaAttribute].ok(attr_domain)
             # Return failure with error message
             return r[m.Ldif.SchemaAttribute].fail(
-                parse_result.error or "Failed to parse attribute"
+                parse_result.error or "Failed to parse attribute",
             )
         return r[str].fail("parse_attribute requires string data")
 
@@ -1990,7 +1990,7 @@ class FlextLdifConversion(
             return r[m.Ldif.SchemaAttribute].ok(attr_domain)
         # Return failure with error message
         return r[m.Ldif.SchemaAttribute].fail(
-            parse_result.error or "Failed to parse target attribute"
+            parse_result.error or "Failed to parse target attribute",
         )
 
     def _write_target_attribute(
@@ -2104,7 +2104,7 @@ class FlextLdifConversion(
             if target_result.is_failure:
                 # Return failure with correct union return type
                 return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].fail(
-                    target_result.error or "Failed to parse target objectClass"
+                    target_result.error or "Failed to parse target objectClass",
                 )
             parsed_value = target_result.value
             # Type narrowing: write_result is r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue]
@@ -2140,7 +2140,7 @@ class FlextLdifConversion(
                 return r[m.Ldif.SchemaObjectClass].ok(oc_domain)
             # Return failure with error message
             return r[m.Ldif.SchemaObjectClass].fail(
-                parse_result.error or "Failed to parse objectClass"
+                parse_result.error or "Failed to parse objectClass",
             )
         return r[str].fail("parse_objectclass requires string data")
 
@@ -2166,7 +2166,7 @@ class FlextLdifConversion(
             return r[m.Ldif.SchemaObjectClass].ok(oc_domain)
         # Return failure with error message
         return r[m.Ldif.SchemaObjectClass].fail(
-            parse_result.error or "Failed to parse target objectClass"
+            parse_result.error or "Failed to parse target objectClass",
         )
 
     def _write_target_objectclass(

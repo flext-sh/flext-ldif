@@ -614,7 +614,7 @@ class FlextLdifUtilitiesSchema:
     def extract_attributes_from_lines(
         ldif_content: str,
         parse_callback: Callable[
-            [str], FlextResult[FlextLdifModelsDomains.SchemaAttribute]
+            [str], FlextResult[FlextLdifModelsDomains.SchemaAttribute],
         ],
     ) -> list[FlextLdifModelsDomains.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines.
@@ -645,7 +645,7 @@ class FlextLdifUtilitiesSchema:
     def extract_objectclasses_from_lines(
         ldif_content: str,
         parse_callback: Callable[
-            [str], FlextResult[FlextLdifModelsDomains.SchemaObjectClass]
+            [str], FlextResult[FlextLdifModelsDomains.SchemaObjectClass],
         ],
     ) -> list[FlextLdifModelsDomains.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
@@ -936,7 +936,7 @@ class FlextLdifUtilitiesSchema:
         )
         if basic_fields_result.is_failure:
             return r[t.Ldif.ModelMetadata.ParsedAttributeDict].fail(
-                basic_fields_result.error
+                basic_fields_result.error,
             )
 
         oid, name, desc = basic_fields_result.value

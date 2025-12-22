@@ -27,7 +27,7 @@ logger: Final = FlextLogger(__name__)
 
 
 class FlextLdifMigrationPipeline(
-    FlextLdifServiceBase[FlextLdifModelsResults.MigrationPipelineResult]
+    FlextLdifServiceBase[FlextLdifModelsResults.MigrationPipelineResult],
 ):
     """Migration Pipeline for Server-to-Server LDIF Migration.
 
@@ -118,7 +118,7 @@ class FlextLdifMigrationPipeline(
                 update={
                     "source_server": source_type,
                     "target_server": target_type,
-                }
+                },
             )
             # Create TransformConfig with ProcessConfig
             transform_config_base = TransformConfig()
@@ -265,7 +265,7 @@ class FlextLdifMigrationPipeline(
                 input_file=str(input_file),
             )
             return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
-                f"File migration failed: {e}"
+                f"File migration failed: {e}",
             )
 
     @override
@@ -281,12 +281,12 @@ class FlextLdifMigrationPipeline(
 
         if in_dir is None:
             return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
-                "No input_dir specified"
+                "No input_dir specified",
             )
 
         if out_dir is None:
             return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
-                "No output_dir specified"
+                "No output_dir specified",
             )
 
         if not in_dir.exists():

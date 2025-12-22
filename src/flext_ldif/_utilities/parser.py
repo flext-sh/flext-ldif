@@ -706,17 +706,17 @@ class FlextLdifUtilitiesParser:
         """
         # Extract extensions from definition
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-            attr_definition
+            attr_definition,
         )
 
         # Track syntax OID validation
         if syntax:
             metadata_extensions["syntax_oid_valid"] = [
-                str(syntax_validation_error is None)
+                str(syntax_validation_error is None),
             ]
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = [
-                    syntax_validation_error
+                    syntax_validation_error,
                 ]
 
         # Preserve original format
@@ -736,7 +736,7 @@ class FlextLdifUtilitiesParser:
             return m.Ldif.QuirkMetadata(
                 quirk_type=cast("Literal['generic']", quirk_type),
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                    **metadata_extensions
+                    **metadata_extensions,
                 ),
             )
 
@@ -955,7 +955,7 @@ class FlextLdifUtilitiesParser:
             )
 
             metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = [
-                oc_definition.strip()
+                oc_definition.strip(),
             ]
 
             metadata = (

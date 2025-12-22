@@ -646,7 +646,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             # u.mapper().get() returns value directly (or default if key not found)
             object_classes_raw: list[str] = u.mapper().get(
-                normalized_attrs, objectclass_key, default=[]
+                normalized_attrs, objectclass_key, default=[],
             )
             object_classes: list[str] = (
                 object_classes_raw

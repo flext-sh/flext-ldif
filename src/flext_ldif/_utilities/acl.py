@@ -413,7 +413,7 @@ class FlextLdifUtilitiesACL:
         # Map the type
         # When default is provided, mapper().get returns the value directly
         subject_type: str = u.mapper().get(
-            subject_type_map, rule_type, default=rule_type
+            subject_type_map, rule_type, default=rule_type,
         )
         subject_type = subject_type if isinstance(subject_type, str) else rule_type
 
@@ -1696,7 +1696,7 @@ class FlextLdifUtilitiesACL:
                 else:
                     if fail_fast:
                         return r[list[m.Ldif.Acl]].fail(
-                            result.error or f"Failed to parse ACL line {i}"
+                            result.error or f"Failed to parse ACL line {i}",
                         )
                     errors.append((i, result.error or f"Failed to parse ACL line {i}"))
             except Exception as exc:
@@ -1760,7 +1760,7 @@ class FlextLdifUtilitiesACL:
                     converted_list.append(converted)
             except Exception as exc:
                 return r[list[dict[str, bool]]].fail(
-                    f"Permissions conversion failed: {exc}"
+                    f"Permissions conversion failed: {exc}",
                 )
 
         return r[list[dict[str, bool]]].ok(converted_list)

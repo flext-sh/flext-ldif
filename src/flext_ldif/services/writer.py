@@ -339,7 +339,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         if isinstance(target_server_type_raw, str):
             try:
                 target_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-                    target_server_type_raw
+                    target_server_type_raw,
                 )
             except ValueError:
                 # Invalid server type - use None (will default to RFC in write method)

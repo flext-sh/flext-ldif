@@ -843,7 +843,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
             # Use hasattr check for structural typing (protocol compliance)
             if not hasattr(entry, "attributes") or not hasattr(entry, "dn"):
                 return False
-            attrs = getattr(entry, "attributes")
+            attrs = entry.attributes
             if attrs is None:
                 return False
             # Handle both dict-like and model-like attributes

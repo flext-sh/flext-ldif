@@ -2173,7 +2173,7 @@ class FlextLdifModelsResults:
                     FlextLdifModelsDomains.Entry(
                         dn=FlextLdifModelsDomains.DN(value=dn_value),
                         attributes=FlextLdifModelsDomains.Attributes(
-                            attributes=attrs_dict
+                            attributes=attrs_dict,
                         ),
                     ),
                 )

@@ -174,7 +174,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         server_type_str = self._get_server_type()
         # Normalize server type using constants
         server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
-            server_type_str
+            server_type_str,
         )
 
         # RFC passthrough: store the raw line in the model.
