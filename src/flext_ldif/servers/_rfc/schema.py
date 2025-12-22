@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Literal, Self, overload
+from typing import Literal, Self, cast, overload
 
 from flext_core import (
     FlextLogger,
@@ -275,14 +275,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             if parse_result.is_failure:
                 # Return empty dict on failure (maintains existing behavior)
                 return {}
-            # parsed is already the correct type
-            return parse_result.value
+            # Cast to expected return type (parse_attribute returns compatible dict)
+            return cast("dict[str, str | bool | None]", parse_result.value)
 
         # Use FlextLdifUtilitiesSchema.parse_attribute directly
         # (FlextLdifUtilities.Ldif.Parsers.Attribute.parse was removed to break circular imports)
         parse_result_temp = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
         if parse_result_temp.is_failure:
-            return parse_result_temp
+            return FlextResult[m.Ldif.SchemaAttribute].fail(
+                parse_result_temp.error or "Failed to parse attribute"
+            )
 
         parse_result_raw = parse_result_temp.value
         # Type narrowing: parse_attribute returns dict, convert to SchemaAttribute
@@ -553,10 +555,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # Wrap method to match ParseCoreHook protocol
         def parse_parts_hook(
             definition: str,
-        ) -> dict[str, str | list[str] | None]:
+        ) -> dict[str, object]:
             # Use FlextLdifUtilitiesSchema.parse_objectclass which returns dict directly
             # Extract only the fields needed by ParsePartsHook
-            # parsed is already the correct type
+            # Return type matches ParseCoreHook protocol
             return FlextLdifUtilitiesSchema.parse_objectclass(definition)
 
         # DSL: Use config-based parse signature
@@ -601,7 +603,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         server_type: Literal["rfc"] = "rfc"
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=server_type,
-            extensions=m.Ldif.DynamicMetadata(**metadata_extensions)
+            extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
         )
@@ -894,7 +896,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return FlextResult[str].ok(
                     self._ensure_x_origin(
                         transformed_str,
-                        attr_transformed.metadata,
+                        cast("m.Ldif.QuirkMetadata | None", attr_transformed.metadata),
                     ),
                 )
 
@@ -911,7 +913,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[str].ok(
                 self._ensure_x_origin(
                     transformed_str,
-                    oc_transformed.metadata,
+                    cast("m.Ldif.QuirkMetadata | None", oc_transformed.metadata),
                 ),
             )
 
@@ -922,8 +924,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 else "objectclass"
             )
             logger.exception(
-                "RFC %s writing exception",
-                item_type,
+                f"RFC {item_type} writing exception",
                 exception=e,
             )
             return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
@@ -1174,7 +1175,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         return m.Ldif.QuirkMetadata(
             quirk_type=server_type_value,
-            extensions=m.Ldif.DynamicMetadata(**all_extensions)
+            extensions=m.Ldif.DynamicMetadata.model_validate(all_extensions)
             if all_extensions
             else m.Ldif.DynamicMetadata(),
         )
