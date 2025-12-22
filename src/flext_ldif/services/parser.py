@@ -104,7 +104,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             )
         # Type narrowing: entry_quirk_raw has parse method
         # Direct call to entry quirk parse method using cast for type safety
-        parse_method = cast("Callable[[str], r[m.Ldif.Entry | str]]", getattr(entry_quirk_raw, "parse"))
+        # Note: parse returns FlextResult[list[m.Ldif.Entry]] per EntryProtocol
+        parse_method = cast("Callable[[str], r[list[m.Ldif.Entry]]]", getattr(entry_quirk_raw, "parse"))
         if not callable(parse_method):
             return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
@@ -114,15 +115,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "LDIF parsing failed")
 
-        # Extract entries from server response
-        raw_entries = parse_result.value
-
-        # Handle case where parse method returns error message as value
-        if isinstance(raw_entries, str):
-            return r[str].fail(f"Parse method returned error: {raw_entries}")
-
-        # Convert to expected type (m.Ldif.Entry should be compatible with m.Ldif.Entry)
-        entries: list[m.Ldif.Entry] = [raw_entries]
+        # Extract entries from server response (list of Entry models)
+        entries = parse_result.value
 
         # Create response with minimal metadata
         # Use facade LdifResults.Statistics for LDIF-specific statistics

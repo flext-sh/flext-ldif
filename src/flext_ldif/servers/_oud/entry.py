@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable, Mapping
-from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -2047,15 +2046,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_data = corrected_result.value
         # Business Rule: apply_syntax_corrections expects specific types
         # Implication: Convert corrected_data and syntax_corrections to expected formats
-        # Type compatibility: corrected_data is AttributeDict (dict[str, list[str]]), compatible with expected type
-        # Use cast to help type checker understand runtime compatibility
+        # Type compatibility: corrected_data is AttributeDict (dict[str, list[str]])
+        # Use dict() to create a mutable copy with proper type inference
         corrected_data_typed: dict[
             str,
             str | int | float | bool | list[str] | dict[str, str | list[str]] | None,
-        ] = cast(
-            "dict[str, str | int | float | bool | list[str] | dict[str, str | list[str]] | None]",
-            corrected_data,
-        )
+        ] = dict(corrected_data)
         # Business Rule: apply_syntax_corrections expects list[str] or dict[str, str], not None.
         # Implication: Type narrowing ensures syntax_corrections_typed is not None before calling.
         # Type narrowing: Convert to expected types for apply_syntax_corrections.
@@ -2256,14 +2252,17 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         dn = str(entry_dict.pop("dn"))
         original_entry_dict = dict(entry_dict)
 
-        # Convert entry_dict to proper type for _parse_entry
-        entry_attrs: dict[str, list[str | bytes]] = {}
+        # Convert entry_dict to proper type for parse_entry (str only, decode bytes)
+        entry_attrs: dict[str, list[str]] = {}
         for k, v in entry_dict.items():
             if isinstance(v, list):
                 entry_attrs[str(k)] = [
-                    item if isinstance(item, str | bytes) else str(item) for item in v
+                    item.decode("utf-8") if isinstance(item, bytes)
+                    else str(item) for item in v
                 ]
-            elif isinstance(v, str | bytes):
+            elif isinstance(v, bytes):
+                entry_attrs[str(k)] = [v.decode("utf-8")]
+            elif isinstance(v, str):
                 entry_attrs[str(k)] = [v]
             else:
                 entry_attrs[str(k)] = [str(v)]
@@ -2318,13 +2317,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _determine_attribute_order(
         self,
         attr_names: list[str],
-        format_options: m.Ldif.WriteFormatOptions,
+        format_options: m.Ldif.WriteFormatOptions | None,
     ) -> list[str]:
         """Determine attribute order based on format options.
 
         Args:
             attr_names: List of attribute names to order
-            format_options: Write format options with sort_attributes flag
+            format_options: Write format options with sort_attributes flag (may be None)
 
         Returns:
             Ordered list of attribute names (sorted or original order)
@@ -2338,7 +2337,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: list[str],
         attr_name: str,
-        _transformation: t.Ldif.TransformationInfo,
+        _transformation: FlextLdifModelsDomains.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.
@@ -2346,7 +2345,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         Args:
             comment_lines: List to append comments to
             attr_name: Name of transformed attribute
-            _transformation: Transformation metadata (unused, reserved for future use)
+            _transformation: Transformation metadata (reserved for future use)
             comment_type: Type of transformation (MODIFIED, TRANSFORMED, etc.)
 
         """

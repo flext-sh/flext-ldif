@@ -1562,26 +1562,26 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: FlextLdifModelsDomains.QuirkMetadata,
         **extra: t.ScalarValue,
     ) -> None:
         """Store minimal differences in metadata (stub).
 
         Args:
-            metadata: QuirkMetadata instance
+            metadata: QuirkMetadata instance (internal or facade type)
             extra: Additional keyword arguments (ignored)
 
         """
 
     @staticmethod
     def track_minimal_differences_in_metadata(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: FlextLdifModelsDomains.QuirkMetadata,
         **extra: t.ScalarValue,
     ) -> None:
         """Track minimal differences in metadata (stub).
 
         Args:
-            metadata: QuirkMetadata instance
+            metadata: QuirkMetadata instance (internal or facade type)
             extra: Additional keyword arguments (ignored)
 
         """

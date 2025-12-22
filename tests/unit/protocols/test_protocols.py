@@ -191,8 +191,8 @@ class TestsTestFlextLdifProtocols(s):
         assert protocol is not None
 
     def test_quirks_namespace_exists(self) -> None:
-        """Test that Quirks namespace exists."""
-        assert hasattr(FlextLdifProtocols, self.Constants.NAMESPACE_QUIRKS)
+        """Test that Quirks namespace exists in Ldif namespace."""
+        assert hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS)
 
     @pytest.mark.parametrize(
         "protocol_name",
