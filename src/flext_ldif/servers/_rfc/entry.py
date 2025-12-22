@@ -135,7 +135,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         return self._create_entry(dn, attrs)
 
     def _create_entry(
-        self, dn: str, attributes: dict[str, list[str]]
+        self, dn: str, attributes: dict[str, list[str]],
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes.
 

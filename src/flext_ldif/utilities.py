@@ -401,7 +401,7 @@ class FlextLdifUtilities(FlextUtilities):
             ) -> r[list[m.Ldif.Entry]]:
                 """Transform multiple entries with common operations."""
                 return FlextLdifUtilitiesEntry.transform_batch(
-                    entries, config, **kwargs
+                    entries, config, **kwargs,
                 )
 
             @staticmethod
@@ -421,13 +421,13 @@ class FlextLdifUtilities(FlextUtilities):
             ) -> bool:
                 """Check if entry matches server-specific patterns."""
                 return FlextLdifUtilitiesEntry.matches_server_patterns(
-                    entry_dn, attributes, config
+                    entry_dn, attributes, config,
                 )
 
             @staticmethod
             def analyze_differences(
                 entry_attrs: Mapping[str, t.GeneralValueType],
-                converted_attrs: t.Ldif.AttributesDict,
+                converted_attrs: dict[str, list[str | bytes]],
                 original_dn: str,
                 cleaned_dn: str,
                 normalize_attr_fn: Callable[[str], str] | None = None,
@@ -439,7 +439,7 @@ class FlextLdifUtilities(FlextUtilities):
             ]:
                 """Analyze DN and attribute differences for round-trip support."""
                 return FlextLdifUtilitiesEntry.analyze_differences(
-                    entry_attrs, converted_attrs, original_dn, cleaned_dn, normalize_attr_fn
+                    entry_attrs, converted_attrs, original_dn, cleaned_dn, normalize_attr_fn,
                 )
 
         class Events(FlextLdifUtilitiesEvents):
@@ -520,40 +520,38 @@ class FlextLdifUtilities(FlextUtilities):
                     update={
                         "source_server": source_server,
                         "target_server": target_server or c.Ldif.ServerTypes.RFC,
-                    }
+                    },
                 )
                 # Create TransformConfig with ProcessConfig
                 transform_config = TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": process_config}
+                        update={"process_config": process_config},
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # INTENTIONAL CAST: model_copy returned type differs from input type
-                    transform_config.process_config = cast("ProcessConfig", process_config)
+                    transform_config.process_config = process_config
             else:
                 # Create TransformConfig with existing ProcessConfig
                 transform_config = TransformConfig()
                 if hasattr(transform_config, "model_copy"):
                     transform_config = transform_config.model_copy(
-                        update={"process_config": config}
+                        update={"process_config": config},
                     )
                 else:
                     # Fallback for older Pydantic versions or non-Pydantic models
-                    # INTENTIONAL CAST: config is ProcessConfig but type narrowing needed
-                    transform_config.process_config = cast("ProcessConfig", config)
+                    transform_config.process_config = config
             pipeline = ProcessingPipeline(transform_config)
             pipeline_result = pipeline.execute(list(entries))
             if pipeline_result.is_failure:
                 return FlextLdifResult.fail(
-                    pipeline_result.error or "Pipeline execution failed"
+                    pipeline_result.error or "Pipeline execution failed",
                 )
             # Convert FlextLdifModelsDomains.Entry to m.Ldif.Entry using model_validate
             domain_entries = pipeline_result.value
             converted_entries: list[m.Ldif.Entry] = [
                 m.Ldif.Entry.model_validate(
-                    entry.model_dump(exclude_computed_fields=True)
+                    entry.model_dump(exclude_computed_fields=True),
                 )
                 for entry in domain_entries
             ]
@@ -584,7 +582,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[str, T], bool]
                 try:
                     result = FlextLdifUtilities.Ldif.call_processor(
-                        predicate, key, value
+                        predicate, key, value,
                     )
                     if isinstance(result, bool):
                         return result
@@ -714,11 +712,11 @@ class FlextLdifUtilities(FlextUtilities):
                 # "if is_two_arg then Callable[[str,T],R] else Callable[[T],R]"
                 # Phase 5.C item: Replace with Protocol-based callable types
                 if FlextLdifUtilities.Ldif.is_two_arg_processor(processor_func):
-                    result_item = cast("Callable[[str, object], object]", processor_func)(
-                        key, value
-                    )
+                    result_item = cast("R", cast("Callable[[str, object], object]", processor_func)(
+                        key, value,
+                    ))
                 else:
-                    result_item = cast("Callable[[object], object]", processor_func)(value)
+                    result_item = cast("R", cast("Callable[[object], object]", processor_func)(value))
                 results.append(result_item)
             return results
 
@@ -886,7 +884,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Processor can accept 1 or 2 args - use VariadicCallable for flexibility
             # Type narrowing: exclude ProcessConfig and None
             if processor_normalized is None or isinstance(
-                processor_normalized, ProcessConfig
+                processor_normalized, ProcessConfig,
             ):
                 msg = "processor is required for base class process"
                 return r[str].fail(msg)
@@ -918,8 +916,8 @@ class FlextLdifUtilities(FlextUtilities):
             try:
                 # Process single items through processor_func
                 # Processor function accepts various types - cast to single-arg version
-                result_item = cast("Callable[[object], object]", processor_func)(items)
-                return r[str].ok([result_item])
+                result_item = cast("R", cast("Callable[[object], object]", processor_func)(items))
+                return r[list[R]].ok([result_item])
             except Exception as e:
                 return r[str].fail(f"Processing failed: {e}")
 
@@ -957,7 +955,7 @@ class FlextLdifUtilities(FlextUtilities):
             pipeline_result = pipeline.execute(entries_list)
             if pipeline_result.is_failure:
                 return FlextLdifResult.fail(
-                    pipeline_result.error or "Pipeline execution failed"
+                    pipeline_result.error or "Pipeline execution failed",
                 )
             # Pipeline returns list[m.Ldif.Entry], which matches return type
             transformed_entries = pipeline_result.value
@@ -2150,12 +2148,12 @@ class FlextLdifUtilities(FlextUtilities):
                         # Handle None explicitly
                         converted_args.append(None)
                     elif isinstance(arg, (list, tuple)) and not isinstance(
-                        arg, (str, bytes)
+                        arg, (str, bytes),
                     ):
                         # Type narrowing: arg is Sequence
                         converted_args.append(arg)
                     elif isinstance(arg, (dict, Mapping)) and not isinstance(
-                        arg, (str, bytes)
+                        arg, (str, bytes),
                     ):
                         # Type narrowing: arg is Mapping
                         converted_args.append(arg)
@@ -2228,11 +2226,9 @@ class FlextLdifUtilities(FlextUtilities):
                 if FlextLdifUtilities.Ldif.is_object_arg_callable(pred):
                     # TypeGuard ensures pred is Callable[[object], bool]
                     return pred(value)
-                # Fallback: try calling with value (runtime validation)
-                try:
-                    return bool(pred(value))
-                except (TypeError, ValueError):
-                    return bool(pred)
+                # Fallback: all callable cases should be handled by TypeGuards above
+                # If we get here, treat as truthy/falsy value
+                return bool(pred)
             return bool(pred)
 
         @classmethod
@@ -2242,7 +2238,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> object:
             """Evaluate a no-arg result value."""
             if callable(result_val) and FlextLdifUtilities.Ldif.is_no_arg_callable(
-                result_val
+                result_val,
             ):
                 # TypeGuard ensures result_val is Callable[[], object]
                 return result_val()
@@ -2256,7 +2252,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> object:
             """Evaluate a value-arg result value."""
             if callable(result_val) and FlextLdifUtilities.Ldif.is_object_arg_callable(
-                result_val
+                result_val,
             ):
                 # TypeGuard ensures result_val is Callable[[object], object]
                 return result_val(value)

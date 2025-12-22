@@ -345,7 +345,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_values = list(attr_values)
                 # When default is provided, mapper().get returns the value directly
                 converted_values = u.mapper().get(
-                    converted_attributes, attr_name, default=original_values
+                    converted_attributes, attr_name, default=original_values,
                 )
 
                 if converted_values != original_values:
@@ -431,7 +431,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """
         # When default is provided, mapper().get returns the value directly
         object_classes: list[str] = u.mapper().get(
-            converted_attributes, "objectClass", default=[]
+            converted_attributes, "objectClass", default=[],
         )
         object_classes_lower = {oc.lower() for oc in object_classes}
 
@@ -664,7 +664,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if isinstance(converted_attrs_data, dict):
             # When default is provided, mapper().get returns the value directly
             boolean_conversions_obj: dict[str, object] = u.mapper().get(
-                converted_attrs_data, mk.CONVERSION_BOOLEAN_CONVERSIONS, default={}
+                converted_attrs_data, mk.CONVERSION_BOOLEAN_CONVERSIONS, default={},
             )
             # Type-safe extraction: rebuild with proper typing
             if isinstance(boolean_conversions_obj, dict):
@@ -1056,7 +1056,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else {}
         )
         converted_attrs_data: dict[
-            str, dict[str, dict[str, str | list[str]]] | dict[str, str]
+            str, dict[str, dict[str, str | list[str]]] | dict[str, str],
         ] = {
             c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions,
             c.Ldif.MetadataKeys.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
@@ -1293,7 +1293,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     # Business Rule: DynamicMetadata accepts MetadataAttributeValue
                     # Implication: Complex types must be converted to compatible format
                     conv_data: dict[
-                        str, dict[str, dict[str, str | list[str]]] | list[str]
+                        str, dict[str, dict[str, str | list[str]]] | list[str],
                     ] = {
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_list,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions,
@@ -1533,7 +1533,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             # Pydantic 2: model_copy accepts dict[str, object] for partial updates
             update_dict: dict[str, object] = {
                 "extensions": FlextLdifModelsMetadata.DynamicMetadata(
-                    **current_extensions
+                    **current_extensions,
                 )
                 if current_extensions
                 else FlextLdifModelsMetadata.DynamicMetadata(),

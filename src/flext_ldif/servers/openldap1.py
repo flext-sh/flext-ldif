@@ -16,7 +16,7 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult
 

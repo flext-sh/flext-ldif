@@ -143,7 +143,7 @@ class FlextLdifAnalysis(
             m.Ldif.LdifResults.EntryAnalysisResult(
                 total_entries=total_entries,
                 objectclass_distribution=FlextLdifModelsResults.DynamicCounts(
-                    **objectclass_distribution
+                    **objectclass_distribution,
                 ),
                 patterns_detected=sorted(patterns_detected),
             ),

@@ -208,7 +208,7 @@ class FlextLdifCategorization(
                 self,
                 "_schema_whitelist_rules",
                 m.Ldif.LdifResults.WhitelistRules.model_validate(
-                    schema_whitelist_rules
+                    schema_whitelist_rules,
                 ),
             )
         else:
@@ -374,7 +374,7 @@ class FlextLdifCategorization(
                 )
                 self._rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
                 return r[m.Ldif.Entry].fail(
-                    f"DN normalization failed: {norm_result.error or 'Unknown error'}"
+                    f"DN normalization failed: {norm_result.error or 'Unknown error'}",
                 )
             # Create new Entry with normalized DN
             # Use model_copy with DN string value, not DN object
@@ -419,7 +419,7 @@ class FlextLdifCategorization(
             )
 
         return r[list[m.Ldif.Entry]].ok(
-            cast("list[m.Ldif.Entry]", validated)
+            cast("list[m.Ldif.Entry]", validated),
         )
 
     def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
@@ -880,7 +880,7 @@ class FlextLdifCategorization(
         effective_server_type_raw = server_type or self._server_type
         try:
             effective_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-                effective_server_type_raw
+                effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
             return (
@@ -1146,7 +1146,7 @@ class FlextLdifCategorization(
             existing_rejected = filtered.get(_cat("rejected"), [])
             # Convert both lists to same type for concatenation
             filtered[_cat("rejected")] = list(existing_rejected) + list(
-                all_excluded_entries
+                all_excluded_entries,
             )
 
         # Type narrowing: filtered is already m.Ldif.LdifResults.FlexibleCategories compatible
@@ -1283,7 +1283,7 @@ class FlextLdifCategorization(
             existing_rejected = filtered.get(_cat("rejected"), [])
             # Convert both lists to same type for concatenation
             filtered[_cat("rejected")] = list(existing_rejected) + list(
-                excluded_entries
+                excluded_entries,
             )
 
         # Type narrowing: filtered is already m.Ldif.LdifResults.FlexibleCategories compatible

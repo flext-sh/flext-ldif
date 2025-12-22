@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable, Mapping
+from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -385,7 +386,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             original_attribute_case=original_attribute_case,
         )
         metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(
-            metadata_config
+            metadata_config,
         )
 
         # Update entry with OUD metadata
@@ -1359,7 +1360,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         if isinstance(commented_raw, str):
-            return json.loads(commented_raw)
+            # json.loads returns Any - cast to expected return type
+            result = json.loads(commented_raw)
+            return cast("dict[str, object] | None", result)
         if isinstance(commented_raw, dict):
             return commented_raw
         return None
@@ -1669,7 +1672,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     )
                     # Type narrow for proper type checking
                     acl_extensions: dict[str, t.MetadataAttributeValue] = dict(
-                        acl_ext_raw
+                        acl_ext_raw,
                     )
                     self._process_parsed_acl_extensions(
                         acl_extensions,
@@ -2209,7 +2212,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry.metadata = entry.metadata.model_copy(
                 update={
                     "extensions": FlextLdifModelsMetadata.DynamicMetadata(
-                        **merged_extensions
+                        **merged_extensions,
                     ),
                 },
             )
@@ -2275,7 +2278,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_attrs = entry.attributes.attributes if entry.attributes else {}
 
             # CONSOLIDATED: Use utilities for difference analysis and storage (DRY)
-            converted_attrs: dict[str, list[str]] = {
+            # Type annotation uses str | bytes to match analyze_differences signature
+            converted_attrs: dict[str, list[str | bytes]] = {
                 k: list(v) if isinstance(v, list) else [str(v)]
                 for k, v in parsed_attrs.items()
             }

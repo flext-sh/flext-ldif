@@ -301,7 +301,7 @@ class FlextLdifResult[T]:
 
     @overload
     def __or__(
-        self, transformer: p.Ldif.TransformerProtocol[T]
+        self, transformer: p.Ldif.TransformerProtocol[T],
     ) -> FlextLdifResult[T]: ...
 
     @overload

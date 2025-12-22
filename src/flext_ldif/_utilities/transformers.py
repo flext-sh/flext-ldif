@@ -179,7 +179,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         # Type validation - ensure we received the correct type
         if not isinstance(item, m.Ldif.Entry):
             return r[str].fail(
-                f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}"
+                f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
             )
 
         if item.dn is None:

@@ -105,7 +105,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
         # Type narrowing: entry_quirk_raw has parse method
         # Direct call to entry quirk parse method using cast for type safety
         # Note: parse returns FlextResult[list[m.Ldif.Entry]] per EntryProtocol
-        parse_method = cast("Callable[[str], r[list[m.Ldif.Entry]]]", getattr(entry_quirk_raw, "parse"))
+        parse_method = cast("Callable[[str], r[list[m.Ldif.Entry]]]", entry_quirk_raw.parse)
         if not callable(parse_method):
             return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
