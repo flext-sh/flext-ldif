@@ -1023,8 +1023,8 @@ class _PriorityDescriptor:
 # happens at module import time, not instance creation time.
 # Use cast to inform mypy that we're intentionally assigning descriptors
 # Note: This bypasses Pydantic's field validation at the class level
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+FlextLdifServersBase.server_type = cast("str", _ServerTypeDescriptor("unknown"))
+FlextLdifServersBase.priority = cast("int", _PriorityDescriptor(0))
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

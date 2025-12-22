@@ -32,6 +32,7 @@ from flext_core import (
     FlextUtilities,
     r,
 )
+from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import ValidatorSpec
@@ -1021,7 +1022,8 @@ class FlextLdifUtilities(FlextUtilities):
                 # Wrap VariadicCallable to make compatible with Callable[[object], bool]
 
                 def predicate_callable(item: object) -> bool:
-                    return predicate(item)
+                    item_typed = FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                    return predicate(item_typed)
 
                 return FlextLdifUtilities.Ldif.filter_base_class(
                     items_or_entries,
@@ -1325,8 +1327,8 @@ class FlextLdifUtilities(FlextUtilities):
             if isinstance(result, (list, tuple)):
                 # Type narrowing: result is list/tuple
                 return list(result)
-            # Type narrowing: result is object, but we know it's t.GeneralValueType
-            result_typed: t.GeneralValueType = result
+            # Type narrowing: result is object, convert to GeneralValueType
+            result_typed = FlextUtilitiesMapper._narrow_to_general_value_type(result)
             return [result_typed]
 
         # Mnemonic helper
@@ -1384,24 +1386,30 @@ class FlextLdifUtilities(FlextUtilities):
                 operations_list: list[Callable[[object], object]] = [
                     op for op in ops if callable(op) and not isinstance(op, dict)
                 ]
-                # Type narrowing: pipe_result is r[t.GeneralValueType]
-                return FlextUtilities.Reliability.pipe(
+                # Call pipe and narrow the result
+                pipe_result = FlextUtilities.Reliability.pipe(
                     value,
                     *operations_list,
                     on_error=on_error,
                 )
+                if pipe_result.is_success:
+                    narrowed = FlextUtilitiesMapper._narrow_to_general_value_type(
+                        pipe_result.value,
+                    )
+                    return r[t.GeneralValueType].ok(narrowed)
+                return r[t.GeneralValueType].fail(pipe_result.error or "Pipe failed")
 
             # LDIF-specific pipe using flow()
             flow_ops: list[t.ConfigurationDict | Callable[[object], object]] = []
             for op in ops:
                 if isinstance(op, dict):
-                    # dict[str, object] is compatible with ConfigurationDict (dict[str, t.GeneralValueType])
+                    # dict[str, object] is compatible with ConfigurationDict
                     flow_ops.append(op)
                 elif callable(op):
-                    # Type narrowing: op is Callable[[object], object] after callable check
                     flow_ops.append(op)
-            # Type narrowing: flow returns t.GeneralValueType
-            return FlextUtilities.Reliability.flow(value, *flow_ops)
+            # Narrow flow result to GeneralValueType
+            flow_result = FlextUtilities.Reliability.flow(value, *flow_ops)
+            return FlextUtilitiesMapper._narrow_to_general_value_type(flow_result)
 
         # Alias for pipe_ldif (mnemonic: pp)
         @staticmethod
@@ -1998,10 +2006,9 @@ class FlextLdifUtilities(FlextUtilities):
             ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
             result = cls.build(value, ops=ops)
             # Ensure result is t.GeneralValueType for or_()
-            # Type narrowing: result is object, but we know it's t.GeneralValueType
-            result_typed: t.GeneralValueType | None = (
-                result if result is not None else None
-            )
+            if result is None:
+                return cls.or_(None, default=default)
+            result_typed = FlextUtilitiesMapper._narrow_to_general_value_type(result)
             return cls.or_(result_typed, default=default)
 
         # Mnemonic helper
@@ -2160,18 +2167,24 @@ class FlextLdifUtilities(FlextUtilities):
                     else:
                         # Fallback: convert to string
                         converted_args.append(str(arg))
-                # Call fn with converted args
+                # Call fn with converted args (narrow to GeneralValueType)
                 if len(converted_args) == 0:
                     result = fn()
                 elif len(converted_args) == 1:
-                    result = fn(converted_args[0])
+                    typed_arg = FlextUtilitiesMapper._narrow_to_general_value_type(
+                        converted_args[0],
+                    )
+                    result = fn(typed_arg)
                 else:
-                    result = fn(*converted_args)
-                # Type narrowing: result is t.GeneralValueType
-                return result
+                    typed_args = [
+                        FlextUtilitiesMapper._narrow_to_general_value_type(arg)
+                        for arg in converted_args
+                    ]
+                    result = fn(*typed_args)
+                # Return narrowed result
+                return FlextUtilitiesMapper._narrow_to_general_value_type(result)
 
-            # Type narrowing: curried has signature compatible with VariadicCallable[t.GeneralValueType]
-            # Return type already declared as VariadicCallable[t.GeneralValueType]
+            # Return curried function - signature matches VariadicCallable
             return curried
 
         # Mnemonic helper
