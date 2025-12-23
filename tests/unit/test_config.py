@@ -184,7 +184,7 @@ class TestsTestFlextLdifSettings(s):
         assert config.ldif_max_entries == 1000000
         assert config.ldif_chunk_size == 1000
         assert config.ldif_encoding == "utf-8"
-        assert config.memory_limit_mb == lib_c.LdifProcessing.MIN_MEMORY_MB
+        assert config.memory_limit_mb == lib_c.Ldif.LdifProcessing.MIN_MEMORY_MB
 
     def test_initialization_with_overrides(self) -> None:
         """Test configuration initialization with field overrides."""

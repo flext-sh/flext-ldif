@@ -1632,12 +1632,34 @@ class TestDeduplicationHelpers:
             msg = "conversion_matrix has no convert method"
             raise AssertionError(msg)
 
+        # Parse data into model instance based on conversion type
+        conversion_type_lower = conversion_type.lower()
+        if conversion_type_lower == "attribute":
+            from flext_ldif.services.schema import FlextLdifSchema
+
+            schema_service = FlextLdifSchema()
+            parse_result = schema_service.parse_attribute(data)
+            if not parse_result.is_success:
+                raise AssertionError(f"Failed to parse attribute: {parse_result.error}")
+            model_instance = parse_result.value
+        elif conversion_type_lower in {"objectclass", "objectclasses"}:
+            from flext_ldif.services.schema import FlextLdifSchema
+
+            schema_service = FlextLdifSchema()
+            parse_result = schema_service.parse_objectclass(data)
+            if not parse_result.is_success:
+                raise AssertionError(
+                    f"Failed to parse objectclass: {parse_result.error}"
+                )
+            model_instance = parse_result.value
+        else:
+            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
+
         # Perform conversion
         result = convert_method(
             source=source_quirk,
             target=target_quirk,
-            data=data,
-            model_type=conversion_type,
+            model_instance=model_instance,
         )
 
         # Check result
@@ -1646,6 +1668,10 @@ class TestDeduplicationHelpers:
             output = result.value
         else:
             output = result
+
+        # Convert model instances to string if expected
+        if expected_type is str and not isinstance(output, str):
+            output = str(output)
 
         # Type check
         if expected_type is not None and not isinstance(output, expected_type):
@@ -1756,12 +1782,39 @@ class TestDeduplicationHelpers:
             msg = "conversion_matrix has no batch_convert method"
             raise AssertionError(msg)
 
+        # Parse items into model instances based on conversion type
+        model_list = []
+        conversion_type_lower = conversion_type.lower()
+        if conversion_type_lower == "attribute":
+            from flext_ldif.services.schema import FlextLdifSchema
+
+            schema_service = FlextLdifSchema()
+            for item in items:
+                parse_result = schema_service.parse_attribute(item)
+                if not parse_result.is_success:
+                    raise AssertionError(
+                        f"Failed to parse attribute: {parse_result.error}"
+                    )
+                model_list.append(parse_result.value)
+        elif conversion_type_lower in {"objectclass", "objectclasses"}:
+            from flext_ldif.services.schema import FlextLdifSchema
+
+            schema_service = FlextLdifSchema()
+            for item in items:
+                parse_result = schema_service.parse_objectclass(item)
+                if not parse_result.is_success:
+                    raise AssertionError(
+                        f"Failed to parse objectclass: {parse_result.error}"
+                    )
+                model_list.append(parse_result.value)
+        else:
+            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
+
         # Perform batch conversion
         result = batch_convert_method(
             source=source_quirk,
             target=target_quirk,
-            items=items,
-            model_type=conversion_type,
+            model_list=model_list,
         )
 
         # Handle FlextResult

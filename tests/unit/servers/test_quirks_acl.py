@@ -901,7 +901,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
                 },
             ),
         )
@@ -937,7 +937,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
                 },
             ),
         )
@@ -978,7 +978,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
                 },
             ),
         )
@@ -1060,7 +1060,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
                 },
             ),
         )
@@ -1333,7 +1333,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
                 },
             ),
         )
@@ -1363,7 +1363,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
                 },
             ),
         )
@@ -1394,7 +1394,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
                 },
             ),
         )
@@ -1425,7 +1425,7 @@ class TestsTestFlextLdifQuirksAcl(s):
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    lib_c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
+                    lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
                 },
             ),
         )

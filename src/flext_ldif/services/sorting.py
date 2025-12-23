@@ -782,9 +782,7 @@ class FlextLdifSorting(
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
                 # Extract value directly from FlextResult
                 parent_normalized: str | None = (
-                    parent_norm_result.value
-                    if parent_norm_result.is_success
-                    else None
+                    parent_norm_result.value if parent_norm_result.is_success else None
                 )
                 parent_key = (
                     parent_normalized.lower()
@@ -887,9 +885,7 @@ class FlextLdifSorting(
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
                 # Extract value directly from FlextResult
                 parent_normalized: str | None = (
-                    parent_norm_result.value
-                    if parent_norm_result.is_success
-                    else None
+                    parent_norm_result.value if parent_norm_result.is_success else None
                 )
                 parent_key = (
                     parent_normalized.lower()

@@ -311,7 +311,9 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
             oc_dict = {
                 "oid": str(parsed_dict["oid"]) if parsed_dict["oid"] else "",
                 "name": str(parsed_dict.get("name") or parsed_dict["oid"]),
-                "desc": str(parsed_dict.get("desc")) if parsed_dict.get("desc") else None,
+                "desc": str(parsed_dict.get("desc"))
+                if parsed_dict.get("desc")
+                else None,
                 "sup": parsed_dict.get("sup"),
                 "kind": str(parsed_dict.get("kind", "STRUCTURAL")),
                 "must": parsed_dict.get("must"),

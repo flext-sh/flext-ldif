@@ -15,9 +15,8 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif.constants import c as lib_c
-from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests import GenericFieldsDict, c, s
+from tests import GenericFieldsDict, c, m, s
 
 # =============================================================================
 # TEST ENUMS AND DATA STRUCTURES
@@ -303,15 +302,15 @@ def create_acl_components_helper() -> FlextResult[
 
     """
     target = m.AclTarget(
-        target_dn=lib_c.ServerDetection.ACL_WILDCARD_DN,
+        target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
     )
     subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
         "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-        lib_c.ServerDetection.ACL_WILDCARD_TYPE,
+        "all",
     )
     subject = m.AclSubject(
         subject_type=subject_type_literal,
-        subject_value=lib_c.ServerDetection.ACL_WILDCARD_VALUE,
+        subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
     )
     permissions = m.AclPermissions(read=True)
 
@@ -678,11 +677,11 @@ class TestFlextLdifAclComponents(s):
         ]:
             """Create ACL components with proper validation using railway pattern."""
             target = m.AclTarget(
-                target_dn=lib_c.ServerDetection.ACL_WILDCARD_DN,
+                target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
             )
             subject = m.AclSubject(
                 subject_type="all",
-                subject_value=lib_c.ServerDetection.ACL_WILDCARD_VALUE,
+                subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
             )
             permissions = m.AclPermissions(read=True)
 

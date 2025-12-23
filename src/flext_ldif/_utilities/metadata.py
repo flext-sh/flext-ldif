@@ -305,7 +305,8 @@ class FlextLdifUtilitiesMetadata:
             k: v
             for k, v in metadata.items()
             if isinstance(
-                v, (str, int, float, bool, type(None), list, dict, Sequence, Mapping),
+                v,
+                (str, int, float, bool, type(None), list, dict, Sequence, Mapping),
             )
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)

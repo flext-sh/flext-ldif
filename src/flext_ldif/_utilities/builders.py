@@ -313,7 +313,8 @@ class ProcessConfigBuilder:
             dn_config=self._dn_config or DnNormalizationConfig.model_validate({}),
             attr_config=self._attr_config or AttrNormalizationConfig.model_validate({}),
             acl_config=self._acl_config or AclConversionConfig.model_validate({}),
-            validation_config=self._validation_config or ValidationConfig.model_validate({}),
+            validation_config=self._validation_config
+            or ValidationConfig.model_validate({}),
             metadata_config=self._metadata_config or MetadataConfig.model_validate({}),
         )
 
@@ -630,7 +631,9 @@ class WriteConfigBuilder:
         # Create config with all values at construction time (frozen model)
         # Convert types to match WriteConfig expectations
         base64_attrs_value = (
-            list(self._base64_attrs) if isinstance(self._base64_attrs, (list, tuple)) else None
+            list(self._base64_attrs)
+            if isinstance(self._base64_attrs, (list, tuple))
+            else None
         )
         attr_order_value = (
             list(self._attr_order) if self._attr_order is not None else None

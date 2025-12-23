@@ -731,7 +731,8 @@ class FlextLdifUtilitiesEntry:
         """Check objectClass criteria."""
         # Direct iteration instead of u.Collection.filter
         matching_ocs: list[str] = [
-            oc for oc in objectclasses
+            oc
+            for oc in objectclasses
             if FlextLdifUtilitiesEntry.has_objectclass(entry, oc)
         ]
         return (
@@ -950,7 +951,9 @@ class FlextLdifUtilitiesEntry:
                     transformed_list.append(result)
             except Exception as exc:
                 if config.fail_fast:
-                    return r[list[m.Ldif.Entry]].fail(f"Transform failed at entry {i}: {exc}")
+                    return r[list[m.Ldif.Entry]].fail(
+                        f"Transform failed at entry {i}: {exc}"
+                    )
                 errors.append((i, f"Transform failed at entry {i}: {exc}"))
 
         if errors and config.fail_fast:
@@ -997,7 +1000,8 @@ class FlextLdifUtilitiesEntry:
 
         # Direct iteration instead of u.Collection.filter
         filtered: list[m.Ldif.Entry] = [
-            entry for entry in entries
+            entry
+            for entry in entries
             if FlextLdifUtilitiesEntry.matches_criteria(
                 entry,
                 config=FlextLdifModelsSettings.EntryCriteriaConfig(

@@ -2059,7 +2059,9 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return r[str].fail(batch_result.error or "Normalization failed")
         batch_data = batch_result.value
-        return r[str].ok([item for item in batch_data["results"] if isinstance(item, str)])
+        return r[str].ok([
+            item for item in batch_data["results"] if isinstance(item, str)
+        ])
 
     @staticmethod
     def validate_batch(
@@ -2153,7 +2155,9 @@ class FlextLdifUtilitiesDN:
 
         on_error_mode = "fail" if fail_fast else "skip"
         batch_result = u.Collection.batch(
-            list(dns), replace_dn, _on_error=on_error_mode,
+            list(dns),
+            replace_dn,
+            _on_error=on_error_mode,
         )
         if batch_result.is_failure:
             return r[str].fail(batch_result.error or "Base replacement failed")

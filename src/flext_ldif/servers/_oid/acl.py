@@ -796,7 +796,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             extensions.append(f"filter={acl_filter}")
 
         acl_constraint = u.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_CONSTRAINT,
+            meta_extensions,
+            c.Ldif.MetadataKeys.ACL_CONSTRAINT,
         )
         if acl_constraint:
             extensions.append(f"added_object_constraint=({acl_constraint})")
@@ -807,26 +808,30 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             extensions.append(f"bindmode=({bindmode})")
 
         bind_ip_filter = u.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER,
+            meta_extensions,
+            c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER,
         )
         if bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")
 
         constrain_to_added = u.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
+            meta_extensions,
+            c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
         if constrain_to_added:
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
 
         # Boolean OID-specific extensions
         deny_group_override = u.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+            meta_extensions,
+            c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
         )
         if deny_group_override:
             extensions.append("DenyGroupOverride")
 
         append_to_all = u.mapper().get(
-            meta_extensions, c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL,
+            meta_extensions,
+            c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL,
         )
         if append_to_all:
             extensions.append("AppendToAll")
@@ -1272,7 +1277,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
                     attributes=target_attrs or [],
                 ),
                 subject=m.Ldif.AclSubject(
-                    subject_type=cast("c.Ldif.LiteralTypes.AclSubjectTypeLiteral", subject_type_literal),
+                    subject_type=cast(
+                        "c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
+                        subject_type_literal,
+                    ),
                     subject_value=rfc_subject_value,
                 ),
                 permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),

@@ -350,7 +350,9 @@ class FlextLdifConversion(
             else [],
         )
         _ = u.Ldif.Events.log_and_emit_conversion_event(
-            logger=cast("Any", logger),  # FlextLogger compatible with StructlogLogger protocol
+            logger=cast(
+                "Any", logger
+            ),  # FlextLogger compatible with StructlogLogger protocol
             config=conversion_config,
             log_level="info" if result.is_success else "error",
         )
@@ -401,11 +403,15 @@ class FlextLdifConversion(
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
             if isinstance(model_instance, m.Ldif.SchemaAttribute):
                 return FlextLdifConversion._convert_schema_attribute(
-                    source_quirk, target_quirk, model_instance,
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
             if isinstance(model_instance, m.Ldif.SchemaObjectClass):
                 return FlextLdifConversion._convert_schema_objectclass(
-                    source_quirk, target_quirk, model_instance,
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
             if isinstance(model_instance, m.Ldif.Acl):
                 return self._convert_acl(source_quirk, target_quirk, model_instance)
@@ -450,7 +456,9 @@ class FlextLdifConversion(
         # Type narrowing: boolean_conversions is FlextTypes.GeneralValueType
         if not isinstance(boolean_conversions, dict):
             return analysis
-        boolean_conv_typed: dict[str, object] = cast("dict[str, object]", boolean_conversions)
+        boolean_conv_typed: dict[str, object] = cast(
+            "dict[str, object]", boolean_conversions
+        )
 
         def process_conversion(
             item: tuple[str, object],
@@ -536,7 +544,9 @@ class FlextLdifConversion(
         # Type narrowing: analysis is dict[str, object]
         analysis_obj: dict[str, object] = cast("dict[str, object]", analysis)
         # Type narrowing: evolved_raw is dict[str, dict[str, str]]
-        return cast("dict[str, dict[str, str]]", u.Ldif.evolve(analysis_obj, reduced_raw))
+        return cast(
+            "dict[str, dict[str, str]]", u.Ldif.evolve(analysis_obj, reduced_raw)
+        )
 
     @staticmethod
     def _analyze_attribute_case(
@@ -697,7 +707,8 @@ class FlextLdifConversion(
         if not get_metadata(current_entry):
             # Cast validated_quirk_type (str) to Literal for QuirkMetadata
             quirk_type_literal = cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral", validated_quirk_type,
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                validated_quirk_type,
             )
             metadata_obj = m.Ldif.QuirkMetadata(quirk_type=quirk_type_literal)
             # metadata_obj is m.Ldif.QuirkMetadata which is t.MetadataAttributeValue
@@ -983,7 +994,10 @@ class FlextLdifConversion(
                     or "Target schema quirk error: Schema not available",
                 )
             # Type narrowing: verify schema quirks have attribute methods
-            if not (hasattr(source_schema, "write_attribute") and hasattr(target_schema, "parse_attribute")):
+            if not (
+                hasattr(source_schema, "write_attribute")
+                and hasattr(target_schema, "parse_attribute")
+            ):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1051,7 +1065,10 @@ class FlextLdifConversion(
                 )
 
             # Type narrowing: verify schema quirks have objectclass methods
-            if not (hasattr(source_schema, "write_objectclass") and hasattr(target_schema, "parse_objectclass")):
+            if not (
+                hasattr(source_schema, "write_objectclass")
+                and hasattr(target_schema, "parse_objectclass")
+            ):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1260,7 +1277,9 @@ class FlextLdifConversion(
         """Apply OID to OUD permission mapping."""
         # map_dict expects dict[str, object], orig_perms_dict is dict[str, bool]
         # Use cast for dict invariance (dict[str, bool] -> dict[str, object])
-        orig_perms_dict_typed: dict[str, object] = cast("dict[str, object]", orig_perms_dict)
+        orig_perms_dict_typed: dict[str, object] = cast(
+            "dict[str, object]", orig_perms_dict
+        )
         normalized_orig_perms_raw = u.Ldif.map_dict(
             orig_perms_dict_typed,
             mapper=lambda k, v: (
@@ -1570,10 +1589,12 @@ class FlextLdifConversion(
 
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
         conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]", conv_ext,
+            "Mapping[str, FlextTypes.GeneralValueType]",
+            conv_ext,
         )
         orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]", orig_ext,
+            "Mapping[str, FlextTypes.GeneralValueType]",
+            orig_ext,
         )
         # Merge dicts: conv_ext_typed overrides orig_ext_typed
         merged_ext_raw: dict[str, object] = {**orig_ext_typed, **conv_ext_typed}
@@ -2103,7 +2124,9 @@ class FlextLdifConversion(
             # Handle result manually
             if target_result.is_failure:
                 # Return failure with correct union return type
-                return r[m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue].fail(
+                return r[
+                    m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+                ].fail(
                     target_result.error or "Failed to parse target objectClass",
                 )
             parsed_value = target_result.value

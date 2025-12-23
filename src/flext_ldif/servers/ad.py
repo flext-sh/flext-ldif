@@ -541,7 +541,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             # u.mapper().get() returns value directly (or default if key not found)
             raw_object_classes: list[str] = u.mapper().get(
-                attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[],
+                attributes,
+                c.Ldif.DictKeys.OBJECTCLASS,
+                default=[],
             )
             object_classes = (
                 raw_object_classes

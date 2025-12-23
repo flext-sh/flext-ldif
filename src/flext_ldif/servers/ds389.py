@@ -646,7 +646,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             # u.mapper().get() returns value directly (or default if key not found)
             object_classes_raw: list[str] = u.mapper().get(
-                normalized_attrs, objectclass_key, default=[],
+                normalized_attrs,
+                objectclass_key,
+                default=[],
             )
             object_classes: list[str] = (
                 object_classes_raw
@@ -680,9 +682,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.DS389.value,
                 )
-                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
-                    marker in dn_lower
-                    for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
+                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
+                    any(
+                        marker in dn_lower
+                        for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
+                    )
                 )
 
                 processed_entry = m.Ldif.Entry(

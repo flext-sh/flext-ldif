@@ -138,8 +138,7 @@ class FlextLdifStatistics(
         # Use dict comprehension with u.count for clarity
         # Type narrowing: entries is list[object] from categorized dict
         categorized_counts_dict = {
-            category: u.count(entries)
-            for category, entries in categorized.items()
+            category: u.count(entries) for category, entries in categorized.items()
         }
         categorized_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
             categorized_counts_dict,

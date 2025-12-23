@@ -1043,9 +1043,7 @@ class FlextLdifCategorization(
             if cat_entries:
                 # Type narrowing: cat_entries is list[Entry], u.count accepts list
                 entries_count: int = (
-                    u.count(cat_entries)
-                    if isinstance(cat_entries, list)
-                    else 0
+                    u.count(cat_entries) if isinstance(cat_entries, list) else 0
                 )
                 logger.info(
                     "Category entries",
@@ -1201,8 +1199,7 @@ class FlextLdifCategorization(
                     "Applied schema OID whitelist filter",
                     total_entries=u.count(schema_entries),
                     filtered_entries=u.count(filtered),
-                    removed_entries=u.count(schema_entries)
-                    - u.count(filtered),
+                    removed_entries=u.count(schema_entries) - u.count(filtered),
                 )
                 return r[list[m.Ldif.Entry]].ok(filtered)
 

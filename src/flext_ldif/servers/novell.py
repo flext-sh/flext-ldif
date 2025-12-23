@@ -639,7 +639,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
             # objectClasses is already list[str] in
             object_classes_raw: list[str] = u.mapper().get(
-                attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[],
+                attributes,
+                c.Ldif.DictKeys.OBJECTCLASS,
+                default=[],
             )
             # Ensure object_classes is a list
             if isinstance(object_classes_raw, (list, tuple)):
@@ -666,7 +668,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             try:
                 # Get objectClasses (already list[str] in Attributes)
                 object_classes: list[str] = u.mapper().get(
-                    attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[],
+                    attributes,
+                    c.Ldif.DictKeys.OBJECTCLASS,
+                    default=[],
                 )
 
                 # Process attributes - work directly with dict[str, list[str]]

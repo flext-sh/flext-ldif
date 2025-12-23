@@ -341,7 +341,9 @@ class Pipeline:
             if process_result.is_failure:
                 # Real error - handle based on fail_fast setting
                 if self._fail_fast:
-                    return r[str].fail(process_result.error or "Pipeline execution failed")
+                    return r[str].fail(
+                        process_result.error or "Pipeline execution failed"
+                    )
                 # Collect mode: skip error and continue
                 continue
             # Success: add to results
@@ -405,7 +407,9 @@ class ProcessingPipeline:
         # Add DN normalization if enabled
         if self._config.normalize_dns and self._config.process_config is not None:
             # Convert Literal to StrEnum for type compatibility
-            dn_config = self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
+            dn_config = (
+                self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
+            )
             case_fold_value = dn_config.case_fold or "none"
             space_handling_value = dn_config.space_handling or "preserve"
 
@@ -423,7 +427,10 @@ class ProcessingPipeline:
 
         # Add attribute normalization if enabled
         if self._config.normalize_attrs and self._config.process_config is not None:
-            attr_config = self._config.process_config.attr_config or m.Ldif.AttrNormalizationConfig()
+            attr_config = (
+                self._config.process_config.attr_config
+                or m.Ldif.AttrNormalizationConfig()
+            )
             pipeline.add(
                 Normalize.attrs(
                     case_fold_names=attr_config.case_fold_names,

@@ -217,7 +217,7 @@ class TestsFlextLdifWriterFormatOptions(s):
     def entry_with_aci_and_acl_metadata(self) -> p.Entry:
         """Create an entry with aci attribute and ACL_ORIGINAL_FORMAT metadata."""
         extensions = m.Ldif.DynamicMetadata.model_validate({
-            lib_c.MetadataKeys.ACL_ORIGINAL_FORMAT: (
+            lib_c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: (
                 "access to attr=(cn,sn) by self (read) by * (search)"
             ),
         })

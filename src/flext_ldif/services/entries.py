@@ -470,7 +470,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Implication: If attribute extraction fails, objectClass extraction also fails
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
-            return r[str].fail(f"Failed to get entry attributes: {attributes_result.error}")
+            return r[str].fail(
+                f"Failed to get entry attributes: {attributes_result.error}"
+            )
 
         attributes = attributes_result.value
         if not attributes:
