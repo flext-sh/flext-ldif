@@ -161,7 +161,9 @@ class FlextLdifUtilities(FlextUtilities):
             conversion operations, providing a fluent DSL interface on top.
             """
 
-            def __init__(self, *, value: str | bytes | float | bool | list[str] | None) -> None:
+            def __init__(
+                self, *, value: str | bytes | float | bool | list[str] | None
+            ) -> None:
                 """Initialize conversion builder with a value.
 
                 Args:
@@ -169,7 +171,9 @@ class FlextLdifUtilities(FlextUtilities):
 
                 """
                 self._value = value
-                self._default: str | bytes | int | float | bool | list[str] | None = None
+                self._default: str | bytes | int | float | bool | list[str] | None = (
+                    None
+                )
                 self._target_type: str | None = None
                 self._safe_mode = False
 
@@ -403,7 +407,9 @@ class FlextLdifUtilities(FlextUtilities):
             ) -> r[list[m.Ldif.Entry]]:
                 """Transform multiple entries with common operations."""
                 return FlextLdifUtilitiesEntry.transform_batch(
-                    entries, config, **kwargs,
+                    entries,
+                    config,
+                    **kwargs,
                 )
 
             @staticmethod
@@ -423,7 +429,9 @@ class FlextLdifUtilities(FlextUtilities):
             ) -> bool:
                 """Check if entry matches server-specific patterns."""
                 return FlextLdifUtilitiesEntry.matches_server_patterns(
-                    entry_dn, attributes, config,
+                    entry_dn,
+                    attributes,
+                    config,
                 )
 
             @staticmethod
@@ -441,7 +449,11 @@ class FlextLdifUtilities(FlextUtilities):
             ]:
                 """Analyze DN and attribute differences for round-trip support."""
                 return FlextLdifUtilitiesEntry.analyze_differences(
-                    entry_attrs, converted_attrs, original_dn, cleaned_dn, normalize_attr_fn,
+                    entry_attrs,
+                    converted_attrs,
+                    original_dn,
+                    cleaned_dn,
+                    normalize_attr_fn,
                 )
 
         class Events(FlextLdifUtilitiesEvents):
@@ -603,7 +615,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # TypeGuard ensures predicate is Callable[[str, T], bool]
                 try:
                     result = FlextLdifUtilities.Ldif.call_processor(
-                        predicate, key, value,
+                        predicate,
+                        key,
+                        value,
                     )
                     if isinstance(result, bool):
                         return result
@@ -733,11 +747,17 @@ class FlextLdifUtilities(FlextUtilities):
                 # "if is_two_arg then Callable[[str,T],R] else Callable[[T],R]"
                 # Phase 5.C item: Replace with Protocol-based callable types
                 if FlextLdifUtilities.Ldif.is_two_arg_processor(processor_func):
-                    result_item = cast("R", cast("Callable[[str, object], object]", processor_func)(
-                        key, value,
-                    ))
+                    result_item = cast(
+                        "R",
+                        cast("Callable[[str, object], object]", processor_func)(
+                            key,
+                            value,
+                        ),
+                    )
                 else:
-                    result_item = cast("R", cast("Callable[[object], object]", processor_func)(value))
+                    result_item = cast(
+                        "R", cast("Callable[[object], object]", processor_func)(value)
+                    )
                 results.append(result_item)
             return results
 
@@ -905,7 +925,8 @@ class FlextLdifUtilities(FlextUtilities):
             # Processor can accept 1 or 2 args - use VariadicCallable for flexibility
             # Type narrowing: exclude ProcessConfig and None
             if processor_normalized is None or isinstance(
-                processor_normalized, ProcessConfig,
+                processor_normalized,
+                ProcessConfig,
             ):
                 msg = "processor is required for base class process"
                 return r[str].fail(msg)
@@ -937,7 +958,9 @@ class FlextLdifUtilities(FlextUtilities):
             try:
                 # Process single items through processor_func
                 # Processor function accepts various types - cast to single-arg version
-                result_item = cast("R", cast("Callable[[object], object]", processor_func)(items))
+                result_item = cast(
+                    "R", cast("Callable[[object], object]", processor_func)(items)
+                )
                 return r[list[R]].ok([result_item])
             except Exception as e:
                 return r[str].fail(f"Processing failed: {e}")
@@ -1042,7 +1065,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # Wrap VariadicCallable to make compatible with Callable[[object], bool]
 
                 def predicate_callable(item: object) -> bool:
-                    item_typed = FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                    item_typed = FlextUtilitiesMapper._narrow_to_general_value_type(
+                        item
+                    )
                     return predicate(item_typed)
 
                 return FlextLdifUtilities.Ldif.filter_base_class(
@@ -2175,12 +2200,14 @@ class FlextLdifUtilities(FlextUtilities):
                         # Handle None explicitly
                         converted_args.append(None)
                     elif isinstance(arg, (list, tuple)) and not isinstance(
-                        arg, (str, bytes),
+                        arg,
+                        (str, bytes),
                     ):
                         # Type narrowing: arg is Sequence
                         converted_args.append(arg)
                     elif isinstance(arg, (dict, Mapping)) and not isinstance(
-                        arg, (str, bytes),
+                        arg,
+                        (str, bytes),
                     ):
                         # Type narrowing: arg is Mapping
                         converted_args.append(arg)

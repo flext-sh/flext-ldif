@@ -150,9 +150,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         # ACL default values (migrated from _parse_acl method)
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
-        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.LiteralTypes.AclSubjectTypeLiteral] = (
-            "all"  # Default to "all" for generic ACL access
-        )
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[
+            c.Ldif.LiteralTypes.AclSubjectTypeLiteral
+        ] = "all"  # Default to "all" for generic ACL access
         ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = ""
 
         # ACL attribute name constants (migrated from _write_acl method)
@@ -492,7 +492,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return True
 
             object_classes_raw: list[str] = u.mapper().get(
-                attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[],
+                attributes,
+                c.Ldif.DictKeys.OBJECTCLASS,
+                default=[],
             )
             object_classes: list[str] = (
                 object_classes_raw
@@ -529,7 +531,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
                 # Get objectClasses directly from attributes (already list[str])
                 object_classes: list[str] = u.mapper().get(
-                    attributes, c.Ldif.DictKeys.OBJECTCLASS, default=[],
+                    attributes,
+                    c.Ldif.DictKeys.OBJECTCLASS,
+                    default=[],
                 )
 
                 # Process attributes - work directly with dict[str, list[str]]
@@ -559,7 +563,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     marker in dn_lower
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
-                processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
+                processed_attributes[
+                    c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY
+                ] = [
                     str(is_config),
                 ]
                 # Update objectClass (already in list format)

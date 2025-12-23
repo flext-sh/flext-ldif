@@ -279,7 +279,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
 
         type_category = resolve_result.value.type_category
         validator_raw = self._VALIDATOR_MAP.get(
-            type_category, lambda _: r[bool].ok(True),
+            type_category,
+            lambda _: r[bool].ok(True),
         )
         # Type narrowing: validator_raw is object, check if callable
         if callable(validator_raw):

@@ -404,7 +404,9 @@ class _BooleanFlags(FlextLdifModelsBase):
 
 
 # Use simple type hint to avoid circular dependency
-class _FlexibleCategories(FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]):
+class _FlexibleCategories(
+    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]
+):
     """Flexible entry categorization with dynamic categories.
 
     Replaces dict[str, list[Entry]] pattern with type-safe model.

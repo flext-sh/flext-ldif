@@ -109,7 +109,8 @@ class FlextLdifUtilitiesServer:
             # Type narrowing: server_type_lower is in valid server types
             # Cast to literal since we validated it's in valid types
             return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral", server_type_lower,
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                server_type_lower,
             )
         return None
 
@@ -310,7 +311,21 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def normalize_server_type(
         server_type: str,
-    ) -> Literal["oid", "oud", "openldap", "openldap1", "openldap2", "ad", "apache", "ds389", "rfc", "relaxed", "novell", "ibm_tivoli", "generic"]:
+    ) -> Literal[
+        "oid",
+        "oud",
+        "openldap",
+        "openldap1",
+        "openldap2",
+        "ad",
+        "apache",
+        "ds389",
+        "rfc",
+        "relaxed",
+        "novell",
+        "ibm_tivoli",
+        "generic",
+    ]:
         """Normalize server type string to canonical ServerTypes enum value.
 
         Converts aliases and variations to canonical short form:
@@ -353,7 +368,9 @@ class FlextLdifUtilitiesServer:
         # Check alias map first
         if server_type_lower in alias_map:
             # alias_map values are guaranteed valid ServerTypeLiterals
-            return cast("c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower])
+            return cast(
+                "c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower]
+            )
         # Check if it's already a canonical value
         # ServerTypes is a StrEnum, iterate over enum members
         for server_enum in c.Ldif.ServerTypes.__members__.values():

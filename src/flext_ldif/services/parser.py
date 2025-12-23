@@ -84,7 +84,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            return r[str].fail(f"Invalid server type: {effective_server_type_raw} - {e}")
+            return r[str].fail(
+                f"Invalid server type: {effective_server_type_raw} - {e}"
+            )
 
         try:
             entry_quirk_raw = self._server.entry(effective_server_type)
@@ -105,7 +107,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
         # Type narrowing: entry_quirk_raw has parse method
         # Direct call to entry quirk parse method using cast for type safety
         # Note: parse returns FlextResult[list[m.Ldif.Entry]] per EntryProtocol
-        parse_method = cast("Callable[[str], r[list[m.Ldif.Entry]]]", entry_quirk_raw.parse)
+        parse_method = cast(
+            "Callable[[str], r[list[m.Ldif.Entry]]]", entry_quirk_raw.parse
+        )
         if not callable(parse_method):
             return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
@@ -217,7 +221,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModelsResults.ParseResponse]
             processed_value = batch_result.value
             if isinstance(processed_value, dict) and "results" in processed_value:
                 # Extract results from BatchResult dict
-                processed_list: list[list[str]] = cast("list[list[str]]", processed_value["results"])
+                processed_list: list[list[str]] = cast(
+                    "list[list[str]]", processed_value["results"]
+                )
                 for entry_lines in processed_list:
                     if isinstance(entry_lines, list):
                         ldif_lines.extend(entry_lines)

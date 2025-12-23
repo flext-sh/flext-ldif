@@ -301,7 +301,8 @@ class FlextLdifResult[T]:
 
     @overload
     def __or__(
-        self, transformer: p.Ldif.TransformerProtocol[T],
+        self,
+        transformer: p.Ldif.TransformerProtocol[T],
     ) -> FlextLdifResult[T]: ...
 
     @overload
@@ -532,7 +533,9 @@ class FlextLdifResult[T]:
         # Handle sequence of entries - filter elements and preserve type
         if isinstance(value, Sequence) and not isinstance(value, str):
             # Filter elements - result is always a list for type consistency
-            filtered_elements: list[object] = [item for item in value if matches_func(item)]
+            filtered_elements: list[object] = [
+                item for item in value if matches_func(item)
+            ]
             # Type narrowing: filtered_elements is the filtered sequence of type T
             return FlextLdifResult(r.ok(filtered_elements))  # type: ignore[arg-type]
 

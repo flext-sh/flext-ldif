@@ -250,6 +250,7 @@ class FlextLdifConstants(FlextConstants):
             ANONYMOUS = "anonymous"
             AUTHENTICATED = "authenticated"
             SDDL = "sddl"  # Active Directory SDDL format
+            DN = "dn"  # DN-based subject (user or group by distinguished name)
 
         class DictKeys(StrEnum):
             """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP.
@@ -2043,6 +2044,7 @@ class FlextLdifConstants(FlextConstants):
                 "anonymous",
                 "authenticated",
                 "sddl",
+                "dn",
             ]
             """ACL subject type literals matching AclSubjectType StrEnum values exactly."""
 

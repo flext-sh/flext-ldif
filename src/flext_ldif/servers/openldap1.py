@@ -582,9 +582,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 # Build Acl model
                 # Note: ACL_ATTRIBUTE_NAME is OpenLDAP 1.x format from Constants
                 # Use model_construct for DynamicMetadata to bypass validation
-                acl_extensions = FlextLdifModelsMetadata.DynamicMetadata.model_construct(
-                    _fields_set={"original_format"},
-                    original_format=acl_line,
+                acl_extensions = (
+                    FlextLdifModelsMetadata.DynamicMetadata.model_construct(
+                        _fields_set={"original_format"},
+                        original_format=acl_line,
+                    )
                 )
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
@@ -725,7 +727,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.OPENLDAP1.value,
                 )
-                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
+                metadata.extensions[
+                    c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT
+                ] = True
 
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,

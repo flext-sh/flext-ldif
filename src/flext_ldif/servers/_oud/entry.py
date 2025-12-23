@@ -2260,8 +2260,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for k, v in entry_dict.items():
             if isinstance(v, list):
                 entry_attrs[str(k)] = [
-                    item.decode("utf-8") if isinstance(item, bytes)
-                    else str(item) for item in v
+                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                    for item in v
                 ]
             elif isinstance(v, bytes):
                 entry_attrs[str(k)] = [v.decode("utf-8")]

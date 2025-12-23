@@ -1762,7 +1762,9 @@ class FlextLdifModelsDomains:
                     "novell",
                 }:
                     # quirk_type_value is validated as ServerTypeLiteral
-                    final_quirk_type_val = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", quirk_type_value)
+                    final_quirk_type_val = cast(
+                        "c.Ldif.LiteralTypes.ServerTypeLiteral", quirk_type_value
+                    )
                 else:
                     # Use literal value directly for type safety
                     final_quirk_type_val = "rfc"

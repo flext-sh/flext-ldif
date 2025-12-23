@@ -845,11 +845,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             ] = {
                 # OBJECTCLASS requirement (OpenLDAP is flexible - check frozenset)
                 "requires_objectclass": (
-                    server_type in c.Ldif.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
+                    server_type
+                    in c.Ldif.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
                 ),
                 # NAMING ATTRIBUTE requirement (OpenLDAP is flexible - check frozenset)
                 "requires_naming_attr": (
-                    server_type in c.Ldif.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
+                    server_type
+                    in c.Ldif.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
                 ),
                 # BINARY OPTION requirement (OpenLDAP 2.x requires ;binary)
                 "requires_binary_option": (

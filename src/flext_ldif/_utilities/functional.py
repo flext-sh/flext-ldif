@@ -1120,7 +1120,8 @@ class FlextFunctional:
                     if accepts_args:
                         # Cast target_type to callable that accepts object and returns U
                         constructor_callable = cast(
-                            "Callable[[object], U]", target_type,
+                            "Callable[[object], U]",
+                            target_type,
                         )
                         converted_result: U = constructor_callable(value)
                         if isinstance(converted_result, target_type):

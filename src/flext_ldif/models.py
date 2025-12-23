@@ -248,10 +248,14 @@ class FlextLdifModels(FlextModels):
         # Format options models (direct aliases for test convenience)
         ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
         MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
-        PermissionMappingConfig: TypeAlias = FlextLdifModelsSettings.PermissionMappingConfig
+        PermissionMappingConfig: TypeAlias = (
+            FlextLdifModelsSettings.PermissionMappingConfig
+        )
 
         # Migration results (direct aliases for convenience)
-        MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
+        MigrationPipelineResult: TypeAlias = (
+            FlextLdifModelsResults.MigrationPipelineResult
+        )
         FlexibleCategories: TypeAlias = _FlexibleCategories
 
         # Event models - real inheritance classes
@@ -263,7 +267,9 @@ class FlextLdifModels(FlextModels):
             MigrationEvent: TypeAlias = FlextLdifModelsEvents.MigrationEvent
             MigrationEventConfig: TypeAlias = FlextLdifModelsEvents.MigrationEventConfig
             ConversionEvent: TypeAlias = FlextLdifModelsEvents.ConversionEvent
-            ConversionEventConfig: TypeAlias = FlextLdifModelsEvents.ConversionEventConfig
+            ConversionEventConfig: TypeAlias = (
+                FlextLdifModelsEvents.ConversionEventConfig
+            )
             SchemaEvent: TypeAlias = FlextLdifModelsEvents.SchemaEvent
             SchemaEventConfig: TypeAlias = FlextLdifModelsEvents.SchemaEventConfig
             ParseEvent: TypeAlias = FlextLdifModelsEvents.ParseEvent
@@ -277,33 +283,59 @@ class FlextLdifModels(FlextModels):
             """Extended configuration models namespace."""
 
             EntryParseConfig: TypeAlias = FlextLdifModelsSettings.EntryParseConfig
-            EntryParseMetadataConfig: TypeAlias = FlextLdifModelsSettings.EntryParseMetadataConfig
-            EntryProcessingConfig: TypeAlias = FlextLdifModelsSettings.EntryProcessingConfig
-            EntryTransformConfig: TypeAlias = FlextLdifModelsSettings.EntryTransformConfig
+            EntryParseMetadataConfig: TypeAlias = (
+                FlextLdifModelsSettings.EntryParseMetadataConfig
+            )
+            EntryProcessingConfig: TypeAlias = (
+                FlextLdifModelsSettings.EntryProcessingConfig
+            )
+            EntryTransformConfig: TypeAlias = (
+                FlextLdifModelsSettings.EntryTransformConfig
+            )
             EntryFilterConfig: TypeAlias = FlextLdifModelsSettings.EntryFilterConfig
             EntryWriteConfig: TypeAlias = FlextLdifModelsSettings.EntryWriteConfig
-            ObjectClassParseConfig: TypeAlias = FlextLdifModelsSettings.ObjectClassParseConfig
-            LdifContentParseConfig: TypeAlias = FlextLdifModelsSettings.LdifContentParseConfig
+            ObjectClassParseConfig: TypeAlias = (
+                FlextLdifModelsSettings.ObjectClassParseConfig
+            )
+            LdifContentParseConfig: TypeAlias = (
+                FlextLdifModelsSettings.LdifContentParseConfig
+            )
             ParserParams: TypeAlias = FlextLdifModelsSettings.ParserParams
             WriterParams: TypeAlias = FlextLdifModelsSettings.WriterParams
             ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
             BatchWriteConfig: TypeAlias = FlextLdifModelsSettings.BatchWriteConfig
-            AttributeNormalizeConfig: TypeAlias = FlextLdifModelsSettings.AttributeNormalizeConfig
-            AttributeDenormalizeConfig: TypeAlias = FlextLdifModelsSettings.AttributeDenormalizeConfig
+            AttributeNormalizeConfig: TypeAlias = (
+                FlextLdifModelsSettings.AttributeNormalizeConfig
+            )
+            AttributeDenormalizeConfig: TypeAlias = (
+                FlextLdifModelsSettings.AttributeDenormalizeConfig
+            )
             RdnProcessingConfig: TypeAlias = FlextLdifModelsSettings.RdnProcessingConfig
             DnCaseRules: TypeAlias = FlextLdifModelsSettings.DnCaseRules
             EncodingRules: TypeAlias = FlextLdifModelsSettings.EncodingRules
             AclFormatRules: TypeAlias = FlextLdifModelsSettings.AclFormatRules
-            MigrationPipelineParams: TypeAlias = FlextLdifModelsSettings.MigrationPipelineParams
+            MigrationPipelineParams: TypeAlias = (
+                FlextLdifModelsSettings.MigrationPipelineParams
+            )
             MigrationConfig: TypeAlias = FlextLdifModelsSettings.MigrationConfig
-            ServerValidationRules: TypeAlias = FlextLdifModelsSettings.ServerValidationRules
-            ServerPatternsConfig: TypeAlias = FlextLdifModelsSettings.ServerPatternsConfig
+            ServerValidationRules: TypeAlias = (
+                FlextLdifModelsSettings.ServerValidationRules
+            )
+            ServerPatternsConfig: TypeAlias = (
+                FlextLdifModelsSettings.ServerPatternsConfig
+            )
             AciLineFormatConfig: TypeAlias = FlextLdifModelsSettings.AciLineFormatConfig
             FilterCriteria: TypeAlias = FlextLdifModelsSettings.FilterCriteria
-            MetadataTransformationConfig: TypeAlias = FlextLdifModelsSettings.MetadataTransformationConfig
+            MetadataTransformationConfig: TypeAlias = (
+                FlextLdifModelsSettings.MetadataTransformationConfig
+            )
             ConfigInfo: TypeAlias = FlextLdifModelsSettings.ConfigInfo
-            PermissionMappingConfig: TypeAlias = FlextLdifModelsSettings.PermissionMappingConfig
-            SchemaConversionPipelineConfig: TypeAlias = FlextLdifModelsSettings.SchemaConversionPipelineConfig
+            PermissionMappingConfig: TypeAlias = (
+                FlextLdifModelsSettings.PermissionMappingConfig
+            )
+            SchemaConversionPipelineConfig: TypeAlias = (
+                FlextLdifModelsSettings.SchemaConversionPipelineConfig
+            )
             MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
 
         # Results models - extended set
@@ -321,14 +353,18 @@ class FlextLdifModels(FlextModels):
             # Analysis and detection results
             AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult
             EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
-            ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
+            ServerDetectionResult: TypeAlias = (
+                FlextLdifModelsResults.ServerDetectionResult
+            )
 
             # Parsing and writing results
             ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
             WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
 
             # Schema discovery and validation
-            SchemaDiscoveryResult: TypeAlias = FlextLdifModelsResults.SchemaDiscoveryResult
+            SchemaDiscoveryResult: TypeAlias = (
+                FlextLdifModelsResults.SchemaDiscoveryResult
+            )
             SchemaBuilderResult: TypeAlias = FlextLdifModelsResults.SchemaBuilderResult
             SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
 
@@ -337,13 +373,21 @@ class FlextLdifModels(FlextModels):
             AclEvaluationResult: TypeAlias = FlextLdifModelsResults.AclEvaluationResult
 
             # Migration results
-            MigrationEntriesResult: TypeAlias = FlextLdifModelsResults.MigrationEntriesResult
-            MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
+            MigrationEntriesResult: TypeAlias = (
+                FlextLdifModelsResults.MigrationEntriesResult
+            )
+            MigrationPipelineResult: TypeAlias = (
+                FlextLdifModelsResults.MigrationPipelineResult
+            )
 
             # Validation results
             ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
-            ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
-            LdifValidationResult: TypeAlias = FlextLdifModelsResults.LdifValidationResult
+            ValidationBatchResult: TypeAlias = (
+                FlextLdifModelsResults.ValidationBatchResult
+            )
+            LdifValidationResult: TypeAlias = (
+                FlextLdifModelsResults.LdifValidationResult
+            )
 
             # Dynamic counts and categorization
             DynamicCounts = FlextLdifModelsResults.DynamicCounts
@@ -384,10 +428,14 @@ class FlextLdifModels(FlextModels):
             EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
 
             # Service status aliases from _models/results.py
-            StatisticsServiceStatus: TypeAlias = FlextLdifModelsResults.StatisticsServiceStatus
+            StatisticsServiceStatus: TypeAlias = (
+                FlextLdifModelsResults.StatisticsServiceStatus
+            )
             SchemaServiceStatus: TypeAlias = FlextLdifModelsResults.SchemaServiceStatus
             SyntaxServiceStatus: TypeAlias = FlextLdifModelsResults.SyntaxServiceStatus
-            ValidationServiceStatus: TypeAlias = FlextLdifModelsResults.ValidationServiceStatus
+            ValidationServiceStatus: TypeAlias = (
+                FlextLdifModelsResults.ValidationServiceStatus
+            )
             EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
             ServiceStatus: TypeAlias = FlextLdifModelsResults.ServiceStatus
             Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
@@ -399,21 +447,33 @@ class FlextLdifModels(FlextModels):
             WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
 
             # Schema discovery
-            SchemaDiscoveryResult: TypeAlias = FlextLdifModelsResults.SchemaDiscoveryResult
+            SchemaDiscoveryResult: TypeAlias = (
+                FlextLdifModelsResults.SchemaDiscoveryResult
+            )
             SchemaBuilderResult: TypeAlias = FlextLdifModelsResults.SchemaBuilderResult
             SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
 
             # Migration results
-            MigrationEntriesResult: TypeAlias = FlextLdifModelsResults.MigrationEntriesResult
-            MigrationPipelineResult: TypeAlias = FlextLdifModelsResults.MigrationPipelineResult
+            MigrationEntriesResult: TypeAlias = (
+                FlextLdifModelsResults.MigrationEntriesResult
+            )
+            MigrationPipelineResult: TypeAlias = (
+                FlextLdifModelsResults.MigrationPipelineResult
+            )
 
             # Validation results
             ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
-            ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
-            LdifValidationResult: TypeAlias = FlextLdifModelsResults.LdifValidationResult
+            ValidationBatchResult: TypeAlias = (
+                FlextLdifModelsResults.ValidationBatchResult
+            )
+            LdifValidationResult: TypeAlias = (
+                FlextLdifModelsResults.LdifValidationResult
+            )
 
             # Analysis and detection results
-            ServerDetectionResult: TypeAlias = FlextLdifModelsResults.ServerDetectionResult
+            ServerDetectionResult: TypeAlias = (
+                FlextLdifModelsResults.ServerDetectionResult
+            )
             AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult
             EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
 

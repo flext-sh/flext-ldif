@@ -326,7 +326,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for flexible entry categorization."""
 
             def __getitem__(
-                self, key: str,
+                self,
+                key: str,
             ) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Get entries for a category by key."""
                 ...
@@ -435,7 +436,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def filter_by_base_dn(
-                self, base_dn: str,
+                self,
+                base_dn: str,
             ) -> FlextLdifProtocols.Ldif.FlexibleCategoriesProtocol:
                 """Filter categories by base DN."""
                 ...
@@ -520,13 +522,15 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for ACL quirk implementations."""
 
             def parse(
-                self, acl_line: str,
+                self,
+                acl_line: str,
             ) -> FlextResult[FlextLdifProtocols.Ldif.AclProtocol]:
                 """Parse ACL definition."""
                 ...
 
             def write(
-                self, acl_data: FlextLdifProtocols.Ldif.AclProtocol,
+                self,
+                acl_data: FlextLdifProtocols.Ldif.AclProtocol,
             ) -> FlextResult[str]:
                 """Write ACL definition."""
                 ...
@@ -536,7 +540,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for Entry quirk implementations."""
 
             def parse(
-                self, entry_lines: Sequence[str],
+                self,
+                entry_lines: Sequence[str],
             ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Parse entry definition."""
                 ...
@@ -579,7 +584,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for quirk registry implementations."""
 
             def get_quirk(
-                self, server_type: str,
+                self,
+                server_type: str,
             ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
                 """Get quirk for server type."""
                 ...
@@ -641,13 +647,15 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def __and__(
-                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T],
+                self,
+                other: FlextLdifProtocols.Ldif.FilterProtocol[T],
             ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
                 """AND combination."""
                 ...
 
             def __or__(
-                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T],
+                self,
+                other: FlextLdifProtocols.Ldif.FilterProtocol[T],
             ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
                 """OR combination."""
                 ...
@@ -680,7 +688,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for validators."""
 
             def validate(
-                self, item: T,
+                self,
+                item: T,
             ) -> FlextResult[FlextLdifProtocols.Ldif.ValidationReportProtocol]:
                 """Validate an item."""
                 ...

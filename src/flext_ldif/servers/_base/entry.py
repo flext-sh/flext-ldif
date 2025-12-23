@@ -534,7 +534,9 @@ class FlextLdifServersBaseEntry(
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
         | dict[str, object],
-    ) -> FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions:
+    ) -> (
+        FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
+    ):
         """Convert write options to appropriate typed model."""
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
@@ -574,10 +576,13 @@ class FlextLdifServersBaseEntry(
             if isinstance(write_options_typed, FlextLdifModelsDomains.WriteOptions):
                 write_opts_for_meta = write_options_typed
             elif isinstance(
-                write_options_typed, FlextLdifModelsSettings.WriteFormatOptions,
+                write_options_typed,
+                FlextLdifModelsSettings.WriteFormatOptions,
             ):
-                write_opts_for_meta = FlextLdifModelsDomains.WriteOptions.model_validate(
-                    write_options_typed.model_dump(),
+                write_opts_for_meta = (
+                    FlextLdifModelsDomains.WriteOptions.model_validate(
+                        write_options_typed.model_dump(),
+                    )
                 )
             updated_metadata = m.Ldif.QuirkMetadata(
                 quirk_type="rfc",

@@ -402,7 +402,9 @@ class _BooleanFlags(FlextLdifModelsBase):
 
 
 # Use simple type hint to avoid circular dependency
-class _FlexibleCategories(FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]):
+class _FlexibleCategories(
+    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]
+):
     """Flexible entry categorization with dynamic categories.
 
     Replaces dict[str, list[Entry]] pattern with type-safe model.
@@ -2163,7 +2165,9 @@ class FlextLdifModelsResults:
                     if isinstance(raw_attrs, dict):
                         for k, v in raw_attrs.items():
                             if isinstance(k, str) and isinstance(v, list):
-                                attrs_dict[str(k)] = [str(x) for x in v if x is not None]
+                                attrs_dict[str(k)] = [
+                                    str(x) for x in v if x is not None
+                                ]
                 elif isinstance(entry.attributes, Mapping):
                     for k, v in entry.attributes.items():
                         if isinstance(k, str) and isinstance(v, list):

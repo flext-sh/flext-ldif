@@ -591,9 +591,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         )
         # Convert entries for ParseResponse - use model_copy() for safety
         domain_entries: Sequence[m.Ldif.Entry] = [
-            entry
-            if isinstance(entry, m.Ldif.Entry)
-            else entry.model_copy(deep=True)
+            entry if isinstance(entry, m.Ldif.Entry) else entry.model_copy(deep=True)
             for entry in entries
         ]
         parse_response = FlextLdifModelsResults.ParseResponse(

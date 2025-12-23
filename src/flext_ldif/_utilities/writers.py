@@ -122,7 +122,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entry_parts(
-                entry: FlextLdifModelsDomains.Entry,
+            entry: FlextLdifModelsDomains.Entry,
             config: FlextLdifModelsSettings.EntryWriteConfig,
             lines: list[str],
         ) -> None:
@@ -174,7 +174,9 @@ class FlextLdifUtilitiesWriters:
 
                 # Transform entry if hook provided
                 if config.transform_entry_hook:
-                    entry = config.transform_entry_hook(entry)  # Returns core Entry, assign to domain Entry
+                    entry = config.transform_entry_hook(
+                        entry
+                    )  # Returns core Entry, assign to domain Entry
 
                 # Write entry parts (expects m.Ldif.Entry)
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)

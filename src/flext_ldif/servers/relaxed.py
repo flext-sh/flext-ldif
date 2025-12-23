@@ -820,8 +820,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     else:
                         # Update existing metadata using model_copy
                         updated_extensions = (
-                            acl.metadata.extensions
-                            or m.Ldif.DynamicMetadata()
+                            acl.metadata.extensions or m.Ldif.DynamicMetadata()
                         )
                         updated_metadata = acl.metadata.model_copy(
                             update={

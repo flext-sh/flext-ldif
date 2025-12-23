@@ -413,7 +413,9 @@ class FlextLdifUtilitiesACL:
         # Map the type
         # When default is provided, mapper().get returns the value directly
         subject_type: str = u.mapper().get(
-            subject_type_map, rule_type, default=rule_type,
+            subject_type_map,
+            rule_type,
+            default=rule_type,
         )
         subject_type = subject_type if isinstance(subject_type, str) else rule_type
 
@@ -446,7 +448,8 @@ class FlextLdifUtilitiesACL:
         result.update({
             key: value
             for key, value in extension_items
-            if value is not None and isinstance(value, (str, int, float, bool, list, dict, type(None)))
+            if value is not None
+            and isinstance(value, (str, int, float, bool, list, dict, type(None)))
         })
 
         return result
@@ -961,9 +964,7 @@ class FlextLdifUtilitiesACL:
         if extra_dict:
             # Native Python: dict comprehension with isinstance check
             filtered_extensions: dict[str, str] = {
-                k: v
-                for k, v in extra_dict.items()
-                if isinstance(v, str)
+                k: v for k, v in extra_dict.items() if isinstance(v, str)
             }
             if filtered_extensions:
                 extensions = dict(extensions, **filtered_extensions)
@@ -1701,7 +1702,9 @@ class FlextLdifUtilitiesACL:
                     errors.append((i, result.error or f"Failed to parse ACL line {i}"))
             except Exception as exc:
                 if fail_fast:
-                    return r[list[m.Ldif.Acl]].fail(f"Exception parsing ACL line {i}: {exc}")
+                    return r[list[m.Ldif.Acl]].fail(
+                        f"Exception parsing ACL line {i}: {exc}"
+                    )
                 errors.append((i, f"Exception parsing ACL line {i}: {exc}"))
 
         if errors and fail_fast:

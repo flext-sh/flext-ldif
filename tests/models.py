@@ -12,6 +12,13 @@ from __future__ import annotations
 
 from flext_tests.models import FlextTestsModels
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.validation import (
+    AclFormatRules,
+    DnCaseRules,
+    EncodingRules,
+    ServerValidationRules,
+)
 from flext_ldif.models import FlextLdifModels
 
 
@@ -51,6 +58,13 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
 
     # Result models (direct aliases for test convenience)
     ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
+    ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
+
+    # Validation rules models (direct aliases for test convenience)
+    ServerValidationRules = ServerValidationRules
+    EncodingRules = EncodingRules
+    DnCaseRules = DnCaseRules
+    AclFormatRules = AclFormatRules
 
 
 # Standardized short name for use in tests (same pattern as flext-core)

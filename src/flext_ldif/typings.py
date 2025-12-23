@@ -149,7 +149,8 @@ class FlextLdifTypes(FlextTypes):
             WriteMethodArg: TypeAlias = object
             WriteMethodReturn: TypeAlias = object
             WriteMethod: TypeAlias = Callable[
-                [object, WriteMethodArg], WriteMethodReturn,
+                [object, WriteMethodArg],
+                WriteMethodReturn,
             ]
             WriteMethodDecorator: TypeAlias = Callable[[WriteMethod], WriteMethod]
 
@@ -187,7 +188,8 @@ class FlextLdifTypes(FlextTypes):
 
         # Metadata dictionary types (mutable variants)
         MetadataDictMutable: TypeAlias = dict[
-            str, str | int | float | bool | list[str] | None,
+            str,
+            str | int | float | bool | list[str] | None,
         ]
         FlexibleKwargsMutable: TypeAlias = dict[str, object]
 
