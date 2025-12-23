@@ -72,7 +72,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         result = schema_service.execute()
         assert result.is_success
         status = result.value
-        assert isinstance(status, m.Ldif.SchemaServiceStatus)
+        assert isinstance(status, m.Ldif.LdifResults.SchemaServiceStatus)
         assert status.service == "SchemaService"
         assert status.status == "operational"
         assert status.rfc_compliance == "RFC 4512"

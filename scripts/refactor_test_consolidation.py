@@ -30,8 +30,7 @@ def analyze_test_file(file_path: Path) -> FileAnalysis:
         msg = f"File not found: {file_path}"
         raise FileNotFoundError(msg)
 
-    with Path(file_path).open("r", encoding="utf-8") as f:
-        content = f.read()
+    content = Path(file_path).read_text(encoding="utf-8")
 
     lines = content.split("\n")
     line_count = len(lines)

@@ -13,6 +13,7 @@ Provides power method infrastructure:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# ruff: noqa: SLF001, PLC2701
 
 from __future__ import annotations
 
@@ -487,11 +488,30 @@ class FlextLdifUtilities(FlextUtilities):
             source_server: c.Ldif.ServerTypes,
             target_server: c.Ldif.ServerTypes | None,
         ) -> bool:
-            """Check if this is an LDIF-specific process call."""
+            """Check if this is an LDIF-specific process call.
+
+            Returns True only if:
+            1. items is a non-empty Sequence (not str/bytes/dict)
+            2. items contains at least one Entry object
+            3. LDIF-specific configuration is present
+
+            This prevents misrouting generic sequences (like list[Path])
+            to the LDIF entry processing pipeline.
+            """
             is_sequence_entry = isinstance(items, Sequence) and not isinstance(
                 items,
                 (str, bytes, dict),
             )
+
+            # Verify sequence actually contains Entry objects
+            # Empty sequences should use generic processing
+            if is_sequence_entry and items:
+                # Check first element to verify it's an Entry
+                # This prevents list[Path] from being treated as list[Entry]
+                first_item = next(iter(items), None)
+                if first_item is not None and not isinstance(first_item, m.Ldif.Entry):
+                    return False
+
             has_ldif_config = (
                 (processor_normalized is None and processor is None)
                 or isinstance(processor_normalized, ProcessConfig)

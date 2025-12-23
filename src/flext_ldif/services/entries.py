@@ -686,12 +686,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[str].fail(f"Attribute '{attribute_name}' not found")
 
         # Type narrowing: attribute values are str | list[str]
-        attr_value: str | list[str]
-        if isinstance(value_raw, (str, list)):
-            attr_value = value_raw
-        else:
-            # Fallback: convert to string
-            attr_value = str(value_raw)
+        attr_value: str | list[str] = (
+            value_raw if isinstance(value_raw, (str, list)) else str(value_raw)
+        )
 
         # Type-based normalization to list[str]
         if isinstance(attr_value, str):
