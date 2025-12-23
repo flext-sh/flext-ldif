@@ -644,6 +644,8 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_SUBJECT_PATTERNS: ClassVar[dict[str, tuple[str | None, str, str]]] = {
         " by self ": (None, "self", "ldap:///self"),
         " by self)": (None, "self", "ldap:///self"),
+        " by * ": (None, "*", "*"),  # Anonymous access: by *
+        " by *(": (None, "*", "*"),  # Anonymous access: by *(browse)
         ' by "': (r'by\s+"([^"]+)"', "user_dn", "ldap:///{0}"),
         " by group=": (r'by\s+group\s*=\s*"([^"]+)"', "group_dn", "ldap:///{0}"),
         " by dnattr=": (r"by\s+dnattr\s*=\s*\(([^)]+)\)", "dn_attr", "{0}#LDAPURL"),

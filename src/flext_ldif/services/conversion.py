@@ -1280,12 +1280,10 @@ class FlextLdifConversion(
         orig_perms_dict_typed: dict[str, object] = cast(
             "dict[str, object]", orig_perms_dict
         )
+        # Use key_mapper to normalize keys (not mapper which would replace values)
         normalized_orig_perms_raw = u.Ldif.map_dict(
             orig_perms_dict_typed,
-            mapper=lambda k, v: (
-                FlextLdifConversion._normalize_permission_key(k),
-                v,
-            ),
+            key_mapper=FlextLdifConversion._normalize_permission_key,
         )
         # Type narrowing: map_dict returns dict[str, object], check if it's dict[str, bool]
         if isinstance(normalized_orig_perms_raw, dict):

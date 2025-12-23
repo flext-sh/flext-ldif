@@ -606,8 +606,9 @@ class FlextLdifUtilitiesACL:
         """Check if rule value matches any special value."""
         # Simple native iteration - no complex FlextFunctional chains
         for key, value_tuple in u.mapper().to_dict(special_values).items():
+            # Compare normalized values (case-insensitive)
             if (
-                u.normalize(rule_value, key)
+                rule_value.lower() == key.lower()
                 and isinstance(value_tuple, tuple)
                 and len(value_tuple) == TUPLE_LENGTH_PAIR
                 and isinstance(value_tuple[0], str)
