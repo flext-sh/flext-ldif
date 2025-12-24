@@ -33,9 +33,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
-from flext_ldif.models import m
 from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 # Import removed to avoid circular dependency
 
@@ -56,7 +54,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _convert_transformation_to_metadata_value(
         transformation: m.Ldif.Types.TransformationInfo,
-    ) -> Mapping[str, FlextTypes.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict.
 
         TransformationInfo has changes: list[str], which needs to be converted
@@ -152,7 +150,7 @@ class FlextLdifUtilitiesMetadata:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
-            metadata_obj = FlextModels.Metadata(attributes={})
+            metadata_obj = m.Metadata(attributes={})
 
         if isinstance(metadata_obj, FlextModels.Metadata) and isinstance(
             metadata_obj.attributes,

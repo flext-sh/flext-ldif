@@ -18,6 +18,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesDN:
@@ -1608,7 +1609,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> r[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Transform BaseDN in all LDIF files in directory.
 
         Reads all *.ldif files from directory, transforms BaseDN in entries,
