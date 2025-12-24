@@ -102,7 +102,6 @@ description: Application data entry
             path_str = cast("str", path)
             file_path = Path(path_str)
             if file_path.exists():
-                _size = file_path.stat().st_size
                 _lines = len(file_path.read_text(encoding="utf-8").splitlines())
 
         # Show sample output

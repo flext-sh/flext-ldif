@@ -9,8 +9,7 @@ from __future__ import annotations
 import operator
 import re
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities
-
+from flext import FlextLogger, FlextResult, FlextUtilities
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 # REMOVED: Type aliases redundantes - use m.* diretamente (já importado com runtime alias)

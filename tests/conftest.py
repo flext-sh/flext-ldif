@@ -17,8 +17,8 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_core import r
 
+from flext import r
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 
 # =============================================================================

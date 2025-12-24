@@ -22,7 +22,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from flext_core import FlextSettings
+from flext import FlextSettings
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif

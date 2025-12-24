@@ -11,9 +11,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
-from flext_core import r
 from pydantic import PrivateAttr
 
+from flext import r
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
@@ -83,7 +83,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             )
         except (ValueError, TypeError) as e:
             return r[str].fail(
-                f"Invalid server type: {effective_server_type_raw} - {e}"
+                f"Invalid server type: {effective_server_type_raw} - {e}",
             )
 
         try:
@@ -210,7 +210,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         batch_result = u.Collection.batch(
             results,
             convert_entry,
-            _on_error="skip",
+            on_error="skip",
         )
         if batch_result.is_success:
             # u.Collection.batch returns BatchResult dict with 'results' key

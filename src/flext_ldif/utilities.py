@@ -27,17 +27,12 @@ from collections.abc import (
 )
 from typing import ClassVar, Literal, Self, TypeGuard, cast, overload
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextUtilities,
-    r,
-)
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import ValidatorSpec
 
+from flext_core import FlextLogger, FlextResult, u, r
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -159,7 +154,9 @@ class FlextLdifUtilities(FlextUtilities):
             """
 
             def __init__(
-                self, *, value: str | bytes | float | bool | list[str] | None
+                self,
+                *,
+                value: str | bytes | float | bool | list[str] | None,
             ) -> None:
                 """Initialize conversion builder with a value.
 
@@ -824,7 +821,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 else:
                     result_item = cast(
-                        "R", cast("Callable[[object], object]", processor_func)(value)
+                        "R",
+                        cast("Callable[[object], object]", processor_func)(value),
                     )
                 results.append(result_item)
             return results
@@ -1028,7 +1026,8 @@ class FlextLdifUtilities(FlextUtilities):
                 # Process single items through processor_func
                 # Processor function accepts various types - cast to single-arg version
                 result_item = cast(
-                    "R", cast("Callable[[object], object]", processor_func)(items)
+                    "R",
+                    cast("Callable[[object], object]", processor_func)(items),
                 )
                 return r[list[R]].ok([result_item])
             except Exception as e:
@@ -1135,7 +1134,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 def predicate_callable(item: object) -> bool:
                     item_typed = FlextUtilitiesMapper._narrow_to_general_value_type(
-                        item
+                        item,
                     )
                     return predicate(item_typed)
 
@@ -3284,8 +3283,10 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             if isinstance(obj, dict):
+                # Convert values to strings for invert_dict (expects Mapping[str, str])
+                str_dict: t.StringMapping = {k: str(v) for k, v in obj.items()}
                 # Use flext-core mapper for consistent behavior
-                return FlextUtilities.mapper().invert_dict(obj)
+                return FlextUtilities.mapper().invert_dict(str_dict)
             return {}
 
         # Mnemonic helper

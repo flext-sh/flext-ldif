@@ -7,7 +7,7 @@ transformations through decorated methods.
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext import FlextResult
 from tests import m, s
 
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators

@@ -267,7 +267,7 @@ class TestDeduplicationHelpers:
                 pass  # Protocol, use structural typing
             elif not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
                 )
 
         return value

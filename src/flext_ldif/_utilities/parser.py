@@ -12,8 +12,7 @@ import re
 from collections.abc import Callable
 from typing import Literal, TypedDict, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
-
+from flext import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

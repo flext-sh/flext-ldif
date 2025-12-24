@@ -24,11 +24,7 @@ import re
 from datetime import datetime
 from typing import Literal, Self, cast, overload
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextLogger, FlextResult, t
 
 # Metadata access via m.Ldif namespace from models import
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
@@ -923,10 +919,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            logger.exception(
-                f"RFC {item_type} writing exception",
-                exception=e,
-            )
+            logger.exception("RFC %s writing exception", item_type)
             return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
     def _write_attribute(

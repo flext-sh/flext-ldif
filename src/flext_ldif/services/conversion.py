@@ -22,14 +22,9 @@ import traceback
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, ClassVar, Self, TypeGuard, cast, override
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-    r,
-)
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, r
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.base import FlextLdifServiceBase
 
@@ -351,7 +346,8 @@ class FlextLdifConversion(
         )
         _ = u.Ldif.Events.log_and_emit_conversion_event(
             logger=cast(
-                "Any", logger
+                "Any",
+                logger,
             ),  # FlextLogger compatible with StructlogLogger protocol
             config=conversion_config,
             log_level="info" if result.is_success else "error",
@@ -457,7 +453,8 @@ class FlextLdifConversion(
         if not isinstance(boolean_conversions, dict):
             return analysis
         boolean_conv_typed: dict[str, object] = cast(
-            "dict[str, object]", boolean_conversions
+            "dict[str, object]",
+            boolean_conversions,
         )
 
         def process_conversion(
@@ -507,7 +504,7 @@ class FlextLdifConversion(
         batch_result = u.Collection.batch(
             pairs_list,
             process_conversion,
-            _on_error="skip",
+            on_error="skip",
         )
 
         # Extract results from batch result dict
@@ -545,7 +542,8 @@ class FlextLdifConversion(
         analysis_obj: dict[str, object] = cast("dict[str, object]", analysis)
         # Type narrowing: evolved_raw is dict[str, dict[str, str]]
         return cast(
-            "dict[str, dict[str, str]]", u.Ldif.evolve(analysis_obj, reduced_raw)
+            "dict[str, dict[str, str]]",
+            u.Ldif.evolve(analysis_obj, reduced_raw),
         )
 
     @staticmethod
@@ -575,7 +573,7 @@ class FlextLdifConversion(
         """Analyze DN spacing for target compatibility."""
         pipe_result = u.Reliability.pipe(
             original_format_details,
-            lambda d: (u.Ldif.take(d, "dn_spacing") if isinstance(d, dict) else None),
+            lambda d: u.Ldif.take(d, "dn_spacing") if isinstance(d, dict) else None,
             lambda spacing: (
                 {
                     "dn_format": {
@@ -1278,7 +1276,8 @@ class FlextLdifConversion(
         # map_dict expects dict[str, object], orig_perms_dict is dict[str, bool]
         # Use cast for dict invariance (dict[str, bool] -> dict[str, object])
         orig_perms_dict_typed: dict[str, object] = cast(
-            "dict[str, object]", orig_perms_dict
+            "dict[str, object]",
+            orig_perms_dict,
         )
         # Use key_mapper to normalize keys (not mapper which would replace values)
         normalized_orig_perms_raw = u.Ldif.map_dict(

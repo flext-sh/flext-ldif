@@ -20,8 +20,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
-
+from flext import FlextLogger, FlextResult
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl

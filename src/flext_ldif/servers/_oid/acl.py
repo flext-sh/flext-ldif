@@ -20,8 +20,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar, Literal, cast
 
-from flext_core import FlextLogger, FlextResult, u
-
+from flext import FlextLogger, FlextResult, u
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata

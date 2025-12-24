@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import FlextLogger, FlextResult as r
-
+from flext import FlextLogger, FlextResult as r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c

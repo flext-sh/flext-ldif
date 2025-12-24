@@ -41,9 +41,9 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
+from flext import FlextLogger, r, s
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m

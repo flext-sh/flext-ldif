@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
+from flext import FlextResult
 from tests import s
 
 from flext_ldif.protocols import FlextLdifProtocols

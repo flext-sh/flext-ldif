@@ -12,26 +12,17 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext_core import r
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field
 
+from flext import r
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
-
-# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED: if TYPE_CHECKING:
-# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED:     from flext_ldif._models.shared import Acl, SchemaObjectClass
-# TYPE_CHECKING REMOVED: # TYPE_CHECKING REMOVED:
-# TYPE_CHECKING REMOVED: # REMOVED: Aliases for nested objects - use p.* directly (no redundant aliases for nested objects)
-# TYPE_CHECKING REMOVED: # _Entry = "FlextModelsEntity.Entry"  # Use "FlextModelsEntity.Entry" directly
-# TYPE_CHECKING REMOVED: # _SchemaObjectClass = "FlextModelsBase.SchemaObjectClass"  # Use "FlextModelsBase.SchemaObjectClass" directly
-# TYPE_CHECKING REMOVED: # _Acl = "FlextModelsBase.Acl"  # Use "FlextModelsBase.Acl" directly
-# TYPE_CHECKING REMOVED:
 
 
 # Configuration classes defined outside main class for type resolution

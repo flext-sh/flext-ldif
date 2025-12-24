@@ -18,8 +18,7 @@ from __future__ import annotations
 import re
 from typing import Literal, cast
 
-from flext_core import FlextUtilities
-
+from flext import FlextUtilities
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 
@@ -369,13 +368,14 @@ class FlextLdifUtilitiesServer:
         if server_type_lower in alias_map:
             # alias_map values are guaranteed valid ServerTypeLiterals
             return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral", alias_map[server_type_lower]
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                alias_map[server_type_lower],
             )
         # Check if it's already a canonical value
         # ServerTypes is a StrEnum, iterate over enum members
         for server_enum in c.Ldif.ServerTypes.__members__.values():
             if server_enum.value == server_type_lower:
-                return server_enum.value  # StrEnum.value is a valid ServerTypeLiteral
+                return server_enum.value  # type: ignore[return-value]
         # Not found
         # ServerTypes is a StrEnum, iterate over enum members
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]

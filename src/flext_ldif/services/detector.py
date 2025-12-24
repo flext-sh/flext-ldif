@@ -19,9 +19,7 @@ import re
 from pathlib import Path
 from typing import Protocol, override
 
-from flext_core import r
-
-from flext_ldif._models.results import DynamicCounts as InternalDynamicCounts
+from flext import r
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
@@ -127,10 +125,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
         """
         # Python 3.13+ Advanced Features: Structural pattern matching for input validation
-        max_lines = (
-            max_lines
-            or u.Ldif.Server.get_server_detection_default_max_lines()
-        )
+        max_lines = max_lines or u.Ldif.Server.get_server_detection_default_max_lines()
 
         match (ldif_path, ldif_content):
             case (None, None):
@@ -164,12 +159,10 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         patterns_found = self._extract_patterns(content_sample)
 
         # Normalize detected type to proper Literal type
-        detected_type = u.Ldif.Server.normalize_server_type(
-            detected_type_raw
-        )
+        detected_type = u.Ldif.Server.normalize_server_type(detected_type_raw)
 
-        # Convert dict to DynamicCounts model (supports extra fields via Pydantic)
-        scores_model = InternalDynamicCounts(**scores_dict)
+        # Convert dict to DynamicCounts model (supports
+        scores_model = m.Ldif.InternalDynamicCounts(**scores_dict)
 
         detection_result = m.Ldif.LdifResults.ServerDetectionResult(
             detected_server_type=detected_type,
@@ -309,9 +302,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         if re.search(pattern, search_content):
             scores[server_type] += weight
 
-        score_attr_match = (
-            u.Ldif.Server.get_server_detection_attribute_match_score()
-        )
+        score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             # normalize() auto-detects contains when two strings are passed
             # Use string comparison (utilities prohibited in services/)
@@ -512,10 +503,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         detected_key: str = max(scores, key=lambda k: scores[k])
 
         # If low confidence, return RFC
-        if (
-            confidence
-            < u.Ldif.Server.get_server_detection_confidence_threshold()
-        ):
+        if confidence < u.Ldif.Server.get_server_detection_confidence_threshold():
             return "rfc", confidence
 
         # Map "generic" fallback to "rfc" (generic is not a registered quirk)

@@ -33,9 +33,9 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal, Self, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
+from flext import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID

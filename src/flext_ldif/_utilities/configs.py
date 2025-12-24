@@ -5,81 +5,37 @@ Provides configuration classes for LDIF processing:
     - TransformConfig: Transformation pipeline configuration
     - FilterConfig: Entry filtering configuration
     - WriteConfig: LDIF output configuration
-    - And related configuration options (Enums, TypedDicts, etc.)
+    - And related configuration options (TypedDicts, etc.)
 
 Python 3.13+ features:
     - PEP 695 type parameter syntax
     - Keyword-only arguments
+
+NOTE: All StrEnums are centralized in constants.py per FLEXT pattern.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from enum import StrEnum
 from typing import Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldif.constants import c
+
 # =========================================================================
-# ENUMS FOR SERVER TYPES AND OPTIONS
+# ENUM ALIASES FROM CONSTANTS (CENTRALIZED SOURCE OF TRUTH)
 # =========================================================================
+# Per FLEXT pattern: StrEnums are ONLY in constants.py
+# These aliases provide backward compatibility for existing usages
 
-
-class ServerType(StrEnum):
-    """LDAP server type enumeration."""
-
-    AUTO = "auto"
-    OID = "oid"
-    OUD = "oud"
-    OPENLDAP = "openldap"
-    OPENLDAP1 = "openldap1"
-    AD = "ad"
-    DS389 = "ds389"
-    NOVELL = "novell"
-    TIVOLI = "tivoli"
-    RELAXED = "relaxed"
-    RFC = "rfc"
-
-
-class OutputFormat(StrEnum):
-    """Output format enumeration."""
-
-    LDIF = "ldif"
-    JSON = "json"
-    CSV = "csv"
-    YAML = "yaml"
-
-
-class CaseFoldOption(StrEnum):
-    """Case folding options for DN normalization."""
-
-    NONE = "none"
-    LOWER = "lower"
-    UPPER = "upper"
-
-
-class SpaceHandlingOption(StrEnum):
-    """Space handling options for DN normalization."""
-
-    PRESERVE = "preserve"
-    TRIM = "trim"
-    NORMALIZE = "normalize"
-
-
-class EscapeHandlingOption(StrEnum):
-    """Escape sequence handling options."""
-
-    PRESERVE = "preserve"
-    UNESCAPE = "unescape"
-    NORMALIZE = "normalize"
-
-
-class SortOption(StrEnum):
-    """Attribute sorting options."""
-
-    NONE = "none"
-    ALPHABETICAL = "alphabetical"
-    HIERARCHICAL = "hierarchical"
+# Domain options from constants
+ServerType = c.Ldif.Domain.ServerType
+OutputFormat = c.Ldif.Domain.OutputFormat
+CaseFoldOption = c.Ldif.Domain.CaseFoldOption
+SpaceHandlingOption = c.Ldif.Domain.SpaceHandlingOption
+EscapeHandlingOption = c.Ldif.Domain.EscapeHandlingOption
+SortOption = c.Ldif.Domain.SortOption
 
 
 # =========================================================================

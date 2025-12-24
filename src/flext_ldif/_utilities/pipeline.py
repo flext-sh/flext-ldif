@@ -33,8 +33,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Self
 
-from flext_core import r
-
+from flext import r
 from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
@@ -342,7 +341,7 @@ class Pipeline:
                 # Real error - handle based on fail_fast setting
                 if self._fail_fast:
                     return r[str].fail(
-                        process_result.error or "Pipeline execution failed"
+                        process_result.error or "Pipeline execution failed",
                     )
                 # Collect mode: skip error and continue
                 continue

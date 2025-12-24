@@ -18,8 +18,7 @@ from __future__ import annotations
 import json
 from functools import reduce
 
-from flext_core import FlextLogger, FlextResult
-
+from flext import FlextLogger, FlextResult
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -535,7 +534,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if attr_name.lower() in schema_attrs
                 else attr_values
             )
-            for attr_name, attr_values in u.mapper()
+            for attr_name, attr_values in u
+            .mapper()
             .to_dict(entry.attributes.attributes)
             .items()
         }

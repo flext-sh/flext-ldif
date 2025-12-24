@@ -18,11 +18,9 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from contextlib import suppress
 from typing import ClassVar
 
-from flext_core import r
-
+from flext import r
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
@@ -32,7 +30,6 @@ from flext_ldif.servers._rfc import (
 )
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
@@ -315,7 +312,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # Nested class references for Schema - allows Schema().Entry() pattern
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[misc]
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
         # SDDL pattern moved to Constants.ACL_SDDL_PREFIX_PATTERN
@@ -532,7 +529,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             normalized_attrs = {
                 name.lower(): value
-                for name, value in u.Ldif.mapper().to_dict(attributes).items()
+                for name, value in attributes.items()
             }
             if any(
                 marker in normalized_attrs
@@ -540,11 +537,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
 
-            # u.Ldif.mapper().get() returns value directly (or default if key not found)
-            raw_object_classes: list[str] = u.Ldif.mapper().get(
-                attributes,
+            # Get object classes directly from attributes
+            raw_object_classes = attributes.get(
                 c.Ldif.DictKeys.OBJECTCLASS,
-                default=[],
+                [],
             )
             object_classes = (
                 raw_object_classes

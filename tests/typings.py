@@ -10,14 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
+from typing import TypedDict
 
 from flext_tests.typings import FlextTestsTypes
 
 from flext_ldif.typings import FlextLdifTypes
-
-# Type aliases for test data structures
-GenericFieldsDict: TypeAlias = dict[str, object]
 
 
 class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
@@ -26,21 +23,49 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     Provides test-specific type extensions without duplicating parent functionality.
     All parent types are accessible via inheritance hierarchy.
 
+    Hierarchy:
+    - FlextTestsTypes.Tests.* (generic test types from flext_tests)
+    - FlextLdifTypes.Ldif.* (source types from flext_ldif)
+    - TestsFlextLdifTypes.Tests.* (flext-ldif-specific test types)
+
     Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
-    Short name 't' for convenient access in tests.
+    Short name 't' for convenient access in tests, 'tt' as test-specific alias.
     """
 
-    # Test-specific type extensions can be added here
-    # All parent types (from FlextTestsTypes and FlextLdifTypes) are accessible via inheritance
+    class Tests:
+        """flext-ldif-specific test type definitions namespace.
+
+        Use tt.Tests.* for flext-ldif-specific test types.
+        Use t.Tests.* for generic test types from FlextTestsTypes.
+        """
+
+        class Fixtures:
+            """TypedDict definitions for LDIF test fixtures."""
+
+            class GenericFieldsDict(TypedDict, total=False):
+                """Generic dictionary for flexible test data and configurations."""
+
+            class LdifEntryDict(TypedDict, total=False):
+                """Test LDIF entry data."""
+
+                dn: str
+                changetype: str
+                attributes: dict[str, list[str]]
+
+            class LdifParseResultDict(TypedDict, total=False):
+                """LDIF parse result test data."""
+
+                entries: list[dict[str, object]]
+                errors: list[str]
+                warnings: list[str]
 
 
 # Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
-Testst = TestsFlextLdifTypes  # Alias for tests/__init__.py
+tt = TestsFlextLdifTypes
 
 __all__ = [
-    "GenericFieldsDict",
     "TestsFlextLdifTypes",
-    "Testst",
     "t",
+    "tt",
 ]

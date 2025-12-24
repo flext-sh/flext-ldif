@@ -5,9 +5,8 @@ from __future__ import annotations
 import inspect
 from typing import cast
 
-from flext_core import FlextLogger, r
-
 import flext_ldif.servers as servers_package
+from flext import FlextLogger, r
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase

@@ -23,8 +23,7 @@ SPDX-License-Identifier: MIT
 
 """
 
-from flext_core import d, e, h, r
-
+from flext import d, e, h, r
 from flext_ldif.api import FlextLdif
 from flext_ldif.base import FlextLdifServiceBase, s
 from flext_ldif.constants import FlextLdifConstants, c

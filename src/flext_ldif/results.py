@@ -144,9 +144,9 @@ class DynamicCounts(FlextLdifModelsBase):
             return None
         return max(
             extra,
-            key=lambda k: int(extra.get(k, 0))
-            if isinstance(extra.get(k, 0), (int, float))
-            else 0,
+            key=lambda k: (
+                int(extra.get(k, 0)) if isinstance(extra.get(k, 0), (int, float)) else 0
+            ),
         )
 
     def to_items(self) -> list[tuple[str, int]]:
@@ -405,7 +405,7 @@ class _BooleanFlags(FlextLdifModelsBase):
 
 # Use simple type hint to avoid circular dependency
 class _FlexibleCategories(
-    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]
+    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
 ):
     """Flexible entry categorization with dynamic categories.
 

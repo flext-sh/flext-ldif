@@ -19,8 +19,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import r
-
+from flext import r
 from flext_ldif import FlextLdif, m
 from flext_ldif.constants import c
 from flext_ldif.utilities import u
@@ -367,7 +366,8 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
 
         # Step 2: Migrate OID → Intermediate (OUD format)
         source_server_typed = cast(
-            "c.Ldif.LiteralTypes.ServerTypeLiteral", source_server
+            "c.Ldif.LiteralTypes.ServerTypeLiteral",
+            source_server,
         )
         intermediate_migration = api.migrate(
             input_dir=source_dir,

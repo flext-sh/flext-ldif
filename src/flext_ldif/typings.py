@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, TypeAlias, TypeVar
 
-from flext_core import FlextResult as r, FlextTypes
+from flext import FlextResult as r, FlextTypes
 
 
 class FlextLdifTypes(FlextTypes):

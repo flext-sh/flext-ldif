@@ -23,8 +23,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextContext, r
-
+from flext import FlextContext, r
 from flext_ldif import FlextLdif, m
 
 
@@ -71,7 +70,7 @@ mail: jane.smith@example.com
 
         # Chain operations with Railway pattern
         validate_result = api.parse(self.SAMPLE_LDIF, server_type=server_type).and_then(
-            api.validate_entries
+            api.validate_entries,
         )
         if validate_result.is_failure:
             return r.fail(validate_result.error or "Validation failed")

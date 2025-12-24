@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import u
+from flext import u
 
 
 class FlextLdifUtilitiesValidation(u.Validation):

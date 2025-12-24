@@ -36,11 +36,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import IO, Self, overload
+from typing import IO, Self, cast, overload
 
-from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
 
+from flext import FlextResult
 from flext_ldif.protocols import p
 
 r = FlextResult
@@ -358,7 +358,7 @@ class FlextLdifResult[T]:
         if hasattr(transformer, "apply"):
             apply_method = getattr(transformer, "apply", None)
             if apply_method is not None and callable(apply_method):
-                transform_result: T | FlextResult[T] = apply_method(self.value)
+                transform_result = apply_method(self.value)
                 if isinstance(transform_result, FlextResult):
                     return FlextLdifResult.from_result(transform_result)
                 return FlextLdifResult.ok(transform_result)
@@ -524,7 +524,7 @@ class FlextLdifResult[T]:
         predicate_matches = getattr(predicate, "matches", None)
         if predicate_matches is not None and callable(predicate_matches):
             # FilterProtocol with matches method
-            matches_func = predicate_matches
+            matches_func = predicate_matches  # type: ignore[assignment]
         elif callable(predicate):
             matches_func = predicate
         else:
@@ -534,13 +534,13 @@ class FlextLdifResult[T]:
         if isinstance(value, Sequence) and not isinstance(value, str):
             # Filter elements - result is always a list for type consistency
             filtered_elements: list[object] = [
-                item for item in value if matches_func(item)
+                item for item in value if matches_func(item)  # type: ignore[arg-type]
             ]
             # Type narrowing: filtered_elements is the filtered sequence of type T
-            return FlextLdifResult(r.ok(filtered_elements))  # type: ignore[arg-type]
+            return FlextLdifResult(r.ok(cast("list[T]", filtered_elements)))
 
         # Handle single value - return if matches, fail otherwise
-        if matches_func(value):
+        if matches_func(value):  # type: ignore[arg-type]
             return FlextLdifResult.ok(value)
 
         return FlextLdifResult.fail("Value did not match filter predicate")
