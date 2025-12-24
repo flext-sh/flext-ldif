@@ -1,20 +1,20 @@
-"""Apache Directory Server quirks implementation."""
+"""Apache Directory Server quirks implementation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
 
 from __future__ import annotations
 
-# Copyright (c) 2025 FLEXT Team. All rights reserved.
-# SPDX-License-Identifier: MIT
 import re
 from typing import ClassVar
 
 from flext_core import FlextResult
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
 
@@ -39,12 +39,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         # Server identification
 
         # Auto-discovery constants
-        CANONICAL_NAME: ClassVar[str] = "apache_directory"
+        CANONICAL_NAME: ClassVar[str] = "apache"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["apache", "apache_directory"])
-        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache_directory"])
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
             [
-                "apache_directory",
+                "apache",
                 "rfc",
             ],
         )
@@ -215,7 +215,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(
-                    "apache_directory",
+                    "apache",  # Use canonical server type
                 )
                 return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
@@ -337,6 +337,34 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Inherits entry handling from RFC base - no override needed.
         """
 
+        def can_handle(
+            self,
+            entry_dn: str,
+            attributes: dict[str, list[str]],
+        ) -> bool:
+            """Check if this quirk can handle the entry.
+
+            Apache Directory Server entries are detected by:
+            - DN markers: ou=config, ou=services, ou=system, ou=partitions
+            - Attribute prefixes: ads-, apacheds
+            - ObjectClass names: ads-* prefixed classes
+
+            When Apache quirk is selected, it accepts ALL entries for processing.
+
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes mapping
+
+            Returns:
+                True - Apache quirk accepts all entries once selected
+
+            """
+            # Apache quirk accepts all entries when it's the selected quirk
+            # Detection markers are used for auto-detection, not filtering
+            _ = entry_dn
+            _ = attributes
+            return True
+
         def _parse_entry(
             self,
             entry_dn: str,
@@ -382,7 +410,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
-                    metadata.extensions = FlextLdifModelsMetadata.DynamicMetadata()
+                    metadata.extensions = m.Ldif.DynamicMetadata()
                 metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
                 )

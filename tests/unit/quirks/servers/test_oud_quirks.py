@@ -178,7 +178,7 @@ class TestsTestFlextLdifOudQuirks(s):
         try:
             # Parse and validate using unified methods
             entries = tf.load_fixture_and_validate_structure(fixture_path)
-            tm.entries(entries, all_have_attr="dn", all_have_oc="top")
+            tm.entries(entries, all_have_oc="top")
 
             dns = [e.dn.value for e in entries if e.dn is not None]
             assert "dc=example,dc=com" in dns

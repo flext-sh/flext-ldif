@@ -256,8 +256,8 @@ class TestRfcSchemaQuirkDirectUsage:
     def test_schema_quirk_methods(
         self,
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
-        sample_schema_attribute: p.Ldif.SchemaAttribute,
-        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Schema quirk can_handle and should_filter methods."""
         assert rfc_schema_quirk.can_handle_attribute("any attribute definition") is True

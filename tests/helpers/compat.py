@@ -80,7 +80,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_attribute_valid(
-        attr: p.Ldif.SchemaAttribute | str,
+        attr: m.Ldif.SchemaAttribute | str,
         expected_oid: str | None = None,
         msg: str | None = None,
     ) -> None:
@@ -91,7 +91,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_objectclass_valid(
-        oc: p.Ldif.SchemaObjectClass | str,
+        oc: m.Ldif.SchemaObjectClass | str,
         expected_name: str | None = None,
         msg: str | None = None,
     ) -> None:

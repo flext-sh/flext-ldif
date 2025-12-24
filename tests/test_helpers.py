@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from flext_core.result import r
 from flext_tests import (
@@ -24,6 +25,7 @@ from flext_tests import (
     tt as tt_base,
 )
 
+from flext_ldif import FlextLdif
 from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
 
@@ -139,8 +141,9 @@ class TestsFlextLdifMatchers(tm_base):
             else str(dn_obj)
         )
 
-        # Get objectClasses - normalized to list
-        objectclasses = attrs.get("objectClass", [])
+        # Get objectClasses - normalized to list (case-insensitive lookup)
+        # LDAP attribute names are case-insensitive, check both forms
+        objectclasses = attrs.get("objectClass", attrs.get("objectclass", []))
         if isinstance(objectclasses, str):
             objectclasses = [objectclasses]
 
@@ -390,7 +393,10 @@ class TestsFlextLdifMatchers(tm_base):
                         else (attrs_obj if isinstance(attrs_obj, dict) else {})
                     )
                     if isinstance(attrs, dict):
-                        objectclasses = attrs.get("objectClass", [])
+                        objectclasses = attrs.get(
+                            "objectClass",
+                            attrs.get("objectclass", []),
+                        )
                         if isinstance(objectclasses, str):
                             objectclasses = [objectclasses]
                         if all(oc in objectclasses for oc in oc_list):
@@ -650,6 +656,70 @@ class TestsFlextLdifFixtures(tf_base):
             entry = cls.create_entry(dn, **attrs)
             result.append(entry)
         return result
+
+    @staticmethod
+    def run_fixture_roundtrip(
+        fixture_path: Path,
+        msg: str | None = None,
+    ) -> list[p.Entry]:
+        """Run fixture roundtrip - parse, write, parse again.
+
+        Args:
+            fixture_path: Path to the LDIF fixture file
+            msg: Optional error message
+
+        Returns:
+            List of entries after roundtrip
+
+        """
+        api = FlextLdif.get_instance()
+        parse_result = api.parse(fixture_path)
+        entries = TestsFlextLdifMatchers.ok(parse_result, msg=msg, is_=list)
+        # Roundtrip through write/parse
+        write_result = api.write(entries)
+        ldif_content = TestsFlextLdifMatchers.ok(write_result, msg=msg, is_=str)
+        roundtrip_result = api.parse(ldif_content)
+        return TestsFlextLdifMatchers.ok(roundtrip_result, msg=msg, is_=list)
+
+    @staticmethod
+    def load_fixture_entries(
+        fixture_path: Path,
+        msg: str | None = None,
+    ) -> list[p.Entry]:
+        """Load fixture entries from LDIF file.
+
+        Args:
+            fixture_path: Path to the LDIF fixture file
+            msg: Optional error message
+
+        Returns:
+            List of parsed entries
+
+        """
+        api = FlextLdif.get_instance()
+        result = api.parse(fixture_path)
+        return TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
+
+    @staticmethod
+    def load_fixture_and_validate_structure(
+        fixture_path: Path,
+        msg: str | None = None,
+    ) -> list[p.Entry]:
+        """Load fixture and validate structure.
+
+        Args:
+            fixture_path: Path to the LDIF fixture file
+            msg: Optional error message
+
+        Returns:
+            List of validated entries
+
+        """
+        api = FlextLdif.get_instance()
+        result = api.parse(fixture_path)
+        entries = TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
+        TestsFlextLdifMatchers.entries(entries, msg=msg)
+        return entries
 
 
 # Alias for tests/__init__.py

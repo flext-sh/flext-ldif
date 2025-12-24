@@ -1492,7 +1492,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -1508,7 +1508,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1525,7 +1525,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1542,7 +1542,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1560,7 +1560,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1578,7 +1578,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1602,7 +1602,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -2069,7 +2069,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()
@@ -2285,32 +2285,32 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult[
-                    p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
                 ].ok("")
 
             def _parse_attribute(
                 self,
                 attr_definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 return FlextResult.fail("Not implemented")
 
             def _parse_objectclass(
                 self,
                 oc_definition: str,
-            ) -> FlextResult[p.Ldif.SchemaObjectClass]:
+            ) -> FlextResult[m.Ldif.SchemaObjectClass]:
                 return FlextResult.fail("Not implemented")
 
             def _write_attribute(
                 self,
-                attr_data: p.Ldif.SchemaAttribute,
+                attr_data: m.Ldif.SchemaAttribute,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
             def _write_objectclass(
                 self,
-                oc_data: p.Ldif.SchemaObjectClass,
+                oc_data: m.Ldif.SchemaObjectClass,
             ) -> FlextResult[str]:
                 return FlextResult.fail("Not implemented")
 
@@ -2446,7 +2446,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
                 return FlextResult.ok("")
 
         schema = StandaloneSchema()

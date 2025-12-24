@@ -260,7 +260,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
         assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
@@ -278,7 +278,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
         assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
@@ -320,7 +320,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=p.Ldif.SchemaObjectClass,
+            expected_type=m.Ldif.SchemaObjectClass,
         )
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
@@ -344,7 +344,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=p.Ldif.SchemaObjectClass,
+            expected_type=m.Ldif.SchemaObjectClass,
         )
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.kind == "AUXILIARY"
@@ -358,7 +358,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=p.Ldif.SchemaObjectClass,
+            expected_type=m.Ldif.SchemaObjectClass,
         )
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"

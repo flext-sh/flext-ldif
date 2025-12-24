@@ -19,6 +19,16 @@ from flext_ldif.utilities import FlextLdifUtilities
 from tests import s
 
 
+@pytest.fixture(autouse=True)
+def reset_settings_singleton() -> None:
+    """Reset FlextLdifSettings singleton before each test.
+
+    This ensures each test gets a fresh settings instance and
+    validation runs properly (not bypassed by singleton reuse).
+    """
+    FlextLdifSettings._reset_instance()
+
+
 class TestsTestFlextLdifSettingsValidators(s):
     """Comprehensive test suite for FlextLdifSettings Pydantic validators.
 
@@ -99,15 +109,16 @@ class TestsTestFlextLdifSettingsValidators(s):
     }
 
     SERVER_TYPE_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
+        # Use canonical server type names that match c.Ldif.ServerTypes enum values
         ServerTypeScenario.RFC_VALID: ("rfc", True),
         ServerTypeScenario.OID_VALID: ("oid", True),
         ServerTypeScenario.OUD_VALID: ("oud", True),
         ServerTypeScenario.OPENLDAP_VALID: ("openldap", True),
         ServerTypeScenario.OPENLDAP1_VALID: ("openldap1", True),
-        ServerTypeScenario.AD_VALID: ("active_directory", True),
-        ServerTypeScenario.DS389_VALID: ("389ds", True),
-        ServerTypeScenario.APACHE_VALID: ("apache_directory", True),
-        ServerTypeScenario.NOVELL_VALID: ("novell_edirectory", True),
+        ServerTypeScenario.AD_VALID: ("ad", True),  # canonical is "ad", not "active_directory"
+        ServerTypeScenario.DS389_VALID: ("ds389", True),  # canonical is "ds389", not "389ds"
+        ServerTypeScenario.APACHE_VALID: ("apache", True),  # canonical is "apache", not "apache_directory"
+        ServerTypeScenario.NOVELL_VALID: ("novell", True),  # canonical is "novell", not "novell_edirectory"
         ServerTypeScenario.TIVOLI_VALID: ("ibm_tivoli", True),
         ServerTypeScenario.RELAXED_VALID: ("relaxed", True),
         ServerTypeScenario.GENERIC_VALID: ("generic", True),

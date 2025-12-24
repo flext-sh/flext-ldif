@@ -42,6 +42,30 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Initialize RFC LDIF Entry processor."""
         super().__init__()
 
+    def can_handle(
+        self,
+        entry_dn: str,
+        attributes: dict[str, list[str]],
+    ) -> bool:
+        """Check if this RFC quirk can handle the entry.
+
+        RFC 2849 requires entries to have a non-empty DN and objectClass.
+
+        Args:
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes mapping
+
+        Returns:
+            True if entry has valid DN and objectClass
+
+        """
+        if not entry_dn or not entry_dn.strip():
+            return False
+
+        # Check for objectClass (case-insensitive)
+        attr_lower = {k.lower(): v for k, v in attributes.items()}
+        return "objectclass" in attr_lower
+
     def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal).
 

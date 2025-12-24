@@ -326,7 +326,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
         result: (
-            FlextResult[p.Ldif.SchemaAttribute] | FlextResult[p.Ldif.SchemaObjectClass]
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
         )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(bad_input)
@@ -359,7 +359,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test parsing fails without OID even in relaxed mode."""
         result: (
-            FlextResult[p.Ldif.SchemaAttribute] | FlextResult[p.Ldif.SchemaObjectClass]
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
         )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_without_oid)
@@ -383,7 +383,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test parsing succeeds with OID even with binary data."""
         result: (
-            FlextResult[p.Ldif.SchemaAttribute] | FlextResult[p.Ldif.SchemaObjectClass]
+            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
         )
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_with_oid)

@@ -13,6 +13,7 @@ from typing import ClassVar, cast
 import pytest
 from tests import GenericFieldsDict, p, s
 
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -262,8 +263,9 @@ class TestsTestFlextLdifOidMetadata(s):
 
         assert entry is not None
         # If entry has metadata, verify quirk type
+        # OID entry quirk extends RFC, so quirk_type can be "oid", "rfc", or None
         if entry.metadata and hasattr(entry.metadata, "quirk_type"):
-            assert entry.metadata.quirk_type in {"oid", None}
+            assert entry.metadata.quirk_type in {"oid", "rfc", None}
 
     @pytest.mark.parametrize(
         ("scenario", "dn", "attrs"),
@@ -318,10 +320,11 @@ class TestsTestFlextLdifOidMetadata(s):
         # Entry should preserve original data
         if entry.metadata and hasattr(entry.metadata, "extensions"):
             # Extensions must be DynamicMetadata, not dict
+            # Use actual metadata class, not facade (facade subclass != parent)
             assert (
                 isinstance(
                     entry.metadata.extensions,
-                    m.Ldif.DynamicMetadata,
+                    FlextLdifModelsMetadata.DynamicMetadata,
                 )
                 or entry.metadata.extensions is None
             )
@@ -405,9 +408,10 @@ class TestsTestFlextLdifOidMetadata(s):
         )
 
         assert metadata.quirk_type == "oid"
+        # Use actual metadata class, not facade (facade subclass != parent)
         assert isinstance(
             metadata.extensions,
-            m.Ldif.DynamicMetadata,
+            FlextLdifModelsMetadata.DynamicMetadata,
         )
         assert "key1" in metadata.extensions
         assert "key2" in metadata.extensions
@@ -420,9 +424,10 @@ class TestsTestFlextLdifOidMetadata(s):
         )
 
         assert metadata.quirk_type == "oid"
+        # Use actual metadata class, not facade (facade subclass != parent)
         assert isinstance(
             metadata.extensions,
-            m.Ldif.DynamicMetadata,
+            FlextLdifModelsMetadata.DynamicMetadata,
         )
         assert len(metadata.extensions) == 0
 
@@ -482,8 +487,9 @@ class TestsTestFlextLdifOidMetadata(s):
         assert "objectClass" in entry.attributes
 
         # Metadata should track Oracle-specific conversions
+        # OID entry quirk extends RFC, so quirk_type can be "oid", "rfc", or None
         if entry.metadata:
-            assert entry.metadata.quirk_type in {"oid", None}
+            assert entry.metadata.quirk_type in {"oid", "rfc", None}
 
     def test_metadata_consistency_across_entries(
         self,

@@ -10,12 +10,15 @@
 ## 🔒 FLOCK PROTOCOL - Multi-Agent File Coordination
 
 ### Purpose
+
 Prevent simultaneous file modifications that cause merge conflicts and corrupted code in multi-agent development environment.
 
 ### Protocol Overview
+
 **Flock (File Lock)** establishes exclusive access to files during modification operations.
 
 ### Establishing a Flock
+
 1. **Check .token** for existing locks on target file
 2. **Write lock** to .token: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
 3. **Re-read file** after lock is established (other agents may have modified)
@@ -24,6 +27,7 @@ Prevent simultaneous file modifications that cause merge conflicts and corrupted
 6. **Release lock**: Update .token with `RELEASE_[AGENT_NAME]_[TARGET_FILE]`
 
 ### Lock Format
+
 ```bash
 # Establish lock
 FLOCK_[AGENT_NAME]_[TARGET_FILE]
@@ -36,6 +40,7 @@ RELEASE_[AGENT_NAME]_[TARGET_FILE]
 ```
 
 ### Critical Rules
+
 - **🔴 NEVER modify a file with active flock from another agent**
 - **🔄 ALWAYS re-read file after establishing your flock**
 - **⚡ RELEASE immediately after changes are complete and tested**
@@ -87,6 +92,7 @@ Tier 3 - Application (Top Layer):
 ```
 
 **WHY THIS MATTERS**:
+
 - Circular imports cause runtime failures
 - Lazy imports are a band-aid, not a solution
 - Proper layering ensures testability and maintainability
@@ -97,6 +103,7 @@ Tier 3 - Application (Top Layer):
 ### Architecture Violation Quick Check
 
 **Run before committing:**
+
 ```bash
 # Quick check for this project
 grep -rEn "(from flext_.*\.(services|api) import)" \
@@ -112,6 +119,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 ---
 
 ## Regra 0 — Alinhamento Cruzado
+
 - Este arquivo espelha o `../CLAUDE.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `CLAUDE.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `client-a-oud-mig/`.
 - Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `CLAUDE.md` raiz antes de codar.
 
@@ -124,6 +132,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 **Python**: 3.13+ only
 
 **Current Quality Metrics** (Target Post-Refactoring):
+
 - ✅ Ruff: Zero violations (PLC0415 justified for circular imports)
 - ✅ MyPy: Zero type errors (strict mode)
 - ✅ PyRight: Zero type errors
@@ -134,6 +143,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 - ✅ Test Structure: Unified Tests[FlextLdif]* classes with short name aliases
 
 **Server Implementation Status**: See project documentation for server implementation details.
+
 - ✅ **RFC Stub Servers** (Detection + RFC Baseline): Apache, 389DS, Novell, Tivoli, AD - **174 tests passing**
 - ✅ **Real Implementations**: OpenLDAP 2.x (olc* format), OpenLDAP 1.x, OID, OUD
 - ✅ **Tests**: All stub servers 100% passing. OpenLDAP fixture tests blocked by RFC refactoring (other agents)
@@ -264,12 +274,14 @@ def process(data: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
 FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **quirks system** for server-specific extensions:
 
 **Core Architecture**:
+
 - **RFC 2849 (LDIF Format)** - Standard LDIF parsing and writing foundation
 - **RFC 4512 (Schema)** - Standard LDAP schema parsing foundation
 - **Quirks System** - Pluggable server-specific extensions that enhance RFC parsing
 - **Generic Transformation** - Source → RFC → Target pipeline works with any server
 
 **Design Principles**:
+
 - RFC parsers provide the **baseline** for all LDAP servers
 - Quirks **extend and enhance** RFC parsing for server-specific features
 - No server-specific code in core parsers - all extensions via quirks
@@ -319,6 +331,7 @@ src/flext_ldif/
 ### Quirks System Architecture
 
 **How Quirks Work**:
+
 1. **RFC Foundation**: All parsing starts with RFC-compliant parsers
 2. **Quirk Discovery**: `FlextLdifQuirksRegistry` auto-discovers server-specific quirks
 3. **Priority Resolution**: Quirks use priority system (lower number = higher priority)
@@ -326,6 +339,7 @@ src/flext_ldif/
 5. **Transformation Pipeline**: Source → RFC → Target via `QuirksConversionMatrix`
 
 **Supported Servers**:
+
 - **Fully Implemented**: OID, OUD, OpenLDAP 1.x/2.x, Relaxed Mode
 - **Stub Implementations**: Active Directory, Apache DS, 389 DS, Novell eDirectory, IBM Tivoli DS
 - **Generic RFC**: Works with any LDAP server using RFC baseline
@@ -336,6 +350,7 @@ src/flext_ldif/
 **Purpose**: Automatically detect LDAP server type from LDIF content using pattern matching and confidence scoring.
 
 **How Auto-Detection Works**:
+
 1. **Pattern Matching**: Scans LDIF content for server-specific OIDs, attributes, and patterns
 2. **Weighted Scoring**: Each server type receives points based on pattern matches
 3. **Confidence Calculation**: Determines confidence score (0.0-1.0) based on match strength
@@ -346,6 +361,7 @@ src/flext_ldif/
 **Quirks Detection Modes**: Control how server-specific quirks are selected during LDIF processing.
 
 **Three Detection Modes**:
+
 - **auto** (default): Automatic detection from LDIF content
 - **manual**: Uses specified `quirks_server_type` from config, skips auto-detection
 - **disabled**: Uses only RFC 2849/4512, no server-specific quirks
@@ -430,6 +446,7 @@ m = FlextLdifModels
 ### 3. Circular Import Avoidance Strategies
 
 **Strategy 1: Forward References with `from __future__ import annotations`**
+
 ```python
 from __future__ import annotations
 from typing import Self
@@ -441,6 +458,7 @@ class QuirkBase:
 ```
 
 **Strategy 2: Protocol-Based Decoupling**
+
 ```python
 # protocols.py (Tier 0 - no internal imports except flext_core)
 from flext_core.protocols import FlextProtocols
@@ -460,6 +478,7 @@ class ParserService:
 ```
 
 **Strategy 3: Dependency Injection**
+
 ```python
 # Instead of importing services directly, inject them
 from flext_core import FlextContainer
@@ -620,11 +639,13 @@ pytest -m ldif                   # LDIF-specific tests
 ### Enhanced Test Infrastructure
 
 All test files should import unified test infrastructure:
+
 ```python
 from tests import t, c, p, m, u, s, tm, tv, tt, tf
 ```
 
 **Available Test Helpers**:
+
 - `tm`: `TestsFlextLdifMatchers` - Unified matchers with parameterized validation
 - `tv`: `TestsFlextLdifValidators` - Enhanced validators
 - `tt`: `TestsFlextLdifTypes` - Type helpers
@@ -633,6 +654,7 @@ from tests import t, c, p, m, u, s, tm, tv, tt, tf
 ### Unified Entry Validation Methods
 
 **`tm.entry()`** - Unified entry validation (ALL entry assertions in ONE method):
+
 ```python
 # Validate DN and attributes
 tm.entry(entry, dn="cn=test,dc=example", has_attr=["cn", "sn"])
@@ -648,6 +670,7 @@ tm.entry(entry, not_has_attr=["userPassword", "pwdHistory"])
 ```
 
 **`tm.entries()`** - Unified entries list validation:
+
 ```python
 # Validate count and all entries
 tm.entries(result, count=5, all_have_attr="cn")
@@ -657,11 +680,13 @@ tm.entries(entries, at_index={0: {"dn": "cn=first"}, 1: {"has_attr": "mail"}})
 ```
 
 **`tm.ok_entry()`** - Assert FlextResult success and validate entry:
+
 ```python
 entry = tm.ok_entry(result, has_dn="cn=test,dc=example", has_attrs=["cn", "sn"])
 ```
 
 **`tm.ok_entries()`** - Assert FlextResult success and validate entries list:
+
 ```python
 entries = tm.ok_entries(result, count=3, empty=False)
 ```
@@ -669,12 +694,14 @@ entries = tm.ok_entries(result, count=3, empty=False)
 ### Factory Methods
 
 **`tf.create_entry()`** - Create test entry with flexible parameterization:
+
 ```python
 entry = tf.create_entry("cn=test,dc=example", attrs={"cn": ["test"]})
 entry = tf.create_entry("cn=user,dc=example", object_classes=["person", "inetOrgPerson"])
 ```
 
 **`tf.create_entries()`** - Create multiple entries:
+
 ```python
 entries = tf.create_entries([
     ("cn=user1,dc=example", {"cn": ["user1"]}),
@@ -822,18 +849,21 @@ if FlextRuntime.is_list_like(values):
 ## Development Priorities
 
 ### Phase 1: Production Hardening (Current)
+
 - Maintain 100% test pass rate and type safety
 - Enhance error messages for quirk-related failures
 - Document server-specific quirk behaviors
 - Expand integration test coverage
 
 ### Phase 2: Performance Optimization
+
 - Implement memory usage monitoring and warnings
 - Develop streaming parser for large files (>100MB)
 - Add configurable chunk sizes for memory management
 - Establish performance baselines and benchmarks
 
 ### Phase 3: Feature Enhancement
+
 - Add more server-specific quirks (enhance stubs)
 - Enhanced ACL transformation capabilities
 - Better schema validation and conflict resolution
@@ -842,6 +872,7 @@ if FlextRuntime.is_list_like(values):
 ---
 
 **See Also**:
+
 - [Workspace Standards](../CLAUDE.md)
 - [flext-core Patterns](../flext-core/CLAUDE.md)
 - [flext-ldap Patterns](../flext-ldap/CLAUDE.md)

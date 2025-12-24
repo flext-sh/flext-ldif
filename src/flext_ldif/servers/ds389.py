@@ -21,16 +21,14 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, u
+from flext_core import FlextResult
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -631,8 +629,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return True
 
             normalized_attrs = {
-                name.lower(): value
-                for name, value in u.mapper().to_dict(attributes).items()
+                name.lower(): value for name, value in attributes.items()
             }
             if any(
                 attr.startswith(
@@ -644,11 +641,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             # Use lowercase objectClass key for normalized attributes
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
-            # u.mapper().get() returns value directly (or default if key not found)
-            object_classes_raw: list[str] = u.mapper().get(
-                normalized_attrs,
+            # Get objectClass from normalized attributes
+            object_classes_raw: list[str] = normalized_attrs.get(
                 objectclass_key,
-                default=[],
+                [],
             )
             object_classes: list[str] = (
                 object_classes_raw

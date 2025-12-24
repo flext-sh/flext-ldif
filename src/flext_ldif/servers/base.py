@@ -41,11 +41,10 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, r, s, u
+from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.results import FlextLdifModelsResults
@@ -54,6 +53,7 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
+from flext_ldif.utilities import u
 
 # Removed: # Use FlextLdifUtilitiesServer directly to avoid circular import
 
@@ -77,7 +77,7 @@ def _get_server_type_from_utilities(
     """
     # Business Rule: Access Server utility directly via FlextLdifUtilitiesServer
     # Implication: Direct access to avoid circular import with utilities.py
-    return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
+    return u.Ldif.Server.get_parent_server_type(quirk_class)
 
 
 logger = FlextLogger(__name__)
@@ -713,7 +713,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             parse_response = parse_result.value
             entries = getattr(parse_response, "entries", [])
             # ParseResponse.entries is always Sequence[Entry] (never a single Entry)
-            if u.Guards.is_list_non_empty(entries):
+            if u.Ldif.Guards.is_list_non_empty(entries):
                 domain_entry = entries[0]
                 # Convert domain Entry to public Entry type for type compatibility
                 # m.Ldif.Entry extends m.Ldif.Entry
@@ -802,7 +802,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if server_type and isinstance(server_type, str):
                 # Type narrowing: ensure server_type is a valid ServerTypeLiteral
                 # Use normalize_server_type for proper validation and type narrowing
-                return FlextLdifUtilitiesServer.normalize_server_type(server_type)
+                return u.Ldif.Server.normalize_server_type(server_type)
         except StopIteration:
             pass
 

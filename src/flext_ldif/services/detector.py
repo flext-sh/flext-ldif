@@ -21,11 +21,12 @@ from typing import Protocol, override
 
 from flext_core import r
 
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif._models.results import DynamicCounts as InternalDynamicCounts
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.settings import FlextLdifSettings
+from flext_ldif.utilities import u
 
 # Access types directly via composition - no type aliases needed
 
@@ -60,7 +61,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
     - Novell eDirectory: GUID, Modifiers, nrpDistributionPassword
     - IBM Tivoli: ibm-*, tivoli, ldapdb patterns
 
-    All server types are accessed via FlextLdifUtilitiesServer helper methods
+    All server types are accessed via u.Ldif.Server helper methods
     to avoid importing constants in services.
 
     Detection Priority (by score):
@@ -88,7 +89,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             List of all server type identifiers
 
         """
-        return FlextLdifUtilitiesServer.get_all_server_types()
+        return u.Ldif.Server.get_all_server_types()
 
     def detect_server_type(
         self,
@@ -128,7 +129,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         # Python 3.13+ Advanced Features: Structural pattern matching for input validation
         max_lines = (
             max_lines
-            or FlextLdifUtilitiesServer.get_server_detection_default_max_lines()
+            or u.Ldif.Server.get_server_detection_default_max_lines()
         )
 
         match (ldif_path, ldif_content):
@@ -151,7 +152,10 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
                 pass  # ldif_content is already provided
 
         # Type narrowing - after match, ldif_content is guaranteed to be str
-        assert ldif_content is not None, "ldif_content must be set by match cases above"
+        if ldif_content is None:
+            return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                "No LDIF content provided",
+            )
         lines = ldif_content.split("\n")
         content_sample = "\n".join(lines[:max_lines])
 
@@ -160,13 +164,11 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         patterns_found = self._extract_patterns(content_sample)
 
         # Normalize detected type to proper Literal type
-        detected_type = FlextLdifUtilitiesServer.normalize_server_type(
+        detected_type = u.Ldif.Server.normalize_server_type(
             detected_type_raw
         )
 
         # Convert dict to DynamicCounts model (supports extra fields via Pydantic)
-        from flext_ldif._models.results import DynamicCounts as InternalDynamicCounts
-
         scores_model = InternalDynamicCounts(**scores_dict)
 
         detection_result = m.Ldif.LdifResults.ServerDetectionResult(
@@ -175,28 +177,28 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             scores=scores_model,
             patterns_found=patterns_found,
             is_confident=confidence
-            >= FlextLdifUtilitiesServer.get_server_detection_confidence_threshold(),
+            >= u.Ldif.Server.get_server_detection_confidence_threshold(),
         )
         return r[m.Ldif.LdifResults.ServerDetectionResult].ok(
             detection_result,
         )
 
     @override
-    def execute(self) -> r[FlextLdifModelsResults.ClientStatus]:
+    def execute(self) -> r[m.Ldif.LdifResults.ClientStatus]:
         """Execute server detector self-check (required by FlextService).
 
         Returns:
             r with detector status
 
         """
-        config_settings = _ConfigSettings()
+        config_settings = m.Ldif.Results.ConfigSettings()
         config_settings.set_setting("service", "FlextLdifDetector")
-        status_result = FlextLdifModelsResults.ClientStatus(
+        status_result = m.Ldif.LdifResults.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
             config=config_settings,
         )
-        return r[FlextLdifModelsResults.ClientStatus].ok(status_result)
+        return r[m.Ldif.LdifResults.ClientStatus].ok(status_result)
 
     @staticmethod
     def resolve_from_config(
@@ -228,20 +230,20 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             "enable_relaxed_parsing",
             getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
         ):
-            return FlextLdifUtilitiesServer.get_server_type_value("RELAXED")
+            return u.Ldif.Server.get_server_type_value("RELAXED")
 
         # Priority 3: Manual configuration mode
         if config.quirks_detection_mode == "manual":
             # Validate that quirks_server_type is provided in manual mode
             if config.quirks_server_type is None:
-                return FlextLdifUtilitiesServer.get_server_type_value("RFC")
+                return u.Ldif.Server.get_server_type_value("RFC")
             if not config.quirks_server_type.strip():
-                return FlextLdifUtilitiesServer.get_server_type_value("RFC")
+                return u.Ldif.Server.get_server_type_value("RFC")
             return config.quirks_server_type
 
         # Priority 4: Disabled mode falls back to RFC
         if config.quirks_detection_mode == "disabled":
-            return FlextLdifUtilitiesServer.get_server_type_value("RFC")
+            return u.Ldif.Server.get_server_type_value("RFC")
 
         # Default: Use the configured default server type
         return config.ldif_default_server_type
@@ -308,7 +310,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             scores[server_type] += weight
 
         score_attr_match = (
-            FlextLdifUtilitiesServer.get_server_detection_attribute_match_score()
+            u.Ldif.Server.get_server_detection_attribute_match_score()
         )
         for item in (*attributes, *(objectclasses or [])):
             # normalize() auto-detects contains when two strings are passed
@@ -379,13 +381,13 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
         """
         scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
-        scores[FlextLdifUtilitiesServer.get_server_type_value("GENERIC")] = 1
+        scores[u.Ldif.Server.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
 
         # Server processing configuration mapping
         # Use normalize_server_type for proper type narrowing
-        oid_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OID"),
+        oid_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OID"),
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -398,8 +400,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
                 case_sensitive=True,
             )
 
-        oud_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OUD"),
+        oud_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OUD"),
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
@@ -411,8 +413,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
                 scores,
             )
 
-        openldap_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OPENLDAP"),
+        openldap_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants and hasattr(openldap_constants, "DETECTION_PATTERN"):
@@ -433,8 +435,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
                     ),
                 )
 
-        ad_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("AD"),
+        ad_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants and hasattr(ad_constants, "DETECTION_PATTERN"):
@@ -463,7 +465,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             "389ds",
             "apache_directory",
         ):
-            server_literal = FlextLdifUtilitiesServer.normalize_server_type(
+            server_literal = u.Ldif.Server.normalize_server_type(
                 server_type_str,
             )
             constants = self._get_server_constants(server_literal)
@@ -512,7 +514,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         # If low confidence, return RFC
         if (
             confidence
-            < FlextLdifUtilitiesServer.get_server_detection_confidence_threshold()
+            < u.Ldif.Server.get_server_detection_confidence_threshold()
         ):
             return "rfc", confidence
 
@@ -636,8 +638,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         content_lower = content.lower()
 
         # Oracle OID
-        oid_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OID"),
+        oid_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OID"),
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -654,8 +656,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             self._extract_oid_specific_patterns(oid_constants, content, patterns)
 
         # Oracle OUD
-        oud_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OUD"),
+        oud_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OUD"),
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
@@ -670,8 +672,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             )
 
         # OpenLDAP
-        openldap_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("OPENLDAP"),
+        openldap_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants:
@@ -690,8 +692,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             )
 
         # Active Directory
-        ad_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("AD"),
+        ad_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants:
@@ -716,19 +718,19 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         # Pattern-based servers
         for server_type_str, description in [
             (
-                FlextLdifUtilitiesServer.get_server_type_value("NOVELL"),
+                u.Ldif.Server.get_server_type_value("NOVELL"),
                 "Novell eDirectory attributes (GUID, Modifiers, etc.)",
             ),
             (
-                FlextLdifUtilitiesServer.get_server_type_value("DS389"),
+                u.Ldif.Server.get_server_type_value("DS389"),
                 "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
             ),
             (
-                FlextLdifUtilitiesServer.get_server_type_value("APACHE"),
+                u.Ldif.Server.get_server_type_value("APACHE"),
                 "Apache DS attributes (apacheDS, apache-*)",
             ),
         ]:
-            server_type = FlextLdifUtilitiesServer.normalize_server_type(
+            server_type = u.Ldif.Server.normalize_server_type(
                 server_type_str,
             )
             self._extract_pattern_with_attr(
@@ -740,8 +742,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             )
 
         # Special handling for IBM Tivoli (compiled pattern)
-        tivoli_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-            FlextLdifUtilitiesServer.get_server_type_value("IBM_TIVOLI"),
+        tivoli_server_type = u.Ldif.Server.normalize_server_type(
+            u.Ldif.Server.get_server_type_value("IBM_TIVOLI"),
         )
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
