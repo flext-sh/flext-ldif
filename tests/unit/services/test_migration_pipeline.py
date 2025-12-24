@@ -11,11 +11,10 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_tests import tf
 
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
-from tests import c, s
+from tests import c, s, tf
 
 m = FlextLdifModels
 

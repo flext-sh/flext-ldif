@@ -146,9 +146,9 @@ def sample_entry() -> p.Entry:
 
 
 @pytest.fixture
-def sample_acl() -> m.Acl:
+def sample_acl() -> m.Ldif.Acl:
     """Provides a sample Acl for tests."""
-    return m.Acl(raw_acl="test: acl", server_type="rfc")
+    return m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
 
 
 @pytest.fixture

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.models import m
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,

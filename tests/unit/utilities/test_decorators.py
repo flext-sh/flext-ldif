@@ -159,7 +159,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 attr = m.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
@@ -182,7 +182,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 return FlextResult.fail("Parse failed")
 
         quirk = TestQuirk()
@@ -247,7 +247,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.attach_write_metadata("test_quirk")
-            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
                 return FlextResult.ok("( 1.2.3.4.5 NAME 'testAttr' )")
 
         quirk = TestQuirk()
@@ -268,7 +268,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 attr = m.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
                     name="testAttr",
@@ -289,7 +289,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 msg = "Test error"
                 raise ValueError(msg)
 
@@ -305,7 +305,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
                 return FlextResult.ok("( 1.2.3.4.5 NAME 'testAttr' )")
 
         quirk = TestQuirk()
@@ -323,7 +323,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
                 msg = "Test error"
                 raise ValueError(msg)
 
@@ -346,7 +346,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 """Test parse method."""
                 attr = m.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
@@ -366,7 +366,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 """Test parse method."""
                 attr = m.Ldif.SchemaAttribute(
                     oid="1.2.3.4.5",
@@ -430,7 +430,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
             def parse_attribute(
                 self,
                 definition: str,
-            ) -> FlextResult[p.Ldif.SchemaAttribute]:
+            ) -> FlextResult[m.Ldif.SchemaAttribute]:
                 msg = "User cancelled"
                 raise KeyboardInterrupt(msg)
 
@@ -445,7 +445,7 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
 
         class TestQuirk:
             @FlextLdifUtilitiesDecorators.safe_write("test writing")
-            def write_attribute(self, attr: p.Ldif.SchemaAttribute) -> FlextResult[str]:
+            def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> FlextResult[str]:
                 msg = "Invalid type"
                 raise TypeError(msg)
 

@@ -3835,6 +3835,7 @@ class FlextLdifConstants(FlextConstants):
                 "integer": "integer",
                 "boolean": "boolean",
                 "distinguished_name": "dn",
+                "dn": "dn",  # alias for OID_TO_NAME compatibility
                 "generalized_time": "time",
                 "utc_time": "time",
                 "binary": "binary",

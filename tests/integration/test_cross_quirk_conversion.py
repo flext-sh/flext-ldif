@@ -64,7 +64,7 @@ class TestOidToOudSchemaConversion:
         assert isinstance(unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(unwrapped).__name__}"
         )
-        parsed_data: p.Ldif.SchemaAttribute = unwrapped
+        parsed_data: m.Ldif.SchemaAttribute = unwrapped
 
         # Verify parsed data (SchemaAttribute object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
@@ -88,7 +88,7 @@ class TestOidToOudSchemaConversion:
         assert isinstance(oud_unwrapped, m.Ldif.SchemaAttribute), (
             f"Expected SchemaAttribute, got {type(oud_unwrapped).__name__}"
         )
-        oud_data: p.Ldif.SchemaAttribute = oud_unwrapped
+        oud_data: m.Ldif.SchemaAttribute = oud_unwrapped
 
         # Verify conversion preserved key fields (both are objects, not dicts)
         assert oud_data.oid == parsed_data.oid
@@ -111,7 +111,7 @@ class TestOidToOudSchemaConversion:
         assert isinstance(unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(unwrapped).__name__}"
         )
-        parsed_data: p.Ldif.SchemaObjectClass = unwrapped
+        parsed_data: m.Ldif.SchemaObjectClass = unwrapped
 
         # Verify parsed data (object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
@@ -133,7 +133,7 @@ class TestOidToOudSchemaConversion:
         assert isinstance(oud_unwrapped, m.Ldif.SchemaObjectClass), (
             f"Expected SchemaObjectClass, got {type(oud_unwrapped).__name__}"
         )
-        oud_data: p.Ldif.SchemaObjectClass = oud_unwrapped
+        oud_data: m.Ldif.SchemaObjectClass = oud_unwrapped
 
         # Verify conversion preserved key fields (objects, not dicts)
         assert oud_data.oid == parsed_data.oid

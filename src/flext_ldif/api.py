@@ -37,8 +37,7 @@ from flext_core import r
 from pydantic import BaseModel, computed_field
 
 # Imports
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
@@ -57,7 +56,7 @@ from flext_ldif.typings import t
 # Access types directly via composition - no type aliases needed
 
 
-class FlextLdif(FlextLdifServiceBase[object]):
+class FlextLdif(s[object]):
     r"""Main API facade for LDIF operations using composition pattern.
 
     Provides a unified interface for LDIF parsing, writing, validation, and
@@ -202,9 +201,9 @@ class FlextLdif(FlextLdifServiceBase[object]):
         return svc
 
     @property
-    def models(self) -> type[FlextLdifModelsDomains]:
-        """Get FlextLdifModelsDomains class."""
-        return FlextLdifModelsDomains
+    def models(self) -> type[m]:
+        """Get FlextLdifModels class."""
+        return m
 
     @property
     def constants(self) -> object:

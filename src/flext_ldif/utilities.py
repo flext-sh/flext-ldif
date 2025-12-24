@@ -25,7 +25,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Literal, Self, TypeGuard, cast, overload
+from typing import ClassVar, Literal, Self, TypeGuard, cast, overload
 
 from flext_core import (
     FlextLogger,
@@ -38,7 +38,6 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import ValidatorSpec
 
-# Local aliases for model types
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -51,8 +50,6 @@ from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif._utilities.filters import (
     EntryFilter,
 )
-
-# Import fluent classes for DnOps and EntryOps
 from flext_ldif._utilities.fluent import DnOps, EntryOps
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
@@ -349,6 +346,77 @@ class FlextLdifUtilities(FlextUtilities):
 
         class Constants(c):
             """Constants for LDIF operations."""
+
+            # Category to StrEnum mapping
+            _CATEGORY_MAP: ClassVar[dict[str, type]] = {
+                "server_type": c.Ldif.ServerTypes,
+                "encoding": c.Ldif.Encoding,
+            }
+
+            @classmethod
+            def get_valid_values(cls, category: str) -> set[str]:
+                """Get valid values for a category.
+
+                Args:
+                    category: Category name ('server_type', 'encoding')
+
+                Returns:
+                    Set of valid values for the category
+
+                Raises:
+                    KeyError: If category is unknown
+
+                """
+                if category not in cls._CATEGORY_MAP:
+                    msg = f"Unknown category: {category}"
+                    raise KeyError(msg)
+                enum_class = cls._CATEGORY_MAP[category]
+                return {e.value for e in enum_class}
+
+            @classmethod
+            def is_valid(cls, value: str, category: str) -> bool:
+                """Check if value is valid for a category.
+
+                Args:
+                    value: Value to check
+                    category: Category name ('server_type', 'encoding')
+
+                Returns:
+                    True if value is valid, False otherwise
+
+                """
+                if category not in cls._CATEGORY_MAP:
+                    return False
+                valid_values = cls.get_valid_values(category)
+                # Case-insensitive check
+                return value.lower() in {v.lower() for v in valid_values}
+
+            @classmethod
+            def validate_many(
+                cls,
+                values: set[str],
+                category: str,
+            ) -> tuple[bool, set[str]]:
+                """Validate multiple values for a category.
+
+                Args:
+                    values: Set of values to validate
+                    category: Category name ('server_type', 'encoding')
+
+                Returns:
+                    Tuple of (all_valid, set of invalid values)
+
+                Raises:
+                    KeyError: If category is unknown
+
+                """
+                if category not in cls._CATEGORY_MAP:
+                    msg = f"Unknown category: {category}"
+                    raise KeyError(msg)
+                valid_values = cls.get_valid_values(category)
+                valid_lower = {v.lower() for v in valid_values}
+                invalid = {v for v in values if v.lower() not in valid_lower}
+                return len(invalid) == 0, invalid
 
         class Decorators(FlextLdifUtilitiesDecorators):
             """Decorator utilities for LDIF operations."""
@@ -882,7 +950,8 @@ class FlextLdifUtilities(FlextUtilities):
                 >>> result = FlextLdifUtilities.process(entries, source_server="oid")
                 >>> result = FlextLdifUtilities.process(
                 ...     entries,
-                ...     config=ProcessConfig.builder()
+                ...     config=ProcessConfig
+                ...     .builder()
                 ...     .source("oid")
                 ...     .target("oud")
                 ...     .normalize_dn(case="lower")
@@ -1287,7 +1356,8 @@ class FlextLdifUtilities(FlextUtilities):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.dn("CN=Test, DC=Example, DC=Com")
+                ...     FlextLdifUtilities
+                ...     .dn("CN=Test, DC=Example, DC=Com")
                 ...     .normalize(case="lower")
                 ...     .clean()
                 ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
@@ -1309,7 +1379,8 @@ class FlextLdifUtilities(FlextUtilities):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.entry(entry)
+                ...     FlextLdifUtilities
+                ...     .entry(entry)
                 ...     .normalize_dn()
                 ...     .filter_attrs(exclude=["userPassword"])
                 ...     .attach_metadata(source="oid")
@@ -2022,7 +2093,8 @@ class FlextLdifUtilities(FlextUtilities):
             if target_type is str:
                 str_default = default if isinstance(default, str) else ""
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_str(default=str_default)
                     .safe()
                     .build()
@@ -2033,7 +2105,8 @@ class FlextLdifUtilities(FlextUtilities):
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_bool(default=bool_default)
                     .safe()
                     .build()
@@ -2041,7 +2114,8 @@ class FlextLdifUtilities(FlextUtilities):
             if target_type is list:
                 list_default = default if isinstance(default, list) else []
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .str_list(default=list_default)
                     .safe()
                     .build()

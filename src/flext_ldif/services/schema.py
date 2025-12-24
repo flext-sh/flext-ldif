@@ -15,11 +15,7 @@ from typing import Self, override
 from flext_core import r
 from pydantic import PrivateAttr
 
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
 
@@ -27,7 +23,7 @@ from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 
 
-class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceStatus]):
+class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service.
 
     Business Rule: Schema service centralizes all schema-related operations using
@@ -183,7 +179,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
     @override
     def execute(
         self,
-    ) -> r[FlextLdifModelsResults.SchemaServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
@@ -191,8 +187,8 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModelsResults.SchemaServiceS
 
         """
         server_type_lit: c.Ldif.ServerTypes = c.Ldif.ServerTypes(self._server_type)
-        return r[FlextLdifModelsResults.SchemaServiceStatus].ok(
-            FlextLdifModelsResults.SchemaServiceStatus(
+        return r[m.Ldif.LdifResults.SchemaServiceStatus].ok(
+            m.Ldif.LdifResults.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=server_type_lit.value,
                 status="operational",

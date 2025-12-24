@@ -25,18 +25,13 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult
-from flext_core.utilities import u
+from flext_core import r
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -202,7 +197,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if not isinstance(attr_definition, str):
                 # Check using protocol/structural typing
                 if hasattr(attr_definition, "oid") and hasattr(attr_definition, "name"):
-                    return FlextLdifUtilitiesServer.matches_server_patterns(
+                    return u.Ldif.Server.matches_server_patterns(
                         value=attr_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                         detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -254,7 +249,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Detect eDirectory objectClass definitions using Constants."""
             if not isinstance(oc_definition, str):
                 if hasattr(oc_definition, "oid") and hasattr(oc_definition, "name"):
-                    return FlextLdifUtilitiesServer.matches_server_patterns(
+                    return u.Ldif.Server.matches_server_patterns(
                         value=oc_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                         detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -280,14 +275,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Novell metadata.
 
             Args:
                 attr_definition: Attribute definition string
 
             Returns:
-                FlextResult with SchemaAttribute marked with Novell metadata
+                r with SchemaAttribute marked with Novell metadata
 
             """
             result = super()._parse_attribute(attr_definition)
@@ -296,7 +291,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[m.Ldif.SchemaAttribute].ok(
+                return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(
                         update={"metadata": metadata},
                     ),
@@ -306,14 +301,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Novell metadata.
 
             Args:
                 oc_definition: ObjectClass definition string
 
             Returns:
-                FlextResult with SchemaObjectClass marked with Novell metadata
+                r with SchemaObjectClass marked with Novell metadata
 
             """
             result = super()._parse_objectclass(oc_definition)
@@ -322,14 +317,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(
+                return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(
                         update={"metadata": metadata},
                     ),
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
         def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
@@ -369,13 +364,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return False
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 # Use static method correctly
                 attr_name, content = self.__class__.splitacl_line(acl_line)
                 if not content:
-                    return FlextResult[m.Ldif.Acl].fail("Empty ACL content")
+                    return r[m.Ldif.Acl].fail("Empty ACL content")
                 segments = [
                     segment
                     for segment in content.split(
@@ -443,7 +438,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             # First part before colon might be attribute name
                             attr_name = parts[0].strip()
                             # Add if it looks like an attribute name (not a permission)
-                            if attr_name.lower() not in u.Enum.values(
+                            if attr_name.lower() not in u.Ldif.Enum.values(
                                 c.Ldif.RfcAclPermission,
                             ):
                                 attributes.append(attr_name)
@@ -480,16 +475,16 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     ),
                     metadata=m.Ldif.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                        extensions=m.Ldif.DynamicMetadata(
                             original_format=acl_line,
                         ),
                     ),
                     raw_acl=acl_line,
                 )
-                return FlextResult[m.Ldif.Acl].ok(acl)
+                return r[m.Ldif.Acl].ok(acl)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Acl].fail(
+                return r[m.Ldif.Acl].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}",
                 )
 
@@ -532,7 +527,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         perms_dict[canonical_name] = True
             return perms_dict
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             Novell eDirectory ACLs use "#" delimited segments:
@@ -546,7 +541,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
-                    return FlextResult[str].ok(acl_data.raw_acl)
+                    return r[str].ok(acl_data.raw_acl)
 
                 # Build from model fields
                 parts: list[str] = []
@@ -587,9 +582,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     else f"{acl_attribute}:"
                 )
 
-                return FlextResult[str].ok(acl_str)
+                return r[str].ok(acl_str)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[str].fail(
+                return r[str].fail(
                     f"Novell eDirectory ACL write failed: {exc}",
                 )
 
@@ -638,7 +633,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return True
 
             # objectClasses is already list[str] in
-            object_classes_raw: list[str] = u.mapper().get(
+            object_classes_raw: list[str] = u.Ldif.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -659,15 +654,15 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def process_entry(
             self,
             entry: m.Ldif.Entry,
-        ) -> FlextResult[m.Ldif.Entry]:
+        ) -> r[m.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
-                return FlextResult[m.Ldif.Entry].ok(entry)
+                return r[m.Ldif.Entry].ok(entry)
 
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in Attributes)
-                object_classes: list[str] = u.mapper().get(
+                object_classes: list[str] = u.Ldif.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
@@ -703,9 +698,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 new_entry = entry.model_copy(
                     update={"attributes": new_attrs},
                 )
-                return FlextResult[m.Ldif.Entry].ok(new_entry)
+                return r[m.Ldif.Entry].ok(new_entry)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Entry].fail(
+                return r[m.Ldif.Entry].fail(
                     f"Novell eDirectory entry processing failed: {exc}",
                 )

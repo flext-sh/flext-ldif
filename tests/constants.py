@@ -27,6 +27,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestsFlextLdifConstants(FlextTestsConstants):
@@ -153,6 +154,13 @@ class TestsFlextLdifConstants(FlextTestsConstants):
         TEST_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
         TEST_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
         INVALID_DN: Final[str] = "invalid-dn-format"
+
+        # Aliases for SAMPLE_* (legacy test compatibility)
+        SAMPLE_DN: Final[str] = TEST_DN
+        SAMPLE_DN_USER1: Final[str] = TEST_DN_USER1
+        SAMPLE_DN_USER2: Final[str] = TEST_DN_USER2
+        SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
+        SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
 
         # LDIF content samples
         SAMPLE_LDIF_BASIC: Final[str] = """dn: cn=test,dc=example,dc=com
@@ -1386,6 +1394,392 @@ class RfcTestHelpers:
 
         return value
 
+    @staticmethod
+    def test_parse_and_assert_entry_structure(
+        parser_service: object,
+        content: str,
+        expected_dn: str,
+        expected_attributes: list[str],
+        expected_count: int = 1,
+    ) -> list[object]:
+        """Parse LDIF content and assert entry structure.
+
+        Args:
+            parser_service: The parser service instance
+            content: LDIF content to parse
+            expected_dn: Expected DN of first entry
+            expected_attributes: Expected attribute names
+            expected_count: Expected number of entries
+
+        Returns:
+            List of parsed entries
+
+        Raises:
+            AssertionError: If parsing fails or structure doesn't match
+
+        """
+        if not isinstance(parser_service, FlextLdifParser):
+            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+
+        result = parser_service.parse_string(content=content, server_type="rfc")
+
+        if result.is_failure:
+            raise AssertionError(f"Parsing failed: {result.error}")
+
+        entries = list(result.value.entries)
+        if len(entries) != expected_count:
+            raise AssertionError(
+                f"Expected {expected_count} entries, got {len(entries)}"
+            )
+
+        if entries and expected_dn:
+            actual_dn = getattr(entries[0], "dn", None)
+            if str(actual_dn) != expected_dn:
+                raise AssertionError(f"Expected DN '{expected_dn}', got '{actual_dn}'")
+
+        if entries and expected_attributes:
+            entry = entries[0]
+            attrs = getattr(entry, "attributes", {})
+            for attr_name in expected_attributes:
+                if attr_name not in attrs:
+                    raise AssertionError(
+                        f"Expected attribute '{attr_name}' not found in entry"
+                    )
+
+        return entries
+
+    @staticmethod
+    def test_parse_and_assert_multiple_entries(
+        parser_service: object,
+        content: str,
+        expected_dns: list[str],
+        expected_count: int,
+    ) -> list[object]:
+        """Parse LDIF content with multiple entries and assert structure.
+
+        Args:
+            parser_service: The parser service instance
+            content: LDIF content to parse
+            expected_dns: Expected DNs of entries (in order)
+            expected_count: Expected number of entries
+
+        Returns:
+            List of parsed entries
+
+        Raises:
+            AssertionError: If parsing fails or structure doesn't match
+
+        """
+        if not isinstance(parser_service, FlextLdifParser):
+            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+
+        result = parser_service.parse_string(content=content, server_type="rfc")
+
+        if result.is_failure:
+            raise AssertionError(f"Parsing failed: {result.error}")
+
+        entries = list(result.value.entries)
+        if len(entries) != expected_count:
+            raise AssertionError(
+                f"Expected {expected_count} entries, got {len(entries)}"
+            )
+
+        for i, expected_dn in enumerate(expected_dns):
+            if i < len(entries):
+                actual_dn = getattr(entries[i], "dn", None)
+                if str(actual_dn) != expected_dn:
+                    raise AssertionError(
+                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
+                    )
+
+        return entries
+
+    @staticmethod
+    def test_create_entry(
+        dn: str,
+        attributes: dict[str, object],
+    ) -> object:
+        """Create an entry for testing.
+
+        Args:
+            dn: Distinguished Name for the entry
+            attributes: Dictionary of attributes for the entry
+
+        Returns:
+            Entry instance
+
+        Raises:
+            AssertionError: If entry creation fails
+
+        """
+        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+        if result.is_failure:
+            raise AssertionError(f"Entry creation failed: {result.error}")
+        return result.value
+
+    @staticmethod
+    def test_write_entries_to_string(
+        writer_service: object,
+        entries: list[object],
+        expected_content: list[str] | None = None,
+    ) -> str:
+        """Write entries to LDIF string.
+
+        Args:
+            writer_service: The writer service instance
+            entries: List of entries to write
+            expected_content: Optional list of strings that must appear in output
+
+        Returns:
+            LDIF string
+
+        Raises:
+            AssertionError: If writing fails or expected content not found
+
+        """
+        if not isinstance(writer_service, FlextLdifWriter):
+            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+
+        result = writer_service.write_to_string(entries=entries)
+
+        if result.is_failure:
+            raise AssertionError(f"Writing failed: {result.error}")
+
+        ldif_string = result.value
+        if not isinstance(ldif_string, str):
+            raise AssertionError(f"Expected string, got {type(ldif_string)}")
+
+        if expected_content:
+            for substring in expected_content:
+                if substring not in ldif_string:
+                    raise AssertionError(f"'{substring}' not found in LDIF output")
+
+        return ldif_string
+
+    @staticmethod
+    def test_write_entries_to_file(
+        writer_service: object,
+        entries: list[object],
+        file_path: object,
+        expected_content: list[str] | None = None,
+    ) -> None:
+        """Write entries to LDIF file.
+
+        Args:
+            writer_service: The writer service instance
+            entries: List of entries to write
+            file_path: Path to write to
+            expected_content: Optional list of strings that must appear in output
+
+        Raises:
+            AssertionError: If writing fails or expected content not found
+
+        """
+        if not isinstance(writer_service, FlextLdifWriter):
+            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+
+        if not isinstance(file_path, Path):
+            raise TypeError(f"Expected Path, got {type(file_path)}")
+
+        result = writer_service.write_to_file(entries=entries, path=file_path)
+
+        if result.is_failure:
+            raise AssertionError(f"Writing to file failed: {result.error}")
+
+        if not file_path.exists():
+            raise AssertionError(f"Output file {file_path} was not created")
+
+        if expected_content:
+            content = file_path.read_text()
+            for substring in expected_content:
+                if substring not in content:
+                    raise AssertionError(f"'{substring}' not found in file content")
+
+    @staticmethod
+    def test_parse_edge_case(
+        parser_service: object,
+        content: str,
+        should_succeed: bool | None = None,
+    ) -> object | None:
+        """Parse edge case LDIF content.
+
+        Args:
+            parser_service: The parser service instance
+            content: LDIF content to parse
+            should_succeed: Expected success state (None = either outcome acceptable)
+
+        Returns:
+            Parse result value if successful, None otherwise
+
+        Raises:
+            AssertionError: If should_succeed specified and result doesn't match
+
+        """
+        if not isinstance(parser_service, FlextLdifParser):
+            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+
+        result = parser_service.parse_string(content=content, server_type="rfc")
+
+        if should_succeed is True and result.is_failure:
+            raise AssertionError(f"Expected success but got failure: {result.error}")
+
+        if should_succeed is False and result.is_success:
+            msg = "Expected failure but got success"
+            raise AssertionError(msg)
+
+        return result.value if result.is_success else None
+
+    @staticmethod
+    def test_write_entry_variations(
+        writer_service: object,
+        entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
+    ) -> None:
+        """Test writing entries with various data types.
+
+        Args:
+            writer_service: The writer service instance
+            entry_data: Dict mapping test case names to entry data
+
+        Raises:
+            AssertionError: If any write operation fails
+
+        """
+        if not isinstance(writer_service, FlextLdifWriter):
+            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+
+        for test_name, data in entry_data.items():
+            dn = str(data.get("dn", ""))
+            attributes = data.get("attributes", {})
+            if not isinstance(attributes, dict):
+                attributes = {}
+
+            entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+            if entry_result.is_failure:
+                raise AssertionError(
+                    f"Entry creation failed for {test_name}: {entry_result.error}"
+                )
+
+            write_result = writer_service.write_to_string(entries=[entry_result.value])
+            if write_result.is_failure:
+                raise AssertionError(
+                    f"Write failed for {test_name}: {write_result.error}"
+                )
+
+            if dn and dn not in write_result.value:
+                raise AssertionError(f"DN '{dn}' not found in output for {test_name}")
+
+    @staticmethod
+    def test_entry_quirk_can_handle(
+        entry_quirk: object,
+        entry: object,
+        expected: bool,
+    ) -> None:
+        """Test Entry quirk can_handle method.
+
+        Args:
+            entry_quirk: Entry quirk instance
+            entry: Entry to test
+            expected: Expected result from can_handle
+
+        Raises:
+            AssertionError: If can_handle returns unexpected result
+
+        """
+        can_handle_method = getattr(entry_quirk, "can_handle", None)
+        if can_handle_method is None:
+            msg = "Entry quirk has no can_handle method"
+            raise AssertionError(msg)
+
+        dn = str(getattr(entry, "dn", ""))
+        attributes = getattr(entry, "attributes", {})
+
+        result = can_handle_method(dn, attributes)
+        if result != expected:
+            raise AssertionError(
+                f"Expected can_handle to return {expected}, got {result}"
+            )
+
+    @staticmethod
+    def test_acl_quirk_parse_and_verify(
+        acl_quirk: object,
+        acl_line: str,
+        expected_raw_acl: str | None = None,
+    ) -> object:
+        """Parse ACL and verify result.
+
+        Args:
+            acl_quirk: ACL quirk instance
+            acl_line: ACL line to parse
+            expected_raw_acl: Expected raw ACL value
+
+        Returns:
+            Parsed ACL object
+
+        Raises:
+            AssertionError: If parsing fails or verification fails
+
+        """
+        parse_method = getattr(acl_quirk, "parse", None)
+        if parse_method is None:
+            msg = "ACL quirk has no parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(acl_line)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"ACL parsing failed: {result.error}")
+
+        value = result.value if hasattr(result, "value") else result
+
+        if expected_raw_acl is not None:
+            raw_acl = getattr(value, "raw_acl", None)
+            if raw_acl != expected_raw_acl:
+                raise AssertionError(
+                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
+                )
+
+        return value
+
+    @staticmethod
+    def test_acl_quirk_write_and_verify(
+        acl_quirk: object,
+        acl: object,
+        expected_content: str | None = None,
+    ) -> str:
+        """Write ACL and verify result.
+
+        Args:
+            acl_quirk: ACL quirk instance
+            acl: ACL object to write
+            expected_content: Expected content in output
+
+        Returns:
+            Written ACL string
+
+        Raises:
+            AssertionError: If writing fails or verification fails
+
+        """
+        write_method = getattr(acl_quirk, "write", None)
+        if write_method is None:
+            msg = "ACL quirk has no write method"
+            raise AssertionError(msg)
+
+        result = write_method(acl)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"ACL writing failed: {result.error}")
+
+        output = result.value if hasattr(result, "value") else result
+
+        if not isinstance(output, str):
+            raise AssertionError(f"Expected string output, got {type(output)}")
+
+        if expected_content is not None and expected_content not in output:
+            raise AssertionError(f"Expected '{expected_content}' not found in output")
+
+        return output
+
 
 class TestDeduplicationHelpers:
     """Test helpers for deduplication functionality."""
@@ -1415,6 +1809,55 @@ class TestDeduplicationHelpers:
             if result.is_success:
                 entries.append(result.value)
         return entries
+
+    @staticmethod
+    def batch_parse_and_assert(
+        parser_service: object,
+        test_cases: list[dict[str, object]],
+        *,
+        validate_all: bool = True,
+    ) -> list[object]:
+        """Batch parse LDIF content and assert results.
+
+        Args:
+            parser_service: The parser service instance
+            test_cases: List of dicts with 'ldif_content', 'should_succeed',
+                       and optionally 'server_type' keys
+            validate_all: Whether to validate all results strictly
+
+        Returns:
+            List of parse results
+
+        Raises:
+            AssertionError: If validation fails when validate_all is True
+
+        """
+        if not isinstance(parser_service, FlextLdifParser):
+            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+
+        results = []
+        for test_case in test_cases:
+            ldif_content = str(test_case.get("ldif_content", ""))
+            should_succeed = test_case.get("should_succeed")
+            server_type = str(test_case.get("server_type", "rfc"))
+
+            result = parser_service.parse_string(
+                content=ldif_content,
+                server_type=server_type,
+            )
+
+            if validate_all and should_succeed is True and result.is_failure:
+                raise AssertionError(
+                    f"Expected success but got failure: {result.error}"
+                )
+
+            if validate_all and should_succeed is False and result.is_success:
+                msg = "Expected failure but got success"
+                raise AssertionError(msg)
+
+            results.append(result)
+
+        return results
 
     @staticmethod
     def helper_api_write_and_unwrap(

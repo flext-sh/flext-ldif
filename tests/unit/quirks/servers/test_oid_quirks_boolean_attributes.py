@@ -151,10 +151,10 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("p.Ldif.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == name
         assert attr.oid == oid
 
@@ -172,10 +172,10 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("p.Ldif.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == "orclBasicBool"
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -205,9 +205,9 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed1 = cast("p.Ldif.SchemaAttribute", parsed1_result)
+        parsed1 = cast("m.Ldif.SchemaAttribute", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -221,9 +221,9 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             written,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed2 = cast("p.Ldif.SchemaAttribute", parsed2_result)
+        parsed2 = cast("m.Ldif.SchemaAttribute", parsed2_result)
 
         # Verify roundtrip integrity
         assert parsed1.oid == parsed2.oid
@@ -261,10 +261,10 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("p.Ldif.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == attr_name
 
     def test_known_oracle_boolean_attributes(
@@ -407,10 +407,10 @@ class TestsTestFlextLdifOidBooleanAttributes(s):
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=p.Ldif.SchemaAttribute,
+            expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("p.Ldif.SchemaAttribute", parsed_result)
+        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
         assert attr.name == "orclValidBool"
         # Verify it's a valid boolean attribute structure
         assert attr.syntax or attr.syntax is None  # Syntax may or may not be preserved

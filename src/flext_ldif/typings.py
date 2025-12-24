@@ -24,15 +24,16 @@ class FlextLdifTypes(FlextTypes):
     DRY Pattern: Base types defined first, then reused in complex types.
     """
 
-    # Inherit MetadataAttributeValue from FlextTypes for proper type checking
-    type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
-
     # =========================================================================
     # NAMESPACE: .Ldif - All LDIF domain types
     # =========================================================================
 
     class Ldif:
         """LDIF domain type namespace."""
+
+        # Inherit types from parent for hierarchical access
+        type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
+        type ScalarValue = FlextTypes.ScalarValue
 
         # =========================================================================
         # BASIC TYPES (Single Source of Truth - DRY)

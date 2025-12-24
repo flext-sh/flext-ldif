@@ -21,7 +21,7 @@ import re
 from contextlib import suppress
 from typing import ClassVar
 
-from flext_core import FlextResult, u
+from flext_core import r
 
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -32,6 +32,7 @@ from flext_ldif.servers._rfc import (
 )
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
@@ -266,14 +267,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add AD metadata.
 
             Args:
                 attr_definition: Attribute definition string
 
             Returns:
-                FlextResult with SchemaAttribute marked with AD metadata
+                r with SchemaAttribute marked with AD metadata
 
             """
             result = super()._parse_attribute(attr_definition)
@@ -283,20 +284,20 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     self._get_server_type(),
                 )
                 attr_updated = attr_data.model_copy(update={"metadata": metadata})
-                return FlextResult[m.Ldif.SchemaAttribute].ok(attr_updated)
+                return r[m.Ldif.SchemaAttribute].ok(attr_updated)
             return result
 
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add AD metadata.
 
             Args:
                 oc_definition: ObjectClass definition string
 
             Returns:
-                FlextResult with SchemaObjectClass marked with AD metadata
+                r with SchemaObjectClass marked with AD metadata
 
             """
             result = super()._parse_objectclass(oc_definition)
@@ -309,7 +310,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     self._get_server_type(),
                 )
                 oc_updated = oc_data.model_copy(update={"metadata": metadata})
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(oc_updated)
+                return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
             return result
 
         # Nested class references for Schema - allows Schema().Entry() pattern
@@ -383,12 +384,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 )
             return False
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
                 line = acl_line.strip()
                 if not line:
-                    return FlextResult[m.Ldif.Acl].fail(
+                    return r[m.Ldif.Acl].fail(
                         "Empty ACL line cannot be parsed",
                     )
 
@@ -454,14 +455,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 if acl_model.metadata and acl_model.metadata.extensions is not None:
                     acl_model.metadata.extensions["original_format"] = acl_line
 
-                return FlextResult[m.Ldif.Acl].ok(acl_model)
+                return r[m.Ldif.Acl].ok(acl_model)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Acl].fail(
+                return r[m.Ldif.Acl].fail(
                     f"Active Directory ACL parsing failed: {exc}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             Active Directory ACLs use nTSecurityDescriptor format.
@@ -470,13 +471,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             acl_data: ACL data dictionary
 
             Returns:
-            FlextResult with ACL string in AD nTSecurityDescriptor format
+            r with ACL string in AD nTSecurityDescriptor format
 
             """
             try:
                 # Get the raw ACL value - fail if missing
                 if not acl_data.raw_acl:
-                    return FlextResult[str].fail(
+                    return r[str].fail(
                         "Active Directory ACL write requires raw_acl value",
                     )
                 raw_value = acl_data.raw_acl
@@ -492,10 +493,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 else:
                     acl_str = f"{acl_attribute}:"
 
-                return FlextResult[str].ok(acl_str)
+                return r[str].ok(acl_str)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[str].fail(
+                return r[str].fail(
                     f"Active Directory ACL write failed: {exc}",
                 )
 
@@ -531,7 +532,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             normalized_attrs = {
                 name.lower(): value
-                for name, value in u.mapper().to_dict(attributes).items()
+                for name, value in u.Ldif.mapper().to_dict(attributes).items()
             }
             if any(
                 marker in normalized_attrs
@@ -539,8 +540,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
 
-            # u.mapper().get() returns value directly (or default if key not found)
-            raw_object_classes: list[str] = u.mapper().get(
+            # u.Ldif.mapper().get() returns value directly (or default if key not found)
+            raw_object_classes: list[str] = u.Ldif.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -559,11 +560,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
 
 
-# Rebuild Pydantic models after all imports are resolved
-# This fixes circular import issues with forward references
-with suppress(Exception):
-    pass
-    # Forward references resolved automatically by Pydantic
+# Forward references resolved automatically by Pydantic
+# No suppress needed - circular import issues should be resolved architecturally
 
 
 __all__ = ["FlextLdifServersAd"]

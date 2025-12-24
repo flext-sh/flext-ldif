@@ -22,12 +22,9 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -892,7 +889,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     update={
                         "metadata": m.Ldif.QuirkMetadata.create_for(
                             "openldap",  # Literal string for ServerTypeLiteral
-                            extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+                            extensions=m.Ldif.DynamicMetadata(),
                         ),
                     },
                 )

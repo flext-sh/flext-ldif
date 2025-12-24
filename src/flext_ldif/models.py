@@ -428,6 +428,7 @@ class FlextLdifModels(FlextModels):
             EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
 
             # Service status aliases from _models/results.py
+            ClientStatus: TypeAlias = FlextLdifModelsResults.ClientStatus
             StatisticsServiceStatus: TypeAlias = (
                 FlextLdifModelsResults.StatisticsServiceStatus
             )

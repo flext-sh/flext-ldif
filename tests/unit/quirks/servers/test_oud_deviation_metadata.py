@@ -184,7 +184,7 @@ class TestsFlextLdifOudDeviationMetadata(s):
 
         elif test_type == OudMetadataTestType.FORMAT_DETAILS_INTEGRATION:
             metadata = m.Ldif.QuirkMetadata(quirk_type="oud")
-            metadata.original_format_details = m.FormatDetails(
+            metadata.original_format_details = m.Ldif.FormatDetails(
                 dn_line="cn=test, dc=example",
                 trailing_info="server=oud",
             )

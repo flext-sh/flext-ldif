@@ -48,9 +48,9 @@ class TestsFlextLdifCrossServerMigration(s):
 
         # Write as OUD (this should convert via RFC)
         output_path = tmp_path / "oid_to_oud.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             oid_entries,
-            output_path=output_path,
+            output_path,
             server_type="oud",
         )
         assert write_result.is_success, f"OID→OUD write failed: {write_result.error}"
@@ -76,9 +76,9 @@ class TestsFlextLdifCrossServerMigration(s):
 
         # Write as OID
         output_path = tmp_path / "oud_to_oid.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             oud_entries,
-            output_path=output_path,
+            output_path,
             server_type="oid",
         )
         assert write_result.is_success, f"OUD→OID write failed: {write_result.error}"
@@ -100,9 +100,9 @@ class TestsFlextLdifCrossServerMigration(s):
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oid.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             rfc_entries,
-            output_path=output_path,
+            output_path,
             server_type="oid",
         )
         assert write_result.is_success, f"RFC→OID write failed: {write_result.error}"
@@ -117,9 +117,9 @@ class TestsFlextLdifCrossServerMigration(s):
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oud.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             rfc_entries,
-            output_path=output_path,
+            output_path,
             server_type="oud",
         )
         assert write_result.is_success, f"RFC→OUD write failed: {write_result.error}"
@@ -134,9 +134,9 @@ class TestsFlextLdifCrossServerMigration(s):
         assert len(oid_schema) > 0
 
         output_path = tmp_path / "oid_schema_to_oud.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             oid_schema,
-            output_path=output_path,
+            output_path,
             server_type="oud",
         )
         assert write_result.is_success, (
@@ -158,9 +158,9 @@ class TestsFlextLdifCrossServerMigration(s):
 
         # Migrate OID → OUD
         output_path = tmp_path / "dn_preservation_test.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             oid_entries,
-            output_path=output_path,
+            output_path,
             server_type="oud",
         )
         assert write_result.is_success
@@ -201,9 +201,9 @@ class TestsFlextLdifCrossServerMigration(s):
 
         # Migrate to OUD
         output_path = tmp_path / "attr_preservation_test.ldif"
-        write_result = ldif_api.write(
+        write_result = ldif_api.write_file(
             oid_entries[:5],
-            output_path=output_path,
+            output_path,
             server_type="oud",
         )
         assert write_result.is_success

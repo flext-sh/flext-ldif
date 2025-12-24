@@ -20,17 +20,16 @@ from typing import cast
 
 from flext_core import r
 
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import u
 
 
-class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
+class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
     """Direct ACL processing service using flext-core APIs.
 
     Business Rule: ACL service delegates directly to server-specific ACL quirks for
@@ -274,10 +273,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Create response
         # Statistics is a PEP 695 type alias - use the underlying class directly
         # Import internal model type for AclResponse compatibility
-        from flext_ldif._models.domain import FlextLdifModelsDomains
 
         response = m.Ldif.LdifResults.AclResponse(
-            acls=cast("list[FlextLdifModelsDomains.Acl]", acls),
+            acls=cast("list[m.Ldif.Acl]", acls),
             statistics=m.Ldif.LdifResults.Statistics(
                 processed_entries=1,
                 acls_extracted=len(acls),
@@ -314,37 +312,25 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # Filter entries that have at least one ACL attribute
         # Exclude schema entries even if they have ACL attributes
-        def filter_entry(
-            entry: m.Ldif.Entry,
-        ) -> r[m.Ldif.Entry]:
-            """Filter entry if it has ACL attributes - returns FlextResult for batch compatibility."""
+        def has_acl_attribute(entry: m.Ldif.Entry) -> bool:
+            """Check if entry has at least one ACL attribute."""
             # Skip schema entries
             if FlextLdifAcl._is_schema_entry(entry):
-                return r[m.Ldif.Entry].fail("Entry is a schema entry")
+                return False
 
             # Check if entry has any of the ACL attributes
             for attr_name in acl_attributes:
                 attr_values = entry.get_attribute_values(attr_name)
                 if u.Guards.is_list_non_empty(attr_values):
-                    return r[m.Ldif.Entry].ok(entry)
-            return r[m.Ldif.Entry].fail("Entry has no ACL attributes")
+                    return True
+            return False
 
-        # Cast function and list to expected types for batch()
-        batch_func = cast("Callable[[object], object]", filter_entry)
-        batch_result = u.batch(
-            cast("list[object]", entries),
-            batch_func,
-            on_error="skip",
-        )
+        # Filter entries with ACL attributes using list comprehension
         acl_entries: list[m.Ldif.Entry] = [
-            cast("m.Ldif.Entry", entry)
-            for entry in (
-                batch_result.value.get("results", []) if batch_result.is_success else []
-            )
-            if entry is not None
+            entry for entry in entries if has_acl_attribute(entry)
         ]
 
-        return r[str].ok(acl_entries)
+        return r[list[m.Ldif.Entry]].ok(acl_entries)
 
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:

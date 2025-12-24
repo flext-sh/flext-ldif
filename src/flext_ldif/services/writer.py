@@ -19,10 +19,7 @@ from pathlib import Path
 from flext_core import r
 from flext_core.runtime import FlextRuntime
 
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.base import FlextLdifServiceBase
-
-# Services CAN import models/types/constants (but not the reverse)
+from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
@@ -37,7 +34,7 @@ def _extract_pipe_value(
     return pipe_result.value if pipe_result.is_success else None
 
 
-class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
+class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
     """Direct LDIF writing service using flext-core APIs.
 
     Business Rule: Writer service delegates directly to server-specific entry quirks
@@ -220,6 +217,12 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
 
         ldif_content = string_result.value
 
+        # Create parent directories if they don't exist
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            return r[str].fail(f"Failed to create parent directories for {path}: {e}")
+
         # Write to file
         try:
             path.write_text(ldif_content, encoding="utf-8")
@@ -338,7 +341,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.LdifResults.WriteResponse]):
         target_server_type: str | None = None
         if isinstance(target_server_type_raw, str):
             try:
-                target_server_type = FlextLdifUtilitiesServer.normalize_server_type(
+                target_server_type = u.Ldif.Server.normalize_server_type(
                     target_server_type_raw,
                 )
             except ValueError:

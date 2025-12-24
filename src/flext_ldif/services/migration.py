@@ -15,10 +15,10 @@ from typing import Final, override
 from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
 from flext_ldif._utilities.pipeline import ProcessingPipeline
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
@@ -27,7 +27,7 @@ logger: Final = FlextLogger(__name__)
 
 
 class FlextLdifMigrationPipeline(
-    FlextLdifServiceBase[FlextLdifModelsResults.MigrationPipelineResult],
+    s[m.Ldif.LdifResults.MigrationPipelineResult],
 ):
     """Migration Pipeline for Server-to-Server LDIF Migration.
 
@@ -48,8 +48,8 @@ class FlextLdifMigrationPipeline(
     # Instance state (stored as PrivateAttr for frozen model compatibility)
     _input_dir: Path | None = PrivateAttr(default=None)
     _output_dir: Path | None = PrivateAttr(default=None)
-    _source_type: str = PrivateAttr(default="rfc")
-    _target_type: str = PrivateAttr(default="rfc")
+    _source_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
+    _target_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
     _processing_pipeline: ProcessingPipeline | None = PrivateAttr(default=None)
 
     def __init__(
@@ -91,16 +91,16 @@ class FlextLdifMigrationPipeline(
         return getattr(self, "_output_dir", None)
 
     @property
-    def source_server_type(self) -> str:
+    def source_server_type(self) -> c.Ldif.ServerTypes:
         """Get source server type."""
-        # Type narrowing: _source_type is ServerTypeLiteral (defined as PrivateAttr)
-        return getattr(self, "_source_type", "rfc")
+        # Type narrowing: _source_type is c.Ldif.ServerTypes (defined as PrivateAttr)
+        return getattr(self, "_source_type", c.Ldif.ServerTypes.RFC)
 
     @property
-    def target_server_type(self) -> str:
+    def target_server_type(self) -> c.Ldif.ServerTypes:
         """Get target server type."""
-        # Type narrowing: _target_type is ServerTypeLiteral (defined as PrivateAttr)
-        return getattr(self, "_target_type", "rfc")
+        # Type narrowing: _target_type is c.Ldif.ServerTypes (defined as PrivateAttr)
+        return getattr(self, "_target_type", c.Ldif.ServerTypes.RFC)
 
     def _get_processing_pipeline(self) -> ProcessingPipeline:
         """Get or create processing pipeline instance."""
@@ -121,11 +121,7 @@ class FlextLdifMigrationPipeline(
                 },
             )
             # Create TransformConfig with ProcessConfig
-            transform_config_base = TransformConfig()
-            config = TransformConfig(
-                **transform_config_base.model_dump(),
-                process_config=process_config,
-            )
+            config = TransformConfig(process_config=process_config)
             pipeline = ProcessingPipeline(config)
             object.__setattr__(self, "_processing_pipeline", pipeline)
         return pipeline
@@ -166,7 +162,7 @@ class FlextLdifMigrationPipeline(
         self,
         input_file: Path,
         output_file: Path | None = None,
-    ) -> r[FlextLdifModelsResults.MigrationPipelineResult]:
+    ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Migrate a single LDIF file.
 
         Args:
@@ -180,7 +176,7 @@ class FlextLdifMigrationPipeline(
         try:
             # Read input file
             if not input_file.exists():
-                return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+                return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
                 )
 
@@ -194,7 +190,7 @@ class FlextLdifMigrationPipeline(
             )
 
             if parse_result.is_failure:
-                return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+                return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                     f"Parse failed: {parse_result.error}",
                 )
 
@@ -210,7 +206,7 @@ class FlextLdifMigrationPipeline(
             # Migrate entries
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.is_failure:
-                return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+                return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                     f"Migration failed: {migrate_result.error}",
                 )
 
@@ -220,7 +216,7 @@ class FlextLdifMigrationPipeline(
             if output_file is None:
                 out_dir = self.output_dir
                 if out_dir is None:
-                    return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+                    return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                         "No output file or output_dir specified",
                     )
                 output_file = out_dir / input_file.name
@@ -232,7 +228,7 @@ class FlextLdifMigrationPipeline(
             )
 
             if write_result.is_failure:
-                return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+                return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                     f"Write failed: {write_result.error}",
                 )
 
@@ -248,28 +244,28 @@ class FlextLdifMigrationPipeline(
                 m.Ldif.Entry.model_validate(e.model_dump(mode="json")) for e in migrated
             ]
             # Create result using facade class which accepts base Entry type
-            result = FlextLdifModelsResults.MigrationPipelineResult(
+            result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_entries,
                 output_files=[str(output_file)],
-                stats=FlextLdifModelsResults.Statistics(
+                stats=m.Ldif.LdifResults.Statistics(
                     total_entries=len(entries_list),
                     processed_entries=len(migrated),
                 ),
             )
 
-            return r[FlextLdifModelsResults.MigrationPipelineResult].ok(result)
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
 
         except Exception as e:
             logger.exception(
                 "File migration failed",
                 input_file=str(input_file),
             )
-            return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 f"File migration failed: {e}",
             )
 
     @override
-    def execute(self) -> r[FlextLdifModelsResults.MigrationPipelineResult]:
+    def execute(self) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir.
 
         Returns:
@@ -280,17 +276,17 @@ class FlextLdifMigrationPipeline(
         out_dir = self.output_dir
 
         if in_dir is None:
-            return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 "No input_dir specified",
             )
 
         if out_dir is None:
-            return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 "No output_dir specified",
             )
 
         if not in_dir.exists():
-            return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 f"Input directory not found: {in_dir}",
             )
 
@@ -329,20 +325,20 @@ class FlextLdifMigrationPipeline(
                 for e in all_entries
             ]
             # Create result using facade class which accepts base Entry type
-            pipeline_result = FlextLdifModelsResults.MigrationPipelineResult(
+            pipeline_result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_all_entries,
                 output_files=output_files,
-                stats=FlextLdifModelsResults.Statistics(
+                stats=m.Ldif.LdifResults.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                 ),
             )
 
-            return r[FlextLdifModelsResults.MigrationPipelineResult].ok(pipeline_result)
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(pipeline_result)
 
         except Exception as e:
             logger.exception("Migration pipeline failed")
-            return r[FlextLdifModelsResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 f"Migration pipeline failed: {e}",
             )
 

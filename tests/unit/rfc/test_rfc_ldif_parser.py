@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 import pytest
-from flext_tests import tf
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -25,6 +24,7 @@ from tests import (
     m,
     p,
     s,
+    tf,
 )
 
 
@@ -782,7 +782,7 @@ description: {large_value}
         )
         assert result.is_success
 
-        tf.assert_file_exists(empty_file)
+        assert empty_file.exists()
 
     # ════════════════════════════════════════════════════════════════════════
     # ENTRY QUIRK INTEGRATION TESTS
@@ -914,15 +914,25 @@ objectClass: person
     def test_entry_quirk_can_handle_methods(
         self,
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
-        sample_schema_attribute: p.Ldif.SchemaAttribute,
-        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test Entry quirk can_handle methods."""
+        # RFC 2849: Entry requires DN and objectClass
         assert (
-            rfc_entry_quirk.can_handle("cn=test,dc=example,dc=com", {"cn": ["test"]})
+            rfc_entry_quirk.can_handle(
+                "cn=test,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["test"]},
+            )
             is True
         )
-        assert rfc_entry_quirk.can_handle("", {}) is True
+        # Empty DN should be rejected
+        assert rfc_entry_quirk.can_handle("", {"objectClass": ["person"]}) is False
+        # Missing objectClass should be rejected
+        assert (
+            rfc_entry_quirk.can_handle("cn=test,dc=example,dc=com", {"cn": ["test"]})
+            is False
+        )
         assert rfc_entry_quirk.can_handle_attribute(sample_schema_attribute) is False
         assert (
             rfc_entry_quirk.can_handle_objectclass(sample_schema_objectclass) is False
@@ -937,8 +947,8 @@ objectClass: person
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
         sample_acl: m.Acl,
-        sample_schema_attribute: p.Ldif.SchemaAttribute,
-        sample_schema_objectclass: p.Ldif.SchemaObjectClass,
+        sample_schema_attribute: m.Ldif.SchemaAttribute,
+        sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Test ACL quirk can_handle methods."""
         assert rfc_acl_quirk.can_handle_acl("access to entry by * (browse)") is True

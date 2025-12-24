@@ -10,7 +10,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# ruff: noqa: PLC0415
 
 from __future__ import annotations
 
@@ -21,13 +20,9 @@ from typing import override
 
 from flext_core import d, r
 
-# Note: _DynamicCounts is accessed via facade (m.Ldif.LdifResults.DynamicCounts)
-# to maintain architecture layering
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-
-# Access results via facade - no direct imports needed
 from flext_ldif.utilities import u
 
 
@@ -58,7 +53,7 @@ class FlextLdifStatistics(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[FlextLdifModelsResults.StatisticsServiceStatus]:
+    ) -> r[m.Ldif.LdifResults.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Business Rule: Service health check validates statistics generation
@@ -73,8 +68,8 @@ class FlextLdifStatistics(
             r containing service status (health check)
 
         """
-        return r[FlextLdifModelsResults.StatisticsServiceStatus].ok(
-            FlextLdifModelsResults.StatisticsServiceStatus(
+        return r[m.Ldif.LdifResults.StatisticsServiceStatus].ok(
+            m.Ldif.LdifResults.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[
@@ -92,7 +87,7 @@ class FlextLdifStatistics(
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, str],
-    ) -> r[FlextLdifModelsResults.StatisticsResult]:
+    ) -> r[m.Ldif.LdifResults.StatisticsResult]:
         """Generate complete statistics for categorized migration.
 
         Business Rule: Statistics generation computes comprehensive metrics from
@@ -116,84 +111,52 @@ class FlextLdifStatistics(
                 rejection info, and metadata
 
         """
-
-        # Use u.count directly via u.map for unified counting (DSL pattern)
-        def count_entries(entries: object) -> int:
-            """Count entries in list."""
-            # Type narrowing: entries is list[object] after isinstance check
-            entries_list: list[object] = entries if isinstance(entries, list) else []
-            return u.count(entries_list)
-
-        # Convert values to list with explicit type casting
-        # Build list manually to avoid ValuesView type issues with pyrefly
-        # Use .items() to get (key, value) pairs and extract values
+        # Convert values to list with explicit type casting for counting
         categorized_values_list: list[object] = [
             entries for _category_key, entries in categorized.items()
         ]
-        # Sum counts using built-in sum() - u.Collection.map returns list[int]
-        mapped_counts = u.Collection.map(categorized_values_list, mapper=count_entries)
-        total_entries = sum(mapped_counts) if isinstance(mapped_counts, list) else 0
+        # Sum counts using utilities
+        total_entries = sum(
+            u.Ldif.count(entries) if isinstance(entries, list) else 0
+            for entries in categorized_values_list
+        )
 
-        # Build categorized counts as _DynamicCounts model using DSL pattern
-        # Use dict comprehension with u.count for clarity
-        # Type narrowing: entries is list[object] from categorized dict
+        # Build categorized counts using utilities and model validation
         categorized_counts_dict = {
-            category: u.count(entries) for category, entries in categorized.items()
+            category: u.Ldif.count(entries) for category, entries in categorized.items()
         }
         categorized_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
             categorized_counts_dict,
         )
 
         # Access rejected entries directly from categorized dict
-        # u.Ldif.take() doesn't work correctly with _FlexibleCategories Pydantic models
-        rejected_key = "rejected"
-        # Type narrowing: categorized.get returns list[Entry] - cast to facade type
-        from typing import cast
-
-        rejected_entries_raw: list[m.Ldif.Entry] = cast(
-            "list[m.Ldif.Entry]",
-            categorized.get(rejected_key, []) if hasattr(categorized, "get") else [],
-        )
-        # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
-        # Use named function instead of lambda (DSL pattern)
-
-        def is_entry(entry: object) -> bool:
-            """Check if entry is Entry model."""
-            return isinstance(entry, m.Ldif.Entry)
-
-        # Use list comprehension to avoid u.filter overload issues with object type
-        # Type narrowing: isinstance ensures list[m.Ldif.Entry]
         rejected_entries = [
-            entry for entry in rejected_entries_raw if isinstance(entry, m.Ldif.Entry)
+            entry
+            for entry in categorized.get("rejected", [])
+            if isinstance(entry, m.Ldif.Entry)
         ]
-        rejection_count = u.count(rejected_entries)
+        rejection_count = u.Ldif.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
-        # Type narrowing: ensure total_entries is int for division
+        # Calculate rejection rate as percentage
         total_entries_int = total_entries if isinstance(total_entries, int) else 0
         rejection_rate = (
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
 
-        # Build written counts as DynamicCounts model
-        # Create model with values using model_validate for frozen models
+        # Build written counts and output files models
         written_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
             written_counts,
         )
 
-        # Build output files paths as CategoryPaths model
-        # Use the real class, not the TypeAlias
-        output_files_model = FlextLdifModelsResults.CategoryPaths()
+        output_files_model = m.Ldif.Results.CategoryPaths()
         for category in written_counts:
-            # Get filename from output_files or use default
             filename = u.Ldif.take(output_files, category, default=f"{category}.ldif")
-            # Type narrowing: filename is always str since we provide default
-            filename_str = filename if filename is not None else f"{category}.ldif"
-            path_str = str(output_dir / filename_str)
-            setattr(output_files_model, category, path_str)
+            filename_str = filename if isinstance(filename, str) else f"{category}.ldif"
+            setattr(output_files_model, category, str(output_dir / filename_str))
 
-        return r[FlextLdifModelsResults.StatisticsResult].ok(
-            FlextLdifModelsResults.StatisticsResult(
+        return r[m.Ldif.LdifResults.StatisticsResult].ok(
+            m.Ldif.LdifResults.StatisticsResult(
                 total_entries=total_entries_int,
                 categorized=categorized_counts_model,
                 rejection_rate=rejection_rate,
@@ -207,7 +170,7 @@ class FlextLdifStatistics(
     def calculate_for_entries(
         self,
         entries: Sequence[m.Ldif.Entry],
-    ) -> r[FlextLdifModelsResults.EntriesStatistics]:
+    ) -> r[m.Ldif.LdifResults.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 
         Args:
@@ -220,47 +183,36 @@ class FlextLdifStatistics(
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
 
-        def process_entry(entry: m.Ldif.Entry) -> None:
-            """Process entry to update distributions."""
+        for entry in entries:
             object_class_distribution.update(entry.get_objectclass_names())
 
             # Check for server_type in metadata extensions
             if entry.metadata and entry.metadata.extensions:
-                extensions = entry.metadata.extensions
-                st_value = u.Ldif.take(extensions, "server_type", as_type=str)
+                st_value = u.Ldif.take(
+                    entry.metadata.extensions, "server_type", as_type=str
+                )
                 if st_value is not None:
                     server_type_distribution[st_value] += 1
 
-        _ = u.Collection.batch(
-            list(entries),
-            process_entry,
-            _on_error="skip",
-        )
+        # Process entries directly - batch processing handled inline
 
-        # Build object_class_distribution as DynamicCounts model
-        obj_class_model = FlextLdifModelsResults.DynamicCounts()
+        # Build distribution models
+        obj_class_model = m.Ldif.LdifResults.DynamicCounts()
         for class_name, count in object_class_distribution.items():
             obj_class_model.set_count(class_name, count)
 
-        # Build server_type_distribution as DynamicCounts model
-        server_type_model = FlextLdifModelsResults.DynamicCounts()
+        server_type_model = m.Ldif.LdifResults.DynamicCounts()
         for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
 
-        # Debug: Check what we have before creating EntriesStatistics
-        # server_type_distribution dict should have the counts
-        if not server_type_distribution:
-            # If empty, create empty model
-            server_type_model = FlextLdifModelsResults.DynamicCounts()
-
         # Create EntriesStatistics - ensure we pass the populated models
-        entries_stats = FlextLdifModelsResults.EntriesStatistics(
+        entries_stats = m.Ldif.LdifResults.EntriesStatistics(
             total_entries=len(entries),
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
 
-        return r[FlextLdifModelsResults.EntriesStatistics].ok(entries_stats)
+        return r[m.Ldif.LdifResults.EntriesStatistics].ok(entries_stats)
 
     def _extract_rejection_reasons(
         self,
@@ -277,33 +229,12 @@ class FlextLdifStatistics(
         """
         reasons: set[str] = set()
 
-        def extract_reason(entry: m.Ldif.Entry) -> str | r[str]:
-            """Extract rejection reason from entry."""
+        for entry in rejected_entries:
             if entry.metadata and entry.metadata.processing_stats:
                 reason = entry.metadata.processing_stats.rejection_reason
                 if reason:
-                    return r[str].ok(reason)
-            return r[str].fail("No rejection reason")
-
-        batch_result = u.Collection.batch(
-            rejected_entries,
-            extract_reason,
-            _on_error="skip",
-        )
-        # u.Collection.batch returns FlextResult[BatchResultDict]
-        if batch_result.is_success and batch_result.value:
-            batch_dict = batch_result.value
-            results_raw = batch_dict.get("results", [])
-            # Type narrowing: results_raw is list[t.GeneralValueType] from batch dict
-            # extract_reason returns str | r[str], so results are str after unwrapping
-            if not isinstance(results_raw, list):
-                return sorted(reasons)
-            results: list[str | None] = [
-                str(r) if r is not None else None for r in results_raw
-            ]
-            for reason in results:
-                if reason is not None:
                     reasons.add(reason)
+
         return sorted(reasons)
 
 

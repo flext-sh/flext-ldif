@@ -18,15 +18,14 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[FlextLdifModelsResults.EntryAnalysisResult],
+    s[m.Ldif.LdifResults.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -142,7 +141,7 @@ class FlextLdifAnalysis(
         return r[m.Ldif.LdifResults.EntryAnalysisResult].ok(
             m.Ldif.LdifResults.EntryAnalysisResult(
                 total_entries=total_entries,
-                objectclass_distribution=FlextLdifModelsResults.DynamicCounts(
+                objectclass_distribution=m.Ldif.LdifResults.DynamicCounts(
                     **objectclass_distribution,
                 ),
                 patterns_detected=sorted(patterns_detected),

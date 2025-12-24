@@ -16,14 +16,13 @@ from pathlib import Path
 from typing import Final, cast
 
 import pytest
-from flext_tests import tf, tm
 from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import FlextLdif, FlextLdifProtocols, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
-from tests import c, m, p, s
+from tests import c, m, p, s, tf, tm
 
 # Module-level constants
 _OPERATIONAL_ATTRS: Final[list[str]] = [
@@ -1260,17 +1259,14 @@ class TestsFlextLdifEntries(s):
             result = service.get_entry_attribute(entry, attr_name)
 
             if should_succeed:
-                tm.assert_result_success(result)
+                tm.ok(result)
                 if expected_value is not None:
-                    value = FlextTestsUtilities.Tests.Result.assert_success(result)
-                    tm.assert_list_equals(value, expected_value)
+                    value = tm.ok(result)
+                    tm.that(value, eq=expected_value)
             elif expected_error:
-                tm.assert_result_failure(
-                    result,
-                    expected_error=expected_error,
-                )
+                tm.fail(result, has=expected_error)
             else:
-                tm.assert_result_failure(result)
+                tm.fail(result)
 
         @pytest.mark.parametrize(
             (
@@ -1299,20 +1295,17 @@ class TestsFlextLdifEntries(s):
             result = service.normalize_attribute_value(typed_input)
 
             if should_succeed:
-                tm.assert_result_success(result)
+                tm.ok(result)
                 if expected_normalized is not None:
-                    normalized = FlextTestsUtilities.Tests.Result.assert_success(result)
-                    tm.assert_strings_equal_case_insensitive(
-                        normalized,
-                        expected_normalized,
+                    normalized = tm.ok(result)
+                    tm.that(
+                        normalized.lower() if isinstance(normalized, str) else normalized,
+                        eq=expected_normalized.lower() if isinstance(expected_normalized, str) else expected_normalized,
                     )
             elif expected_error:
-                tm.assert_result_failure(
-                    result,
-                    expected_error=expected_error,
-                )
+                tm.fail(result, has=expected_error)
             else:
-                tm.assert_result_failure(result)
+                tm.fail(result)
 
         @pytest.mark.parametrize(
             ("test_name", "attr_name", "should_succeed", "expected_value"),
@@ -1331,15 +1324,15 @@ class TestsFlextLdifEntries(s):
             result = service.get_normalized_attribute(entry, attr_name)
 
             if should_succeed:
-                tm.assert_result_success(result)
+                tm.ok(result)
                 if expected_value is not None:
-                    value = FlextTestsUtilities.Tests.Result.assert_success(result)
-                    tm.assert_strings_equal_case_insensitive(
-                        value,
-                        expected_value,
+                    value = tm.ok(result)
+                    tm.that(
+                        value.lower() if isinstance(value, str) else value,
+                        eq=expected_value.lower() if isinstance(expected_value, str) else expected_value,
                     )
             else:
-                tm.assert_result_failure(result)
+                tm.fail(result)
 
 
 __all__ = ["RealLdifLoader", "TestsFlextLdifEntries"]

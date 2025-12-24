@@ -476,7 +476,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.can_handle_acl with model."""
-        acl = m.Acl(raw_acl="test: acl", server_type="rfc")
+        acl = m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
         assert acl_quirk.can_handle_acl(acl) is True
 
     @pytest.mark.timeout(5)
