@@ -14,7 +14,8 @@ References:
 
 from __future__ import annotations
 
-from flext import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, FlextResult, r
+
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers.base import FlextLdifServersBase
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
+from flext_core._models.entity import FlextModelsEntity
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
@@ -195,7 +196,7 @@ class FlextLdifModelsEvents:
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(m.Entity.DomainEvent):
+    class FilterEvent(FlextModelsEntity.Entry.DomainEvent):
         """Event emitted when LDIF entries are filtered.
 
         Tracks filtering operations including criteria applied and results.
@@ -227,7 +228,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class ParseEvent(m.Entity.DomainEvent):
+    class ParseEvent(FlextModelsEntity.Entry.DomainEvent):
         """Event emitted when LDIF content is parsed.
 
         Tracks parsing operations including source type and results.
@@ -326,7 +327,7 @@ class FlextLdifModelsEvents:
                 error_details=error_details,
             )
 
-    class WriteEvent(m.Entity.DomainEvent):
+    class WriteEvent(FlextModelsEntity.Entry.DomainEvent):
         """Event emitted when LDIF content is written.
 
         Tracks writing operations including target and results.
@@ -362,7 +363,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed entries",
         )
 
-    class CategoryEvent(m.Entity.DomainEvent):
+    class CategoryEvent(FlextModelsEntity.Entry.DomainEvent):
         """Event emitted when entries are categorized.
 
         Tracks categorization operations including rules applied and results.
@@ -390,7 +391,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class AclEvent(m.Entity.DomainEvent):
+    class AclEvent(FlextModelsEntity.Entry.DomainEvent):
         """Event emitted when ACLs are processed.
 
         Tracks ACL parsing, transformation, and validation operations.

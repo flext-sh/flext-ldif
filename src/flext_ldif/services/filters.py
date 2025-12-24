@@ -12,7 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast
 
-from flext import FlextLogger, r
+from flext_core import FlextLogger, r
+
 from flext_ldif.models import m
 
 logger: Final = FlextLogger(__name__)

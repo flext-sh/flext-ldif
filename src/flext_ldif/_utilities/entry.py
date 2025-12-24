@@ -8,7 +8,8 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext import FlextLogger, FlextResult, FlextTypes, r
+from flext_core import FlextLogger, FlextResult, FlextTypes, r
+
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata

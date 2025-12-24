@@ -19,7 +19,8 @@ import re
 from collections.abc import Callable
 from typing import ClassVar, override
 
-from flext import d, r
+from flext_core import d, r
+
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m

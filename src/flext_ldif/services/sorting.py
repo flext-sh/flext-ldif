@@ -17,9 +17,9 @@ import operator
 from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, override
 
+from flext_core import r
 from pydantic import Field, field_validator, model_validator
 
-from flext import r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m

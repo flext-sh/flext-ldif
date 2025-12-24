@@ -18,7 +18,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext import r
+from flext_core import r
+
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

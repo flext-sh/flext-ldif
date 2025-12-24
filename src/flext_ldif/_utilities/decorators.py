@@ -23,7 +23,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext import FlextLogger, r
+from flext_core import FlextLogger, r
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._shared import normalize_server_type

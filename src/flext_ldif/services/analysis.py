@@ -16,7 +16,8 @@ import contextlib
 from collections import Counter
 from typing import override
 
-from flext import r
+from flext_core import r
+
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation

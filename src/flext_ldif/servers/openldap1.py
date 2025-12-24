@@ -18,7 +18,8 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext import r
+from flext_core import r
+
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl

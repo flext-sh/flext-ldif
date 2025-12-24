@@ -29,7 +29,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 
-from flext import r
+from flext_core import r
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry

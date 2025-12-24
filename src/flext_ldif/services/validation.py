@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Self, override
 
+from flext_core import d, r, t
 from pydantic import Field
 
-from flext import d, r, t
 from flext_ldif._models.results import _BooleanFlags
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif.base import FlextLdifServiceBase

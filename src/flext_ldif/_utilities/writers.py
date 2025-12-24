@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from typing import Protocol, cast
 
 import structlog
+from flext_core import FlextRuntime, r
 
-from flext import FlextRuntime, r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m

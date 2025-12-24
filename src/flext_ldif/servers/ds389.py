@@ -21,7 +21,8 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext import FlextResult
+from flext_core import FlextResult
+
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

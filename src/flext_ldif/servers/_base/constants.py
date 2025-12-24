@@ -12,7 +12,8 @@ from abc import ABC
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext import FlextLogger
+from flext_core import FlextLogger
+
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 

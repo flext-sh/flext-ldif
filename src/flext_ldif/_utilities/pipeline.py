@@ -33,7 +33,8 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Self
 
-from flext import r
+from flext_core import r
+
 from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter

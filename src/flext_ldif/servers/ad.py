@@ -20,7 +20,8 @@ import binascii
 import re
 from typing import ClassVar
 
-from flext import r
+from flext_core import r
+
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
@@ -528,8 +529,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
 
             normalized_attrs = {
-                name.lower(): value
-                for name, value in attributes.items()
+                name.lower(): value for name, value in attributes.items()
             }
             if any(
                 marker in normalized_attrs

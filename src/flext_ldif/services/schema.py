@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from typing import Self, override
 
+from flext_core import r
 from pydantic import PrivateAttr
 
-from flext import r
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m

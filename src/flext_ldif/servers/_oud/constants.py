@@ -11,7 +11,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext import FlextLogger
+from flext_core import FlextLogger
+
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 

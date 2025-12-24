@@ -18,7 +18,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from flext import FlextTypes, r
+from flext_core import FlextTypes, r
+
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
