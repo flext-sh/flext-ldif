@@ -23,54 +23,66 @@ from flext_ldif.models import FlextLdifModels
 
 
 class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
-    """Test models extending FlextTestsModels and FlextLdifModels.
+    """Test models - composição de FlextTestsModels + FlextLdifModels.
 
-    Provides test-specific model extensions without duplicating parent functionality.
-    All parent models are accessible via inheritance hierarchy.
+    Hierarquia:
+    - FlextTestsModels: Utilitários de teste genéricos
+    - FlextLdifModels: Models de domínio do projeto
+    - TestsFlextLdifModels: Composição + namespace .Tests
 
-    Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
-    Short name 'm' for convenient access in tests.
+    Access patterns:
+    - tm.Tests.* - Test fixtures (ACL, Schema, etc.)
+    - m.Ldif.* - Production domain models
     """
 
-    # Test-specific model extensions can be added here
-    # All parent models (Entry, SchemaEventConfig, etc.) are accessible via inheritance
+    class Tests:
+        """Test fixture models namespace.
 
-    # Convenience aliases for ACL models (test-only shortcuts)
-    # Production code should use m.Ldif.Acl pattern
-    Acl = FlextLdifModels.Ldif.Acl
-    AclTarget = FlextLdifModels.Ldif.AclTarget
-    AclSubject = FlextLdifModels.Ldif.AclSubject
-    AclPermissions = FlextLdifModels.Ldif.AclPermissions
-    AclWriteMetadata = FlextLdifModels.Ldif.AclWriteMetadata
+        Convenience aliases for test-only shortcuts.
+        Production code should use m.Ldif.* pattern.
+        """
 
-    # Convenience aliases for schema models (test-only shortcuts)
-    Syntax = FlextLdifModels.Ldif.Syntax
-    SchemaAttribute = FlextLdifModels.Ldif.SchemaAttribute
-    SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
+        # ACL models for testing
+        Acl = FlextLdifModels.Ldif.Acl
+        AclTarget = FlextLdifModels.Ldif.AclTarget
+        AclSubject = FlextLdifModels.Ldif.AclSubject
+        AclPermissions = FlextLdifModels.Ldif.AclPermissions
+        AclWriteMetadata = FlextLdifModels.Ldif.AclWriteMetadata
 
-    # Convenience aliases for format options (test-only shortcuts)
-    WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
+        # Schema models for testing
+        Syntax = FlextLdifModels.Ldif.Syntax
+        SchemaAttribute = FlextLdifModels.Ldif.SchemaAttribute
+        SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
 
-    # Service status models (direct aliases for test convenience)
-    ValidationServiceStatus = FlextLdifModels.Ldif.LdifResults.ValidationServiceStatus
-    SchemaServiceStatus = FlextLdifModels.Ldif.LdifResults.SchemaServiceStatus
-    StatisticsServiceStatus = FlextLdifModels.Ldif.LdifResults.StatisticsServiceStatus
+        # Format options for testing
+        WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
 
-    # Result models (direct aliases for test convenience)
-    ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
-    ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
+        # Service status models for testing
+        ValidationServiceStatus = (
+            FlextLdifModels.Ldif.LdifResults.ValidationServiceStatus
+        )
+        SchemaServiceStatus = FlextLdifModels.Ldif.LdifResults.SchemaServiceStatus
+        StatisticsServiceStatus = (
+            FlextLdifModels.Ldif.LdifResults.StatisticsServiceStatus
+        )
 
-    # Validation rules models (direct aliases for test convenience)
-    ServerValidationRules = ServerValidationRules
-    EncodingRules = EncodingRules
-    DnCaseRules = DnCaseRules
-    AclFormatRules = AclFormatRules
+        # Result models for testing
+        ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
+        ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
+
+        # Validation rules for testing
+        ServerValidationRules = ServerValidationRules
+        EncodingRules = EncodingRules
+        DnCaseRules = DnCaseRules
+        AclFormatRules = AclFormatRules
 
 
-# Standardized short name for use in tests (same pattern as flext-core)
+# Short aliases for tests
+tm = TestsFlextLdifModels
 m = TestsFlextLdifModels
 
 __all__ = [
     "TestsFlextLdifModels",
     "m",
+    "tm",
 ]

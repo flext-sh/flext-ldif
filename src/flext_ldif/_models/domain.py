@@ -16,12 +16,6 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, cast
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextUtilities,
-    t,
-)
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import FlextModels as m
@@ -33,6 +27,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_ldif._models.base import (
     AclElement,
     FlextLdifModelsBase,
@@ -1762,9 +1757,7 @@ class FlextLdifModelsDomains:
                     "novell",
                 }:
                     # quirk_type_value is validated as ServerTypeLiteral
-                    final_quirk_type_val = cast(
-                        "c.Ldif.LiteralTypes.ServerTypeLiteral", quirk_type_value
-                    )
+                    final_quirk_type_val = quirk_type_value
                 else:
                     # Use literal value directly for type safety
                     final_quirk_type_val = "rfc"

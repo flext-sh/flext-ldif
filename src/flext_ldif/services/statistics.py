@@ -18,8 +18,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import d, r
-
+from flext import d, r
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -189,7 +188,9 @@ class FlextLdifStatistics(
             # Check for server_type in metadata extensions
             if entry.metadata and entry.metadata.extensions:
                 st_value = u.Ldif.take(
-                    entry.metadata.extensions, "server_type", as_type=str
+                    entry.metadata.extensions,
+                    "server_type",
+                    as_type=str,
                 )
                 if st_value is not None:
                     server_type_distribution[st_value] += 1

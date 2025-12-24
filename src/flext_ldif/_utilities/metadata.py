@@ -24,13 +24,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
-from flext_core import (
-    FlextLogger,
-    FlextModels,
-    FlextRuntime,
-    FlextTypes,
-)
-
+from flext import FlextLogger, FlextModels, FlextRuntime, FlextTypes
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 

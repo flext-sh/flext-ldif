@@ -13,9 +13,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from flext_core import FlextModels
 from pydantic import ConfigDict, Field
 
+from flext import FlextModels
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c

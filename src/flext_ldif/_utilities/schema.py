@@ -12,8 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes, r
-
+from flext import FlextLogger, FlextResult, FlextRuntime, FlextTypes, r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser

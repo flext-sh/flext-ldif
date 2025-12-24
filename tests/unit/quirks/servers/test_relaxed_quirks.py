@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
+from flext import FlextResult
 from tests import c, m, p, s
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed

@@ -13,12 +13,7 @@ import re
 from collections.abc import Callable, Mapping
 from typing import cast
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-)
-
+from flext_core import FlextLogger, FlextResult, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -2108,7 +2103,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_attrs: dict[str, str | list[str]] = corrected_attrs_raw
 
         attrs_for_model: dict[str, list[str]] = {}
-        for k, v in corrected_attrs.items():
+        for k, v in corrected_attrs.items():  # type: ignore[assignment]
             # Python 3.13: Use match/case for type dispatching
             match v:
                 case list():
@@ -2116,7 +2111,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 case str():
                     attrs_for_model[k] = [v]
                 case _ if isinstance(v, (list, tuple)):
-                    attrs_for_model[k] = [str(v)]
+                    attrs_for_model[k] = [str(v)]  # type: ignore[list-item]
 
         corrected_ldif_attrs = m.Ldif.Attributes(
             attributes=attrs_for_model,

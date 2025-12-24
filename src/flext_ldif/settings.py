@@ -15,10 +15,10 @@ from __future__ import annotations
 import codecs
 from typing import Self
 
-from flext_core import FlextSettings
 from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
+from flext import FlextSettings
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
 
@@ -46,7 +46,7 @@ class FlextLdifSettings(FlextSettings):
     config = FlextLdifSettings()
 
     # Or via FlextSettings namespace
-    from flext_core import FlextSettings
+    from flext import FlextSettings
     ldif_config = (
         FlextSettings.get_global_instance()
         .get_namespace("ldif", FlextLdifSettings)

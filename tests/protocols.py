@@ -1,8 +1,7 @@
-"""Test protocol definitions extending src protocols for centralized test protocols.
+"""Protocol definitions for flext-ldif tests.
 
-This module provides test-specific protocol extensions that inherit from
-src/flext_ldif/protocols.py classes. This centralizes test protocols without
-duplicating parent class functionality.
+Provides TestsFlextLdifProtocols, extending FlextTestsProtocols with flext-ldif-specific
+protocols. All generic test protocols come from flext_tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,24 +15,37 @@ from flext_ldif.protocols import FlextLdifProtocols
 
 
 class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
-    """Test protocols extending FlextTestsProtocols and FlextLdifProtocols.
+    """Protocol definitions for flext-ldif tests.
 
-    Provides test-specific protocol extensions without duplicating parent functionality.
-    All parent protocols are accessible via inheritance hierarchy.
+    Extends both FlextTestsProtocols and FlextLdifProtocols with flext-ldif-specific
+    protocol definitions.
 
-    Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
-    Short name 'p' for convenient access in tests.
+    Provides access to:
+    - tp.Tests.Docker.* (from FlextTestsProtocols)
+    - tp.Tests.Factory.* (from FlextTestsProtocols)
+    - tp.Ldif.* (from FlextLdifProtocols)
+
+    Rules:
+    - NEVER redeclare protocols from parent classes
+    - Only flext-ldif-specific test protocols allowed
     """
 
-    # Test-specific protocol extensions can be added here
-    # All parent protocols are accessible via inheritance
+    class Tests:
+        """Project-specific test protocols.
+
+        Extends FlextTestsProtocols.Tests with flext-ldif-specific protocols.
+        """
+
+        class Ldif:
+            """Flext-ldif-specific test protocols."""
 
 
-# Standardized short name for use in tests (same pattern as flext-core)
+# Runtime aliases
 p = TestsFlextLdifProtocols
-Testsp = TestsFlextLdifProtocols  # Alias for tests/__init__.py
+tp = TestsFlextLdifProtocols
 
 __all__ = [
     "TestsFlextLdifProtocols",
     "p",
+    "tp",
 ]

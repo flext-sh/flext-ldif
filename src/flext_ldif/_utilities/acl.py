@@ -10,9 +10,9 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Literal
 
-from flext_core import FlextLogger, r, u
 from flext_core.runtime import FlextRuntime
 
+from flext import FlextLogger, r, u
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional
@@ -1233,7 +1233,7 @@ class FlextLdifUtilitiesACL:
                         result.append(processed)
             except Exception as e:
                 # Log and skip items that fail processing
-                logger.debug(f"Skipping ACL rule processing due to error: {e}")
+                logger.debug("Skipping ACL rule processing due to error: %s", e)
                 continue
         return result
 
@@ -1296,7 +1296,7 @@ class FlextLdifUtilitiesACL:
                         result.append(processed)
             except Exception as e:
                 # Log and skip items that fail processing
-                logger.debug(f"Skipping ACL rule processing due to error: {e}")
+                logger.debug("Skipping ACL rule processing due to error: %s", e)
                 continue
         return result
 
@@ -1704,7 +1704,7 @@ class FlextLdifUtilitiesACL:
             except Exception as exc:
                 if fail_fast:
                     return r[list[m.Ldif.Acl]].fail(
-                        f"Exception parsing ACL line {i}: {exc}"
+                        f"Exception parsing ACL line {i}: {exc}",
                     )
                 errors.append((i, f"Exception parsing ACL line {i}: {exc}"))
 

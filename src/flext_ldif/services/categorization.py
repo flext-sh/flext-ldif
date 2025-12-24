@@ -16,8 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast, override
 
-from flext_core import FlextLogger, r
-
+from flext import FlextLogger, r
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -383,7 +382,7 @@ class FlextLdifCategorization(
         batch_result = u.Collection.batch(
             entries,
             validate_entry,
-            _on_error="skip",
+            on_error="skip",
         )
         # Extract value from result with default fallback
         batch_data = batch_result.value if batch_result.is_success else None
@@ -982,7 +981,7 @@ class FlextLdifCategorization(
         batch_result = u.Collection.batch(
             entries,
             categorize_single_entry,
-            _on_error="skip",
+            on_error="skip",
         )
         # Extract value from result with default fallback
         batch_data = batch_result.value if batch_result.is_success else None

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Self, cast, overload
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, u
+from flext import FlextLogger, FlextResult, FlextTypes, u
 
 # Metadata access via m.Ldif namespace from models import
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -73,12 +73,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         _ = acl_line  # Unused - RFC handles all ACLs
         return True
 
-    def _supports_feature(self, feature_id: str) -> bool:
+    def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature.
 
         Delegates to base class implementation.
         """
-        return super()._supports_feature(feature_id)
+        return super()._supports_feature(_feature_id)
 
     def _normalize_permission(
         self,
@@ -125,12 +125,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         # RFC implementation: keep RFC permission as-is
         return permission
 
-    def _get_feature_fallback(self, feature_id: str) -> str | None:
+    def _get_feature_fallback(self, _feature_id: str) -> str | None:
         """Get RFC fallback value for unsupported vendor feature.
 
         Delegates to base class implementation.
         """
-        return super()._get_feature_fallback(feature_id)
+        return super()._get_feature_fallback(_feature_id)
 
     def _preserve_unsupported_feature(
         self,

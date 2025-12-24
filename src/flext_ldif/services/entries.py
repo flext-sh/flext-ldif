@@ -18,8 +18,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from flext_core import FlextTypes, r
-
+from flext import FlextTypes, r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
@@ -471,7 +470,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
             return r[str].fail(
-                f"Failed to get entry attributes: {attributes_result.error}"
+                f"Failed to get entry attributes: {attributes_result.error}",
             )
 
         attributes = attributes_result.value

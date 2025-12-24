@@ -12,15 +12,14 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import r
 from pydantic import PrivateAttr
 
+from flext import r
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
-
-# Use FlextLdifUtilitiesServer helpers or direct string literals
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.utilities import u
 
 
 class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
@@ -235,7 +234,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                 return r[str].fail("Attribute definition is empty")
 
             # Use utilities for RFC parsing - parse_attribute returns FlextResult
-            parse_result = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+            parse_result = u.Ldif.Schema.parse_attribute(attr_definition)
             if parse_result.is_failure:
                 return r[str].fail(f"Parse failed: {parse_result.error}")
 
@@ -298,7 +297,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                 return r[str].fail("ObjectClass definition is empty")
 
             # Use utilities for RFC parsing - parse_objectclass returns dict directly
-            parsed_dict = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
+            parsed_dict = u.Ldif.Schema.parse_objectclass(oc_definition)
 
             # Extract metadata_extensions before building (not a direct field)
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
@@ -379,7 +378,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             # Validate syntax OID format if present using utilities
             if attr.syntax:
-                validation_result = FlextLdifUtilitiesOID.validate_format(attr.syntax)
+                validation_result = u.Ldif.OID.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.value:
                     return r[str].fail(f"Invalid SYNTAX OID: {attr.syntax}")
 
@@ -472,7 +471,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                 return r[str].fail(validation.error or "Unknown error")
 
             # Use utilities to write
-            return FlextLdifUtilitiesWriter.write_rfc_attribute(attr)
+            return u.Ldif.Writer.write_rfc_attribute(attr)
 
         except Exception as e:
             error_msg = f"Error writing attribute: {e}"
@@ -504,7 +503,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                 return r[str].fail(validation.error or "Unknown error")
 
             # Use utilities to write
-            return FlextLdifUtilitiesWriter.write_rfc_objectclass(oc)
+            return u.Ldif.Writer.write_rfc_objectclass(oc)
 
         except Exception as e:
             error_msg = f"Error writing objectClass: {e}"

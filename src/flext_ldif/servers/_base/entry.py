@@ -36,9 +36,9 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
+from flext import FlextLogger, FlextResult, FlextService
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m

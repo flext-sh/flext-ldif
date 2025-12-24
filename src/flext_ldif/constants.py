@@ -20,7 +20,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
-from flext_core import FlextConstants
+from flext import FlextConstants
 
 # Validation level literal - no corresponding StrEnum (uses hardcoded strings)
 type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
@@ -3204,25 +3204,6 @@ class FlextLdifConstants(FlextConstants):
             MANUAL = "manual"
             DISABLED = "disabled"
 
-        class Categories(StrEnum):
-            """Entry category constants.
-
-            Zero Tolerance: All category strings MUST be defined here.
-            Used for LDIF entry categorization in pipelines.
-
-            DRY Pattern:
-                StrEnum is the single source of truth. Use Categories.USER.value
-                or Categories.USER directly - no base strings needed.
-            """
-
-            ALL = "all"
-            USERS = "users"
-            GROUPS = "groups"
-            HIERARCHY = "hierarchy"
-            SCHEMA = "schema"
-            ACL = "acl"
-            REJECTED = "rejected"
-
         class DataTypes(StrEnum):
             """Data type identifier constants.
 
@@ -4288,6 +4269,25 @@ class FlextLdifConstants(FlextConstants):
             """Obsolete field constants."""
 
             OBSOLETE = "obsolete"
+
+        class Categories(StrEnum):
+            """Entry category constants.
+
+            Zero Tolerance: All category strings MUST be defined here.
+            Used for LDIF entry categorization in pipelines.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Categories.USER.value
+                or Categories.USER directly - no base strings needed.
+            """
+
+            ALL = "all"
+            USERS = "users"
+            GROUPS = "groups"
+            HIERARCHY = "hierarchy"
+            SCHEMA = "schema"
+            ACL = "acl"
+            REJECTED = "rejected"
 
         # Access StrEnum directly via composition - no aliases needed
 

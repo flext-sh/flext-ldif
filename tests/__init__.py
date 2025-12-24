@@ -11,9 +11,10 @@ Unified test infrastructure providing:
 - tv: FlextTestsValidator (validation helpers)
 - tt: FlextTestsTypes (type helpers for tests)
 - tf: FlextTestsFactories (factory helpers)
+- tp: TestsFlextLdifProtocols (test protocols alias)
 
 All test files should import these unified infrastructure components:
-    from tests import t, c, p, m, u, s, tm, tv, tt, tf
+    from tests import t, c, p, m, u, s, tm, tv, tt, tf, tp
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -37,14 +38,14 @@ from tests.constants import (
     TestsFlextLdifConstants as c,
 )
 from tests.models import TestsFlextLdifModels as m
-from tests.protocols import Testsp as p
+from tests.protocols import TestsFlextLdifProtocols, p, tp
 from tests.test_helpers import (
     TestsFlextLdifFixtures as tf,
     TestsFlextLdifMatchers as tm,
-    TestsFlextLdifTypes as tt,
+    TestsFlextLdifTypes as _TestsFlextLdifTypesHelper,
     TestsFlextLdifValidators as tv,
 )
-from tests.typings import GenericFieldsDict, Testst as t
+from tests.typings import TestsFlextLdifTypes as t, tt
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 from tests.utilities import TestsFlextLdifUtilities as u
 
@@ -52,18 +53,14 @@ __all__ = [
     "Filters",
     "FlextLdifFixtures",
     "FlextLdifTestUtils",
-    "GenericFieldsDict",
     "OIDs",
     "RfcTestHelpers",
     "Syntax",
     "TestCategorization",
     "TestDeduplicationHelpers",
     "TestsFlextLdifConstants",
-    "Testsc",
-    "Testsp",
-    "Testst",
-    "Teststt",
-    "Testsu",
+    "TestsFlextLdifProtocols",
+    "_TestsFlextLdifTypesHelper",
     "c",
     "m",
     "p",
@@ -71,6 +68,7 @@ __all__ = [
     "t",
     "tf",
     "tm",
+    "tp",
     "tt",
     "tv",
     "u",

@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_core import FlextResult
+from flext import FlextResult
 from pydantic import Field
 
 from flext_ldif.protocols import FlextLdifProtocols

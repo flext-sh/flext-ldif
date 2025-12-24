@@ -25,8 +25,7 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import r
-
+from flext import r
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc

@@ -16,7 +16,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
-from flext_core import r
+from flext import r
 
 # Use models facade instead of direct _models imports (architecture layering)
 from flext_ldif.base import FlextLdifServiceBase
@@ -228,7 +228,7 @@ class FlextLdifProcessing(
         batch_result = u.Collection.process(
             entries,
             processor_func,
-            _on_error="collect",
+            on_error="collect",
         )
         if batch_result.is_failure:
             return r[list[m.Ldif.ProcessingResult]].fail(

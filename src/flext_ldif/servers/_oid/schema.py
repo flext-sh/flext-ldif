@@ -15,8 +15,7 @@ OID-specific features:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, r
-
+from flext import FlextLogger, r
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m

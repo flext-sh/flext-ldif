@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flext_core import FlextResult, u
-
+from flext import FlextResult, u
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from tests import GenericFieldsDict

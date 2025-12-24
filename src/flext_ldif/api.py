@@ -33,8 +33,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar, cast, override
 
-from flext_core import r
 from pydantic import BaseModel, computed_field
+
+from flext import r
 
 # Imports
 from flext_ldif.base import s

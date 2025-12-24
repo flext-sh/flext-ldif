@@ -28,13 +28,13 @@ from __future__ import annotations
 import warnings
 from typing import Literal, TypeAlias
 
-# flext-core imports
-from flext_core import FlextModels, FlextTypes
 from flext_core._models.base import FlextModelsBase
 
 # Third-party imports
 from pydantic import Field
 
+# flext-core imports
+from flext import FlextModels, FlextTypes
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -81,8 +81,8 @@ class FlextLdifModels(FlextModels):
 
     Migration Guide:
         Old: ``from flext_ldif import FlextLdifModels; entry = FlextLdifModels.Ldif.Entry(...)``
-        New: ``from flext_core import FlextModels; entry = FlextModels.Ldif.Entry(...)``
-        Or: ``from flext_core import m; entry = m.Ldif.Entry(...)``
+        New: ``from flext import FlextModels; entry = FlextModels.Ldif.Entry(...)``
+        Or: ``from flext import m; entry = m.Ldif.Entry(...)``
     """
 
     # Direct aliases for simple access (remove subnamespaces as per FLEXT standards)

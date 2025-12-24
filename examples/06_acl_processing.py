@@ -107,10 +107,12 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
         required_perms = cast("dict[str, bool]", eval_context["permissions"])
     # Type cast needed for type checker - acls is already correct type at runtime
     acls_for_eval: list[FlextLdifModelsDomains.Acl] = cast(
-        "list[FlextLdifModelsDomains.Acl]", acls
+        "list[FlextLdifModelsDomains.Acl]",
+        acls,
     )
     evaluation_result = api.acl_service.evaluate_acl_context(
-        acls_for_eval, required_perms
+        acls_for_eval,
+        required_perms,
     )
 
     if evaluation_result.is_success:

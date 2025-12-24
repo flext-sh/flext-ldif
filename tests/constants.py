@@ -23,41 +23,45 @@ from typing import Final
 from flext_tests.constants import FlextTestsConstants
 
 from flext_ldif import FlextLdif
-from flext_ldif.constants import c
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.writer import FlextLdifWriter
 
 
-class TestsFlextLdifConstants(FlextTestsConstants):
-    """Test-specific constants extending FlextTestsConstants and c.
+class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
+    """Constants for flext-ldif tests using COMPOSITION INHERITANCE.
 
-    Provides test-specific constants without duplicating parent functionality.
-    All parent constants are accessible via inheritance hierarchy.
+    MANDATORY: Inherits from BOTH:
+    1. FlextTestsConstants - for test infrastructure (.Tests.*)
+    2. FlextLdifConstants - for domain constants (.Ldif.*)
 
-    Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
-    Short name 'c' for convenient access in tests.
+    Access patterns:
+    - tc.Tests.Docker.* (container testing)
+    - tc.Tests.Matcher.* (assertion messages)
+    - tc.Tests.Factory.* (test data generation)
+    - tc.Ldif.* (domain constants from production)
+    - tc.TestLdif.* (project-specific test data)
+
+    Rules:
+    - NEVER duplicate constants from FlextTestsConstants or FlextLdifConstants
+    - Only flext-ldif-specific test constants allowed
+    - All generic constants come from FlextTestsConstants
+    - All production constants come from FlextLdifConstants
     """
 
-    # =========================================================================
-    # PROJECT CONSTANTS (from flext_ldif.constants)
-    # =========================================================================
-
-    # Expose main project constants for convenient access in tests
-    # Usage: c.Ldif.ServerTypes.OID, c.RfcSyntaxOids, etc.
-    Ldif = c.Ldif
-
     # Create Schema namespace for test convenience
-    # Maps c.Schema.AUXILIARY and c.Schema.STRUCTURAL to c.Ldif.AclSubjectTypes constants
+    # Maps c.Schema.AUXILIARY and c.Schema.STRUCTURAL to Ldif.AclSubjectTypes constants
     class Schema:
         """Schema constants wrapper for test convenience."""
 
-        STRUCTURAL: str = c.Ldif.AclSubjectTypes.STRUCTURAL
-        AUXILIARY: str = c.Ldif.AclSubjectTypes.AUXILIARY
-        ABSTRACT: str = c.Ldif.AclSubjectTypes.ABSTRACT
-        ACTIVE: str = c.Ldif.AclSubjectTypes.ACTIVE
-        DEPRECATED: str = c.Ldif.AclSubjectTypes.DEPRECATED
+        STRUCTURAL: str = FlextLdifConstants.Ldif.AclSubjectTypes.STRUCTURAL
+        AUXILIARY: str = FlextLdifConstants.Ldif.AclSubjectTypes.AUXILIARY
+        ABSTRACT: str = FlextLdifConstants.Ldif.AclSubjectTypes.ABSTRACT
+        ACTIVE: str = FlextLdifConstants.Ldif.AclSubjectTypes.ACTIVE
+        DEPRECATED: str = FlextLdifConstants.Ldif.AclSubjectTypes.DEPRECATED
 
     # =========================================================================
     # FIXTURE DIRECTORY CONSTANTS
@@ -683,9 +687,9 @@ class Filters:
     """Test filter constants and server types for categorization tests."""
 
     # Server types
-    SERVER_RFC: Final[str] = c.Ldif.ServerTypes.RFC.value
-    SERVER_OID: Final[str] = c.Ldif.ServerTypes.OID.value
-    SERVER_OUD: Final[str] = c.Ldif.ServerTypes.OUD.value
+    SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
+    SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
+    SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
 
     # Test DNs
     DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
@@ -844,7 +848,7 @@ class RfcTestHelpers:
         entries = result.value.entries
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+                f"Expected {expected_count} entries, got {len(entries)}",
             )
 
         return list(entries)
@@ -941,70 +945,70 @@ class RfcTestHelpers:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
                 raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'",
                 )
 
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
                 raise AssertionError(
-                    f"Expected NAME '{expected_name}', got '{actual_name}'"
+                    f"Expected NAME '{expected_name}', got '{actual_name}'",
                 )
 
         if expected_desc is not None:
             actual_desc = getattr(value, "desc", None)
             if actual_desc != expected_desc:
                 raise AssertionError(
-                    f"Expected DESC '{expected_desc}', got '{actual_desc}'"
+                    f"Expected DESC '{expected_desc}', got '{actual_desc}'",
                 )
 
         if expected_syntax is not None:
             actual_syntax = getattr(value, "syntax", None)
             if actual_syntax != expected_syntax:
                 raise AssertionError(
-                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
+                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'",
                 )
 
         if expected_single_value is not None:
             actual_sv = getattr(value, "single_value", None)
             if actual_sv != expected_single_value:
                 raise AssertionError(
-                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
+                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}",
                 )
 
         if expected_length is not None:
             actual_length = getattr(value, "length", None)
             if actual_length != expected_length:
                 raise AssertionError(
-                    f"Expected length {expected_length}, got {actual_length}"
+                    f"Expected length {expected_length}, got {actual_length}",
                 )
 
         if expected_kind is not None:
             actual_kind = getattr(value, "kind", None)
             if actual_kind != expected_kind:
                 raise AssertionError(
-                    f"Expected KIND '{expected_kind}', got '{actual_kind}'"
+                    f"Expected KIND '{expected_kind}', got '{actual_kind}'",
                 )
 
         if expected_sup is not None:
             actual_sup = getattr(value, "sup", None)
             if actual_sup != expected_sup:
                 raise AssertionError(
-                    f"Expected SUP '{expected_sup}', got '{actual_sup}'"
+                    f"Expected SUP '{expected_sup}', got '{actual_sup}'",
                 )
 
         if expected_must is not None:
             actual_must = getattr(value, "must", None) or []
             if list(actual_must) != expected_must:
                 raise AssertionError(
-                    f"Expected MUST {expected_must}, got {list(actual_must)}"
+                    f"Expected MUST {expected_must}, got {list(actual_must)}",
                 )
 
         if expected_may is not None:
             actual_may = getattr(value, "may", None) or []
             if list(actual_may) != expected_may:
                 raise AssertionError(
-                    f"Expected MAY {expected_may}, got {list(actual_may)}"
+                    f"Expected MAY {expected_may}, got {list(actual_may)}",
                 )
 
         return value
@@ -1040,17 +1044,17 @@ class RfcTestHelpers:
         value = result.value
         if expected_type is not None and not isinstance(value, expected_type):
             raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                f"Expected {expected_type.__name__}, got {type(value).__name__}",
             )
 
         if expected_count is not None:
             if not hasattr(value, "__len__"):
                 raise AssertionError(
-                    f"Cannot check count on {type(value).__name__} - not a sequence"
+                    f"Cannot check count on {type(value).__name__} - not a sequence",
                 )
             if len(value) != expected_count:
                 raise AssertionError(
-                    f"Expected count {expected_count}, got {len(value)}"
+                    f"Expected count {expected_count}, got {len(value)}",
                 )
 
         return value
@@ -1234,14 +1238,14 @@ class RfcTestHelpers:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
                 raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'",
                 )
 
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
                 raise AssertionError(
-                    f"Expected name '{expected_name}', got '{actual_name}'"
+                    f"Expected name '{expected_name}', got '{actual_name}'",
                 )
 
         return value
@@ -1338,7 +1342,7 @@ class RfcTestHelpers:
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
             raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
+                f"Expected name '{expected_name}', got '{actual_name}'",
             )
 
         return value
@@ -1389,7 +1393,7 @@ class RfcTestHelpers:
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
             raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
+                f"Expected name '{expected_name}', got '{actual_name}'",
             )
 
         return value
@@ -1429,7 +1433,7 @@ class RfcTestHelpers:
         entries = list(result.value.entries)
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+                f"Expected {expected_count} entries, got {len(entries)}",
             )
 
         if entries and expected_dn:
@@ -1443,7 +1447,7 @@ class RfcTestHelpers:
             for attr_name in expected_attributes:
                 if attr_name not in attrs:
                     raise AssertionError(
-                        f"Expected attribute '{attr_name}' not found in entry"
+                        f"Expected attribute '{attr_name}' not found in entry",
                     )
 
         return entries
@@ -1481,7 +1485,7 @@ class RfcTestHelpers:
         entries = list(result.value.entries)
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+                f"Expected {expected_count} entries, got {len(entries)}",
             )
 
         for i, expected_dn in enumerate(expected_dns):
@@ -1489,7 +1493,7 @@ class RfcTestHelpers:
                 actual_dn = getattr(entries[i], "dn", None)
                 if str(actual_dn) != expected_dn:
                     raise AssertionError(
-                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
+                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'",
                     )
 
         return entries
@@ -1656,13 +1660,13 @@ class RfcTestHelpers:
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
             if entry_result.is_failure:
                 raise AssertionError(
-                    f"Entry creation failed for {test_name}: {entry_result.error}"
+                    f"Entry creation failed for {test_name}: {entry_result.error}",
                 )
 
             write_result = writer_service.write_to_string(entries=[entry_result.value])
             if write_result.is_failure:
                 raise AssertionError(
-                    f"Write failed for {test_name}: {write_result.error}"
+                    f"Write failed for {test_name}: {write_result.error}",
                 )
 
             if dn and dn not in write_result.value:
@@ -1696,7 +1700,7 @@ class RfcTestHelpers:
         result = can_handle_method(dn, attributes)
         if result != expected:
             raise AssertionError(
-                f"Expected can_handle to return {expected}, got {result}"
+                f"Expected can_handle to return {expected}, got {result}",
             )
 
     @staticmethod
@@ -1735,7 +1739,7 @@ class RfcTestHelpers:
             raw_acl = getattr(value, "raw_acl", None)
             if raw_acl != expected_raw_acl:
                 raise AssertionError(
-                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
+                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'",
                 )
 
         return value
@@ -1779,6 +1783,57 @@ class RfcTestHelpers:
             raise AssertionError(f"Expected '{expected_content}' not found in output")
 
         return output
+
+    @staticmethod
+    def test_parse_error_handling(
+        schema_quirk: object,
+        invalid_def: str,
+        *,
+        should_fail: bool = True,
+    ) -> object | None:
+        """Test parsing error handling for invalid definitions.
+
+        Args:
+            schema_quirk: Schema quirk instance
+            invalid_def: Invalid attribute/objectClass definition string
+            should_fail: Whether parsing should fail (default True)
+
+        Returns:
+            Parse result value if successful, None otherwise
+
+        Raises:
+            AssertionError: If should_fail and parsing succeeds,
+                           or if not should_fail and parsing fails
+
+        """
+        # Try attribute parse method
+        parse_method = getattr(schema_quirk, "_parse_attribute", None)
+        if parse_method is None:
+            parse_method = getattr(schema_quirk, "parse_attribute", None)
+
+        if parse_method is None:
+            msg = "Schema quirk has no attribute parse method"
+            raise AssertionError(msg)
+
+        result = parse_method(invalid_def)
+
+        if hasattr(result, "is_failure"):
+            is_failure = result.is_failure
+        else:
+            is_failure = result is None
+
+        if should_fail and not is_failure:
+            msg = "Expected parsing to fail but it succeeded"
+            raise AssertionError(msg)
+
+        if not should_fail and is_failure:
+            error_msg = result.error if hasattr(result, "error") else "Unknown error"
+            raise AssertionError(f"Expected parsing to succeed but got: {error_msg}")
+
+        if is_failure:
+            return None
+
+        return result.value if hasattr(result, "value") else result
 
 
 class TestDeduplicationHelpers:
@@ -1848,7 +1903,7 @@ class TestDeduplicationHelpers:
 
             if validate_all and should_succeed is True and result.is_failure:
                 raise AssertionError(
-                    f"Expected success but got failure: {result.error}"
+                    f"Expected success but got failure: {result.error}",
                 )
 
             if validate_all and should_succeed is False and result.is_success:
@@ -1981,7 +2036,7 @@ class TestDeduplicationHelpers:
                 pass
             elif not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
                 )
         return value
 
@@ -2036,7 +2091,7 @@ class TestDeduplicationHelpers:
             for substring in must_contain:
                 if substring not in output:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
+                        f"'{substring}' not found in output: {output[:200]}...",
                     )
 
         return output
@@ -2078,21 +2133,17 @@ class TestDeduplicationHelpers:
         # Parse data into model instance based on conversion type
         conversion_type_lower = conversion_type.lower()
         if conversion_type_lower == "attribute":
-            from flext_ldif.services.schema import FlextLdifSchema
-
             schema_service = FlextLdifSchema()
             parse_result = schema_service.parse_attribute(data)
             if not parse_result.is_success:
                 raise AssertionError(f"Failed to parse attribute: {parse_result.error}")
             model_instance = parse_result.value
         elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            from flext_ldif.services.schema import FlextLdifSchema
-
             schema_service = FlextLdifSchema()
             parse_result = schema_service.parse_objectclass(data)
             if not parse_result.is_success:
                 raise AssertionError(
-                    f"Failed to parse objectclass: {parse_result.error}"
+                    f"Failed to parse objectclass: {parse_result.error}",
                 )
             model_instance = parse_result.value
         else:
@@ -2119,7 +2170,7 @@ class TestDeduplicationHelpers:
         # Type check
         if expected_type is not None and not isinstance(output, expected_type):
             raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(output).__name__}"
+                f"Expected {expected_type.__name__}, got {type(output).__name__}",
             )
 
         # Check must_contain strings
@@ -2127,7 +2178,7 @@ class TestDeduplicationHelpers:
             for substring in must_contain:
                 if substring not in output:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
+                        f"'{substring}' not found in output: {output[:200]}...",
                     )
 
         return output
@@ -2156,7 +2207,9 @@ class TestDeduplicationHelpers:
         """
         # Get supported conversions method
         get_support_method = getattr(
-            conversion_matrix, "get_supported_conversions", None
+            conversion_matrix,
+            "get_supported_conversions",
+            None,
         )
         if get_support_method is None:
             msg = "conversion_matrix has no get_supported_conversions"
@@ -2229,25 +2282,21 @@ class TestDeduplicationHelpers:
         model_list = []
         conversion_type_lower = conversion_type.lower()
         if conversion_type_lower == "attribute":
-            from flext_ldif.services.schema import FlextLdifSchema
-
             schema_service = FlextLdifSchema()
             for item in items:
                 parse_result = schema_service.parse_attribute(item)
                 if not parse_result.is_success:
                     raise AssertionError(
-                        f"Failed to parse attribute: {parse_result.error}"
+                        f"Failed to parse attribute: {parse_result.error}",
                     )
                 model_list.append(parse_result.value)
         elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            from flext_ldif.services.schema import FlextLdifSchema
-
             schema_service = FlextLdifSchema()
             for item in items:
                 parse_result = schema_service.parse_objectclass(item)
                 if not parse_result.is_success:
                     raise AssertionError(
-                        f"Failed to parse objectclass: {parse_result.error}"
+                        f"Failed to parse objectclass: {parse_result.error}",
                     )
                 model_list.append(parse_result.value)
         else:
@@ -2286,9 +2335,9 @@ class TestCategorization:
     # Placeholder for categorization helper methods if needed
 
 
-# Standardized short name for use in tests (same pattern as flext-core)
-c = TestsFlextLdifConstants
-Testsc = TestsFlextLdifConstants  # Alias for tests/__init__.py
+# Short aliases per FLEXT convention
+tc = TestsFlextLdifConstants  # Primary test constants alias
+c = TestsFlextLdifConstants  # Alternative alias for compatibility
 
 __all__ = [
     "Filters",
@@ -2299,4 +2348,5 @@ __all__ = [
     "TestDeduplicationHelpers",
     "TestsFlextLdifConstants",
     "c",
+    "tc",
 ]

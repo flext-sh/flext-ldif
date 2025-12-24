@@ -23,8 +23,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger, r
-
+from flext import FlextLogger, r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._shared import normalize_server_type
@@ -154,7 +153,7 @@ class FlextLdifUtilitiesDecorators:
             except Exception as e:
                 # If model_copy fails, skip metadata attachment
                 # This is safe - metadata attachment is optional for frozen models
-                logger.debug(f"Failed to attach metadata: {e}")
+                logger.debug("Failed to attach metadata: %s", e)
 
     @staticmethod
     def attach_parse_metadata(

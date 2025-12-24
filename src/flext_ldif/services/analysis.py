@@ -16,8 +16,7 @@ import contextlib
 from collections import Counter
 from typing import override
 
-from flext_core import r
-
+from flext import r
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
@@ -135,7 +134,7 @@ class FlextLdifAnalysis(
         # Process entries using simple iteration - u.process has different signature
         # (u.process is for server transformations, not generic processing)
         for entry in entries:
-            with contextlib.suppress(Exception):  # Skip errors like _on_error="skip"
+            with contextlib.suppress(Exception):  # Skip errors like on_error="skip"
                 process_entry(entry)
 
         return r[m.Ldif.LdifResults.EntryAnalysisResult].ok(

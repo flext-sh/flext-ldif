@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_core import FlextResult
+from flext import FlextResult
 
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.acl import FlextLdifAcl

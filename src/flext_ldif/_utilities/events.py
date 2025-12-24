@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes, t
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.protocols import p
 
+from flext import FlextTypes, t
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
 

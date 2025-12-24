@@ -18,8 +18,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import r
-
+from flext import r
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -579,11 +578,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 # Build Acl model
                 # Note: ACL_ATTRIBUTE_NAME is OpenLDAP 1.x format from Constants
                 # Use model_construct for DynamicMetadata to bypass validation
-                acl_extensions = (
-                    m.Ldif.DynamicMetadata.model_construct(
-                        _fields_set={"original_format"},
-                        original_format=acl_line,
-                    )
+                acl_extensions = m.Ldif.DynamicMetadata.model_construct(
+                    _fields_set={"original_format"},
+                    original_format=acl_line,
                 )
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
