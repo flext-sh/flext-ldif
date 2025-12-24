@@ -3760,7 +3760,7 @@ class FlextLdifUtilities(FlextUtilities):
 
 # Runtime alias for basic class (objetos nested sem aliases redundantes)
 # Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
-u = FlextLdifUtilities
+# u already imported from flext_core above
 
 __all__ = [
     "FlextLdifUtilities",

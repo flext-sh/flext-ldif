@@ -34,7 +34,8 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import t
+
+# t already imported from flext_core above
 
 logger = FlextLogger(__name__)
 
@@ -104,7 +105,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: object | None = None,
         parent_quirk: object | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize RFC schema quirk service.
 
@@ -120,7 +121,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # to avoid Pydantic validation errors (it's not a Pydantic field)
         # Business Rule: Filter parent_quirk and _schema_service from kwargs to avoid type errors
         # Implication: parent_quirk and _schema_service are handled separately, not via Pydantic fields
-        filtered_kwargs: dict[str, FlextTypes.GeneralValueType] = {
+        filtered_kwargs: dict[str, t.GeneralValueType] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "parent_quirk", "_schema_service"}

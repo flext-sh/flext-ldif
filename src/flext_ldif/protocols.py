@@ -24,7 +24,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext import FlextProtocols, FlextResult
+from flext_core import FlextProtocols, FlextResult
+
 from flext_ldif.typings import t
 
 # =========================================================================

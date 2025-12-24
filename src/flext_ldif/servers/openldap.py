@@ -20,7 +20,8 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult
+
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -829,16 +830,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Build validation rules dictionary by reading frozensets
             # ZERO hard-coded values - all from Constants!
-            validation_rules: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | dict[str, str | int | float | bool | list[str] | None]
-                | list[str]
-                | None,
-            ] = {
+            validation_rules: dict[str, str | int | float | bool | dict[str, str | int | float | bool | list[str] | None] | list[str] | None] = {
                 # OBJECTCLASS requirement (OpenLDAP is flexible - check frozenset)
                 "requires_objectclass": (
                     server_type

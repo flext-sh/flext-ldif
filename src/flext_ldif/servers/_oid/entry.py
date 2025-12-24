@@ -18,7 +18,8 @@ from __future__ import annotations
 import json
 from functools import reduce
 
-from flext import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult
+
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL

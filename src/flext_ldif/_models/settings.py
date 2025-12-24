@@ -12,13 +12,13 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
+from flext_core import r
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field
 
-from flext import r
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.shared import SchemaObjectClass

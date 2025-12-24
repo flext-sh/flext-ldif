@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Self, cast, overload
 
-from flext import FlextLogger, FlextResult, FlextTypes, u
+from flext_core import FlextLogger, FlextResult, FlextTypes, u
 
 # Metadata access via m.Ldif namespace from models import
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

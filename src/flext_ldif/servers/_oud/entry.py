@@ -26,7 +26,8 @@ from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import t
+
+# t already imported from flext_core above
 from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
@@ -2235,7 +2236,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: dict[str, FlextTypes.GeneralValueType],
+        entry_dict: dict[str, t.GeneralValueType],
         entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.

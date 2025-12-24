@@ -12,9 +12,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final, override
 
+from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
-from flext import FlextLogger, r
 from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
 from flext_ldif._utilities.pipeline import ProcessingPipeline
 from flext_ldif.base import s

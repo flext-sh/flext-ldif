@@ -11,9 +11,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
+from flext_core import r
 from pydantic import PrivateAttr
 
-from flext import r
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer

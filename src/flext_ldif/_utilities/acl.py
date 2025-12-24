@@ -10,9 +10,9 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Literal
 
+from flext_core import FlextLogger, r, u
 from flext_core.runtime import FlextRuntime
 
-from flext import FlextLogger, r, u
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional

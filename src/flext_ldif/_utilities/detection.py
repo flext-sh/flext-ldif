@@ -47,7 +47,8 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
-from flext import FlextRuntime
+from flext_core import FlextRuntime
+
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 

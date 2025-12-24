@@ -18,7 +18,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext import d, r
+from flext_core import d, r
+
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m

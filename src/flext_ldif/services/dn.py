@@ -18,9 +18,9 @@ import time
 from collections.abc import Callable
 from typing import Self, override
 
+from flext_core import r
 from pydantic import Field, PrivateAttr, field_validator
 
-from flext import r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif.base import FlextLdifServiceBase

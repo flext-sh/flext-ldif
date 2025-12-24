@@ -8,7 +8,8 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
-from flext import FlextLogger
+from flext_core import FlextLogger
+
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAcl,
     FlextLdifServersOudConstants,

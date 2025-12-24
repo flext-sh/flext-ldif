@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import structlog
+from flext_core import FlextResult, r
 
-from flext import FlextResult, r
 from flext_ldif.models import m
 
 logger = structlog.get_logger(__name__)

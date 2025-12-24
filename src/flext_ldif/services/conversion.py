@@ -735,7 +735,7 @@ class FlextLdifConversion(
         # Step 3: Add conversion analysis
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, FlextTypes.GeneralValueType] = {
+            extensions_update: dict[str, t.GeneralValueType] = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:
@@ -1585,8 +1585,8 @@ class FlextLdifConversion(
         orig_ext = self._get_extensions_dict(original_acl)
 
         # conv_ext and orig_ext are already dict[str, t.MetadataAttributeValue] compatible
-        conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]",
+        conv_ext_typed: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]",
             conv_ext,
         )
         orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(

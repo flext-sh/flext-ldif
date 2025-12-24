@@ -20,7 +20,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
-from flext import FlextConstants
+from flext_core import FlextConstants
 
 # Validation level literal - no corresponding StrEnum (uses hardcoded strings)
 type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]

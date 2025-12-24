@@ -24,9 +24,9 @@ from __future__ import annotations
 import re
 from typing import ClassVar, cast
 
+from flext_core import r
 from flext_core.loggings import FlextLogger
 
-from flext import r
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import (

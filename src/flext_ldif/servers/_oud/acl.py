@@ -12,7 +12,8 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, cast
 
-from flext import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult
+
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
