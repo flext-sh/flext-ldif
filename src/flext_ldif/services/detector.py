@@ -12,7 +12,6 @@ type resolution based on config hierarchy.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-# ruff: noqa: PLC0415, S101
 
 from __future__ import annotations
 
@@ -23,12 +22,8 @@ from typing import Protocol, override
 from flext_core import r
 
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import s
 from flext_ldif.models import m
-from flext_ldif.results import (
-    FlextLdifModelsResults,
-    _ConfigSettings,
-)
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.settings import FlextLdifSettings
 
@@ -50,7 +45,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModelsResults.ClientStatus]):
+class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
