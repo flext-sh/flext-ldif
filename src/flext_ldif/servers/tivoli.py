@@ -11,9 +11,7 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import (
-    FlextResult,
-)
+from flext_core import r
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import c
@@ -235,21 +233,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Tivoli metadata.
 
             Args:
                 attr_definition: Attribute definition string
 
             Returns:
-                FlextResult with SchemaAttribute marked with Tivoli metadata
+                r with SchemaAttribute marked with Tivoli metadata
 
             """
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
-                return FlextResult[m.Ldif.SchemaAttribute].ok(
+                return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(
                         update={"metadata": metadata},
                     ),
@@ -259,21 +257,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Tivoli metadata.
 
             Args:
                 oc_definition: ObjectClass definition string
 
             Returns:
-                FlextResult with SchemaObjectClass marked with Tivoli metadata
+                r with SchemaObjectClass marked with Tivoli metadata
 
             """
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(
+                return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(
                         update={"metadata": metadata},
                     ),
@@ -325,7 +323,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return False
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
                 attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
@@ -367,14 +365,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     server_type=self._get_server_type(),
                     raw_acl=acl_line,
                 )
-                return FlextResult[m.Ldif.Acl].ok(acl)
+                return r[m.Ldif.Acl].ok(acl)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Acl].fail(
+                return r[m.Ldif.Acl].fail(
                     f"IBM Tivoli DS ACL parsing failed: {exc}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             IBM Tivoli DS ACLs use "#" delimited segments:
@@ -390,7 +388,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
-                    return FlextResult[str].ok(acl_data.raw_acl)
+                    return r[str].ok(acl_data.raw_acl)
 
                 # Build from model fields
                 parts: list[str] = []
@@ -435,9 +433,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     else f"{acl_attribute}:"
                 )
 
-                return FlextResult[str].ok(acl_str)
+                return r[str].ok(acl_str)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[str].fail(f"IBM Tivoli DS ACL write failed: {exc}")
+                return r[str].fail(f"IBM Tivoli DS ACL write failed: {exc}")
 
     class Entry(FlextLdifServersRfc.Entry):
         """IBM Tivoli DS entry quirk."""
@@ -491,7 +489,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_raw: list[str] = u.mapper().get(
+            object_classes_raw: list[str] = u.Ldif.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -512,16 +510,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def process_entry(
             self,
             entry: m.Ldif.Entry,
-        ) -> FlextResult[m.Ldif.Entry]:
+        ) -> r[m.Ldif.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
                 # Check if entry has DN and attributes - fast fail if missing
                 if not entry.dn:
-                    return FlextResult[m.Ldif.Entry].fail(
+                    return r[m.Ldif.Entry].fail(
                         "Entry DN is required for Tivoli DS normalization",
                     )
                 if not entry.attributes:
-                    return FlextResult[m.Ldif.Entry].fail(
+                    return r[m.Ldif.Entry].fail(
                         "Entry attributes are required for Tivoli DS normalization",
                     )
 
@@ -530,7 +528,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Get objectClasses directly from attributes (already list[str])
-                object_classes: list[str] = u.mapper().get(
+                object_classes: list[str] = u.Ldif.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
@@ -580,10 +578,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     update={"attributes": new_attrs},
                 )
 
-                return FlextResult[m.Ldif.Entry].ok(processed_entry)
+                return r[m.Ldif.Entry].ok(processed_entry)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Entry].fail(
+                return r[m.Ldif.Entry].fail(
                     f"IBM Tivoli DS entry processing failed: {exc}",
                 )
 
