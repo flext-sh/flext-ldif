@@ -22,9 +22,9 @@ import traceback
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, ClassVar, Self, TypeGuard, cast, override
 
+from flext_core import FlextLogger, FlextResult, r
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult, r
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.base import FlextLdifServiceBase
 

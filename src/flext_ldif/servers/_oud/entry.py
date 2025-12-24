@@ -14,6 +14,7 @@ from collections.abc import Callable, Mapping
 from typing import cast
 
 from flext_core import FlextLogger, FlextResult, t
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings

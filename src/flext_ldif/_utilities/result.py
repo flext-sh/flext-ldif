@@ -38,9 +38,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, cast, overload
 
+from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
 
-from flext import FlextResult
 from flext_ldif.protocols import p
 
 r = FlextResult
@@ -534,7 +534,9 @@ class FlextLdifResult[T]:
         if isinstance(value, Sequence) and not isinstance(value, str):
             # Filter elements - result is always a list for type consistency
             filtered_elements: list[object] = [
-                item for item in value if matches_func(item)  # type: ignore[arg-type]
+                item
+                for item in value
+                if matches_func(item)  # type: ignore[arg-type]
             ]
             # Type narrowing: filtered_elements is the filtered sequence of type T
             return FlextLdifResult(r.ok(cast("list[T]", filtered_elements)))

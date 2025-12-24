@@ -16,6 +16,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, cast
 
+from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import FlextModels as m
@@ -27,7 +28,6 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_ldif._models.base import (
     AclElement,
     FlextLdifModelsBase,
@@ -3844,7 +3844,7 @@ class FlextLdifModelsDomains:
             # Use Constants default for quirk_type if not provided
             # normalize_server_type guarantees valid literal value
             default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
-                normalize_server_type(quirk_type)
+                normalize_server_type(quirk_type)  # type: ignore[assignment]
                 if quirk_type is not None
                 else c.Ldif.ServerTypes.RFC.value
             )

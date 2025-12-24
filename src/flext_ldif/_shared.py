@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.constants import c
+from flext_core import c
 
 
 def normalize_server_type(server_type: str) -> c.Ldif.LiteralTypes.ServerTypeLiteral:

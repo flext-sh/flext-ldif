@@ -27,12 +27,12 @@ from collections.abc import (
 )
 from typing import ClassVar, Literal, Self, TypeGuard, cast, overload
 
+from flext_core import FlextLogger, FlextResult, r, u
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import ValidatorSpec
 
-from flext_core import FlextLogger, FlextResult, u, r
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute

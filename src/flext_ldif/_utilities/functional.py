@@ -22,7 +22,7 @@ from collections.abc import Callable, Mapping, Sequence
 from inspect import Parameter, signature
 from typing import Literal, cast, overload
 
-from flext import T, U, u
+from flext_core import T, U, u
 
 
 class FlextFunctional:
@@ -383,7 +383,7 @@ class FlextFunctional:
         result = initial
         # Type narrowing: items is Sequence[T] after isinstance check
         # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:  # type: ignore[assignment]
+        for item in items:
             result = folder(result, item)
         return result
 
@@ -417,10 +417,10 @@ class FlextFunctional:
         result: list[T] = []
         # Type narrowing: items is Sequence[T] after isinstance check
         # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:  # type: ignore[assignment]
-            mapped = mapper(item) if mapper is not None else item  # type: ignore[assignment]
+        for item in items:
+            mapped = mapper(item) if mapper is not None else item
             if predicate(mapped):
-                result.append(mapped)  # type: ignore[arg-type]
+                result.append(mapped)
         return result
 
     mf = map_filter
@@ -457,14 +457,14 @@ class FlextFunctional:
         result: list[U] = []
         # Type narrowing: items is Sequence[T] after isinstance check
         # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:  # type: ignore[assignment]
+        for item in items:
             try:
-                processed = processor(item)  # type: ignore[assignment]
+                processed = processor(item)
                 if isinstance(processed, (list, tuple)):
                     # processed is Sequence[U] after isinstance check
-                    sequence_result = processed  # type: Sequence[U]
-                    result.extend([  # type: ignore[arg-type]
-                        sub_item for sub_item in sequence_result if predicate(sub_item)  # type: ignore[arg-type]
+                    sequence_result = processed
+                    result.extend([
+                        sub_item for sub_item in sequence_result if predicate(sub_item)
                     ])
                 # Single value (not list/tuple), predicate checks it
                 elif predicate(processed):
