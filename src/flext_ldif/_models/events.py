@@ -15,7 +15,6 @@ from pathlib import Path
 
 from pydantic import ConfigDict, Field
 
-from flext import FlextModels
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
@@ -196,7 +195,7 @@ class FlextLdifModelsEvents:
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(FlextModels.DomainEvent):
+    class FilterEvent(m.Entity.DomainEvent):
         """Event emitted when LDIF entries are filtered.
 
         Tracks filtering operations including criteria applied and results.

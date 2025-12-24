@@ -10,9 +10,9 @@ import base64
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
+from flext_core import FlextLogger, FlextResult, FlextRuntime, t, u
 from jinja2 import Environment
 
-from flext import FlextLogger, FlextResult, FlextRuntime, FlextTypes, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c

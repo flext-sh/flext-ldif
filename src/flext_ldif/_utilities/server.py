@@ -18,7 +18,8 @@ from __future__ import annotations
 import re
 from typing import Literal, cast
 
-from flext import FlextUtilities
+from flext_core import FlextUtilities
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 
