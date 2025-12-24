@@ -16,7 +16,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast, override
 
-from flext import FlextLogger, r
+from flext_core import FlextLogger, r
+
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -374,7 +375,7 @@ class FlextLdifCategorization(
                 )
             # Create new Entry with normalized DN
             # Use model_copy with DN string value, not DN object
-            dn_obj = m.Ldif.DN(value=normalized_dn)  # type: ignore[call-arg]
+            dn_obj = m.Ldif.DN(value=normalized_dn)
             return entry.model_copy(
                 update={"dn": dn_obj},
             )

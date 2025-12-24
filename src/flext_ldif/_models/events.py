@@ -227,7 +227,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class ParseEvent(FlextModels.DomainEvent):
+    class ParseEvent(m.Entity.DomainEvent):
         """Event emitted when LDIF content is parsed.
 
         Tracks parsing operations including source type and results.
@@ -326,7 +326,7 @@ class FlextLdifModelsEvents:
                 error_details=error_details,
             )
 
-    class WriteEvent(FlextModels.DomainEvent):
+    class WriteEvent(m.Entity.DomainEvent):
         """Event emitted when LDIF content is written.
 
         Tracks writing operations including target and results.
@@ -362,7 +362,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed entries",
         )
 
-    class CategoryEvent(FlextModels.DomainEvent):
+    class CategoryEvent(m.Entity.DomainEvent):
         """Event emitted when entries are categorized.
 
         Tracks categorization operations including rules applied and results.
@@ -390,7 +390,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class AclEvent(FlextModels.DomainEvent):
+    class AclEvent(m.Entity.DomainEvent):
         """Event emitted when ACLs are processed.
 
         Tracks ACL parsing, transformation, and validation operations.
