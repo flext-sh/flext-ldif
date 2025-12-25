@@ -25,9 +25,10 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from enum import Enum
 from typing import ClassVar, Literal, Self, TypeGuard, cast, overload
 
-from flext_core import FlextLogger, FlextResult, r, u
+from flext_core import FlextLogger, FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import FlextUtilities as u_core, ValidatorSpec
@@ -41,9 +42,7 @@ from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-from flext_ldif._utilities.filters import (
-    EntryFilter,
-)
+from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.fluent import DnOps, EntryOps
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
@@ -59,13 +58,9 @@ from flext_ldif._utilities.pipeline import (
 from flext_ldif._utilities.result import FlextLdifResult
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif._utilities.transformers import (
-    EntryTransformer,
-)
+from flext_ldif._utilities.transformers import EntryTransformer
 from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
-from flext_ldif._utilities.type_helpers import (
-    is_entry_sequence,
-)
+from flext_ldif._utilities.type_helpers import is_entry_sequence
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
@@ -76,7 +71,7 @@ from flext_ldif.protocols import p
 logger = FlextLogger(__name__)
 
 
-class FlextLdifUtilities:
+class FlextLdifUtilities(u_core):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations.
 
     Extends flext-core utility functions building on
@@ -153,6 +148,11 @@ class FlextLdifUtilities:
             entry = u.Entry.create("cn=test", attrs={"cn": ["test"]})
 
         """
+
+        # === EXPOSE BASE UTILITIES (from parent FlextLdifUtilities) ===
+        # These attributes are accessible via u.Ldif.* pattern
+        # They wrap corresponding attributes from FlextUtilities (flext_core)
+        # NOTE: These are forward references - actual assignment happens after class definition
 
         # Type alias for variadic callable (Python 3.13+ compatible)
         # Use p.VariadicCallable from protocols to avoid Any
@@ -280,7 +280,7 @@ class FlextLdifUtilities:
 
             """
             # Use flext-core mapper for consistent behavior
-            return u.mapper().get(mapping, key, default=default)
+            return u_core.mapper().get(mapping, key, default=default)
 
         @staticmethod
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
@@ -357,7 +357,7 @@ class FlextLdifUtilities:
             """Constants for LDIF operations."""
 
             # Category to StrEnum mapping
-            _CATEGORY_MAP: ClassVar[dict[str, type]] = {
+            _CATEGORY_MAP: ClassVar[dict[str, type[Enum]]] = {
                 "server_type": c.Ldif.ServerTypes,
                 "encoding": c.Ldif.Encoding,
             }
@@ -380,7 +380,7 @@ class FlextLdifUtilities:
                     msg = f"Unknown category: {category}"
                     raise KeyError(msg)
                 enum_class = cls._CATEGORY_MAP[category]
-                return {e.value for e in enum_class}
+                return {e.value for e in enum_class.__members__.values()}
 
             @classmethod
             def is_valid(cls, value: str, category: str) -> bool:
@@ -597,7 +597,7 @@ class FlextLdifUtilities:
             if is_sequence_entry and items:
                 # Check first element to verify it's an Entry
                 # This prevents list[Path] from being treated as list[Entry]
-                first_item = next(iter(items), None)
+                first_item = next(iter(items), None)  # type: ignore[call-overload]
                 if first_item is not None and not isinstance(first_item, m.Ldif.Entry):
                     return False
 
@@ -1162,10 +1162,10 @@ class FlextLdifUtilities:
                 (str, bytes, dict),
             ):
                 # Type already narrowed by isinstance checks
-                entries: Sequence[m.Ldif.Entry] = items_or_entries
+                entries = items_or_entries
                 filter_entry = predicate_or_filter1
                 return FlextLdifUtilities.Ldif.filter_ldif_entries(
-                    entries,
+                    entries,  # type: ignore[arg-type]
                     filter_entry,
                     filters,
                     mode,
@@ -1180,12 +1180,12 @@ class FlextLdifUtilities:
                 if isinstance(predicate_or_filter1, EntryFilter):
                     # EntryFilter.matches() returns bool - type narrowing ensures EntryFilter type
                     entry_filter = predicate_or_filter1
-                    return entry_filter.matches(item)
+                    return entry_filter.matches(item)  # type: ignore[arg-type]
                 return False
 
             # Type narrowing: items_or_entries is compatible with base class signature
             # Return type already declared in filter_base_class signature
-            return FlextLdifUtilities.Ldif.filter_base_class(
+            return FlextLdifUtilities.Ldif.filter_base_class(  # type: ignore[return-value]
                 items_or_entries,
                 predicate_wrapper,
                 mapper,
@@ -1207,10 +1207,10 @@ class FlextLdifUtilities:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
                 # Type narrowing: items_or_entries is list[object] | tuple[object, ...]
-                items_list: list[object] | tuple[object, ...] = items_or_entries
+                items_list: list[object] | tuple[object, ...] = items_or_entries  # type: ignore[assignment]
                 # Collection.filter does not support mapper parameter - just filter
                 # Type narrowing: result is list[T] from Collection.filter
-                return u_core.Collection.filter(
+                return u_core.Collection.filter(  # type: ignore[return-value]
                     items_list,
                     predicate,
                 )
@@ -1219,7 +1219,7 @@ class FlextLdifUtilities:
                 items_dict: dict[str, object] | Mapping[str, object] = items_or_entries
                 # Collection.filter does not support mapper parameter - just filter
                 # Type narrowing: result is dict[str, T] from Collection.filter
-                return u_core.Collection.filter(
+                return u_core.Collection.filter(  # type: ignore[return-value]
                     items_dict,
                     predicate,
                 )
@@ -1227,7 +1227,7 @@ class FlextLdifUtilities:
             items_single_list: list[object] = [items_or_entries]
             # Collection.filter does not support mapper parameter - just filter
             # Type narrowing: result is list[T] from Collection.filter
-            return u_core.Collection.filter(
+            return u_core.Collection.filter(  # type: ignore[return-value]
                 items_single_list,
                 predicate,
             )
@@ -1296,7 +1296,7 @@ class FlextLdifUtilities:
             ):
                 # Base class validate - delegate to uValidation
                 # Type narrowing: value_or_entries is T
-                value_base: T = value_or_entries
+                value_base = value_or_entries
                 validate_result = u_core.Validation.validate(
                     value_base,
                     *validators_or_none,
@@ -1324,7 +1324,7 @@ class FlextLdifUtilities:
                 and len(validators_or_none) == 0
             ):
                 # LDIF-specific validate - type narrowing ensures list[Entry]
-                entries: list[m.Ldif.Entry] = value_or_entries
+                entries = value_or_entries
                 pipeline = ValidationPipeline(
                     strict=strict,
                     collect_all=collect_all,
@@ -1483,7 +1483,7 @@ class FlextLdifUtilities:
         # fd alias defined after static method
 
         # LDIF-specific pipe with dict support - named differently to avoid override conflict
-        @overload
+        @overload  # type: ignore[misc]
         @staticmethod
         def pipe_ldif(
             value: t.GeneralValueType,
@@ -3774,7 +3774,7 @@ class FlextLdifUtilities:
 
 
 # Re-assign u to FlextLdifUtilities for module API
-u = FlextLdifUtilities  # noqa: F811
+u = FlextLdifUtilities
 
 __all__ = [
     "FlextLdifUtilities",

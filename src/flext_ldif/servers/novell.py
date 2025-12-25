@@ -438,7 +438,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             # First part before colon might be attribute name
                             attr_name = parts[0].strip()
                             # Add if it looks like an attribute name (not a permission)
-                            if attr_name.lower() not in u.Ldif.Enum.values(
+                            if attr_name.lower() not in u.Enum.values(
                                 c.Ldif.RfcAclPermission,
                             ):
                                 attributes.append(attr_name)
@@ -633,7 +633,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return True
 
             # objectClasses is already list[str] in
-            object_classes_raw: list[str] = u.Ldif.mapper().get(
+            object_classes_raw: list[str] = u.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -662,7 +662,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in Attributes)
-                object_classes: list[str] = u.Ldif.mapper().get(
+                object_classes: list[str] = u.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],

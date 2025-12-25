@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TypeGuard
 
-from flext_core import FlextUtilities
+from flext_core.utilities import FlextUtilities
 
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):

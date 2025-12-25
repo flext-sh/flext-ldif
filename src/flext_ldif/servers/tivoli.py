@@ -489,7 +489,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_raw: list[str] = u.Ldif.mapper().get(
+            object_classes_raw: list[str] = u.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -528,7 +528,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Get objectClasses directly from attributes (already list[str])
-                object_classes: list[str] = u.Ldif.mapper().get(
+                object_classes: list[str] = u.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],

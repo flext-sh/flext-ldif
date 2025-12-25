@@ -16,7 +16,8 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, cast
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, t
+from flext_core import FlextLogger, FlextResult, t
+from flext_core.utilities import FlextUtilities
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import FlextModels as m

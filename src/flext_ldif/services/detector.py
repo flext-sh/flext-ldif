@@ -163,7 +163,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         detected_type = u.Ldif.Server.normalize_server_type(detected_type_raw)
 
         # Convert dict to DynamicCounts model (supports
-        scores_model = m.Ldif.InternalDynamicCounts(**scores_dict)
+        scores_model = m.Ldif.Results.DynamicCounts(**scores_dict)
 
         detection_result = m.Ldif.LdifResults.ServerDetectionResult(
             detected_server_type=detected_type,

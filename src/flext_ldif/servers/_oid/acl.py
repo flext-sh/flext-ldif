@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar, Literal, cast
 
-from flext_core import FlextLogger, FlextResult, u
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -33,6 +33,7 @@ from flext_ldif.servers._rfc import (
 )
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 # Removed alias - use c.Ldif.MetadataKeys directly (no redundant aliases in higher layers)
 
