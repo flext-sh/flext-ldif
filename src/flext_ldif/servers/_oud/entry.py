@@ -13,7 +13,7 @@ import re
 from collections.abc import Callable, Mapping
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, t
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -26,6 +26,7 @@ from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes as t
 
 # t already imported from flext_core above
 from flext_ldif.utilities import u

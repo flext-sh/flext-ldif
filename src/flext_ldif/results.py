@@ -322,7 +322,7 @@ class _ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
             return value
         return None
 
-    def set_setting(self, key: str, value: str | int | bool) -> None:
+    def set_setting(self, key: str, value: str | int | bool) -> None:  # noqa: FBT001
         """Set a setting value."""
         self[key] = value
 
@@ -350,7 +350,7 @@ class _BooleanFlags(FlextLdifModelsBase):
         value = getattr(self, key, default)
         return bool(value) if isinstance(value, (bool, int)) else default
 
-    def set_flag(self, key: str, value: bool) -> None:
+    def set_flag(self, key: str, value: bool) -> None:  # noqa: FBT001
         """Set flag value for a key."""
         setattr(self, key, value)
 
@@ -1932,7 +1932,7 @@ class FlextLdifModelsResults:
         def get(
             self,
             key: str,
-            default: str | float | bool | None = None,
+            default: str | float | bool | None = None,  # noqa: FBT001
         ) -> str | int | float | bool | None:
             """Get attribute value with optional default (dict-style access)."""
             return getattr(self, key, default)

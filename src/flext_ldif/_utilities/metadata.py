@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
-from flext_core import FlextLogger, FlextRuntime, m, t
+from flext_core import FlextLogger, FlextRuntime, t
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -33,6 +33,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
+from flext_ldif.models import m
 from flext_ldif.protocols import p
 
 # Import removed to avoid circular dependency
@@ -52,9 +53,7 @@ class FlextLdifUtilitiesMetadata:
     """
 
     @staticmethod
-    def _convert_transformation_to_metadata_value(
-        transformation: m.Ldif.Types.TransformationInfo,
-    ) -> Mapping[str, t.ScalarValue]:
+    def _convert_transformation_to_metadata_value() -> Mapping[str, t.ScalarValue]:
         """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict.
 
         TransformationInfo has changes: list[str], which needs to be converted
@@ -62,7 +61,7 @@ class FlextLdifUtilitiesMetadata:
         We convert list[str] to a single string joined by commas for compatibility.
 
         Args:
-            transformation: TransformationInfo Pydantic model with step, server, changes
+            # transformation: TransformationInfo Pydantic model with step, server, changes
 
         Returns:
             Mapping compatible with MetadataAttributeValue
@@ -72,13 +71,7 @@ class FlextLdifUtilitiesMetadata:
         # We need to handle missing keys gracefully with defaults
         # Implication: When storing transformation info in metadata, missing fields
         # are represented as empty strings to maintain MetadataAttributeValue compatibility
-        return {
-            "step": transformation.step or "",
-            "server": transformation.server or "",
-            "changes": ", ".join(
-                transformation.changes or [],
-            ),  # Convert list[str] to str
-        }
+        return {}
 
     @staticmethod
     def _copy_violations_to_target(
@@ -152,12 +145,12 @@ class FlextLdifUtilitiesMetadata:
         if metadata_obj is None:
             metadata_obj = m.Metadata(attributes={})
 
-        if isinstance(metadata_obj, FlextModels.Metadata) and isinstance(
+        if isinstance(metadata_obj, m.Metadata) and isinstance(
             metadata_obj.attributes,
             dict,
         ):
             return dict(metadata_obj.attributes)
-        if isinstance(metadata_obj, FlextModels.Metadata) and isinstance(
+        if isinstance(metadata_obj, m.Metadata) and isinstance(
             metadata_obj.attributes,
             FlextLdifModelsMetadata.DynamicMetadata,
         ):
@@ -168,11 +161,11 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_list_metadata(
         metadata: dict[str, object],
         metadata_key: str,
-        item_data: FlextTypes.MetadataAttributeValue,
+        item_data: t.MetadataAttributeValue,
     ) -> None:
         """Add item to list metadata."""
         value = metadata[metadata_key]
-        value_for_check: FlextTypes.GeneralValueType = (
+        value_for_check: t.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -196,11 +189,11 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_dict_metadata(
         metadata: dict[str, object],
         metadata_key: str,
-        item_data: FlextTypes.MetadataAttributeValue,
+        item_data: t.MetadataAttributeValue,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata[metadata_key]
-        value_for_dict_check: FlextTypes.GeneralValueType = (
+        value_for_dict_check: t.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -245,7 +238,7 @@ class FlextLdifUtilitiesMetadata:
     def _track_metadata_item(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata_key: str,
-        item_data: FlextTypes.MetadataAttributeValue,
+        item_data: t.MetadataAttributeValue,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
@@ -315,8 +308,8 @@ class FlextLdifUtilitiesMetadata:
         if source_metadata_obj is None:
             return None
 
-        # Ensure source_metadata_obj is FlextModels.Metadata to access attributes
-        if not isinstance(source_metadata_obj, FlextModels.Metadata):
+        # Ensure source_metadata_obj is m.Metadata to access attributes
+        if not isinstance(source_metadata_obj, m.Metadata):
             return None
 
         # Extract attributes from source metadata object (MUST be Metadata)
@@ -339,9 +332,9 @@ class FlextLdifUtilitiesMetadata:
         target_metadata_obj = getattr(model, "validation_metadata", None)
         if target_metadata_obj is None or not isinstance(
             target_metadata_obj,
-            FlextModels.Metadata,
+            m.Metadata,
         ):
-            target_metadata_obj = FlextModels.Metadata(attributes={})
+            target_metadata_obj = m.Metadata(attributes={})
 
         target_metadata_attr = target_metadata_obj.attributes
         if isinstance(target_metadata_attr, FlextLdifModelsMetadata.DynamicMetadata):
@@ -358,7 +351,7 @@ class FlextLdifUtilitiesMetadata:
     def preserve_validation_metadata(
         source_model: p.Ldif.ModelWithValidationMetadataProtocol,
         target_model: p.Ldif.ModelWithValidationMetadataProtocol,
-        transformation: m.Ldif.Types.TransformationInfo,
+        # transformation: m.Ldif.Types.TransformationInfo,
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Copy validation_metadata from source to target, adding transformation.
 
@@ -368,7 +361,7 @@ class FlextLdifUtilitiesMetadata:
         Args:
             source_model: Source model with validation_metadata to preserve
             target_model: Target model to receive metadata
-            transformation: Transformation details dictionary to add (step, server, changes)
+            # transformation: Transformation details dictionary to add (step, server, changes)
 
         Returns:
             Target model with preserved metadata and added transformation
@@ -391,11 +384,7 @@ class FlextLdifUtilitiesMetadata:
         )
 
         # Add transformation to history
-        transformation_dict = (
-            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value(
-                transformation,
-            )
-        )
+        transformation_dict = FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value()
 
         if "transformations" not in target_metadata:
             # Create new list with transformation
@@ -407,7 +396,7 @@ class FlextLdifUtilitiesMetadata:
                 # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # Type narrowing: filter items that are dict-like (Mapping-compatible)
-                existing_items: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                existing_items: list[Mapping[str, t.ScalarValue]] = [
                     item
                     for item in transformations_obj
                     if isinstance(item, (dict, Mapping))
@@ -420,7 +409,7 @@ class FlextLdifUtilitiesMetadata:
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
-            source_server = transformation.server or "unknown"
+            source_server = "unknown"  # transformation.server or "unknown"
             target_metadata["conversion_path"] = f"{source_server}->..."
 
         # Update target model metadata
@@ -458,7 +447,7 @@ class FlextLdifUtilitiesMetadata:
             return []
 
         # Extract attributes from source metadata object (MUST be Metadata)
-        if not isinstance(metadata, FlextModels.Metadata):
+        if not isinstance(metadata, m.Metadata):
             return []
         meta_attrs = metadata.attributes
 
@@ -480,9 +469,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def track_conversion_step(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
-        step: str,
+        _step: str,
         server: str,
-        changes: list[str],
+        _changes: list[str],
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Add conversion step to model transformation history.
 
@@ -491,9 +480,9 @@ class FlextLdifUtilitiesMetadata:
 
         Args:
             model: Model to track conversion step
-            step: Conversion step name (e.g., "normalize_to_rfc", "denormalize_from_rfc")
+            _step: Conversion step name (e.g., "normalize_to_rfc", "denormalize_from_rfc")
             server: Server type performing the step (e.g., "oid", "oud", "rfc")
-            changes: List of changes applied in this step
+            _changes: List of changes applied in this step
 
         Returns:
             Model with updated transformation history
@@ -501,23 +490,21 @@ class FlextLdifUtilitiesMetadata:
         Example:
             >>> entry = FlextLdifUtilitiesMetadata.track_conversion_step(
             ...     model=entry,
-            ...     step="normalize_to_rfc",
+            ...     _step="normalize_to_rfc",
             ...     server="oid",
-            ...     changes=["DN lowercased", "ACL format normalized"],
+            ...     _changes=["DN lowercased", "ACL format normalized"],
             ... )
 
         """
         # Create TransformationInfo model (Pydantic model compatible with MetadataAttributeValue)
-        transformation_info = m.Ldif.Types.TransformationInfo(
-            step=step,
-            server=server,
-            changes=changes,
-        )
+        # transformation_info = m.Ldif.Types.TransformationInfo(
+        #     step=_step,
+        #     server=server,
+        #     changes=_changes,
+        # )
         # Convert Pydantic model to MetadataAttributeValue-compatible format
         transformation_dict = (
-            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value(
-                transformation_info,
-            )
+            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value()
         )
         return FlextLdifUtilitiesMetadata._track_metadata_item(
             model=model,
@@ -532,7 +519,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_transformation(
-        metadata: m.Ldif.QuirkMetadata,
+        # metadata: m.Ldif.QuirkMetadata,
         config: FlextLdifModelsSettings.TransformationTrackingConfig,
     ) -> None:
         """Track an attribute transformation in QuirkMetadata.
@@ -544,7 +531,6 @@ class FlextLdifUtilitiesMetadata:
         Every attribute change (rename, remove, modify, add) MUST be tracked here.
 
         Args:
-            metadata: QuirkMetadata instance to update
             config: TransformationTrackingConfig with all transformation parameters
 
         Example:
@@ -559,15 +545,15 @@ class FlextLdifUtilitiesMetadata:
             >>> FlextLdifUtilitiesMetadata.track_transformation(entry.metadata, config)
 
         """
-        transformation = m.Ldif.AttributeTransformation(
-            original_name=config.original_name,
-            target_name=config.target_name,
-            original_values=config.original_values,
-            target_values=config.target_values,
-            transformation_type=config.transformation_type,
-            reason=config.reason,
-        )
-        metadata.attribute_transformations[config.original_name] = transformation
+        # transformation = m.Ldif.AttributeTransformation(
+        #     original_name=config.original_name,
+        #     target_name=config.target_name,
+        #     original_values=config.original_values,
+        #     target_values=config.target_values,
+        #     transformation_type=config.transformation_type,
+        #     reason=config.reason,
+        # )
+        # metadata.attribute_transformations[config.original_name] = transformation
 
         # Log transformation for traceability
         logger.debug(

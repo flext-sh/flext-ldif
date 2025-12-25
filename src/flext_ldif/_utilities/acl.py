@@ -1233,7 +1233,7 @@ class FlextLdifUtilitiesACL:
                         result.append(processed)
             except Exception as e:
                 # Log and skip items that fail processing
-                logger.debug("Skipping ACL rule processing due to error: %s", e)
+                logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
 
@@ -1296,7 +1296,7 @@ class FlextLdifUtilitiesACL:
                         result.append(processed)
             except Exception as e:
                 # Log and skip items that fail processing
-                logger.debug("Skipping ACL rule processing due to error: %s", e)
+                logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
 

@@ -154,7 +154,7 @@ class FlextLdifUtilitiesDecorators:
             except Exception as e:
                 # If model_copy fails, skip metadata attachment
                 # This is safe - metadata attachment is optional for frozen models
-                logger.debug("Failed to attach metadata: %s", e)
+                logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
     def attach_parse_metadata(

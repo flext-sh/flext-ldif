@@ -1589,8 +1589,8 @@ class FlextLdifConversion(
             "Mapping[str, t.GeneralValueType]",
             conv_ext,
         )
-        orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]",
+        orig_ext_typed: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]",
             orig_ext,
         )
         # Merge dicts: conv_ext_typed overrides orig_ext_typed
