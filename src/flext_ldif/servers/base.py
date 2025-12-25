@@ -713,7 +713,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             parse_response = parse_result.value
             entries = getattr(parse_response, "entries", [])
             # ParseResponse.entries is always Sequence[Entry] (never a single Entry)
-            if u.Ldif.Guards.is_list_non_empty(entries):
+            if u.Guards.is_list_non_empty(entries):
                 domain_entry = entries[0]
                 # Convert domain Entry to public Entry type for type compatibility
                 # m.Ldif.Entry extends m.Ldif.Entry

@@ -22,7 +22,8 @@ from collections.abc import Callable, Mapping, Sequence
 from inspect import Parameter, signature
 from typing import Literal, cast, overload
 
-from flext_core import T, U, u
+from flext_core import T, U
+from flext_core.utilities import FlextUtilities as u
 
 
 class FlextFunctional:
