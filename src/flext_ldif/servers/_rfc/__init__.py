@@ -2,7 +2,12 @@
 
 This module exports the RFC base classes used by rfc.py.
 All server-specific implementations extend these RFC classes.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants

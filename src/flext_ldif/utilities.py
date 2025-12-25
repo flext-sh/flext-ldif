@@ -13,7 +13,7 @@ Provides power method infrastructure:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-# ruff: noqa: SLF001, PLC2701
+# ruff: noqa: SLF001
 
 from __future__ import annotations
 
@@ -28,10 +28,9 @@ from collections.abc import (
 from typing import ClassVar, Literal, Self, TypeGuard, cast, overload
 
 from flext_core import FlextLogger, FlextResult, r, u
-from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-from flext_core.utilities import ValidatorSpec
+from flext_core.utilities import FlextUtilities as u_core, ValidatorSpec
 
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -77,7 +76,7 @@ from flext_ldif.protocols import p
 logger = FlextLogger(__name__)
 
 
-class FlextLdifUtilities(FlextUtilities):
+class FlextLdifUtilities:
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations.
 
     Extends flext-core utility functions building on
@@ -126,6 +125,19 @@ class FlextLdifUtilities(FlextUtilities):
         result = u.filter(entries, Filter.by_objectclass("person"))
     """
 
+    # === EXPOSE BASE UTILITIES ===
+    # Make flext_core utilities available through this class
+    # These are used by code throughout the module
+    mapper = u_core.mapper
+    count = u_core.count
+    Collection = u_core.Collection
+    err = u_core.err
+    Guards = u_core.Guards
+    Reliability = u_core.Reliability
+    Generators = u_core.Generators
+    find = u_core.find
+    batch = u_core.batch
+
     # === LDIF NAMESPACE ===
     # Project-specific namespace for LDIF utilities
     # Access via u.* pattern for better organization
@@ -149,7 +161,7 @@ class FlextLdifUtilities(FlextUtilities):
         class ConvBuilder:
             """Conversion builder for type-safe value conversion (DSL pattern).
 
-            This builder uses parent FlextUtilities.Conversion utilities for actual
+            This builder uses parent u.Conversion utilities for actual
             conversion operations, providing a fluent DSL interface on top.
             """
 
@@ -209,7 +221,7 @@ class FlextLdifUtilities(FlextUtilities):
                     str_default: str | None = (
                         self._default if isinstance(self._default, str) else None
                     )
-                    return FlextUtilities.to_str(self._value, default=str_default)
+                    return u_core.to_str(self._value, default=str_default)
                 if self._target_type == "to_str_list":
                     # Use parent convenience shortcut with proper type narrowing
                     list_default: list[str] | None = None
@@ -218,7 +230,7 @@ class FlextLdifUtilities(FlextUtilities):
                     ):
                         # Type narrowing: self._default is list[str] after isinstance check
                         list_default = self._default
-                    return FlextUtilities.to_str_list(self._value, default=list_default)
+                    return u_core.to_str_list(self._value, default=list_default)
                 if self._target_type == "to_int":
                     if self._safe_mode:
                         try:
@@ -256,7 +268,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Get value from mapping with default.
 
             Type-safe wrapper around dict.get() that works with any Mapping type.
-            NOTE: Named differently from parent FlextUtilities.get() due to different signature.
+            NOTE: Named differently from parent u.get() due to different signature.
 
             Args:
                 mapping: Dictionary or Mapping to get value from
@@ -268,7 +280,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Use flext-core mapper for consistent behavior
-            return FlextUtilities.mapper().get(mapping, key, default=default)
+            return u.mapper().get(mapping, key, default=default)
 
         @staticmethod
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
@@ -293,7 +305,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> r[list[U]]:
             """Execute batch of operations with FlextResult (simplified).
 
-            NOTE: Named differently from parent FlextUtilities.batch() due to different signature.
+            NOTE: Named differently from parent u.batch() due to different signature.
             The parent method has more advanced options (size, on_error, parallel, etc.).
 
             Args:
@@ -1073,7 +1085,7 @@ class FlextLdifUtilities(FlextUtilities):
             transformed_entries = pipeline_result.value
             return FlextLdifResult.ok(transformed_entries)
 
-        # NOTE: The inherited FlextUtilities.transform() handles dict/Mapping transformations.
+        # NOTE: The inherited u.transform() handles dict/Mapping transformations.
         # For LDIF entry transformations, use transform_entries() instead.
 
         @staticmethod
@@ -1124,7 +1136,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Type narrowing: check if this is LDIF-specific call (entries with EntryFilter)
-            # Base class filter - delegate to FlextUtilitiesCollection.filter when not EntryFilter
+            # Base class filter - delegate to uCollection.filter when not EntryFilter
             if not isinstance(predicate_or_filter1, EntryFilter):
                 # Type already narrowed by isinstance check
                 predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool] = (
@@ -1133,7 +1145,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # Wrap VariadicCallable to make compatible with Callable[[object], bool]
 
                 def predicate_callable(item: object) -> bool:
-                    item_typed = FlextUtilitiesMapper._narrow_to_general_value_type(
+                    item_typed = u_core.Mapper._narrow_to_general_value_type(
                         item,
                     )
                     return predicate(item_typed)
@@ -1151,7 +1163,7 @@ class FlextLdifUtilities(FlextUtilities):
             ):
                 # Type already narrowed by isinstance checks
                 entries: Sequence[m.Ldif.Entry] = items_or_entries
-                filter_entry: EntryFilter[m.Ldif.Entry] = predicate_or_filter1
+                filter_entry = predicate_or_filter1
                 return FlextLdifUtilities.Ldif.filter_ldif_entries(
                     entries,
                     filter_entry,
@@ -1167,7 +1179,7 @@ class FlextLdifUtilities(FlextUtilities):
                 """Wrap EntryFilter as VariadicCallable for base class compatibility."""
                 if isinstance(predicate_or_filter1, EntryFilter):
                     # EntryFilter.matches() returns bool - type narrowing ensures EntryFilter type
-                    entry_filter: EntryFilter[object] = predicate_or_filter1
+                    entry_filter = predicate_or_filter1
                     return entry_filter.matches(item)
                 return False
 
@@ -1198,7 +1210,7 @@ class FlextLdifUtilities(FlextUtilities):
                 items_list: list[object] | tuple[object, ...] = items_or_entries
                 # Collection.filter does not support mapper parameter - just filter
                 # Type narrowing: result is list[T] from Collection.filter
-                return FlextUtilities.Collection.filter(
+                return u_core.Collection.filter(
                     items_list,
                     predicate,
                 )
@@ -1207,7 +1219,7 @@ class FlextLdifUtilities(FlextUtilities):
                 items_dict: dict[str, object] | Mapping[str, object] = items_or_entries
                 # Collection.filter does not support mapper parameter - just filter
                 # Type narrowing: result is dict[str, T] from Collection.filter
-                return FlextUtilities.Collection.filter(
+                return u_core.Collection.filter(
                     items_dict,
                     predicate,
                 )
@@ -1215,7 +1227,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_single_list: list[object] = [items_or_entries]
             # Collection.filter does not support mapper parameter - just filter
             # Type narrowing: result is list[T] from Collection.filter
-            return FlextUtilities.Collection.filter(
+            return u_core.Collection.filter(
                 items_single_list,
                 predicate,
             )
@@ -1276,16 +1288,16 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             # Type narrowing: check if this is LDIF-specific call (entries without validators)
-            # Base class validate - delegate to FlextUtilitiesValidation when not entries
+            # Base class validate - delegate to uValidation when not entries
             if not (
                 isinstance(value_or_entries, Sequence)
                 and not isinstance(value_or_entries, (str, bytes))
                 and len(validators_or_none) == 0
             ):
-                # Base class validate - delegate to FlextUtilitiesValidation
+                # Base class validate - delegate to uValidation
                 # Type narrowing: value_or_entries is T
                 value_base: T = value_or_entries
-                validate_result = FlextUtilities.Validation.validate(
+                validate_result = u_core.Validation.validate(
                     value_base,
                     *validators_or_none,
                     mode=mode,
@@ -1323,7 +1335,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Fallback: delegate to base class validate
             # Type narrowing: value_or_entries is T
             value_fallback: T = value_or_entries
-            validate_result = FlextUtilities.Validation.validate(
+            validate_result = u_core.Validation.validate(
                 value_fallback,
                 *validators_or_none,
                 mode=mode,
@@ -1443,7 +1455,7 @@ class FlextLdifUtilities(FlextUtilities):
                 # Type narrowing: result is list/tuple
                 return list(result)
             # Type narrowing: result is object, convert to GeneralValueType
-            result_typed = FlextUtilitiesMapper._narrow_to_general_value_type(result)
+            result_typed = u_core.Mapper._narrow_to_general_value_type(result)
             return [result_typed]
 
         # Mnemonic helper
@@ -1496,19 +1508,19 @@ class FlextLdifUtilities(FlextUtilities):
             """LDIF-specific pipe - supports dict operations via flow()."""
             # Type narrowing: check if this is base class call (only Callable operations, no dicts)
             if ops and all(callable(op) and not isinstance(op, dict) for op in ops):
-                # Base class pipe - delegate to FlextUtilitiesReliability.pipe
+                # Base class pipe - delegate to uReliability.pipe
                 # Type narrowing: op is Callable[[object], object] after callable check
                 operations_list: list[Callable[[object], object]] = [
                     op for op in ops if callable(op) and not isinstance(op, dict)
                 ]
                 # Call pipe and narrow the result
-                pipe_result = FlextUtilities.Reliability.pipe(
+                pipe_result = u_core.Reliability.pipe(
                     value,
                     *operations_list,
                     on_error=on_error,
                 )
                 if pipe_result.is_success:
-                    narrowed = FlextUtilitiesMapper._narrow_to_general_value_type(
+                    narrowed = u_core.Mapper._narrow_to_general_value_type(
                         pipe_result.value,
                     )
                     return r[t.GeneralValueType].ok(narrowed)
@@ -1523,8 +1535,8 @@ class FlextLdifUtilities(FlextUtilities):
                 elif callable(op):
                     flow_ops.append(op)
             # Narrow flow result to GeneralValueType
-            flow_result = FlextUtilities.Reliability.flow(value, *flow_ops)
-            return FlextUtilitiesMapper._narrow_to_general_value_type(flow_result)
+            flow_result = u_core.Reliability.flow(value, *flow_ops)
+            return u_core.Mapper._narrow_to_general_value_type(flow_result)
 
         # Alias for pipe_ldif (mnemonic: pp)
         @staticmethod
@@ -1688,7 +1700,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Non-mapping: return default
             return default
 
-        # get: Inherited from FlextUtilities with all overloads - no override needed
+        # get: Inherited from u with all overloads - no override needed
 
         # pluck - extract values from sequence of objects by key/index/function
         @classmethod
@@ -1717,7 +1729,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         pk = pluck
 
-        # normalize_ldif - different signature from base FlextUtilities.normalize
+        # normalize_ldif - different signature from base u.normalize
         # Base: normalize(text, pattern, replacement) for string normalization
         # LDIF: normalize_ldif(value, other, case) for case-based comparison
         @classmethod
@@ -1803,8 +1815,8 @@ class FlextLdifUtilities(FlextUtilities):
             if predicate is not None:
                 # Filter items using predicate, then count
                 filtered_items = [item for item in items if predicate(item)]
-                return FlextUtilities.count(filtered_items)
-            return FlextUtilities.count(items)
+                return u.count(filtered_items)
+            return u.count(items)
 
         ct = count
 
@@ -1839,7 +1851,7 @@ class FlextLdifUtilities(FlextUtilities):
         # Mnemonic helper
         om = omit
 
-        # merge_dicts - different signature from base FlextUtilities.merge
+        # merge_dicts - different signature from base u.merge
         # Base: merge(base, other, strategy) for two dicts
         # LDIF: merge_dicts(*dicts, strategy, filter_none, filter_empty) for variadic merge
         @staticmethod
@@ -1898,7 +1910,7 @@ class FlextLdifUtilities(FlextUtilities):
                 dict_item_dict: dict[str, t.GeneralValueType] = (
                     dict(dict_item) if isinstance(dict_item, Mapping) else dict_item
                 )
-                merge_result = FlextUtilities.merge(
+                merge_result = u_core.merge(
                     merged,
                     dict_item_dict,
                     strategy=strategy,
@@ -2126,7 +2138,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Ensure result is t.GeneralValueType for or_()
             if result is None:
                 return cls.or_(None, default=default)
-            result_typed = FlextUtilitiesMapper._narrow_to_general_value_type(result)
+            result_typed = u_core.Mapper._narrow_to_general_value_type(result)
             return cls.or_(result_typed, default=default)
 
         # Mnemonic helper
@@ -2291,18 +2303,18 @@ class FlextLdifUtilities(FlextUtilities):
                 if len(converted_args) == 0:
                     result = fn()
                 elif len(converted_args) == 1:
-                    typed_arg = FlextUtilitiesMapper._narrow_to_general_value_type(
+                    typed_arg = u_core.Mapper._narrow_to_general_value_type(
                         converted_args[0],
                     )
                     result = fn(typed_arg)
                 else:
                     typed_args = [
-                        FlextUtilitiesMapper._narrow_to_general_value_type(arg)
+                        u_core.Mapper._narrow_to_general_value_type(arg)
                         for arg in converted_args
                     ]
                     result = fn(*typed_args)
                 # Return narrowed result
-                return FlextUtilitiesMapper._narrow_to_general_value_type(result)
+                return u_core.Mapper._narrow_to_general_value_type(result)
 
             # Return curried function - signature matches VariadicCallable
             return curried
@@ -2619,7 +2631,7 @@ class FlextLdifUtilities(FlextUtilities):
             if not dict_list:
                 return {}
             # Type narrowing: dict_item is Mapping[str, t.GeneralValueType] (filter already ensures dict type)
-            mappings: list[Mapping[str, t.GeneralValueType]] = list(
+            mappings = list(
                 dict_list,
             )
             if not mappings:
@@ -2627,7 +2639,7 @@ class FlextLdifUtilities(FlextUtilities):
             # Merge mappings sequentially (merge accepts 2 args, not variadic)
             merged: dict[str, t.GeneralValueType] = dict(mappings[0])
             for mapping in mappings[1:]:
-                merge_result = FlextUtilities.merge(
+                merge_result = u_core.merge(
                     merged,
                     dict(mapping),
                     strategy="deep",
@@ -2855,7 +2867,7 @@ class FlextLdifUtilities(FlextUtilities):
         # Mnemonic helper
         tk = take
 
-        # try_ delegated to base class via FlextUtilities.try_()
+        # try_ delegated to base class via u.try_()
         @classmethod
         def try_[T](
             cls,
@@ -2864,13 +2876,13 @@ class FlextLdifUtilities(FlextUtilities):
             default: T | None = None,
             catch: type[Exception] | tuple[type[Exception], ...] = Exception,
         ) -> T | None:
-            """Try using FlextUtilities.try_() (mnemonic: tr)."""
+            """Try using u.try_() (mnemonic: tr)."""
             # Use getattr to avoid mypy attr-defined error if method doesn't exist
-            try_method = getattr(FlextUtilities, "try_", None)
+            try_method = getattr(u, "try_", None)
             if try_method and callable(try_method):
                 # Type narrowing: try_method is callable, execute it
                 result = try_method(func, default=default, catch=catch)
-                # Result should be T | None from FlextUtilities.try_()
+                # Result should be T | None from u.try_()
                 return cast("T | None", result)
             # Fallback: manual try/except
             try:
@@ -3086,8 +3098,8 @@ class FlextLdifUtilities(FlextUtilities):
             # Type narrowing: dict[str, object] values are compatible with t.GeneralValueType
             # Use data directly as it's compatible with Mapping[str, t.GeneralValueType]
             data_mapping = data
-            # Use FlextUtilities.merge() for two-dict merge
-            merge_result = FlextUtilities.merge(
+            # Use u.merge() for two-dict merge
+            merge_result = u_core.merge(
                 dict(data_mapping),
                 dict(update_dict),
                 strategy="override",
@@ -3213,7 +3225,7 @@ class FlextLdifUtilities(FlextUtilities):
                 elif isinstance(transform, dict):
                     # Type narrowing: isinstance ensures dict[str, object] compatible with ConfigurationDict
                     flow_ops.append(transform)
-            flow_result = FlextUtilities.Reliability.flow(obj, *flow_ops)
+            flow_result = u_core.Reliability.flow(obj, *flow_ops)
             # Type narrowing: flow() returns object, but context ensures dict[str, object]
             if isinstance(flow_result, dict):
                 return flow_result
@@ -3242,7 +3254,7 @@ class FlextLdifUtilities(FlextUtilities):
         ky = keys
 
         # dict_vals - get dict values directly
-        # Different from base FlextUtilities.vals which extracts values from FlextResult sequences
+        # Different from base u.vals which extracts values from FlextResult sequences
         @classmethod
         def dict_vals[T](
             cls,
@@ -3269,7 +3281,7 @@ class FlextLdifUtilities(FlextUtilities):
         def invert(
             cls,
             obj: dict[str, object],
-        ) -> dict[object, str]:
+        ) -> t.StringDict:
             """Invert dict using u.map_dict() pattern (mnemonic: iv).
 
             Args:
@@ -3286,7 +3298,9 @@ class FlextLdifUtilities(FlextUtilities):
                 # Convert values to strings for invert_dict (expects Mapping[str, str])
                 str_dict: t.StringMapping = {k: str(v) for k, v in obj.items()}
                 # Use flext-core mapper for consistent behavior
-                return FlextUtilities.mapper().invert_dict(str_dict)
+                inverted = u.mapper().invert_dict(str_dict)
+                # Convert Mapping[str, str] to dict[str, str]
+                return dict(inverted)
             return {}
 
         # Mnemonic helper
@@ -3701,7 +3715,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         fv = find_val
 
-        # merge method removed - use merge_dicts() for variadic merge or FlextUtilities.merge() for two-dict merge
+        # merge method removed - use merge_dicts() for variadic merge or u.merge() for two-dict merge
         # This avoids override incompatibility with base class merge(base, other, strategy) signature
 
         # Result DSL helpers - temporary until migrated to flext-core
@@ -3758,9 +3772,9 @@ class FlextLdifUtilities(FlextUtilities):
 # Removed: FlextLdifUtilities.process
 # Use: u.process
 
-# Runtime alias for basic class (objetos nested sem aliases redundantes)
-# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
-# u already imported from flext_core above
+
+# Re-assign u to FlextLdifUtilities for module API
+u = FlextLdifUtilities  # noqa: F811
 
 __all__ = [
     "FlextLdifUtilities",

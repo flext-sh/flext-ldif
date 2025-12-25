@@ -17,7 +17,8 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import t
+
+# t already imported from flext_core above
 
 # REMOVED: Runtime aliases redundantes - use c, m, t diretamente (já importados com runtime alias)
 # REMOVED: Type aliases para objetos nested - use m.* ou FlextLdifModelsDomains.* diretamente
@@ -512,8 +513,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: dict[str, FlextTypes.GeneralValueType],
-    ) -> list[tuple[str, FlextTypes.GeneralValueType]] | None:
+        entry_data: dict[str, t.GeneralValueType],
+    ) -> list[tuple[str, t.GeneralValueType]] | None:
         """Determine attribute processing order from entry metadata.
 
         Args:
@@ -571,7 +572,7 @@ class FlextLdifUtilitiesWriter:
         }
 
         # Type narrowing: ensure tuple elements are (str, t.GeneralValueType) for return type
-        result: list[tuple[str, FlextTypes.GeneralValueType]] = []
+        result: list[tuple[str, t.GeneralValueType]] = []
         attr_order_list: list[object] = attr_order
         for key in attr_order_list:
             if not isinstance(key, str):
@@ -582,7 +583,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def extract_base64_attrs(
-        entry_data: dict[str, FlextTypes.GeneralValueType],
+        entry_data: dict[str, t.GeneralValueType],
     ) -> set[str]:
         """Extract set of attribute names that require base64 encoding.
 
@@ -840,7 +841,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_modify_operations(
-        entry_data: dict[str, FlextTypes.GeneralValueType],
+        entry_data: dict[str, t.GeneralValueType],
     ) -> list[str]:
         """Write LDIF modify operations for schema additions.
 
@@ -1136,7 +1137,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def extract_typed_attr_values(
-        attr_values: FlextTypes.GeneralValueType,
+        attr_values: t.GeneralValueType,
     ) -> list[str] | str:
         """Type-safe extraction of attribute values.
 
@@ -1251,7 +1252,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_modify_attributes(
-        attributes: t.Ldif.AttributesDict,
+        attributes: m.Ldif.EntryAttributesDict,
         hidden: set[str],
         modify_operation: str,
         *,
@@ -1295,7 +1296,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_add_attributes(
-        attributes: t.Ldif.AttributesDict,
+        attributes: m.Ldif.EntryAttributesDict,
         hidden: set[str],
         *,
         fold_long_lines: bool,
@@ -1364,7 +1365,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def build_entry_lines(
         dn_value: str,
-        attributes: t.Ldif.AttributesDict,
+        attributes: m.Ldif.EntryAttributesDict,
         *,
         format_config: dict[str, object] | None = None,
         **kwargs: object,

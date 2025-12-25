@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from flext_core import r
 from pydantic import BaseModel, computed_field
@@ -372,14 +372,13 @@ class FlextLdif(s[object]):
                 case _:
                     # Fallback: attempt direct validation
                     entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        result = self.processing_service.process(
+        return self.processing_service.process(
             processor_name,
             entries_typed,
             parallel=parallel,
             batch_size=batch_size,
             max_workers=max_workers,
         )
-        return cast("r[list[object]]", result)
 
     def extract_acls(
         self,
@@ -405,11 +404,10 @@ class FlextLdif(s[object]):
             entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
         else:
             entry_typed = m.Ldif.Entry.model_validate(entry)
-        result = self.acl_service.extract_acls_from_entry(
+        return self.acl_service.extract_acls_from_entry(
             entry_typed,
             server_type,
         )
-        return cast("r[object]", result)
 
     def get_entry_dn(
         self,
@@ -586,12 +584,11 @@ class FlextLdif(s[object]):
             FlextResult containing created Entry model.
 
         """
-        result = FlextLdifEntries.create_entry(
+        return FlextLdifEntries.create_entry(
             dn=dn,
             attributes=attributes,
             objectclasses=objectclasses,
         )
-        return cast("r[object]", result)
 
     def detect_server_type(
         self,
@@ -765,11 +762,10 @@ class FlextLdif(s[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use validation service for proper ValidationResult
         validation_service = FlextLdifValidation()
-        result = FlextLdifAnalysis.validate_entries(
+        return FlextLdifAnalysis.validate_entries(
             entries_typed,
             validation_service,
         )
-        return cast("r[object]", result)
 
     def filter_entries(
         self,
@@ -816,8 +812,7 @@ class FlextLdif(s[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
         # Use statistics service instead of direct model access
         stats_service = FlextLdifStatistics()
-        result = stats_service.calculate_for_entries(entries_typed)
-        return cast("r[object]", result)
+        return stats_service.calculate_for_entries(entries_typed)
 
     def filter_persons(
         self,

@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from flext_core._models.entity import FlextModelsEntity
+from flext_core.models import m
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
@@ -196,7 +196,7 @@ class FlextLdifModelsEvents:
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(FlextModelsEntity.Entry.DomainEvent):
+    class FilterEvent(m.DomainEvent):
         """Event emitted when LDIF entries are filtered.
 
         Tracks filtering operations including criteria applied and results.
@@ -228,7 +228,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class ParseEvent(FlextModelsEntity.Entry.DomainEvent):
+    class ParseEvent(m.DomainEvent):
         """Event emitted when LDIF content is parsed.
 
         Tracks parsing operations including source type and results.
@@ -327,7 +327,7 @@ class FlextLdifModelsEvents:
                 error_details=error_details,
             )
 
-    class WriteEvent(FlextModelsEntity.Entry.DomainEvent):
+    class WriteEvent(m.DomainEvent):
         """Event emitted when LDIF content is written.
 
         Tracks writing operations including target and results.
@@ -363,7 +363,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed entries",
         )
 
-    class CategoryEvent(FlextModelsEntity.Entry.DomainEvent):
+    class CategoryEvent(m.DomainEvent):
         """Event emitted when entries are categorized.
 
         Tracks categorization operations including rules applied and results.
@@ -391,7 +391,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class AclEvent(FlextModelsEntity.Entry.DomainEvent):
+    class AclEvent(m.DomainEvent):
         """Event emitted when ACLs are processed.
 
         Tracks ACL parsing, transformation, and validation operations.
@@ -427,7 +427,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed ACLs",
         )
 
-    class DnEvent(FlextModels.DomainEvent):
+    class DnEvent(m.DomainEvent):
         """Event emitted when DNs are processed.
 
         Tracks DN parsing, normalization, and validation operations.
@@ -467,7 +467,7 @@ class FlextLdifModelsEvents:
             description="Number of DN components parsed",
         )
 
-    class MigrationEvent(FlextModels.DomainEvent):
+    class MigrationEvent(m.DomainEvent):
         """Event emitted during migration operations.
 
         Tracks server-to-server migration progress and results.
@@ -515,7 +515,7 @@ class FlextLdifModelsEvents:
             description="Migration throughput in entries per second",
         )
 
-    class ConversionEvent(FlextModels.DomainEvent):
+    class ConversionEvent(m.DomainEvent):
         """Event emitted during conversion operations.
 
         Tracks format conversion progress and results.
@@ -563,7 +563,7 @@ class FlextLdifModelsEvents:
             description="Conversion throughput in items per second",
         )
 
-    class SchemaEvent(FlextModels.DomainEvent):
+    class SchemaEvent(m.DomainEvent):
         """Event emitted during schema processing.
 
         Tracks schema parsing, validation, and transformation operations.

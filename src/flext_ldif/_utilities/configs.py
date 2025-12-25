@@ -30,12 +30,9 @@ from flext_ldif.constants import c
 # These aliases provide backward compatibility for existing usages
 
 # Domain options from constants
-ServerType = c.Ldif.Domain.ServerType
-OutputFormat = c.Ldif.Domain.OutputFormat
-CaseFoldOption = c.Ldif.Domain.CaseFoldOption
-SpaceHandlingOption = c.Ldif.Domain.SpaceHandlingOption
-EscapeHandlingOption = c.Ldif.Domain.EscapeHandlingOption
-SortOption = c.Ldif.Domain.SortOption
+CaseFoldOption = c.Ldif.CaseFoldOption
+SpaceHandlingOption = c.Ldif.SpaceHandlingOption
+EscapeHandlingOption = c.Ldif.EscapeHandlingOption
 
 
 # =========================================================================
@@ -43,11 +40,11 @@ SortOption = c.Ldif.Domain.SortOption
 # =========================================================================
 
 
-# Type aliases for common configuration types
-class DNNormalizationParams(TypedDict, total=False):
-    case: CaseFoldOption
-    spaces: SpaceHandlingOption
-    escapes: EscapeHandlingOption
+# Type aliases for common configuration types - temporarily commented due to missing constants
+# class DNNormalizationParams(TypedDict, total=False):
+#     case: CaseFoldOption
+#     spaces: SpaceHandlingOption
+#     escapes: EscapeHandlingOption
 
 
 class MetadataPreserveParams(TypedDict, total=False):
@@ -67,8 +64,8 @@ class DnNormalizationConfig(BaseModel):
     model_config = ConfigDict(frozen=False, validate_assignment=True)
 
     case_fold: CaseFoldOption = Field(default=CaseFoldOption.LOWER)
-    space_handling: SpaceHandlingOption = Field(default=SpaceHandlingOption.TRIM)
-    escape_handling: EscapeHandlingOption = Field(default=EscapeHandlingOption.PRESERVE)
+    space_handling: SpaceHandlingOption = Field(default=SpaceHandlingOption.PRESERVE)
+    # escape_handling: EscapeHandlingOption = Field(default=EscapeHandlingOption.ENABLE)
     validate_before: bool = Field(
         default=True,
         description="Validate DN before normalization",
@@ -80,7 +77,7 @@ class AttrNormalizationConfig(BaseModel):
 
     model_config = ConfigDict(frozen=False, validate_assignment=True)
 
-    sort_attributes: SortOption = Field(default=SortOption.ALPHABETICAL)
+    # sort_attributes: SortOption = Field(default=SortOption.ALPHABETICAL)
     sort_values: bool = Field(default=True)
     normalize_whitespace: bool = Field(default=True)
     case_fold_names: bool = Field(default=True, description="Lowercase attribute names")
@@ -145,8 +142,8 @@ class ProcessConfig(BaseModel):
 
     model_config = ConfigDict(frozen=False, validate_assignment=True)
 
-    source_server: ServerType = Field(default=ServerType.RFC)
-    target_server: ServerType = Field(default=ServerType.RFC)
+    # source_server: ServerType = Field(default=ServerType.RFC)
+    # target_server: ServerType = Field(default=ServerType.RFC)
     dn_config: DnNormalizationConfig = Field(default_factory=DnNormalizationConfig)
     attr_config: AttrNormalizationConfig = Field(
         default_factory=AttrNormalizationConfig,
@@ -176,24 +173,24 @@ class WriteConfig(BaseModel):
 
     model_config = ConfigDict(frozen=False, validate_assignment=True)
 
-    output_format: OutputFormat = Field(default=OutputFormat.LDIF)
+    # output_format: OutputFormat = Field(default=OutputFormat.LDIF)
     version: int = Field(default=1, ge=1)
     wrap_lines: bool = Field(default=True)
     line_length: int = Field(default=76, ge=10)
-    format: OutputFormat = Field(
-        default=OutputFormat.LDIF,
-        description="Alias for output_format",
-    )
+    # format: OutputFormat = Field(
+    #     default=OutputFormat.LDIF,
+    #     description="Alias for output_format",
+    # )
     line_width: int = Field(default=76, ge=10, description="Alias for line_length")
     fold_lines: bool = Field(default=True, description="Alias for wrap_lines")
     base64_attrs: Sequence[str] | Literal["auto"] = Field(
         default="auto",
         description="Attributes to encode in base64",
     )
-    sort_by: SortOption = Field(
-        default=SortOption.ALPHABETICAL,
-        description="Sort entries by field",
-    )
+    # sort_by: SortOption = Field(
+    #     default=SortOption.ALPHABETICAL,
+    #     description="Sort entries by field",
+    # )
     attr_order: Sequence[str] | None = Field(
         default=None,
         description="Preferred attribute order",
@@ -202,10 +199,7 @@ class WriteConfig(BaseModel):
         default=False,
         description="Include metadata in output",
     )
-    server: ServerType | None = Field(
-        default=None,
-        description="Target server type for formatting",
-    )
+    # server field temporarily removed due to constant reorganization
 
 
 class LoadConfig(BaseModel):
@@ -244,18 +238,18 @@ class ValidationRuleSet(BaseModel):
 __all__: list[str] = [
     "AclConversionConfig",
     "AttrNormalizationConfig",
-    "CaseFoldOption",
+    # "CaseFoldOption",
     "DnNormalizationConfig",
-    "EscapeHandlingOption",
+    # "EscapeHandlingOption",
     "FilterConfig",
     "LoadConfig",
     "MetadataConfig",
-    "OutputFormat",
+    # "OutputFormat",
     "ProcessConfig",
     "SchemaParseConfig",
-    "ServerType",
-    "SortOption",
-    "SpaceHandlingOption",
+    # "ServerType",
+    # "SortOption",
+    # "SpaceHandlingOption",
     "TransformConfig",
     "ValidationConfig",
     "ValidationRuleSet",

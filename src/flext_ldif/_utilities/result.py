@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import IO, Self, cast, overload
+from typing import IO, Self, overload
 
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -496,8 +496,8 @@ class FlextLdifResult[T]:
 
     def filter(
         self,
-        predicate: p.Ldif.FilterProtocol[T] | Callable[[T], bool],
-    ) -> FlextLdifResult[T]:
+        predicate: p.Ldif.FilterProtocol | Callable,
+    ) -> FlextLdifResult:
         """Filter the result value using a predicate.
 
         For sequence values, filters elements matching the predicate and returns
@@ -520,29 +520,28 @@ class FlextLdifResult[T]:
         value = self.value
 
         # Get matches function from predicate - check for matches method first
-        matches_func: Callable[[T], bool]
+        matches_func = None
         predicate_matches = getattr(predicate, "matches", None)
         if predicate_matches is not None and callable(predicate_matches):
-            # FilterProtocol with matches method
-            matches_func = predicate_matches  # type: ignore[assignment]
+            # FilterProtocol with matches method - wrap as callable
+            def wrapped_matches(item: object) -> bool:
+                return bool(predicate_matches(item))
+
+            matches_func = wrapped_matches
         elif callable(predicate):
             matches_func = predicate
-        else:
+
+        if matches_func is None:
             return FlextLdifResult.fail("Invalid predicate type")
 
         # Handle sequence of entries - filter elements and preserve type
         if isinstance(value, Sequence) and not isinstance(value, str):
             # Filter elements - result is always a list for type consistency
-            filtered_elements: list[object] = [
-                item
-                for item in value
-                if matches_func(item)  # type: ignore[arg-type]
-            ]
-            # Type narrowing: filtered_elements is the filtered sequence of type T
-            return FlextLdifResult(r.ok(cast("list[T]", filtered_elements)))
+            filtered_elements = [item for item in value if matches_func(item)]
+            return FlextLdifResult.ok(filtered_elements)
 
         # Handle single value - return if matches, fail otherwise
-        if matches_func(value):  # type: ignore[arg-type]
+        if matches_func(value):
             return FlextLdifResult.ok(value)
 
         return FlextLdifResult.fail("Value did not match filter predicate")
