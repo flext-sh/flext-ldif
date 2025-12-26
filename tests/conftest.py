@@ -14,7 +14,7 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, Final, cast
+from typing import ClassVar, Final
 
 import pytest
 from flext_core import r
@@ -238,28 +238,36 @@ class FlextLdifFixtures:
         """Get singleton OID fixture loader."""
         if "oid" not in cls._instances:
             cls._instances["oid"] = cls.OID()
-        return cast("FlextLdifFixtures.OID", cls._instances["oid"])
+        instance = cls._instances["oid"]
+        assert isinstance(instance, cls.OID)
+        return instance
 
     @classmethod
     def get_oud(cls) -> FlextLdifFixtures.OUD:
         """Get singleton OUD fixture loader."""
         if "oud" not in cls._instances:
             cls._instances["oud"] = cls.OUD()
-        return cast("FlextLdifFixtures.OUD", cls._instances["oud"])
+        instance = cls._instances["oud"]
+        assert isinstance(instance, cls.OUD)
+        return instance
 
     @classmethod
     def get_openldap(cls) -> FlextLdifFixtures.OpenLDAP:
         """Get singleton OpenLDAP fixture loader."""
         if "openldap" not in cls._instances:
             cls._instances["openldap"] = cls.OpenLDAP()
-        return cast("FlextLdifFixtures.OpenLDAP", cls._instances["openldap"])
+        instance = cls._instances["openldap"]
+        assert isinstance(instance, cls.OpenLDAP)
+        return instance
 
     @classmethod
     def get_loader(cls) -> FlextLdifFixtures.Loader:
         """Get singleton generic fixture loader."""
         if "loader" not in cls._instances:
             cls._instances["loader"] = cls.Loader()
-        return cast("FlextLdifFixtures.Loader", cls._instances["loader"])
+        instance = cls._instances["loader"]
+        assert isinstance(instance, cls.Loader)
+        return instance
 
     class ServerType(StrEnum):
         """Supported LDAP server types with quirks."""

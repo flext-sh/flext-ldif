@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import cast
 
 import pytest
 from tests import s
@@ -190,17 +189,13 @@ def get_case_insensitive_tests() -> list[CaseInsensitivityTestCase]:
 @pytest.fixture
 def oid_acl() -> FlextLdifServersOid.Acl:
     """Create OID ACL instance."""
-    instance = get_acl_instance(c.Ldif.ServerTypes.OID)
-    # Type narrowing: c.Ldif.ServerTypes.OID always returns FlextLdifServersOid.Acl
-    return cast("FlextLdifServersOid.Acl", instance)
+    return FlextLdifServersOid.Acl()
 
 
 @pytest.fixture
 def oud_acl() -> FlextLdifServersOud.Acl:
     """Create OUD ACL instance."""
-    instance = get_acl_instance(c.Ldif.ServerTypes.OUD)
-    # Type narrowing: c.Ldif.ServerTypes.OUD always returns FlextLdifServersOud.Acl
-    return cast("FlextLdifServersOud.Acl", instance)
+    return FlextLdifServersOud.Acl()
 
 
 class TestsFlextLdifAclProtocolCompliance(s):
@@ -242,21 +237,19 @@ class TestsFlextLdifAclProtocolCompliance(s):
         self,
         oid_acl: FlextLdifServersOid.Acl,
     ) -> None:
-        """Test OID ACL implements Quirks.AclProtocol."""
-        assert isinstance(oid_acl, FlextLdifProtocols.Ldif.AclProtocol)
+        """Test OID ACL implements AclQuirkProtocol."""
+        assert isinstance(oid_acl, FlextLdifProtocols.Ldif.AclQuirkProtocol)
 
     def test_oud_protocol_compliance(
         self,
         oud_acl: FlextLdifServersOud.Acl,
     ) -> None:
-        """Test OUD ACL implements Quirks.AclProtocol."""
-        assert isinstance(oud_acl, FlextLdifProtocols.Ldif.AclProtocol)
+        """Test OUD ACL implements AclQuirkProtocol."""
+        assert isinstance(oud_acl, FlextLdifProtocols.Ldif.AclQuirkProtocol)
 
     def test_oid_class_constants(self) -> None:
         """Test OID ACL class variables are properly defined."""
-        acl_class = get_acl_class(c.Ldif.ServerTypes.OID)
-        # Type narrowing: c.Ldif.ServerTypes.OID always returns FlextLdifServersOid.Acl class
-        oid_class = cast("type[FlextLdifServersOid.Acl]", acl_class)
+        oid_class = FlextLdifServersOid.Acl
 
         # RFC attributes
         assert hasattr(oid_class, "RFC_ACL_ATTRIBUTES")
@@ -270,9 +263,7 @@ class TestsFlextLdifAclProtocolCompliance(s):
 
     def test_oud_class_constants(self) -> None:
         """Test OUD ACL class variables are properly defined."""
-        acl_class = get_acl_class(c.Ldif.ServerTypes.OUD)
-        # Type narrowing: c.Ldif.ServerTypes.OUD always returns FlextLdifServersOud.Acl class
-        oud_class = cast("type[FlextLdifServersOud.Acl]", acl_class)
+        oud_class = FlextLdifServersOud.Acl
 
         # RFC attributes
         assert hasattr(oud_class, "RFC_ACL_ATTRIBUTES")
@@ -298,16 +289,8 @@ class TestsFlextLdifAclProtocolCompliance(s):
 
     def test_shared_rfc_foundation(self) -> None:
         """Test both OID and OUD share RFC foundation."""
-        oid_class = cast(
-            "type[FlextLdifServersOid.Acl]",
-            get_acl_class(c.Ldif.ServerTypes.OID),
-        )
-        oud_class = cast(
-            "type[FlextLdifServersOud.Acl]",
-            get_acl_class(c.Ldif.ServerTypes.OUD),
-        )
-        oid_rfc = set(oid_class.RFC_ACL_ATTRIBUTES)
-        oud_rfc = set(oud_class.RFC_ACL_ATTRIBUTES)
+        oid_rfc = set(FlextLdifServersOid.Acl.RFC_ACL_ATTRIBUTES)
+        oud_rfc = set(FlextLdifServersOud.Acl.RFC_ACL_ATTRIBUTES)
 
         assert oid_rfc == oud_rfc
 

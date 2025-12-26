@@ -1156,16 +1156,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = self._normalize_acl_dns(entry_data)
 
-        # Write entry in appropriate format (RFC handles both schema and standard entries)
-        result = super()._write_entry(entry_data)
-
-        if result.is_failure:
-            return result
-
-        ldif_parts.append(result.value)
-        # Use utilities for finalization (SRP: delegate to writer)
-        ldif_str = u.Ldif.Writer.finalize_ldif_text(ldif_parts)
-        return FlextResult[str].ok(ldif_str)
+        # Write entry in appropriate format and finalize using map pattern
+        return (
+            super()
+            ._write_entry(entry_data)
+            .map(
+                lambda ldif_text: u.Ldif.Writer.finalize_ldif_text(
+                    ldif_parts + [ldif_text]
+                ),
+            )
+        )
 
     def _write_entry_as_comment(
         self,
@@ -1180,15 +1180,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             FlextResult with commented LDIF string
 
         """
-        # Use RFC write method to get LDIF representation
-        result = super()._write_entry(entry_data)
-        if result.is_failure:
-            return result
-
-        # Prefix each line with '# '
-        ldif_text = result.value
-        commented_lines = [f"# {line}" for line in ldif_text.split("\n")]
-        return FlextResult[str].ok("\n".join(commented_lines))
+        # Use RFC write method and transform to commented LDIF using map pattern
+        return (
+            super()
+            ._write_entry(entry_data)
+            .map(
+                lambda ldif_text: "\n".join(
+                    f"# {line}" for line in ldif_text.split("\n")
+                ),
+            )
+        )
 
     def _add_transformation_comments(
         self,

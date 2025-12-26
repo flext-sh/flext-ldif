@@ -31,7 +31,7 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal, Self, cast
+from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
@@ -41,7 +41,7 @@ from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
@@ -685,33 +685,39 @@ class FlextLdifServersBaseSchema(
             return {}
         extensions_raw = extract_method(attr_definition)
         if isinstance(extensions_raw, dict):
-            return cast("dict[str, list[str] | str | bool | None]", extensions_raw)
+            # Type narrowing: isinstance guarantees dict, filter valid key-value pairs
+            return {
+                k: v
+                for k, v in extensions_raw.items()
+                if isinstance(k, str)
+                and (isinstance(v, (str, bool, list)) or v is None)
+            }
         return {}
 
     @staticmethod
     def _resolve_quirk_type(
         server_type: str | None,
-    ) -> str:
-        """Resolve server type to valid string, defaulting to RFC."""
+    ) -> c.Ldif.ServerTypes:
+        """Resolve server type to valid StrEnum, defaulting to GENERIC."""
         if not server_type:
-            return FlextLdifUtilitiesServer.normalize_server_type("rfc")
-        # Common server types - validation happens at runtime
-        valid_types = {
-            "rfc",
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "ds389",
-            "apache",
-            "ad",
-            "novell",
-            "tivoli",
-            "relaxed",
+            return c.Ldif.ServerTypes.RFC
+        # Map string to StrEnum member
+        type_map: dict[str, c.Ldif.ServerTypes] = {
+            "rfc": c.Ldif.ServerTypes.RFC,
+            "oid": c.Ldif.ServerTypes.OID,
+            "oud": c.Ldif.ServerTypes.OUD,
+            "openldap": c.Ldif.ServerTypes.OPENLDAP,
+            "openldap1": c.Ldif.ServerTypes.OPENLDAP1,
+            "openldap2": c.Ldif.ServerTypes.OPENLDAP2,
+            "ds389": c.Ldif.ServerTypes.DS389,
+            "apache": c.Ldif.ServerTypes.APACHE,
+            "ad": c.Ldif.ServerTypes.AD,
+            "novell": c.Ldif.ServerTypes.NOVELL,
+            "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
+            "relaxed": c.Ldif.ServerTypes.RELAXED,
+            "generic": c.Ldif.ServerTypes.GENERIC,
         }
-        if server_type.lower() in valid_types:
-            return FlextLdifUtilitiesServer.normalize_server_type(server_type)
-        return FlextLdifUtilitiesServer.normalize_server_type("rfc")
+        return type_map.get(server_type.lower(), c.Ldif.ServerTypes.RFC)
 
     @staticmethod
     def _preserve_formatting(
@@ -795,12 +801,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["schema_original_string_complete"] = attr_definition
 
         # Create metadata
+        # QuirkMetadata.quirk_type accepts str - no cast needed
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
         metadata = m.Ldif.QuirkMetadata(
-            quirk_type=cast(
-                "Literal['oid', 'oud', 'openldap', 'openldap1', 'openldap2', 'ad', 'apache', 'ds389', 'rfc', 'relaxed', 'novell', 'ibm_tivoli', 'generic']",
-                quirk_type,
-            ),
+            quirk_type=quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                 metadata_extensions
             )

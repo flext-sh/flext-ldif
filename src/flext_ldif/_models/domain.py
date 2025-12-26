@@ -14,7 +14,7 @@ import re
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
-from typing import ClassVar, Self, TypedDict, Unpack, cast
+from typing import ClassVar, Self, TypedDict, Unpack
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
@@ -209,7 +209,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
 
             if isinstance(dn, str):
-                return cls(value=dn)
+                return cls.model_validate({"value": dn})
 
             return dn
 
@@ -1403,7 +1403,7 @@ class FlextLdifModelsDomains:
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
         # validation_violations inherited from AclElement (default_factory=list)
 
-        # Metadata field override with specific type (type narrowing from object to QuirkMetadata)
+        # Metadata field with concrete type (QuirkMetadata)
         metadata: FlextLdifModelsDomains.QuirkMetadata | None = Field(
             default=None,
             description="Quirk-specific metadata for ACL processing",
@@ -1645,9 +1645,9 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.DN.model_validate(value)
 
             if isinstance(value, str):
-                return FlextLdifModelsDomains.DN(value=value)
+                return FlextLdifModelsDomains.DN.model_validate({"value": value})
 
-            return FlextLdifModelsDomains.DN(value="")
+            return FlextLdifModelsDomains.DN.model_validate({"value": ""})
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -1671,12 +1671,31 @@ class FlextLdifModelsDomains:
                 return value
 
             if isinstance(value, dict) and "attributes" in value:
-                # Handle dict from model_dump()
-                return FlextLdifModelsDomains.Attributes(**value)
+                # Handle dict from model_dump() - extract typed fields
+                attrs_data = value.get("attributes", {})
+                meta_data = value.get("attribute_metadata", {})
+                entry_meta = value.get("metadata")
+                # Build with explicit field assignments for type safety
+                return FlextLdifModelsDomains.Attributes(
+                    attributes=dict(attrs_data) if isinstance(attrs_data, dict) else {},
+                    attribute_metadata=dict(meta_data)
+                    if isinstance(meta_data, dict)
+                    else {},
+                    metadata=entry_meta
+                    if isinstance(entry_meta, FlextLdifModelsMetadata.EntryMetadata)
+                    else None,
+                )
 
-            # value is already dict[str, list[str]] from Mapping input
+            # value is dict from Mapping input, Pydantic validates dict[str, list[str]] at runtime
+            # Explicitly construct attributes dict for type safety
+            attrs_dict: dict[str, list[str]] = {}
+            for k, v in value.items():
+                if isinstance(v, list):
+                    attrs_dict[k] = [str(x) for x in v]
+                else:
+                    attrs_dict[k] = [str(v)]
             return FlextLdifModelsDomains.Attributes(
-                attributes=cast("dict[str, list[str]]", value),
+                attributes=attrs_dict,
             )
 
         # ===================================================================
@@ -2452,6 +2471,9 @@ class FlextLdifModelsDomains:
                         values_list: list[str] = [str(attr_values)]
                     elif isinstance(attr_values, list):
                         values_list = [str(v) for v in attr_values]
+                    else:
+                        # Handle other iterable types (tuple, etc.)
+                        values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
                 return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
             if isinstance(attributes, FlextLdifModelsDomains.Attributes):
@@ -2522,7 +2544,7 @@ class FlextLdifModelsDomains:
                     ext_kwargs_typed
                 )
                 return FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.GENERIC.value,
+                    quirk_type=c.Ldif.ServerTypes.GENERIC,
                     extensions=extensions,
                 )
 

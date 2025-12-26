@@ -23,6 +23,7 @@ from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
+from flext_ldif.protocols import FlextLdifProtocols
 
 
 # Configuration classes defined outside main class for type resolution
@@ -2136,19 +2137,25 @@ class FlextLdifModelsSettings:
             validate_assignment=True,
         )
 
-        source_schema: object = Field(
+        source_schema: (
+            FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+            | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+        ) = Field(
             ...,
             description="Source schema quirk",
         )
-        target_schema: object = Field(
+        target_schema: (
+            FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+            | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+        ) = Field(
             ...,
             description="Target schema quirk",
         )
-        write_method: Callable[[object], r[str]] = Field(
+        write_method: Callable[..., r[str]] = Field(
             ...,
             description="Write method to call on source schema",
         )
-        parse_method: Callable[[object, str], r[object]] = Field(
+        parse_method: Callable[..., r[FlextTypes.GeneralValueType]] = Field(
             ...,
             description="Parse method to call on target schema",
         )

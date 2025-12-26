@@ -497,11 +497,7 @@ class FlextLdifSettings(FlextSettings):
 
     @field_validator("ldif_encoding", mode="after")
     @classmethod
-    def validate_ldif_encoding(
-        cls,
-        v: str,
-        info: ValidationInfo,
-    ) -> str:
+    def validate_ldif_encoding(cls, v: str, info: ValidationInfo | None = None) -> str:
         """Validate ldif_encoding is a valid Python codec.
 
         RFC 2849 § 2: LDIF files SHOULD use UTF-8 encoding.
@@ -509,7 +505,6 @@ class FlextLdifSettings(FlextSettings):
 
         Args:
             v: Encoding string to validate
-            info: Pydantic ValidationInfo context
 
         Returns:
             Validated encoding string
@@ -523,8 +518,9 @@ class FlextLdifSettings(FlextSettings):
         except LookupError as e:
             # Suggest RFC-recommended encoding
             suggestion = "utf-8 (RFC 2849 recommended)"
+            field_name = info.field_name if info else "unknown"
             msg = (
-                f"Invalid encoding '{v}' in field '{info.field_name}': {e}\n"
+                f"Invalid encoding '{v}' in field '{field_name}': {e}\n"
                 f"Suggestion: Use '{suggestion}' for maximum compatibility."
             )
             raise ValueError(msg) from e
@@ -532,11 +528,7 @@ class FlextLdifSettings(FlextSettings):
 
     @field_validator("server_type", mode="before")
     @classmethod
-    def validate_server_type(
-        cls,
-        v: str,
-        info: ValidationInfo,
-    ) -> str:
+    def validate_server_type(cls, v: str, info: ValidationInfo | None = None) -> str:
         """Validate server_type is a recognized LDAP server.
 
         Ensures server_type is one of the supported server types defined in
@@ -545,7 +537,6 @@ class FlextLdifSettings(FlextSettings):
 
         Args:
             v: Server type string to validate (canonical or alias)
-            info: Pydantic ValidationInfo context
 
         Returns:
             Normalized/validated server type string (canonical form)
@@ -581,8 +572,9 @@ class FlextLdifSettings(FlextSettings):
                 c.Ldif.ServerTypes.OID,
                 c.Ldif.ServerTypes.OPENLDAP,
             ]
+            field_name = info.field_name if info else "unknown"
             msg = (
-                f"Invalid server_type '{v}' in field '{info.field_name or 'unknown'}'.\n"
+                f"Invalid server_type '{v}' in field '{field_name}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
                 f"Common choices: {', '.join(common_servers)}"
             )
@@ -591,18 +583,13 @@ class FlextLdifSettings(FlextSettings):
 
     @field_validator("ldif_line_separator", mode="after")
     @classmethod
-    def validate_ldif_line_separator(
-        cls,
-        v: str,
-        info: ValidationInfo,
-    ) -> str:
+    def validate_ldif_line_separator(cls, v: str) -> str:
         """Validate ldif_line_separator is RFC 2849 compliant.
 
         RFC 2849 § 2: Line separator can be LF, CRLF, or CR.
 
         Args:
             v: Line separator string to validate
-            info: Pydantic ValidationInfo context
 
         Returns:
             Validated line separator string
@@ -616,8 +603,7 @@ class FlextLdifSettings(FlextSettings):
         if v not in valid_separators:
             # Suggest most common separator
             msg = (
-                f"Invalid ldif_line_separator '{v!r}' in field "
-                f"'{info.field_name}'.\n"
+                f"Invalid ldif_line_separator '{v!r}'.\n"
                 f"Must be one of: {', '.join(repr(s) for s in valid_separators)} "
                 f"(RFC 2849 § 2)\n"
                 f"Suggestion: Use '\\n' (LF) for Unix/Linux or "
@@ -629,9 +615,7 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("ldif_version_string", mode="after")
     @classmethod
     def validate_ldif_version_string(
-        cls,
-        v: str,
-        info: ValidationInfo,
+        cls, v: str, info: ValidationInfo | None = None
     ) -> str:
         """Validate ldif_version_string is RFC 2849 compliant.
 
@@ -640,7 +624,6 @@ class FlextLdifSettings(FlextSettings):
 
         Args:
             v: Version string to validate
-            info: Pydantic ValidationInfo context
 
         Returns:
             Validated version string
@@ -652,8 +635,7 @@ class FlextLdifSettings(FlextSettings):
         # RFC 2849 version format: "version: 1"
         if not v.startswith("version:"):
             msg = (
-                f"Invalid ldif_version_string '{v}' in field "
-                f"'{info.field_name}'. "
+                f"Invalid ldif_version_string '{v}'. "
                 f"Must start with 'version:' (RFC 2849 § 2)\n"
                 f"Suggestion: Use 'version: 1' (RFC 2849 standard)"
             )
@@ -664,17 +646,19 @@ class FlextLdifSettings(FlextSettings):
             version_part = v.split(":", 1)[1].strip()
             version_num = int(version_part)
             if version_num != 1:
+                field_name = info.field_name if info else "unknown"
                 msg = (
                     f"Unsupported LDIF version {version_num} in field "
-                    f"'{info.field_name}'. "
+                    f"'{field_name}'. "
                     f"Only version 1 is supported (RFC 2849)\n"
                     f"Suggestion: Use 'version: 1'"
                 )
                 raise ValueError(msg)
         except (IndexError, ValueError) as e:
+            field_name = info.field_name if info else "unknown"
             msg = (
                 f"Invalid ldif_version_string format '{v}' in field "
-                f"'{info.field_name}'. "
+                f"'{field_name}'. "
                 f"Expected 'version: 1' (RFC 2849 § 2)\n"
                 f"Suggestion: Use exactly 'version: 1'"
             )
@@ -685,9 +669,7 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("quirks_server_type", mode="before")
     @classmethod
     def validate_quirks_server_type(
-        cls,
-        v: str | None,
-        info: ValidationInfo,
+        cls, v: str | None, info: ValidationInfo | None = None
     ) -> str | None:
         """Validate quirks_server_type when specified is a recognized server.
 
@@ -697,7 +679,6 @@ class FlextLdifSettings(FlextSettings):
 
         Args:
             v: Server type string to validate (canonical or alias, or None)
-            info: Pydantic ValidationInfo context
 
         Returns:
             Normalized/validated server type string (canonical form) or None
@@ -734,8 +715,9 @@ class FlextLdifSettings(FlextSettings):
                 c.Ldif.ServerTypes.OID,
                 c.Ldif.ServerTypes.OPENLDAP,
             ]
+            field_name = info.field_name if info else "unknown"
             msg = (
-                f"Invalid quirks_server_type '{v}' in field '{info.field_name or 'unknown'}'.\n"
+                f"Invalid quirks_server_type '{v}' in field '{field_name}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
                 f"Common choices: {', '.join(common_servers)}"
             )
@@ -745,9 +727,7 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("ldif_default_server_type", mode="after")
     @classmethod
     def validate_ldif_default_server_type(
-        cls,
-        v: str,
-        info: ValidationInfo,
+        cls, v: str, info: ValidationInfo | None = None
     ) -> str:
         """Validate ldif_default_server_type is a recognized server.
 
@@ -755,7 +735,6 @@ class FlextLdifSettings(FlextSettings):
 
         Args:
             v: Server type string to validate
-            info: Pydantic ValidationInfo context
 
         Returns:
             Validated server type string
@@ -781,9 +760,10 @@ class FlextLdifSettings(FlextSettings):
             c.Ldif.ServerTypes.GENERIC,
         ]
         if v not in valid_servers:
+            field_name = info.field_name if info else "unknown"
             msg = (
                 f"Invalid ldif_default_server_type '{v}' in field "
-                f"'{info.field_name}'.\n"
+                f"'{field_name}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
                 f"Suggestion: Use '{c.Ldif.ServerTypes.RFC}' "
                 f"for RFC compliance"

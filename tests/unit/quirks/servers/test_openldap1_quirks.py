@@ -219,7 +219,7 @@ class TestsTestFlextLdifOpenldap1Quirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_data = result.value
-        assert isinstance(acl_data, m.Acl)
+        assert isinstance(acl_data, m.Ldif.Acl)
         assert acl_data.target is not None
         assert acl_data.target.attributes == ["userPassword"]
         assert acl_data.subject is not None

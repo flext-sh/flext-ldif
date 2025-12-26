@@ -946,7 +946,7 @@ objectClass: person
     def test_acl_quirk_can_handle_methods(
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
-        sample_acl: m.Acl,
+        sample_acl: m.Tests.Acl,
         sample_schema_attribute: m.Ldif.SchemaAttribute,
         sample_schema_objectclass: m.Ldif.SchemaObjectClass,
     ) -> None:

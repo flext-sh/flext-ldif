@@ -17,9 +17,9 @@ from flext_core import FlextResult as r, FlextTypes as t
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 
-# Factory type aliases (using object since services cannot import protocols)
-type FilterFactoryType = Callable[[], object]
-type CategorizationFactoryType = Callable[[str], object]
+# Factory type aliases (using t.GeneralValueType for type-safe factories)
+type FilterFactoryType = Callable[[], t.GeneralValueType]
+type CategorizationFactoryType = Callable[[str], t.GeneralValueType]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
@@ -53,29 +53,31 @@ class FlextLdifServiceRegistry(FlextRegistry):
 
     # Service resolution using class-level plugin API
 
-    def get_filter_service(self) -> r[object]:
+    def get_filter_service(self) -> r[t.GeneralValueType]:
         """Get filter service instance from registered factory."""
         factory_result = self.get_class_plugin(self.FACTORIES, "filter")
         if factory_result.is_failure:
-            return r[object].fail(
+            return r[t.GeneralValueType].fail(
                 "Filter service factory not registered. Import flext_ldif.api first.",
             )
         factory_raw = factory_result.value
         if not callable(factory_raw):
-            return r[object].fail("Filter factory is not callable")
-        return r[object].ok(factory_raw())
+            return r[t.GeneralValueType].fail("Filter factory is not callable")
+        return r[t.GeneralValueType].ok(factory_raw())
 
-    def get_categorization_service(self, server_type: str = "rfc") -> r[object]:
+    def get_categorization_service(
+        self, server_type: str = "rfc"
+    ) -> r[t.GeneralValueType]:
         """Get categorization service instance from registered factory."""
         factory_result = self.get_class_plugin(self.FACTORIES, "categorization")
         if factory_result.is_failure:
-            return r[object].fail(
+            return r[t.GeneralValueType].fail(
                 "Categorization factory not registered. Import flext_ldif.api first.",
             )
         factory_raw = factory_result.value
         if not callable(factory_raw):
-            return r[object].fail("Categorization factory is not callable")
-        return r[object].ok(factory_raw(server_type))
+            return r[t.GeneralValueType].fail("Categorization factory is not callable")
+        return r[t.GeneralValueType].ok(factory_raw(server_type))
 
     def is_initialized(self) -> bool:
         """Check if all factories are registered."""

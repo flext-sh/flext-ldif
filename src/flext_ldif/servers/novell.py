@@ -27,6 +27,7 @@ from typing import ClassVar
 
 from flext_core import r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -527,11 +528,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         perms_dict[canonical_name] = True
             return perms_dict
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             Novell eDirectory ACLs use "#" delimited segments:
             scope#trustee#rights#...
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
             """
             try:
                 # Use direct field access on Acl model

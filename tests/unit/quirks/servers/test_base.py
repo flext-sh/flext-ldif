@@ -702,7 +702,7 @@ class TestFlextLdifServersBaseNestedAcl:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl_model = m.Acl()
+        acl_model = m.Ldif.Acl()
         result = acl_concrete._hook_post_parse_acl(acl_model)
         assert result.is_success
         assert result.value == acl_model
@@ -1145,7 +1145,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         # Access private method through concrete class, not protocol
         acl_concrete = rfc._acl_quirk
-        acl = m.Acl()
+        acl = m.Ldif.Acl()
         result = acl_concrete._hook_post_parse_acl(acl)
         assert result.is_success
         assert result.value == acl
@@ -1752,7 +1752,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -1767,7 +1767,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1783,7 +1783,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1800,7 +1800,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1822,7 +1822,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
@@ -1844,12 +1844,12 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
-        acl_model = m.Acl()
+        acl_model = m.Ldif.Acl()
         # Base implementation should return fail
         result = acl._write_acl(acl_model)
         assert result.is_failure
@@ -2085,7 +2085,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()
@@ -2464,7 +2464,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             def execute(
                 self,
                 **kwargs: object,
-            ) -> FlextResult[m.Acl | str]:
+            ) -> FlextResult[m.Ldif.Acl | str]:
                 return FlextResult.ok("")
 
         acl = StandaloneAcl()

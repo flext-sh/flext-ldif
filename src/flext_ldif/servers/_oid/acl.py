@@ -18,10 +18,11 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
@@ -1045,11 +1046,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
 
         # Convert and format permissions
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
-        # Convert dict[str, bool] to MetadataDictMutable for _format_oid_permissions
-        permissions_metadata: t.Ldif.MetadataDictMutable = cast(
-            "t.Ldif.MetadataDictMutable",
-            permissions_dict,
-        )
+        # Construct MetadataDictMutable from dict[str, bool] - values are compatible
+        permissions_metadata: t.Ldif.MetadataDictMutable = dict(permissions_dict)
         permissions_clause = self._format_oid_permissions(permissions_metadata)
 
         return subject_clause, permissions_clause
@@ -1245,26 +1243,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
                 perms_dict,
             )
 
-            # Ensure rfc_subject_type is a valid Literal type for AclSubject
-            # _map_oid_subject_to_rfc returns tuple[str, str], but subject_type must be Literal
-            subject_type_literal: Literal[
-                "user",
-                "group",
-                "role",
-                "self",
-                "all",
-                "public",
-                "anonymous",
-                "authenticated",
-                "dn",
-                "user_dn",
-                "userdn",
-                "sddl",
-            ] = cast(
-                "Literal['user', 'group', 'role', 'self', 'all', 'public', 'anonymous', 'authenticated', 'dn', 'user_dn', 'userdn', 'sddl']",
-                rfc_subject_type,
-            )
-
             # Convert extensions to DynamicMetadata format
             # extensions is dict[str, str | int | bool] from build_acl_metadata_complete
             # QuirkMetadata.extensions accepts DynamicMetadata | dict[str, MetadataAttributeValue] | None
@@ -1280,10 +1258,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
                     attributes=target_attrs or [],
                 ),
                 subject=m.Ldif.AclSubject(
-                    subject_type=cast(
-                        "c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-                        subject_type_literal,
-                    ),
+                    subject_type=rfc_subject_type,  # Pydantic validates Literal at runtime
                     subject_value=rfc_subject_value,
                 ),
                 permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
@@ -1336,7 +1311,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
 
     def _write_acl(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: FlextLdifModelsDomains.Acl,
         _format_option: str | None = None,
     ) -> FlextResult[str]:
         r"""Write ACL to OID orclaci format (Phase 2: Denormalization).

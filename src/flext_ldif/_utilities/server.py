@@ -31,7 +31,7 @@ from flext_ldif.constants import c
 u = FlextUtilities  # Use base class to avoid circular dependency
 
 
-# Valid server types for validation
+# Valid server types for validation - must match c.Ldif.ServerTypes enum values
 _VALID_SERVER_TYPES: frozenset[str] = frozenset(
     {
         "oid",
@@ -39,12 +39,14 @@ _VALID_SERVER_TYPES: frozenset[str] = frozenset(
         "rfc",
         "openldap",
         "openldap1",
+        "openldap2",  # Added - canonical OpenLDAP 2.x type
         "ad",
         "apache",
         "ds389",
         "novell",
-        "tivoli",
+        "ibm_tivoli",  # Fixed - was "tivoli", should match ServerTypes.IBM_TIVOLI
         "relaxed",
+        "generic",  # Added - matches ServerTypes.GENERIC
     },
 )
 _CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")

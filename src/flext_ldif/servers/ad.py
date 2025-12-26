@@ -22,6 +22,7 @@ from typing import ClassVar
 
 from flext_core import r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
@@ -458,13 +459,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     f"Active Directory ACL parsing failed: {exc}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             Active Directory ACLs use nTSecurityDescriptor format.
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
             Args:
-            acl_data: ACL data dictionary
+            acl_data: ACL model (base or derived type)
 
             Returns:
             r with ACL string in AD nTSecurityDescriptor format

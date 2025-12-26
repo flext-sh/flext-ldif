@@ -20,12 +20,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
+from flext_ldif.constants import c
 from flext_ldif.typings import t
 
 # =========================================================================
@@ -61,22 +62,17 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for LDIF Entry models.
 
             LDIF entries that all Entry implementations must satisfy.
+            Uses plain attributes (not @property) for Pydantic 2 structural typing.
             """
 
-            @property
-            def dn(self) -> str | object | None:
-                """Distinguished Name (str, DN model, or None)."""
-                ...
+            dn: str | None
+            """Distinguished Name."""
 
-            @property
-            def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
-                """Entry attributes (Mapping, Attributes model, or None)."""
-                ...
+            attributes: Mapping[str, Sequence[str]] | None
+            """Entry attributes (Mapping, Attributes model, or None)."""
 
-            @property
-            def metadata(self) -> t.Ldif.MetadataType | object | None:
-                """Optional metadata for processing context."""
-                ...
+            metadata: FlextLdifProtocols.Ldif.QuirkMetadataProtocol | None
+            """Optional metadata for processing context."""
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -86,7 +82,8 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 deep: bool = False,
-                update: t.Ldif.MetadataType | None = None,
+                update: Mapping[str, str | int | float | bool | Sequence[str] | None]
+                | None = None,
             ) -> Self:
                 """Create a copy of the entry with optional updates."""
                 ...
@@ -95,10 +92,8 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryWithDnProtocol(Protocol):
             """Protocol for objects that have a DN attribute."""
 
-            @property
-            def dn(self) -> str | object | None:
-                """DN - str, DN model, or None."""
-                ...
+            dn: str | None
+            """Distinguished Name."""
 
         @runtime_checkable
         class AttributeValueProtocol(Protocol):
@@ -106,15 +101,123 @@ class FlextLdifProtocols(FlextProtocols):
 
             values: list[str] | str
 
+        # =========================================================================
+        # METADATA PROTOCOLS (for QuirkMetadata and related classes)
+        # =========================================================================
+
+        @runtime_checkable
+        class DynamicMetadataProtocol(Protocol):
+            """Protocol for DynamicMetadata model with extra="allow"."""
+
+            transformations: list[object] | None
+            model_extra: dict[str, str | int | float | bool | list[str] | None] | None
+
+            def get(
+                self, key: str, default: str | float | bool | list[str] | None = None
+            ) -> str | int | float | bool | list[str] | None:
+                """Get value from model_extra dict with type safety."""
+                ...
+
+        @runtime_checkable
+        class EntryMetadataProtocol(Protocol):
+            """Protocol for EntryMetadata model with extra="allow"."""
+
+            model_extra: (
+                dict[
+                    str,
+                    str
+                    | int
+                    | float
+                    | bool
+                    | list[str]
+                    | dict[str, str | int | float | bool | list[str] | None]
+                    | None,
+                ]
+                | None
+            )
+
+            def get(
+                self, key: str, default: str | float | bool | list[str] | None = None
+            ) -> str | int | float | bool | list[str] | None:
+                """Get value from model_extra dict with type safety."""
+                ...
+
+        @runtime_checkable
+        class AttributeTransformationProtocol(Protocol):
+            """Protocol for AttributeTransformation model."""
+
+            original_name: str
+            target_name: str | None
+            original_values: Sequence[str]
+            target_values: Sequence[str] | None
+            transformation_type: str
+            reason: str
+
+        @runtime_checkable
+        class QuirkMetadataProtocol(Protocol):
+            """Protocol for QuirkMetadata model.
+
+            Matches all fields in FlextLdifModelsDomains.QuirkMetadata.
+            Uses exact types matching the Model for Protocol invariance.
+            """
+
+            # quirk_type can be ServerTypes enum or Literal string - use str for Protocol
+            quirk_type: str
+            # Use list[str] to match Model exactly (Protocol attributes are invariant)
+            rfc_violations: list[str]
+            rfc_warnings: list[str]
+            original_server_type: str | None
+            target_server_type: str | None
+            validation_violations: list[str]
+
+        # =========================================================================
+        # ACL PROTOCOLS
+        # =========================================================================
+
+        @runtime_checkable
+        class AclTargetProtocol(Protocol):
+            """Protocol for ACL target specification.
+
+            Uses list[str] to match Model exactly (Protocol attributes are invariant).
+            """
+
+            target_dn: str
+            attributes: list[str]
+
+        @runtime_checkable
+        class AclSubjectProtocol(Protocol):
+            """Protocol for ACL subject specification."""
+
+            subject_type: str
+            subject_value: str
+
+        @runtime_checkable
+        class AclPermissionsProtocol(Protocol):
+            """Protocol for ACL permissions."""
+
+            read: bool
+            write: bool
+            add: bool
+            delete: bool
+            search: bool
+
         @runtime_checkable
         class AclProtocol(Protocol):
-            """Protocol for LDIF ACL models."""
+            """Protocol for LDIF ACL models.
+
+            Minimal structural protocol for ACL write operations.
+            Avoids nested Protocol types to prevent pyrefly invariance issues.
+            Uses scalar types only for reliable structural typing.
+            """
 
             name: str
-            target: Mapping[str, str]
-            subject: Mapping[str, str]
-            permissions: Mapping[str, bool]
-            metadata: t.Ldif.MetadataType | None
+            """ACL name."""
+
+            raw_acl: str
+            """Original ACL string from LDIF."""
+
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+            """LDAP server type using exact Literal type for invariance."""
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
@@ -139,28 +242,67 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class WriteFormatOptionsProtocol(Protocol):
-            """Protocol for write format options."""
+            """Protocol for write format options.
 
-            line_width: int
-            respect_attribute_order: bool
-            sort_attributes: bool
-            write_hidden_attributes_as_comments: bool
-            write_metadata_as_comments: bool
-            include_version_header: bool
-            include_timestamps: bool
-            base64_encode_binary: bool
-            fold_long_lines: bool
-            restore_original_format: bool
-            write_empty_values: bool
-            normalize_attribute_names: bool
-            include_dn_comments: bool
-            write_removed_attributes_as_comments: bool
-            write_migration_header: bool
-            migration_header_template: str | None
-            write_rejection_reasons: bool
-            include_removal_statistics: bool
-            ldif_changetype: str | None
-            ldif_modify_operation: str
+            All attributes are read-only properties to match Pydantic model behavior.
+            """
+
+            @property
+            def line_width(self) -> int: ...
+            @property
+            def respect_attribute_order(self) -> bool: ...
+            @property
+            def sort_attributes(self) -> bool: ...
+            @property
+            def write_hidden_attributes_as_comments(self) -> bool:
+                """Whether to write hidden attributes as comments."""
+                ...
+
+            @property
+            def write_metadata_as_comments(self) -> bool:
+                """Whether to write metadata as comments."""
+                ...
+
+            @property
+            def include_version_header(self) -> bool:
+                """Whether to include version header."""
+                ...
+
+            @property
+            def include_timestamps(self) -> bool:
+                """Whether to include timestamps."""
+                ...
+
+            @property
+            def base64_encode_binary(self) -> bool:
+                """Whether to base64 encode binary data."""
+                ...
+            @property
+            def fold_long_lines(self) -> bool:
+                """Whether to fold long lines."""
+                ...
+            @property
+            def restore_original_format(self) -> bool: ...
+            @property
+            def write_empty_values(self) -> bool: ...
+            @property
+            def normalize_attribute_names(self) -> bool: ...
+            @property
+            def include_dn_comments(self) -> bool: ...
+            @property
+            def write_removed_attributes_as_comments(self) -> bool: ...
+            @property
+            def write_migration_header(self) -> bool: ...
+            @property
+            def migration_header_template(self) -> str | None: ...
+            @property
+            def write_rejection_reasons(self) -> bool: ...
+            @property
+            def include_removal_statistics(self) -> bool: ...
+            @property
+            def ldif_changetype(self) -> str | None: ...
+            @property
+            def ldif_modify_operation(self) -> str: ...
 
         @runtime_checkable
         class AclWriteMetadataProtocol(Protocol):
@@ -211,10 +353,8 @@ class FlextLdifProtocols(FlextProtocols):
         class HasEntriesProtocol(Protocol):
             """Protocol for objects that have an entries attribute."""
 
-            @property
-            def entries(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                """Get list of entries."""
-                ...
+            entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+            """List of entries."""
 
         @runtime_checkable
         class HasContentProtocol(Protocol):
@@ -223,20 +363,58 @@ class FlextLdifProtocols(FlextProtocols):
             content: str | None
 
         @runtime_checkable
+        class SchemaConversionPipelineConfigProtocol(Protocol):
+            """Protocol for schema conversion pipeline configuration objects.
+
+            All attributes are read-only properties to match Pydantic model behavior.
+            """
+
+            @property
+            def write_method(self) -> Callable[..., FlextResult[str]]:
+                """Method to write schema object to LDIF."""
+                ...
+
+            @property
+            def source_schema(
+                self,
+            ) -> (
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ):
+                """Source schema object to convert."""
+                ...
+
+            @property
+            def parse_method(self) -> Callable[..., FlextResult[object]]:
+                """Method to parse LDIF into schema object."""
+                ...
+
+            @property
+            def target_schema(
+                self,
+            ) -> (
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ):
+                """Target schema object template."""
+                ...
+
+            @property
+            def item_name(self) -> str:
+                """Name of the schema item being converted."""
+                ...
+
+        @runtime_checkable
         class UnifiedParseResultProtocol(Protocol):
             """Unified protocol for all parse result types."""
 
-            @property
-            def entries(
-                self,
-            ) -> Sequence[
+            entries: Sequence[
                 FlextLdifProtocols.Ldif.EntryProtocol
                 | FlextLdifProtocols.Ldif.SchemaAttributeProtocol
                 | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
                 | FlextLdifProtocols.Ldif.AclProtocol
-            ]:
-                """Get all entries."""
-                ...
+            ]
+            """All entries."""
 
         @runtime_checkable
         class UnifiedWriteResultProtocol(Protocol):
@@ -263,15 +441,11 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryResultProtocol(Protocol):
             """Protocol for EntryResult model."""
 
-            @property
-            def entries(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                """Get all entries."""
-                ...
+            entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+            """All entries."""
 
-            @property
-            def content(self) -> Sequence[FlextLdifProtocols.Ldif.EntryProtocol]:
-                """Alias for entries property."""
-                ...
+            content: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+            """Alias for entries."""
 
             def __len__(self) -> int:
                 """Return the number of entries."""
@@ -360,45 +534,29 @@ class FlextLdifProtocols(FlextProtocols):
         class CategoryRulesProtocol(Protocol):
             """Protocol for category rules configuration."""
 
-            @property
-            def user_dn_patterns(self) -> list[str]:
-                """DN patterns to match user entries."""
-                ...
+            user_dn_patterns: list[str]
+            """DN patterns to match user entries."""
 
-            @property
-            def group_dn_patterns(self) -> list[str]:
-                """DN patterns to match group entries."""
-                ...
+            group_dn_patterns: list[str]
+            """DN patterns to match group entries."""
 
-            @property
-            def hierarchy_dn_patterns(self) -> list[str]:
-                """DN patterns to match hierarchy entries."""
-                ...
+            hierarchy_dn_patterns: list[str]
+            """DN patterns to match hierarchy entries."""
 
-            @property
-            def schema_dn_patterns(self) -> list[str]:
-                """DN patterns to match schema entries."""
-                ...
+            schema_dn_patterns: list[str]
+            """DN patterns to match schema entries."""
 
-            @property
-            def user_objectclasses(self) -> list[str]:
-                """ObjectClass names that identify user entries."""
-                ...
+            user_objectclasses: list[str]
+            """ObjectClass names that identify user entries."""
 
-            @property
-            def group_objectclasses(self) -> list[str]:
-                """ObjectClass names that identify group entries."""
-                ...
+            group_objectclasses: list[str]
+            """ObjectClass names that identify group entries."""
 
-            @property
-            def hierarchy_objectclasses(self) -> list[str]:
-                """ObjectClass names that identify hierarchy entries."""
-                ...
+            hierarchy_objectclasses: list[str]
+            """ObjectClass names that identify hierarchy entries."""
 
-            @property
-            def acl_attributes(self) -> list[str]:
-                """Attribute names that identify ACL entries."""
-                ...
+            acl_attributes: list[str]
+            """Attribute names that identify ACL entries."""
 
         @runtime_checkable
         class CategorizationServiceProtocol(Protocol):
@@ -457,10 +615,8 @@ class FlextLdifProtocols(FlextProtocols):
         class ParentQuirkProtocol(Protocol):
             """Protocol for parent quirk (FlextLdifServersBase) instances."""
 
-            @property
-            def server_type(self) -> str:
-                """Server type identifier."""
-                ...
+            server_type: str
+            """Server type identifier."""
 
             class Constants:
                 """Nested Constants class protocol."""
@@ -668,20 +824,14 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidationReportProtocol(Protocol):
             """Protocol for validation reports."""
 
-            @property
-            def is_valid(self) -> bool:
-                """Check if validation passed."""
-                ...
+            is_valid: bool
+            """Check if validation passed."""
 
-            @property
-            def errors(self) -> list[str]:
-                """Get error messages."""
-                ...
+            errors: list[str]
+            """Error messages."""
 
-            @property
-            def warnings(self) -> list[str]:
-                """Get warning messages."""
-                ...
+            warnings: list[str]
+            """Warning messages."""
 
         @runtime_checkable
         class ValidatorProtocol[T](Protocol):
@@ -698,10 +848,8 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidationRuleProtocol[T](Protocol):
             """Protocol for validation rules."""
 
-            @property
-            def name(self) -> str:
-                """Get the rule name."""
-                ...
+            name: str
+            """Rule name."""
 
             def check(self, item: T) -> tuple[bool, str | None]:
                 """Check an item against this rule."""
@@ -711,10 +859,8 @@ class FlextLdifProtocols(FlextProtocols):
         class PipelineStepProtocol[TIn, TOut](Protocol):
             """Protocol for pipeline steps."""
 
-            @property
-            def name(self) -> str:
-                """Get step name."""
-                ...
+            name: str
+            """Step name."""
 
             def execute(self, input_data: TIn) -> FlextResult[TOut]:
                 """Execute pipeline step."""

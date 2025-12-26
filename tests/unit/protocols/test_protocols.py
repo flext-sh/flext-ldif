@@ -292,7 +292,7 @@ class TestsTestFlextLdifProtocols(s):
         registry: FlextLdifServer,
     ) -> None:
         """Test registry can retrieve schema quirks."""
-        result = registry.schema(self.ServerTypes.OID)
+        result = registry.get_schema_quirk(self.ServerTypes.OID)
         # Returns quirk instance or None
         assert result is None or hasattr(result, self.Constants.ATTR_PARSE)
 

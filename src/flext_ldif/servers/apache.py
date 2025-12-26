@@ -12,6 +12,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -305,13 +306,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             return False
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
             """Write ACL data to Apache Directory Server ACI format.
 
             Apache Directory Server ACLs use ACI format with 'aci:' prefix.
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
             Args:
-                acl_data: Acl model to write
+                acl_data: Acl model (base or derived type)
 
             Returns:
                 FlextResult with Apache ACI string

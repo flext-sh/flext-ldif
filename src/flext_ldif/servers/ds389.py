@@ -23,6 +23,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -479,10 +480,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             389 Directory Server ACLs use ACI format with structured clauses.
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
             """
             try:
                 # Use raw_acl if available (preserves original format)
@@ -675,9 +677,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Store metadata in extensions - use centralized constant
-                # StrEnum .value is already the correct Literal type
+                # Pass StrEnum directly (compatible with Literal type)
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.DS389.value,
+                    quirk_type=c.Ldif.ServerTypes.DS389,
                 )
                 metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     any(

@@ -22,6 +22,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -452,12 +453,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def _write_acl(
             self,
-            acl_data: m.Ldif.Acl,
+            acl_data: FlextLdifModelsDomains.Acl,
         ) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format (internal).
 
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
+
             Args:
-                acl_data: Acl model
+                acl_data: Acl model (base or derived type)
 
             Returns:
                 FlextResult with RFC-compliant ACL string

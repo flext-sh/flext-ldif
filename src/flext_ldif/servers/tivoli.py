@@ -13,6 +13,7 @@ from typing import ClassVar
 
 from flext_core import r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -370,11 +371,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     f"IBM Tivoli DS ACL parsing failed: {exc}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             IBM Tivoli DS ACLs use "#" delimited segments:
             scope#trustee#rights#...
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
             """
             try:
                 # Use Tivoli-specific attribute name

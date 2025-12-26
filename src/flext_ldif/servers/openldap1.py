@@ -20,6 +20,7 @@ from typing import ClassVar
 
 from flext_core import r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -608,13 +609,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     f"OpenLDAP 1.x ACL parsing failed: {e}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format.
 
             OpenLDAP 1.x ACL format: access to <what> by <who> <access>
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
             Args:
-            acl_data: Acl model
+            acl_data: Acl model (base or derived type)
 
             Returns:
             r with ACL string in OpenLDAP 1.x format
@@ -718,9 +720,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
-                # StrEnum .value is already the correct Literal type
+                # Pass StrEnum directly (compatible with Literal type)
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1.value,
+                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1,
                 )
                 metadata.extensions[
                     c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT

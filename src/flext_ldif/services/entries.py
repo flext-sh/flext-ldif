@@ -19,6 +19,7 @@ from collections.abc import Callable
 from typing import Self
 
 from flext_core import FlextTypes, r
+from flext_core.typings import t
 
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.base import FlextLdifServiceBase
@@ -133,6 +134,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         Returns:
             List of processed entries
+
+        Raises:
+            RuntimeError: If the operation fails
 
         """
         result = self.execute()
@@ -324,8 +328,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("DN value has unexpected type")
 
     @staticmethod
-    def _extract_dn_from_object(dn_val_raw: object) -> r[str]:
-        """Extract DN from object with dn attribute."""
+    def _extract_dn_from_object(dn_val_raw: t.GeneralValueType) -> r[str]:
+        """Extract DN from GeneralValueType with dn attribute."""
         if dn_val_raw is None:
             return r[str].fail("Entry missing DN (dn is None)")
         if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
@@ -351,7 +355,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def get_entry_dn(
-        entry: m.Ldif.Entry | dict[str, str | list[str]] | object,
+        entry: m.Ldif.Entry | dict[str, str | list[str]] | t.GeneralValueType,
     ) -> r[str]:
         """Extract DN from entry.
 
@@ -380,9 +384,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def _extract_attrs_from_container(
-        attrs: object,
+        attrs: t.GeneralValueType,
     ) -> r[dict[str, list[str]]]:
-        """Extract attributes from container object."""
+        """Extract attributes from container GeneralValueType."""
         # Type narrowing: check for EntryProtocol-like object with attributes property
         if hasattr(attrs, "attributes"):
             # Type narrowing: attrs has attributes property, access it safely
@@ -683,7 +687,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not entry.attributes or not entry.attributes.attributes:
             return r[str].fail(f"Attribute '{attribute_name}' not found")
 
-        value_raw: object = u.mapper().get(entry.attributes.attributes, attribute_name)
+        value_raw: t.GeneralValueType = u.mapper().get(
+            entry.attributes.attributes, attribute_name
+        )
         if value_raw is None:
             return r[str].fail(f"Attribute '{attribute_name}' not found")
 
@@ -757,12 +763,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             r containing normalized string value
 
         """
-        result = self.get_entry_attribute(entry, attribute_name)
-        if result.is_failure:
-            return r[str].fail(f"Attribute '{attribute_name}' not found")
-
-        values = result.value
-        return FlextLdifEntries.normalize_attribute_value(values)
+        return self.get_entry_attribute(entry, attribute_name).flat_map(
+            FlextLdifEntries.normalize_attribute_value,
+        )
 
     @staticmethod
     def remove_operational_attributes(

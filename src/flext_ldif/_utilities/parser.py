@@ -10,7 +10,7 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
-from typing import Literal, TypedDict, cast
+from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
@@ -733,8 +733,9 @@ class FlextLdifUtilitiesParser:
 
         # Create metadata
         if metadata_extensions:
+            # quirk_type is str from normalize_server_type, Pydantic validates Literal at runtime
             return m.Ldif.QuirkMetadata(
-                quirk_type=cast("Literal['generic']", quirk_type),
+                quirk_type=quirk_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     metadata_extensions,
                 ),

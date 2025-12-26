@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, t, u
@@ -1159,21 +1159,15 @@ class FlextLdifUtilitiesWriter:
             # Fallback for other sequence types - ensure it's iterable
             if isinstance(attr_values, Sequence):
                 return [str(v) for v in attr_values]
-            # If not a sequence, try to convert to list
-            # Type narrowing: attr_values is list-like but not Sequence, try iter()
-            # Check if it's iterable but not a string/bytes
+            # If not a sequence, try to convert to list using hasattr check
             if hasattr(attr_values, "__iter__") and not isinstance(
                 attr_values,
                 (str, bytes),
             ):
-                # Type narrowing: attr_values has __iter__, safe to iterate
-                # Use cast to help mypy understand it's iterable
+                # hasattr confirms __iter__, safe to iterate directly
                 try:
-                    # Type narrowing: attr_values is iterable, convert to list
-                    if isinstance(attr_values, Iterable):
-                        attr_values_list: list[object] = list(attr_values)
-                        return [str(v) for v in attr_values_list]
-                    return str(attr_values) if attr_values else ""
+                    attr_values_list: list[object] = [v for v in attr_values]  # noqa: C416
+                    return [str(v) for v in attr_values_list]
                 except (TypeError, ValueError):
                     return str(attr_values) if attr_values else ""
             return str(attr_values) if attr_values else ""

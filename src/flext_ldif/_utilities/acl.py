@@ -471,17 +471,11 @@ class FlextLdifUtilitiesACL:
                 return " "
             return char
 
-        sanitized_chars: list[str] = f.normalize_list(
-            list(raw_name),
-            mapper=sanitize_char,
-        )
+        # Apply sanitization directly to get correctly typed list[str]
+        sanitized_chars: list[str] = [sanitize_char(c) for c in raw_name]
 
         # Check if any characters were modified during sanitization
-        sanitized_chars_list: list[str] = (
-            sanitized_chars
-            if isinstance(sanitized_chars, list)
-            else list(sanitized_chars)
-        )
+        sanitized_chars_list: list[str] = sanitized_chars
         was_sanitized = sanitized_chars_list != list(raw_name)
 
         # Remove consecutive spaces

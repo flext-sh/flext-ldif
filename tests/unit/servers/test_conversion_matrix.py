@@ -146,7 +146,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -479,7 +479,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -612,7 +612,7 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -747,7 +747,7 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         """Does NOT handle objectClass - that's the point of this test."""
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -872,7 +872,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     ) -> bool:
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -1019,7 +1019,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -1046,7 +1046,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
-    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Tests.Acl) -> FlextResult[str]:
         return FlextResult.ok("test")
 
 
@@ -1142,7 +1142,7 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -1613,17 +1613,17 @@ class TestsFlextLdifAclQuirk(s):
     from FlextLdifServersBase.Acl to avoid pytest collection warnings.
     """
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         return True
 
-    def parse(self, acl_line: str) -> FlextResult[m.Acl]:
+    def parse(self, acl_line: str) -> FlextResult[m.Tests.Acl]:
         """Parse ACL definition."""
-        return FlextResult.ok(m.Acl(raw_acl=acl_line))
+        return FlextResult.ok(m.Tests.Acl(raw_acl=acl_line))
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Acl]:
-        return FlextResult.ok(m.Acl(raw_acl=acl_line))
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Tests.Acl]:
+        return FlextResult.ok(m.Tests.Acl(raw_acl=acl_line))
 
-    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Tests.Acl) -> FlextResult[str]:
         return FlextResult.ok(acl_data.raw_acl)
 
 
@@ -1748,7 +1748,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
     ) -> bool:
         return False
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Tests.Acl) -> bool:
         return True  # Only ACL support
 
     def _parse_objectclass(

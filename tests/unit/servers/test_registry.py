@@ -57,7 +57,7 @@ class TestSchemaRetrieval:
         """Test retrieving schema quirks for OID server."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("oid")
+        quirk = registry.get_schema_quirk("oid")
 
         assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
@@ -67,7 +67,7 @@ class TestSchemaRetrieval:
         """Test retrieving schema quirks for OUD server."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("oud")
+        quirk = registry.get_schema_quirk("oud")
 
         assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
@@ -77,7 +77,7 @@ class TestSchemaRetrieval:
         """Test retrieving schema quirks for OpenLDAP server."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("openldap")
+        quirk = registry.get_schema_quirk("openldap")
 
         assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
@@ -87,7 +87,7 @@ class TestSchemaRetrieval:
         """Test retrieving schema quirks for nonexistent server type."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("unknown_server")
+        quirk = registry.get_schema_quirk("unknown_server")
 
         assert quirk is None
 
@@ -99,7 +99,7 @@ class TestQuirkPriorityOrdering:
         """Test that schema quirks are sorted by priority."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("oid")
+        quirk = registry.get_schema_quirk("oid")
 
         # Single quirk per server type now - just verify it exists
         assert quirk is not None
@@ -267,7 +267,7 @@ class TestServerQuirksAvailability:
 
         for server_type in supported_servers:
             # Each server should have at least schema quirks
-            schema = registry.schema(server_type)
+            schema = registry.get_schema_quirk(server_type)
             assert schema is not None, f"No schema quirk for {server_type}"
 
             # Each server should have entry quirks
@@ -288,14 +288,14 @@ class TestErrorHandling:
         """Test that getting quirks handles empty server type gracefully."""
         registry = FlextLdifServer()
 
-        quirk = registry.schema("")
+        quirk = registry.get_schema_quirk("")
         assert quirk is None
 
     def test_find_with_empty_definition(self) -> None:
         """Test getting schema quirk with empty server type string."""
         registry = FlextLdifServer()
 
-        found = registry.schema("")
+        found = registry.get_schema_quirk("")
 
         # Should handle gracefully - empty server type returns None
         assert found is None

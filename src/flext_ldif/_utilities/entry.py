@@ -346,15 +346,10 @@ class FlextLdifUtilitiesEntry:
             if k.lower() not in attrs_to_remove
         }
 
-        result = m.Ldif.Entry.create(
+        return m.Ldif.Entry.create(
             dn=entry.dn,
             attributes=m.Ldif.Attributes(attributes=filtered),
-        )
-        if result.is_failure:
-            return entry
-
-        # Use entry directly - both types share same interface (duck-typing)
-        return result.value
+        ).unwrap_or(entry)
 
     @staticmethod
     def analyze_differences(

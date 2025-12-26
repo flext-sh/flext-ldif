@@ -141,14 +141,10 @@ class FlextLdifMigrationPipeline(
         """
         try:
             pipeline = self._get_processing_pipeline()
-            result = pipeline.execute(entries)
-            if result.is_failure:
-                return r[list[m.Ldif.Entry]].fail(str(result.error))
-
-            # result.value already returns list[m.Ldif.Entry] - entries are already m.Ldif.Entry via inheritance
-            # Business Rule: pipeline.execute returns FlextResult[list[m.Ldif.Entry]], so entries are already compatible
-            migrated = result.value
-            return r[list[m.Ldif.Entry]].ok(migrated)
+            # pipeline.execute already returns r[list[m.Ldif.Entry]]
+            # Business Rule: pipeline.execute returns FlextResult[list[m.Ldif.Entry]],
+            # so we can return directly - no need to unwrap and re-wrap
+            return pipeline.execute(entries)
 
         except Exception as e:
             logger.exception(
