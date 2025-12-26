@@ -1161,18 +1161,18 @@ class FlextFunctional:
                                 converted = (
                                     dict(value) if isinstance(value, dict) else default
                                 )
-                            elif target_type is not object:
+                            elif target_type is object:
+                                # target_type is object - accept any value as-is
+                                converted = value
+                            else:
                                 # For all other types (custom classes, etc.), call constructor
-                                # Explicit check: target_type is not object (object() takes no args)
+                                # Explicit check: target_type is not object
                                 try:
                                     # Call target_type constructor with value
                                     result = target_type(value)
                                     converted = result
                                 except Exception:
                                     return default
-                            else:
-                                # target_type is object - can't construct with value
-                                return default
 
                             if converted is None:
                                 return default
