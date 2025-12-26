@@ -49,10 +49,14 @@ from tests.typings import TestsFlextLdifTypes as t, tt
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 from tests.utilities import TestsFlextLdifUtilities as u
 
+# Export GenericFieldsDict from nested class for easier access
+GenericFieldsDict = t.Tests.Fixtures.GenericFieldsDict
+
 __all__ = [
     "Filters",
     "FlextLdifFixtures",
     "FlextLdifTestUtils",
+    "GenericFieldsDict",
     "OIDs",
     "RfcTestHelpers",
     "Syntax",

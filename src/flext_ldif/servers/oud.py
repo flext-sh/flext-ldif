@@ -111,7 +111,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     class Constants(FlextLdifServersOudConstants):
         """OUD server constants."""
 
-    class Acl(FlextLdifServersOudAcl):
+    class Acl(FlextLdifServersOudAcl):  # type: ignore[override]
         """OUD ACL quirk."""
 
     class Schema(FlextLdifServersOudSchema):

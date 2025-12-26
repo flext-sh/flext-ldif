@@ -92,7 +92,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
                 "usage": [str(attr_def["usage"])],
             },
         )
-        return attr_result.value if attr_result.is_success else None
+        return attr_result.map_or(None)
 
     batch_result = u.process(
         cast("list[dict[str, str | int | float | bool | list[str]]]", attribute_types),
@@ -152,7 +152,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
             attrs["may"] = may_val
 
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
-        return oc_result.value if oc_result.is_success else None
+        return oc_result.map_or(None)
 
     batch_result = u.process(
         cast("list[dict[str, str | list[str] | object]]", object_classes),
@@ -356,7 +356,7 @@ mail: modern@example.com
     def parse_file(ldif_file: Path) -> list[FlextLdifModels.Entry]:
         """Parse LDIF file."""
         parse_result = api.parse(ldif_file)
-        return parse_result.value if parse_result.is_success else []
+        return parse_result.map_or([])
 
     batch_result = u.process(
         list(source_dir.glob("*.ldif")),
@@ -414,7 +414,7 @@ mail: modern@example.com
             dn=entry_dn,
             attributes=attrs_dict,
         )
-        return migrate_result.value if migrate_result.is_success else None
+        return migrate_result.map_or(None)
 
     batch_result = u.process(
         all_entries,
@@ -479,7 +479,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
                 "singleValue": ["TRUE" if single_val else "FALSE"],
             },
         )
-        return attr_result.value if attr_result.is_success else None
+        return attr_result.map_or(None)
 
     batch_result = u.process(
         core_attribute_definitions,
@@ -534,7 +534,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
             attrs["may"] = may_attrs
 
         oc_result = api.create_entry(dn=f"cn={name},cn=schema", attributes=attrs)
-        return oc_result.value if oc_result.is_success else None
+        return oc_result.map_or(None)
 
     batch_result = u.process(
         oc_definitions,
@@ -635,7 +635,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
                 },
             )
 
-        return entry_result.value if entry_result.is_success else None
+        return entry_result.map_or(None)
 
     batch_result = u.process(
         list(range(10)),

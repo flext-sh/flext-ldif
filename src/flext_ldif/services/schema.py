@@ -251,7 +251,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
             if metadata_extensions and isinstance(metadata_extensions, dict):
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata(**metadata_extensions),
+                    extensions=m.Ldif.DynamicMetadata.from_dict(metadata_extensions),
                 )
 
             # Note: server_type is unused for attributes (server quirks primarily enhance objectClass parsing)
@@ -321,7 +321,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
             if metadata_extensions and isinstance(metadata_extensions, dict):
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata(**metadata_extensions),
+                    extensions=m.Ldif.DynamicMetadata.from_dict(metadata_extensions),
                 )
 
             # Note: server_type parameter provided for future server-specific enhancements

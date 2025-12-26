@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Final, cast, override
+from typing import Final, override
 
 from flext_core import FlextLogger, r
 
@@ -28,6 +28,7 @@ from flext_ldif.utilities import u
 
 # Module-level constants
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
+_TUPLE_PAIR_LENGTH: Final[int] = 2
 
 logger: Final = FlextLogger(__name__)
 
@@ -358,8 +359,7 @@ class FlextLdifCategorization(
                 return r[m.Ldif.Entry].fail(f"DN validation failed: {dn_str[:80]}")
 
             norm_result = u.Ldif.DN.norm(dn_str)
-            # Extract value from result with default fallback
-            normalized_dn = norm_result.value if norm_result.is_success else None
+            normalized_dn = norm_result.map_or(None)
             if normalized_dn is None:
                 # Track rejection in metadata using FlextLdifUtilities
                 rejected_entry = u.Ldif.Metadata.update_entry_statistics(
@@ -385,11 +385,14 @@ class FlextLdifCategorization(
             validate_entry,
             on_error="skip",
         )
-        # Extract value from result with default fallback
-        batch_data = batch_result.value if batch_result.is_success else None
-        # Type narrowing: batch_data["results"] contains m.Ldif.Entry after validation
-        validated = (
-            [entry for entry in batch_data["results"] if entry is not None]
+        batch_data = batch_result.map_or(None)
+        # Type narrowing: use isinstance to ensure m.Ldif.Entry type
+        validated: list[m.Ldif.Entry] = (
+            [
+                entry
+                for entry in batch_data["results"]
+                if isinstance(entry, m.Ldif.Entry)
+            ]
             if batch_data is not None
             else []
         )
@@ -415,9 +418,7 @@ class FlextLdifCategorization(
                 rejected_dns_preview=sample_rejected_dns,
             )
 
-        return r[list[m.Ldif.Entry]].ok(
-            cast("list[m.Ldif.Entry]", validated),
-        )
+        return r[list[m.Ldif.Entry]].ok(validated)
 
     def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition.
@@ -866,8 +867,7 @@ class FlextLdifCategorization(
         """
         # Normalize rules using helper
         rules_result = self._normalize_rules(rules)
-        # Extract value from result with default fallback
-        normalized_rules = rules_result.value if rules_result.is_success else None
+        normalized_rules = rules_result.map_or(None)
         if normalized_rules is None:
             return (_cat("rejected"), rules_result.error or "Failed to normalize rules")
 
@@ -894,9 +894,7 @@ class FlextLdifCategorization(
         constants: type | None = None
         constants_result = self._get_server_constants(effective_server_type)
         if constants_result.is_success:
-            constants_raw = (
-                constants_result.value if constants_result.is_success else None
-            )
+            constants_raw = constants_result.map_or(None)
             if constants_raw is not None and isinstance(constants_raw, type):
                 constants = constants_raw
         elif not merged_category_map:
@@ -984,26 +982,33 @@ class FlextLdifCategorization(
             categorize_single_entry,
             on_error="skip",
         )
-        # Extract value from result with default fallback
-        batch_data = batch_result.value if batch_result.is_success else None
+        batch_data = batch_result.map_or(None)
         if batch_data is not None:
             for result_item in batch_data["results"]:
-                if result_item is not None and isinstance(result_item, tuple):
-                    # Type narrowing: result_item is tuple[str, m.Ldif.Entry] after processing
-                    result_tuple = cast("tuple[str, m.Ldif.Entry]", result_item)
-                    category, entry_to_append = result_tuple
-                    if category == _cat("rejected"):
-                        self._rejection_tracker["categorization_rejected"].append(
-                            entry_to_append,
-                        )
-                        logger.debug(
-                            "Entry rejected during categorization",
-                            entry_dn=str(entry_to_append.dn)
-                            if entry_to_append.dn
-                            else None,
-                            rejection_reason=None,  # Reason not available in batch context
-                        )
-                    categories[category].append(entry_to_append)
+                # Type narrowing: validate tuple structure with isinstance checks
+                if (
+                    result_item is not None
+                    and isinstance(result_item, tuple)
+                    and len(result_item) == _TUPLE_PAIR_LENGTH
+                ):
+                    category_raw, entry_raw = result_item
+                    if isinstance(category_raw, str) and isinstance(
+                        entry_raw, m.Ldif.Entry
+                    ):
+                        category = category_raw
+                        entry_to_append = entry_raw
+                        if category == _cat("rejected"):
+                            self._rejection_tracker["categorization_rejected"].append(
+                                entry_to_append,
+                            )
+                            logger.debug(
+                                "Entry rejected during categorization",
+                                entry_dn=str(entry_to_append.dn)
+                                if entry_to_append.dn
+                                else None,
+                                rejection_reason=None,  # Reason not available in batch context
+                            )
+                        categories[category].append(entry_to_append)
         else:
             # Fallback to original loop if batch fails
             for entry in entries:
@@ -1104,10 +1109,12 @@ class FlextLdifCategorization(
                 _cat("groups"),
                 _cat("acl"),
             }:
-                # entries from categories.items() needs cast to m.Ldif.Entry
-                # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
+                # Type narrowing: use isinstance to ensure m.Ldif.Entry type
+                entries_list: list[m.Ldif.Entry] = [
+                    e for e in entries if isinstance(e, m.Ldif.Entry)
+                ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    cast("list[m.Ldif.Entry]", list(entries)),
+                    entries_list,
                     self._base_dn,
                 )
                 # Track filter results in metadata
@@ -1196,7 +1203,7 @@ class FlextLdifCategorization(
         )
 
         if result.is_success:
-            filtered = result.value if result.is_success else None
+            filtered = result.map_or(None)
             if filtered is not None:
                 # filtered is already list[m.Ldif.Entry] after None check
                 logger.info(
@@ -1254,9 +1261,10 @@ class FlextLdifCategorization(
                 continue
 
             if category in filterable_categories:
-                # entries from categories.items() needs cast to list[m.Ldif.Entry]
-                # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
-                entries_list = cast("list[m.Ldif.Entry]", list(entries))
+                # Type narrowing: use isinstance to ensure m.Ldif.Entry type
+                entries_list: list[m.Ldif.Entry] = [
+                    e for e in entries if isinstance(e, m.Ldif.Entry)
+                ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     base_dn,

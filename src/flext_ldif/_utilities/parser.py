@@ -735,8 +735,8 @@ class FlextLdifUtilitiesParser:
         if metadata_extensions:
             return m.Ldif.QuirkMetadata(
                 quirk_type=cast("Literal['generic']", quirk_type),
-                extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                    **metadata_extensions,
+                extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    metadata_extensions,
                 ),
             )
 
@@ -961,8 +961,8 @@ class FlextLdifUtilitiesParser:
             metadata = (
                 m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                        **metadata_extensions,
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                        metadata_extensions,
                     ),
                 )
                 if metadata_extensions

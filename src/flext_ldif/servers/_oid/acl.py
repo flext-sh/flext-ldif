@@ -1269,7 +1269,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             # extensions is dict[str, str | int | bool] from build_acl_metadata_complete
             # QuirkMetadata.extensions accepts DynamicMetadata | dict[str, MetadataAttributeValue] | None
             # Create DynamicMetadata instance from dict
-            extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+            extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                extensions
+            )
 
             acl_model = m.Ldif.Acl(
                 name=FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,

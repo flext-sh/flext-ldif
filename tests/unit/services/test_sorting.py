@@ -13,7 +13,7 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 from pydantic import ValidationError
 
 from flext_ldif.services.sorting import FlextLdifSorting

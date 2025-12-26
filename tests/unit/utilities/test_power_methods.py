@@ -8,7 +8,7 @@ for composable LDIF data transformation workflows.
 from __future__ import annotations
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 from tests import m, s
 
 from flext_ldif._utilities import (

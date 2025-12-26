@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator, ItemsView, KeysView, ValuesView
+from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
 from typing import ClassVar, overload
 
 from flext_core import t
@@ -50,23 +50,36 @@ class FlextLdifModelsMetadata:
 
         transformations: list[object] | None = Field(default=None)
 
-        def __init__(
-            self,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> None:
-            """Initialize DynamicMetadata with arbitrary keyword arguments.
+        @classmethod
+        def from_dict(
+            cls,
+            data: Mapping[str, t.MetadataAttributeValue] | None = None,
+        ) -> FlextLdifModelsMetadata.DynamicMetadata:
+            """Create DynamicMetadata from a dictionary.
+
+            Factory method that handles type-safe construction from dict.
+            Use this instead of DynamicMetadata(**kwargs) for better type safety.
 
             Args:
-                **kwargs: Arbitrary key-value pairs stored as extra fields.
-                          Values must be compatible with MetadataAttributeValue.
+                data: Mapping of string keys to metadata values. Uses Mapping
+                    instead of dict for covariance - allows dict[str, list[str]]
+                    to be passed where dict[str, MetadataAttributeValue] expected.
 
             Example:
-                meta = DynamicMetadata(original_format="test", custom_field=123)
-                assert meta["original_format"] == "test"
-                assert meta["custom_field"] == 123
+                meta = DynamicMetadata.from_dict({"custom_field": "value"})
 
             """
-            super().__init__(**kwargs)
+            if data is None:
+                return cls()
+            # Use model_validate to properly handle extra fields
+            # Convert Mapping to dict for Pydantic
+            return cls.model_validate(dict(data))
+
+        # Common extension fields - defined statically for type safety
+        original_format: str | None = Field(default=None)
+        schema_source_server: str | None = Field(default=None)
+        server_type: str | None = Field(default=None)
+        relaxed_mode: bool | None = Field(default=None)
 
         @overload
         def get(self, key: str) -> t.MetadataAttributeValue: ...

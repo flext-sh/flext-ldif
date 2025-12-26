@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 from tests import s
 
 from flext_ldif.protocols import FlextLdifProtocols
@@ -40,14 +40,14 @@ class TestsTestFlextLdifProtocols(s):
     """
 
     class ProtocolNames(StrEnum):
-        """Protocol names in FlextLdifProtocols.Ldif.Quirks namespace organized as nested enum."""
+        """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
 
         __test__ = False
 
-        SCHEMA = "SchemaProtocol"
-        ACL = "AclProtocol"
-        ENTRY = "EntryProtocol"
-        QUIRKS_PORT = "QuirksPort"
+        SCHEMA = "SchemaQuirkProtocol"
+        ACL = "AclQuirkProtocol"
+        ENTRY = "EntryQuirkProtocol"
+        QUIRKS_PORT = "QuirksPortProtocol"
 
     # Protocol names list for parametrization (defined after enum)
     # Use list() to iterate over enum members
@@ -186,8 +186,8 @@ class TestsTestFlextLdifProtocols(s):
     )
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
-        assert hasattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
-        protocol = getattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
+        assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
+        protocol = getattr(FlextLdifProtocols.Ldif, protocol_name)
         assert protocol is not None
 
     def test_quirks_namespace_exists(self) -> None:
@@ -199,8 +199,8 @@ class TestsTestFlextLdifProtocols(s):
         _PROTOCOL_NAMES,
     )
     def test_protocol_in_namespace(self, protocol_name: str) -> None:
-        """Test that protocol exists in Quirks namespace."""
-        assert hasattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
+        """Test that protocol exists in Ldif namespace."""
+        assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies SchemaProtocol."""

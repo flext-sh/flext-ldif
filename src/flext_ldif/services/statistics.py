@@ -193,7 +193,7 @@ class FlextLdifStatistics(
                     "server_type",
                     as_type=str,
                 )
-                if st_value is not None:
+                if st_value is not None and isinstance(st_value, str):
                     server_type_distribution[st_value] += 1
 
         # Process entries directly - batch processing handled inline

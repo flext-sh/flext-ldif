@@ -381,10 +381,10 @@ class FlextFunctional:
         """
         if not isinstance(items, (list, tuple)):
             return initial
+        # Type assertion: after isinstance check, items is Sequence[T]
+        sequence: Sequence[T] = items
         result = initial
-        # Type narrowing: items is Sequence[T] after isinstance check
-        # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:
+        for item in sequence:
             result = folder(result, item)
         return result
 
@@ -415,10 +415,10 @@ class FlextFunctional:
         """
         if not isinstance(items, (list, tuple)):
             return []
+        # Type assertion: after isinstance check, items is Sequence[T]
+        sequence: Sequence[T] = items
         result: list[T] = []
-        # Type narrowing: items is Sequence[T] after isinstance check
-        # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:
+        for item in sequence:
             mapped = mapper(item) if mapper is not None else item
             if predicate(mapped):
                 result.append(mapped)
@@ -429,7 +429,7 @@ class FlextFunctional:
     @staticmethod
     def process_flatten[T, U](
         items: Sequence[T] | T,
-        processor: Callable[[T], Sequence[U] | U],
+        processor: Callable[[T], list[U] | tuple[U, ...] | U],
         *,
         predicate: Callable[[object], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
@@ -438,7 +438,7 @@ class FlextFunctional:
 
         Args:
             items: Sequence to process
-            processor: Function that may return single value or sequence
+            processor: Function that may return single value, list, or tuple
             predicate: Function to filter results
             on_error: Error handling mode:
                 - "skip": Continue processing, skip items that raise exceptions
@@ -455,22 +455,25 @@ class FlextFunctional:
         """
         if not isinstance(items, (list, tuple)):
             return []
+        # Type assertion: after isinstance check, items is Sequence[T]
+        sequence: Sequence[T] = items
         result: list[U] = []
-        # Type narrowing: items is Sequence[T] after isinstance check
-        # isinstance narrows to list | tuple, both are Sequence[T]
-        for item in items:
+        for item in sequence:
             try:
                 processed = processor(item)
-                if isinstance(processed, (list, tuple)):
-                    # processed is Sequence[U] after isinstance check
-                    sequence_result = processed
+                if isinstance(processed, list):
+                    # processed is list[U] - extend with filtered items
                     result.extend([
-                        sub_item for sub_item in sequence_result if predicate(sub_item)
+                        sub_item for sub_item in processed if predicate(sub_item)
                     ])
-                # Single value (not list/tuple), predicate checks it
+                elif isinstance(processed, tuple):
+                    # processed is tuple[U, ...] - extend with filtered items
+                    result.extend([
+                        sub_item for sub_item in processed if predicate(sub_item)
+                    ])
+                # Single value case - processed is U (not list or tuple)
                 elif predicate(processed):
-                    # processed is U when not a sequence - cast to ensure type safety
-                    result.append(cast("U", processed))
+                    result.append(processed)
             except Exception:
                 if on_error == "stop":
                     raise

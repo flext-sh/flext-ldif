@@ -518,12 +518,15 @@ class FlextLdifSorting(
         if not result.is_success:
             return result
 
-        # Use u.val for unified result unwrapping (DSL pattern)
-        # Extract value from result with default fallback
-        sorted_entries_raw = result.value if result.is_success else None
+        # Use map_or for railway pattern
+        sorted_entries_raw = result.map_or(None)
         if sorted_entries_raw is None:
-            return r[list[m.Ldif.Entry]].fail(u.err(result, default="Sort failed"))
-        # Type narrowing: unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
+            error_msg = (
+                result.error
+                if hasattr(result, "error") and result.error
+                else "Sort failed"
+            )
+            return r[list[m.Ldif.Entry]].fail(error_msg)
         sorted_entries: list[m.Ldif.Entry] = sorted_entries_raw
 
         # Step 2: Sort attributes if configured
@@ -531,14 +534,14 @@ class FlextLdifSorting(
             result = self._sort_attributes_in_entries(sorted_entries)
             if not result.is_success:
                 return result
-            # Use u.val for unified result unwrapping (DSL pattern)
-            # Extract value from result with default fallback
-            sorted_entries_attr_raw = result.value if result.is_success else None
+            sorted_entries_attr_raw = result.map_or(None)
             if sorted_entries_attr_raw is None:
-                return r[list[m.Ldif.Entry]].fail(
-                    u.err(result, default="Attribute sort failed"),
+                error_msg = (
+                    result.error
+                    if hasattr(result, "error") and result.error
+                    else "Attribute sort failed"
                 )
-            # Type narrowing: unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
+                return r[list[m.Ldif.Entry]].fail(error_msg)
             sorted_entries = sorted_entries_attr_raw
 
         # Step 3: Sort ACL if configured
@@ -546,12 +549,14 @@ class FlextLdifSorting(
             result = self._sort_acl_in_entries(sorted_entries)
             if not result.is_success:
                 return result
-            # Use u.val for unified result unwrapping (DSL pattern)
-            sorted_entries_raw = result.value if result.is_success else None
+            sorted_entries_raw = result.map_or(None)
             if sorted_entries_raw is None:
-                return r[list[m.Ldif.Entry]].fail(
-                    u.err(result, default="ACL sort failed"),
+                error_msg = (
+                    result.error
+                    if hasattr(result, "error") and result.error
+                    else "ACL sort failed"
                 )
+                return r[list[m.Ldif.Entry]].fail(error_msg)
             # Type narrowing: unwrap_or(, default=None) on r[list[Entry]] returns list[Entry]
             # Reassign to existing variable instead of redefining
             sorted_entries = sorted_entries_raw
@@ -594,8 +599,7 @@ class FlextLdifSorting(
                 raise ValueError(error_text)
 
             # Use u.val for unified result unwrapping (DSL pattern)
-            # Extract value from result with default fallback
-            sorted_entry_raw = result.value if result.is_success else None
+            sorted_entry_raw = result.map_or(None)
             if sorted_entry_raw is None:
                 error_msg = result.error or "Unknown error"
                 error_text = f"Attribute sort failed: {error_msg}"
@@ -756,10 +760,9 @@ class FlextLdifSorting(
             if not dn_value:
                 continue
 
-            # Normalize DN for consistent handling using u.val (DSL pattern)
+            # Normalize DN for consistent handling
             norm_result = u.Ldif.DN.norm(dn_value)
-            # Type narrowing: norm_result.value is str when is_success
-            normalized_dn = norm_result.value if norm_result.is_success else None
+            normalized_dn = norm_result.map_or(None)
             normalized_result = u.Ldif.normalize_ldif(
                 normalized_dn or dn_value,
                 case="lower",
@@ -780,10 +783,7 @@ class FlextLdifSorting(
             if "," in dn_value:
                 parent_dn = dn_value.split(",", 1)[1]
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                # Extract value directly from FlextResult
-                parent_normalized: str | None = (
-                    parent_norm_result.value if parent_norm_result.is_success else None
-                )
+                parent_normalized: str | None = parent_norm_result.map_or(None)
                 parent_key = (
                     parent_normalized.lower()
                     if parent_normalized
@@ -883,10 +883,7 @@ class FlextLdifSorting(
                 # Check if parent exists in entry list
                 parent_dn = dn_value.split(",", 1)[1]
                 parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                # Extract value directly from FlextResult
-                parent_normalized: str | None = (
-                    parent_norm_result.value if parent_norm_result.is_success else None
-                )
+                parent_normalized: str | None = parent_norm_result.map_or(None)
                 parent_key = (
                     parent_normalized.lower()
                     if parent_normalized
@@ -925,10 +922,8 @@ class FlextLdifSorting(
                 return (0, "")
 
             depth = dn_value.count(",") + 1
-            # Use u.val for unified result unwrapping (DSL pattern)
             norm_result = u.Ldif.DN.norm(dn_value)
-            # Type narrowing: norm_result.value is str when is_success
-            normalized = norm_result.value if norm_result.is_success else None
+            normalized = norm_result.map_or(None)
             # Type narrowing: when passing str and no `other`, normalize_ldif returns str
             sort_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
             sort_dn: str = (
@@ -988,7 +983,7 @@ class FlextLdifSorting(
                 dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
                 if dn_value:
                     norm_result = u.Ldif.DN.norm(dn_value)
-                    normalized = norm_result.value if norm_result.is_success else None
+                    normalized = norm_result.map_or(None)
                     normalized_result = u.Ldif.normalize_ldif(
                         normalized or dn_value,
                         case="lower",
@@ -1039,10 +1034,8 @@ class FlextLdifSorting(
                 return ""
 
             # Normalize DN using u for RFC 4514 compliance
-            # Use u.val for unified result unwrapping (DSL pattern)
             norm_result = u.Ldif.DN.norm(dn_value)
-            # Type narrowing: norm_result.value is str when is_success
-            normalized = norm_result.value if norm_result.is_success else None
+            normalized = norm_result.map_or(None)
             # Type narrowing: when passing str and no `other`, normalize_ldif returns str
             result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
             return result if isinstance(result, str) else str(result)
