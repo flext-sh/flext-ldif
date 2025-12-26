@@ -84,7 +84,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     # ════════════════════════════════════════════════════════════════════════
 
     _registry: FlextLdifServer = PrivateAttr(default_factory=FlextLdifServer)
-    _server_type: str = PrivateAttr(
+    _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(
         default="rfc",
     )
 
@@ -92,7 +92,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: str = "rfc",
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> None:
         """Initialize schema service with dependency injection.
 
@@ -120,7 +120,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     # ════════════════════════════════════════════════════════════════════════
 
     @property
-    def server_type(self) -> str:
+    def server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get configured server type."""
         return self._server_type
 
@@ -147,7 +147,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
     def with_server_type(
         self,
-        server_type: str,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder).
 
@@ -185,11 +185,11 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
             FlextResult containing service status
 
         """
-        server_type_lit: c.Ldif.ServerTypes = c.Ldif.ServerTypes(self._server_type)
+        # Get server type - Pydantic validates at runtime
         return r[m.Ldif.LdifResults.SchemaServiceStatus].ok(
             m.Ldif.LdifResults.SchemaServiceStatus(
                 service="SchemaService",
-                server_type=server_type_lit.value,
+                server_type=self._server_type,
                 status="operational",
                 rfc_compliance="RFC 4512",
                 operations=[

@@ -184,9 +184,7 @@ class FlextLdifDn(
             # Parse components if operation was parse
             parse_components = None
             if self.operation == "parse" and result.is_success:
-                parse_result = self.parse_components(self.dn)
-                if parse_result.is_success:
-                    parse_components = parse_result.value
+                parse_components = self.parse_components(self.dn).map_or(None)
 
             # Create DN event config
             dn_config = m.Ldif.LdifResults.DnEventConfig(
@@ -493,40 +491,28 @@ class FlextLdifDn(
         @staticmethod
         def parse_operation(dn: str) -> r[str]:
             """Parse DN operation (internal)."""
-            result = FlextLdifDn.Parser.parse_components(dn)
-            if result.is_failure:
-                return r[str].fail(result.error or "Parse components failed")
-            components = result.value
-            components_str = ", ".join(f"{attr}={value}" for attr, value in components)
-            return r[str].ok(components_str)
+            return FlextLdifDn.Parser.parse_components(dn).map(
+                lambda components: ", ".join(
+                    f"{attr}={value}" for attr, value in components
+                ),
+            )
 
         @staticmethod
         def validate_operation(dn: str) -> r[str]:
             """Validate DN operation (internal)."""
-            result = FlextLdifDn.Parser.validate_format(dn)
-            if result.is_failure:
-                return r[str].fail(result.error or "Validation failed")
-            is_valid = result.value
-            return r[str].ok(str(is_valid))
+            return FlextLdifDn.Parser.validate_format(dn).map(str)
 
         @staticmethod
         def compare_operation(dn1: str, dn2: str) -> r[str]:
             """Compare DN operation (internal)."""
-            result = FlextLdifDn.Parser.compare_dns(dn1, dn2)
-            if result.is_failure:
-                return r[str].fail(result.error or "Comparison failed")
-            comparison = result.value
-            return r[str].ok(str(comparison))
+            return FlextLdifDn.Parser.compare_dns(dn1, dn2).map(str)
 
         @staticmethod
         def parse_rdn_operation(dn: str) -> r[str]:
             """Parse RDN operation (internal)."""
-            result = FlextLdifDn.Parser.parse_rdn(dn)
-            if result.is_failure:
-                return r[str].fail(result.error or "Parse RDN failed")
-            pairs = result.value
-            pairs_str = ", ".join(f"{attr}={value}" for attr, value in pairs)
-            return r[str].ok(pairs_str)
+            return FlextLdifDn.Parser.parse_rdn(dn).map(
+                lambda pairs: ", ".join(f"{attr}={value}" for attr, value in pairs),
+            )
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED NORMALIZER CLASS (Normalization & Escaping)

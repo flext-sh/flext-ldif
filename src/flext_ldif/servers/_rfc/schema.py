@@ -22,11 +22,12 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Literal, Self, cast, overload
+from typing import Literal, Self, overload
 
 from flext_core import FlextLogger, FlextResult
 
 # Metadata access via m.Ldif namespace from models import
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -273,8 +274,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             if parse_result.is_failure:
                 # Return empty dict on failure (maintains existing behavior)
                 return {}
-            # Cast to expected return type (parse_attribute returns compatible dict)
-            return cast("dict[str, str | bool | None]", parse_result.value)
+            # parse_attribute returns dict - validate and filter values
+            if isinstance(parse_result.value, dict):
+                return {
+                    k: v
+                    for k, v in parse_result.value.items()
+                    if isinstance(k, str) and (isinstance(v, (str, bool)) or v is None)
+                }
+            return {}
 
         # Use FlextLdifUtilitiesSchema.parse_attribute directly
         # (FlextLdifUtilities.Ldif.Parsers.Attribute.parse was removed to break circular imports)
@@ -828,7 +835,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _ensure_x_origin(
         self,
         output_str: str,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata.
 
@@ -894,7 +901,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return FlextResult[str].ok(
                     self._ensure_x_origin(
                         transformed_str,
-                        cast("m.Ldif.QuirkMetadata | None", attr_transformed.metadata),
+                        attr_transformed.metadata,
                     ),
                 )
 
@@ -911,7 +918,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return FlextResult[str].ok(
                 self._ensure_x_origin(
                     transformed_str,
-                    cast("m.Ldif.QuirkMetadata | None", oc_transformed.metadata),
+                    oc_transformed.metadata,
                 ),
             )
 

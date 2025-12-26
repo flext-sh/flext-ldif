@@ -621,18 +621,18 @@ class FlextLdifServersBaseEntry(
         opts = self._resolve_write_options_for_header(write_options)
         header_lines = self._build_header_lines(opts, len(entries))
 
-        results: list[str] = []
-        for entry in entries:
-            result = self._write_single_entry(entry, write_options)
-            if result.is_failure:
-                return result
-            results.append(result.value)
+        # Use traverse pattern for fail-fast processing
+        def format_output(results: list[str]) -> str:
+            all_lines = header_lines + results
+            ldif_output = "\n".join(all_lines) if all_lines else ""
+            if header_lines and not ldif_output.endswith("\n"):
+                ldif_output += "\n"
+            return ldif_output
 
-        all_lines = header_lines + results
-        ldif_output = "\n".join(all_lines) if all_lines else ""
-        if header_lines and not ldif_output.endswith("\n"):
-            ldif_output += "\n"
-        return FlextResult[str].ok(ldif_output)
+        return FlextResult.traverse(
+            entries,
+            lambda e: self._write_single_entry(e, write_options),
+        ).map(format_output)
 
     def _write_single_entry(
         self,
@@ -777,13 +777,11 @@ class FlextLdifServersBaseEntry(
                 ldif_lines.append(f"{attr_name}: {value_str}")
         ldif_content = "\n".join(ldif_lines) + "\n"
 
-        # Parse using _parse_content and return first entry
-        result = self._parse_content(ldif_content)
-        if result.is_failure:
-            return FlextResult[m.Ldif.Entry].fail(
-                result.error or "Failed to parse entry",
-            )
-        entries = result.value
-        if not entries:
-            return FlextResult[m.Ldif.Entry].fail("No entries parsed")
-        return FlextResult[m.Ldif.Entry].ok(entries[0])
+        # Parse using _parse_content and return first entry (using flat_map pattern)
+        return self._parse_content(ldif_content).flat_map(
+            lambda entries: (
+                FlextResult[m.Ldif.Entry].ok(entries[0])
+                if entries
+                else FlextResult[m.Ldif.Entry].fail("No entries parsed")
+            ),
+        )

@@ -114,9 +114,9 @@ class WriterTestFactory:
     def create_format_options(
         *,
         base64_encode: bool = False,
-    ) -> m.WriteFormatOptions:
+    ) -> m.Ldif.WriteFormatOptions:
         """Create write format options."""
-        return m.WriteFormatOptions(base64_encode_binary=base64_encode)
+        return m.Ldif.WriteFormatOptions(base64_encode_binary=base64_encode)
 
     @classmethod
     def create_simple_entry(cls) -> p.Entry:

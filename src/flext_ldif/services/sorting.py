@@ -578,35 +578,26 @@ class FlextLdifSorting(
             else:
                 result = self._sort_entry_attributes_alphabetically(entry)
 
+            # Log on failure and raise
             if result.is_failure:
-                # Extract error directly from FlextResult
-                error_msg = result.error or "Unknown error"
-                original_attrs = (
-                    list(entry.attributes.attributes.keys()) if entry.attributes else []
-                )
                 self.logger.error(
                     "Failed to sort entry attributes",
                     action_attempted="sort_entry_attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
                     entry_index=0,  # Index not available in batch context
                     total_entries=u.count(entries),
-                    error=str(error_msg),
+                    error=str(result.error),
                     error_type=type(result.error).__name__ if result.error else None,
-                    attributes_count=u.count(original_attrs),
+                    attributes_count=u.count(
+                        list(entry.attributes.attributes.keys())
+                        if entry.attributes
+                        else [],
+                    ),
                     consequence="Entry attributes were not sorted",
                 )
-                error_text = f"Attribute sort failed: {error_msg}"
-                raise ValueError(error_text)
-
-            # Use u.val for unified result unwrapping (DSL pattern)
-            sorted_entry_raw = result.map_or(None)
-            if sorted_entry_raw is None:
-                error_msg = result.error or "Unknown error"
-                error_text = f"Attribute sort failed: {error_msg}"
-                raise ValueError(error_text)
-            # Type narrowing: unwrap_or(, default=None) on r[Entry] returns Entry
-            # Return entry with sorted attributes directly
-            return sorted_entry_raw
+                error_msg = f"Attribute sort failed: {result.error}"
+                raise ValueError(error_msg)
+            return result.value
 
         # Direct iteration instead of u.Collection.batch
         processed: list[m.Ldif.Entry] = []

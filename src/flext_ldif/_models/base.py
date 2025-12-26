@@ -139,7 +139,7 @@ class AclElement(FlextModelsBase.ArbitraryTypesModel):
 
     model_config = ConfigDict(
         strict=True,
-        frozen=True,
+        frozen=False,  # Allow mutation for Protocol compatibility
         extra="forbid",
         validate_default=True,
         use_enum_values=True,

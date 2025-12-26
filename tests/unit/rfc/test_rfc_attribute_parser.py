@@ -311,10 +311,10 @@ class TestsFlextLdifRfcAttributeParser(s):
 
         syntax = attr.syntax_definition
         if expected_syntax is None:
-            assert syntax is None or isinstance(syntax, m.Syntax)
+            assert syntax is None or isinstance(syntax, m.Tests.Syntax)
         else:
             assert syntax is not None
-            assert isinstance(syntax, m.Syntax)
+            assert isinstance(syntax, m.Tests.Syntax)
             assert syntax.name == expected_syntax
 
     @pytest.mark.timeout(5)
@@ -371,7 +371,7 @@ class TestsFlextLdifRfcAttributeParser(s):
             x_oid=None,
         )
         syntax = invalid_oid_attr.syntax_definition
-        assert syntax is None or isinstance(syntax, m.Syntax)
+        assert syntax is None or isinstance(syntax, m.Tests.Syntax)
 
     @pytest.mark.timeout(5)
     def test_syntax_definition_caching_behavior(
@@ -394,8 +394,8 @@ class TestsFlextLdifRfcAttributeParser(s):
 
         assert syntax1 is not None
         assert syntax2 is not None
-        assert isinstance(syntax1, m.Syntax)
-        assert isinstance(syntax2, m.Syntax)
+        assert isinstance(syntax1, m.Tests.Syntax)
+        assert isinstance(syntax2, m.Tests.Syntax)
         assert syntax1.oid == syntax2.oid
         assert syntax1.name == syntax2.name
 

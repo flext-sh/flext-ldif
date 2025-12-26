@@ -535,8 +535,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if attr_name.lower() in schema_attrs
                 else attr_values
             )
-            for attr_name, attr_values in u
-            .mapper()
+            for attr_name, attr_values in u.mapper()
             .to_dict(entry.attributes.attributes)
             .items()
         }

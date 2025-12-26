@@ -10,7 +10,6 @@ import copy
 import re
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes, r
 
@@ -1001,27 +1000,23 @@ class FlextLdifUtilitiesSchema:
             }
 
         # Build parsed attribute dict
-        # NOTE: Types are runtime-compatible, pyrefly sees recursion in nested dict conversion
-        # Cast to ensure type compatibility - convert_metadata_value ensures max 2-level nesting
-        parsed_dict: t.Ldif.ModelMetadata.ParsedAttributeDict = cast(
-            "t.Ldif.ModelMetadata.ParsedAttributeDict",
-            {
-                "oid": oid,
-                "name": name,
-                "desc": desc,
-                "syntax": syntax,
-                "length": length,
-                "equality": equality,
-                "ordering": ordering,
-                "substr": substr,
-                "single_value": single_value,
-                "no_user_modification": no_user_modification,
-                "sup": sup,
-                "usage": usage,
-                "metadata_extensions": extensions_converted,
-                "syntax_validation": syntax_validation_converted,
-            },
-        )
+        # Dict matches TypedDict structure, type annotation ensures compatibility
+        parsed_dict: t.Ldif.ModelMetadata.ParsedAttributeDict = {
+            "oid": oid,
+            "name": name,
+            "desc": desc,
+            "syntax": syntax,
+            "length": length,
+            "equality": equality,
+            "ordering": ordering,
+            "substr": substr,
+            "single_value": single_value,
+            "no_user_modification": no_user_modification,
+            "sup": sup,
+            "usage": usage,
+            "metadata_extensions": extensions_converted,
+            "syntax_validation": syntax_validation_converted,
+        }
         return r[t.Ldif.ModelMetadata.ParsedAttributeDict].ok(parsed_dict)
 
     @staticmethod
@@ -1194,21 +1189,17 @@ class FlextLdifUtilitiesSchema:
         }
 
         # Build parsed objectClass dict
-        # NOTE: Types are runtime-compatible, pyrefly sees recursion in nested dict conversion
-        # Cast to ensure type compatibility - _convert_metadata_for_objectclass ensures max 2-level nesting
-        parsed_dict: t.Ldif.ModelMetadata.ParsedObjectClassDict = cast(
-            "t.Ldif.ModelMetadata.ParsedObjectClassDict",
-            {
-                "oid": oid,
-                "name": name,
-                "desc": desc,
-                "sup": sup,
-                "kind": kind,
-                "must": must,
-                "may": may,
-                "metadata_extensions": extensions_converted,
-            },
-        )
+        # Dict matches TypedDict structure, type annotation ensures compatibility
+        parsed_dict: t.Ldif.ModelMetadata.ParsedObjectClassDict = {
+            "oid": oid,
+            "name": name,
+            "desc": desc,
+            "sup": sup,
+            "kind": kind,
+            "must": must,
+            "may": may,
+            "metadata_extensions": extensions_converted,
+        }
         return parsed_dict
 
     @staticmethod

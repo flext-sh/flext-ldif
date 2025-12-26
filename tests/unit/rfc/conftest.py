@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_ldif import (
@@ -38,19 +36,25 @@ def rfc_quirk() -> FlextLdifServersRfc:
 @pytest.fixture
 def rfc_schema_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Schema:
     """Provides RFC Schema quirk instance for tests."""
-    return cast("FlextLdifServersRfc.Schema", rfc_quirk.schema_quirk)
+    schema_quirk = rfc_quirk.schema_quirk
+    assert isinstance(schema_quirk, FlextLdifServersRfc.Schema)
+    return schema_quirk
 
 
 @pytest.fixture
 def rfc_entry_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Entry:
     """Provides RFC Entry quirk instance for tests."""
-    return cast("FlextLdifServersRfc.Entry", rfc_quirk.entry_quirk)
+    entry_quirk = rfc_quirk.entry_quirk
+    assert isinstance(entry_quirk, FlextLdifServersRfc.Entry)
+    return entry_quirk
 
 
 @pytest.fixture
 def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
     """Provides RFC ACL quirk instance for tests."""
-    return cast("FlextLdifServersRfc.Acl", rfc_quirk.acl_quirk)
+    acl_quirk = rfc_quirk.acl_quirk
+    assert isinstance(acl_quirk, FlextLdifServersRfc.Acl)
+    return acl_quirk
 
 
 @pytest.fixture
@@ -119,7 +123,10 @@ def sample_entry() -> p.Entry:
             "mail": ["test@example.com"],
         },
     )
-    return cast("p.Entry", result.value)
+    assert result.is_success
+    entry = result.value
+    assert entry is not None
+    return entry
 
 
 @pytest.fixture
@@ -135,4 +142,7 @@ def sample_entries(
             c.Ldif.DictKeys.OBJECTCLASS: ["person"],
         },
     )
-    return [sample_entry, cast("p.Entry", entry2_result.value)]
+    assert entry2_result.is_success
+    entry2 = entry2_result.value
+    assert entry2 is not None
+    return [sample_entry, entry2]

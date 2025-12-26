@@ -722,7 +722,7 @@ class TestsFlextLdifRfcQuirks(s):
         acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._write_acl with raw_acl."""
-        acl = m.Acl(raw_acl="aci: test acl value", server_type="rfc")
+        acl = m.Ldif.Acl(raw_acl="aci: test acl value", server_type="rfc")
         result = acl_quirk._write_acl(acl)
         assert result.is_success
         written = result.value

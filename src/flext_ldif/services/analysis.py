@@ -21,6 +21,7 @@ from flext_core import r
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 
@@ -279,7 +280,7 @@ class FlextLdifAnalysis(
         """
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: object = u.mapper().get(
+        oc_values_raw: t.GeneralValueType = u.mapper().get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],

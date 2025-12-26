@@ -9,9 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes, t
+from flext_core import FlextLogger, FlextTypes, t
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.protocols import p
 
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -309,7 +308,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_dn_event(
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -370,7 +369,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _log_and_emit_generic_event(
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         log_context: dict[str, t.ScalarValue],
         log_message: str,
         log_level: str = "info",
@@ -405,7 +404,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_migration_event(
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         config: FlextLdifModelsEvents.MigrationEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -472,7 +471,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_conversion_event(
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -539,7 +538,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_schema_event(
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         config: FlextLdifModelsEvents.SchemaEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,

@@ -10,7 +10,7 @@ import re
 import string
 from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
-from typing import Literal, cast, overload
+from typing import Literal, overload
 
 from flext_core import r, t, u
 
@@ -2036,30 +2036,26 @@ class FlextLdifUtilitiesDN:
                 return r[str].ok(dn.upper())
             return r[str].ok(dn)
 
-        if fail_fast:
-            batch_result = u.Collection.batch(
-                list(dns),
-                cast("Callable[[str], r[str] | str]", normalize_dn),
-                on_error="fail",
-            )
-            if batch_result.is_failure:
-                return r[str].fail(batch_result.error or "Normalization failed")
-            batch_data = batch_result.value
-            return r[str].ok([
-                item for item in batch_data["results"] if isinstance(item, str)
-            ])
+        # Process DNs manually instead of using batch due to type signature issue
+        # flext-core's batch expects FlextResult[Never] which is impossible to satisfy
+        normalized_results: list[str] = []
 
-        batch_result = u.Collection.batch(
-            list(dns),
-            cast("Callable[[str], r[str] | str]", normalize_dn),
-            on_error="skip",
-        )
-        if batch_result.is_failure:
-            return r[str].fail(batch_result.error or "Normalization failed")
-        batch_data = batch_result.value
-        return r[str].ok([
-            item for item in batch_data["results"] if isinstance(item, str)
-        ])
+        if fail_fast:
+            # Fail on first error
+            for dn in dns:
+                result = normalize_dn(dn)
+                if result.is_failure:
+                    return r[str].fail(result.error or f"Failed to normalize DN: {dn}")
+                normalized_results.append(result.value)
+            return r[str].ok(normalized_results)
+
+        # Skip errors
+        for dn in dns:
+            result = normalize_dn(dn)
+            if result.is_success:
+                normalized_results.append(result.value)
+
+        return r[str].ok(normalized_results)
 
     @staticmethod
     def validate_batch(

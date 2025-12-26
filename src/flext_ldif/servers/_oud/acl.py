@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -240,9 +241,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             True if this is Oracle OUD ACL format
 
         """
-        # Type narrowing: t.Ldif.AclOrString is str | m.Ldif.Acl, compatible with can_handle_acl signature
-        # Use cast to ensure type checker knows it's compatible
-        return self.can_handle_acl(cast("str | m.Ldif.Acl", acl_line))
+        # Type narrowing: validate acl_line is str or m.Ldif.Acl
+        if isinstance(acl_line, str):
+            return self.can_handle_acl(acl_line)
+        if isinstance(acl_line, m.Ldif.Acl):
+            return self.can_handle_acl(acl_line)
+        # Not a valid ACL type
+        return False
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
@@ -656,22 +661,19 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         try:
             # Build minimal ACL model for ds-privilege-name
             # This format doesn't have traditional target/subject/permissions
-            # Cast to Literal type for model compatibility
-            server_type_oud = cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                FlextLdifServersOudConstants.SERVER_TYPE,
-            )
+            # Use StrEnum member for type-safe Literal compatibility
+            server_type_oud: c.Ldif.LiteralTypes.ServerTypeLiteral = "oud"
             acl_model = m.Ldif.Acl(
                 name=privilege_name,  # Use privilege name as ACL name
                 target=None,  # No target in ds-privilege-name format
                 subject=None,  # No subject in ds-privilege-name format
                 permissions=None,  # No traditional read/write/add permissions
-                server_type=server_type_oud,  # OUD server type from Constants
+                server_type=server_type_oud,  # OUD server type
                 raw_line=privilege_name,  # Original line
                 raw_acl=privilege_name,  # Raw ACL string
                 validation_violations=[],  # No validation issues
                 metadata=m.Ldif.QuirkMetadata(
-                    quirk_type=server_type_oud,  # OUD quirk type from Constants
+                    quirk_type=c.Ldif.ServerTypes.OUD,  # OUD quirk type from StrEnum
                     extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict({
                         # Use Constants for metadata keys instead of hardcoded strings
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
@@ -692,11 +694,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 f"Failed to parse OUD ds-privilege-name: {e}",
             )
 
-    def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
+    def _should_use_raw_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
+
         Args:
-            acl_data: ACL model instance
+            acl_data: ACL model instance (base or derived type)
 
         Returns:
             True if raw_acl should be used (only if already in proper OUD format)
@@ -713,8 +717,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             FlextLdifServersOudConstants.ACL_ACI_PREFIX,
         )
 
-    def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_target(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI target clause from ACL model.
+
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
         RFC vs OUD Behavior Differences
         ================================
@@ -804,9 +810,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
 
     def _build_aci_permissions(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: FlextLdifModelsDomains.Acl,
     ) -> FlextResult[str]:
         """Build ACI permissions clause from ACL model.
+
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
         RFC vs OUD Behavior Differences
         ================================
@@ -882,22 +890,15 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             # We need MetadataDictMutable (dict[str, MetadataAttributeValue]) for type safety.
             # Implication: Convert and validate types explicitly.
             if target_perms_dict and isinstance(target_perms_dict, dict):
-                # Type narrowing: ensure dict has correct types
-                # Filter to only MetadataAttributeValue-compatible types
-
-                perms_data = cast(
-                    "t.Ldif.MetadataDictMutable",
-                    {
-                        k: v
-                        for k, v in (
-                            target_perms_dict.items()
-                            if isinstance(target_perms_dict, dict)
-                            else []
-                        )
-                        if not isinstance(v, Mapping)  # Exclude nested mappings
-                        and isinstance(v, (str, int, float, bool, type(None), list))
-                    },
-                )
+                # Type narrowing: filter to MetadataAttributeValue-compatible types
+                perms_data: t.Ldif.MetadataDictMutable = {}
+                for k, v in target_perms_dict.items():
+                    if (
+                        isinstance(k, str)
+                        and not isinstance(v, Mapping)
+                        and (isinstance(v, (str, int, float, bool, list)) or v is None)
+                    ):
+                        perms_data[k] = v
             else:
                 perms_data = {}
             # Extract boolean fields with type guards - only use fields that exist in AclPermissions
@@ -972,7 +973,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
 
     def _extract_and_resolve_acl_subject(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: FlextLdifModelsDomains.Acl,
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass.
 
@@ -1052,8 +1053,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
 
         return base_dn, subject_type, subject_value
 
-    def _build_aci_subject(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_subject(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI bind rules (subject) clause from ACL model.
+
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
         RFC vs OUD Behavior Differences
         ================================
@@ -1157,7 +1160,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             bind_operator,
         )
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method).
 
         This is the server-specific ACL serialization implementation for Oracle Unified Directory (OUD).

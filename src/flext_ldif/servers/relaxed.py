@@ -27,6 +27,7 @@ from typing import ClassVar
 from flext_core import r
 from flext_core.loggings import FlextLogger
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
@@ -852,11 +853,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"Failed to parse ACL: {e}",
                 )
 
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL to RFC format - stringify in relaxed mode.
 
+            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
+
             Args:
-                acl_data: Acl model
+                acl_data: Acl model (base or derived type)
 
             Returns:
                 r with RFC-compliant ACL string

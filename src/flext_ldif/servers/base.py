@@ -34,10 +34,8 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import (
-    Any,
     ClassVar,
     Self,
-    cast,
     overload,
 )
 
@@ -165,12 +163,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
     @property
-    def acl(self) -> object:
+    def acl(self) -> FlextLdifServersBaseSchemaAcl:
         """Access to nested acl quirk instance."""
         return self._acl_quirk
 
     @property
-    def entry(self) -> object:
+    def entry(self) -> FlextLdifServersBaseEntry:
         """Access to nested entry quirk instance."""
         return self._entry_quirk
 
@@ -464,10 +462,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         kwargs: object,
     ) -> str | None:
         """Extract and validate operation parameter."""
-        kwargs_dict = cast("dict[str, object]", kwargs)
-        if "operation" not in kwargs_dict:
+        if not isinstance(kwargs, dict):
             return None
-        raw = kwargs_dict["operation"]
+        if "operation" not in kwargs:
+            return None
+        raw = kwargs["operation"]
         if raw is None:
             return None
         if raw == "parse":
@@ -498,52 +497,18 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     # =========================================================================
 
     @property
-    def schema_quirk(self) -> object:
+    def schema_quirk(self) -> FlextLdifServersBaseSchema:
         """Get the Schema quirk instance."""
-        # Type narrowing: _schema_quirk implements SchemaProtocol structurally
-        # The concrete Schema class implements all protocol methods
-        # Structural typing ensures protocol compliance at runtime
-        schema_instance = self._schema_quirk
-        # Verify protocol compliance via structural typing
-        if not hasattr(schema_instance, "parse") or not hasattr(
-            schema_instance,
-            "write",
-        ):
-            msg = "Schema instance does not implement SchemaProtocol"
-            raise TypeError(msg)
-        # Type assertion: Schema class implements SchemaProtocol structurally
-        # All required methods are present, so this is safe
-        # Return as protocol type - structural typing ensures compatibility
-        # Protocol compliance verified at runtime via hasattr checks above
-        # Type assertion: Schema implements SchemaProtocol structurally
-        # Business Rule: Validate Schema instance satisfies SchemaProtocol structurally
-        # SchemaProtocol requires parse() and write() methods per protocol definition
-        # Use structural checks only (hasattr) to avoid pyright Protocol overlap warnings
-        # Runtime behavior: Structural typing ensures correct implementation
-        required_methods = ("parse", "write")
-        if not all(
-            hasattr(schema_instance, method)
-            and callable(getattr(schema_instance, method))
-            for method in required_methods
-        ):
-            msg = "Schema instance does not satisfy SchemaProtocol - missing required methods"
-            raise TypeError(msg)
-        # Return after structural validation - satisfies pyright without Protocol overlap warnings
-
-        return schema_instance
+        return self._schema_quirk
 
     @property
-    def acl_quirk(self) -> object:
+    def acl_quirk(self) -> FlextLdifServersBaseSchemaAcl:
         """Get the Acl quirk instance."""
-        # Type narrowing: _acl_quirk implements AclProtocol structurally
-        # Acl class implements AclProtocol structurally (all methods match)
-        # Mypy doesn't recognize structural typing, so we return directly
         return self._acl_quirk
 
     @property
-    def entry_quirk(self) -> object:
+    def entry_quirk(self) -> FlextLdifServersBaseEntry:
         """Get the Entry quirk instance."""
-        # Type narrowing: _entry_quirk implements p.Ldif.Entry.EntryProtocol structurally
         return self._entry_quirk
 
     # =========================================================================
@@ -632,20 +597,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 return result
             return r[str].fail("No entry quirk found")
 
-        # Process all entries with early return on first failure
-        ldif_lines: list[str] = []
-        for entry_model in entries:
-            result = write_single_entry(entry_model)
-            if result.is_failure:
-                return r[str].fail(f"Failed to write entry: {result.error}")
-            ldif_lines.append(result.value)
+        # Process all entries using traverse pattern (fail fast on first error)
+        def format_ldif_output(ldif_lines: list[str]) -> str:
+            """Format LDIF output with proper newline handling."""
+            ldif = "\n".join(ldif_lines)
+            if ldif and not ldif.endswith("\n"):
+                ldif += "\n"
+            return ldif
 
-        # Finalize LDIF with proper formatting
-        ldif = "\n".join(ldif_lines)
-        if ldif and not ldif.endswith("\n"):
-            ldif += "\n"
-
-        return r[str].ok(ldif)
+        return r.traverse(entries, write_single_entry).map(format_ldif_output)
 
     def _route_model_to_write(
         self,
@@ -670,10 +630,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         """
         # Use isinstance for proper type narrowing and direct method calls
         if isinstance(model, m.Ldif.Entry):
-            # Call write() method on entry quirk - cast result to avoid Any
-            entry_quirk = cast("Any", self.entry)
-            result = entry_quirk.write(model)
-            return cast("r[str]", result)
+            # Entry quirk's write() returns FlextResult[str] via protocol
+            return self.entry.write(model)
         if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
@@ -683,10 +641,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_objectclass(model)
         if isinstance(model, FlextLdifModelsDomains.Acl):
-            # Call write() method on acl quirk - cast result to avoid Any
-            acl_quirk = cast("Any", self.acl)
-            result = acl_quirk.write(model)
-            return cast("r[str]", result)
+            # ACL quirk's write() returns FlextResult[str] via protocol
+            return self.acl.write(model)
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
 
@@ -899,9 +855,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             or is not callable, following fail-fast validation pattern.
             """
             method = getattr(registry_obj, "register_quirk", None)
-            if method and callable(method):
-                # Cast to expected callable type to avoid Any return
-                return cast("Callable[[str, object], None]", method)
+            if method is not None and callable(method):
+                # Type narrowing: callable confirmed, return with typed annotation
+                # Wrapper function provides explicit signature for type checker
+                captured = method
+
+                def typed_register(server_type: str, quirk: object) -> None:
+                    captured(server_type, quirk)
+
+                return typed_register
             return None
 
         def perform_registration(
@@ -1019,10 +981,9 @@ class _PriorityDescriptor:
 # class and instance access. Descriptors implement __get__ returning str/int,
 # satisfying the type annotations above. This is a class-level assignment that
 # happens at module import time, not instance creation time.
-# Use cast to inform mypy that we're intentionally assigning descriptors
 # Note: This bypasses Pydantic's field validation at the class level
-FlextLdifServersBase.server_type = cast("str", _ServerTypeDescriptor("unknown"))
-FlextLdifServersBase.priority = cast("int", _PriorityDescriptor(0))
+setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
+setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

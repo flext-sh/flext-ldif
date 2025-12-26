@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Protocol, cast
+from typing import Protocol
 
 import structlog
 from flext_core import FlextRuntime, r
@@ -186,10 +186,14 @@ class FlextLdifUtilitiesWriters:
                 return r[str].ok(ldif_str)
 
             except Exception as e:
-                # Type narrowing: config.entry is flext_core.Entry, extract DN for error message
+                # Type narrowing: config.entry is Entry, extract DN for error message
                 entry_for_error_raw = config.entry
-                # Cast to m.Ldif.Entry to access dn attribute
-                entry_for_error = cast("m.Ldif.Entry", entry_for_error_raw)
+                # Use isinstance check for type-safe access to dn attribute
+                entry_for_error: m.Ldif.Entry | None = (
+                    entry_for_error_raw
+                    if isinstance(entry_for_error_raw, m.Ldif.Entry)
+                    else None
+                )
                 # Extract DN string
                 dn_for_error: str | None = None
                 try:
@@ -488,12 +492,12 @@ class FlextLdifUtilitiesWriters:
                     total_entries=len(config.entries),
                 )
 
-                # Convert flext_core.Entry entries to m.Ldif.Entry for type compatibility
-                entries_typed: list[m.Ldif.Entry] = []
-                for entry_raw in config.entries:
-                    # config.entries are flext_core.Entry instances, cast to m.Ldif.Entry
-                    entry = cast("m.Ldif.Entry", entry_raw)
-                    entries_typed.append(entry)
+                # Filter entries to m.Ldif.Entry for type compatibility
+                entries_typed: list[m.Ldif.Entry] = [
+                    entry_raw
+                    for entry_raw in config.entries
+                    if isinstance(entry_raw, m.Ldif.Entry)
+                ]
 
                 # Write each entry using manual loop for clear type inference
                 # (avoiding complex generic type inference issues with u.Collection.batch)

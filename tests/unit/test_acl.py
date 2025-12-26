@@ -9,7 +9,7 @@ from __future__ import annotations
 import dataclasses
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, Final, cast
+from typing import ClassVar, Final
 
 import pytest
 from flext_core import FlextResult
@@ -203,7 +203,7 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
     UnifiedAclTestCase(
         AclTestType.UNIFIED_INSTANCE_TYPE,
         lib_c.Ldif.LdapServers.OPENLDAP,
-        description="Verify ACL is m.Acl instance",
+        description="Verify ACL is m.Tests.Acl instance",
     ),
     UnifiedAclTestCase(
         AclTestType.UNIFIED_EXCEPTION_HANDLING,
@@ -289,9 +289,9 @@ PARSER_TESTS: Final[list[AclParserTestCase]] = [
 
 def create_acl_components_helper() -> FlextResult[
     tuple[
-        m.AclTarget,
-        m.AclSubject,
-        m.AclPermissions,
+        m.Tests.AclTarget,
+        m.Tests.AclSubject,
+        m.Tests.AclPermissions,
     ]
 ]:
     """Create ACL components with proper validation using railway pattern.
@@ -301,36 +301,32 @@ def create_acl_components_helper() -> FlextResult[
         or failure with descriptive error message.
 
     """
-    target = m.AclTarget(
+    target = m.Tests.AclTarget(
         target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
     )
-    subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-        "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-        "all",
-    )
-    subject = m.AclSubject(
-        subject_type=subject_type_literal,
+    subject = m.Tests.AclSubject(
+        subject_type="all",
         subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
     )
-    permissions = m.AclPermissions(read=True)
+    permissions = m.Tests.AclPermissions(read=True)
 
     return FlextResult[
         tuple[
-            m.AclTarget,
-            m.AclSubject,
-            m.AclPermissions,
+            m.Tests.AclTarget,
+            m.Tests.AclSubject,
+            m.Tests.AclPermissions,
         ]
     ].ok((target, subject, permissions))
 
 
 def create_unified_acl_helper(
     name: str,
-    target: m.AclTarget,
-    subject: m.AclSubject,
-    permissions: m.AclPermissions,
+    target: m.Tests.AclTarget,
+    subject: m.Tests.AclSubject,
+    permissions: m.Tests.AclPermissions,
     server_type: str,
     raw_acl: str,
-) -> FlextResult[m.Acl]:
+) -> FlextResult[m.Tests.Acl]:
     """Create unified ACL with proper validation using railway pattern.
 
     Args:
@@ -355,19 +351,14 @@ def create_unified_acl_helper(
             lib_c.Ldif.LdapServers.DS_389,
         }
 
-        effective_server_type_raw = (
+        # Use validated server type directly - fallback to OPENLDAP
+        effective_server_type = (
             server_type
             if server_type in supported_servers
             else lib_c.Ldif.LdapServers.OPENLDAP
         )
 
-        # Cast server_type to Literal type
-        effective_server_type = cast(
-            "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-            effective_server_type_raw,
-        )
-
-        unified_acl = m.Acl(
+        unified_acl = m.Tests.Acl(
             name=name,
             target=target,
             subject=subject,
@@ -376,9 +367,9 @@ def create_unified_acl_helper(
             raw_acl=raw_acl,
         )
 
-        return FlextResult[m.Acl].ok(unified_acl)
+        return FlextResult[m.Tests.Acl].ok(unified_acl)
     except (ValueError, TypeError, AttributeError) as e:
-        return FlextResult[m.Acl].fail(f"Failed to create ACL: {e}")
+        return FlextResult[m.Tests.Acl].fail(f"Failed to create ACL: {e}")
 
 
 # =============================================================================
@@ -670,38 +661,38 @@ class TestFlextLdifAclComponents(s):
         @staticmethod
         def create_acl_components() -> FlextResult[
             tuple[
-                m.AclTarget,
-                m.AclSubject,
-                m.AclPermissions,
+                m.Tests.AclTarget,
+                m.Tests.AclSubject,
+                m.Tests.AclPermissions,
             ]
         ]:
             """Create ACL components with proper validation using railway pattern."""
-            target = m.AclTarget(
+            target = m.Tests.AclTarget(
                 target_dn=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
             )
-            subject = m.AclSubject(
+            subject = m.Tests.AclSubject(
                 subject_type="all",
                 subject_value=lib_c.Ldif.ServerDetection.ACL_WILDCARD_DN,
             )
-            permissions = m.AclPermissions(read=True)
+            permissions = m.Tests.AclPermissions(read=True)
 
             return FlextResult[
                 tuple[
-                    m.AclTarget,
-                    m.AclSubject,
-                    m.AclPermissions,
+                    m.Tests.AclTarget,
+                    m.Tests.AclSubject,
+                    m.Tests.AclPermissions,
                 ]
             ].ok((target, subject, permissions))
 
         @staticmethod
         def create_unified_acl(
             name: str,
-            target: m.AclTarget,
-            subject: m.AclSubject,
-            permissions: m.AclPermissions,
+            target: m.Tests.AclTarget,
+            subject: m.Tests.AclSubject,
+            permissions: m.Tests.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextResult[m.Acl]:
+        ) -> FlextResult[m.Tests.Acl]:
             """Create unified ACL with proper validation using railway pattern."""
             try:
                 supported_servers = {
@@ -713,29 +704,25 @@ class TestFlextLdifAclComponents(s):
                     lib_c.Ldif.LdapServers.DS_389,
                 }
 
+                # Use validated server type directly
                 effective_server_type = (
                     server_type
                     if server_type in supported_servers
                     else lib_c.Ldif.LdapServers.OPENLDAP
                 )
 
-                server_type_literal: lib_c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    effective_server_type,
-                )
-
-                unified_acl = m.Acl(
+                unified_acl = m.Tests.Acl(
                     name=name,
                     target=target,
                     subject=subject,
                     permissions=permissions,
-                    server_type=server_type_literal,
+                    server_type=effective_server_type,
                     raw_acl=raw_acl,
                 )
 
-                return FlextResult[m.Acl].ok(unified_acl)
+                return FlextResult[m.Tests.Acl].ok(unified_acl)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[m.Acl].fail(
+                return FlextResult[m.Tests.Acl].fail(
                     f"Failed to create ACL: {e}",
                 )
 
@@ -749,9 +736,9 @@ class TestFlextLdifAclComponents(s):
 
         match test_case.test_type:
             case AclTestType.COMPONENTS_CREATION:
-                assert isinstance(target, m.AclTarget)
-                assert isinstance(subject, m.AclSubject)
-                assert isinstance(permissions, m.AclPermissions)
+                assert isinstance(target, m.Tests.AclTarget)
+                assert isinstance(subject, m.Tests.AclSubject)
+                assert isinstance(permissions, m.Tests.AclPermissions)
 
             case AclTestType.COMPONENTS_TARGET:
                 assert target.target_dn == "*"
@@ -766,16 +753,12 @@ class TestFlextLdifAclComponents(s):
     @pytest.mark.parametrize("test_case", UNIFIED_ACL_TESTS)
     def test_unified_acl_creation(self, test_case: UnifiedAclTestCase) -> None:
         """Test unified ACL creation with various server types and configurations."""
-        target = m.AclTarget(target_dn=test_case.target_dn)
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-            test_case.subject_type,
-        )
-        subject = m.AclSubject(
-            subject_type=subject_type_literal,
+        target = m.Tests.AclTarget(target_dn=test_case.target_dn)
+        subject = m.Tests.AclSubject(
+            subject_type=test_case.subject_type,
             subject_value=test_case.subject_value,
         )
-        permissions = m.AclPermissions(
+        permissions = m.Tests.AclPermissions(
             read=test_case.permissions_read,
             write=test_case.permissions_write,
             delete=test_case.permissions_delete,
@@ -794,7 +777,7 @@ class TestFlextLdifAclComponents(s):
             case AclTestType.UNIFIED_BASIC:
                 assert result.is_success, f"Failed to create ACL: {result.error}"
                 acl = result.value
-                assert isinstance(acl, m.Acl)
+                assert isinstance(acl, m.Tests.Acl)
                 assert acl.name == test_case.acl_name
 
             case AclTestType.UNIFIED_PROPERTY_PRESERVATION:
@@ -809,7 +792,7 @@ class TestFlextLdifAclComponents(s):
             case AclTestType.UNIFIED_INSTANCE_TYPE:
                 assert result.is_success
                 acl = result.value
-                assert isinstance(acl, m.Acl)
+                assert isinstance(acl, m.Tests.Acl)
 
             case AclTestType.UNIFIED_EXCEPTION_HANDLING:
                 assert result.is_success
@@ -840,28 +823,21 @@ class AclParserTestFactory:
         delete: bool = False,
         server_type: str = lib_c.Ldif.ServerTypes.OPENLDAP,
         raw_acl: str = c.Rfc.ACL_SAMPLE_READ,
-    ) -> m.Acl:
+    ) -> m.Tests.Acl:
         """Create test ACL model."""
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", subject_type
-        )
-        server_type_literal: lib_c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.ServerTypeLiteral", server_type
-        )
-
-        return m.Acl(
+        return m.Tests.Acl(
             name=name,
-            target=m.AclTarget(target_dn=target_dn),
-            subject=m.AclSubject(
-                subject_type=subject_type_literal,
+            target=m.Tests.AclTarget(target_dn=target_dn),
+            subject=m.Tests.AclSubject(
+                subject_type=subject_type,
                 subject_value=subject_value,
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=read,
                 write=write,
                 delete=delete,
             ),
-            server_type=server_type_literal,
+            server_type=server_type,
             raw_acl=raw_acl,
         )
 
@@ -880,7 +856,9 @@ class AclParserTestFactory:
             permissions["write"] = True
         if delete:
             permissions["delete"] = True
-        return cast("GenericFieldsDict", {"permissions": permissions})
+        # Return dict compatible with GenericFieldsDict (TypedDict with total=False)
+        result: GenericFieldsDict = {"permissions": permissions}
+        return result
 
 
 def get_parser_tests() -> list[AclParserTestCase]:
@@ -919,7 +897,7 @@ class TestsTestFlextLdifAclParser(s):
                 assert isinstance(acl_response.acls, list)
 
             case AclParserTestType.PARSE_OPENLDAP:
-                parse_result_openldap: FlextResult[m.Acl] = (
+                parse_result_openldap: FlextResult[m.Tests.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line, test_case.server_type
                     )
@@ -929,11 +907,11 @@ class TestsTestFlextLdifAclParser(s):
                     f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_openldap.value
-                assert isinstance(parsed_acl, m.Acl)
+                assert isinstance(parsed_acl, m.Tests.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OID:
-                parse_result_oid: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                parse_result_oid: FlextResult[m.Tests.Acl] = acl_service.parse_acl_string(
                     test_case.acl_line,
                     test_case.server_type,
                 )
@@ -942,11 +920,11 @@ class TestsTestFlextLdifAclParser(s):
                     f"OID ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oid.value
-                assert isinstance(parsed_acl, m.Acl)
+                assert isinstance(parsed_acl, m.Tests.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OUD:
-                parse_result_oud: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                parse_result_oud: FlextResult[m.Tests.Acl] = acl_service.parse_acl_string(
                     test_case.acl_line,
                     test_case.server_type,
                 )
@@ -955,11 +933,11 @@ class TestsTestFlextLdifAclParser(s):
                     f"OUD ACI parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oud.value
-                assert isinstance(parsed_acl, m.Acl)
+                assert isinstance(parsed_acl, m.Tests.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_REAL_OID_EXAMPLE:
-                parse_result_real_oid: FlextResult[m.Acl] = (
+                parse_result_real_oid: FlextResult[m.Tests.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -968,13 +946,13 @@ class TestsTestFlextLdifAclParser(s):
                 assert isinstance(parse_result_real_oid, FlextResult)
                 if parse_result_real_oid.is_success:
                     parsed_acl = parse_result_real_oid.value
-                    assert isinstance(parsed_acl, m.Acl)
+                    assert isinstance(parsed_acl, m.Tests.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
                     assert "No ACL quirk available" in str(parse_result_real_oid.error)
 
             case AclParserTestType.PARSE_REAL_OUD_EXAMPLE:
-                parse_result_real_oud: FlextResult[m.Acl] = (
+                parse_result_real_oud: FlextResult[m.Tests.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -983,13 +961,13 @@ class TestsTestFlextLdifAclParser(s):
                 assert isinstance(parse_result_real_oud, FlextResult)
                 if parse_result_real_oud.is_success:
                     parsed_acl = parse_result_real_oud.value
-                    assert isinstance(parsed_acl, m.Acl)
+                    assert isinstance(parsed_acl, m.Tests.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                 else:
                     assert "No ACL quirk available" in str(parse_result_real_oud.error)
 
             case AclParserTestType.PARSE_UNSUPPORTED:
-                parse_result_unsupported: FlextResult[m.Acl] = (
+                parse_result_unsupported: FlextResult[m.Tests.Acl] = (
                     acl_service.parse_acl_string(
                         acl_string=test_case.acl_line,
                         server_type=test_case.server_type,
@@ -1062,9 +1040,9 @@ class TestsFlextLdifComponentFactory(s):
         assert len(components) == 3
 
         target, subject, permissions = components
-        assert isinstance(target, m.AclTarget)
-        assert isinstance(subject, m.AclSubject)
-        assert isinstance(permissions, m.AclPermissions)
+        assert isinstance(target, m.Tests.AclTarget)
+        assert isinstance(subject, m.Tests.AclSubject)
+        assert isinstance(permissions, m.Tests.AclPermissions)
 
     def test_create_acl_components_target_properties(self) -> None:
         """Test ACL target component properties."""
@@ -1090,12 +1068,9 @@ class TestsFlextLdifComponentFactory(s):
 
     def test_create_unified_acl_openldap(self) -> None:
         """Test creating unified ACL for OpenLDAP server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True, write=False)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True, write=False)
 
         result = create_unified_acl_helper(
             name="openldap_acl",
@@ -1108,7 +1083,7 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
         assert acl.name == "openldap_acl"
         assert acl.server_type in {
             lib_c.Ldif.LdapServers.OPENLDAP,
@@ -1117,12 +1092,9 @@ class TestsFlextLdifComponentFactory(s):
 
     def test_create_unified_acl_openldap_2(self) -> None:
         """Test creating unified ACL for OpenLDAP 2.x server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="openldap2_acl",
@@ -1135,16 +1107,13 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="openldap1_acl",
@@ -1157,16 +1126,13 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="oid_acl",
@@ -1179,16 +1145,13 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="oud_acl",
@@ -1201,16 +1164,13 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="ds389_acl",
@@ -1223,16 +1183,13 @@ class TestsFlextLdifComponentFactory(s):
 
         assert result.is_success
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="unknown_acl",
@@ -1249,15 +1206,12 @@ class TestsFlextLdifComponentFactory(s):
 
     def test_create_unified_acl_preserves_properties(self) -> None:
         """Test that created ACL preserves all input properties."""
-        target = m.AclTarget(target_dn="cn=test,dc=example,dc=com")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "group"
-        )
-        subject = m.AclSubject(
-            subject_type=subject_type_literal,
+        target = m.Tests.AclTarget(target_dn="cn=test,dc=example,dc=com")
+        subject = m.Tests.AclSubject(
+            subject_type="group",
             subject_value="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
         )
-        permissions = m.AclPermissions(
+        permissions = m.Tests.AclPermissions(
             read=True,
             write=True,
             delete=False,
@@ -1280,13 +1234,10 @@ class TestsFlextLdifComponentFactory(s):
         assert acl.raw_acl == "original acl string"
 
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
-        """Test that created ACL is an m.Acl instance."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        """Test that created ACL is an m.Tests.Acl instance."""
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="test_acl",
@@ -1298,16 +1249,13 @@ class TestsFlextLdifComponentFactory(s):
         )
 
         acl = result.value
-        assert isinstance(acl, m.Acl)
+        assert isinstance(acl, m.Tests.Acl)
 
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl."""
-        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "user"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="test_acl",
@@ -1322,12 +1270,9 @@ class TestsFlextLdifComponentFactory(s):
 
     def test_create_acl_components_with_invalid_data(self) -> None:
         """Test create_acl_components with invalid server type defaults to OpenLDAP."""
-        target = m.AclTarget(target_dn="*")
-        subject_type_literal: lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.AclSubjectTypeLiteral", "all"
-        )
-        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="*")
-        permissions = m.AclPermissions(read=True)
+        target = m.Tests.AclTarget(target_dn="*")
+        subject = m.Tests.AclSubject(subject_type="all", subject_value="*")
+        permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="",

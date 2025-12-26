@@ -83,14 +83,8 @@ class EntryTransformer[T](ABC):
             r containing list of transformed items or error
 
         """
-        # Apply transformation to each item (avoid circular import)
-        results = []
-        for item in items:
-            result = self.apply(item)
-            if result.is_failure:
-                return r[str].fail(result.error or "Transform failed")
-            results.append(result.value)
-        return r[list[T]].ok(results)
+        # Apply transformation to each item using traverse pattern
+        return r.traverse(items, self.apply)
 
 
 # =========================================================================

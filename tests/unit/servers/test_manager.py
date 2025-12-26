@@ -151,7 +151,7 @@ class TestFlextLdifServerQuirkRetrieval:
         test_case: QuirkTestCase,
     ) -> None:
         """Test getting schema quirks for supported servers."""
-        quirk = registry.schema(test_case.server_type)
+        quirk = registry.get_schema_quirk(test_case.server_type)
         assert quirk is not None, f"Schema quirk not found for {test_case.server_type}"
 
     @pytest.mark.parametrize("test_case", get_acl_quirk_cases())
@@ -186,7 +186,7 @@ class TestFlextLdifServerRegistryCompletion:
     ) -> None:
         """Test that registry has quirks for all supported server types."""
         # Test schema quirks
-        schema = registry.schema(server_type)
+        schema = registry.get_schema_quirk(server_type)
         assert schema is not None, f"Schema quirk not found for {server_type}"
 
         # Test entry quirks

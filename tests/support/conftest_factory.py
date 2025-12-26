@@ -16,7 +16,7 @@ import tempfile
 import time
 from collections.abc import Callable, Collection, Generator
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings
@@ -51,44 +51,38 @@ class FlextLdifTestConftest:
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
 
-    _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, Collection[str]] | str]]] = (
-        cast(
-            "list[dict[str, dict[str, Collection[str]] | str]]",
-            [
-                {
-                    "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
-                    "attributes": {
-                        "objectclass": ["inetOrgPerson", "person"],
-                        "cn": [user.get("name", "Test User")],
-                        "sn": [
-                            (
-                                user.get("name", "User").split()[-1]
-                                if " " in user.get("name", "")
-                                else "User"
-                            ),
-                        ],
-                        "mail": [user.get("email", f"test{i}@example.com")],
-                        "uid": [f"testuser{i}"],
-                    },
-                }
-                for i, user in enumerate(_TEST_USERS)
-            ]
-            + [
-                {
-                    "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-                    "attributes": {
-                        "objectclass": ["groupOfNames"],
-                        "cn": ["Test Group"],
-                        "description": ["Test group for LDIF processing"],
-                        "member": [
-                            f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
-                            for i, user in enumerate(_TEST_USERS)
-                        ],
-                    },
-                },
-            ],
-        )
-    )
+    _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, Collection[str]] | str]]] = [
+        {
+            "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
+            "attributes": {
+                "objectclass": ["inetOrgPerson", "person"],
+                "cn": [user.get("name", "Test User")],
+                "sn": [
+                    (
+                        user.get("name", "User").split()[-1]
+                        if " " in user.get("name", "")
+                        else "User"
+                    ),
+                ],
+                "mail": [user.get("email", f"test{i}@example.com")],
+                "uid": [f"testuser{i}"],
+            },
+        }
+        for i, user in enumerate(_TEST_USERS)
+    ] + [
+        {
+            "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
+            "attributes": {
+                "objectclass": ["groupOfNames"],
+                "cn": ["Test Group"],
+                "description": ["Test group for LDIF processing"],
+                "member": [
+                    f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
+                    for i, user in enumerate(_TEST_USERS)
+                ],
+            },
+        },
+    ]
 
     def docker_control(self) -> FlextTestsDocker:
         """Provide FlextTestsDocker instance for container management.
@@ -536,28 +530,25 @@ class FlextLdifTestConftest:
     # Schema and other fixtures
     def ldap_schema_config(self) -> dict[str, object]:
         """LDAP schema config."""
-        return cast(
-            "dict[str, object]",
-            {
-                "validate_object_classes": True,
-                "validate_attributes": True,
-                "required_object_classes": ["top"],
-                "allowed_attributes": {
-                    "inetOrgPerson": [
-                        "uid",
-                        "cn",
-                        "sn",
-                        "givenName",
-                        "mail",
-                        "telephoneNumber",
-                        "employeeNumber",
-                        "departmentNumber",
-                        "title",
-                    ],
-                    "groupOfNames": ["cn", "description", "member"],
-                },
+        return {
+            "validate_object_classes": True,
+            "validate_attributes": True,
+            "required_object_classes": ["top"],
+            "allowed_attributes": {
+                "inetOrgPerson": [
+                    "uid",
+                    "cn",
+                    "sn",
+                    "givenName",
+                    "mail",
+                    "telephoneNumber",
+                    "employeeNumber",
+                    "departmentNumber",
+                    "title",
+                ],
+                "groupOfNames": ["cn", "description", "member"],
             },
-        )
+        }
 
     def transformation_rules(self) -> dict[str, object]:
         """Transformation rules."""
@@ -568,43 +559,35 @@ class FlextLdifTestConftest:
         def _transform_cn(x: str | float | None) -> str:
             return str(x).title() if x else ""
 
-        # Note: value_transformations contains callables which are not in dict[str, object]
-        # Use cast to indicate this is a test fixture with extended structure
-        return cast(
-            "dict[str, object]",
-            {
-                "attribute_mappings": {
-                    "telephoneNumber": "phone",
-                    "employeeNumber": "employee_id",
-                    "departmentNumber": "department",
-                },
-                "value_transformations": {
-                    "mail": _transform_mail,
-                    "cn": _transform_cn,
-                },
-                "dn_transformations": {
-                    "base_dn": "dc=newdomain,dc=com",
-                    "ou_mappings": {"people": "users", "groups": "groups"},
-                },
+        # value_transformations contains callables - they are objects in Python
+        return {
+            "attribute_mappings": {
+                "telephoneNumber": "phone",
+                "employeeNumber": "employee_id",
+                "departmentNumber": "department",
             },
-        )
+            "value_transformations": {
+                "mail": _transform_mail,
+                "cn": _transform_cn,
+            },
+            "dn_transformations": {
+                "base_dn": "dc=newdomain,dc=com",
+                "ou_mappings": {"people": "users", "groups": "groups"},
+            },
+        }
 
     def ldif_filters(self) -> dict[str, object]:
         """LDIF filters."""
-        # Note: attribute_filters contains mixed types (str and list[str])
-        # Use cast to indicate this is a test fixture with extended structure
-        return cast(
-            "dict[str, object]",
-            {
-                "include_object_classes": ["inetOrgPerson", "groupOfNames"],
-                "exclude_attributes": ["userPassword", "pwdHistory"],
-                "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
-                "attribute_filters": {
-                    "mail": r".*@example\.com$",
-                    "departmentNumber": ["IT", "HR", "Finance"],
-                },
+        # attribute_filters contains mixed types - all are objects in Python
+        return {
+            "include_object_classes": ["inetOrgPerson", "groupOfNames"],
+            "exclude_attributes": ["userPassword", "pwdHistory"],
+            "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
+            "attribute_filters": {
+                "mail": r".*@example\.com$",
+                "departmentNumber": ["IT", "HR", "Finance"],
             },
-        )
+        }
 
     def expected_ldif_stats(self) -> dict[str, object]:
         """Expected LDIF stats."""
@@ -640,17 +623,13 @@ objectClass: person
 
     def large_ldif_config(self) -> dict[str, object]:
         """Large LDIF config."""
-        # Note: memory_limit can be str or int in test fixtures
-        return cast(
-            "dict[str, object]",
-            {
-                "batch_size": 1000,
-                "memory_limit": "100MB",
-                "progress_reporting": True,
-                "parallel_processing": True,
-                "max_workers": 4,
-            },
-        )
+        return {
+            "batch_size": 1000,
+            "memory_limit": "100MB",
+            "progress_reporting": True,
+            "parallel_processing": True,
+            "max_workers": 4,
+        }
 
     # Local test utilities
     class LocalTestMatchers:
@@ -671,7 +650,7 @@ objectClass: person
 
         def create_configuration(self, **kwargs: object) -> dict[str, object]:
             """Create config."""
-            return cast("dict[str, object]", kwargs)
+            return dict(kwargs)
 
     def flext_domains(self) -> LocalTestDomains:
         """Domain-specific test data."""
@@ -705,11 +684,9 @@ objectClass: person
         content_lines: list[str] = []
 
         for entry in ldif_test_entries:
-            # Use cast to access keys that may not be in dict[str, object]
-            entry_dict = cast("dict[str, object]", entry)
-            dn = entry_dict.get("dn", "")
+            dn = entry.get("dn", "")
             content_lines.append(f"dn: {dn}")
-            attributes = entry_dict.get("attributes")
+            attributes = entry.get("attributes")
             assert isinstance(attributes, dict)
 
             for attr_key, attr_values in attributes.items():
@@ -747,17 +724,12 @@ objectClass: person
             timeout=30,
             max_workers=2,
         )
-        # Note: large_entry_count, complex_attributes_per_entry, deep_nesting_levels
-        # are now defined in dict[str, object]
-        return cast(
-            "dict[str, object]",
-            {
-                "large_entry_count": 5000,
-                "complex_attributes_per_entry": 20,
-                "deep_nesting_levels": 5,
-                **config,
-            },
-        )
+        return {
+            "large_entry_count": 5000,
+            "complex_attributes_per_entry": 20,
+            "deep_nesting_levels": 5,
+            **config,
+        }
 
     # Pytest markers
     def pytest_configure(self, config: pytest.Config) -> None:

@@ -37,6 +37,7 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.models import m
@@ -384,13 +385,14 @@ class FlextLdifServersBaseSchemaAcl(
             False  # Must be implemented by subclass  # Must be implemented by subclass
         )
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format (internal).
 
         Base class stub - must be implemented by subclass.
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
         Args:
-            acl_data: Acl model
+            acl_data: Acl model (base or derived type)
 
         Returns:
             FlextResult.fail with "Must be implemented by subclass"
@@ -413,13 +415,14 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return self._parse_acl(acl_line)
 
-    def write(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def write(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write Acl model to string format.
 
         This satisfies AclProtocol (structural typing via hasattr checks).
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
 
         Args:
-            acl_data: Acl model
+            acl_data: Acl model (base or derived type)
 
         Returns:
             FlextResult with string representation

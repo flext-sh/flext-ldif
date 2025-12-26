@@ -16,12 +16,14 @@ from __future__ import annotations
 
 from flext_core import r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 
@@ -236,7 +238,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             )
 
         # Parse each ACL value using u
-        acls: list[m.Ldif.Acl] = []
+        acls: list[FlextLdifModelsDomains.Acl] = []
         failed_count = 0
 
         def parse_single_acl(acl_value: str) -> r[m.Ldif.Acl]:
@@ -253,9 +255,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             )
             return r[m.Ldif.Acl].fail(parse_result.error or "Failed to parse ACL")
 
-        # Wrapper function with object signature for batch() compatibility
-        def parse_acl_wrapper(item: object) -> object:
-            """Wrapper that accepts object and returns object for batch()."""
+        # Wrapper function with GeneralValueType signature for batch() compatibility
+        def parse_acl_wrapper(item: t.GeneralValueType) -> r[m.Ldif.Acl]:
+            """Wrapper that accepts GeneralValueType and returns FlextResult."""
             if isinstance(item, str):
                 return parse_single_acl(item)
             return r[m.Ldif.Acl].fail(f"Expected string, got {type(item).__name__}")
@@ -405,9 +407,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             """Check if ACL grants all required permissions."""
             return all(getattr(acl.permissions, perm, False) for perm in required_perms)
 
-        # Wrapper predicate with object signature for find() compatibility
-        def predicate_wrapper(item: object) -> bool:
-            """Wrapper that accepts object for find()."""
+        # Wrapper predicate with GeneralValueType signature for find() compatibility
+        def predicate_wrapper(item: t.GeneralValueType) -> bool:
+            """Wrapper that accepts GeneralValueType for find()."""
             if isinstance(item, m.Ldif.Acl):
                 return acl_grants_all(item)
             return False

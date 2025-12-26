@@ -156,7 +156,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -193,7 +193,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -231,7 +231,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -269,7 +269,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -344,7 +344,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         # Conversion succeeds and maps selfwrite → write
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Verify mapping: selfwrite → write
         assert converted_acl_model.permissions is not None
@@ -389,7 +389,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -429,7 +429,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -477,7 +477,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -516,7 +516,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -555,7 +555,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -597,7 +597,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
@@ -639,7 +639,7 @@ class TestsTestFlextLdifQuirksAcl(s):
 
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.value
-        assert isinstance(converted_acl_model, m.Acl)
+        assert isinstance(converted_acl_model, m.Tests.Acl)
 
         # Write converted ACL model to string format
         write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -678,7 +678,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -722,7 +722,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -762,7 +762,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -801,7 +801,7 @@ class TestsTestFlextLdifQuirksAcl(s):
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
             converted_acl_model = result.value
-            assert isinstance(converted_acl_model, m.Acl)
+            assert isinstance(converted_acl_model, m.Tests.Acl)
 
             # Write converted ACL model to string format
             write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
@@ -822,16 +822,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         Default format produces standard single-line orclaci string.
         """
         # Create ACL model with self subject
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["userPassword"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(write=True),
+            permissions=m.Tests.AclPermissions(write=True),
         )
 
         # Write with default format
@@ -854,16 +854,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         Oneline format produces single line without line breaks.
         """
         # Create ACL model with self subject
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["userPassword"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(write=True),
+            permissions=m.Tests.AclPermissions(write=True),
         )
 
         # Write with oneline format
@@ -885,16 +885,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         """Test OID writer with dnattr subject in default format."""
         # Create ACL model with dnattr subject
         # Use valid subject_type and store original type in metadata
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn", "mail"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="dn",  # Valid Literal type
                 subject_value="manager",  # Remove suffix, writer will add it
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 search=True,
             ),
@@ -924,16 +924,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         """Test OID writer with guidattr subject in oneline format."""
         # Create ACL model with guidattr subject
         # Use valid subject_type and store original type in metadata
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["objectGUID"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="dn",  # Valid Literal type
                 subject_value="owner",  # Remove suffix, writer will add it
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
                 extensions={
@@ -961,16 +961,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         """Test OID writer with groupattr subject in default format."""
         # Create ACL model with groupattr subject
         # Use valid subject_type and store original type in metadata
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["department"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="group",  # Valid Literal type
                 subject_value="memberOf",  # Remove suffix, writer will add it
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 search=True,
                 compare=True,
@@ -1000,16 +1000,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with multiple permissions in oneline format."""
         # Create ACL model with multiple permissions
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn", "mail", "telephoneNumber"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 write=True,
                 add=True,
@@ -1044,16 +1044,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with group_dn subject in oneline format."""
         # Create ACL model with group_dn subject
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["*"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 write=True,
             ),
@@ -1083,16 +1083,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with entry target (no attributes) in default format."""
         # Create ACL model with entry target (no specific attributes)
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=[],  # Entry level (no attributes)
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 search=True,
             ),
@@ -1115,16 +1115,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with proxy permission in oneline format."""
         # Create ACL model with proxy permission (OID-specific)
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=[],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",
                 subject_value="ldap:///cn=proxyuser,dc=example,dc=com",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 proxy=True,
             ),
         )
@@ -1147,16 +1147,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with selfwrite permission in default format."""
         # Create ACL model with selfwrite permission (OID-specific)
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["password", "pwdLastSet"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 self_write=True,
                 read=True,
             ),
@@ -1183,16 +1183,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with all permissions expanded together."""
         # Create ACL with all possible permissions
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=[],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 read=True,
                 write=True,
                 add=True,
@@ -1219,16 +1219,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with empty attributes list produces 'entry'."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=[],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
@@ -1244,16 +1244,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with single attribute."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
@@ -1270,16 +1270,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer with many attributes."""
         attrs = ["cn", "mail", "telephoneNumber", "mobile", "description", "department"]
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=attrs,
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             ),
-            permissions=m.AclPermissions(read=True, write=True),
+            permissions=m.Tests.AclPermissions(read=True, write=True),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
@@ -1295,16 +1295,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer extracts DN from LDAP URL for user_dn subject."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["userPassword"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",
                 subject_value="ldap:///cn=john,ou=users,dc=example,dc=com?scope=base",
             ),
-            permissions=m.AclPermissions(write=True),
+            permissions=m.Tests.AclPermissions(write=True),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
@@ -1320,16 +1320,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer extracts DN from LDAP URL for group_dn subject."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="ldap:///cn=engineers,ou=groups,dc=example,dc=com",
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
@@ -1350,16 +1350,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #LDAPURL suffix from dnattr subject value."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["mail"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="dn",  # Use valid AclSubjectTypeLiteral
                 subject_value="manager#LDAPURL",  # With suffix
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
@@ -1381,16 +1381,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #USERDN suffix from guidattr subject value."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["*"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",  # Use valid AclSubjectTypeLiteral
                 subject_value="owner#USERDN",  # With suffix
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
@@ -1412,16 +1412,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #GROUPDN suffix from groupattr subject value."""
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["department"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="memberOf#GROUPDN",  # With suffix
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
@@ -1445,16 +1445,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         """Test OID writer uses raw_acl if already in OID format."""
         # Create ACL with raw_acl already set
         raw_orclaci = "orclaci: access to attr=(userPassword) by self (write)"
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn"],  # Different from raw
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(read=True),  # Different from raw
+            permissions=m.Tests.AclPermissions(read=True),  # Different from raw
             raw_acl=raw_orclaci,
         )
 
@@ -1472,16 +1472,16 @@ class TestsTestFlextLdifQuirksAcl(s):
         """Test OID writer handles special characters in DN values."""
         # DN with special characters
         special_dn = "cn=User\\, Admin,ou=special,dc=example,dc=com"
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=[],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="user_dn",
                 subject_value=special_dn,
             ),
-            permissions=m.AclPermissions(read=True),
+            permissions=m.Tests.AclPermissions(read=True),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
@@ -1497,16 +1497,16 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer permission order matches permission check sequence."""
         # Mix of permissions
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["*"],
             ),
-            subject=m.AclSubject(
+            subject=m.Tests.AclSubject(
                 subject_type="self",
                 subject_value="*",
             ),
-            permissions=m.AclPermissions(
+            permissions=m.Tests.AclPermissions(
                 compare=True,
                 read=True,
                 write=True,
@@ -1527,8 +1527,8 @@ class TestsTestFlextLdifQuirksAcl(s):
     ) -> None:
         """Test OID writer handles missing subject gracefully."""
         # ACL without subject
-        acl = m.Acl(
-            target=m.AclTarget(
+        acl = m.Tests.Acl(
+            target=m.Tests.AclTarget(
                 target_dn="*",
                 attributes=["cn"],
             ),

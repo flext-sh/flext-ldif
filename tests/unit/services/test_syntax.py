@@ -163,7 +163,7 @@ class TestsFlextLdifSyntaxModel(s):
         """
         oid, name, desc, type_category = self.SYNTAX_DATA[test_case]
 
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=oid,
             name=name,
             desc=desc,
@@ -178,7 +178,7 @@ class TestsFlextLdifSyntaxModel(s):
 
     def test_create_syntax_with_all_optional_fields(self) -> None:
         """Test creating Syntax with complete field specification."""
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
             desc="UTF-8 string for directory entries",
@@ -196,7 +196,7 @@ class TestsFlextLdifSyntaxModel(s):
 
     def test_syntax_defaults(self) -> None:
         """Test default field values for Syntax model."""
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.39",
             name="Octet String",
             desc=None,
@@ -212,7 +212,7 @@ class TestsFlextLdifSyntaxModel(s):
     def test_syntax_oid_required(self) -> None:
         """Test that OID is required field."""
         with pytest.raises(ValueError):
-            m.Syntax(
+            m.Tests.Syntax(
                 oid="",
                 name="Invalid",
                 desc=None,
@@ -235,7 +235,7 @@ class TestsFlextLdifSyntaxModel(s):
                 description="OID-specific syntax handling",
             ),
         )
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="2.16.840.1.113894.1.1.1",
             name="Oracle GUID",
             metadata=metadata,
@@ -261,7 +261,7 @@ class TestsFlextLdifSyntaxModel(s):
         Parametrized test covering OID suffix extraction for:
         - Boolean (1), DN (7), Directory String (15), Integer (27)
         """
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=oid,
             name="Test",
             desc=None,
@@ -280,7 +280,7 @@ class TestsFlextLdifSyntaxModel(s):
         - Oracle-specific OID
         - Active Directory OID
         """
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=oid,
             name="Test",
             desc=None,
@@ -302,7 +302,7 @@ class TestsFlextLdifSyntaxModel(s):
         """
         oid, name = self.ENCODING_DATA[encoding_case]
 
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=oid,
             name=name,
             desc=f"{encoding_case.value} encoded string syntax",
@@ -335,7 +335,7 @@ class TestsFlextLdifSyntaxModel(s):
         - Phone number validation (with spaces, dashes, parens, plus)
         - No validation pattern
         """
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.36",
             name=f"Test {description}",
             desc=None,
@@ -362,7 +362,7 @@ class TestsFlextLdifSyntaxModel(s):
         """
         oid, name, _, _ = self.SYNTAX_DATA[test_case]
 
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=oid,
             name=name,
             desc=None,
@@ -383,7 +383,7 @@ class TestsFlextLdifSyntaxModel(s):
 
         # Test model_validate
         data = {"oid": oid, "name": name, "type_category": "string"}
-        validated = m.Syntax.model_validate(data)
+        validated = m.Tests.Syntax.model_validate(data)
         assert validated.name == name
 
     # ========================================================================
@@ -401,7 +401,7 @@ class TestsFlextLdifSyntaxModel(s):
         - Negative length (Pydantic allows, semantically invalid)
         - Large lengths
         """
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
             max_length=max_length,
@@ -412,7 +412,7 @@ class TestsFlextLdifSyntaxModel(s):
 
     def test_empty_name_allowed(self) -> None:
         """Test creating syntax with empty name is allowed."""
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="",
             desc=None,
@@ -424,7 +424,7 @@ class TestsFlextLdifSyntaxModel(s):
     def test_very_long_oid(self) -> None:
         """Test handling of very long OID."""
         long_oid = "1.2.3.4.5.6.7.8.9.10.11.12.13.14.15"
-        syntax = m.Syntax(
+        syntax = m.Tests.Syntax(
             oid=long_oid,
             name="Custom OID",
             desc=None,
@@ -435,14 +435,14 @@ class TestsFlextLdifSyntaxModel(s):
 
     def test_multiple_syntaxes_independence(self) -> None:
         """Test that multiple syntax instances are independent."""
-        syntax1 = m.Syntax(
+        syntax1 = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="Boolean",
             desc=None,
             max_length=None,
             validation_pattern=None,
         )
-        syntax2 = m.Syntax(
+        syntax2 = m.Tests.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
             desc=None,

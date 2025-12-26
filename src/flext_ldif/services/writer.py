@@ -21,7 +21,6 @@ from flext_core.runtime import FlextRuntime
 
 from flext_ldif.base import s
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -171,11 +170,8 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         options = self._normalize_format_options(format_options)
 
         # Direct call to entry quirk write method
-        # Use protocol-compatible options (None if not matching protocol)
-        write_options: p.Ldif.WriteFormatOptionsProtocol | None = (
-            options if isinstance(options, p.Ldif.WriteFormatOptionsProtocol) else None
-        )
-        write_result = entry_quirk.write(entries, write_options)
+        # Pass normalized options directly - model implements protocol via properties
+        write_result = entry_quirk.write(entries, options)
 
         if write_result.is_failure:
             return r[str].fail(write_result.error or "LDIF writing failed")
@@ -353,11 +349,11 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
                 # Invalid server type - use None (will default to RFC in write method)
                 target_server_type = None
         output_path_raw = u.Ldif.take(params, "output_path", as_type=Path)
-        # Type narrowing: output_path_raw is object, check if Path
+        # Type narrowing: output_path_raw is GeneralValueType, check if Path
         output_path: Path | None = (
             output_path_raw if isinstance(output_path_raw, Path) else None
         )
-        format_options_raw: object = u.Ldif.take(params, "format_options")
+        format_options_raw: t.GeneralValueType = u.Ldif.take(params, "format_options")
         # Type narrowing: format_options_raw is object, check if WriteFormatOptions or WriteOptions
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions

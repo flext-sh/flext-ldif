@@ -20,11 +20,12 @@ References:
 
 from __future__ import annotations
 
-from typing import Self, cast, overload
+from typing import Self, overload
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
 # Metadata access via m.Ldif namespace from models import
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.models import m
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -200,10 +201,11 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     # create_metadata(), convert_rfc_acl_to_aci(), format_acl_value()
     # are now in base.py - these methods delegate to parent without RFC-specific logic
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write ACL to RFC-compliant string format (internal).
 
         RFC implementation of ACL writing using raw_acl or name fallback.
+        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
         """
         # Use raw_acl if available and non-empty
         if acl_data.raw_acl and acl_data.raw_acl.strip():
@@ -335,9 +337,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             data: str | m.Ldif.Acl | None = None
             if isinstance(data_raw, str):
                 data = data_raw
-            elif data_raw is not None and hasattr(data_raw, "raw_acl"):
-                # Type narrowing: data_raw has raw_acl attribute, so it's an Acl
-                data = cast("m.Ldif.Acl", data_raw)
+            elif isinstance(data_raw, m.Ldif.Acl):
+                # Type narrowing: isinstance check confirms m.Ldif.Acl type
+                data = data_raw
             op_raw = kwargs.get("operation")
             op: str | None = None
             if isinstance(op_raw, str) and op_raw == "parse":
