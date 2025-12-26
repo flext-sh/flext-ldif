@@ -251,7 +251,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         # Nested Acl and Entry classes for test API compatibility
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """Apache Directory Server ACI quirk.
 
         Handles ApacheDS ACI (Access Control Instruction) format.

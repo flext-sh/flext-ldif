@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Final, cast
+from typing import Final
 
 from flext_core import FlextLogger, r
 
@@ -81,10 +81,12 @@ class FlextLdifFilters:
         if hasattr(attrs, "attributes"):
             # Type narrowing: attrs.attributes is Mapping[str, list[str]]
             attrs_dict: Mapping[str, list[str]] = attrs.attributes
+        elif isinstance(attrs, Mapping):
+            # Type narrowing: attrs is already a Mapping
+            attrs_dict = attrs
         else:
-            # Type narrowing: attrs is Mapping[str, list[str]]
-            # Cast to satisfy mypy - attrs is already the correct type
-            attrs_dict = cast("Mapping[str, list[str]]", attrs)
+            # attrs is neither Attributes nor Mapping, return True (include entry)
+            return True
 
         # Check each schema type
         is_attr, include_attr = cls._check_schema_oid(

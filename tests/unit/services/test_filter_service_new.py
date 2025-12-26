@@ -27,6 +27,7 @@ import pytest
 from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.filters import FlextLdifFilters
 from tests import TestDeduplicationHelpers, c, s
 from tests.constants import Filters, OIDs
@@ -456,14 +457,17 @@ class TestCategorization:
             rules = {}
             expected = "rejected"
 
-        result_category, _reason = FlextLdifFilters.categorize(
+        # Create categorization service instance with server type
+        server_type = (
+            Filters.SERVER_OUD
+            if scenario == CategorizationScenario.CATEGORY_ACL
+            else Filters.SERVER_RFC
+        )
+        categorization_service = FlextLdifCategorization(server_type=server_type)
+        result_category, _reason = categorization_service.categorize_entry(
             entry,
             rules,
-            server_type=(
-                Filters.SERVER_OUD
-                if scenario == CategorizationScenario.CATEGORY_ACL
-                else Filters.SERVER_RFC
-            ),
+            server_type=server_type,
         )
         assert result_category == expected
 

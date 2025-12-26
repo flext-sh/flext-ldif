@@ -1198,6 +1198,14 @@ class RfcTestHelpers:
         content: str,
         expected_oid: str | None = None,
         expected_name: str | None = None,
+        expected_desc: str | None = None,
+        expected_sup: str | None = None,
+        expected_kind: str | None = None,
+        expected_must: list[str] | None = None,
+        expected_may: list[str] | None = None,
+        expected_syntax: str | None = None,
+        expected_equality: str | None = None,
+        expected_single_value: bool | None = None,
     ) -> object:
         """Parse schema content and assert properties.
 
@@ -1246,6 +1254,62 @@ class RfcTestHelpers:
             if actual_name != expected_name:
                 raise AssertionError(
                     f"Expected name '{expected_name}', got '{actual_name}'",
+                )
+
+        if expected_desc is not None:
+            actual_desc = getattr(value, "desc", None)
+            if actual_desc != expected_desc:
+                raise AssertionError(
+                    f"Expected desc '{expected_desc}', got '{actual_desc}'",
+                )
+
+        if expected_sup is not None:
+            actual_sup = getattr(value, "sup", None)
+            if actual_sup != expected_sup:
+                raise AssertionError(
+                    f"Expected sup '{expected_sup}', got '{actual_sup}'",
+                )
+
+        if expected_kind is not None:
+            actual_kind = getattr(value, "kind", None)
+            if actual_kind != expected_kind:
+                raise AssertionError(
+                    f"Expected kind '{expected_kind}', got '{actual_kind}'",
+                )
+
+        if expected_must is not None:
+            actual_must = getattr(value, "must", None)
+            if actual_must != expected_must:
+                raise AssertionError(
+                    f"Expected must '{expected_must}', got '{actual_must}'",
+                )
+
+        if expected_may is not None:
+            actual_may = getattr(value, "may", None)
+            if actual_may != expected_may:
+                raise AssertionError(
+                    f"Expected may '{expected_may}', got '{actual_may}'",
+                )
+
+        if expected_syntax is not None:
+            actual_syntax = getattr(value, "syntax", None)
+            if actual_syntax != expected_syntax:
+                raise AssertionError(
+                    f"Expected syntax '{expected_syntax}', got '{actual_syntax}'",
+                )
+
+        if expected_equality is not None:
+            actual_equality = getattr(value, "equality", None)
+            if actual_equality != expected_equality:
+                raise AssertionError(
+                    f"Expected equality '{expected_equality}', got '{actual_equality}'",
+                )
+
+        if expected_single_value is not None:
+            actual_single_value = getattr(value, "single_value", None)
+            if actual_single_value != expected_single_value:
+                raise AssertionError(
+                    f"Expected single_value '{expected_single_value}', got '{actual_single_value}'",
                 )
 
         return value
@@ -1631,7 +1695,7 @@ class RfcTestHelpers:
             msg = "Expected failure but got success"
             raise AssertionError(msg)
 
-        return result.value if result.is_success else None
+        return result.map_or(None)
 
     @staticmethod
     def test_write_entry_variations(
@@ -2000,7 +2064,8 @@ class TestDeduplicationHelpers:
         msg: str | None = None,
         parse_method: str | None = None,
         expected_type: type | None = None,
-    ) -> object:
+        should_succeed: bool | None = None,
+    ) -> object | None:
         """Parse using quirk and unwrap result.
 
         Args:
@@ -2009,12 +2074,15 @@ class TestDeduplicationHelpers:
             msg: Optional message for assertion
             parse_method: Optional specific parse method name (e.g., 'parse_attribute')
             expected_type: Optional expected type for validation
+            should_succeed: Expected outcome (True=must succeed, False=must fail,
+                None=any outcome acceptable)
 
         Returns:
-            Parsed result value
+            Parsed result value if successful, None if expected failure
 
         Raises:
-            AssertionError: If parsing fails or type doesn't match
+            AssertionError: If should_succeed specified and result doesn't match,
+                or if type doesn't match
 
         """
         # Get the appropriate parse method
@@ -2026,7 +2094,25 @@ class TestDeduplicationHelpers:
         else:
             result = quirk.parse(content)
 
-        assert result.is_success, msg or f"quirk.parse() failed: {result.error}"
+        # Handle expected failure cases
+        if should_succeed is False:
+            if result.is_success:
+                raise AssertionError(msg or "Expected failure but parse succeeded")
+            return None  # Expected failure, return None
+
+        # Handle expected success or default case
+        if should_succeed is True and result.is_failure:
+            raise AssertionError(
+                msg or f"Expected success but parse failed: {result.error}",
+            )
+
+        # Default behavior for should_succeed=None: assert success
+        if should_succeed is None:
+            assert result.is_success, msg or f"quirk.parse() failed: {result.error}"
+
+        # For failures with should_succeed=None, return None
+        if result.is_failure:
+            return None
 
         value = result.value
         if expected_type is not None:

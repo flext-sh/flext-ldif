@@ -320,7 +320,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
-        assert isinstance(acl_model, m.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
 
     def test_parse_acl_with_sddl_prefix(self) -> None:
         """Test ACL parsing with SDDL prefix (O:, G:, D:, S:)."""
@@ -328,7 +328,7 @@ class TestsTestFlextLdifAdQuirks(s):
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "O:BAG:BAD:S:"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
-        assert isinstance(acl_model, m.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
 
     def test_parse_acl_with_base64_value(self) -> None:
         """Test parsing ACL with base64-encoded nTSecurityDescriptor."""
@@ -338,7 +338,7 @@ class TestsTestFlextLdifAdQuirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_model = result.value
-        assert isinstance(acl_model, m.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.raw_acl == acl_line
         assert acl_model.subject is not None
@@ -352,7 +352,7 @@ class TestsTestFlextLdifAdQuirks(s):
         result = acl.parse(acl_line)
         assert result.is_success
         acl_model = result.value
-        assert isinstance(acl_model, m.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.subject is not None
         assert acl_model.subject.subject_value == "O:BAG:BAD:S:"
@@ -370,14 +370,14 @@ class TestsTestFlextLdifAdQuirks(s):
         """Test writing ACL to RFC string format."""
         server = FlextLdifServersAd()
         acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
-        acl_model = m.Acl(
+        acl_model = m.Ldif.Acl(
             name="nTSecurityDescriptor",
-            target=m.AclTarget(target_dn="*", attributes=[]),
-            subject=m.AclSubject(
+            target=m.Ldif.AclTarget(target_dn="*", attributes=[]),
+            subject=m.Ldif.AclSubject(
                 subject_type="sddl",
                 subject_value="O:BAG:BAD:S:",
             ),
-            permissions=m.AclPermissions(),
+            permissions=m.Ldif.AclPermissions(),
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "active_directory",
             ),

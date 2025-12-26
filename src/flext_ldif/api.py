@@ -343,7 +343,7 @@ class FlextLdif(s[object]):
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
-    ) -> r[list[object]]:
+    ) -> r[list[m.Ldif.ProcessingResult]]:
         """Process entries using processing service.
 
         Args:
@@ -383,7 +383,7 @@ class FlextLdif(s[object]):
     def extract_acls(
         self,
         entry: object,
-    ) -> r[object]:
+    ) -> r[m.Ldif.Results.AclResponse]:
         """Extract ACLs from entry.
 
         Args:
@@ -567,7 +567,7 @@ class FlextLdif(s[object]):
         dn: str,
         attributes: dict[str, str | list[str]],
         objectclasses: list[str] | None = None,
-    ) -> r[object]:
+    ) -> r[m.Ldif.Entry]:
         """Create a new Entry model.
 
         Business Rules:
@@ -736,7 +736,7 @@ class FlextLdif(s[object]):
     def validate_entries(
         self,
         entries: list[object],
-    ) -> r[object]:
+    ) -> r[m.Ldif.Results.ValidationResult]:
         """Validate list of entries.
 
         Business Rules:
@@ -791,7 +791,7 @@ class FlextLdif(s[object]):
     def get_entry_statistics(
         self,
         _entries: list[object],
-    ) -> r[object]:
+    ) -> r[m.Ldif.Results.EntriesStatistics]:
         """Get statistics for list of entries.
 
         Args:

@@ -228,7 +228,8 @@ class TestDeduplicationHelpers:
         msg: str | None = None,
         parse_method: str | None = None,
         expected_type: type | None = None,
-    ) -> object:
+        should_succeed: bool | None = None,
+    ) -> object | None:
         """Parse using quirk - use service methods.
 
         Args:
@@ -237,9 +238,11 @@ class TestDeduplicationHelpers:
             msg: Optional message for assertion
             parse_method: Optional specific parse method name (e.g., 'parse_attribute')
             expected_type: Optional expected type for validation
+            should_succeed: Expected outcome (True=must succeed, False=must fail,
+                None=any outcome acceptable)
 
         Returns:
-            Parsed result value
+            Parsed result value if successful, None if expected failure
 
         """
         # Get the appropriate parse method
@@ -252,13 +255,34 @@ class TestDeduplicationHelpers:
             result = quirk.parse(content)
 
         # Handle FlextResult
-        if hasattr(result, "is_failure"):
-            if result.is_failure:
-                error = getattr(result, "error", "Unknown error")
-                raise AssertionError(msg or f"quirk.parse() failed: {error}")
-            value = result.value
-        else:
-            value = result
+        is_failure = (
+            getattr(result, "is_failure", False)
+            if hasattr(result, "is_failure")
+            else False
+        )
+        is_success = not is_failure
+
+        # Handle expected failure cases
+        if should_succeed is False:
+            if is_success:
+                raise AssertionError(msg or "Expected failure but parse succeeded")
+            return None  # Expected failure, return None
+
+        # Handle expected success case
+        if should_succeed is True and is_failure:
+            error = getattr(result, "error", "Unknown error")
+            raise AssertionError(msg or f"Expected success but parse failed: {error}")
+
+        # Default behavior for should_succeed=None: assert success
+        if should_succeed is None and is_failure:
+            error = getattr(result, "error", "Unknown error")
+            raise AssertionError(msg or f"quirk.parse() failed: {error}")
+
+        # For failures with should_succeed=None, return None
+        if is_failure:
+            return None
+
+        value = result.value if hasattr(result, "value") else result
 
         # Validate type if specified
         if expected_type is not None:

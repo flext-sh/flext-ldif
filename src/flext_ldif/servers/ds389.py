@@ -28,7 +28,7 @@ from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -313,7 +313,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """389 Directory Server ACI quirk."""
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -642,15 +642,16 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             # Use lowercase objectClass key for normalized attributes
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             # Get objectClass from normalized attributes
-            object_classes_raw: list[str] = normalized_attrs.get(
+            object_classes_raw = normalized_attrs.get(
                 objectclass_key,
                 [],
             )
-            object_classes: list[str] = (
-                object_classes_raw
-                if isinstance(object_classes_raw, (list, tuple))
-                else [object_classes_raw]
-            )
+            if isinstance(object_classes_raw, list):
+                object_classes: list[str] = object_classes_raw
+            elif isinstance(object_classes_raw, tuple):
+                object_classes = list(object_classes_raw)
+            else:
+                object_classes = [str(object_classes_raw)]
             return bool(
                 any(
                     str(oc).lower()

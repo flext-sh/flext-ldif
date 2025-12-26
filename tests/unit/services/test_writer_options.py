@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext import FlextSettings
+from flext_core import FlextSettings
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 

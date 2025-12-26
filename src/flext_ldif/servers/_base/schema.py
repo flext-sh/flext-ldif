@@ -801,7 +801,9 @@ class FlextLdifServersBaseSchema(
                 "Literal['oid', 'oud', 'openldap', 'openldap1', 'openldap2', 'ad', 'apache', 'ds389', 'rfc', 'relaxed', 'novell', 'ibm_tivoli', 'generic']",
                 quirk_type,
             ),
-            extensions=FlextLdifModelsMetadata.DynamicMetadata(**metadata_extensions)
+            extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                metadata_extensions
+            )
             if metadata_extensions
             else FlextLdifModelsMetadata.DynamicMetadata(),
         )

@@ -22,7 +22,7 @@ from collections.abc import Mapping
 from typing import Final
 
 import pytest
-from flext import FlextLogger
+from flext_core import FlextLogger
 
 from flext_ldif import FlextLdif, FlextLdifSettings
 

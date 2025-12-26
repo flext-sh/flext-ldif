@@ -351,17 +351,13 @@ class FlextLdifResult[T]:
         # Transformer can be p.Ldif.TransformerProtocol (has apply method) or callable
         # p.Ldif.TransformerProtocol.apply() returns FlextResult[T] or T
         # Callable transforms T -> T or T -> FlextResult[T]
-        # Check if it has apply method (TransformerProtocol)
-        # Business Rule: Access apply method via getattr for type safety
-        # Implication: Type checker cannot infer that transformer.apply exists even after
-        # hasattr check, so we use getattr to satisfy pyright strict mode.
-        if hasattr(transformer, "apply"):
-            apply_method = getattr(transformer, "apply", None)
-            if apply_method is not None and callable(apply_method):
-                transform_result = apply_method(self.value)
-                if isinstance(transform_result, FlextResult):
-                    return FlextLdifResult.from_result(transform_result)
-                return FlextLdifResult.ok(transform_result)
+        # Check if transformer implements TransformerProtocol (runtime_checkable)
+        if isinstance(transformer, p.Ldif.TransformerProtocol):
+            transform_result = transformer.apply(self.value)
+            if isinstance(transform_result, FlextResult):
+                return FlextLdifResult.from_result(transform_result)
+            # After isinstance check, transform_result is T (not FlextResult)
+            return FlextLdifResult.ok(transform_result)
 
         # It's a callable (function or lambda)
         if callable(transformer):
@@ -496,7 +492,7 @@ class FlextLdifResult[T]:
 
     def filter(
         self,
-        predicate: p.Ldif.FilterProtocol | Callable,
+        predicate: p.Ldif.FilterProtocol | Callable[[object], bool],
     ) -> FlextLdifResult:
         """Filter the result value using a predicate.
 
@@ -519,19 +515,20 @@ class FlextLdifResult[T]:
 
         value = self.value
 
-        # Get matches function from predicate - check for matches method first
-        matches_func = None
-        predicate_matches = getattr(predicate, "matches", None)
-        if predicate_matches is not None and callable(predicate_matches):
-            # FilterProtocol with matches method - wrap as callable
+        # Use Protocol isinstance check for FilterProtocol (runtime_checkable)
+        matches_func: Callable[[object], bool]
+        if isinstance(predicate, p.Ldif.FilterProtocol):
+            # FilterProtocol - use matches method directly
+            filter_protocol = predicate
+
             def wrapped_matches(item: object) -> bool:
-                return bool(predicate_matches(item))
+                return filter_protocol.matches(item)
 
             matches_func = wrapped_matches
         elif callable(predicate):
+            # Direct callable
             matches_func = predicate
-
-        if matches_func is None:
+        else:
             return FlextLdifResult.fail("Invalid predicate type")
 
         # Handle sequence of entries - filter elements and preserve type

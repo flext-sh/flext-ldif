@@ -16,8 +16,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, cast
 
-from flext_core import FlextLogger, FlextResult, t
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import FlextModels as m
@@ -1741,27 +1740,16 @@ class FlextLdifModelsDomains:
                 # Create default QuirkMetadata with quirk_type from data if available
                 # If no quirk_type provided, use 'rfc' as safe default
                 quirk_type_value = data.get("quirk_type")
-                final_quirk_type_val: c.Ldif.LiteralTypes.ServerTypeLiteral
-                if isinstance(quirk_type_value, str) and quirk_type_value in {
-                    "oid",
-                    "oud",
-                    "openldap",
-                    "openldap1",
-                    "openldap2",
-                    "ad",
-                    "apache",
-                    "ds389",
-                    "rfc",
-                    "relaxed",
-                    "generic",
-                    "ibm_tivoli",
-                    "novell",
-                }:
-                    # quirk_type_value is validated as ServerTypeLiteral
-                    final_quirk_type_val = quirk_type_value  # type: ignore[assignment]
+                final_quirk_type_val: c.Ldif.ServerTypes
+                if isinstance(quirk_type_value, str):
+                    # Try to match to a ServerTypes enum member
+                    try:
+                        final_quirk_type_val = c.Ldif.ServerTypes(quirk_type_value)
+                    except ValueError:
+                        final_quirk_type_val = c.Ldif.ServerTypes.RFC
                 else:
-                    # Use literal value directly for type safety
-                    final_quirk_type_val = "rfc"
+                    # Use RFC as safe default
+                    final_quirk_type_val = c.Ldif.ServerTypes.RFC
 
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=final_quirk_type_val,
@@ -2530,7 +2518,9 @@ class FlextLdifModelsDomains:
                 )
                 # Type narrowing: convert values to t.MetadataAttributeValue compatible types
                 ext_kwargs_typed: dict[str, t.MetadataAttributeValue] = dict(ext_kwargs)
-                extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
+                extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    ext_kwargs_typed
+                )
                 return FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.GENERIC.value,
                     extensions=extensions,
@@ -3626,9 +3616,9 @@ class FlextLdifModelsDomains:
 
         model_config = ConfigDict(extra="allow", frozen=False)
 
-        quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
+        quirk_type: c.Ldif.ServerTypes | c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             ...,
-            description="Type of quirk this metadata represents",
+            description="Type of quirk this metadata represents (ServerTypes enum or literal)",
         )
         extensions: FlextLdifModelsMetadata.DynamicMetadata = Field(
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
@@ -3843,18 +3833,20 @@ class FlextLdifModelsDomains:
 
             """
             # Use Constants default for quirk_type if not provided
-            # normalize_server_type guarantees valid literal value
-            default_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
-                normalize_server_type(quirk_type)  # type: ignore[assignment]
+            # normalize_server_type returns ServerTypes enum (which is StrEnum)
+            default_quirk_type: c.Ldif.ServerTypes = (
+                normalize_server_type(quirk_type)
                 if quirk_type is not None
-                else c.Ldif.ServerTypes.RFC.value
+                else c.Ldif.ServerTypes.RFC
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
             elif isinstance(extensions, dict):
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+                extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    extensions
+                )
             else:
                 extensions_model = extensions
             return cls(

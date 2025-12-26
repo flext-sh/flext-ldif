@@ -21,6 +21,7 @@ from flext_core.runtime import FlextRuntime
 
 from flext_ldif.base import s
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -31,7 +32,7 @@ def _extract_pipe_value(
 ) -> object | None:
     """Extract value from pipe result."""
     # Accept both FlextResult and RuntimeResult (compatible interfaces)
-    return pipe_result.value if pipe_result.is_success else None
+    return pipe_result.unwrap_or(None)
 
 
 class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
@@ -170,7 +171,11 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         options = self._normalize_format_options(format_options)
 
         # Direct call to entry quirk write method
-        write_result = entry_quirk.write(entries, options)
+        # Use protocol-compatible options (None if not matching protocol)
+        write_options: p.Ldif.WriteFormatOptionsProtocol | None = (
+            options if isinstance(options, p.Ldif.WriteFormatOptionsProtocol) else None
+        )
+        write_result = entry_quirk.write(entries, write_options)
 
         if write_result.is_failure:
             return r[str].fail(write_result.error or "LDIF writing failed")

@@ -153,7 +153,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     class Constants(FlextLdifServersOidConstants):
         """OID server constants."""
 
-    class Acl(FlextLdifServersOidAcl):
+    class Acl(FlextLdifServersOidAcl):  # type: ignore[override]
         """OID ACL quirk."""
 
     class Schema(FlextLdifServersOidSchema):

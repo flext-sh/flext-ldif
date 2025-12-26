@@ -1539,8 +1539,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
             # Pydantic 2: model_copy accepts dict[str, object] for partial updates
             update_dict: dict[str, object] = {
-                "extensions": FlextLdifModelsMetadata.DynamicMetadata(
-                    **current_extensions,
+                "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    current_extensions,
                 )
                 if current_extensions
                 else FlextLdifModelsMetadata.DynamicMetadata(),

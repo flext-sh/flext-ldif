@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable, Mapping
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -26,9 +25,7 @@ from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes as t
-
-# t already imported from flext_core above
+from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
@@ -1358,9 +1355,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         if isinstance(commented_raw, str):
-            # json.loads returns Any - cast to expected return type
+            # json.loads returns Any - validate with isinstance
             result = json.loads(commented_raw)
-            return cast("dict[str, object] | None", result)
+            if isinstance(result, dict):
+                return result
+            return None
         if isinstance(commented_raw, dict):
             return commented_raw
         return None
@@ -1704,8 +1703,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 current_extensions = {}
             # Merge and create new entry
             current_extensions.update(acl_metadata_extensions)
-            merged_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **current_extensions,
+            merged_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                current_extensions,
             )
             return entry.model_copy(
                 update={
@@ -1719,8 +1718,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Entry has no metadata, create it
         entry_metadata = m.Ldif.QuirkMetadata.create_for(
             "oud",
-            extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                **acl_metadata_extensions,
+            extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                acl_metadata_extensions,
             ),
         )
         return entry.model_copy(update={"metadata": entry_metadata}, deep=True)
@@ -2102,19 +2101,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Type narrowing: corrected_attrs should be dict[str, str | list[str]] | None
         if not isinstance(corrected_attrs_raw, dict):
             return FlextResult[m.Ldif.Entry].ok(entry)
-        # Type narrowing: after isinstance check, corrected_attrs is dict[str, str | list[str]]
-        corrected_attrs: dict[str, str | list[str]] = corrected_attrs_raw
 
         attrs_for_model: dict[str, list[str]] = {}
-        for k, v in corrected_attrs.items():  # type: ignore[assignment]
-            # Python 3.13: Use match/case for type dispatching
-            match v:
-                case list():
-                    attrs_for_model[k] = [str(item) for item in v]
-                case str():
-                    attrs_for_model[k] = [v]
-                case _ if isinstance(v, (list, tuple)):
-                    attrs_for_model[k] = [str(v)]  # type: ignore[list-item]
+        for raw_key, raw_value in corrected_attrs_raw.items():
+            # Type narrowing: ensure key is string
+            if not isinstance(raw_key, str):
+                continue
+            # Type narrowing: handle different value types
+            if isinstance(raw_value, list):
+                attrs_for_model[raw_key] = [str(item) for item in raw_value]
+            elif isinstance(raw_value, str):
+                attrs_for_model[raw_key] = [raw_value]
+            elif isinstance(raw_value, tuple):
+                attrs_for_model[raw_key] = [str(item) for item in raw_value]
 
         corrected_ldif_attrs = m.Ldif.Attributes(
             attributes=attrs_for_model,
@@ -2130,9 +2129,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if isinstance(syntax_corrections, (list, tuple))
             else 0,
             corrections=syntax_corrections,
-            corrected_attributes=list(corrected_attrs.keys())
-            if isinstance(corrected_attrs, dict)
-            else None,
+            corrected_attributes=list(attrs_for_model.keys()),
         )
         return FlextResult[m.Ldif.Entry].ok(corrected_entry)
 
@@ -2209,8 +2206,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             # Always update metadata if we have extensions (even if they're the same)
             entry.metadata = entry.metadata.model_copy(
                 update={
-                    "extensions": FlextLdifModelsMetadata.DynamicMetadata(
-                        **merged_extensions,
+                    "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                        merged_extensions,
                     ),
                 },
             )

@@ -614,7 +614,9 @@ class FlextLdifServersBaseSchemaAcl(
         if extensions:
             all_extensions.update(extensions)
         # Convert dict to DynamicMetadata for QuirkMetadata
-        extensions_model = FlextLdifModelsMetadata.DynamicMetadata(**all_extensions)
+        extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            all_extensions
+        )
         return m.Ldif.QuirkMetadata(
             quirk_type=self._get_server_type(),
             extensions=extensions_model,

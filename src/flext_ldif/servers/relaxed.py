@@ -22,16 +22,14 @@ Relaxed Mode Features:
 from __future__ import annotations
 
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import r
 from flext_core.loggings import FlextLogger
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -557,14 +555,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # Extract MUST/MAY fields
             must, may = self._extract_must_may_from_objectclass(oc_definition)
 
-            # Build metadata
-            extensions = u.Ldif.LdifParser.extract_extensions(oc_definition)
-            extensions["original_format"] = [oc_definition.strip()]
-            extensions["schema_source_server"] = ["relaxed"]
-
+            # Build metadata - create DynamicMetadata with typed fields
             metadata = m.Ldif.QuirkMetadata(
                 quirk_type=self._get_server_type(),
-                extensions=m.Ldif.DynamicMetadata(**extensions),
+                extensions=m.Ldif.DynamicMetadata(
+                    original_format=oc_definition.strip(),
+                    schema_source_server="relaxed",
+                ),
             )
 
             # Use name if available, otherwise use OID
@@ -737,7 +734,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _parse_acl(): Parses ACL with best-effort approach
         # - _write_acl(): Writes ACL to RFC format - stringify in relaxed mode
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """Relaxed ACL quirk for lenient LDIF processing.
 
         Implements minimal validation for ACL entries.
@@ -801,17 +798,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     # Implication: Frozen Pydantic models require model_copy for updates.
                     if not acl.metadata:
                         updated_acl = acl.model_copy(
-                            update=cast(
-                                "dict[str, object]",
-                                {
-                                    "metadata": m.Ldif.QuirkMetadata(
-                                        quirk_type=self._get_server_type(),
-                                        extensions=m.Ldif.DynamicMetadata.model_validate({
-                                            "original_format": acl_line.strip(),
-                                        }),
-                                    ),
-                                },
-                            ),
+                            update={
+                                "metadata": m.Ldif.QuirkMetadata(
+                                    quirk_type=self._get_server_type(),
+                                    extensions=m.Ldif.DynamicMetadata.model_validate({
+                                        "original_format": acl_line.strip(),
+                                    }),
+                                ),
+                            },
                         )
                     else:
                         # Update existing metadata using model_copy
@@ -825,10 +819,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             },
                         )
                         updated_acl = acl.model_copy(
-                            update=cast(
-                                "dict[str, object]",
-                                {"metadata": updated_metadata},
-                            ),
+                            update={"metadata": updated_metadata},
                         )
                     return r[m.Ldif.Acl].ok(updated_acl)
                 # Create minimal Acl model with relaxed parsing
@@ -839,10 +830,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         attributes=[],
                     ),
                     subject=m.Ldif.AclSubject(
-                        subject_type=cast(
-                            "c.Ldif.LiteralTypes.AclSubjectTypeLiteral",
-                            FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_TYPE,
-                        ),
+                        subject_type="all",  # Relaxed mode: wildcard maps to "all"
                         subject_value=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
                     ),
                     permissions=m.Ldif.AclPermissions(),
@@ -1045,16 +1033,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     dn_line=entry_dn,
                     spacing=entry_dn,  # Store original DN spacing
                 )
+                # Convert attribute case dict to DynamicMetadata safely
+                case_metadata = m.Ldif.DynamicMetadata.model_validate(
+                    original_attribute_case,
+                )
                 metadata = m.Ldif.QuirkMetadata(
                     quirk_type="relaxed",
                     original_format_details=format_details,
-                    original_attribute_case=m.Ldif.DynamicMetadata(
-                        **original_attribute_case,
+                    original_attribute_case=case_metadata,
+                    extensions=m.Ldif.DynamicMetadata(
+                        server_type="relaxed",
+                        relaxed_mode=True,
                     ),
-                    extensions=m.Ldif.DynamicMetadata.model_validate({
-                        "server_type": "relaxed",
-                        "relaxed_mode": True,
-                    }),
                 )
 
                 entry = m.Ldif.Entry(
@@ -1193,15 +1183,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         attr_name,
                         attr_values,
                     ) in entry_data.attributes.attributes.items():
-                        if isinstance(attr_values, (list, tuple)):
-                            ldif_lines.extend(
-                                f"{attr_name}{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}{value}"
-                                for value in attr_values
-                            )
-                        else:
-                            ldif_lines.append(
-                                f"{attr_name}{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}{attr_values}",
-                            )
+                        # attributes.attributes is dict[str, list[str]], iterate list directly
+                        ldif_lines.extend(
+                            f"{attr_name}{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}{value}"
+                            for value in attr_values
+                        )
 
                 # Join with newlines and ensure proper LDIF formatting
                 ldif_text = FlextLdifServersRelaxed.Constants.LDIF_JOIN_SEPARATOR.join(

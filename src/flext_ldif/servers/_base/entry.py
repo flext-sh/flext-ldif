@@ -720,7 +720,7 @@ class FlextLdifServersBaseEntry(
         if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
             return FlextResult[m.Ldif.Entry | str].ok(
-                str_result.value if str_result.is_success else "",
+                str_result.map_or(""),
             )
 
         return FlextResult[m.Ldif.Entry | str].ok("")

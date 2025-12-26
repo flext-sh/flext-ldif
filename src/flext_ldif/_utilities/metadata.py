@@ -295,7 +295,9 @@ class FlextLdifUtilitiesMetadata:
                 (str, int, float, bool, type(None), list, dict, Sequence, Mapping),
             )
         }
-        dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)
+        dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            metadata_typed
+        )
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
         return model
 
@@ -384,7 +386,9 @@ class FlextLdifUtilitiesMetadata:
         )
 
         # Add transformation to history
-        transformation_dict = FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value()
+        transformation_dict = (
+            FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value()
+        )
 
         if "transformations" not in target_metadata:
             # Create new list with transformation
@@ -1628,7 +1632,9 @@ class FlextLdifUtilitiesMetadata:
 
         # Create QuirkMetadata with original_strings populated
         # Convert extensions_dict to DynamicMetadata for type compatibility
-        dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata(**extensions_dict)
+        dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            extensions_dict
+        )
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=config.quirk_type,
             server_specific_data=server_data,

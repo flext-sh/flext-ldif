@@ -174,7 +174,8 @@ class TestsTestFlextLdifUtilitiesOid(s):
                 metadata=m.Ldif.QuirkMetadata(
                     quirk_type="oid",
                     extensions=m.Ldif.DynamicMetadata(
-                        original_format=12345,
+                        # Test with invalid format string (no OID pattern)
+                        original_format="invalid_format_without_oid",
                     ),
                 ),
             ),
@@ -187,7 +188,8 @@ class TestsTestFlextLdifUtilitiesOid(s):
                 metadata=m.Ldif.QuirkMetadata(
                     quirk_type="oid",
                     extensions=m.Ldif.DynamicMetadata(
-                        original_format={"key": "value"},
+                        # Test with JSON-like format string (edge case)
+                        original_format='{"key": "value"}',
                     ),
                 ),
             ),
@@ -237,7 +239,7 @@ class TestsTestFlextLdifUtilitiesOid(s):
                 metadata=m.Ldif.QuirkMetadata(
                     quirk_type="oid",
                     extensions=m.Ldif.DynamicMetadata(
-                        original_format=[],
+                        original_format="[]",
                     ),
                 ),
             ),

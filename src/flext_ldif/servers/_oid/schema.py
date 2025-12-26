@@ -841,7 +841,9 @@ class FlextLdifServersOidSchema(
             }
             # Use specific type for model_copy update
             update_dict: dict[str, object] = {
-                "extensions": FlextLdifModelsMetadata.DynamicMetadata(**new_extensions),
+                "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    new_extensions
+                ),
             }
             oid_metadata = attr_copy.metadata.model_copy(update=update_dict)
 

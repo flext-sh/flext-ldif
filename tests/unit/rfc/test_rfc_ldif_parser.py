@@ -978,7 +978,7 @@ objectClass: person
             expected_content=acl_line,
         )
 
-        name_only_acl = m.Acl(name="test_acl", server_type="rfc")
+        name_only_acl = m.Ldif.Acl(name="test_acl", server_type="rfc")
         _ = RfcTestHelpers.test_acl_quirk_write_and_verify(
             rfc_acl_quirk,
             name_only_acl,
@@ -986,7 +986,7 @@ objectClass: person
         )
 
         # Test empty ACL through public write() method
-        empty_acl = m.Acl(server_type="rfc")
+        empty_acl = m.Ldif.Acl(server_type="rfc")
         result = rfc_acl_quirk.write(empty_acl)
         assert result.is_failure
         assert result.error is not None

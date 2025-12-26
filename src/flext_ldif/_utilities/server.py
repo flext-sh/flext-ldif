@@ -16,9 +16,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import Literal, cast
+from typing import Literal, TypeGuard
 
-from flext_core import FlextUtilities
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
@@ -38,6 +38,7 @@ _VALID_SERVER_TYPES: frozenset[str] = frozenset(
         "oud",
         "rfc",
         "openldap",
+        "openldap1",
         "ad",
         "apache",
         "ds389",
@@ -49,6 +50,16 @@ _VALID_SERVER_TYPES: frozenset[str] = frozenset(
 _CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
 
 
+def _is_valid_server_type_literal(
+    value: str,
+) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
+    """TypeGuard to narrow str to ServerTypeLiteral.
+
+    Validates that the value is a valid server type string.
+    """
+    return value in _VALID_SERVER_TYPES
+
+
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution.
 
@@ -58,30 +69,53 @@ class FlextLdifUtilitiesServer:
     """
 
     @staticmethod
+    def _extract_server_type_from_constants(
+        cls_with_constants: type[object] | None,
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+        """Extract server type from a class's Constants.SERVER_TYPE."""
+        if cls_with_constants is None:
+            return None
+        constants = getattr(cls_with_constants, "Constants", None)
+        if constants is None:
+            return None
+        server_type = getattr(constants, "SERVER_TYPE", None)
+        if (
+            server_type is not None
+            and isinstance(server_type, str)
+            and _is_valid_server_type_literal(server_type)
+        ):
+            return server_type
+        return None
+
+    @staticmethod
     def _get_type_from_nested_class(
         target_cls: type[object],
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
-        if not (hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__):
-            return None
-        parent_class_name = target_cls.__qualname__.split(".")[0]
-        try:
-            parent_module = __import__(
-                target_cls.__module__,
-                fromlist=[parent_class_name],
+        # First try the nested class pattern with __qualname__
+        if hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__:
+            parent_class_name = target_cls.__qualname__.split(".")[0]
+            try:
+                parent_module = __import__(
+                    target_cls.__module__,
+                    fromlist=[parent_class_name],
+                )
+                parent_server_cls = getattr(parent_module, parent_class_name, None)
+                result = FlextLdifUtilitiesServer._extract_server_type_from_constants(
+                    parent_server_cls,
+                )
+                if result is not None:
+                    return result
+            except (AttributeError, ImportError):
+                pass
+
+        # Fallback: search through MRO for a class with Constants.SERVER_TYPE
+        for mro_cls in target_cls.__mro__:
+            result = FlextLdifUtilitiesServer._extract_server_type_from_constants(
+                mro_cls,
             )
-            parent_server_cls = getattr(parent_module, parent_class_name, None)
-            if parent_server_cls is None:
-                return None
-            constants = getattr(parent_server_cls, "Constants", None)
-            if constants is None:
-                return None
-            server_type = getattr(constants, "SERVER_TYPE", None)
-            if server_type is not None:
-                # server_type is already ServerTypeLiteral
-                return cast("c.Ldif.LiteralTypes.ServerTypeLiteral", server_type)
-        except (AttributeError, ImportError):
-            pass
+            if result is not None:
+                return result
         return None
 
     @staticmethod
@@ -105,13 +139,9 @@ class FlextLdifUtilitiesServer:
         if imported_type:
             return imported_type
         # Fallback: validate and return derived type
-        if server_type_lower in _VALID_SERVER_TYPES:
-            # Type narrowing: server_type_lower is in valid server types
-            # Cast to literal since we validated it's in valid types
-            return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                server_type_lower,
-            )
+        # Use TypeGuard to narrow to ServerTypeLiteral
+        if _is_valid_server_type_literal(server_type_lower):
+            return server_type_lower
         return None
 
     @staticmethod
@@ -368,15 +398,16 @@ class FlextLdifUtilitiesServer:
         # Check alias map first
         if server_type_lower in alias_map:
             # alias_map values are guaranteed valid ServerTypeLiterals
-            return cast(
-                "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                alias_map[server_type_lower],
-            )
+            alias_value = alias_map[server_type_lower]
+            if _is_valid_server_type_literal(alias_value):
+                return alias_value
         # Check if it's already a canonical value
         # ServerTypes is a StrEnum, iterate over enum members
         for server_enum in c.Ldif.ServerTypes.__members__.values():
             if server_enum.value == server_type_lower:
-                return server_enum.value  # type: ignore[return-value]
+                enum_value = server_enum.value
+                if _is_valid_server_type_literal(enum_value):
+                    return enum_value
         # Not found
         # ServerTypes is a StrEnum, iterate over enum members
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]

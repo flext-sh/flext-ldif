@@ -1,8 +1,8 @@
-"""Service Registry for breaking circular dependencies.
+"""Service Registry using FlextRegistry class-level plugin API.
 
-Provides factory registration and service resolution for services that
-would otherwise cause circular imports. Factories are registered by
-api.py after all services are loaded.
+Provides factory registration for services that would otherwise cause
+circular imports. Uses class-level storage so all instances share
+the same registered factories.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,207 +11,105 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar, Final, cast
+from typing import ClassVar
 
-# Factory function types (PEP 695) - defined at module level for better type checking
-# Business Rule: Type aliases defined at module level for reuse across the class.
-# Implication: These types are used in ClassVar annotations and method signatures.
-# Note: PEP 695 type aliases can be defined inside classes, but module-level avoids
-# pyright issues with ClassVar assignment.
-# Using object since services cannot import protocols
-type FilterFactoryType = Callable[
-    [],
-    object,
-]
-type CategorizationFactoryType = Callable[
-    [str],
-    object,
-]
+from flext_core import FlextResult as r, FlextTypes as t
+from flext_core.protocols import p
+from flext_core.registry import FlextRegistry
+
+# Factory type aliases (using object since services cannot import protocols)
+type FilterFactoryType = Callable[[], object]
+type CategorizationFactoryType = Callable[[str], object]
 
 
-class FlextLdifServiceRegistry:
-    """Service registry for factory functions.
+class FlextLdifServiceRegistry(FlextRegistry):
+    """Service registry using FlextRegistry class-level plugin API.
 
     Breaks circular dependencies between categorization and filter services
-    by providing a central registry for factory functions. The api.py facade
-    registers factories after importing all services.
-
-    Business Rule: Service registry pattern prevents circular import dependencies
-    by deferring service instantiation until runtime. Factories are registered
-    during module initialization (api.py) and resolved on-demand by services.
-    This follows Dependency Injection principles and enables testability.
-
-    Implication: All services using this registry must handle RuntimeError when
-    factories are not registered. This ensures fail-fast behavior and clear
-    error messages for misconfigured environments.
-
-    Usage:
-        # In api.py (after importing services):
-        FlextLdifServiceRegistry.register_filter_factory(FlextLdifFilters)
-        FlextLdifServiceRegistry.register_categorization_factory(...)
-
-        # In services (instead of lazy imports):
-        filter_service = FlextLdifServiceRegistry.get_filter_service()
-
+    by providing a central registry for factory functions. Uses class-level
+    storage so all instances see the same registered factories.
     """
 
-    # Private class-level storage for factories (ClassVar for proper type checking)
-    # Business Rule: ClassVar indicates these are class-level state, not instance
-    # attributes. This enables proper type narrowing in classmethods and prevents
-    # pyright errors about missing self/cls parameters.
-    # Implication: ClassVar allows assignment in classmethods. Initialize to None
-    # at class definition time for proper type checking.
-    _filter_factory: ClassVar[FilterFactoryType | None] = None
-    _categorization_factory: ClassVar[CategorizationFactoryType | None] = None
+    FACTORIES: ClassVar[str] = "ldif_factories"
 
-    # Error messages as constants
-    _FILTER_NOT_REGISTERED: Final[str] = (
-        "Filter service factory not registered. Import flext_ldif.api first."
-    )
-    _CATEGORIZATION_NOT_REGISTERED: Final[str] = (
-        "Categorization service factory not registered. Import flext_ldif.api first."
-    )
-
-    @classmethod
-    def register_filter_factory(
-        cls,
-        factory: FilterFactoryType,
+    def __init__(
+        self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
     ) -> None:
-        """Register factory function for filter service.
+        """Initialize with FlextRegistry infrastructure."""
+        super().__init__(dispatcher=dispatcher, **data)
 
-        Business Rule: Factory registration must happen before service resolution.
-        Typically called during module initialization in api.py. Registration is
-        idempotent - subsequent registrations overwrite previous ones.
+    # Factory registration using class-level plugin API
 
-        Implication: Services that depend on filter service must ensure api.py
-        is imported before attempting to resolve the service.
+    def register_filter_factory(self, factory: FilterFactoryType) -> r[bool]:
+        """Register factory function for filter service."""
+        return self.register_class_plugin(self.FACTORIES, "filter", factory)
 
-        Args:
-            factory: Callable that returns FilterServiceProtocol instance
-
-        """
-        # Business Rule: ClassVar assignment in classmethods.
-        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
-        # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
-        # This pattern enables factory registration for dependency injection.
-        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
-        type.__setattr__(cls, "_filter_factory", factory)
-
-    @classmethod
     def register_categorization_factory(
-        cls,
+        self,
         factory: CategorizationFactoryType,
-    ) -> None:
-        """Register factory function for categorization service.
+    ) -> r[bool]:
+        """Register factory for categorization service."""
+        return self.register_class_plugin(self.FACTORIES, "categorization", factory)
 
-        Business Rule: Categorization factory accepts server_type parameter to
-        create server-specific categorization instances. This enables per-server
-        categorization rules while maintaining a single registry interface.
+    # Service resolution using class-level plugin API
 
-        Implication: Factory must handle server type normalization and validation.
-        Invalid server types should be normalized to "rfc" as fallback.
+    def get_filter_service(self) -> r[object]:
+        """Get filter service instance from registered factory."""
+        factory_result = self.get_class_plugin(self.FACTORIES, "filter")
+        if factory_result.is_failure:
+            return r[object].fail(
+                "Filter service factory not registered. Import flext_ldif.api first.",
+            )
+        factory_raw = factory_result.value
+        if not callable(factory_raw):
+            return r[object].fail("Filter factory is not callable")
+        return r[object].ok(factory_raw())
 
-        Args:
-            factory: Callable that accepts server_type and returns
-                    CategorizationServiceProtocol instance
+    def get_categorization_service(self, server_type: str = "rfc") -> r[object]:
+        """Get categorization service instance from registered factory."""
+        factory_result = self.get_class_plugin(self.FACTORIES, "categorization")
+        if factory_result.is_failure:
+            return r[object].fail(
+                "Categorization factory not registered. Import flext_ldif.api first.",
+            )
+        factory_raw = factory_result.value
+        if not callable(factory_raw):
+            return r[object].fail("Categorization factory is not callable")
+        return r[object].ok(factory_raw(server_type))
 
-        """
-        # Business Rule: ClassVar assignment in classmethods.
-        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
-        # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
-        # This pattern enables factory registration for dependency injection.
-        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
-        type.__setattr__(cls, "_categorization_factory", factory)
+    def is_initialized(self) -> bool:
+        """Check if all factories are registered."""
+        plugins = self.list_class_plugins(self.FACTORIES).value or []
+        return "filter" in plugins and "categorization" in plugins
 
-    @classmethod
-    def get_filter_service(
-        cls,
-    ) -> object:
-        """Get filter service instance from registered factory.
+    def reset(self) -> None:
+        """Reset registry (for testing only)."""
+        self.unregister_class_plugin(self.FACTORIES, "filter")
+        self.unregister_class_plugin(self.FACTORIES, "categorization")
 
-        Business Rule: Service resolution follows fail-fast pattern - raises
-        RuntimeError immediately if factory not registered. This prevents
-        silent failures and ensures proper initialization order.
 
-        Implication: Callers must handle RuntimeError or ensure api.py is
-        imported before calling this method. Used internally by services
-        that need filter capabilities.
+# Global instance for backward compatibility
+_global_registry: FlextLdifServiceRegistry | None = None
 
-        Returns:
-            FilterServiceProtocol instance
 
-        Raises:
-            RuntimeError: If factory not registered (fail-fast validation)
+def get_registry() -> FlextLdifServiceRegistry:
+    """Get or create global registry instance."""
+    global _global_registry  # noqa: PLW0603
+    if _global_registry is None:
+        _global_registry = FlextLdifServiceRegistry()
+    return _global_registry
 
-        """
-        # Business Rule: Access ClassVar via getattr() to work around pyright strict mode.
-        # Implication: Direct access to ClassVar may fail in pyright strict mode.
-        # Runtime behavior is correct - getattr() works identically to direct access.
-        filter_factory = getattr(cls, "_filter_factory", None)
-        if filter_factory is None:
-            raise RuntimeError(cls._FILTER_NOT_REGISTERED)
-        # Cast needed: getattr returns object, but we know it's FilterFactoryType after None check
-        return cast("FilterFactoryType", filter_factory)()
 
-    @classmethod
-    def get_categorization_service(
-        cls,
-        server_type: str = "rfc",
-    ) -> object:
-        """Get categorization service instance from registered factory.
+def reset_registry() -> None:
+    """Reset global registry (for testing)."""
+    global _global_registry  # noqa: PLW0603
+    if _global_registry is not None:
+        _global_registry.reset()
+    _global_registry = None
 
-        Business Rule: Server type parameter enables server-specific categorization
-        rules. Defaults to "rfc" for generic RFC-compliant categorization. Factory
-        must normalize server types and handle invalid values gracefully.
 
-        Implication: Services requesting categorization must provide correct
-        server type for accurate categorization. Invalid server types are
-        normalized by the factory implementation.
-
-        Args:
-            server_type: LDAP server type for categorization rules (default: "rfc")
-
-        Returns:
-            CategorizationServiceProtocol instance configured for server type
-
-        Raises:
-            RuntimeError: If factory not registered (fail-fast validation)
-
-        """
-        # Business Rule: Access ClassVar via getattr() to work around pyright strict mode.
-        # Implication: Direct access to ClassVar may fail in pyright strict mode.
-        # Runtime behavior is correct - getattr() works identically to direct access.
-        categorization_factory = getattr(cls, "_categorization_factory", None)
-        if categorization_factory is None:
-            raise RuntimeError(cls._CATEGORIZATION_NOT_REGISTERED)
-        # Cast needed: getattr returns object, but we know it's CategorizationFactoryType after None check
-        return cast("CategorizationFactoryType", categorization_factory)(server_type)
-
-    @classmethod
-    def is_initialized(cls) -> bool:
-        """Check if all factories are registered.
-
-        Returns:
-            True if both factories are registered
-
-        """
-        # Business Rule: Access ClassVar via getattr() to work around pyright strict mode.
-        # Implication: Direct access to ClassVar may fail in pyright strict mode.
-        filter_factory = getattr(cls, "_filter_factory", None)
-        categorization_factory = getattr(cls, "_categorization_factory", None)
-        return filter_factory is not None and categorization_factory is not None
-
-    @classmethod
-    def reset(cls) -> None:
-        """Reset registry (for testing only).
-
-        Clears all registered factories.
-
-        """
-        # Business Rule: Reset ClassVar to None for testing/cleanup.
-        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
-        # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
-        # This pattern enables factory reset for test isolation.
-        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
-        type.__setattr__(cls, "_filter_factory", None)
-        type.__setattr__(cls, "_categorization_factory", None)
+__all__ = [
+    "FlextLdifServiceRegistry",
+    "get_registry",
+    "reset_registry",
+]

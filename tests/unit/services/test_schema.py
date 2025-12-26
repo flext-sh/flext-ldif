@@ -10,7 +10,7 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 
 from flext_ldif.models import m
 from flext_ldif.services.schema import FlextLdifSchema

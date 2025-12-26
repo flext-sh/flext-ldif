@@ -7,7 +7,6 @@ wrapped in ``FlextResult`` to keep error handling explicit.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
@@ -103,20 +102,32 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
         # Type narrowing: entry_quirk_raw has parse method
-        # Direct call to entry quirk parse method using type annotation
-        # Note: parse returns FlextResult[list[m.Ldif.Entry]] per EntryProtocol
-        parse_method: Callable[[str], r[list[m.Ldif.Entry]]] = entry_quirk_raw.parse
-        if not callable(parse_method):
+        # Get parse method from attribute and validate callable
+        parse_attr = getattr(entry_quirk_raw, "parse", None)
+        if parse_attr is None or not callable(parse_attr):
             return r[str].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
             )
-        parse_result = parse_method(content)
+        # Call parse method - result is FlextResult[list[Entry]] per EntryProtocol
+        parse_result_raw = parse_attr(content)
 
-        if parse_result.is_failure:
-            return r[str].fail(parse_result.error or "LDIF parsing failed")
+        # Check for failure via attribute access
+        is_failure = getattr(parse_result_raw, "is_failure", None)
+        if is_failure is None:
+            return r[str].fail("Invalid parse result from entry quirk")
+        if is_failure:
+            error_msg = (
+                getattr(parse_result_raw, "error", None) or "LDIF parsing failed"
+            )
+            return r[str].fail(
+                error_msg if isinstance(error_msg, str) else str(error_msg)
+            )
 
         # Extract entries from server response (list of Entry models)
-        entries = parse_result.value
+        entries_raw = getattr(parse_result_raw, "value", None)
+        if entries_raw is None:
+            return r[str].fail("Parse result has no value")
+        entries = entries_raw if isinstance(entries_raw, list) else []
 
         # Create response with minimal metadata
         # Use facade LdifResults.Statistics for LDIF-specific statistics

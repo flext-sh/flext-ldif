@@ -921,7 +921,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            logger.exception("RFC %s writing exception", item_type)
+            logger.exception(f"RFC {item_type} writing exception")
             return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
     def _write_attribute(

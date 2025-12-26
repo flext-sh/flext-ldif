@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 from tests import RfcTestHelpers, c, s
 
 from flext_ldif.models import m

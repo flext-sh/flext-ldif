@@ -12,7 +12,7 @@ from enum import IntEnum
 from typing import TypeVar
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif.models import m

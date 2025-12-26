@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import cast
 
 import pytest
-from flext import FlextResult
+from flext_core import FlextResult
 from flext_tests import tm
 
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -253,7 +253,7 @@ class TestsTestFlextLdifConversionService(s):
         conversion_service: FlextLdifConversion,
     ) -> None:
         """Test resolving invalid server type."""
-        with pytest.raises(ValueError, match="Invalid server type"):
+        with pytest.raises(ValueError, match="Unknown server type"):
             FlextLdifConversion._resolve_quirk("invalid_server_type")
 
     # ────────────────────────────────────────────────────────────────────────

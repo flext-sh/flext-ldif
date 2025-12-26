@@ -12,50 +12,42 @@ from __future__ import annotations
 from flext_ldif.constants import c
 
 
-def normalize_server_type(server_type: str) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-    """Normalize server type string to canonical ServerTypes enum value.
+def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
+    """Normalize server type string to canonical ServerTypes enum member.
 
-    Converts aliases and variations to canonical short form:
-    - "active_directory", "ad", "ActiveDirectory" → "ad"
-    - "oracle_oid", "oid", "OID" → "oid"
+    Converts aliases and variations to canonical enum member:
+    - "active_directory", "ad", "ActiveDirectory" → ServerTypes.AD
+    - "oracle_oid", "oid", "OID" → ServerTypes.OID
     - etc.
 
-    Returns canonical ServerTypes enum value (short identifier).
+    Returns canonical ServerTypes enum member. Since ServerTypes is a StrEnum,
+    the returned value can be used directly as a string in comparisons.
     Raises ValueError if server_type is not recognized.
-
-    Note: Return value is guaranteed to be a valid ServerTypeLiteral string,
-    but returned as `str` for type compatibility. All returned values are
-    validated against ServerTypes enum members.
     """
     server_type_lower = server_type.lower().strip()
-    # Map aliases to canonical forms
-    # Use full path to ServerTypes to avoid name resolution issues
-    alias_map: dict[str, str] = {
-        "active_directory": c.Ldif.ServerTypes.AD.value,
-        "activedirectory": c.Ldif.ServerTypes.AD.value,
-        "oracle_oid": c.Ldif.ServerTypes.OID.value,
-        "oracleoid": c.Ldif.ServerTypes.OID.value,
-        "oracle_oud": c.Ldif.ServerTypes.OUD.value,
-        "oracleoud": c.Ldif.ServerTypes.OUD.value,
-        "openldap": c.Ldif.ServerTypes.OPENLDAP2.value,  # "openldap" maps to "openldap2"
-        "openldap1": c.Ldif.ServerTypes.OPENLDAP1.value,
-        "openldap2": c.Ldif.ServerTypes.OPENLDAP2.value,
-        "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
-        "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
-        "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
+    # Map aliases to canonical enum members
+    alias_map: dict[str, c.Ldif.ServerTypes] = {
+        "active_directory": c.Ldif.ServerTypes.AD,
+        "activedirectory": c.Ldif.ServerTypes.AD,
+        "oracle_oid": c.Ldif.ServerTypes.OID,
+        "oracleoid": c.Ldif.ServerTypes.OID,
+        "oracle_oud": c.Ldif.ServerTypes.OUD,
+        "oracleoud": c.Ldif.ServerTypes.OUD,
+        "openldap": c.Ldif.ServerTypes.OPENLDAP2,  # "openldap" maps to OPENLDAP2
+        "openldap1": c.Ldif.ServerTypes.OPENLDAP1,
+        "openldap2": c.Ldif.ServerTypes.OPENLDAP2,
+        "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
+        "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
+        "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
     }
     # Check alias map first
     if server_type_lower in alias_map:
-        # alias_map values are guaranteed valid ServerTypeLiterals
-        return alias_map[server_type_lower]  # type: ignore[return-value]
+        return alias_map[server_type_lower]
     # Check if it's already a canonical value
-    # ServerTypes is a StrEnum, iterate over enum members
     for server_enum in c.Ldif.ServerTypes.__members__.values():
         if server_enum.value == server_type_lower:
-            # Return the enum member's value which is already a ServerTypeLiteral
-            return server_enum.value  # type: ignore[return-value]
+            return server_enum
     # Not found
-    # ServerTypes is a StrEnum, iterate over enum members
     valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
     msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
     raise ValueError(msg)

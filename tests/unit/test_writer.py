@@ -84,10 +84,7 @@ class TestFlextLdifWriterRfc(s):
             target_server_type="rfc",
         )
 
-        content = tm.ok(
-            result,
-            f"Write failed for scenario {scenario.value}",
-        )
+        content = tm.ok(result)
 
         assert isinstance(content, str)
         # Writer output may not include "version: 1" header by default

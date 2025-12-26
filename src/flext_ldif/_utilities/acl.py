@@ -1052,7 +1052,7 @@ class FlextLdifUtilitiesACL:
             metadata=m.Ldif.QuirkMetadata.create_for(
                 config.server_type,
                 extensions=(
-                    FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+                    FlextLdifModelsMetadata.DynamicMetadata.from_dict(extensions)
                     if extensions
                     else None
                 ),

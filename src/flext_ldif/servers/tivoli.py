@@ -16,9 +16,7 @@ from flext_core import r
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
 
@@ -278,7 +276,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """IBM Tivoli Directory Server ACL quirks implementation."""
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -494,11 +492,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
             )
-            object_classes: list[str] = (
-                object_classes_raw
-                if isinstance(object_classes_raw, (list, tuple))
-                else [object_classes_raw]
-            )
+            if isinstance(object_classes_raw, list):
+                object_classes: list[str] = object_classes_raw
+            elif isinstance(object_classes_raw, tuple):
+                object_classes = list(object_classes_raw)
+            else:
+                object_classes = [str(object_classes_raw)]
             return bool(
                 any(
                     str(oc).lower()

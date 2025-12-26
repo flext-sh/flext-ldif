@@ -6,7 +6,7 @@ against RFC 4517 standard syntaxes.
 
 from __future__ import annotations
 
-from flext import FlextResult
+from flext_core import FlextResult
 
 from flext_ldif.services.syntax import FlextLdifSyntax
 from tests import s

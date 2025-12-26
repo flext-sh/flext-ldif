@@ -192,7 +192,7 @@ class FlextLdifDn(
             dn_config = m.Ldif.LdifResults.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
-                output_dn=result.value if result.is_success else None,
+                output_dn=result.map_or(None),
                 operation_duration_ms=duration_ms,
                 validation_result=result.is_success
                 if self.operation == "validate"

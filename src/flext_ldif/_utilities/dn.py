@@ -1480,7 +1480,7 @@ class FlextLdifUtilitiesDN:
 
         # Normalize the DN first
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-        normalized_dn = norm_result.value if norm_result.is_success else dn_str
+        normalized_dn = norm_result.map_or(dn_str)
 
         # Use regex to replace source base DN suffix with target base DN
         # Pattern: match either:

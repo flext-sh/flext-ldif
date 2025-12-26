@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from flext import FlextSettings
+from flext_core import FlextSettings
 
 from flext_ldif import (
     FlextLdif,

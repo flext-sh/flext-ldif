@@ -26,9 +26,7 @@ from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -313,7 +311,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # Nested class references for Schema - allows Schema().Entry() pattern
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
         # SDDL pattern moved to Constants.ACL_SDDL_PREFIX_PATTERN

@@ -319,7 +319,7 @@ def schema_driven_workflow() -> None:
             },
         )
 
-        return person_result.value if person_result.is_success else None
+        return person_result.map_or(None)
 
     batch_result = u.process(
         list(range(5)),

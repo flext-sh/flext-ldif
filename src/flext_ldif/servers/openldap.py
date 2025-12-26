@@ -378,7 +378,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             # Just pass through to parent
             return super()._transform_objectclass_for_write(oc_data)
 
-    class Acl(FlextLdifServersRfcAcl):
+    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
         """OpenLDAP 2.x ACL quirk (nested).
 
         Extends RFC ACL parsing with OpenLDAP 2.x-specific ACL formats:
@@ -830,7 +830,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Build validation rules dictionary by reading frozensets
             # ZERO hard-coded values - all from Constants!
-            validation_rules: dict[str, str | int | float | bool | dict[str, str | int | float | bool | list[str] | None] | list[str] | None] = {
+            validation_rules: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | dict[str, str | int | float | bool | list[str] | None]
+                | list[str]
+                | None,
+            ] = {
                 # OBJECTCLASS requirement (OpenLDAP is flexible - check frozenset)
                 "requires_objectclass": (
                     server_type

@@ -122,7 +122,9 @@ class FlextLdifUtilitiesDecorators:
         )
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
-            extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_dict),
+            extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                extensions_dict
+            ),
         )
 
         # Attach metadata by checking if object is a model instance with metadata
