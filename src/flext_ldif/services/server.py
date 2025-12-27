@@ -150,7 +150,7 @@ class FlextLdifServer(FlextRegistry):
     def get_all_quirks(
         self,
         server_type: str,
-    ) -> r[t.ConfigurationDict]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Get all quirk types for a server."""
         return self.quirk(server_type).map(
             lambda base: {
@@ -191,7 +191,7 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_detection_constants)
 
-    def get_registry_stats(self) -> t.ConfigurationDict:
+    def get_registry_stats(self) -> dict[str, t.GeneralValueType]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}

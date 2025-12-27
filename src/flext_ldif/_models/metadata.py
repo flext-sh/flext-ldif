@@ -116,8 +116,12 @@ class FlextLdifModelsMetadata:
                 return str(value) if value is not None else None
             raise KeyError(key)
 
-        def __setitem__(self, key: str, value: t.MetadataAttributeValue) -> None:
-            """Set value by key using Pydantic's extra field handling."""
+        def __setitem__(self, key: str, value: object) -> None:
+            """Set value by key using Pydantic's extra field handling.
+
+            Note: Uses `object` type to handle type invariance with list[str]
+            assignments. The underlying setattr accepts any object.
+            """
             setattr(self, key, value)
 
         def __contains__(self, key: str) -> bool:

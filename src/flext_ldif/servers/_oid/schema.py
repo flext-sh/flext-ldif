@@ -23,6 +23,7 @@ from flext_ldif.models import m
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 # Removed alias - use c.Ldif.MetadataKeys directly (no redundant aliases in higher layers)
@@ -281,13 +282,13 @@ class FlextLdifServersOidSchema(
             # Step 4: Transform caseIgnoreSubstringsMatch (EQUALITY → SUBSTR)
             attr = self._transform_case_ignore_substrings(attr)
 
-            return r[str].ok(attr)
+            return r[m.Ldif.SchemaAttribute].ok(attr)
 
         except Exception as e:
             logger.exception(
                 "OID post-parse attribute hook failed",
             )
-            return r[str].fail(
+            return r[m.Ldif.SchemaAttribute].fail(
                 f"OID post-parse attribute hook failed: {e}",
             )
 
@@ -409,13 +410,13 @@ class FlextLdifServersOidSchema(
             if update_dict:
                 oc = oc.model_copy(update=update_dict)
 
-            return r[str].ok(oc)
+            return r[m.Ldif.SchemaObjectClass].ok(oc)
 
         except Exception as e:
             logger.exception(
                 "OID post-parse objectclass hook failed",
             )
-            return r[str].fail(
+            return r[m.Ldif.SchemaObjectClass].fail(
                 f"OID post-parse objectclass hook failed: {e}",
             )
 
@@ -840,7 +841,7 @@ class FlextLdifServersOidSchema(
                 if k not in keys_to_remove
             }
             # Use specific type for model_copy update
-            update_dict: dict[str, object] = {
+            update_dict: dict[str, t.GeneralValueType] = {
                 "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     new_extensions
                 ),
@@ -849,7 +850,7 @@ class FlextLdifServersOidSchema(
 
         # Apply transformations with model_copy
         # Use specific type for model_copy update
-        matchers_dict: dict[str, object] = {
+        matchers_dict: dict[str, t.GeneralValueType] = {
             "equality": oid_equality,
             "substr": oid_substr,
             "ordering": oid_ordering,

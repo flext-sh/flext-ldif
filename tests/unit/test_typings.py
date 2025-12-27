@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import Any, ClassVar
 
 import pytest
 
@@ -169,88 +169,74 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        # GenericFieldsDict doesn't have these keys defined, use cast for type flexibility
-        attrs: GenericFieldsDict = cast(
-            "GenericFieldsDict",
-            {
-                c.Names.CN: ["John Doe"],
-                c.Names.OBJECTCLASS: [
-                    c.Names.INETORGPERSON,
-                    c.Names.PERSON,
-                    c.Names.TOP,
-                ],
-                c.Names.SN: "Doe",
-                c.Names.MAIL: ["john@example.com"],
-                c.Names.UID: "jdoe",
-            },
-        )
-        # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_value = cast("list[str]", attrs.get(c.Names.CN))
+        # GenericFieldsDict is a flexible TypedDict for test data
+        attrs: dict[str, Any] = {
+            c.Names.CN: ["John Doe"],
+            c.Names.OBJECTCLASS: [
+                c.Names.INETORGPERSON,
+                c.Names.PERSON,
+                c.Names.TOP,
+            ],
+            c.Names.SN: "Doe",
+            c.Names.MAIL: ["john@example.com"],
+            c.Names.UID: "jdoe",
+        }
+        # Access test data directly
+        cn_value: Any = attrs.get(c.Names.CN)
         assert cn_value == ["John Doe"]
-        objectclass_value = cast("list[str]", attrs.get(c.Names.OBJECTCLASS))
+        objectclass_value: Any = attrs.get(c.Names.OBJECTCLASS)
         assert isinstance(objectclass_value, list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        # GenericFieldsDict doesn't have schema keys, use cast for type flexibility
-        data: dict[str, GenericFieldsDict] = {
-            c.Names.CN: cast(
-                "GenericFieldsDict",
-                {
-                    "oid": OIDs.CN,
-                    "syntax": "Directory String",
-                    "equality": "caseIgnoreMatch",
-                    "single_valued": False,
-                },
-            ),
-            c.Names.UID: cast(
-                "GenericFieldsDict",
-                {
-                    "oid": "0.9.2342.19200300.100.1.1",
-                    "syntax": "Directory String",
-                    "single_valued": True,
-                },
-            ),
+        # Use dict[str, Any] for flexible test data
+        data: dict[str, dict[str, Any]] = {
+            c.Names.CN: {
+                "oid": OIDs.CN,
+                "syntax": "Directory String",
+                "equality": "caseIgnoreMatch",
+                "single_valued": False,
+            },
+            c.Names.UID: {
+                "oid": "0.9.2342.19200300.100.1.1",
+                "syntax": "Directory String",
+                "single_valued": True,
+            },
         }
-        # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_oid = cast("str", data[c.Names.CN].get("oid"))
+        # Access test data directly with Any type
+        cn_oid: Any = data[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN
-        uid_single_valued = cast("bool", data[c.Names.UID].get("single_valued"))
+        uid_single_valued: Any = data[c.Names.UID].get("single_valued")
         assert uid_single_valued is True
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        # GenericFieldsDict doesn't have schema keys, use cast for type flexibility
-        data: dict[str, GenericFieldsDict] = {
-            c.Names.INETORGPERSON: cast(
-                "GenericFieldsDict",
-                {
-                    "oid": "2.16.840.1.113730.3.2.2",
-                    "kind": "STRUCTURAL",
-                    "sup": "organizationalPerson",
-                    "must": [c.Names.UID],
-                    "may": [c.Names.MAIL, "mobile"],
-                },
-            ),
+        # Use dict[str, Any] for flexible test data
+        data: dict[str, dict[str, Any]] = {
+            c.Names.INETORGPERSON: {
+                "oid": "2.16.840.1.113730.3.2.2",
+                "kind": "STRUCTURAL",
+                "sup": "organizationalPerson",
+                "must": [c.Names.UID],
+                "may": [c.Names.MAIL, "mobile"],
+            },
         }
-        # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        oid_value = cast("str", data[c.Names.INETORGPERSON].get("oid"))
+        # Access test data directly with Any type
+        oid_value: Any = data[c.Names.INETORGPERSON].get("oid")
         assert oid_value == "2.16.840.1.113730.3.2.2"
-        may_values = cast("list[str]", data[c.Names.INETORGPERSON].get("may"))
+        may_values: Any = data[c.Names.INETORGPERSON].get("may")
         assert c.Names.MAIL in may_values
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        # GenericFieldsDict doesn't have these keys, use dict[str, object] for flexibility
-        extensions_dict: dict[str, object] = {
+        # Use dict[str, Any] for flexible test data
+        extensions: dict[str, Any] = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
         }
-        # Cast to GenericFieldsDict for type compatibility
-        extensions: GenericFieldsDict = cast("GenericFieldsDict", extensions_dict)
-        # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        supports_dn_case = cast("bool", extensions.get("supports_dn_case_registry"))
+        # Access test data directly with Any type
+        supports_dn_case: Any = extensions.get("supports_dn_case_registry")
         assert supports_dn_case is True
 
 
@@ -355,14 +341,10 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        # GenericFieldsDict doesn't have schema keys, use dict[str, object] for flexibility
-        schema_dict: dict[str, dict[str, object]] = {
+        # Use dict[str, Any] for flexible test data
+        schema_attrs: dict[str, dict[str, Any]] = {
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
-        # Cast to dict[str, GenericFieldsDict] for type compatibility
-        schema_attrs: dict[str, GenericFieldsDict] = cast(
-            "dict[str, GenericFieldsDict]", schema_dict
-        )
-        # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_oid = cast("str", schema_attrs[c.Names.CN].get("oid"))
+        # Access test data directly with Any type
+        cn_oid: Any = schema_attrs[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN

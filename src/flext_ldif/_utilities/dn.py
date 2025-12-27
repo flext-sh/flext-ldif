@@ -534,7 +534,7 @@ class FlextLdifUtilitiesDN:
         """
         # Early validation - consolidate returns
         if dn is None:
-            return r[str].fail("DN cannot be None")
+            return r[list[tuple[str, str]]].fail("DN cannot be None")
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
             error_msg = (
@@ -542,7 +542,7 @@ class FlextLdifUtilitiesDN:
                 if not dn_str
                 else f"Invalid DN format: missing '=' separator in '{dn_str}'"
             )
-            return r[str].fail(error_msg)
+            return r[list[tuple[str, str]]].fail(error_msg)
 
         try:
             components = FlextLdifUtilitiesDN.split(dn_str)
@@ -561,7 +561,9 @@ class FlextLdifUtilitiesDN:
                 on_error="skip",
             )
             if process_result.is_failure:
-                return r[str].fail(f"Failed to parse DN components from '{dn_str}'")
+                return r[list[tuple[str, str]]].fail(
+                    f"Failed to parse DN components from '{dn_str}'"
+                )
             parsed_list = process_result.value
             tuple_length = 2
             result = [
@@ -575,7 +577,7 @@ class FlextLdifUtilitiesDN:
                 else r.fail(f"Failed to parse DN components from '{dn_str}'")
             )
         except Exception as e:
-            return r[str].fail(f"DN parsing error: {e}")
+            return r[list[tuple[str, str]]].fail(f"DN parsing error: {e}")
 
     @overload
     @staticmethod
@@ -665,7 +667,7 @@ class FlextLdifUtilitiesDN:
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
-            return r[str].fail(
+            return r[tuple[str, FlextLdifModelsDomains.DNStatistics]].fail(
                 "DN string is empty or invalid",
             )
         # Use original_dn if provided, otherwise use dn_str
@@ -673,7 +675,7 @@ class FlextLdifUtilitiesDN:
 
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if not norm_result.is_success:
-            return r[str].fail(
+            return r[tuple[str, FlextLdifModelsDomains.DNStatistics]].fail(
                 norm_result.error or "DN normalization failed",
             )
         normalized = norm_result.value
@@ -691,7 +693,7 @@ class FlextLdifUtilitiesDN:
             transformations=transformations,
         )
 
-        return r[str].ok(
+        return r[tuple[str, FlextLdifModelsDomains.DNStatistics]].ok(
             (
                 normalized,
                 stats,
@@ -1024,17 +1026,17 @@ class FlextLdifUtilitiesDN:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.is_success:
-            return r[str].fail(
+            return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
             )
 
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
         if not norm2_result.is_success:
-            return r[str].fail(
+            return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
 
-        return r[str].ok((
+        return r[tuple[str, str]].ok((
             norm1_result.value.lower(),
             norm2_result.value.lower(),
         ))
@@ -1050,17 +1052,17 @@ class FlextLdifUtilitiesDN:
         """
         try:
             if not dn1 or not dn2:
-                return r[str].fail("Both DNs must be provided for comparison")
+                return r[int].fail("Both DNs must be provided for comparison")
 
             norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
             if not norm_result.is_success:
-                return r[str].fail(norm_result.error or "Normalization failed")
+                return r[int].fail(norm_result.error or "Normalization failed")
 
             norm1_lower, norm2_lower = norm_result.value
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
-            return r[str].ok(comparison)
+            return r[int].ok(comparison)
         except Exception as e:
-            return r[str].fail(f"DN comparison error: {e}")
+            return r[int].fail(f"DN comparison error: {e}")
 
     @staticmethod
     def _process_rdn_escape(rdn: str, i: int, current_val: str) -> tuple[str, int]:
@@ -1151,7 +1153,7 @@ class FlextLdifUtilitiesDN:
         Returns r with list of (attr, value) pairs or failure.
         """
         if not rdn or not isinstance(rdn, str):
-            return r[str].fail(
+            return r[list[tuple[str, str]]].fail(
                 "RDN must be a non-empty string",
             )
 
@@ -1191,26 +1193,26 @@ class FlextLdifUtilitiesDN:
                 pairs = rdn_config.pairs
 
                 if char_at_pos == "=" and not in_value and not current_attr:
-                    return r[str].fail(
+                    return r[list[tuple[str, str]]].fail(
                         f"Invalid RDN format: unexpected '=' at position {idx}",
                     )
 
             if not in_value or not current_attr:
-                return r[str].fail(
+                return r[list[tuple[str, str]]].fail(
                     f"Invalid RDN format: missing attribute or value in '{rdn}'",
                 )
 
             current_val = current_val.strip()
             if not current_val:
-                return r[str].fail(
+                return r[list[tuple[str, str]]].fail(
                     f"Invalid RDN format: empty value in '{rdn}'",
                 )
             pairs.append((current_attr, current_val))
 
-            return r[str].ok(pairs)
+            return r[list[tuple[str, str]]].ok(pairs)
 
         except Exception as e:
-            return r[str].fail(f"RDN parsing error: {e}")
+            return r[list[tuple[str, str]]].fail(f"RDN parsing error: {e}")
 
     @staticmethod
     def extract_rdn(dn: str) -> r[str]:
@@ -1404,11 +1406,11 @@ class FlextLdifUtilitiesDN:
         """
         # Wildcard or None is always valid
         if not dn_value or dn_value == "*":
-            return r[str].ok(True)
+            return r[bool].ok(True)
 
         # Validate DN format per RFC 4514
         if not FlextLdifUtilitiesDN.validate(dn_value):
-            return r[str].fail(
+            return r[bool].fail(
                 f"Invalid {dn_label} format per RFC 4514: {dn_value}",
             )
 
@@ -1419,16 +1421,16 @@ class FlextLdifUtilitiesDN:
                 dn_value,
             )
             if not comparison_result.is_success:
-                return r[str].fail(
+                return r[bool].fail(
                     f"DN comparison failed: {comparison_result.error}",
                 )
             comparison_value = comparison_result.value
             if comparison_value != 0:  # 0 means equal
-                return r[str].fail(
+                return r[bool].fail(
                     f"{dn_label.capitalize()} mismatch: {context_dn} != {dn_value}",
                 )
 
-        return r[str].ok(True)
+        return r[bool].ok(True)
 
     @overload
     @staticmethod
@@ -1628,7 +1630,9 @@ class FlextLdifUtilitiesDN:
         """
         try:
             if not ldif_dir.exists():
-                return r[str].fail(f"Directory not found: {ldif_dir}")
+                return r[dict[str, t.GeneralValueType]].fail(
+                    f"Directory not found: {ldif_dir}"
+                )
 
             transformed_count = 0
             failed_count = 0
@@ -1684,14 +1688,16 @@ class FlextLdifUtilitiesDN:
                     failed_count += 1
                     continue
 
-            return r[str].ok({
+            return r[dict[str, t.GeneralValueType]].ok({
                 "transformed_count": transformed_count,
                 "failed_count": failed_count,
                 "total_count": transformed_count + failed_count,
             })
 
         except Exception as e:
-            return r[str].fail(f"LDIF directory transformation failed: {e}")
+            return r[dict[str, t.GeneralValueType]].fail(
+                f"LDIF directory transformation failed: {e}"
+            )
 
     @staticmethod
     def _transform_attrs_with_dn(
@@ -2045,9 +2051,11 @@ class FlextLdifUtilitiesDN:
             for dn in dns:
                 result = normalize_dn(dn)
                 if result.is_failure:
-                    return r[str].fail(result.error or f"Failed to normalize DN: {dn}")
+                    return r[list[str]].fail(
+                        result.error or f"Failed to normalize DN: {dn}"
+                    )
                 normalized_results.append(result.value)
-            return r[str].ok(normalized_results)
+            return r[list[str]].ok(normalized_results)
 
         # Skip errors
         for dn in dns:
@@ -2055,7 +2063,7 @@ class FlextLdifUtilitiesDN:
             if result.is_success:
                 normalized_results.append(result.value)
 
-        return r[str].ok(normalized_results)
+        return r[list[str]].ok(normalized_results)
 
     @staticmethod
     def validate_batch(
@@ -2089,7 +2097,9 @@ class FlextLdifUtilitiesDN:
 
         batch_result = u.Collection.batch(list(dns), validate_dn, on_error="skip")
         if batch_result.is_failure:
-            return r[str].fail(batch_result.error or "Validation failed")
+            return r[list[tuple[str, bool, list[str]]]].fail(
+                batch_result.error or "Validation failed"
+            )
         batch_data = batch_result.value
         tuple_length = 3
         results = [
@@ -2101,7 +2111,7 @@ class FlextLdifUtilitiesDN:
             invalid_results = [item for item in results if not item[1]]
             if invalid_results:
                 results = results[: results.index(invalid_results[0]) + 1]
-        return r[str].ok(results)
+        return r[list[tuple[str, bool, list[str]]]].ok(results)
 
     @staticmethod
     def replace_base_batch(
@@ -2154,10 +2164,10 @@ class FlextLdifUtilitiesDN:
             on_error=on_error_mode,
         )
         if batch_result.is_failure:
-            return r[str].fail(batch_result.error or "Base replacement failed")
+            return r[list[str]].fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value
         results = [item for item in batch_data["results"] if isinstance(item, str)]
-        return r[str].ok(results)
+        return r[list[str]].ok(results)
 
     @staticmethod
     def process_complete(
@@ -2211,19 +2221,23 @@ class FlextLdifUtilitiesDN:
             try:
                 current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
             except Exception as exc:
-                return r[str].fail(f"Clean failed: {exc}")
+                return r[str | list[tuple[str, str]]].fail(f"Clean failed: {exc}")
 
         # Step 2: Validate
         if validate:
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
             if not is_valid:
-                return r[str].fail(f"Validation failed: {', '.join(errors)}")
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Validation failed: {', '.join(errors)}"
+                )
 
         # Step 3: Normalize
         if normalize:
             norm_result = FlextLdifUtilitiesDN.norm(current_dn)
             if norm_result.is_failure:
-                return r[str].fail(f"Normalization failed: {norm_result.error}")
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Normalization failed: {norm_result.error}"
+                )
             current_dn = norm_result.value
 
         # Step 4: Parse (optional)
@@ -2233,10 +2247,12 @@ class FlextLdifUtilitiesDN:
         if parse:
             parse_result = FlextLdifUtilitiesDN.parse(current_dn)
             if parse_result.is_failure:
-                return r[str].fail(f"Parse failed: {parse_result.error}")
-            return r[str].ok(parse_result.value)
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Parse failed: {parse_result.error}"
+                )
+            return r[str | list[tuple[str, str]]].ok(parse_result.value)
 
-        return r[str].ok(current_dn)
+        return r[str | list[tuple[str, str]]].ok(current_dn)
 
 
 __all__ = [

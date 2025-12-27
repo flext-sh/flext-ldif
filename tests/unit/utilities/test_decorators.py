@@ -88,7 +88,8 @@ class TestsTestFlextLdifUtilitiesDecorators(s):
         assert entry.metadata is not None
         assert entry.metadata.quirk_type == "oid"
         assert entry.metadata.extensions is not None
-        assert entry.metadata.extensions.get("server_type") == "oid"
+        # server_type is a direct attribute on DynamicMetadata, not in extensions dict
+        assert entry.metadata.extensions.server_type == "oid"
 
     def test_attach_metadata_if_present_with_schema_attribute(self) -> None:
         """Test _attach_metadata_if_present attaches metadata to SchemaAttribute."""

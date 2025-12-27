@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from tests import TestDeduplicationHelpers, c, m, p, s
@@ -244,11 +244,10 @@ class TestsTestFlextLdifApacheQuirks(s):
     def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema: FlextLdifServersApache.Schema = cast(
-            "FlextLdifServersApache.Schema",
-            server.schema_quirk,
-        )
-        result = schema.can_handle_attribute(test_case.attr_definition)
+        schema_quirk = server.schema_quirk
+
+        assert isinstance(schema_quirk, FlextLdifServersApache.Schema)
+        result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
 
     def test_schema_attribute_parse_success(self) -> None:
@@ -304,11 +303,10 @@ class TestsTestFlextLdifApacheQuirks(s):
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema: FlextLdifServersApache.Schema = cast(
-            "FlextLdifServersApache.Schema",
-            server.schema_quirk,
-        )
-        result = schema.can_handle_objectclass(test_case.oc_definition)
+        schema_quirk = server.schema_quirk
+
+        assert isinstance(schema_quirk, FlextLdifServersApache.Schema)
+        result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
 
     def test_schema_objectclass_parse_structural(self) -> None:
@@ -481,10 +479,9 @@ class TestsTestFlextLdifApacheQuirks(s):
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
-        acl_quirk: FlextLdifServersApache.Acl = cast(
-            "FlextLdifServersApache.Acl",
-            server.acl_quirk,
-        )
+        acl_quirk = server.acl_quirk
+
+        assert isinstance(acl_quirk, FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
         # Test with string directly - can_handle_acl accepts str | AclProtocol
         assert acl_quirk.can_handle_acl(acl_line) is False
@@ -492,10 +489,9 @@ class TestsTestFlextLdifApacheQuirks(s):
     def test_acl_can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
-        acl_quirk: FlextLdifServersApache.Acl = cast(
-            "FlextLdifServersApache.Acl",
-            server.acl_quirk,
-        )
+        acl_quirk = server.acl_quirk
+
+        assert isinstance(acl_quirk, FlextLdifServersApache.Acl)
         assert acl_quirk.can_handle_acl("") is False
 
     def test_acl_parse_success(self) -> None:
@@ -589,10 +585,9 @@ class TestsTestFlextLdifApacheQuirks(s):
     def test_entry_can_handle(self, test_case: EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
-        entry_quirk: FlextLdifServersApache.Entry = cast(
-            "FlextLdifServersApache.Entry",
-            server.entry_quirk,
-        )
+        entry_quirk = server.entry_quirk
+
+        assert isinstance(entry_quirk, FlextLdifServersApache.Entry)
         result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle
 

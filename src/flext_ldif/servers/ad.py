@@ -312,7 +312,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # Nested class references for Schema - allows Schema().Entry() pattern
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
         # SDDL pattern moved to Constants.ACL_SDDL_PREFIX_PATTERN

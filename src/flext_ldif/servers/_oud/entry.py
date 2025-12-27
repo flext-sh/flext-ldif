@@ -598,7 +598,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | dict[str, object] | None,
+        write_opts: m.Ldif.WriteOptions | dict[str, t.GeneralValueType] | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -627,13 +627,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Type narrowing: check if write_opts is a Pydantic model
         # Business Rule: Always use public m.Ldif.WriteOptions, not internal m.Ldif.WriteOptions
         if isinstance(write_opts, m.Ldif.WriteOptions):
-            # Use dict[str, object] for model_copy update to satisfy strict type checker
-            update_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}
+            # Use dict[str, t.GeneralValueType] for model_copy update to satisfy strict type checker
+            update_dict: dict[str, t.GeneralValueType] = {
+                "hidden_attrs": list(hidden_attrs_set)
+            }
             return write_opts.model_copy(update=update_dict)
 
         # Handle dict
         if isinstance(write_opts, dict):
-            write_opts_dict: dict[str, object] = {
+            write_opts_dict: dict[str, t.GeneralValueType] = {
                 "hidden_attrs": list(hidden_attrs_set),
             }
             for field in ["line_width", "indent", "sort_attributes"]:
@@ -645,7 +647,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Business Rule: Always convert to public FlextLdifModelsDomains.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
         if hasattr(write_opts, "model_dump"):
             write_opts_dict_raw = write_opts.model_dump()
-            filtered_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}
+            filtered_dict: dict[str, t.GeneralValueType] = {
+                "hidden_attrs": list(hidden_attrs_set)
+            }
             for field in ["line_width", "indent", "sort_attributes"]:
                 if field in write_opts_dict_raw:
                     filtered_dict[field] = write_opts_dict_raw[field]
@@ -692,14 +696,18 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
 
         # Create new metadata instance with updated write_options
-        # Use dict[str, object] for model_copy update to satisfy strict type checker
-        update_dict: dict[str, object] = {"write_options": new_write_options}
+        # Use dict[str, t.GeneralValueType] for model_copy update to satisfy strict type checker
+        update_dict: dict[str, t.GeneralValueType] = {
+            "write_options": new_write_options
+        }
         metadata_typed = metadata_typed.model_copy(update=update_dict)
 
         # Store commented ACL values
         if commented_acl_values:
-            converted_attrs: list[str] = list(commented_acl_values.keys())
-            current_extensions["converted_attributes"] = converted_attrs
+            converted_attrs_list: list[str] = list(commented_acl_values.keys())
+            # Widen list[str] to MetadataAttributeValue
+            converted_attrs_typed: t.MetadataAttributeValue = list(converted_attrs_list)
+            current_extensions["converted_attributes"] = converted_attrs_typed
             # Business Rule: extensions expects MetadataAttributeValue (ScalarValue)
             # Implication: Convert dict to JSON string for storage
             current_extensions["commented_attribute_values"] = json.dumps(
@@ -719,12 +727,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 commented_attrs.append(acl_attr)
 
         if commented_attrs:
-            current_extensions["acl_commented_attributes"] = commented_attrs
+            # Widen list[str] to MetadataAttributeValue
+            commented_attrs_typed: t.MetadataAttributeValue = list(commented_attrs)
+            current_extensions["acl_commented_attributes"] = commented_attrs_typed
 
         # Business Rule: metadata is frozen, must use model_copy to update both extensions and write_options
         # Implication: Combine both updates in a single model_copy call
-        # Use dict[str, object] for model_copy update to satisfy strict type checker
-        update_dict_final: dict[str, object] = {
+        # Use dict[str, t.GeneralValueType] for model_copy update to satisfy strict type checker
+        update_dict_final: dict[str, t.GeneralValueType] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
         }
@@ -1345,7 +1355,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def _parse_commented_values(
         commented_raw: object,
-    ) -> dict[str, object] | None:
+    ) -> dict[str, t.GeneralValueType] | None:
         """Parse commented ACL values from raw storage format.
 
         Args:
@@ -1628,14 +1638,17 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 ]
                 current_extensions[final_key] = value_list
             elif isinstance(value, dict):
-                # Convert dict values to ScalarValue
-                value_dict: dict[str, t.ScalarValue] = {
-                    k: v
-                    if isinstance(v, (str, int, float, bool, type(None)))
-                    else str(v)
-                    for k, v in value.items()
-                }
-                current_extensions[final_key] = value_dict
+                # Convert dict values to scalar types (str, int, float, bool, None)
+                # Build dict with explicit type widening
+                value_dict_inner: dict[str, str | int | float | bool | None] = {}
+                for k, v in value.items():
+                    if isinstance(v, (str, int, float, bool, type(None))):
+                        value_dict_inner[k] = v
+                    else:
+                        value_dict_inner[k] = str(v)
+                # Widen to MetadataAttributeValue
+                value_dict_typed: t.MetadataAttributeValue = dict(value_dict_inner)
+                current_extensions[final_key] = value_dict_typed
             else:
                 # Convert other types to str
                 current_extensions[final_key] = str(value)
@@ -1760,13 +1773,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ]
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, dict):
-                    value_dict: dict[str, t.ScalarValue] = {
-                        k: v
-                        if isinstance(v, (str, int, float, bool, type(None)))
-                        else str(v)
-                        for k, v in value_raw.items()
-                    }
-                    acl_metadata_extensions[dest_key] = value_dict
+                    # Build dict with explicit type widening
+                    value_dict_1: dict[str, str | int | float | bool | None] = {}
+                    for k, v in value_raw.items():
+                        if isinstance(v, (str, int, float, bool, type(None))):
+                            value_dict_1[k] = v
+                        else:
+                            value_dict_1[k] = str(v)
+                    # Widen to MetadataAttributeValue
+                    value_dict_typed_1: t.MetadataAttributeValue = dict(value_dict_1)
+                    acl_metadata_extensions[dest_key] = value_dict_typed_1
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
 
@@ -1805,13 +1821,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ]
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, dict):
-                    value_dict: dict[str, t.ScalarValue] = {
-                        k: v
-                        if isinstance(v, (str, int, float, bool, type(None)))
-                        else str(v)
-                        for k, v in value_raw.items()
-                    }
-                    acl_metadata_extensions[dest_key] = value_dict
+                    # Build dict with explicit type widening
+                    value_dict_2: dict[str, str | int | float | bool | None] = {}
+                    for k, v in value_raw.items():
+                        if isinstance(v, (str, int, float, bool, type(None))):
+                            value_dict_2[k] = v
+                        else:
+                            value_dict_2[k] = str(v)
+                    # Widen to MetadataAttributeValue
+                    value_dict_typed_2: t.MetadataAttributeValue = dict(value_dict_2)
+                    acl_metadata_extensions[dest_key] = value_dict_typed_2
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
 

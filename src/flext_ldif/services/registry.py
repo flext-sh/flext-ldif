@@ -31,6 +31,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     """
 
     FACTORIES: ClassVar[str] = "ldif_factories"
+    _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
         self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
@@ -81,33 +82,43 @@ class FlextLdifServiceRegistry(FlextRegistry):
 
     def is_initialized(self) -> bool:
         """Check if all factories are registered."""
-        plugins = self.list_class_plugins(self.FACTORIES).value or []
+        plugins_result = self.list_class_plugins(self.FACTORIES)
+        if not plugins_result.is_success:
+            return False
+        plugins = plugins_result.value
         return "filter" in plugins and "categorization" in plugins
 
     def reset(self) -> None:
         """Reset registry (for testing only)."""
-        self.unregister_class_plugin(self.FACTORIES, "filter")
-        self.unregister_class_plugin(self.FACTORIES, "categorization")
+        _ = self.unregister_class_plugin(self.FACTORIES, "filter")
+        _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
+
+    @classmethod
+    def get_global(cls) -> FlextLdifServiceRegistry:
+        """Get or create global registry instance."""
+        if cls._global_instance is None:
+            cls._global_instance = cls()
+        return cls._global_instance
+
+    @classmethod
+    def reset_global(cls) -> None:
+        """Reset global registry (for testing)."""
+        if cls._global_instance is not None:
+            cls._global_instance.reset()
+        cls._global_instance = None
 
 
-# Global instance for backward compatibility
-_global_registry: FlextLdifServiceRegistry | None = None
+# Global instance functions for backward compatibility
 
 
 def get_registry() -> FlextLdifServiceRegistry:
     """Get or create global registry instance."""
-    global _global_registry  # noqa: PLW0603
-    if _global_registry is None:
-        _global_registry = FlextLdifServiceRegistry()
-    return _global_registry
+    return FlextLdifServiceRegistry.get_global()
 
 
 def reset_registry() -> None:
     """Reset global registry (for testing)."""
-    global _global_registry  # noqa: PLW0603
-    if _global_registry is not None:
-        _global_registry.reset()
-    _global_registry = None
+    FlextLdifServiceRegistry.reset_global()
 
 
 __all__ = [

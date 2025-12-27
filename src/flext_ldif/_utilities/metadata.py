@@ -119,7 +119,7 @@ class FlextLdifUtilitiesMetadata:
                 # Convert DynamicMetadata to dict for m.Metadata
                 metadata_dict = metadata.model_dump()
                 # Create Metadata with proper type - attributes accepts dict[str, MetadataAttributeValue]
-                # DynamicMetadata.model_dump() returns dict[str, object] which needs conversion
+                # DynamicMetadata.model_dump() returns dict[str, t.GeneralValueType] which needs conversion
                 # m.Metadata BaseModel implements Mapping protocol structurally
                 # Protocol expects t.Metadata (Mapping[str, MetadataAttributeValue] | None)
                 # BaseModel satisfies Mapping structurally, so we can assign directly
@@ -139,7 +139,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
-    ) -> dict[str, object]:
+    ) -> dict[str, t.GeneralValueType]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -159,7 +159,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: dict[str, object],
+        metadata: dict[str, t.GeneralValueType],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
@@ -187,7 +187,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: dict[str, object],
+        metadata: dict[str, t.GeneralValueType],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
@@ -218,7 +218,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: dict[str, object],
+        metadata: dict[str, t.GeneralValueType],
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -284,17 +284,51 @@ class FlextLdifUtilitiesMetadata:
 
         # Type narrowing: metadata values are already compatible with MetadataAttributeValue
         # (str, int, float, bool, None, list, dict are all valid MetadataAttributeValue)
-        # Convert dict[str, object] to dict[str, MetadataAttributeValue] with type narrowing
+        # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue] with type narrowing
         # Type narrowing: filter values compatible with MetadataAttributeValue
         # (str, int, float, bool, None, list, dict are all valid)
-        metadata_typed: dict[str, t.MetadataAttributeValue] = {
-            k: v
-            for k, v in metadata.items()
-            if isinstance(
-                v,
-                (str, int, float, bool, type(None), list, dict, Sequence, Mapping),
-            )
-        }
+        # Build dict iteratively with proper type narrowing per value type
+        metadata_typed: dict[str, t.MetadataAttributeValue] = {}
+        for k, v in metadata.items():
+            if isinstance(v, str):
+                metadata_typed[k] = v
+            elif isinstance(v, bool):
+                # Check bool before int since bool is subclass of int
+                metadata_typed[k] = v
+            elif isinstance(v, (int, float)) or v is None:
+                metadata_typed[k] = v
+            elif isinstance(v, list):
+                # Widen list type
+                list_typed: t.MetadataAttributeValue = list(v)
+                metadata_typed[k] = list_typed
+            elif isinstance(v, dict):
+                # Widen dict type
+                dict_typed: t.MetadataAttributeValue = dict(v)
+                metadata_typed[k] = dict_typed
+            elif isinstance(v, Mapping):
+                # Convert Mapping to MetadataNestedDict (dict within MetadataAttributeValue)
+                # Filter values to only include MetadataNestedDict compatible types
+                # Note: MetadataNestedDict doesn't include datetime - that's in MetadataAttributeValue
+                nested_dict: t.MetadataNestedDict = {}
+                for mk, mv in v.items():
+                    if isinstance(mv, str | int | float | bool | type(None)):
+                        nested_dict[str(mk)] = mv
+                    elif isinstance(mv, list):
+                        nested_dict[str(mk)] = [
+                            x
+                            for x in mv
+                            if isinstance(x, str | int | float | bool | type(None))
+                        ]
+                metadata_typed[k] = nested_dict
+            elif isinstance(v, Sequence):
+                # Convert Sequence to MetadataListValue
+                # Note: MetadataListValue doesn't include datetime
+                list_from_seq: t.MetadataListValue = [
+                    item
+                    for item in v
+                    if isinstance(item, str | int | float | bool | type(None))
+                ]
+                metadata_typed[k] = list_from_seq
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed
         )
@@ -395,18 +429,25 @@ class FlextLdifUtilitiesMetadata:
             # list[Mapping[str, ScalarValue]] is compatible with MetadataAttributeValue (list type)
             target_metadata.transformations = [transformation_dict]
         else:
-            transformations_obj = target_metadata["transformations"]
+            # Use getattr to get actual attribute value, not __getitem__ which may differ
+            transformations_obj: object = getattr(
+                target_metadata, "transformations", None
+            )
             if isinstance(transformations_obj, list):
                 # Type narrowing: transformations_obj is list, verify items are Mapping-compatible
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # Type narrowing: filter items that are dict-like (Mapping-compatible)
-                existing_items: list[Mapping[str, t.ScalarValue]] = [
-                    item
+                # Convert each Mapping to dict for proper typing
+                # Build list[t.GeneralValueType] for transformations attribute using comprehension
+                converted_objs: list[t.GeneralValueType] = [
+                    dict(item)
                     for item in transformations_obj
                     if isinstance(item, (dict, Mapping))
                 ]
-                existing_items.append(transformation_dict)
-                target_metadata["transformations"] = existing_items
+                # Add new transformation as dict
+                converted_objs.append(dict(transformation_dict))
+                # Widen to list[t.GeneralValueType] for assignment
+                target_metadata.transformations = converted_objs
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
                 target_metadata.transformations = [transformation_dict]
@@ -510,10 +551,12 @@ class FlextLdifUtilitiesMetadata:
         transformation_dict = (
             FlextLdifUtilitiesMetadata._convert_transformation_to_metadata_value()
         )
+        # Widen Mapping type to MetadataAttributeValue for item_data param
+        transformation_typed: t.MetadataAttributeValue = dict(transformation_dict)
         return FlextLdifUtilitiesMetadata._track_metadata_item(
             model=model,
             metadata_key="transformations",
-            item_data=transformation_dict,
+            item_data=transformation_typed,
             update_conversion_path=server,
         )
 
@@ -600,9 +643,14 @@ class FlextLdifUtilitiesMetadata:
         # Pydantic v2: Use model_validate() to create/update FormatDetails
         if metadata.original_format_details is None:
             # Create new FormatDetails with the key using model_validate
-            format_dict: dict[str, t.MetadataAttributeValue] = {
-                format_key: original_value,
-            }
+            # Build dict iteratively to avoid invariance issues with dict literals
+            format_dict: dict[str, t.MetadataAttributeValue] = {}
+            # Handle list[str] type widening for MetadataAttributeValue
+            if isinstance(original_value, list):
+                value_typed: t.MetadataAttributeValue = list(original_value)
+            else:
+                value_typed = original_value
+            format_dict[format_key] = value_typed
             metadata.original_format_details = m.Ldif.FormatDetails.model_validate(
                 format_dict,
             )
@@ -977,28 +1025,31 @@ class FlextLdifUtilitiesMetadata:
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
-        combined["field_order"] = field_order
-        combined["field_positions"] = field_positions
-        combined["spacing_between_fields"] = (
-            FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
-                definition,
-                field_order,
-                field_positions,
-                {
-                    "OID": r"\(\s*([0-9.]+)",
-                    "NAME": r"NAME",
-                    "DESC": r"DESC",
-                    "EQUALITY": r"EQUALITY",
-                    "SUBSTR": r"SUBSTR",
-                    "ORDERING": r"ORDERING",
-                    "SYNTAX": r"SYNTAX",
-                    "SUP": r"SUP",
-                    "SINGLE-VALUE": r"SINGLE-VALUE",
-                    "OBSOLETE": r"OBSOLETE",
-                    "X-ORIGIN": r"X-ORIGIN",
-                },
-            )
+        # Widen types for MetadataAttributeValue assignment
+        field_order_typed: t.MetadataAttributeValue = list(field_order)
+        field_positions_typed: t.MetadataAttributeValue = dict(field_positions)
+        combined["field_order"] = field_order_typed
+        combined["field_positions"] = field_positions_typed
+        spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
+            definition,
+            field_order,
+            field_positions,
+            {
+                "OID": r"\(\s*([0-9.]+)",
+                "NAME": r"NAME",
+                "DESC": r"DESC",
+                "EQUALITY": r"EQUALITY",
+                "SUBSTR": r"SUBSTR",
+                "ORDERING": r"ORDERING",
+                "SYNTAX": r"SYNTAX",
+                "SUP": r"SUP",
+                "SINGLE-VALUE": r"SINGLE-VALUE",
+                "OBSOLETE": r"OBSOLETE",
+                "X-ORIGIN": r"X-ORIGIN",
+            },
         )
+        spacing_typed: t.MetadataAttributeValue = dict(spacing_result)
+        combined["spacing_between_fields"] = spacing_typed
         return combined
 
     @staticmethod
@@ -1250,8 +1301,8 @@ class FlextLdifUtilitiesMetadata:
         stats_dict = updated_stats.model_dump()
         # m.Ldif.EntryStatistics is the facade alias, use it for validation
         stats_facade = m.Ldif.EntryStatistics.model_validate(stats_dict)
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
-        update_dict: dict[str, object] = {"processing_stats": stats_facade}
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
+        update_dict: dict[str, t.GeneralValueType] = {"processing_stats": stats_facade}
         updated_metadata = entry.metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -1596,20 +1647,32 @@ class FlextLdifUtilitiesMetadata:
 
         """
         # Build server_specific_data as EntryMetadata
-        server_data_dict: dict[str, t.MetadataAttributeValue] = {
-            "original_entry_dn": config.original_entry_dn,
-            "cleaned_dn": config.cleaned_dn,
-            "dn_was_base64": config.dn_was_base64,
-        }
+        # Build dict iteratively to avoid invariance issues with dict literals
+        server_data_dict: dict[str, t.MetadataAttributeValue] = {}
+        dn_typed: t.MetadataAttributeValue = config.original_entry_dn
+        cleaned_typed: t.MetadataAttributeValue = config.cleaned_dn
+        base64_typed: t.MetadataAttributeValue = config.dn_was_base64
+        server_data_dict["original_entry_dn"] = dn_typed
+        server_data_dict["cleaned_dn"] = cleaned_typed
+        server_data_dict["dn_was_base64"] = base64_typed
 
         if config.original_dn_line:
-            server_data_dict["original_dn_line"] = config.original_dn_line
+            dn_line_typed: t.MetadataAttributeValue = config.original_dn_line
+            server_data_dict["original_dn_line"] = dn_line_typed
 
         if config.original_attr_lines:
-            server_data_dict["original_attribute_lines"] = config.original_attr_lines
+            # Widen list[str] to MetadataAttributeValue
+            attr_lines_typed: t.MetadataAttributeValue = list(
+                config.original_attr_lines
+            )
+            server_data_dict["original_attribute_lines"] = attr_lines_typed
 
         if config.original_attribute_case:
-            server_data_dict["original_attribute_case"] = config.original_attribute_case
+            # Widen dict[str, str] to MetadataAttributeValue
+            attr_case_typed: t.MetadataAttributeValue = dict(
+                config.original_attribute_case
+            )
+            server_data_dict["original_attribute_case"] = attr_case_typed
 
         # Create EntryMetadata from dict using model_validate
         # EntryMetadata accepts extra="allow" so dynamic fields are valid

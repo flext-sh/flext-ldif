@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, TypedDict, cast
+from typing import ClassVar, TypedDict
 
 import pytest
 from tests import c, p, s
@@ -243,12 +243,12 @@ class TestsFlextLdifRfcQuirks(s):
 
         for entry in entries:
             if has_dn:
-                assert entry.dn is not None, "Entry must have DN"
-                assert entry.dn.value, "DN must not be empty"
+                assert entry_quirk.dn is not None, "Entry must have DN"
+                assert entry_quirk.dn.value, "DN must not be empty"
             if has_attrs:
-                assert entry.attributes is not None, "Entry must have attributes"
-            if has_objectclass and entry.attributes:
-                attr_names = {a.lower() for a in entry.attributes.attributes}
+                assert entry_quirk.attributes is not None, "Entry must have attributes"
+            if has_objectclass and entry_quirk.attributes:
+                attr_names = {a.lower() for a in entry_quirk.attributes.attributes}
                 assert "objectclass" in attr_names, "Entry must have objectClass"
 
     @pytest.mark.timeout(10)
@@ -496,7 +496,7 @@ class TestsFlextLdifRfcQuirks(s):
         result = acl_quirk._parse_acl(acl_line)
         assert result.is_success
         acl = result.value
-        assert acl.server_type == expected_server
+        assert acl_quirk.server_type == expected_server
 
     def test_acl_parse_empty_fails(
         self,
@@ -606,8 +606,8 @@ class TestsFlextLdifRfcQuirks(s):
         result = entry_quirk._parse_entry(dn, attrs)
         assert result.is_success
         entry = result.value
-        assert entry.dn is not None
-        assert "cn=test,dc=example,dc=com" in entry.dn.value
+        assert entry_quirk.dn is not None
+        assert "cn=test,dc=example,dc=com" in entry_quirk.dn.value
 
     def test_entry_can_handle_entry_empty_dn(
         self,
@@ -656,7 +656,7 @@ class TestsFlextLdifRfcQuirks(s):
         """Test Schema._write_attribute with invalid type returns failure."""
         # Pass invalid type directly - test expects failure (runtime validation)
         # Cast used because we're testing runtime type validation intentionally
-        invalid_attr = cast("m.Ldif.SchemaAttribute", "not an attribute")
+        invalid_attr = "not an attribute"
         result = schema_quirk._write_attribute(invalid_attr)
         assert result.is_failure
 
@@ -666,7 +666,7 @@ class TestsFlextLdifRfcQuirks(s):
     ) -> None:
         """Test Schema._write_objectclass with invalid type returns failure."""
         # Cast used because we're testing runtime type validation intentionally
-        invalid_oc = cast("m.Ldif.SchemaObjectClass", "not an objectclass")
+        invalid_oc = "not an objectclass"
         result = schema_quirk._write_objectclass(invalid_oc)
         assert result.is_failure
 

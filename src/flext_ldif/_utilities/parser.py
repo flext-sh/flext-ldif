@@ -734,10 +734,17 @@ class FlextLdifUtilitiesParser:
         # Create metadata
         if metadata_extensions:
             # quirk_type is str from normalize_server_type, Pydantic validates Literal at runtime
+            # Widen dict[str, list[str]] to dict[str, MetadataAttributeValue] for from_dict
+            extensions_typed: dict[str, t.MetadataAttributeValue] = {}
+            for key, val in metadata_extensions.items():
+                # Widen list[str] to MetadataAttributeValue
+                # pyrefly: ignore[bad-assignment] - list[str] is subtype of list[...] at runtime
+                typed_val: t.MetadataAttributeValue = list(val)
+                extensions_typed[key] = typed_val
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    metadata_extensions,
+                    extensions_typed,  # pyrefly: ignore[bad-argument-type]
                 ),
             )
 
@@ -959,16 +966,20 @@ class FlextLdifUtilitiesParser:
                 oc_definition.strip(),
             ]
 
-            metadata = (
-                m.Ldif.QuirkMetadata(
+            # Widen dict[str, list[str]] to dict[str, MetadataAttributeValue] for from_dict
+            metadata: m.Ldif.QuirkMetadata | None = None
+            if metadata_extensions:
+                extensions_typed: dict[str, t.MetadataAttributeValue] = {}
+                for key, val in metadata_extensions.items():
+                    # pyrefly: ignore[bad-assignment] - list[str] is subtype at runtime
+                    typed_val: t.MetadataAttributeValue = list(val)
+                    extensions_typed[key] = typed_val
+                metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                        metadata_extensions,
+                        extensions_typed,
                     ),
                 )
-                if metadata_extensions
-                else None
-            )
 
             objectclass = m.Ldif.SchemaObjectClass(
                 oid=oid,

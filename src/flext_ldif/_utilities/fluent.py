@@ -49,6 +49,7 @@ from flext_ldif._utilities.transformers import Normalize, Transform
 # Import CaseFoldOption directly to avoid circular import issues
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.typings import t
 
 # REMOVED: Runtime aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly
@@ -464,9 +465,9 @@ class EntryOps:
         else:
             new_attrs[name] = list(values)
 
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = m.Ldif.Attributes(attributes=new_attrs)
-        update_dict: dict[str, object] = {"attributes": new_attributes}
+        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
         return self
@@ -526,9 +527,9 @@ class EntryOps:
             else:
                 new_attrs[key] = values
 
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = m.Ldif.Attributes(attributes=new_attrs)
-        update_dict: dict[str, object] = {"attributes": new_attributes}
+        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
         return self

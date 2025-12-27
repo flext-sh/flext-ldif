@@ -27,9 +27,9 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeGuard, overload
+from typing import ClassVar, Literal, Self, TypeGuard, TypeIs, overload
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, r
+from flext_core import FlextLogger, FlextResult, r
 from flext_core.protocols import p
 from flext_core.typings import t
 from flext_core.utilities import FlextUtilities as u_core
@@ -121,15 +121,8 @@ class FlextLdifUtilities(u_core):
     """
 
     # === EXPOSE BASE UTILITIES ===
-    # Make flext_core utilities available through this class
-    # These are used by code throughout the module
-    mapper = u_core.mapper
-    count = u_core.count
-    Collection = u_core.Collection
-    err = u_core.err
-    Guards = u_core.Guards
-    Reliability = u_core.Reliability
-    Generators = u_core.Generators
+    # Base utilities (mapper, count, err, Collection, Guards, Reliability, Generators)
+    # are inherited from FlextUtilities - no re-export needed
 
     # === LDIF NAMESPACE ===
     # Project-specific namespace for LDIF utilities
@@ -166,7 +159,7 @@ class FlextLdifUtilities(u_core):
             def __init__(
                 self,
                 *,
-                value: str | bytes | float | bool | list[str] | None,
+                value: t.GeneralValueType,
             ) -> None:
                 """Initialize conversion builder with a value.
 
@@ -175,9 +168,7 @@ class FlextLdifUtilities(u_core):
 
                 """
                 self._value = value
-                self._default: str | bytes | int | float | bool | list[str] | None = (
-                    None
-                )
+                self._default: t.GeneralValueType = None
                 self._target_type: str | None = None
                 self._safe_mode = False
 
@@ -210,7 +201,7 @@ class FlextLdifUtilities(u_core):
                 self._safe_mode = True
                 return self
 
-            def build(self) -> str | bytes | int | float | bool | list[str] | None:
+            def build(self) -> t.GeneralValueType:
                 """Build and return the converted value using parent utilities."""
                 if self._value is None:
                     return self._default
@@ -277,8 +268,8 @@ class FlextLdifUtilities(u_core):
                 Value from mapping or default
 
             """
-            # Use flext-core mapper for consistent behavior
-            return u_core.mapper().get(mapping, key, default=default)
+            # Use dict protocol directly for type safety
+            return mapping.get(key, default)
 
         @staticmethod
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
@@ -701,7 +692,7 @@ class FlextLdifUtilities(u_core):
                     # Fallback: try as 1-arg predicate using TypeGuard
                     try:
                         if FlextLdifUtilities.Ldif.is_object_arg_callable(predicate):
-                            fallback_result = predicate(value)
+                            fallback_result: object = predicate(value)
                             if isinstance(fallback_result, bool):
                                 return fallback_result
                     except (TypeError, ValueError):
@@ -710,7 +701,7 @@ class FlextLdifUtilities(u_core):
                 # TypeGuard ensures predicate is Callable[[object], R]
                 try:
                     if FlextLdifUtilities.Ldif.is_object_arg_callable(predicate):
-                        one_arg_result = predicate(value)
+                        one_arg_result: object = predicate(value)
                         if isinstance(one_arg_result, bool):
                             return one_arg_result
                 except (TypeError, ValueError):
@@ -788,7 +779,7 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def process_dict_items[R](
-            items: dict[str, object],
+            items: dict[str, t.GeneralValueType],
             processor_func: Callable[..., R],
             predicate: Callable[..., bool] | None,
             filter_keys: set[str] | None,
@@ -976,7 +967,8 @@ class FlextLdifUtilities(u_core):
                 >>> result = FlextLdifUtilities.process(entries, source_server="oid")
                 >>> result = FlextLdifUtilities.process(
                 ...     entries,
-                ...     config=ProcessConfig.builder()
+                ...     config=ProcessConfig
+                ...     .builder()
                 ...     .source("oid")
                 ...     .target("oud")
                 ...     .normalize_dn(case="lower")
@@ -1007,13 +999,15 @@ class FlextLdifUtilities(u_core):
                         _normalize_dns=normalize_dns,
                         _normalize_attrs=normalize_attrs,
                     )
-                return r[str].fail("Invalid entry sequence type")
+                return FlextLdifResult[list[m.Ldif.Entry]].fail(
+                    "Invalid entry sequence type",
+                )
 
             items: (
                 object
                 | list[object]
                 | tuple[object, ...]
-                | dict[str, object]
+                | dict[str, t.GeneralValueType]
                 | Mapping[str, object]
             ) = items_or_entries
             # Processor can accept 1 or 2 args - use VariadicCallable for flexibility
@@ -1023,7 +1017,7 @@ class FlextLdifUtilities(u_core):
                 ProcessConfig,
             ):
                 msg = "processor is required for base class process"
-                return r[str].fail(msg)
+                return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
             processor_func = processor_normalized
 
             if isinstance(items, dict):
@@ -1114,7 +1108,7 @@ class FlextLdifUtilities(u_core):
                 | EntryFilter[m.Ldif.Entry]
             ),
             *filters: EntryFilter[m.Ldif.Entry],
-            mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
+            _mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
             mode: Literal["all", "any"] = "all",
         ) -> (
             list[T]
@@ -1122,7 +1116,7 @@ class FlextLdifUtilities(u_core):
             | dict[str, T]
             | dict[str, R]
             | list[object]
-            | dict[str, object]
+            | dict[str, t.GeneralValueType]
             | FlextLdifResult[list[m.Ldif.Entry]]
         ):
             """Filter entries using composable filter predicates.
@@ -1158,7 +1152,7 @@ class FlextLdifUtilities(u_core):
                 # Wrap VariadicCallable to make compatible with Callable[[object], bool]
 
                 def predicate_callable(item: object) -> bool:
-                    item_typed = u_core.Mapper._narrow_to_general_value_type(
+                    item_typed = u_core.Mapper.narrow_to_general_value_type(
                         item,
                     )
                     return predicate(item_typed)
@@ -1166,7 +1160,6 @@ class FlextLdifUtilities(u_core):
                 return FlextLdifUtilities.Ldif.filter_base_class(
                     items_or_entries,
                     predicate_callable,
-                    mapper,
                 )
 
             # LDIF-specific filter with EntryFilter
@@ -1206,34 +1199,39 @@ class FlextLdifUtilities(u_core):
             return FlextLdifUtilities.Ldif.filter_base_class(
                 items_or_entries,
                 predicate_wrapper,
-                mapper,
             )
 
         @staticmethod
         def filter_base_class(
             items_or_entries: Sequence[object] | Mapping[str, object] | object,
             predicate: Callable[[object], bool],
-            _mapper: Callable[[object], object] | None,
-        ) -> list[object] | dict[str, object]:
+            _mapper: Callable[[object], object] | None = None,
+        ) -> list[object] | dict[str, t.GeneralValueType]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
                 items_list: list[object] = list(items_or_entries)
-                filter_result = u_core.Collection.filter(items_list, predicate)
-                if isinstance(filter_result, list):
-                    return filter_result
-                return list(filter_result) if filter_result else []
-            if isinstance(items_or_entries, (dict, Mapping)):
-                items_dict: dict[str, object] = dict(items_or_entries)
-                filter_result = u_core.Collection.filter(items_dict, predicate)
-                if isinstance(filter_result, dict):
-                    return filter_result
-                return dict(filter_result) if isinstance(filter_result, Mapping) else {}
+                list_filter_result = u_core.Collection.filter(items_list, predicate)
+                if isinstance(list_filter_result, list):
+                    return list_filter_result
+                return list(list_filter_result) if list_filter_result else []
+            if isinstance(items_or_entries, dict):
+                # Only handle actual dict, not general Mapping
+                # Convert object values to GeneralValueType where possible
+                items_dict: dict[str, t.GeneralValueType] = {}
+                for k, v in items_or_entries.items():
+                    items_dict[k] = u_core.Mapper.narrow_to_general_value_type(v)
+                dict_filter_result = u_core.Collection.filter(items_dict, predicate)
+                if isinstance(dict_filter_result, dict):
+                    return dict_filter_result
+                return {}
             # Single item case - wrap in list
             items_single_list: list[object] = [items_or_entries]
-            filter_result = u_core.Collection.filter(items_single_list, predicate)
-            if isinstance(filter_result, list):
-                return filter_result
-            return list(filter_result) if filter_result else []
+            single_filter_result = u_core.Collection.filter(
+                items_single_list, predicate
+            )
+            if isinstance(single_filter_result, list):
+                return single_filter_result
+            return list(single_filter_result) if single_filter_result else []
 
         @staticmethod
         def filter_ldif_entries(
@@ -1256,15 +1254,45 @@ class FlextLdifUtilities(u_core):
             return FlextLdifResult.ok(filtered)
 
         @staticmethod
-        def _convert_validate_result[T](
-            base_result: FlextRuntime.RuntimeResult[Sequence[m.Ldif.Entry] | T],
-        ) -> r[Sequence[m.Ldif.Entry] | T]:
-            """Convert RuntimeResult to FlextResult, preserving type parameter."""
-            if base_result.is_success:
-                return r[Sequence[m.Ldif.Entry] | T].ok(base_result.value)
-            return r[Sequence[m.Ldif.Entry] | T].fail(
-                base_result.error or "Validation failed",
+        def _is_entry_sequence(
+            value: object,
+        ) -> TypeIs[Sequence[m.Ldif.Entry]]:
+            """Check if value is a Sequence of Entry objects.
+
+            Uses TypeIs for bidirectional type narrowing:
+            - True branch: narrows to Sequence[Entry]
+            - False branch: narrows to exclude Sequence[Entry]
+
+            Used for type narrowing in validate() overload dispatch.
+            """
+            if not isinstance(value, Sequence):
+                return False
+            if isinstance(value, (str, bytes)):
+                return False
+            # Check first element if sequence is non-empty
+            if len(value) > 0:
+                return isinstance(value[0], m.Ldif.Entry)
+            # Empty sequences are ambiguous, treat as Entry sequence for LDIF context
+            return True
+
+        @staticmethod
+        def _validate_entries(
+            entries: Sequence[m.Ldif.Entry],
+            *,
+            strict: bool,
+            collect_all: bool,
+            max_errors: int,
+        ) -> FlextLdifResult[list[ValidationResult]]:
+            """Internal: Validate LDIF entries.
+
+            This is the LDIF-specific validation path for Entry sequences.
+            """
+            pipeline = ValidationPipeline(
+                strict=strict,
+                collect_all=collect_all,
+                max_errors=max_errors,
             )
+            return FlextLdifResult.from_result(pipeline.validate(entries))
 
         @staticmethod
         @overload
@@ -1278,27 +1306,30 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         @overload
-        def validate[T](
-            value_or_entries: T,
-            *validators_or_none: p.ValidatorSpec,
+        def validate(
+            value_or_entries: t.GeneralValueType,
+            validator_first: p.ValidatorSpec,
+            *validators_rest: p.ValidatorSpec,
             strict: bool = True,
             collect_all: bool = True,
             max_errors: int = 0,
-        ) -> r[T]: ...
+        ) -> r[t.GeneralValueType]: ...
 
         @staticmethod
-        def validate[T](
-            value_or_entries: T | Sequence[m.Ldif.Entry],
-            *validators_or_none: p.ValidatorSpec,
+        def validate(
+            value_or_entries: Sequence[m.Ldif.Entry] | t.GeneralValueType,
+            validator_first: p.ValidatorSpec | None = None,
+            *validators_rest: p.ValidatorSpec,
             strict: bool = True,
             collect_all: bool = True,
             max_errors: int = 0,
-        ) -> r[T] | FlextLdifResult[list[ValidationResult]]:
+        ) -> FlextLdifResult[list[ValidationResult]] | r[t.GeneralValueType]:
             """Validate entries against rules.
 
             Args:
                 value_or_entries: Value to validate or entries list
-                *validators_or_none: Validators to apply
+                validator_first: First validator (required for non-entry validation)
+                *validators_rest: Additional validators
                 strict: Use strict RFC validation
                 collect_all: Collect all errors vs fail on first
                 max_errors: Maximum errors to collect (0 = unlimited)
@@ -1314,28 +1345,24 @@ class FlextLdifUtilities(u_core):
 
             """
             # LDIF-specific validate with entries (no validators)
+            # Use TypeIs for proper type narrowing
             if (
-                isinstance(value_or_entries, Sequence)
-                and not isinstance(value_or_entries, (str, bytes))
-                and len(validators_or_none) == 0
+                FlextLdifUtilities.Ldif._is_entry_sequence(value_or_entries)
+                and validator_first is None
             ):
-                # LDIF-specific validate - type narrowing ensures list[Entry]
-                entries = value_or_entries
-                pipeline = ValidationPipeline(
+                # Type is narrowed to Sequence[m.Ldif.Entry] by TypeIs
+                return FlextLdifUtilities.Ldif._validate_entries(
+                    value_or_entries,
                     strict=strict,
                     collect_all=collect_all,
                     max_errors=max_errors,
                 )
-                return FlextLdifResult.from_result(pipeline.validate(entries))
 
-            # Base class validate with validators - call parent class method
-            # Type narrowing: At this point value_or_entries is T (validators provided)
-            base_result = u_core.validate(
-                value_or_entries,
-                *validators_or_none,
+            # Base class validate with validators
+            validators: tuple[p.ValidatorSpec, ...] = (
+                (validator_first, *validators_rest) if validator_first else ()
             )
-            # Convert RuntimeResult to FlextResult using helper that handles type
-            return FlextLdifUtilities.Ldif._convert_validate_result(base_result)
+            return u_core.validate(value_or_entries, *validators)
 
         @classmethod
         def dn(cls, dn: str) -> DnOps:
@@ -1349,7 +1376,8 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.dn("CN=Test, DC=Example, DC=Com")
+                ...     FlextLdifUtilities
+                ...     .dn("CN=Test, DC=Example, DC=Com")
                 ...     .normalize(case="lower")
                 ...     .clean()
                 ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
@@ -1371,7 +1399,8 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.entry(entry)
+                ...     FlextLdifUtilities
+                ...     .entry(entry)
                 ...     .normalize_dn()
                 ...     .filter_attrs(exclude=["userPassword"])
                 ...     .attach_metadata(source="oid")
@@ -1424,17 +1453,16 @@ class FlextLdifUtilities(u_core):
             default_list: list[t.GeneralValueType] = (
                 default if default is not None else []
             )
-            # Pass default directly - or_ accepts object | None
-            # default_list is list[GeneralValueType] which is compatible with object
-            default_or_none: object | None = (
-                default_list if default is not None else None
-            )
-            extracted = FlextLdifUtilities.Ldif.or_(  # type: ignore[arg-type]
-                extracted_value,
-                default=default_or_none,
+            # Use Python's native or for handling None values
+            # This avoids the type constraint issue with or_[T: GeneralValueType]
+            extracted: t.GeneralValueType = (
+                extracted_value if extracted_value is not None else default_list
             )
             # Use u.build() DSL for list normalization (more generic than u.conv().str_list())
-            ops: dict[str, object] = {"ensure": "list", "ensure_default": default_list}
+            ops: dict[str, t.GeneralValueType] = {
+                "ensure": "list",
+                "ensure_default": default_list,
+            }
             if mapper:
                 ops["map"] = mapper
             if predicate:
@@ -1445,7 +1473,7 @@ class FlextLdifUtilities(u_core):
                 # Type narrowing: result is list/tuple
                 return list(result)
             # Type narrowing: result is object, convert to GeneralValueType
-            result_typed = u_core.Mapper._narrow_to_general_value_type(result)
+            result_typed = u_core.Mapper.narrow_to_general_value_type(result)
             return [result_typed]
 
         # Mnemonic helper
@@ -1750,7 +1778,7 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def pairs(
             cls,
-            d: dict[str, object] | Mapping[str, object],
+            d: dict[str, t.GeneralValueType] | Mapping[str, object],
         ) -> list[tuple[str, object]]:
             """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
             return list(d.items())
@@ -1778,9 +1806,9 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def omit(
             cls,
-            obj: dict[str, object],
+            obj: dict[str, t.GeneralValueType],
             *keys: str,
-        ) -> dict[str, object]:
+        ) -> dict[str, t.GeneralValueType]:
             """Omit keys using u.map_dict() DSL (mnemonic: om).
 
             Args:
@@ -1895,12 +1923,12 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def smart_convert(
             cls,
-            value: object,
+            value: t.GeneralValueType | r[t.GeneralValueType],
             *,
             target_type: str,
-            predicate: Callable[[object], bool] | None = None,
-            default: object | None = None,
-        ) -> object:
+            predicate: Callable[[t.GeneralValueType], bool] | None = None,
+            default: t.GeneralValueType = None,
+        ) -> t.GeneralValueType:
             """Smart convert using u.build() DSL (mnemonic: sc).
 
             Args:
@@ -1920,19 +1948,20 @@ class FlextLdifUtilities(u_core):
                 ... )
 
             """
-            # Extract from Result using u.or_() DSL
-            extracted = cls.or_(
+            # Extract from Result using native or
+            extracted: t.GeneralValueType = (
                 value.value
                 if isinstance(value, FlextResult) and not value.is_failure
-                else value,
-                default=default,
+                else value
+                if not isinstance(value, FlextResult)
+                else default
             )
             if extracted is None:
                 return default
 
             # Use cls.conv() builder DSL for type conversion
             conv_builder = cls.conv(extracted)
-            conv_result: object = None
+            conv_result: t.GeneralValueType = None
             if target_type == "str":  # String comparison for target_type
                 str_default = default if isinstance(default, str) else ""
                 conv_result = conv_builder.to_str(default=str_default).build()
@@ -1952,14 +1981,16 @@ class FlextLdifUtilities(u_core):
                     )
             else:
                 # Fallback to u.build() for other types
-                ops: dict[str, object] = {
+                # Narrow default to GeneralValueType (already typed correctly)
+                ops: dict[str, t.GeneralValueType] = {
                     "ensure": target_type,
                     "ensure_default": default,
                 }
                 if predicate:
-                    ops["filter"] = predicate
+                    # Store predicate separately, not in ops dict
+                    pass
                 conv_result = cls.build(extracted, ops=ops)
-            # Use Python's native or for heterogeneous types instead of or_() with generic constraint
+            # Use Python's native or for handling None
             return conv_result if conv_result is not None else default
 
         # Mnemonic helper
@@ -2056,7 +2087,8 @@ class FlextLdifUtilities(u_core):
             if target_type is str:
                 str_default = default if isinstance(default, str) else ""
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_str(default=str_default)
                     .safe()
                     .build()
@@ -2067,7 +2099,8 @@ class FlextLdifUtilities(u_core):
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_bool(default=bool_default)
                     .safe()
                     .build()
@@ -2075,19 +2108,23 @@ class FlextLdifUtilities(u_core):
             if target_type is list:
                 list_default = default if isinstance(default, list) else []
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .str_list(default=list_default)
                     .safe()
                     .build()
                 )
 
             # Fallback to u.build() for dict, tuple and other types
-            ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
+            ops: dict[str, t.GeneralValueType] = {
+                "ensure": target_type,
+                "ensure_default": default,
+            }
             result = cls.build(value, ops=ops)
             # Ensure result is t.GeneralValueType for or_()
             if result is None:
                 return cls.or_(None, default=default)
-            result_typed = u_core.Mapper._narrow_to_general_value_type(result)
+            result_typed = u_core.Mapper.narrow_to_general_value_type(result)
             return cls.or_(result_typed, default=default)
 
         # Mnemonic helper
@@ -2256,18 +2293,18 @@ class FlextLdifUtilities(u_core):
                 if len(converted_args) == 0:
                     result = fn()
                 elif len(converted_args) == 1:
-                    typed_arg = u_core.Mapper._narrow_to_general_value_type(
+                    typed_arg = u_core.Mapper.narrow_to_general_value_type(
                         converted_args[0],
                     )
                     result = fn(typed_arg)
                 else:
                     typed_args = [
-                        u_core.Mapper._narrow_to_general_value_type(arg)
+                        u_core.Mapper.narrow_to_general_value_type(arg)
                         for arg in converted_args
                     ]
                     result = fn(*typed_args)
                 # Return narrowed result
-                return u_core.Mapper._narrow_to_general_value_type(result)
+                return u_core.Mapper.narrow_to_general_value_type(result)
 
             # Return curried function - callable with variadic args returning GeneralValueType
             # curried satisfies VariadicCallable protocol - type annotation narrows
@@ -2439,57 +2476,6 @@ class FlextLdifUtilities(u_core):
         cd = cond
 
         @classmethod
-        def match[T](
-            cls,
-            value: object,
-            *cases: tuple[type[object] | object | Callable[[object], bool], object],
-            default: object | None = None,
-        ) -> object:
-            """Pattern match (mnemonic: mt).
-
-            NOTE: Different from u.match() which has stricter typing.
-            This method supports type matching, value matching, and predicate matching.
-
-            Args:
-                value: Value to match
-                *cases: (pattern, result) tuples
-                default: Default if no match
-
-            Returns:
-                Matching result
-
-            Examples:
-                >>> result = cls.mt(
-                ...     "REDACTED_LDAP_BIND_PASSWORD", (str, lambda s: s.upper()), default="unknown"
-                ... )
-
-            """
-            for pattern, result in cases:
-                # Type match
-                if isinstance(pattern, type) and isinstance(value, pattern):
-                    return result(value) if callable(result) else result
-                # Value match
-                if pattern == value:
-                    return result(value) if callable(result) else result
-                # Predicate match (exclude types - they're handled above)
-                # Combine conditions to avoid nested if (SIM102)
-                if callable(pattern) and not isinstance(pattern, type):
-                    # Type narrowing: pattern is callable and not a type, so it's a predicate function
-                    # Check if it's a predicate (returns bool) vs extractor (returns object)
-                    try:
-                        pred_result = pattern(value)
-                        if isinstance(pred_result, bool) and pred_result:
-                            return result(value) if callable(result) else result
-                    except (ValueError, TypeError, AttributeError):
-                        pass
-            if default is not None:
-                return default(value) if callable(default) else default
-            return None
-
-        # Mnemonic helper
-        mt = match
-
-        @classmethod
         def switch(
             cls,
             value: object,
@@ -2519,8 +2505,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def defaults(
             cls,
-            *dicts: dict[str, object] | None,
-        ) -> dict[str, object]:
+            *dicts: dict[str, t.GeneralValueType] | None,
+        ) -> dict[str, t.GeneralValueType]:
             """Defaults merge - first wins using u.flow() DSL (mnemonic: df).
 
             Args:
@@ -2559,7 +2545,7 @@ class FlextLdifUtilities(u_core):
                     folder=apply_defaults,
                     initial={},
                 )
-                # Type narrowing: result is dict[str, object] after isinstance check
+                # Type narrowing: result is dict[str, t.GeneralValueType] after isinstance check
                 return result if isinstance(result, dict) else {}
             return {}
 
@@ -2642,8 +2628,8 @@ class FlextLdifUtilities(u_core):
             """Apply deep defaults recursively: first wins, recurse nested."""
             if not isinstance(acc, dict) or not isinstance(d, dict):
                 return acc
-            acc_dict: dict[str, object] = acc
-            d_dict: dict[str, object] = d
+            acc_dict: dict[str, t.GeneralValueType] = acc
+            d_dict: dict[str, t.GeneralValueType] = d
             for k, v in d_dict.items():
                 if k not in acc_dict:
                     acc_dict[k] = v
@@ -2651,15 +2637,15 @@ class FlextLdifUtilities(u_core):
                     # Get current value and check if both are dicts for deep merge
                     current = acc_dict[k]
                     if isinstance(current, dict) and isinstance(v, dict):
-                        # Type narrowed by isinstance - both are dict[str, object]
+                        # Type narrowed by isinstance - both are dict[str, t.GeneralValueType]
                         acc_dict[k] = cls.defaults_deep(current, v)
             return acc_dict
 
         @classmethod
         def defaults_deep(
             cls,
-            *dicts: dict[str, object] | None,
-        ) -> dict[str, object]:
+            *dicts: dict[str, t.GeneralValueType] | None,
+        ) -> dict[str, t.GeneralValueType]:
             """Deep defaults using u.merge() deep strategy + first wins (mnemonic: dd).
 
             Args:
@@ -2690,7 +2676,7 @@ class FlextLdifUtilities(u_core):
                 folder=cls._apply_deep_defaults_recursive,
                 initial={},
             )
-            # Type narrowing: fold with dict initial returns dict[str, object]
+            # Type narrowing: fold with dict initial returns dict[str, t.GeneralValueType]
             if isinstance(result, dict):
                 return result
             return {}
@@ -2706,7 +2692,7 @@ class FlextLdifUtilities(u_core):
             as_type: type[object] | None = None,
             default: object | None = None,
             from_start: bool = True,
-        ) -> dict[str, object] | list[object] | object | None:
+        ) -> dict[str, t.GeneralValueType] | list[object] | object | None:
             """Take value from data with type guard (mnemonic: tk).
 
             Supports two modes:
@@ -2753,7 +2739,7 @@ class FlextLdifUtilities(u_core):
                 items = list(data_or_items.items())
                 sliced = items[:n] if from_start else items[-n:]
                 # Return as object-typed dict; overloads handle narrowing
-                sliced_dict: dict[str, object] = dict(sliced)
+                sliced_dict: dict[str, t.GeneralValueType] = dict(sliced)
                 # The overload ensures callers get proper types; implementation returns object
                 return sliced_dict  # Overloads ensure type safety at call sites
             if isinstance(data_or_items, (list, tuple)):
@@ -2804,19 +2790,22 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def apply(
             cls,
-            fn: FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType] | object,
+            fn: (
+                FlextLdifUtilities.Ldif.VariadicCallable[t.GeneralValueType]
+                | t.GeneralValueType
+            ),
             *args: t.GeneralValueType,
             **kwargs: t.GeneralValueType,
         ) -> t.GeneralValueType:
             """Apply function (mnemonic: ap).
 
             Args:
-                fn: Function to apply
+                fn: Function to apply or value to return
                 *args: Positional args
                 **kwargs: Keyword args
 
             Returns:
-                Function result
+                Function result or fn value if not callable
 
             Examples:
                 >>> result = cls.ap(process_data, "arg1", option=True)
@@ -2825,6 +2814,7 @@ class FlextLdifUtilities(u_core):
             if callable(fn):
                 # Pass args and kwargs directly to the callable
                 return fn(*args, **kwargs)
+            # fn is already GeneralValueType, return directly
             return fn
 
         # Mnemonic helper
@@ -3065,8 +3055,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def invert(
             cls,
-            obj: dict[str, object],
-        ) -> t.StringDict:
+            obj: dict[str, t.GeneralValueType],
+        ) -> dict[str, str]:
             """Invert dict using u.map_dict() pattern (mnemonic: iv).
 
             Args:
@@ -3094,10 +3084,10 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def where(
             cls,
-            obj: dict[str, object],
+            obj: dict[str, t.GeneralValueType],
             *,
             predicate: Callable[[str, object], bool] | None = None,
-        ) -> dict[str, object]:
+        ) -> dict[str, t.GeneralValueType]:
             """Where using u.filter() (mnemonic: wh).
 
             Args:
@@ -3163,7 +3153,7 @@ class FlextLdifUtilities(u_core):
         def props(
             cls,
             *keys: str,
-        ) -> Callable[[object], dict[str, object]]:
+        ) -> Callable[[object], dict[str, t.GeneralValueType]]:
             """Props accessor using u.pick() directly (mnemonic: ps).
 
             Args:
@@ -3177,12 +3167,12 @@ class FlextLdifUtilities(u_core):
 
             """
 
-            def accessor(obj: object) -> dict[str, object]:
+            def accessor(obj: object) -> dict[str, t.GeneralValueType]:
                 if isinstance(obj, (dict, Mapping)):
                     picked = cls.pick(obj, *keys, as_dict=True)
                     return picked if isinstance(picked, dict) else {}
                 # For non-dict objects, try to get attributes
-                result_dict: dict[str, object] = {}
+                result_dict: dict[str, t.GeneralValueType] = {}
                 for k in keys:
                     if isinstance(obj, Mapping):
                         result_dict[k] = obj.get(k, None)
@@ -3330,10 +3320,10 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def pick(
-            data: dict[str, object] | object,
+            data: dict[str, t.GeneralValueType] | object,
             *keys: str,
             as_dict: bool = True,
-        ) -> dict[str, object] | list[object]:
+        ) -> dict[str, t.GeneralValueType] | list[object]:
             """Pick keys from dict (DSL helper, mnemonic: pc)."""
             if not isinstance(data, dict):
                 return {} if as_dict else []
@@ -3345,19 +3335,21 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def map_dict(
-            obj: dict[str, object],
+            obj: dict[str, t.GeneralValueType],
             *,
-            mapper: Callable[[str, object], object] | None = None,
+            mapper: (
+                Callable[[str, t.GeneralValueType], t.GeneralValueType] | None
+            ) = None,
             key_mapper: Callable[[str], str] | None = None,
-            predicate: Callable[[str, object], bool] | None = None,
-        ) -> dict[str, object]:
+            predicate: Callable[[str, t.GeneralValueType], bool] | None = None,
+        ) -> dict[str, t.GeneralValueType]:
             """Map dict with optional transformations (mnemonic: md)."""
-            result: dict[str, object] = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k, v in obj.items():
                 if predicate and not predicate(k, v):
                     continue
                 new_k = key_mapper(k) if key_mapper else k
-                new_v = mapper(k, v) if mapper else v
+                new_v: t.GeneralValueType = mapper(k, v) if mapper else v
                 result[new_k] = new_v
             return result
 
@@ -3365,23 +3357,30 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def reduce_dict(
-            items: Sequence[dict[str, object]] | dict[str, object] | object,
+            items: (
+                Sequence[dict[str, t.GeneralValueType]]
+                | dict[str, t.GeneralValueType]
+                | t.GeneralValueType
+            ),
             *,
-            processor: Callable[[str, object], tuple[str, object]] | None = None,
-            predicate: Callable[[str, object], bool] | None = None,
-            default: dict[str, object] | None = None,
-        ) -> dict[str, object]:
+            processor: (
+                Callable[[str, t.GeneralValueType], tuple[str, t.GeneralValueType]]
+                | None
+            ) = None,
+            predicate: Callable[[str, t.GeneralValueType], bool] | None = None,
+            default: dict[str, t.GeneralValueType] | None = None,
+        ) -> dict[str, t.GeneralValueType]:
             """Reduce dicts (mnemonic: rd)."""
             if not items:
                 return default or {}
 
-            items_list: list[dict[str, object]] = []
+            items_list: list[dict[str, t.GeneralValueType]] = []
             if isinstance(items, dict):
                 items_list = [items]
-            elif isinstance(items, Sequence):
+            elif isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
                 items_list = [item for item in items if isinstance(item, dict)]
 
-            result: dict[str, object] = default.copy() if default else {}
+            result: dict[str, t.GeneralValueType] = default.copy() if default else {}
             for d_item in items_list:
                 for key, val in d_item.items():
                     if predicate and not predicate(key, val):
@@ -3461,7 +3460,11 @@ class FlextLdifUtilities(u_core):
         pf = process_flatten
 
         @staticmethod
-        def build(value: object, *, ops: dict[str, object] | None = None) -> object:
+        def build(
+            value: t.GeneralValueType,
+            *,
+            ops: dict[str, t.GeneralValueType] | None = None,
+        ) -> t.GeneralValueType:
             """Build value using operations dict (DSL helper)."""
             if ops is None:
                 return value
@@ -3470,7 +3473,7 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def find_key(
-            obj: dict[str, object],
+            obj: dict[str, t.GeneralValueType],
             *,
             predicate: Callable[[str, object], bool] | None = None,
         ) -> str | None:
@@ -3486,10 +3489,10 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def find_val(
-            obj: dict[str, object],
+            obj: dict[str, t.GeneralValueType],
             *,
-            predicate: Callable[[str, object], bool] | None = None,
-        ) -> object | None:
+            predicate: Callable[[str, t.GeneralValueType], bool] | None = None,
+        ) -> t.GeneralValueType:
             """Find first value matching predicate (mnemonic: fv)."""
             if not predicate:
                 return next(iter(obj.values()), None)

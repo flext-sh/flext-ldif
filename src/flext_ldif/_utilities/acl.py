@@ -996,7 +996,7 @@ class FlextLdifUtilitiesACL:
             config.aci_prefix,
         )
         if not is_valid:
-            return r[str].fail(
+            return r[m.Ldif.Acl].fail(
                 f"Not a valid ACI format: {config.aci_prefix}",
             )
 
@@ -1492,7 +1492,7 @@ class FlextLdifUtilitiesACL:
         patterns: Mapping[str, str | tuple[str, int]],
         *,
         defaults: Mapping[str, object] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, t.GeneralValueType]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -1542,7 +1542,7 @@ class FlextLdifUtilitiesACL:
         def extract_component_batch(
             name: str,
             pattern_spec: str | tuple[str, int],
-        ) -> tuple[str, object]:
+        ) -> tuple[str, t.GeneralValueType]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
@@ -1550,12 +1550,22 @@ class FlextLdifUtilitiesACL:
                 pattern = pattern_spec
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
-            default_value = effective_defaults.get(name) if effective_defaults else None
-            final_value = value if value is not None else default_value
+            raw_default = effective_defaults.get(name) if effective_defaults else None
+            # Narrow default_value to GeneralValueType (None is valid)
+            default_value: t.GeneralValueType | None = (
+                raw_default
+                if isinstance(raw_default, str | int | float | bool | type(None))
+                else str(raw_default)
+                if raw_default is not None
+                else None
+            )
+            final_value: t.GeneralValueType = (
+                value if value is not None else default_value
+            )
             return name, final_value
 
         # Direct iteration instead of u.Collection.process
-        result_dict: dict[str, tuple[str, object]] = {}
+        result_dict: dict[str, tuple[str, t.GeneralValueType]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
@@ -1566,7 +1576,7 @@ class FlextLdifUtilitiesACL:
                 continue
 
         # Build result dict from pairs - extract second element from tuple values
-        final_result: dict[str, object] = {}
+        final_result: dict[str, t.GeneralValueType] = {}
         for key, value_item in result_dict.items():
             if isinstance(value_item, tuple) and len(value_item) == TUPLE_LENGTH_PAIR:
                 final_result[key] = value_item[1]
@@ -1600,7 +1610,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _process_batch_results(
-        batch_data: dict[str, object],
+        batch_data: dict[str, t.GeneralValueType],
         *,
         skip_invalid: bool = True,
     ) -> r[list[m.Ldif.Acl]]:
@@ -1631,8 +1641,10 @@ class FlextLdifUtilitiesACL:
                 error_msgs = FlextLdifUtilitiesACL._format_batch_errors(
                     errors_typed,
                 )
-                return r[str].fail(f"Parse errors: {'; '.join(error_msgs)}")
-        return r[str].ok(results_typed)
+                return r[list[m.Ldif.Acl]].fail(
+                    f"Parse errors: {'; '.join(error_msgs)}"
+                )
+        return r[list[m.Ldif.Acl]].ok(results_typed)
 
     @staticmethod
     def parse_batch(
@@ -1676,8 +1688,8 @@ class FlextLdifUtilitiesACL:
                 fail_fast=fail_fast,
             )
             if acl_result is None:
-                return r[str].fail("Failed to parse ACL line")
-            return r[str].ok(acl_result)
+                return r[m.Ldif.Acl].fail("Failed to parse ACL line")
+            return r[m.Ldif.Acl].ok(acl_result)
 
         # Use u.Collection.batch which returns TypedDict directly
         # Convert parse_single_acl to return T | r[T] format expected by batch
@@ -1706,16 +1718,17 @@ class FlextLdifUtilitiesACL:
             error_msg = errors[0][1]
             return r[list[m.Ldif.Acl]].fail(error_msg)
 
-        # Process results and handle errors
-        batch_data_dict: dict[str, object] = {
-            "results": results,
-            "errors": errors,
-            "error_count": len(errors),
-        }
-        return FlextLdifUtilitiesACL._process_batch_results(
-            batch_data_dict,
-            skip_invalid=skip_invalid,
-        )
+        # Process results directly without using intermediate dict
+        # Filter only successful Acl results, ignoring failed FlextResult items
+        acl_results: list[m.Ldif.Acl] = [
+            item for item in results if isinstance(item, m.Ldif.Acl)
+        ]
+
+        if errors and not skip_invalid:
+            error_msgs = "; ".join(msg for _, msg in errors)
+            return r[list[m.Ldif.Acl]].fail(f"Parse errors: {error_msgs}")
+
+        return r[list[m.Ldif.Acl]].ok(acl_results)
 
     @staticmethod
     def convert_permissions_batch(

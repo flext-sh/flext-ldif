@@ -174,18 +174,18 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
         """
         if not dn or not isinstance(dn, str):
-            return r[str].fail(f"Invalid DN: {dn}")
+            return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         if not isinstance(attributes, dict):
-            return r[str].fail(f"Invalid attributes: {attributes}")
+            return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
 
         try:
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
                 attributes=m.Ldif.Attributes(attributes=attributes or {}),
             )
-            return r[str].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         except Exception as e:
-            return r[str].fail(f"Failed to create entry {dn}: {e}")
+            return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
 
     def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance.
@@ -200,14 +200,16 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
         """
         if not entry or not isinstance(entry, m.Ldif.Entry):
-            return r[str].fail(f"Invalid entry: {entry}")
+            return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
         # Entry.dn is DN, not str - check .value
         if not entry.dn or not hasattr(entry.dn, "value"):
-            return r[str].fail(f"Invalid DN in entry: {entry.dn}")
+            return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not isinstance(entry.attributes, dict):
-            return r[str].fail(f"Invalid attributes in entry: {entry.attributes}")
+            return r[m.Ldif.Entry].fail(
+                f"Invalid attributes in entry: {entry.attributes}"
+            )
 
-        return r[str].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
 
 __all__ = ["FlextLdifServersRfcEntry"]

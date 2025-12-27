@@ -379,8 +379,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             # Just pass through to parent
             return super()._transform_objectclass_for_write(oc_data)
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
         """OpenLDAP 2.x ACL quirk (nested).
+
+        Override: Extends base RFC Acl with OpenLDAP 2.x-specific ACL parsing.
 
         Extends RFC ACL parsing with OpenLDAP 2.x-specific ACL formats:
         - olcAccess: OpenLDAP 2.x access control directives

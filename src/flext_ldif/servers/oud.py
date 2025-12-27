@@ -111,8 +111,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     class Constants(FlextLdifServersOudConstants):
         """OUD server constants."""
 
-    class Acl(FlextLdifServersOudAcl):  # type: ignore[override]
-        """OUD ACL quirk."""
+    class Acl(FlextLdifServersOudAcl):  # pyrefly: ignore[bad-override]
+        """OUD ACL quirk.
+
+        Override: Extends base RFC Acl with OUD-specific ACL parsing.
+        """
 
     class Schema(FlextLdifServersOudSchema):
         """OUD Schema quirk."""

@@ -591,7 +591,7 @@ class FlextLdifModels(FlextModels):
                 """Registry statistics dictionary model.
 
                 Replaces TypedDict from typings.py with Pydantic model.
-                Replaces dict[str, object] with specific structure.
+                Replaces dict[str, t.GeneralValueType] with specific structure.
                 """
 
                 total_servers: int = Field(default=0)

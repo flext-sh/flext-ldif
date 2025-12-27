@@ -14,6 +14,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.typings import t
 
 
 class _SchemaConstants:
@@ -265,7 +266,7 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], dict[str, object]] | None = None,
+        parse_parts_hook: Callable[[str], dict[str, t.GeneralValueType]] | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model.
 

@@ -7,7 +7,7 @@ including objectClass transformations, attribute name mappings, and schema fixes
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from tests import p, s
@@ -245,7 +245,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
         assert isinstance(parsed_attr_result, m.Ldif.SchemaAttribute)
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = parsed_attr_result
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -278,7 +278,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = parsed_attr_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -349,7 +349,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             expected_type=m.Ldif.SchemaObjectClass,
         )
         assert isinstance(parsed_oc_result, m.Ldif.SchemaObjectClass)
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        parsed_oc = parsed_oc_result
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -381,7 +381,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        parsed_oc = parsed_oc_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -412,7 +412,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = parsed_attr_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -476,7 +476,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = parsed_attr_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -537,7 +537,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed_attr = cast("m.Ldif.SchemaAttribute", parsed_attr_result)
+        parsed_attr = parsed_attr_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -569,7 +569,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed1 = cast("m.Ldif.SchemaAttribute", parsed1_result)
+        parsed1 = parsed1_result
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -585,7 +585,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        parsed2 = cast("m.Ldif.SchemaAttribute", parsed2_result)
+        parsed2 = parsed2_result
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -607,7 +607,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        parsed1 = cast("m.Ldif.SchemaObjectClass", parsed1_result)
+        parsed1 = parsed1_result
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -623,7 +623,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        parsed2 = cast("m.Ldif.SchemaObjectClass", parsed2_result)
+        parsed2 = parsed2_result
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -656,7 +656,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        parsed_oc = cast("m.Ldif.SchemaObjectClass", parsed_oc_result)
+        parsed_oc = parsed_oc_result
 
         assert parsed_oc.kind == kind
 

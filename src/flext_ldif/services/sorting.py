@@ -17,7 +17,7 @@ import operator
 from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, override
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -94,7 +94,7 @@ class FlextLdifSorting(
 
         """
         # Use model_copy to update frozen model
-        update_dict: dict[str, object] = {}
+        update_dict: dict[str, t.GeneralValueType] = {}
         if alphabetical is not None:
             update_dict["sort_attributes"] = alphabetical
             update_dict["attribute_order"] = None

@@ -36,6 +36,7 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.constants import c
 from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.typings import t
 
 # =========================================================================
 # BASE TRANSFORMER CLASS
@@ -139,8 +140,8 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
-            return r[str].fail(f"Invalid DN: {', '.join(all_errors)}")
-        return r[str].ok(True)  # Validation passed
+            return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
+        return r[bool].ok(True)  # Validation passed
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""
@@ -172,12 +173,12 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         """
         # Type validation - ensure we received the correct type
         if not isinstance(item, m.Ldif.Entry):
-            return r[str].fail(
+            return r[m.Ldif.Entry].fail(
                 f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
             )
 
         if item.dn is None:
-            return r[str].fail("Entry has no DN")
+            return r[m.Ldif.Entry].fail("Entry has no DN")
 
         # Get DN string value
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
@@ -197,18 +198,18 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         # Normalize DN
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if norm_result.is_failure:
-            return r[str].fail(norm_result.error)
+            return r[m.Ldif.Entry].fail(norm_result.error)
 
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
         # Update entry DN (create new DN)
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_dn = FlextLdifModelsDomains.DN(value=normalized_dn)
-        update_dict: dict[str, object] = {"dn": new_dn}
+        update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r[str].ok(updated_entry)
+        return r[m.Ldif.Entry].ok(updated_entry)
 
 
 class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -255,7 +256,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.attributes is None:
-            return r[str].fail("Entry has no attributes")
+            return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         # Get attributes dict
         attrs = (
@@ -293,9 +294,9 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         # Update entry with processed attributes if anything changed
         if needs_update:
-            # Use dict[str, object] for model_copy update (Pydantic accepts object)
+            # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
             new_attributes = FlextLdifModelsDomains.Attributes(attributes=new_attrs)
-            update_dict: dict[str, object] = {"attributes": new_attributes}
+            update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
 
         return r[str].ok(item)
@@ -403,7 +404,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.dn is None:
-            return r[str].fail("Entry has no DN")
+            return r[m.Ldif.Entry].fail("Entry has no DN")
 
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
 
@@ -419,9 +420,9 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         )
 
         # Create new DN and update entry
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_dn = FlextLdifModelsDomains.DN(value=new_dn_str)
-        update_dict: dict[str, object] = {"dn": new_dn}
+        update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r[str].ok(updated_entry)
@@ -496,9 +497,9 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         )
 
         # Create new entry with converted attributes
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = FlextLdifModelsDomains.Attributes(attributes=converted_attrs)
-        update_dict: dict[str, object] = {"attributes": new_attributes}
+        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r[str].ok(updated_entry)
@@ -539,7 +540,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         """
         if item.attributes is None:
-            return r[str].fail("Entry has no attributes")
+            return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         attrs = (
             item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
@@ -568,9 +569,9 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
 
         # Update entry with filtered attributes
-        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = FlextLdifModelsDomains.Attributes(attributes=attrs)
-        update_dict: dict[str, object] = {"attributes": new_attributes}
+        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r[str].ok(updated_entry)

@@ -21,7 +21,7 @@ from collections.abc import Callable, Mapping, Sequence
 from inspect import Parameter, signature
 from typing import Literal, TypeVar, overload
 
-from flext_core import T, U
+from flext_core import FlextTypes as t, T, U
 from flext_core.utilities import FlextUtilities as u
 
 # Type variable for callable types that are not object
@@ -925,7 +925,7 @@ class FlextFunctional:
         | list[object]
         | tuple[object, ...]
         | set[object]
-        | dict[str, object]
+        | dict[str, t.GeneralValueType]
     )
 
     @overload
@@ -1004,9 +1004,9 @@ class FlextFunctional:
         cls,
         value: object,
         *,
-        target: type[dict[str, object]] | Literal["dict"],
-        default: dict[str, object] | None = None,
-    ) -> dict[str, object] | None: ...
+        target: type[dict[str, t.GeneralValueType]] | Literal["dict"],
+        default: dict[str, t.GeneralValueType] | None = None,
+    ) -> dict[str, t.GeneralValueType] | None: ...
 
     @classmethod
     def as_type(
@@ -1165,12 +1165,15 @@ class FlextFunctional:
                                 # target_type is object - accept any value as-is
                                 converted = value
                             else:
-                                # For all other types (custom classes, etc.), call constructor
-                                # Explicit check: target_type is not object
+                                # For all other types (custom classes, etc.)
+                                # At this point target_type is not object
+                                # Try calling constructor - this works for most types
                                 try:
-                                    # Call target_type constructor with value
-                                    result = target_type(value)
-                                    converted = result
+                                    # Dynamic type construction
+                                    # We know target_type is callable and not object
+                                    # Use Callable signature that accepts one argument
+                                    factory: Callable[[object], object] = target_type
+                                    converted = factory(value)
                                 except Exception:
                                     return default
 
@@ -1235,7 +1238,7 @@ class FlextFunctional:
     def props(
         cls,
         *keys: str,
-    ) -> Callable[[object], dict[str, object]]:
+    ) -> Callable[[object], dict[str, t.GeneralValueType]]:
         """Multiple property accessor (mnemonic: ps).
 
         Args:
@@ -1251,16 +1254,16 @@ class FlextFunctional:
 
         """
 
-        def accessor(obj: object) -> dict[str, object]:
+        def accessor(obj: object) -> dict[str, t.GeneralValueType]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, object] = {}
+            result_dict: dict[str, t.GeneralValueType] = {}
             for k in keys:
                 if isinstance(obj, Mapping):
                     # Type assertion: obj is Mapping, get() returns value or None
-                    value: object = u.mapper().get(obj, k)
+                    value: t.GeneralValueType | None = u.mapper().get(obj, k)
                     result_dict[k] = value
                 elif hasattr(obj, k):
-                    attr_value: object = getattr(obj, k, None)
+                    attr_value: t.GeneralValueType = getattr(obj, k, None)
                     result_dict[k] = attr_value
                 else:
                     result_dict[k] = None

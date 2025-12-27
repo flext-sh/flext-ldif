@@ -735,8 +735,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _parse_acl(): Parses ACL with best-effort approach
         # - _write_acl(): Writes ACL to RFC format - stringify in relaxed mode
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
         """Relaxed ACL quirk for lenient LDIF processing.
+
+        Override: Extends base RFC Acl with relaxed/lenient ACL parsing.
 
         Implements minimal validation for ACL entries.
         Accepts any ACL format in relaxed mode.

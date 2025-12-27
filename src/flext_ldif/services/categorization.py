@@ -704,15 +704,17 @@ class FlextLdifCategorization(
         """
         # Type narrowing: check if rules is already CategoryRules
         if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
-            return r[str].ok(rules)
+            return r[m.Ldif.LdifResults.CategoryRules].ok(rules)
         if isinstance(rules, dict):
             try:
                 # model_validate is a Pydantic method, type checker should recognize it
                 validated_rules = m.Ldif.LdifResults.CategoryRules.model_validate(rules)
-                return r[str].ok(validated_rules)
+                return r[m.Ldif.LdifResults.CategoryRules].ok(validated_rules)
             except Exception as e:
-                return r[str].fail(f"Invalid category rules: {e}")
-        return r[str].ok(self._categorization_rules)
+                return r[m.Ldif.LdifResults.CategoryRules].fail(
+                    f"Invalid category rules: {e}"
+                )
+        return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
 
     def _match_entry_to_category(
         self,
@@ -964,11 +966,27 @@ class FlextLdifCategorization(
 
             # Track category assignment and rejection in metadata using FlextLdifUtilities
             rejection_reason = reason if reason is not None else "No category match"
-            # Only pass category if it's "rejected" to ensure type safety
             is_rejected = category == _cat("rejected")
+
+            # Map category string to CategoryLiteral for type safety
+            # Only valid categories are passed; "all" and invalid values are skipped
+            category_literal: c.Ldif.LiteralTypes.CategoryLiteral | None = None
+            if category == "users":
+                category_literal = "users"
+            elif category == "groups":
+                category_literal = "groups"
+            elif category == "hierarchy":
+                category_literal = "hierarchy"
+            elif category == "schema":
+                category_literal = "schema"
+            elif category == "acl":
+                category_literal = "acl"
+            elif category == "rejected":
+                category_literal = "rejected"
+
             entry_to_append = u.Ldif.Metadata.update_entry_statistics(
                 entry,
-                category="rejected" if is_rejected else None,
+                category=category_literal,
                 mark_rejected=(
                     (c.Ldif.RejectionCategory.NO_CATEGORY_MATCH.value, rejection_reason)
                     if is_rejected

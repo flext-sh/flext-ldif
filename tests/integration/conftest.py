@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import socket
 from pathlib import Path
 
 import pytest
@@ -594,3 +595,40 @@ def oud_acl_quirk(
 ) -> FlextLdifProtocols.Quirks.AclProtocol:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk
+
+
+# ============================================================================
+# LDAP CONTAINER FIXTURES
+# ============================================================================
+
+
+@pytest.fixture(scope="session")
+def ldap_container_shared() -> str:
+    """Provide LDAP connection URL for tests requiring Docker container.
+
+    This fixture provides the LDAP connection URL for integration tests that
+    need to interact with a real LDAP server. It skips tests if the container
+    is not running.
+
+    Returns:
+        str: LDAP connection URL (e.g., "ldap://localhost:3390")
+
+    """
+    port = 3390  # Default LDAP port from docker-compose.openldap.yml
+
+    # Check if port is available (container is running)
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        result = sock.connect_ex(("localhost", port))
+        sock.close()
+        if result != 0:
+            pytest.skip(
+                f"LDAP container not running on port {port}. "
+                f"Start with: cd /home/marlonsc/flext/docker && "
+                f"docker compose -f docker-compose.openldap.yml up -d",
+            )
+    except OSError:
+        pytest.skip(f"Could not check LDAP container on port {port}")
+
+    return f"ldap://localhost:{port}"

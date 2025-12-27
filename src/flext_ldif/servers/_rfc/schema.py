@@ -560,7 +560,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         # Wrap method to match ParseCoreHook protocol
         def parse_parts_hook(
             definition: str,
-        ) -> dict[str, object]:
+        ) -> dict[str, t.GeneralValueType]:
             # Use FlextLdifUtilitiesSchema.parse_objectclass which returns dict directly
             # Extract only the fields needed by ParsePartsHook
             # Return type matches ParseCoreHook protocol

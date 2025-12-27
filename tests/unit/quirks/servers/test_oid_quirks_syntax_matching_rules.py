@@ -7,7 +7,7 @@ mappings and matching rule transformations during LDIF processing.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from tests import TestDeduplicationHelpers, m, p, s
@@ -122,7 +122,10 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
-        return cast("FlextLdifServersBaseSchema", FlextLdifServersOid().schema_quirk)
+        server = FlextLdifServersOid()
+        schema_quirk = server.schema_quirk
+        assert isinstance(schema_quirk, FlextLdifServersBaseSchema)
+        return schema_quirk
 
     # ═════════════════════════════════════════════════════════════════════════════
     # SYNTAX TRANSFORMATION TESTS
@@ -173,7 +176,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         assert attr.syntax == syntax_oid or syntax_oid in (attr.syntax or "")
 
     def test_syntax_transformation_comprehensive(
@@ -247,7 +250,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         # caseIgnoreSubstringsMatch is moved to SUBSTR field by OID quirk
         if "Substrings" in rule_name:
             assert attr.substr == rule_expected or rule_expected in (attr.substr or "")
@@ -276,7 +279,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         assert attr.equality or attr.substr or attr.ordering
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -301,7 +304,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         assert attr.name == "orclOudCompat"
 
     @pytest.mark.parametrize(
@@ -409,7 +412,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         assert attr.name == "orclComplex"
         assert attr.syntax
 
@@ -489,7 +492,7 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         # After transformation: typo corrected and moved to SUBSTR
         assert attr.substr == "caseIgnoreSubstringsMatch", (
             f"Expected corrected substr 'caseIgnoreSubstringsMatch', got {attr.substr}"
@@ -524,6 +527,6 @@ class TestsTestFlextLdifOidSyntaxTransformations(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
 
-        attr = cast("m.Ldif.SchemaAttribute", parsed_result)
+        attr = parsed_result
         assert attr.syntax
         assert attr.equality

@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -64,9 +63,8 @@ class TestMinimalDifferencesOidOud:
         # Validate that entries have metadata
         # Note: original_dn_complete and minimal_differences_dn are added during conversion,
         # not during simple parsing. This test validates parsing works correctly.
-        for entry_protocol in entries:
-            # Cast to Entry model to access metadata and dn attributes
-            entry = cast("p.Entry", entry_protocol)
+        for entry in entries:
+            # Entries from parser are already p.Entry protocol type
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             # Check that metadata structure exists (extensions may be empty during parsing)
             assert hasattr(entry.metadata, "extensions"), (
@@ -108,9 +106,8 @@ class TestMinimalDifferencesOidOud:
         # Validate that entries have metadata
         # Note: original_dn_complete and minimal_differences_dn are added during conversion,
         # not during simple parsing. This test validates parsing works correctly.
-        for entry_protocol in entries:
-            # Cast to Entry model to access metadata and dn attributes
-            entry = cast("p.Entry", entry_protocol)
+        for entry in entries:
+            # Entries from parser are already p.Entry protocol type
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             # Check that metadata structure exists (extensions may be empty during parsing)
             assert hasattr(entry.metadata, "extensions"), (
@@ -140,9 +137,8 @@ orcldasisenabled: 1
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
-        original_entry_protocol = entries[0]
-        # Cast to Entry model to access metadata and dn attributes
-        original_entry = cast("p.Entry", original_entry_protocol)
+        # Entries from parser are already p.Entry protocol type
+        original_entry = entries[0]
 
         # Verify metadata captured differences
         assert original_entry.metadata is not None

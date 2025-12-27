@@ -102,7 +102,7 @@ class FlextLdifSettings(FlextSettings):
 
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
-        default=10000,
+        default=c.Ldif.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=c.Performance.BatchProcessing.DEFAULT_SIZE,
         le=c.Ldif.LdifProcessing.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",

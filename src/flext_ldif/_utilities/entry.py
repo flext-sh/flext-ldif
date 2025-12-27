@@ -439,9 +439,10 @@ class FlextLdifUtilitiesEntry:
                 # Single value - wrap in list for consistency with metadata format
                 # Business Rule: Metadata stores attributes as sequences for consistency
                 original_values_list = [str(attr_values)]
-            # Store as MetadataAttributeValue (list[str] is compatible with Sequence[ScalarValue])
-            original_values: t.MetadataAttributeValue = original_values_list
-            original_attributes_complete[original_attr_name] = original_values
+            # Store in original_attributes_complete dict
+            # Use t.MetadataAttributeValue annotation on the assignment target
+            typed_list: t.MetadataAttributeValue = list(original_values_list)
+            original_attributes_complete[original_attr_name] = typed_list
 
             converted_values = converted_attrs.get(canonical_name, [])
 
@@ -665,7 +666,7 @@ class FlextLdifUtilitiesEntry:
         """
         # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, object] and validates at runtime
+            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
                 kwargs,
             )
@@ -793,7 +794,7 @@ class FlextLdifUtilitiesEntry:
         """
         # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, object] and validates at runtime
+            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
 
         checks: list[bool] = []
@@ -872,7 +873,7 @@ class FlextLdifUtilitiesEntry:
         """
         # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, object] and validates at runtime
+            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
 
         def transform_entry(
@@ -888,9 +889,9 @@ class FlextLdifUtilitiesEntry:
                 )
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
-                    # Use dict[str, object] for model_copy update (Pydantic accepts object)
+                    # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
                     # m.Ldif.DN is compatible via inheritance
-                    dn_update: dict[str, object] = {
+                    dn_update: dict[str, t.GeneralValueType] = {
                         "dn": m.Ldif.DN(value=norm_result.value),
                     }
                     current = current.model_copy(update=dn_update)
@@ -903,9 +904,9 @@ class FlextLdifUtilitiesEntry:
                     if config.attr_case == "upper"
                     else attrs
                 )
-                # Use dict[str, object] for model_copy update (Pydantic accepts object)
+                # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
                 # m.Ldif.Attributes. is compatible via inheritance
-                attrs_update: dict[str, object] = {
+                attrs_update: dict[str, t.GeneralValueType] = {
                     "attributes": m.Ldif.Attributes(attributes=new_attrs),
                 }
                 current = current.model_copy(update=attrs_update)
@@ -925,9 +926,9 @@ class FlextLdifUtilitiesEntry:
                     source_format=source_format,
                     target_format=target_format,
                 )
-                # Use dict[str, object] for model_copy update (Pydantic accepts object)
+                # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
                 # m.Ldif.Attributes. is compatible via inheritance
-                converted_attrs_update: dict[str, object] = {
+                converted_attrs_update: dict[str, t.GeneralValueType] = {
                     "attributes": m.Ldif.Attributes(attributes=converted),
                 }
                 current = current.model_copy(update=converted_attrs_update)
@@ -992,7 +993,7 @@ class FlextLdifUtilitiesEntry:
             if exclude_schema and effective_is_schema is None:
                 effective_is_schema = False
             kwargs["is_schema"] = effective_is_schema
-            # Use model_validate which accepts dict[str, object] and validates at runtime
+            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
 
         # Direct iteration instead of u.Collection.filter

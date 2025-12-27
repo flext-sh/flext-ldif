@@ -164,7 +164,7 @@ class FlextLdifUtilitiesWriters:
             """
             # Use provided config or build from kwargs
             if config is None:
-                # Use model_validate which accepts dict[str, object] and validates at runtime
+                # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
                 config = FlextLdifModelsSettings.EntryWriteConfig.model_validate(kwargs)
 
             try:
@@ -475,7 +475,7 @@ class FlextLdifUtilitiesWriters:
             """
             # Use provided config or build from kwargs
             if config is None:
-                # Use model_validate which accepts dict[str, object] and validates at runtime
+                # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
                 config = FlextLdifModelsSettings.BatchWriteConfig.model_validate(kwargs)
 
             try:

@@ -8,7 +8,7 @@ to ensure proper validation of all configuration options.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal
 
 import pytest
 from pydantic import ValidationError
@@ -184,12 +184,8 @@ class TestsTestFlextLdifSettingsValidators(s):
     ) -> None:
         """Test ldif_encoding field_validator with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifSettings(
-                ldif_encoding=cast(
-                    "lib_c.Ldif.LiteralTypes.EncodingLiteral",
-                    encoding,
-                ),
-            )
+            # Pydantic validates encoding at runtime
+            config = FlextLdifSettings(ldif_encoding=encoding)
             assert config.ldif_encoding == encoding
         else:
             with pytest.raises(ValidationError) as exc_info:
@@ -213,12 +209,8 @@ class TestsTestFlextLdifSettingsValidators(s):
     ) -> None:
         """Test server_type field_validator with parametrized scenarios."""
         if should_succeed:
-            config = FlextLdifSettings(
-                server_type=cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    server_type,
-                ),
-            )
+            # Pydantic validates and normalizes server_type at runtime
+            config = FlextLdifSettings(server_type=server_type)
             # The validator normalizes aliases to canonical form
             # So we should expect the normalized value, not the original
             expected_server_type = FlextLdifUtilities.Ldif.Server.normalize_server_type(server_type)
@@ -307,12 +299,10 @@ class TestsTestFlextLdifSettingsValidators(s):
         Pydantic validates the value at runtime.
         """
         if should_succeed:
+            # Pydantic validates quirks_detection_mode and quirks_server_type at runtime
             config = FlextLdifSettings(
                 quirks_detection_mode=mode,
-                quirks_server_type=cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral | None",
-                    server_type,
-                ),
+                quirks_server_type=server_type,
             )
             assert config.quirks_detection_mode == mode
             assert config.quirks_server_type == server_type

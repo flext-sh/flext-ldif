@@ -76,12 +76,12 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
             | type
-            | dict[str, object]
+            | dict[str, t.GeneralValueType]
             | None
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
-        result_raw = u.Ldif.match(
+        result_raw = u.match(
             format_options,
             (type(None), lambda _: m.Ldif.LdifResults.WriteFormatOptions()),
             (type, lambda t: t()),
@@ -93,13 +93,13 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
                         opts.model_dump(exclude_none=True),
                         lambda d: (
                             {
-                                "base64_encode_binary": u.Ldif.take(
+                                "base64_encode_binary": u.take(
                                     d,
                                     "base64_encode_binary",
                                     as_type=bool,
                                 ),
                             }
-                            if u.Ldif.take(d, "base64_encode_binary", as_type=bool)
+                            if u.take(d, "base64_encode_binary", as_type=bool)
                             is not None
                             else {}
                         ),
@@ -212,7 +212,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         # First get the LDIF string
         string_result = self.write_to_string(entries, server_type, format_options)
         if string_result.is_failure:
-            return r[str].fail(
+            return r[m.Ldif.LdifResults.WriteResponse].fail(
                 string_result.error or "Failed to generate LDIF content",
             )
 
@@ -222,13 +222,17 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            return r[str].fail(f"Failed to create parent directories for {path}: {e}")
+            return r[m.Ldif.LdifResults.WriteResponse].fail(
+                f"Failed to create parent directories for {path}: {e}",
+            )
 
         # Write to file
         try:
             path.write_text(ldif_content, encoding="utf-8")
         except (OSError, UnicodeEncodeError) as e:
-            return r[str].fail(f"Failed to write LDIF file {path}: {e}")
+            return r[m.Ldif.LdifResults.WriteResponse].fail(
+                f"Failed to write LDIF file {path}: {e}",
+            )
 
         # Create response with basic statistics
         # Use facade LdifResults.Statistics for LDIF-specific statistics
@@ -286,8 +290,10 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
                 format_options,
             )
             if file_result.is_failure:
-                return r[str].fail(file_result.error or "File write failed")
-            return r[str].ok(file_result.value)
+                return r[str | m.Ldif.LdifResults.WriteResponse].fail(
+                    file_result.error or "File write failed",
+                )
+            return r[str | m.Ldif.LdifResults.WriteResponse].ok(file_result.value)
         # Return string
         string_result = self.write_to_string(
             entries,
@@ -295,12 +301,14 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             format_options,
         )
         if string_result.is_failure:
-            return r[str].fail(string_result.error or "String write failed")
-        return r[str].ok(string_result.value)
+            return r[str | m.Ldif.LdifResults.WriteResponse].fail(
+                string_result.error or "String write failed",
+            )
+        return r[str | m.Ldif.LdifResults.WriteResponse].ok(string_result.value)
 
     def execute(
         self,
-        params: dict[str, object] | None = None,
+        params: dict[str, t.GeneralValueType] | None = None,
     ) -> r[m.Ldif.LdifResults.WriteResponse]:
         """Execute write operation with parameters.
 
@@ -325,14 +333,14 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
 
         """
         params = params or {}
-        entries_raw = u.Ldif.take(params, "entries", as_type=list, default=[])
+        entries_raw = u.take(params, "entries", as_type=list, default=[])
         # Type narrowing: entries_raw is object, check if list[Entry]
         entries: list[m.Ldif.Entry] = (
             [entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)]
             if isinstance(entries_raw, list)
             else []
         )
-        target_server_type_raw = u.Ldif.take(
+        target_server_type_raw = u.take(
             params,
             "target_server_type",
             as_type=str,
@@ -348,12 +356,12 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             except ValueError:
                 # Invalid server type - use None (will default to RFC in write method)
                 target_server_type = None
-        output_path_raw = u.Ldif.take(params, "output_path", as_type=Path)
+        output_path_raw = u.take(params, "output_path", as_type=Path)
         # Type narrowing: output_path_raw is GeneralValueType, check if Path
         output_path: Path | None = (
             output_path_raw if isinstance(output_path_raw, Path) else None
         )
-        format_options_raw: t.GeneralValueType = u.Ldif.take(params, "format_options")
+        format_options_raw: t.GeneralValueType = u.take(params, "format_options")
         # Type narrowing: format_options_raw is object, check if WriteFormatOptions or WriteOptions
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions
@@ -380,15 +388,15 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
 
         # Convert result to WriteResponse format
         if write_result.is_failure:
-            return r[str].fail(write_result.error)
+            return r[m.Ldif.LdifResults.WriteResponse].fail(write_result.error)
 
         result_value = write_result.value
         if isinstance(result_value, m.Ldif.LdifResults.WriteResponse):
-            return r[str].ok(result_value)
+            return r[m.Ldif.LdifResults.WriteResponse].ok(result_value)
 
         # Convert string result to WriteResponse
         # Use facade LdifResults.Statistics for LDIF-specific statistics
-        return r[str].ok(
+        return r[m.Ldif.LdifResults.WriteResponse].ok(
             m.Ldif.LdifResults.WriteResponse(
                 content=str(result_value),
                 statistics=m.Ldif.LdifResults.Statistics(

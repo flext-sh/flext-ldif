@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from tests import GenericFieldsDict, RfcTestHelpers, c, s
@@ -293,10 +293,9 @@ class TestsFlextLdifOpenldapQuirks(s):
     ) -> None:
         """Test parsing OpenLDAP fixtures."""
         server_dir, filename, should_have_entries = config
-        server_type: lib_c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
-            "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-            server_dir,
-        )
+        # server_dir is "openldap" from FIXTURE_SCENARIOS dict
+        assert server_dir == "openldap"
+        server_type = server_dir
         fixture_path = FlextLdifTestUtils.get_fixture_path(server_type, filename)
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
@@ -533,7 +532,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         assert result.is_success == should_parse
         if should_parse:
             acl = result.value
-            assert acl.raw_acl == acl_line
+            assert acl_quirk.raw_acl == acl_line
 
     def test_acl_can_handle_to_clause(
         self,
@@ -624,7 +623,7 @@ class TestsFlextLdifOpenldapQuirks(s):
             "single_value": False,
         }
         attr_model = RfcTestHelpers.test_create_schema_attribute_from_dict(
-            cast("GenericFieldsDict", attr_dict),
+            attr_dict,
         )
         result = schema_quirk.write(attr_model)
         assert result.is_success
@@ -646,7 +645,7 @@ class TestsFlextLdifOpenldapQuirks(s):
             "may": ["userPassword"],
         }
         oc_model = RfcTestHelpers.test_create_schema_objectclass_from_dict(
-            cast("GenericFieldsDict", oc_dict),
+            oc_dict,
         )
         result = schema_quirk._write_objectclass(oc_model)
         assert result.is_success

@@ -310,7 +310,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
             )
         )
         # Use specific type for model_copy update
-        update_dict: dict[str, object] = {
+        update_dict: dict[str, t.GeneralValueType] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }

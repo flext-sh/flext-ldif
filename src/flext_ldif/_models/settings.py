@@ -881,7 +881,7 @@ class FlextLdifModelsSettings:
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, object] with type-safe Pydantic model.
+        Replaces dict[str, t.GeneralValueType] with type-safe Pydantic model.
         """
 
         user_dn_patterns: list[str] = Field(
@@ -1039,7 +1039,7 @@ class FlextLdifModelsSettings:
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, object] with type-safe Pydantic model.
+        Replaces dict[str, t.GeneralValueType] with type-safe Pydantic model.
         """
 
         blocked_objectclasses: list[str] = Field(
@@ -2140,6 +2140,7 @@ class FlextLdifModelsSettings:
         source_schema: (
             FlextLdifProtocols.Ldif.SchemaAttributeProtocol
             | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
         ) = Field(
             ...,
             description="Source schema quirk",
@@ -2147,6 +2148,7 @@ class FlextLdifModelsSettings:
         target_schema: (
             FlextLdifProtocols.Ldif.SchemaAttributeProtocol
             | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
         ) = Field(
             ...,
             description="Target schema quirk",
