@@ -342,12 +342,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         for attr_name, attr_values in u.mapper().to_dict(entry_attributes).items():
             if attr_name.lower() in boolean_attr_names:
-                original_values = list(attr_values)
-                # When default is provided, mapper().get returns the value directly
-                converted_values = u.mapper().get(
-                    converted_attributes,
-                    attr_name,
-                    default=original_values,
+                original_values: list[str] = list(attr_values)
+                # Use dict.get() for type-safe key lookup with default
+                converted_values: list[str] = converted_attributes.get(
+                    attr_name, original_values
                 )
 
                 if converted_values != original_values:
@@ -357,15 +355,18 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     # Format: "TRUE_VALUE/FALSE_VALUE" (matches utility expectations)
                     original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
                     converted_format_str = f"{c.Ldif.BooleanFormats.TRUE_RFC}/{c.Ldif.BooleanFormats.FALSE_RFC}"
-                    # Use standardized nested metadata keys (DRY: avoid hardcoding)
-                    mk_conv = c.Ldif.MetadataKeys
-                    boolean_conversions[attr_name] = {
-                        mk_conv.CONVERSION_ORIGINAL_VALUE: original_values,
-                        mk_conv.CONVERSION_CONVERTED_VALUE: converted_values,
-                        "conversion_type": "boolean_oid_to_rfc",
-                        c.Ldif.MetadataKeys.ORIGINAL_FORMAT: original_format_str,
-                        "converted_format": converted_format_str,
-                    }
+                    # Use standardized nested metadata keys
+                    # Build dict iteratively to satisfy type checker
+                    conversion_dict: dict[str, str | list[str]] = {}
+                    original_key: str = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
+                    converted_key: str = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
+                    format_key: str = c.Ldif.MetadataKeys.ORIGINAL_FORMAT
+                    conversion_dict[original_key] = original_values
+                    conversion_dict[converted_key] = converted_values
+                    conversion_dict["conversion_type"] = "boolean_oid_to_rfc"
+                    conversion_dict[format_key] = original_format_str
+                    conversion_dict["converted_format"] = converted_format_str
+                    boolean_conversions[attr_name] = conversion_dict
                     logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
@@ -430,10 +431,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         """
         # When default is provided, mapper().get returns the value directly
-        object_classes: list[str] = u.mapper().get(
+        object_classes_raw = u.mapper().get(
             converted_attributes,
             "objectClass",
             default=[],
+        )
+        object_classes: list[str] = (
+            object_classes_raw if isinstance(object_classes_raw, list) else []
         )
         object_classes_lower = {oc.lower() for oc in object_classes}
 
@@ -535,7 +539,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if attr_name.lower() in schema_attrs
                 else attr_values
             )
-            for attr_name, attr_values in u.mapper()
+            for attr_name, attr_values in u
+            .mapper()
             .to_dict(entry.attributes.attributes)
             .items()
         }
@@ -544,8 +549,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if new_attributes == entry.attributes.attributes:
             return entry
 
-        # Pydantic 2: model_copy accepts dict[str, object] for partial updates
-        update_dict: dict[str, object] = {
+        # Pydantic 2: model_copy accepts dict[str, t.GeneralValueType] for partial updates
+        update_dict: dict[str, t.GeneralValueType] = {
             "attributes": m.Ldif.Attributes(attributes=new_attributes),
         }
         return entry.model_copy(update=update_dict)
@@ -621,11 +626,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_attrs: dict[str, list[str]] | None = None
         if original_attrs_raw is not None and isinstance(original_attrs_raw, dict):
             # Convert dict values to list[str] format
-            original_attrs = {
-                k: v if isinstance(v, list) else [str(v)]
-                for k, v in u.mapper().to_dict(original_attrs_raw).items()
-                if isinstance(k, str)
-            }
+            result_attrs: dict[str, list[str]] = {}
+            for k, v in u.mapper().to_dict(original_attrs_raw).items():
+                if isinstance(k, str):
+                    if isinstance(v, list):
+                        result_attrs[k] = [str(item) for item in v]
+                    else:
+                        result_attrs[k] = [str(v)]
+            original_attrs = result_attrs
         denormalized: dict[str, list[str]] = {}
         for attr_name, attr_values in u.mapper().to_dict(attrs).items():
             restored_name, restored_values = self._restore_single_attribute(
@@ -665,7 +673,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # Extract from nested structure: CONVERTED_ATTRIBUTES[CONVERSION_BOOLEAN_CONVERSIONS]
         if isinstance(converted_attrs_data, dict):
             # When default is provided, mapper().get returns the value directly
-            boolean_conversions_obj: dict[str, object] = u.mapper().get(
+            boolean_conversions_obj = u.mapper().get(
                 converted_attrs_data,
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 default={},
@@ -828,8 +836,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if entry_data.attributes and entry_data.attributes.metadata:
             # entry_data.attributes.metadata is already EntryMetadata | None
             entry_metadata = entry_data.attributes.metadata
-        # Pydantic 2: model_copy accepts dict[str, object] for partial updates
-        update_dict: dict[str, object] = {
+        # Pydantic 2: model_copy accepts dict[str, t.GeneralValueType] for partial updates
+        update_dict: dict[str, t.GeneralValueType] = {
             "attributes": m.Ldif.Attributes(
                 attributes=restored_attrs,
                 attribute_metadata=(
@@ -963,7 +971,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # INLINE: _build_conversion_metadata (18 lines → 2 lines)
         # Use constants for metadata keys (DRY: avoid hardcoding)
         mk = c.Ldif.MetadataKeys
-        conversion_metadata: dict[str, list[str]] = (
+        conversion_metadata: dict[str, t.MetadataAttributeValue] = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
             else {}
@@ -972,7 +980,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # INLINE: _build_dn_metadata (27 lines → 3 lines)
         # Use constants for metadata keys (DRY: avoid hardcoding)
         mk = c.Ldif.MetadataKeys
-        dn_metadata: dict[str, str | bool] = (
+        dn_metadata: dict[str, t.MetadataAttributeValue] = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
                 mk.ORIGINAL_DN_LINE_COMPLETE: cleaned_dn,  # cleaned_dn is the processed DN
@@ -1079,20 +1087,36 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # Extract compatible extensions from original entry using helper
         original_extensions = self._extract_original_extensions(original_entry)
 
-        # Build extensions dict using dict constructor + update for PERF403 compliance
-        # Business Rule: DynamicMetadata accepts MetadataAttributeValue
-        # Implication: All values must be compatible with MetadataAttributeValue
-        # Type annotation ensures MetadataValue compatibility
-        # Type narrowing: conversion_metadata values are list[str] which is compatible with MetadataAttributeValue
-        extensions_data: dict[str, t.MetadataAttributeValue] = dict(conversion_metadata)
-        # Type narrowing: dn_metadata values are str | bool which are compatible with MetadataAttributeValue
-        extensions_data.update(dn_metadata)
-        # Type narrowing: rfc_compliance_metadata values are str which is compatible with MetadataAttributeValue
-        extensions_data.update(rfc_compliance_metadata)
-        # Type narrowing: generic_metadata values are str which is compatible with MetadataAttributeValue
-        extensions_data.update(generic_metadata)
-        # Type narrowing: original_extensions values are str | int | bool | list[str] which are compatible with MetadataAttributeValue
-        extensions_data.update(original_extensions)
+        # Build extensions dict - use dict unpacking for efficiency
+        extensions_data: dict[str, t.MetadataAttributeValue] = {
+            **conversion_metadata,
+            **dn_metadata,
+            **generic_metadata,
+        }
+        # Add rfc_compliance_metadata with type widening for nested dict/list
+        for key, val in rfc_compliance_metadata.items():
+            if isinstance(val, list):
+                widened_list: t.MetadataAttributeValue = list(val)
+                extensions_data[key] = widened_list
+            elif isinstance(val, dict):
+                # Build nested dict with widened values
+                nested_dict: dict[str, t.ScalarValue | list[t.ScalarValue]] = {}
+                for nk, nv in val.items():
+                    if isinstance(nv, list):
+                        nested_dict[nk] = list(nv)
+                    else:
+                        nested_dict[nk] = nv
+                widened_dict: t.MetadataAttributeValue = nested_dict
+                extensions_data[key] = widened_dict
+            else:
+                extensions_data[key] = val
+        # Add original_extensions with type widening for list
+        for key, val in original_extensions.items():
+            if isinstance(val, list):
+                widened_ext: t.MetadataAttributeValue = list(val)
+                extensions_data[key] = widened_ext
+            else:
+                extensions_data[key] = val
         extensions_data[c.Ldif.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )
@@ -1536,8 +1560,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # Update entry metadata with all extensions (ACL extensions + OID-specific metadata)
         if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
-            # Pydantic 2: model_copy accepts dict[str, object] for partial updates
-            update_dict: dict[str, object] = {
+            # Pydantic 2: model_copy accepts dict[str, t.GeneralValueType] for partial updates
+            update_dict: dict[str, t.GeneralValueType] = {
                 "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     current_extensions,
                 )

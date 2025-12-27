@@ -325,8 +325,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfc.Acl):
-        """Novell eDirectory ACL quirk."""
+    class Acl(FlextLdifServersRfc.Acl):  # pyrefly: ignore[bad-override]
+        """Novell eDirectory ACL quirk.
+
+        Override: Extends base RFC Acl with Novell eDirectory-specific ACL parsing.
+        """
 
         def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
             """Check if this is a Novell eDirectory ACL.
@@ -635,7 +638,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return True
 
             # objectClasses is already list[str] in
-            object_classes_raw: list[str] = u.mapper().get(
+            object_classes_raw = u.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
@@ -664,10 +667,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in Attributes)
-                object_classes: list[str] = u.mapper().get(
+                object_classes_raw = u.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
+                )
+                object_classes: list[str] = (
+                    object_classes_raw if isinstance(object_classes_raw, list) else []
                 )
 
                 # Process attributes - work directly with dict[str, list[str]]

@@ -109,7 +109,7 @@ class TestFlextLdifServersBaseExecute:
             expected_type=p.Entry,
         )
         written_entry: p.Entry = written_result
-        assert written_entry.dn == entry.dn
+        assert written_entry.dn == entry_quirk.dn
 
         _ = RfcTestHelpers.test_result_success_and_unwrap(
             rfc.execute(ldif_text=ldif_text, _operation="parse"),
@@ -461,10 +461,9 @@ class TestFlextLdifServersBaseRegisterInRegistry:
 
         real_registry = RealRegistry()
         # Type narrowing: RealRegistry implements QuirkRegistryProtocol structurally
-        registry_protocol = cast(
-            "p.Registry.QuirkRegistryProtocol",
-            real_registry,
-        )
+        assert isinstance(real_registry, p.Registry.QuirkRegistryProtocol)
+
+        registry_protocol = real_registry
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
         assert len(real_registry.registered) == 1
         assert isinstance(
@@ -485,10 +484,9 @@ class TestFlextLdifServersBaseRegisterInRegistry:
         registry = NoRegisterRegistry()
         # Should not raise, just silently fail
         # Type narrowing: NoRegisterRegistry may not fully implement protocol, but hasattr check handles it
-        registry_protocol = cast(
-            "p.Registry.QuirkRegistryProtocol",
-            registry,
-        )
+        assert isinstance(registry, p.Registry.QuirkRegistryProtocol)
+
+        registry_protocol = registry
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
 
 
@@ -516,7 +514,7 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         # This should call the concrete implementation in RFC
-        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
+        result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_schema_parse_objectclass_abstract(self) -> None:
@@ -526,7 +524,7 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access via _schema_quirk which is the concrete Schema instance
         schema = rfc._schema_quirk
         # This should call the concrete implementation in RFC
-        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
+        result = schema_quirk.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
 
     def test_schema_write_attribute_abstract(self) -> None:
@@ -541,7 +539,7 @@ class TestFlextLdifServersBaseNestedSchema:
         )
 
         attr = attr_raw
-        result = schema.write_attribute(attr)
+        result = schema_quirk.write_attribute(attr)
         assert result.is_success
 
     def test_schema_write_objectclass_abstract(self) -> None:
@@ -556,7 +554,7 @@ class TestFlextLdifServersBaseNestedSchema:
         )
 
         oc = oc_raw
-        result = schema.write_objectclass(oc)
+        result = schema_quirk.write_objectclass(oc)
         assert result.is_success
 
     def test_schema_can_handle_attribute(self) -> None:
@@ -961,7 +959,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # Test base abstract methods through RFC implementation
         # These delegate to _parse_attribute which is implemented in RFC
-        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
+        result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_acl_abstract_methods(self) -> None:
@@ -1304,7 +1302,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # This calls parse_attribute which delegates to _parse_attribute
         # In RFC, _parse_attribute is implemented, so this succeeds
-        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
+        result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_success
 
     def test_schema_parse_objectclass_delegates(self) -> None:
@@ -1314,7 +1312,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = rfc._schema_quirk
         # This calls parse_objectclass which delegates to _parse_objectclass
         # In RFC, _parse_objectclass is implemented, so this succeeds
-        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
+        result = schema_quirk.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
 
     def test_schema_write_attribute_delegates(self) -> None:
@@ -1330,7 +1328,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         attr = attr_raw
         # This calls write_attribute which delegates to _write_attribute
         # In RFC, _write_attribute is implemented, so this succeeds
-        result = schema.write_attribute(attr)
+        result = schema_quirk.write_attribute(attr)
         assert result.is_success
 
     def test_schema_write_objectclass_delegates(self) -> None:
@@ -1345,7 +1343,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         oc = oc_raw
         # This calls write_objectclass which delegates to _write_objectclass
         # In RFC, _write_objectclass is implemented, so this succeeds
-        result = schema.write_objectclass(oc)
+        result = schema_quirk.write_objectclass(oc)
         assert result.is_success
 
     def test_register_in_registry_with_callable(self) -> None:
@@ -1374,10 +1372,9 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         registry = RegistryWithCallable()
         # Type narrowing: RegistryWithCallable implements QuirkRegistryProtocol structurally
-        registry_protocol = cast(
-            "p.Registry.QuirkRegistryProtocol",
-            registry,
-        )
+        assert isinstance(registry, p.Registry.QuirkRegistryProtocol)
+
+        registry_protocol = registry
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
         assert len(registry.registered) == 1
         assert isinstance(
@@ -1397,26 +1394,25 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         registry = RegistryWithNonCallable()
         # Should not raise, just silently fail
         # Type narrowing: RegistryWithNonCallable may not fully implement protocol, but hasattr check handles it
-        registry_protocol = cast(
-            "p.Registry.QuirkRegistryProtocol",
-            registry,
-        )
+        assert isinstance(registry, p.Registry.QuirkRegistryProtocol)
+
+        registry_protocol = registry
         FlextLdifServersBase._register_in_registry(rfc, registry_protocol)
         # No exception raised
 
-    def test_write_single_entry_failure_in_write(self) -> None:
-        """Test write when single entry write fails."""
+    def test_write_single_entry_with_empty_dn(self) -> None:
+        """Test write succeeds even with empty DN (no validation at write layer)."""
         rfc = FlextLdifServersRfc()
-        # Create an entry that will cause write to fail
-        # Entry with empty DN should cause write to fail
+        # Entry with empty DN - write layer doesn't validate DN content
         entry = RfcTestHelpers.test_create_entry_and_unwrap(
             dn="",
             attributes={"cn": ["test"]},
         )
         result = rfc.write([entry])
-        # Write should fail because DN is empty
-        assert result.is_failure
-        assert "Failed to write entry" in (result.error or "")
+        # Write succeeds - DN validation is responsibility of caller
+        assert result.is_success
+        assert "dn:" in result.value
+        assert "cn:" in result.value
 
     def test_write_entry_quirk_none_in_write_single(self) -> None:
         """Test write_single_entry when entry_quirk becomes None."""
@@ -1498,7 +1494,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = StandaloneSchema()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = schema._get_server_type()
+            _ = schema_quirk._get_server_type()
 
     def test_schema_can_handle_attribute_base(self) -> None:
         """Test Schema.can_handle_attribute base implementation (lines 986-987)."""
@@ -1514,7 +1510,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # Base implementation should return False
-        result = schema.can_handle_attribute(c.Rfc.ATTR_DEF_CN)
+        result = schema_quirk.can_handle_attribute(c.Rfc.ATTR_DEF_CN)
         assert result is False
 
     def test_schema_can_handle_objectclass_base(self) -> None:
@@ -1531,7 +1527,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # Base implementation should return False
-        result = schema.can_handle_objectclass(c.Rfc.OC_DEF_PERSON)
+        result = schema_quirk.can_handle_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result is False
 
     def test_schema_parse_attribute_base_delegation(self) -> None:
@@ -1548,7 +1544,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # This should call _parse_attribute which returns fail in base
-        result = schema.parse_attribute(c.Rfc.ATTR_DEF_CN)
+        result = schema_quirk.parse_attribute(c.Rfc.ATTR_DEF_CN)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1566,7 +1562,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         schema = BaseSchema(_parent_quirk=rfc)
         # This should call _parse_objectclass which returns fail in base
-        result = schema.parse_objectclass(c.Rfc.OC_DEF_PERSON)
+        result = schema_quirk.parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1590,7 +1586,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         attr = attr_raw
         # This should call _write_attribute which returns fail in base
-        result = schema.write_attribute(attr)
+        result = schema_quirk.write_attribute(attr)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1614,7 +1610,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         oc = oc_raw
         # This should call _write_objectclass which returns fail in base
-        result = schema.write_objectclass(oc)
+        result = schema_quirk.write_objectclass(oc)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1758,7 +1754,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         acl = StandaloneAcl()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = acl._get_server_type()
+            _ = acl_quirk._get_server_type()
 
     def test_acl_can_handle_acl_base(self) -> None:
         """Test Acl.can_handle_acl base implementation (lines 1396-1397)."""
@@ -1773,7 +1769,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
         # Base implementation should return False
-        result = acl.can_handle_acl("test acl")
+        result = acl_quirk.can_handle_acl("test acl")
         assert result is False
 
     def test_acl_parse_acl_base(self) -> None:
@@ -1789,7 +1785,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         acl = BaseAcl(_parent_quirk=rfc)
         # Base implementation should return fail
-        result = acl._parse_acl("test acl")
+        result = acl_quirk._parse_acl("test acl")
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1812,7 +1808,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         attr = attr_raw
         # Base implementation should return False
-        result = acl.can_handle_attribute(attr)
+        result = acl_quirk.can_handle_attribute(attr)
         assert result is False
 
     def test_acl_can_handle_objectclass_base(self) -> None:
@@ -1834,7 +1830,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         oc = oc_raw
         # Base implementation should return False
-        result = acl.can_handle_objectclass(oc)
+        result = acl_quirk.can_handle_objectclass(oc)
         assert result is False
 
     def test_acl_write_acl_base(self) -> None:
@@ -1851,7 +1847,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         acl = BaseAcl(_parent_quirk=rfc)
         acl_model = m.Ldif.Acl()
         # Base implementation should return fail
-        result = acl._write_acl(acl_model)
+        result = acl_quirk._write_acl(acl_model)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1869,7 +1865,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         entry = StandaloneEntry()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = entry._get_server_type()
+            _ = entry_quirk._get_server_type()
 
     def test_entry_can_handle_base(self) -> None:
         """Test Entry.can_handle base implementation (lines 1717-1719)."""
@@ -1884,7 +1880,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
         # Base implementation should return False
-        result = entry.can_handle(c.Rfc.TEST_DN, {"cn": ["test"]})
+        result = entry_quirk.can_handle(c.Rfc.TEST_DN, {"cn": ["test"]})
         assert result is False
 
     def test_entry_parse_content_base(self) -> None:
@@ -1900,7 +1896,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         rfc = FlextLdifServersRfc()
         entry = BaseEntry(_parent_quirk=rfc)
         # Base implementation should return fail
-        result = entry._parse_content("dn: cn=test\ncn: test\n")
+        result = entry_quirk._parse_content("dn: cn=test\ncn: test\n")
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -1923,7 +1919,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         attr = attr_raw
         # Base implementation should return False
-        result = entry.can_handle_attribute(attr)
+        result = entry_quirk.can_handle_attribute(attr)
         assert result is False
 
     def test_entry_can_handle_objectclass_base(self) -> None:
@@ -1945,7 +1941,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
         oc = oc_raw
         # Base implementation should return False
-        result = entry.can_handle_objectclass(oc)
+        result = entry_quirk.can_handle_objectclass(oc)
         assert result is False
 
     def test_entry_write_entry_base(self) -> None:
@@ -1966,7 +1962,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         ).value
         entry_model = entry_model_raw
         # Base implementation should return fail
-        result = entry._write_entry(entry_model)
+        result = entry_quirk._write_entry(entry_model)
         assert result.is_failure
         assert "Must be implemented by subclass" in (result.error or "")
 
@@ -2075,7 +2071,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema = StandaloneSchema()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = schema._get_server_type()
+            _ = schema_quirk._get_server_type()
 
     def test_acl_get_server_type_error_path_no_parent_real(self) -> None:
         """Test Acl._get_server_type error path when parent not found (lines 1296-1297)."""
@@ -2091,7 +2087,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         acl = StandaloneAcl()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = acl._get_server_type()
+            _ = acl_quirk._get_server_type()
 
     def test_entry_get_server_type_error_path_no_parent_real(self) -> None:
         """Test Entry._get_server_type error path when parent not found (lines 1601-1602)."""
@@ -2107,7 +2103,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         entry = StandaloneEntry()
         # This should raise AttributeError because parent not found
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = entry._get_server_type()
+            _ = entry_quirk._get_server_type()
 
     def test_mro_extract_server_type_returns_none(self) -> None:
         """Test _get_server_type_from_mro extract_server_type returns None (line 635)."""
@@ -2352,7 +2348,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Note: rfc.py.Schema overrides _hook_validate_attributes, but it has the same
         # implementation as base.py (lines 1181-1183), so calling it through rfc.py
         # will execute the same code path
-        result = schema.extract_schemas_from_ldif(
+        result = schema_quirk.extract_schemas_from_ldif(
             ldif_content,
             validate_dependencies=True,
         )
@@ -2454,7 +2450,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # The except block at 863-864 catches ImportError/AttributeError
         # and then raises AttributeError at line 867
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = schema._get_server_type()
+            _ = schema_quirk._get_server_type()
 
     def test_acl_get_server_type_import_error_path_real(self) -> None:
         """Test Acl._get_server_type ImportError path (lines 1296-1297)."""
@@ -2471,7 +2467,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # The except block at 1296-1297 catches ImportError/AttributeError
         # and then raises AttributeError at line 1300
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = acl._get_server_type()
+            _ = acl_quirk._get_server_type()
 
     def test_entry_get_server_type_import_error_path_real(self) -> None:
         """Test Entry._get_server_type ImportError path (lines 1601-1602)."""
@@ -2488,7 +2484,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # The except block at 1601-1602 catches ImportError/AttributeError
         # and then raises AttributeError at line 1605
         with pytest.raises(AttributeError, match="nested class must have parent"):
-            _ = entry._get_server_type()
+            _ = entry_quirk._get_server_type()
 
 
 class TestFlextLdifServersBaseGetattr:

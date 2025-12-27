@@ -43,6 +43,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -533,7 +534,7 @@ class FlextLdifServersBaseEntry(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
-        | dict[str, object],
+        | dict[str, t.GeneralValueType],
     ) -> (
         FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
     ):
@@ -559,7 +560,7 @@ class FlextLdifServersBaseEntry(
     ) -> m.Ldif.Entry:
         """Inject write options into entry metadata."""
         write_options_typed = self._convert_write_options(write_options)
-        new_write_opts: dict[str, object] = (
+        new_write_opts: dict[str, t.GeneralValueType] = (
             dict(entry.metadata.write_options)
             if entry.metadata and entry.metadata.write_options
             else {}
@@ -703,7 +704,7 @@ class FlextLdifServersBaseEntry(
 
     def execute(
         self,
-        **kwargs: dict[str, object],
+        **kwargs: dict[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")

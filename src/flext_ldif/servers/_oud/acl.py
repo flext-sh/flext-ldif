@@ -523,11 +523,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
         # Preserve all extensions from parse_aci (including targattrfilters, targetcontrol, etc.)
-        extensions = (
-            dict(acl.metadata.extensions)
-            if acl.metadata and acl.metadata.extensions
-            else {}
-        )
+        extensions: dict[str, t.MetadataAttributeValue] = {}
+        if acl.metadata and acl.metadata.extensions:
+            for key, val in dict(acl.metadata.extensions).items():
+                if isinstance(val, list):
+                    list_typed: t.MetadataAttributeValue = list(val)
+                    extensions[key] = list_typed
+                elif isinstance(val, dict):
+                    dict_typed: t.MetadataAttributeValue = dict(val)
+                    extensions[key] = dict_typed
+                else:
+                    extensions[key] = val
 
         # Handle bind_timeofday (captures operator + value)
         # Uses c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY for consistency
@@ -788,11 +794,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")
-                # Type narrowing: Convert to expected types for AclTarget
+                # Type narrowing: Build list[str] using list comprehension
                 attrs: list[str] = (
-                    list(attrs_raw)
+                    [item for item in attrs_raw if isinstance(item, str)]
                     if isinstance(attrs_raw, list)
-                    and all(isinstance(item, str) for item in attrs_raw)
                     else []
                 )
                 dn: str = str(dn_raw) if isinstance(dn_raw, str) else "*"
@@ -893,12 +898,18 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
                 # Type narrowing: filter to MetadataAttributeValue-compatible types
                 perms_data: t.Ldif.MetadataDictMutable = {}
                 for k, v in target_perms_dict.items():
-                    if (
-                        isinstance(k, str)
-                        and not isinstance(v, Mapping)
-                        and (isinstance(v, (str, int, float, bool, list)) or v is None)
-                    ):
+                    if not isinstance(k, str):
+                        continue
+                    if isinstance(v, Mapping):
+                        continue
+                    if isinstance(v, (str, bool, int, float)) or v is None:
                         perms_data[k] = v
+                    elif isinstance(v, list):
+                        # Build list[str] explicitly
+                        str_list: list[str] = [
+                            str(item) for item in v if isinstance(item, str)
+                        ]
+                        perms_data[k] = str_list
             else:
                 perms_data = {}
             # Extract boolean fields with type guards - only use fields that exist in AclPermissions

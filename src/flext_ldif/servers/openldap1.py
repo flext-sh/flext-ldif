@@ -413,8 +413,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # - _parse_acl(): Parses OpenLDAP 1.x ACL definitions
         # - _write_acl(): Writes RFC-compliant ACL strings
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
         """OpenLDAP 1.x ACL quirk (nested).
+
+        Override: Extends base RFC Acl with OpenLDAP 1.x-specific ACL parsing.
 
         Extends RFC ACL parsing with OpenLDAP 1.x-specific ACL formats:
         - access: OpenLDAP 1.x access control directives from slapd.conf

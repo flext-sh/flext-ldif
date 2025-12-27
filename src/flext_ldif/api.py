@@ -136,7 +136,7 @@ class FlextLdif(s[object]):
         self.__dict__["_service_cache"] = {}
         self.logger.info("FlextLdif facade initialized")
 
-    def _get_service_cache(self) -> dict[str, object]:
+    def _get_service_cache(self) -> dict[str, t.GeneralValueType]:
         """Get service cache dict."""
         cache = self.__dict__.get("_service_cache")
         if cache is None:
@@ -619,7 +619,9 @@ class FlextLdif(s[object]):
             try:
                 content_str = ldif_content.read_text(encoding="utf-8")
             except OSError as e:
-                return r[object].fail(f"Failed to read file: {e}")
+                return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                    f"Failed to read file: {e}"
+                )
         else:
             content_str = ldif_content
         return self.detector.detect_server_type(ldif_content=content_str)

@@ -314,8 +314,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
-        """389 Directory Server ACI quirk."""
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
+        """389 Directory Server ACI quirk.
+
+        Override: Extends base RFC Acl with 389DS-specific ACL parsing.
+        """
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method).

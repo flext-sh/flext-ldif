@@ -738,9 +738,13 @@ class FlextLdifUtilitiesSchema:
         """
         # Use Parser to extract extensions
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        # ExtensionsDict is dict[str, str | list[str] | bool | None]
-        # Convert to dict[str, MetadataAttributeValue] for compatibility
-        extensions: dict[str, t.MetadataAttributeValue] = dict(extensions_raw.items())
+        # ExtensionsDict is dict[str, list[str]]
+        # Convert to dict[str, MetadataAttributeValue] by widening list types
+        extensions: dict[str, t.MetadataAttributeValue] = {}
+        for key, val in extensions_raw.items():
+            # pyrefly: ignore[bad-assignment] - list[str] is subtype at runtime
+            typed_val: t.MetadataAttributeValue = list(val)
+            extensions[key] = typed_val
 
         # Store original format for round-trip fidelity
         extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
@@ -815,7 +819,14 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
             c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        return dict(syntax_extensions.items())
+        result_dict: dict[str, t.MetadataAttributeValue] = {}
+        for key, val in syntax_extensions.items():
+            if isinstance(val, list):
+                list_typed: t.MetadataAttributeValue = list(val)
+                result_dict[key] = list_typed
+            else:
+                result_dict[key] = val
+        return result_dict
 
     @staticmethod
     def _extract_attribute_matching_rules(

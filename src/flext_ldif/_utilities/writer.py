@@ -208,7 +208,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def render_template(
         template_str: str,
-        context: dict[str, object],
+        context: dict[str, t.GeneralValueType],
     ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
@@ -539,22 +539,15 @@ class FlextLdifUtilitiesWriter:
                 else None
             )
         elif isinstance(metadata, dict):
-            extensions_raw: dict[str, t.MetadataAttributeValue] | object = (
-                u.mapper().get(metadata, "extensions", default={})
+            extensions_raw: dict[str, t.GeneralValueType] | object = u.mapper().get(
+                metadata, "extensions", default={}
             )
             if not isinstance(extensions_raw, dict):
                 attr_order = None
             else:
-                # Type narrowing: after isinstance check, extensions_raw is dict[str, t.MetadataAttributeValue]
-                # Business Rule: extensions_raw is dict[str, t.GeneralValueType] from metadata
-                # but we need dict[str, MetadataAttributeValue] for type safety.
-                # t.GeneralValueType includes recursive types, but metadata extensions
-                # in practice only contain ScalarValue or Sequence[ScalarValue].
-                extensions_dict: dict[str, t.MetadataAttributeValue] = extensions_raw
-                if FlextRuntime.is_dict_like(extensions_dict):
-                    attr_order = u.mapper().get(extensions_dict, "attribute_order")
-                else:
-                    attr_order = None
+                # Type narrowing: after isinstance check, extensions_raw is dict
+                # u.mapper().get works with any Mapping, so we can use extensions_raw directly
+                attr_order = u.mapper().get(extensions_raw, "attribute_order")
 
         if attr_order is None:
             return None
@@ -573,8 +566,8 @@ class FlextLdifUtilitiesWriter:
 
         # Type narrowing: ensure tuple elements are (str, t.GeneralValueType) for return type
         result: list[tuple[str, t.GeneralValueType]] = []
-        attr_order_list: list[object] = attr_order
-        for key in attr_order_list:
+        # attr_order is already narrowed to list by isinstance check above
+        for key in attr_order:
             if not isinstance(key, str):
                 continue  # Skip non-string keys
             if key in entry_data and key not in skip_keys:
@@ -952,15 +945,15 @@ class FlextLdifUtilitiesWriter:
 
         """
         # Get marked_attributes from metadata (type narrowing)
-        marked_attrs_raw: dict[str, dict[str, t.MetadataAttributeValue]] | object = (
-            u.mapper().get(entry_metadata.extensions, "marked_attributes", default={})
+        marked_attrs_raw: dict[str, t.GeneralValueType] | object = u.mapper().get(
+            entry_metadata.extensions, "marked_attributes", default={}
         )
         if not isinstance(marked_attrs_raw, dict):
             return (attr_name, attr_values)
 
-        # Type narrowing: after isinstance check, marked_attrs_raw is dict[str, dict[str, t.MetadataAttributeValue]]
-        marked_attrs: dict[str, dict[str, t.MetadataAttributeValue]] = marked_attrs_raw
-        attr_info = u.mapper().get(marked_attrs, attr_name)
+        # Type narrowing: after isinstance check, marked_attrs_raw is dict
+        # u.mapper().get works with any Mapping, so we can use it directly
+        attr_info = u.mapper().get(marked_attrs_raw, attr_name)
 
         # If attribute not marked, write normally
         if not attr_info:
@@ -981,7 +974,16 @@ class FlextLdifUtilitiesWriter:
         # Use full path to avoid type resolution issues
         # Access enum value directly as string literal to avoid mypy issues with nested enum access
         normal_status = "normal"  # c.Ldif.AttributeMarkerStatus.NORMAL.value
-        status_raw = u.mapper().get(attr_info, "status", default=normal_status)
+
+        # Type narrowing: attr_info must be dict-like to get 'status' key
+        if not isinstance(attr_info, dict):
+            return (attr_name, attr_values)
+
+        status_raw = u.mapper().get(
+            attr_info,
+            "status",
+            default=normal_status,
+        )
         # Validate status is AttributeMarkerStatusLiteral
         valid_statuses = {
             "normal",
@@ -1086,6 +1088,9 @@ class FlextLdifUtilitiesWriter:
                 return None
             if name_format is None:
                 return None
+            # Type narrowing: name_format is str after None check above
+            if not isinstance(name_format, str):
+                return None
             return (name_format, attr_values)
 
         # Default: write normally
@@ -1166,7 +1171,7 @@ class FlextLdifUtilitiesWriter:
             ):
                 # hasattr confirms __iter__, safe to iterate directly
                 try:
-                    attr_values_list: list[object] = [v for v in attr_values]  # noqa: C416
+                    attr_values_list: list[object] = list(attr_values)
                     return [str(v) for v in attr_values_list]
                 except (TypeError, ValueError):
                     return str(attr_values) if attr_values else ""
@@ -1319,7 +1324,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: dict[str, object],
+        changetype_config: dict[str, t.GeneralValueType],
     ) -> None:
         """Add changetype lines based on format.
 
@@ -1329,6 +1334,7 @@ class FlextLdifUtilitiesWriter:
             changetype_config: Dict with keys: include_changetype, changetype_value, fold_long_lines, width
 
         """
+        # u.mapper().get works with any Mapping[str, object], no cast needed
         include_changetype = bool(
             u.mapper().get(changetype_config, "include_changetype"),
         )
@@ -1361,8 +1367,8 @@ class FlextLdifUtilitiesWriter:
         dn_value: str,
         attributes: m.Ldif.EntryAttributesDict,
         *,
-        format_config: dict[str, object] | None = None,
-        **kwargs: object,
+        format_config: dict[str, t.GeneralValueType] | None = None,
+        **kwargs: t.GeneralValueType,
     ) -> list[str]:
         """Build LDIF lines for an entry in ADD or MODIFY format.
 
@@ -1386,6 +1392,7 @@ class FlextLdifUtilitiesWriter:
 
         """
         config = {**(format_config or {}), **kwargs}
+        # u.mapper().get works with any Mapping[str, object], no cast needed
         format_type = str(u.mapper().get(config, "format_type", default="add"))
         modify_operation = str(
             u.mapper().get(config, "modify_operation", default="add"),
@@ -1414,8 +1421,8 @@ class FlextLdifUtilitiesWriter:
         )
 
         # Changetype handling
-        # Type narrowing: dict[str, bool | int | str] is compatible with dict[str, object]
-        changetype_config: dict[str, object] = {
+        # Type narrowing: dict[str, bool | int | str] is compatible with dict[str, t.GeneralValueType]
+        changetype_config: dict[str, t.GeneralValueType] = {
             "include_changetype": include_changetype,
             "changetype_value": changetype_value,
             "fold_long_lines": fold_long_lines,

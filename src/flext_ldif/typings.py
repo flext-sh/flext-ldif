@@ -64,8 +64,8 @@ class FlextLdifTypes(FlextTypes):
         NormalizedAttributesDict: TypeAlias = dict[str, list[str]]
 
         # Schema definition dicts
-        SchemaAttributeDict: TypeAlias = dict[str, object]
-        SchemaObjectClassDict: TypeAlias = dict[str, object]
+        SchemaAttributeDict: TypeAlias = dict[str, FlextTypes.GeneralValueType]
+        SchemaObjectClassDict: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         # ACL types
         AclPermission: TypeAlias = str
@@ -93,7 +93,7 @@ class FlextLdifTypes(FlextTypes):
             # Entry component types
             EntryDict: TypeAlias = dict[str, list[str]]
             EntryAttributes: TypeAlias = dict[str, list[str]]
-            EntryMetadata: TypeAlias = dict[str, object]
+            EntryMetadata: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         class Attribute:
             """Attribute-related type definitions."""
@@ -101,15 +101,17 @@ class FlextLdifTypes(FlextTypes):
             # Attribute component types
             AttributeList: TypeAlias = list[str]
             AttributeOptions: TypeAlias = dict[str, str]
-            AttributeMetadata: TypeAlias = dict[str, object]
+            AttributeMetadata: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         class Schema:
             """Schema-related type definitions."""
 
             # Schema component types
-            SchemaDict: TypeAlias = dict[str, object]
-            SchemaElements: TypeAlias = dict[str, dict[str, object]]
-            SchemaMetadata: TypeAlias = dict[str, object]
+            SchemaDict: TypeAlias = dict[str, FlextTypes.GeneralValueType]
+            SchemaElements: TypeAlias = dict[
+                str, dict[str, FlextTypes.GeneralValueType]
+            ]
+            SchemaMetadata: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         # =========================================================================
         # EXTENSIONS TYPES (Schema extensions and metadata)
@@ -129,9 +131,9 @@ class FlextLdifTypes(FlextTypes):
         class ModelMetadata:
             """Metadata type aliases for parsed schema objects."""
 
-            ParsedAttributeDict: TypeAlias = dict[str, object]
-            ParsedObjectClassDict: TypeAlias = dict[str, object]
-            ParsedSchemaDict: TypeAlias = dict[str, list[object]]
+            ParsedAttributeDict: TypeAlias = dict[str, FlextTypes.GeneralValueType]
+            ParsedObjectClassDict: TypeAlias = dict[str, FlextTypes.GeneralValueType]
+            ParsedSchemaDict: TypeAlias = dict[str, list[FlextTypes.GeneralValueType]]
 
         # =========================================================================
         # DECORATOR TYPES (Callable types for decorators)
@@ -192,13 +194,13 @@ class FlextLdifTypes(FlextTypes):
             str,
             str | int | float | bool | list[str] | None,
         ]
-        FlexibleKwargsMutable: TypeAlias = dict[str, object]
+        FlexibleKwargsMutable: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         # Template types
         TemplateValue: TypeAlias = str | int | float | bool | None
 
         # Transformation types
-        TransformationInfo: TypeAlias = dict[str, object]
+        TransformationInfo: TypeAlias = dict[str, FlextTypes.GeneralValueType]
 
         # =========================================================================
         # TYPE VARIABLES (Only TypeVars allowed in typings.py)
@@ -210,8 +212,8 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
 
-# Runtime alias for basic class (objects nested without redundant aliases)
-# Pattern: Classes básicas sempre com runtime alias, objects nested without redundant aliases
+# Runtime alias - FlextLdifTypes extends FlextTypes
+# t.GeneralValueType works (inherited), t.Ldif.* works (defined here)
 t = FlextLdifTypes
 
 

@@ -175,10 +175,10 @@ class Pipeline:
             transformer_result = transformer.apply(entry)
             if transformer_result.is_failure:
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
-                return r[str].fail(transformer_result.error)
+                return r[m.Ldif.Entry | _Filtered].fail(transformer_result.error)
             # Transformers always return Entry (never FILTERED)
             entry_value = transformer_result.value
-            return r[str].ok(entry_value)
+            return r[m.Ldif.Entry | _Filtered].ok(entry_value)
 
         self._steps.append((step_name, wrapped_transformer))
         return self
@@ -207,9 +207,9 @@ class Pipeline:
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry | _Filtered]:
             if entry_filter.matches(entry):
-                return r[str].ok(entry)
+                return r[m.Ldif.Entry | _Filtered].ok(entry)
             # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
-            return r[str].ok(FILTERED)
+            return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
 
         self._steps.append((step_name, filter_func))
         return self
@@ -247,18 +247,18 @@ class Pipeline:
             func_result = func(entry)
             if func_result is None:
                 # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
-                return r[str].ok(FILTERED)
+                return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
             if isinstance(func_result, r):
                 # If result is Entry, wrap in Entry | FILTERED union
                 if func_result.is_success:
                     entry_value = func_result.value
                     # Type narrowing: entry_value is Entry when success
-                    return r[str].ok(entry_value)
+                    return r[m.Ldif.Entry | _Filtered].ok(entry_value)
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
-                return r[str].fail(func_result.error)
+                return r[m.Ldif.Entry | _Filtered].fail(func_result.error)
             # func_result is Entry (not None, not r)
             # Type narrowing: func_result is Entry
-            return r[str].ok(func_result)
+            return r[m.Ldif.Entry | _Filtered].ok(func_result)
 
         self._steps.append((name, wrapped_func))
         return self
@@ -281,19 +281,21 @@ class Pipeline:
         for step_name, step_func in self._steps:
             if isinstance(current, _Filtered):
                 # Entry was filtered out in previous step
-                return r[str].ok(FILTERED)
+                return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
 
             # Type narrowing: current is Entry when not _Filtered
             result = step_func(current)
             if result.is_failure:
-                return r[str].fail(f"Step '{step_name}' failed: {result.error}")
+                return r[m.Ldif.Entry | _Filtered].fail(
+                    f"Step '{step_name}' failed: {result.error}"
+                )
 
             unwrapped = result.value
             # Business Rule: FILTERED sentinel indicates entry was filtered out
             # Type narrowing: unwrapped is Entry | FILTERED
             current = unwrapped
 
-        return r[str].ok(current)
+        return r[m.Ldif.Entry | _Filtered].ok(current)
 
     def execute(
         self,
@@ -341,14 +343,14 @@ class Pipeline:
             if process_result.is_failure:
                 # Real error - handle based on fail_fast setting
                 if self._fail_fast:
-                    return r[str].fail(
+                    return r[list[m.Ldif.Entry]].fail(
                         process_result.error or "Pipeline execution failed",
                     )
                 # Collect mode: skip error and continue
                 continue
             # Success: add to results
             results.append(process_result.value)
-        return r[str].ok(results)
+        return r[list[m.Ldif.Entry]].ok(results)
 
     @property
     def step_count(self) -> int:
@@ -585,7 +587,7 @@ class ValidationPipeline:
             validation_result = self.validate_one(entry)
             if validation_result.is_failure:
                 # Convert r[ValidationResult] failure to r[list[ValidationResult]] failure
-                return r[str].fail(validation_result.error)
+                return r[list[ValidationResult]].fail(validation_result.error)
 
             validation = validation_result.value
             results.append(validation)
@@ -597,7 +599,7 @@ class ValidationPipeline:
             if not self._collect_all and not validation.is_valid:
                 break
 
-        return r[str].ok(results)
+        return r[list[ValidationResult]].ok(results)
 
 
 # =========================================================================

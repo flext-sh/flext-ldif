@@ -117,13 +117,13 @@ class FlextLdifStatistics(
         ]
         # Sum counts using utilities
         total_entries = sum(
-            u.Ldif.count(entries) if isinstance(entries, list) else 0
+            u.count(entries) if isinstance(entries, list) else 0
             for entries in categorized_values_list
         )
 
         # Build categorized counts using utilities and model validation
         categorized_counts_dict = {
-            category: u.Ldif.count(entries) for category, entries in categorized.items()
+            category: u.count(entries) for category, entries in categorized.items()
         }
         categorized_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
             categorized_counts_dict,
@@ -135,7 +135,7 @@ class FlextLdifStatistics(
             for entry in categorized.get("rejected", [])
             if isinstance(entry, m.Ldif.Entry)
         ]
-        rejection_count = u.Ldif.count(rejected_entries)
+        rejection_count = u.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
         # Calculate rejection rate as percentage
@@ -151,7 +151,7 @@ class FlextLdifStatistics(
 
         output_files_model = m.Ldif.Results.CategoryPaths()
         for category in written_counts:
-            filename = u.Ldif.take(output_files, category, default=f"{category}.ldif")
+            filename = u.take(output_files, category, default=f"{category}.ldif")
             filename_str = filename if isinstance(filename, str) else f"{category}.ldif"
             setattr(output_files_model, category, str(output_dir / filename_str))
 
@@ -188,7 +188,7 @@ class FlextLdifStatistics(
 
             # Check for server_type in metadata extensions
             if entry.metadata and entry.metadata.extensions:
-                st_value = u.Ldif.take(
+                st_value = u.take(
                     entry.metadata.extensions,
                     "server_type",
                     as_type=str,

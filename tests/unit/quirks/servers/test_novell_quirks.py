@@ -203,13 +203,21 @@ def schema_quirk(
     novell_server: FlextLdifServersNovell,
 ) -> FlextLdifServersNovell.Schema:
     """Get schema quirk from Novell server."""
-    return cast("FlextLdifServersNovell.Schema", novell_server.schema_quirk)
+    quirk = novell_server.schema_quirk
+
+    assert isinstance(quirk, FlextLdifServersNovell.Schema)
+
+    return quirk
 
 
 @pytest.fixture
 def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
     """Get entry quirk from Novell server."""
-    return cast("FlextLdifServersNovell.Entry", novell_server.entry_quirk)
+    quirk = novell_server.entry_quirk
+
+    assert isinstance(quirk, FlextLdifServersNovell.Entry)
+
+    return quirk
 
 
 class TestsFlextLdifNovellInitialization(s):
@@ -312,7 +320,7 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("FlextLdifServersNovell.Schema", schema_quirk),
+            schema_quirk,
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
             expected_name="ndsPerson",
@@ -329,7 +337,7 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("FlextLdifServersNovell.Schema", schema_quirk),
+            schema_quirk,
             oc_def,
             expected_kind="AUXILIARY",
         )
@@ -341,7 +349,7 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("FlextLdifServersNovell.Schema", schema_quirk),
+            schema_quirk,
             oc_def,
             expected_kind="ABSTRACT",
         )
@@ -352,7 +360,7 @@ class TestNovellSchemaObjectClassParsing:
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
-        quirk_schema = cast("FlextLdifServersNovell.Schema", schema_quirk)
+        quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
 
         assert result.is_failure
@@ -431,6 +439,6 @@ class TestNovellEntryDetection:
         entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""
-        quirk_entry = cast("FlextLdifServersNovell.Entry", entry_quirk)
+        quirk_entry = entry_quirk
         result = quirk_entry.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle

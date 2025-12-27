@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -302,13 +301,8 @@ class TestsTestFlextLdifSettings(s):
         def test_ldif_encoding_invalid(self) -> None:
             """Test invalid ldif_encoding value."""
             with pytest.raises(ValidationError):
-                # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifSettings(
-                    ldif_encoding=cast(
-                        "lib_c.Ldif.LiteralTypes.EncodingLiteral",
-                        "invalid-encoding",
-                    ),
-                )
+                # Pydantic validates encoding at runtime
+                FlextLdifSettings(ldif_encoding="invalid-encoding")
 
         @pytest.mark.parametrize(
             "level",
@@ -316,25 +310,15 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_validation_level_valid(self, level: str) -> None:
             """Test valid validation_level values."""
-            # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifSettings(
-                validation_level=cast(
-                    "lib_c.Ldif.LiteralTypes.ValidationLevelLiteral",
-                    level,
-                ),
-            )
+            # Pydantic validates validation_level at runtime
+            config = FlextLdifSettings(validation_level=level)
             assert config.validation_level == level
 
         def test_validation_level_invalid(self) -> None:
             """Test invalid validation_level value."""
             with pytest.raises(ValidationError):
-                # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifSettings(
-                    validation_level=cast(
-                        "lib_c.Ldif.LiteralTypes.ValidationLevelLiteral",
-                        "invalid",
-                    ),
-                )
+                # Pydantic validates validation_level at runtime
+                FlextLdifSettings(validation_level="invalid")
 
         @pytest.mark.parametrize(
             "server_type",
@@ -342,7 +326,7 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_server_type_valid(self, server_type: str) -> None:
             """Test valid server_type values."""
-            # Normalize and cast: use normalize_server_type to ensure valid ServerTypeLiteral
+            # Normalize and validate: Pydantic validates server_type at runtime
             normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(server_type)
             config = FlextLdifSettings(server_type=normalized)
             assert config.server_type == normalized
@@ -350,13 +334,8 @@ class TestsTestFlextLdifSettings(s):
         def test_server_type_invalid(self) -> None:
             """Test invalid server_type value."""
             with pytest.raises(ValidationError):
-                # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifSettings(
-                    server_type=cast(
-                        "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                        "invalid-server",
-                    ),
-                )
+                # Pydantic validates server_type at runtime
+                FlextLdifSettings(server_type="invalid-server")
 
         @pytest.mark.parametrize(
             "detail_level",
@@ -364,25 +343,15 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_analytics_detail_level_valid(self, detail_level: str) -> None:
             """Test valid analytics_detail_level values."""
-            # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifSettings(
-                analytics_detail_level=cast(
-                    "lib_c.Ldif.LiteralTypes.AnalyticsDetailLevelLiteral",
-                    detail_level,
-                ),
-            )
+            # Pydantic validates analytics_detail_level at runtime
+            config = FlextLdifSettings(analytics_detail_level=detail_level)
             assert config.analytics_detail_level == detail_level
 
         def test_analytics_detail_level_invalid(self) -> None:
             """Test invalid analytics_detail_level value."""
             with pytest.raises(ValidationError):
-                # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifSettings(
-                    analytics_detail_level=cast(
-                        "lib_c.Ldif.LiteralTypes.AnalyticsDetailLevelLiteral",
-                        "invalid",
-                    ),
-                )
+                # Pydantic validates analytics_detail_level at runtime
+                FlextLdifSettings(analytics_detail_level="invalid")
 
         @pytest.mark.parametrize(
             "mode",
@@ -390,25 +359,15 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_error_recovery_mode_valid(self, mode: str) -> None:
             """Test valid error_recovery_mode values."""
-            # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifSettings(
-                error_recovery_mode=cast(
-                    "lib_c.Ldif.LiteralTypes.ErrorRecoveryModeLiteral",
-                    mode,
-                ),
-            )
+            # Pydantic validates error_recovery_mode at runtime
+            config = FlextLdifSettings(error_recovery_mode=mode)
             assert config.error_recovery_mode == mode
 
         def test_error_recovery_mode_invalid(self) -> None:
             """Test invalid error_recovery_mode value."""
             with pytest.raises(ValidationError):
-                # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifSettings(
-                    error_recovery_mode=cast(
-                        "lib_c.Ldif.LiteralTypes.ErrorRecoveryModeLiteral",
-                        "invalid",
-                    ),
-                )
+                # Pydantic validates error_recovery_mode at runtime
+                FlextLdifSettings(error_recovery_mode="invalid")
 
     class Encoding:
         """Test encoding-related functionality."""
@@ -420,13 +379,8 @@ class TestsTestFlextLdifSettings(s):
 
         def test_get_effective_encoding_active_directory(self) -> None:
             """Test get_effective_encoding returns utf-16 for AD server."""
-            # Type narrowing: cast str to Literal for type checker
-            ad_config = FlextLdifSettings(
-                server_type=cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    "active_directory",
-                ),
-            )
+            # Pydantic validates server_type at runtime
+            ad_config = FlextLdifSettings(server_type="active_directory")
             assert ad_config.get_effective_encoding() == "utf-16"
 
     class QuirksDetection:
@@ -443,21 +397,14 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_detection_mode_valid(self, mode: str) -> None:
             """Test valid detection modes can be configured."""
-            # Type narrowing: cast str to Literal for type checker
-            mode_literal = cast(
-                "lib_c.Ldif.LiteralTypes.DetectionModeLiteral",
-                mode,
-            )
+            # Pydantic validates quirks_detection_mode at runtime
             if mode == "manual":
                 config = FlextLdifSettings(
-                    quirks_detection_mode=mode_literal,
-                    quirks_server_type=cast(
-                        "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                        "oud",
-                    ),
+                    quirks_detection_mode=mode,
+                    quirks_server_type="oud",
                 )
             else:
-                config = FlextLdifSettings(quirks_detection_mode=mode_literal)
+                config = FlextLdifSettings(quirks_detection_mode=mode)
             assert config.quirks_detection_mode == mode
 
         def test_manual_detection_mode_requires_server_type(self) -> None:
@@ -481,23 +428,16 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_relaxed_parsing_combinations(self, mode: str) -> None:
             """Test relaxed parsing with all detection mode combinations."""
-            # Type narrowing: cast str to Literal for type checker
-            mode_literal = cast(
-                "lib_c.Ldif.LiteralTypes.DetectionModeLiteral",
-                mode,
-            )
+            # Pydantic validates quirks_detection_mode at runtime
             if mode == "manual":
                 config = FlextLdifSettings(
-                    quirks_detection_mode=mode_literal,
-                    quirks_server_type=cast(
-                        "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                        "oud",
-                    ),
+                    quirks_detection_mode=mode,
+                    quirks_server_type="oud",
                     enable_relaxed_parsing=True,
                 )
             else:
                 config = FlextLdifSettings(
-                    quirks_detection_mode=mode_literal,
+                    quirks_detection_mode=mode,
                     enable_relaxed_parsing=True,
                 )
             assert config.quirks_detection_mode == mode
@@ -505,30 +445,20 @@ class TestsTestFlextLdifSettings(s):
 
         def test_manual_mode_with_server_type(self) -> None:
             """Test manual mode with server type specified."""
+            # Pydantic validates quirks_detection_mode and quirks_server_type at runtime
             config = FlextLdifSettings(
-                quirks_detection_mode=cast(
-                    "lib_c.Ldif.LiteralTypes.DetectionModeLiteral",
-                    "manual",
-                ),
-                quirks_server_type=cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    "oud",
-                ),
+                quirks_detection_mode="manual",
+                quirks_server_type="oud",
             )
             assert config.quirks_detection_mode == "manual"
             assert config.quirks_server_type == "oud"
 
         def test_disabled_mode_with_server_type(self) -> None:
             """Test disabled mode can have server type (ignored during parsing)."""
+            # Pydantic validates quirks_detection_mode and quirks_server_type at runtime
             config = FlextLdifSettings(
-                quirks_detection_mode=cast(
-                    "lib_c.Ldif.LiteralTypes.DetectionModeLiteral",
-                    "disabled",
-                ),
-                quirks_server_type=cast(
-                    "lib_c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    "oud",
-                ),
+                quirks_detection_mode="disabled",
+                quirks_server_type="oud",
             )
             assert config.quirks_detection_mode == "disabled"
             assert config.quirks_server_type == "oud"
@@ -559,13 +489,8 @@ class TestsTestFlextLdifSettings(s):
         )
         def test_analytics_detail_levels(self, level: str) -> None:
             """Test analytics detail level options."""
-            # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifSettings(
-                analytics_detail_level=cast(
-                    "lib_c.Ldif.LiteralTypes.AnalyticsDetailLevelLiteral",
-                    level,
-                ),
-            )
+            # Pydantic validates analytics_detail_level at runtime
+            config = FlextLdifSettings(analytics_detail_level=level)
             assert config.analytics_detail_level == level
 
     class Processing:

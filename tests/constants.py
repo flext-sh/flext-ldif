@@ -1463,6 +1463,62 @@ class RfcTestHelpers:
         return value
 
     @staticmethod
+    def test_schema_write_attribute_with_metadata(
+        schema_quirk: object,
+        attr_def: str,
+        expected_oid: str,
+        expected_name: str,
+        must_contain: list[str] | None = None,
+    ) -> tuple[object, str]:
+        """Parse attribute definition, write it back, and validate output.
+
+        Args:
+            schema_quirk: Schema quirk instance
+            attr_def: Attribute definition string to parse
+            expected_oid: Expected OID in the parsed attribute
+            expected_name: Expected name in the parsed attribute
+            must_contain: List of strings that must appear in written output
+
+        Returns:
+            Tuple of (parsed attribute, written string)
+
+        Raises:
+            AssertionError: If parsing/writing fails or validations don't pass
+
+        """
+        # First parse the attribute
+        attr = RfcTestHelpers.test_schema_parse_attribute(
+            schema_quirk,
+            attr_def,
+            expected_oid,
+            expected_name,
+        )
+
+        # Get write method
+        write_method = getattr(schema_quirk, "write_attribute", None)
+        if write_method is None:
+            msg = "Schema quirk has no write_attribute method"
+            raise AssertionError(msg)
+
+        # Write the attribute back
+        result = write_method(attr)
+
+        if hasattr(result, "is_failure") and result.is_failure:
+            raise AssertionError(f"Attribute writing failed: {result.error}")
+
+        written = result.value if hasattr(result, "value") else result
+
+        # Validate written contains expected elements
+        if must_contain:
+            for element in must_contain:
+                if element not in written:
+                    raise AssertionError(
+                        f"Expected '{element}' in written output: {written}",
+                    )
+
+        return attr, written
+
+    @staticmethod
     def test_parse_and_assert_entry_structure(
         parser_service: object,
         content: str,

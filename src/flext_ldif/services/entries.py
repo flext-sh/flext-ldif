@@ -162,20 +162,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         """
         if not self._operation:
-            return r[str].fail("No operation specified")
+            return r[list[m.Ldif.Entry]].fail("No operation specified")
 
         if self._operation == "remove_operational_attributes":
             return self.remove_operational_attributes_batch(self._entries)
         if self._operation == "remove_attributes":
             if not self._attributes_to_remove:
-                return r[str].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
             return self.remove_attributes_batch(
                 self._entries,
                 self._attributes_to_remove,
             )
-        return r[str].fail(f"Unknown operation: {self._operation}")
+        return r[list[m.Ldif.Entry]].fail(f"Unknown operation: {self._operation}")
 
     @staticmethod
     def remove_operational_attributes_batch(
@@ -224,12 +224,16 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     if result.is_success and isinstance(result.value, m.Ldif.Entry):
                         results.append(result.value)
                     else:
-                        return r[str].fail(result.error or "Failed to process entry")
+                        return r[list[m.Ldif.Entry]].fail(
+                            result.error or "Failed to process entry",
+                        )
                 elif isinstance(result, m.Ldif.Entry):
                     results.append(result)
             except Exception as exc:
-                return r[str].fail(f"Batch processing failed: {exc}")
-        return r[str].ok(results)
+                return r[list[m.Ldif.Entry]].fail(
+                    f"Batch processing failed: {exc}",
+                )
+        return r[list[m.Ldif.Entry]].ok(results)
 
     def remove_attributes_batch(
         self,
@@ -281,12 +285,16 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     if result.is_success and isinstance(result.value, m.Ldif.Entry):
                         results.append(result.value)
                     else:
-                        return r[str].fail(result.error or "Failed to process entry")
+                        return r[list[m.Ldif.Entry]].fail(
+                            result.error or "Failed to process entry",
+                        )
                 elif isinstance(result, m.Ldif.Entry):
                     results.append(result)
             except Exception as exc:
-                return r[str].fail(f"Batch processing failed: {exc}")
-        return r[str].ok(results)
+                return r[list[m.Ldif.Entry]].fail(
+                    f"Batch processing failed: {exc}",
+                )
+        return r[list[m.Ldif.Entry]].ok(results)
 
     @staticmethod
     def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> r[str]:
@@ -396,11 +404,11 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 attrs_dict: dict[str, list[str]] = (
                     dict(attrs_dict_raw) if isinstance(attrs_dict_raw, dict) else {}
                 )
-                return r[str].ok(attrs_dict)
-            return r[str].ok({})
+                return r[dict[str, list[str]]].ok(attrs_dict)
+            return r[dict[str, list[str]]].ok({})
         if isinstance(attrs, dict):
-            return r[str].ok(dict(attrs))
-        return r[str].fail(
+            return r[dict[str, list[str]]].ok(dict(attrs))
+        return r[dict[str, list[str]]].fail(
             f"Unknown attributes container type: {type(attrs)}",
         )
 
@@ -435,17 +443,23 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Implication: ValueError and AttributeError are caught and converted to r failures
         try:
             if not hasattr(entry, "attributes"):
-                return r[str].fail("Entry missing attributes attribute")
+                return r[dict[str, list[str]]].fail(
+                    "Entry missing attributes attribute",
+                )
             attrs = entry.attributes
             if attrs is None:
-                return r[str].fail("Entry has no attributes (attributes is None)")
+                return r[dict[str, list[str]]].fail(
+                    "Entry has no attributes (attributes is None)",
+                )
             if not attrs:
-                return r[str].ok({})
+                return r[dict[str, list[str]]].ok({})
             return FlextLdifEntries._extract_attrs_from_container(attrs)
         except (AttributeError, ValueError) as e:
             # Business Rule: Convert exceptions to r failures
             # This ensures railway-oriented error handling throughout the codebase
-            return r[str].fail(f"Failed to extract attributes: {e}")
+            return r[dict[str, list[str]]].fail(
+                f"Failed to extract attributes: {e}",
+            )
 
     @staticmethod
     def get_entry_objectclasses(
@@ -474,13 +488,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Implication: If attribute extraction fails, objectClass extraction also fails
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
-            return r[str].fail(
+            return r[list[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
 
         attributes = attributes_result.value
         if not attributes:
-            return r[str].ok([])
+            return r[list[str]].ok([])
 
         # Business Rule: Case-insensitive search for objectClass attribute per RFC 4512
         # LDAP attribute names are case-insensitive, so we match "objectclass" regardless of case
@@ -497,7 +511,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         # Type narrowing: found_kv is tuple[str, str | list[str]] | None
         if not found_kv:
-            return r[str].fail("Entry is missing objectClass attribute")
+            return r[list[str]].fail("Entry is missing objectClass attribute")
 
         # Type narrowing: found_kv[1] is str | list[str] (attribute value)
         objectclasses: str | list[str] = found_kv[1]
@@ -530,7 +544,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """
         # Validate DN using FlextLdifUtilitiesDN
         if not FlextLdifUtilitiesDN.validate(dn):
-            return r[str].fail(f"Invalid DN: {dn}")
+            return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
 
         # Prepare attributes
         final_attrs = dict(attributes)
@@ -594,16 +608,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         """
         if not entry.attributes or not entry.attributes.attributes:
-            return r[str].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
 
         # Get current objectClass values
         objectclasses_result = FlextLdifEntries.get_entry_objectclasses(entry)
         if objectclasses_result.is_failure:
-            return r[str].ok(entry)  # No objectClass attribute, nothing to remove
+            return r[m.Ldif.Entry].ok(
+                entry
+            )  # No objectClass attribute, nothing to remove
 
         current_ocs = objectclasses_result.value
         if not current_ocs:
-            return r[str].ok(entry)  # Empty objectClass list, nothing to remove
+            return r[m.Ldif.Entry].ok(
+                entry
+            )  # Empty objectClass list, nothing to remove
 
         # Normalize objectClass names to lowercase for case-insensitive comparison
         ocs_to_remove_lower = {oc.lower() for oc in objectclasses_to_remove}
@@ -616,7 +634,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         # If all objectClasses were removed, return error
         if not new_ocs:
-            return r[str].fail("Cannot remove all objectClass values from entry")
+            return r[m.Ldif.Entry].fail(
+                "Cannot remove all objectClass values from entry",
+            )
 
         # Create new attributes dict with updated objectClass
         new_attrs = dict(entry.attributes.attributes)
@@ -628,7 +648,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             attributes=m.Ldif.Attributes(attributes=new_attrs),
             metadata=entry.metadata,
         )
-        return r[str].ok(modified_entry)
+        return r[m.Ldif.Entry].ok(modified_entry)
 
     @staticmethod
     def get_attribute_values(
@@ -644,30 +664,32 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         """
         if isinstance(attribute, str):
-            return r[str].ok([attribute])
+            return r[list[str]].ok([attribute])
         if isinstance(attribute, list):
-            return r[str].ok(attribute)
+            return r[list[str]].ok(attribute)
         # Check if it's a protocol with values attribute
         if hasattr(attribute, "values"):
             values = getattr(attribute, "values", None)
             if isinstance(values, str):
-                return r[str].ok([values])
+                return r[list[str]].ok([values])
             if isinstance(values, (list, tuple)):
-                return r[str].ok(list(values))
-            return r[str].fail(
+                return r[list[str]].ok(list(values))
+            return r[list[str]].fail(
                 f"Attribute 'values' has unsupported type: {type(values).__name__}",
             )
         # Try to iterate if it's iterable and contains strings (but not already handled above)
         if isinstance(attribute, (tuple, set, frozenset)):
             try:
                 str_list = [str(item) for item in attribute]
-                return r[str].ok(str_list)
+                return r[list[str]].ok(str_list)
             except (TypeError, ValueError):
-                return r[str].fail(
+                return r[list[str]].fail(
                     f"Cannot convert iterable to string list: {type(attribute).__name__}",
                 )
         # Not a supported type
-        return r[str].fail(f"Unsupported attribute type: {type(attribute).__name__}")
+        return r[list[str]].fail(
+            f"Unsupported attribute type: {type(attribute).__name__}",
+        )
 
     @staticmethod
     def get_entry_attribute(
@@ -685,13 +707,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         """
         if not entry.attributes or not entry.attributes.attributes:
-            return r[str].fail(f"Attribute '{attribute_name}' not found")
+            return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
         value_raw: t.GeneralValueType = u.mapper().get(
             entry.attributes.attributes, attribute_name
         )
         if value_raw is None:
-            return r[str].fail(f"Attribute '{attribute_name}' not found")
+            return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
         # Type narrowing: attribute values are str | list[str]
         attr_value: str | list[str] = (
@@ -820,7 +842,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         operational_attrs_lower = {attr.lower() for attr in operational_attrs}
 
         # Create new attributes dict without operational attributes (case-insensitive)
-        # Use dict comprehension for type safety (u.where expects dict[str, object])
+        # Use dict comprehension for type safety (u.where expects dict[str, t.GeneralValueType])
         new_attrs: dict[str, list[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()

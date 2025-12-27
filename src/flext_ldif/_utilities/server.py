@@ -80,13 +80,13 @@ class FlextLdifUtilitiesServer:
         constants = getattr(cls_with_constants, "Constants", None)
         if constants is None:
             return None
-        server_type = getattr(constants, "SERVER_TYPE", None)
+        server_type_raw: object = getattr(constants, "SERVER_TYPE", None)
         if (
-            server_type is not None
-            and isinstance(server_type, str)
-            and _is_valid_server_type_literal(server_type)
+            server_type_raw is not None
+            and isinstance(server_type_raw, str)
+            and _is_valid_server_type_literal(server_type_raw)
         ):
-            return server_type
+            return server_type_raw
         return None
 
     @staticmethod

@@ -1,7 +1,7 @@
 """Processing Models - Type-safe processing results.
 
 Provides typed models for processing service results, replacing generic
-dict[str, object] returns with proper Pydantic models.
+dict[str, t.GeneralValueType] returns with proper Pydantic models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,7 +17,7 @@ from flext_ldif._models.base import FlextLdifModelsBase
 class ProcessingResult(FlextLdifModelsBase):
     """Result of entry processing (transform or validate operation).
 
-    Replaces dict[str, object] returns from processing service to provide
+    Replaces dict[str, t.GeneralValueType] returns from processing service to provide
     type-safe structured results matching p.Ldif.Entry.EntryProtocol contract.
 
     Attributes:

@@ -155,7 +155,7 @@ class DynamicCounts(FlextLdifModelsBase):
 
 
 class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
-    """Base schema element mapping model (replaces dict[str, object]).
+    """Base schema element mapping model (replaces dict[str, t.GeneralValueType]).
 
     Consolidated base model for schema element mappings.
     Uses DynamicMetadata to reduce code duplication.
@@ -197,7 +197,7 @@ class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
 
 
 class _SchemaAttributeMap(_SchemaElementMap):
-    """Schema attribute mapping model (replaces dict[str, object]).
+    """Schema attribute mapping model (replaces dict[str, t.GeneralValueType]).
 
     Defined at module level to avoid forward reference issues in default_factory.
     """
@@ -231,7 +231,7 @@ class _SchemaAttributeMap(_SchemaElementMap):
 
 
 class _SchemaObjectClassMap(_SchemaElementMap):
-    """Schema object class mapping model (replaces dict[str, object]).
+    """Schema object class mapping model (replaces dict[str, t.GeneralValueType]).
 
     Defined at module level to avoid forward reference issues in default_factory.
     """

@@ -113,7 +113,10 @@ class FlextLdifProtocols(FlextProtocols):
             model_extra: dict[str, str | int | float | bool | list[str] | None] | None
 
             def get(
-                self, key: str, default: str | float | bool | list[str] | None = None
+                self,
+                key: str,
+                *,
+                default: str | float | bool | list[str] | None = None,
             ) -> str | int | float | bool | list[str] | None:
                 """Get value from model_extra dict with type safety."""
                 ...
@@ -137,7 +140,10 @@ class FlextLdifProtocols(FlextProtocols):
             )
 
             def get(
-                self, key: str, default: str | float | bool | list[str] | None = None
+                self,
+                key: str,
+                *,
+                default: str | float | bool | list[str] | None = None,
             ) -> str | int | float | bool | list[str] | None:
                 """Get value from model_extra dict with type safety."""
                 ...
@@ -248,11 +254,20 @@ class FlextLdifProtocols(FlextProtocols):
             """
 
             @property
-            def line_width(self) -> int: ...
+            def line_width(self) -> int:
+                """Maximum line width for LDIF output."""
+                ...
+
             @property
-            def respect_attribute_order(self) -> bool: ...
+            def respect_attribute_order(self) -> bool:
+                """Whether to respect original attribute order."""
+                ...
+
             @property
-            def sort_attributes(self) -> bool: ...
+            def sort_attributes(self) -> bool:
+                """Whether to sort attributes alphabetically."""
+                ...
+
             @property
             def write_hidden_attributes_as_comments(self) -> bool:
                 """Whether to write hidden attributes as comments."""
@@ -277,42 +292,66 @@ class FlextLdifProtocols(FlextProtocols):
             def base64_encode_binary(self) -> bool:
                 """Whether to base64 encode binary data."""
                 ...
+
             @property
             def fold_long_lines(self) -> bool:
                 """Whether to fold long lines."""
                 ...
+
             @property
             def restore_original_format(self) -> bool:
                 """Whether to restore original format."""
                 ...
+
             @property
             def write_empty_values(self) -> bool:
                 """Whether to write empty values."""
                 ...
+
             @property
             def normalize_attribute_names(self) -> bool:
                 """Whether to normalize attribute names."""
                 ...
+
             @property
             def include_dn_comments(self) -> bool:
                 """Whether to include DN comments."""
                 ...
+
             @property
             def write_removed_attributes_as_comments(self) -> bool:
                 """Whether to write removed attributes as comments."""
                 ...
+
             @property
-            def write_migration_header(self) -> bool: ...
+            def write_migration_header(self) -> bool:
+                """Whether to write a migration header."""
+                ...
+
             @property
-            def migration_header_template(self) -> str | None: ...
+            def migration_header_template(self) -> str | None:
+                """Template for the migration header."""
+                ...
+
             @property
-            def write_rejection_reasons(self) -> bool: ...
+            def write_rejection_reasons(self) -> bool:
+                """Whether to write rejection reasons as comments."""
+                ...
+
             @property
-            def include_removal_statistics(self) -> bool: ...
+            def include_removal_statistics(self) -> bool:
+                """Whether to include removal statistics in output."""
+                ...
+
             @property
-            def ldif_changetype(self) -> str | None: ...
+            def ldif_changetype(self) -> str | None:
+                """LDIF changetype directive value."""
+                ...
+
             @property
-            def ldif_modify_operation(self) -> str: ...
+            def ldif_modify_operation(self) -> str:
+                """LDIF modify operation type."""
+                ...
 
         @runtime_checkable
         class AclWriteMetadataProtocol(Protocol):
@@ -390,6 +429,7 @@ class FlextLdifProtocols(FlextProtocols):
             ) -> (
                 FlextLdifProtocols.Ldif.SchemaAttributeProtocol
                 | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
             ):
                 """Source schema object to convert."""
                 ...
@@ -405,6 +445,7 @@ class FlextLdifProtocols(FlextProtocols):
             ) -> (
                 FlextLdifProtocols.Ldif.SchemaAttributeProtocol
                 | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
             ):
                 """Target schema object template."""
                 ...
@@ -806,9 +847,13 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class FilterProtocol[T](Protocol):
-            """Protocol for filters in pipelines."""
+            """Protocol for filters in pipelines.
 
-            def matches(self, item: T) -> bool:
+            Note: matches accepts object for flexibility when filtering sequences.
+            Implementations should internally narrow to T.
+            """
+
+            def matches(self, item: object) -> bool:
                 """Check if item matches filter criteria."""
                 ...
 

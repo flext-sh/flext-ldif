@@ -277,8 +277,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):  # type: ignore[override]
-        """IBM Tivoli Directory Server ACL quirks implementation."""
+    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
+        """IBM Tivoli Directory Server ACL quirks implementation.
+
+        Override: Extends base RFC Acl with Tivoli-specific ACL parsing.
+        """
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this ACL is a Tivoli DS ACL."""
@@ -489,17 +492,20 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_raw: list[str] = u.mapper().get(
+            object_classes_result = u.mapper().get(
                 attributes,
                 c.Ldif.DictKeys.OBJECTCLASS,
                 default=[],
             )
-            if isinstance(object_classes_raw, list):
-                object_classes: list[str] = object_classes_raw
-            elif isinstance(object_classes_raw, tuple):
-                object_classes = list(object_classes_raw)
+            # Type narrowing: mapper().get() returns GeneralValueType | None
+            if isinstance(object_classes_result, list):
+                object_classes: list[str] = object_classes_result
+            elif isinstance(object_classes_result, tuple):
+                object_classes = list(object_classes_result)
+            elif object_classes_result is not None:
+                object_classes = [str(object_classes_result)]
             else:
-                object_classes = [str(object_classes_raw)]
+                object_classes = []
             return bool(
                 any(
                     str(oc).lower()
@@ -529,10 +535,13 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Get objectClasses directly from attributes (already list[str])
-                object_classes: list[str] = u.mapper().get(
+                object_classes_raw = u.mapper().get(
                     attributes,
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
+                )
+                object_classes: list[str] = (
+                    object_classes_raw if isinstance(object_classes_raw, list) else []
                 )
 
                 # Process attributes - work directly with dict[str, list[str]]

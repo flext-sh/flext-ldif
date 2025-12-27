@@ -81,7 +81,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            return r[str].fail(
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
                 f"Invalid server type: {effective_server_type_raw} - {e}",
             )
 
@@ -89,23 +89,23 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             entry_quirk_raw = self._server.entry(effective_server_type)
         except ValueError as e:
             # Invalid server type validation error
-            return r[str].fail(str(e))
+            return r[m.Ldif.LdifResults.ParseResponse].fail(str(e))
         if entry_quirk_raw is None:
-            return r[str].fail(
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
                 f"No entry quirk found for server type: {effective_server_type}",
             )
 
         # Type narrowing: entry_quirk_raw is EntryProtocol (structural typing)
         # Use hasattr to check for parse method (structural typing check)
         if not hasattr(entry_quirk_raw, "parse"):
-            return r[str].fail(
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
         # Type narrowing: entry_quirk_raw has parse method
         # Get parse method from attribute and validate callable
         parse_attr = getattr(entry_quirk_raw, "parse", None)
         if parse_attr is None or not callable(parse_attr):
-            return r[str].fail(
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
             )
         # Call parse method - result is FlextResult[list[Entry]] per EntryProtocol
@@ -114,19 +114,23 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         # Check for failure via attribute access
         is_failure = getattr(parse_result_raw, "is_failure", None)
         if is_failure is None:
-            return r[str].fail("Invalid parse result from entry quirk")
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
+                "Invalid parse result from entry quirk",
+            )
         if is_failure:
             error_msg = (
                 getattr(parse_result_raw, "error", None) or "LDIF parsing failed"
             )
-            return r[str].fail(
-                error_msg if isinstance(error_msg, str) else str(error_msg)
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
+                error_msg if isinstance(error_msg, str) else str(error_msg),
             )
 
         # Extract entries from server response (list of Entry models)
         entries_raw = getattr(parse_result_raw, "value", None)
         if entries_raw is None:
-            return r[str].fail("Parse result has no value")
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
+                "Parse result has no value",
+            )
         entries = entries_raw if isinstance(entries_raw, list) else []
 
         # Create response with minimal metadata
@@ -171,7 +175,9 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             # Read file content directly
             content = path.read_text(encoding=encoding)
         except (OSError, UnicodeDecodeError) as e:
-            return r[str].fail(f"Failed to read LDIF file {path}: {e}")
+            return r[m.Ldif.LdifResults.ParseResponse].fail(
+                f"Failed to read LDIF file {path}: {e}",
+            )
 
         # Delegate to string parsing
         return self.parse_string(content, server_type)
@@ -282,7 +288,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             r.fail() with error message directing to correct usage
 
         """
-        return r[str].fail(
+        return r[m.Ldif.LdifResults.ParseResponse].fail(
             "FlextLdifParser requires input data to parse. "
             "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
         )

@@ -40,10 +40,12 @@ from typing import IO, Self, overload
 
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif.protocols import p
 
 r = FlextResult
+u_core = FlextUtilities
 
 # Type variable for the result value type
 type ResultValue[T] = T
@@ -492,22 +494,22 @@ class FlextLdifResult[T]:
 
     def filter(
         self,
-        predicate: p.Ldif.FilterProtocol | Callable[[object], bool],
-    ) -> FlextLdifResult:
+        predicate: p.Ldif.FilterProtocol[T] | Callable[[T], bool],
+    ) -> FlextLdifResult[T]:
         """Filter the result value using a predicate.
 
-        For sequence values, filters elements matching the predicate and returns
-        a new sequence of the same type T. For single values, returns the value
-        if it matches, or a failure if it doesn't match.
+        For single values, returns the value if it matches the predicate,
+        or a failure if it doesn't match.
 
-        Business Rule: The filter method preserves the type T. When T is list[Entry],
-        filtering returns FlextLdifResult[list[Entry]] with matching entries.
+        Note: For filtering elements within sequences (e.g., filtering entries
+        from list[Entry]), use the pipe operator with a filter transformer:
+            result | Filter.by_objectclass("person")
 
         Args:
             predicate: Filter predicate (p.Ldif.FilterProtocol or callable)
 
         Returns:
-            FlextLdifResult with filtered value or propagated error
+            FlextLdifResult with value if matched, or failure if not matched
 
         """
         if self.is_failure:
@@ -516,28 +518,22 @@ class FlextLdifResult[T]:
         value = self.value
 
         # Use Protocol isinstance check for FilterProtocol (runtime_checkable)
-        matches_func: Callable[[object], bool]
+        matches_func: Callable[[T], bool]
         if isinstance(predicate, p.Ldif.FilterProtocol):
-            # FilterProtocol - use matches method directly
+            # FilterProtocol - wrap matches method with proper typing
             filter_protocol = predicate
 
-            def wrapped_matches(item: object) -> bool:
+            def wrapped_matches(item: T) -> bool:
                 return filter_protocol.matches(item)
 
             matches_func = wrapped_matches
         elif callable(predicate):
-            # Direct callable
+            # Direct callable - already properly typed as Callable[[T], bool]
             matches_func = predicate
         else:
             return FlextLdifResult.fail("Invalid predicate type")
 
-        # Handle sequence of entries - filter elements and preserve type
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            # Filter elements - result is always a list for type consistency
-            filtered_elements = [item for item in value if matches_func(item)]
-            return FlextLdifResult.ok(filtered_elements)
-
-        # Handle single value - return if matches, fail otherwise
+        # Check if value matches predicate
         if matches_func(value):
             return FlextLdifResult.ok(value)
 

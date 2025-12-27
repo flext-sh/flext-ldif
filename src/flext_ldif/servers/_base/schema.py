@@ -44,6 +44,7 @@ from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -803,12 +804,20 @@ class FlextLdifServersBaseSchema(
         # Create metadata
         # QuirkMetadata.quirk_type accepts str - no cast needed
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
+        # Widen metadata_extensions types for from_dict compatibility
+        extensions_typed: dict[str, t.MetadataAttributeValue] = {}
+        for key, val in metadata_extensions.items():
+            if isinstance(val, list):
+                list_typed: t.MetadataAttributeValue = list(val)
+                extensions_typed[key] = list_typed
+            else:
+                extensions_typed[key] = val
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                metadata_extensions
+                extensions_typed
             )
-            if metadata_extensions
+            if extensions_typed
             else FlextLdifModelsMetadata.DynamicMetadata(),
         )
 
@@ -1046,7 +1055,7 @@ class FlextLdifServersBaseSchema(
         *,
         data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None) = None,
         operation: str | None = None,
-        **kwargs: dict[str, object],
+        **kwargs: dict[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write.
 

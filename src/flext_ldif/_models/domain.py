@@ -58,7 +58,7 @@ class FlextLdifModelsDomains:
     # DOMAIN MODELS - Core LDIF entities
     # =========================================================================
 
-    class DN(m.Value):
+    class DN(FlextModelsEntity.Value):
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -931,7 +931,7 @@ class FlextLdifModelsDomains:
                 if meta.get("status") == "deleted"
             }
 
-    class ErrorDetail(m.Value):
+    class ErrorDetail(FlextModelsBase.FrozenStrictModel):
         """Error detail information for failed operations."""
 
         model_config = ConfigDict(
@@ -1626,7 +1626,10 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: str | dict[str, object] | FlextLdifModelsDomains.DN | None,
+            value: str
+            | dict[str, t.GeneralValueType]
+            | FlextLdifModelsDomains.DN
+            | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1654,7 +1657,7 @@ class FlextLdifModelsDomains:
         def coerce_attributes_from_dict(
             cls,
             value: dict[str, list[str]]
-            | dict[str, object]
+            | dict[str, t.GeneralValueType]
             | FlextLdifModelsDomains.Attributes
             | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
@@ -1716,8 +1719,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, t.MetadataAttributeValue] | list[t.MetadataAttributeValue],
-        ) -> dict[str, t.MetadataAttributeValue] | list[t.MetadataAttributeValue]:
+            data: dict[str, t.GeneralValueType] | list[t.GeneralValueType],
+        ) -> dict[str, t.GeneralValueType] | list[t.GeneralValueType]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -1773,7 +1776,7 @@ class FlextLdifModelsDomains:
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=final_quirk_type_val,
                 )
-                # metadata_obj is already MetadataAttributeValue type
+                # Assign to dict with object type - QuirkMetadata is object
                 data["metadata"] = metadata_obj
 
             return data
@@ -2247,9 +2250,10 @@ class FlextLdifModelsDomains:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                # server_violations is list[str], compatible with t.MetadataAttributeValue
+                # Convert to MetadataAttributeValue type for DynamicMetadata
+                violations_typed: t.MetadataAttributeValue = list(server_violations)
                 self.metadata.extensions["server_specific_violations"] = (
-                    server_violations
+                    violations_typed
                 )
 
             return self
@@ -2489,17 +2493,18 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> dict[str, str | dict[str, list[str]]]:
+        ) -> dict[str, t.MetadataAttributeValue]:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: dict[str, str | dict[str, list[str]]] = {}
+            ext_kwargs: dict[str, t.MetadataAttributeValue] = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
-                ext_kwargs["unconverted_attributes"] = (
-                    unconverted_attributes.model_dump()
-                )
+                unconverted_dump = unconverted_attributes.model_dump()
+                # Convert dict[str, list[str]] to MetadataAttributeValue
+                unconverted_typed: t.MetadataAttributeValue = unconverted_dump
+                ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
 
         @classmethod
@@ -2538,10 +2543,9 @@ class FlextLdifModelsDomains:
                     source_entry,
                     unconverted_attributes,
                 )
-                # Type narrowing: convert values to t.MetadataAttributeValue compatible types
-                ext_kwargs_typed: dict[str, t.MetadataAttributeValue] = dict(ext_kwargs)
+                # ext_kwargs already typed as dict[str, t.MetadataAttributeValue]
                 extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    ext_kwargs_typed
+                    ext_kwargs
                 )
                 return FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.GENERIC,
@@ -3953,8 +3957,9 @@ class FlextLdifModelsDomains:
                 ... )
 
             """
-            # values is list[str], compatible with t.MetadataAttributeValue
-            self.removed_attributes[attribute_name] = values
+            # Convert to MetadataAttributeValue type for DynamicMetadata
+            values_typed: t.MetadataAttributeValue = list(values)
+            self.removed_attributes[attribute_name] = values_typed
             return self.track_attribute_transformation(
                 original_name=attribute_name,
                 new_name=None,
@@ -4002,8 +4007,9 @@ class FlextLdifModelsDomains:
             self.original_strings[rfc_format.META_DN_ORIGINAL] = original_dn
             self.extensions[rfc_format.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
-                # escapes_applied is Sequence[str] | None, compatible with t.MetadataAttributeValue
-                self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_applied
+                # Convert to MetadataAttributeValue type for DynamicMetadata
+                escapes_typed: t.MetadataAttributeValue = list(escapes_applied)
+                self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_typed
 
             # Add to conversion notes
             self.conversion_notes[f"dn_{transformation_type}"] = (

@@ -34,7 +34,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -42,6 +42,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -115,7 +116,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         acl_service: object | None = None,
         _parent_quirk: object | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection.
 
@@ -516,7 +517,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: dict[str, dict[str, object]],
+        kwargs: dict[str, dict[str, t.GeneralValueType]],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -529,7 +530,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: dict[str, dict[str, object]],
+        kwargs: dict[str, dict[str, t.GeneralValueType]],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
@@ -555,7 +556,7 @@ class FlextLdifServersBaseSchemaAcl(
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
-        **kwargs: dict[str, object],
+        **kwargs: dict[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write.
 
@@ -596,7 +597,7 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: dict[str, FlextTypes.MetadataAttributeValue] | None = None,
+        extensions: dict[str, t.MetadataAttributeValue] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata.
 
@@ -611,7 +612,7 @@ class FlextLdifServersBaseSchemaAcl(
             QuirkMetadata with quirk_type and extensions.
 
         """
-        all_extensions: dict[str, FlextTypes.MetadataAttributeValue] = {
+        all_extensions: dict[str, t.MetadataAttributeValue] = {
             "original_format": original_format,
         }
         if extensions:

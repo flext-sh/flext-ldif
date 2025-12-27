@@ -96,7 +96,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             )
         except (ValueError, TypeError) as e:
             # Invalid server type validation error
-            return r[str].fail(f"Invalid server type: {server_type} - {e}")
+            return r[m.Ldif.Acl].fail(f"Invalid server type: {server_type} - {e}")
 
         # Get ACL quirk for normalized server type
         # If "openldap" (generic) was requested, try "openldap1" (legacy format) first
@@ -113,9 +113,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
                 acl_quirk = self._server.acl(normalized_server_type)
         except ValueError as e:
             # Invalid server type validation error
-            return r[str].fail(str(e))
+            return r[m.Ldif.Acl].fail(str(e))
         if acl_quirk is None:
-            return r[str].fail(
+            return r[m.Ldif.Acl].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
 
