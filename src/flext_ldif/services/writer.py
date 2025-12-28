@@ -81,35 +81,38 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
-        result_raw = u.Ldif.match(
-            format_options,
-            (type(None), lambda _: m.Ldif.LdifResults.WriteFormatOptions()),
-            (type, lambda t: t()),
-            (m.Ldif.LdifResults.WriteFormatOptions, lambda opts: opts),
-            (
-                m.Ldif.LdifResults.WriteOptions,
-                lambda opts: _extract_pipe_value(
-                    u.Reliability.pipe(
-                        opts.model_dump(exclude_none=True),
-                        lambda d: (
-                            {
-                                "base64_encode_binary": (
-                                    d.get("base64_encode_binary")
-                                    if isinstance(d, dict)
-                                    else None
-                                ),
-                            }
-                            if isinstance(d, dict)
-                            and d.get("base64_encode_binary") is not None
-                            else {}
-                        ),
-                        m.Ldif.LdifResults.WriteFormatOptions.model_validate,
+        # Pattern match on format_options type and convert to WriteFormatOptions
+        if format_options is None:
+            result_raw = m.Ldif.LdifResults.WriteFormatOptions()
+        elif isinstance(format_options, type):
+            result_raw = format_options()
+        elif isinstance(format_options, m.Ldif.LdifResults.WriteFormatOptions):
+            result_raw = format_options
+        elif isinstance(format_options, m.Ldif.LdifResults.WriteOptions):
+            result_raw = _extract_pipe_value(
+                u.Reliability.pipe(
+                    format_options.model_dump(exclude_none=True),
+                    lambda d: (
+                        {
+                            "base64_encode_binary": (
+                                d.get("base64_encode_binary")
+                                if isinstance(d, dict)
+                                else None
+                            ),
+                        }
+                        if isinstance(d, dict)
+                        and d.get("base64_encode_binary") is not None
+                        else {}
                     ),
+                    m.Ldif.LdifResults.WriteFormatOptions.model_validate,
                 ),
-            ),
-            (dict, m.Ldif.LdifResults.WriteFormatOptions.model_validate),
-            default=None,
-        )
+            )
+        elif isinstance(format_options, dict):
+            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
+                format_options
+            )
+        else:
+            result_raw = None
         if result_raw is None:
             msg = f"Expected WriteFormatOptions | WriteOptions | dict | None, got {type(format_options)}"
             raise TypeError(msg)
