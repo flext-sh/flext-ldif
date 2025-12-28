@@ -744,12 +744,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             oc_must_value = parsed["must"]
             oc_must: list[str] | None = (
-                [str(item) for item in oc_must_value] if isinstance(oc_must_value, list) else None
+                [str(item) for item in oc_must_value]
+                if isinstance(oc_must_value, list)
+                else None
             )
 
             oc_may_value = parsed["may"]
             oc_may: list[str] | None = (
-                [str(item) for item in oc_may_value] if isinstance(oc_may_value, list) else None
+                [str(item) for item in oc_may_value]
+                if isinstance(oc_may_value, list)
+                else None
             )
 
             objectclass = m.Ldif.SchemaObjectClass(

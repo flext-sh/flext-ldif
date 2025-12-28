@@ -93,7 +93,9 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             dumped = format_options.model_dump(exclude_none=True)
             result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate({
                 "base64_encode_binary": (
-                    dumped.get("base64_encode_binary") if isinstance(dumped, dict) else None
+                    dumped.get("base64_encode_binary")
+                    if isinstance(dumped, dict)
+                    else None
                 ),
             })
         elif isinstance(format_options, dict):

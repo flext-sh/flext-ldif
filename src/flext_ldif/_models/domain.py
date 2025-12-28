@@ -1678,12 +1678,35 @@ class FlextLdifModelsDomains:
                 attrs_data = value.get("attributes", {})
                 meta_data = value.get("attribute_metadata", {})
                 entry_meta = value.get("metadata")
+                # Type conversion: ensure proper dict types
+                typed_attrs: dict[str, list[str]] = {}
+                if isinstance(attrs_data, dict):
+                    for k, v in attrs_data.items():
+                        if isinstance(k, str):
+                            if isinstance(v, list):
+                                typed_attrs[k] = [str(item) for item in v]
+                            else:
+                                typed_attrs[k] = [str(v)]
+
+                typed_meta: dict[str, dict[str, str | list[str]]] = {}
+                if isinstance(meta_data, dict):
+                    for k, v in meta_data.items():
+                        if isinstance(k, str) and isinstance(v, dict):
+                            nested_dict: dict[str, str | list[str]] = {}
+                            for mk, mv in v.items():
+                                if isinstance(mk, str):
+                                    if isinstance(mv, list):
+                                        nested_dict[mk] = [str(item) for item in mv]
+                                    elif isinstance(mv, str):
+                                        nested_dict[mk] = mv
+                                    else:
+                                        nested_dict[mk] = str(mv)
+                            typed_meta[k] = nested_dict
+
                 # Build with explicit field assignments for type safety
                 return FlextLdifModelsDomains.Attributes(
-                    attributes=dict(attrs_data) if isinstance(attrs_data, dict) else {},
-                    attribute_metadata=dict(meta_data)
-                    if isinstance(meta_data, dict)
-                    else {},
+                    attributes=typed_attrs,
+                    attribute_metadata=typed_meta,
                     metadata=entry_meta
                     if isinstance(entry_meta, FlextLdifModelsMetadata.EntryMetadata)
                     else None,

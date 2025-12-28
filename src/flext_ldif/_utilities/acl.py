@@ -1202,7 +1202,7 @@ class FlextLdifUtilitiesACL:
                 # Type narrowing: value_raw is a tuple with at least 2 elements
                 # Extract tuple elements to variables for type safety
                 tuple_items = list(value_raw) if value_raw else []
-                if len(tuple_items) >= 2:
+                if len(tuple_items) >= TUPLE_LENGTH_PAIR:
                     operator_val = str(tuple_items[0])
                     value_val = str(tuple_items[1])
                     if operator_placeholder in format_template:
@@ -1646,12 +1646,14 @@ class FlextLdifUtilitiesACL:
                     if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR:
                         # Type conversion: tuple[GeneralValueType, ...] → tuple[int, str]
                         err_list = list(err) if isinstance(err, (tuple, list)) else []
-                        if len(err_list) >= 2:
+                        if len(err_list) >= TUPLE_LENGTH_PAIR:
                             try:
                                 # Convert first element to int (or int value)
                                 first_val = err_list[0]
                                 second_val = err_list[1]
-                                error_code = int(str(first_val)) if first_val is not None else 0
+                                error_code = (
+                                    int(str(first_val)) if first_val is not None else 0
+                                )
                                 error_msg = str(second_val)
                                 err_tuple: tuple[int, str] = (error_code, error_msg)
                                 errors_typed.append(err_tuple)

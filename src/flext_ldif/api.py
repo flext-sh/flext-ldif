@@ -835,16 +835,21 @@ class FlextLdif(s[object]):
         """
         person_classes = {"person", "inetorgperson", "organizationalperson"}
 
-        def is_person(entry: object) -> bool:
-            # Use hasattr check for structural typing (protocol compliance)
-            if not hasattr(entry, "attributes") or not hasattr(entry, "dn"):
+        def is_person(entry: p.Ldif.EntryWithDnProtocol | dict | None) -> bool:
+            # Type guard: verify entry has expected attributes
+            if entry is None:
                 return False
-            attrs = entry.attributes
-            if attrs is None:
-                return False
-            # Handle both dict-like and model-like attributes
-            if isinstance(attrs, dict) or hasattr(attrs, "get"):
-                objectclasses = attrs.get("objectClass", [])
+            if isinstance(entry, dict):
+                objectclasses = entry.get("objectClass", [])
+            elif hasattr(entry, "attributes"):
+                attrs = entry.attributes
+                if attrs is None:
+                    return False
+                # Handle both dict-like and model-like attributes
+                if isinstance(attrs, dict) or hasattr(attrs, "get"):
+                    objectclasses = attrs.get("objectClass", []) if hasattr(attrs, "get") else []
+                else:
+                    return False
             else:
                 return False
             if isinstance(objectclasses, str):
