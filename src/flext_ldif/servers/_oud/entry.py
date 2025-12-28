@@ -2132,8 +2132,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
             elif isinstance(raw_value, str):
                 attrs_for_model[raw_key] = [raw_value]
-            elif isinstance(raw_value, tuple):
-                attrs_for_model[raw_key] = [str(item) for item in raw_value]
+            else:
+                # Handle other GeneralValueType values
+                attrs_for_model[raw_key] = [str(raw_value)]
 
         corrected_ldif_attrs = m.Ldif.Attributes(
             attributes=attrs_for_model,

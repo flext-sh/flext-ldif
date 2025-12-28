@@ -498,9 +498,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
             # Type narrowing: mapper().get() returns GeneralValueType | None
             if isinstance(object_classes_result, list):
-                object_classes: list[str] = object_classes_result
+                object_classes: list[str] = [str(oc) for oc in object_classes_result]
             elif isinstance(object_classes_result, tuple):
-                object_classes = list(object_classes_result)
+                object_classes = [str(oc) for oc in object_classes_result]
             elif object_classes_result is not None:
                 object_classes = [str(object_classes_result)]
             else:
@@ -539,9 +539,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
                 )
-                object_classes: list[str] = (
-                    object_classes_raw if isinstance(object_classes_raw, list) else []
-                )
+                # Type narrowing and conversion
+                if isinstance(object_classes_raw, list):
+                    object_classes: list[str] = [str(oc) for oc in object_classes_raw]
+                else:
+                    object_classes = []
 
                 # Process attributes - work directly with dict[str, list[str]]
                 # Copy all existing attributes first

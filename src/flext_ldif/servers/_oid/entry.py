@@ -436,9 +436,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             "objectClass",
             default=[],
         )
-        object_classes: list[str] = (
-            object_classes_raw if isinstance(object_classes_raw, list) else []
-        )
+        # Explicit type narrowing and conversion
+        if isinstance(object_classes_raw, list):
+            object_classes: list[str] = [str(oc) for oc in object_classes_raw]
+        else:
+            object_classes = []
         object_classes_lower = {oc.lower() for oc in object_classes}
 
         # Python 3.13: Set operations and list comprehensions
@@ -683,9 +685,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 for key, value in u.mapper().to_dict(boolean_conversions_obj).items():
                     if isinstance(key, str) and isinstance(value, dict):
                         # Narrow value type to dict[str, str | list[str]]
-                        boolean_conversions[key] = {
-                            k: v for k, v in value.items() if isinstance(v, str | list)
-                        }
+                        typed_dict: dict[str, str | list[str]] = {}
+                        for k, v in value.items():
+                            if isinstance(k, str):
+                                if isinstance(v, str):
+                                    typed_dict[k] = v
+                                elif isinstance(v, list):
+                                    typed_dict[k] = [str(item) for item in v]
+                        boolean_conversions[key] = typed_dict
 
         return boolean_conversions
 

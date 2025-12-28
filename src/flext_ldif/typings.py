@@ -183,10 +183,12 @@ class FlextLdifTypes(FlextTypes):
         # =========================================================================
 
         # ACL-related types
-        AclOrString: TypeAlias = str | object  # ACL model or string representation
+        # AclOrString uses p.Ldif.AclProtocol for type safety instead of object
+        AclOrString: TypeAlias = str | "p.Ldif.AclProtocol"  # ACL model or string representation
 
         # Schema-related types
-        SchemaModelOrString: TypeAlias = str | object  # Schema model or string
+        # SchemaModelOrString uses p.Ldif.SchemaAttributeProtocol for type safety
+        SchemaModelOrString: TypeAlias = str | "p.Ldif.SchemaAttributeProtocol"  # Schema model or string
         ConvertibleModel: TypeAlias = object  # Model that can be converted
 
         # Metadata dictionary types (mutable variants)
