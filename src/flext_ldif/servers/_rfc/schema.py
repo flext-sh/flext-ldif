@@ -632,14 +632,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             parsed = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
 
             metadata_extensions_raw = parsed["metadata_extensions"]
-            metadata_extensions_raw_dict: dict[
-                str,
-                str | int | float | bool | datetime | list[str] | None,
-            ] = (
-                metadata_extensions_raw
-                if isinstance(metadata_extensions_raw, dict)
-                else {}
-            )
+            # Type narrowing: metadata_extensions_raw is GeneralValueType, must narrow to dict
+            if isinstance(metadata_extensions_raw, dict):
+                metadata_extensions_raw_dict: dict[
+                    str,
+                    str | int | float | bool | datetime | list[str] | None,
+                ] = {
+                    k: ([str(vi) for vi in v] if isinstance(v, list) else v)
+                    for k, v in metadata_extensions_raw.items()
+                    if isinstance(k, str)
+                    and (
+                        isinstance(v, (str, int, float, bool, list))
+                        or v is None
+                        or isinstance(v, datetime)
+                    )
+                }
+            else:
+                metadata_extensions_raw_dict = {}
             # Convert to expected type for methods that require it
             metadata_extensions: dict[str, list[str] | str | bool | None] = {}
             for key, value in metadata_extensions_raw_dict.items():
@@ -677,12 +686,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             # Narrow must and may lists before passing to _validate_oid_list
             must_val = parsed.get("must")
             must_list: list[str] | None = (
-                must_val if isinstance(must_val, list) else None
+                [str(item) for item in must_val] if isinstance(must_val, list) else None
             )
             self._validate_oid_list(must_list, "MUST", metadata_extensions)
 
             may_val = parsed.get("may")
-            may_list: list[str] | None = may_val if isinstance(may_val, list) else None
+            may_list: list[str] | None = (
+                [str(item) for item in may_val] if isinstance(may_val, list) else None
+            )
             self._validate_oid_list(may_list, "MAY", metadata_extensions)
 
             metadata = self._build_objectclass_metadata(
@@ -720,7 +731,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             if isinstance(oc_sup_value, str):
                 oc_sup: str | list[str] | None = oc_sup_value
             elif isinstance(oc_sup_value, list):
-                oc_sup = oc_sup_value
+                oc_sup = [str(item) for item in oc_sup_value]
             else:
                 oc_sup = None
 
@@ -733,12 +744,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             oc_must_value = parsed["must"]
             oc_must: list[str] | None = (
-                oc_must_value if isinstance(oc_must_value, list) else None
+                [str(item) for item in oc_must_value] if isinstance(oc_must_value, list) else None
             )
 
             oc_may_value = parsed["may"]
             oc_may: list[str] | None = (
-                oc_may_value if isinstance(oc_may_value, list) else None
+                [str(item) for item in oc_may_value] if isinstance(oc_may_value, list) else None
             )
 
             objectclass = m.Ldif.SchemaObjectClass(
