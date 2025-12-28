@@ -395,7 +395,7 @@ class FlextLdifUtilitiesACL:
         # When default is not provided, mapper().get may return RuntimeResult or value directly
         special_match_raw = u.mapper().get(special_values, rule_value)
         # Type narrowing: check if it's a RuntimeResult or direct value
-        special_match: tuple[str, str] | None = None
+        special_match: tuple[t.GeneralValueType, ...] | None = None
         # Type narrowing: check if it's a RuntimeResult using isinstance
         if isinstance(special_match_raw, FlextRuntime.RuntimeResult):
             # It's a RuntimeResult
@@ -408,7 +408,11 @@ class FlextLdifUtilitiesACL:
                 special_match_raw if isinstance(special_match_raw, tuple) else None
             )
         if special_match:
-            return special_match
+            # Convert to tuple[str, str] for return
+            if len(special_match) >= 2:
+                return (str(special_match[0]), str(special_match[1]))
+            elif len(special_match) == 1:
+                return (str(special_match[0]), "")
 
         # Map the type
         # When default is provided, mapper().get returns the value directly
@@ -1195,12 +1199,15 @@ class FlextLdifUtilitiesACL:
             # Native Python: if-elif-else instead of f.match()
             # Match case 1: tuple with expected length
             if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
+                # Type narrowing: value_raw is a tuple with at least 2 elements
+                operator_val = str(value_raw[0])
+                value_val = str(value_raw[1])
                 if operator_placeholder in format_template:
                     return format_template.format(
-                        operator=str(value_raw[0]),
-                        value=str(value_raw[1]),
+                        operator=operator_val,
+                        value=value_val,
                     )
-                return format_template.format(value=str(value_raw[1]))
+                return format_template.format(value=value_val)
 
             # Match case 2: has operator placeholder and default operator
             if operator_placeholder in format_template and operator_default is not None:
