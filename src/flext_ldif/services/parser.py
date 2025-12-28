@@ -237,7 +237,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
                 processed_list = processed_value["results"]
                 for entry_lines in processed_list:
                     if isinstance(entry_lines, list):
-                        ldif_lines.extend(entry_lines)
+                        ldif_lines.extend([str(line) for line in entry_lines])
 
         content = "\n".join(ldif_lines)
 

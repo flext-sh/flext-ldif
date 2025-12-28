@@ -414,7 +414,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[dict[str, list[str]]].ok(attrs_dict)
             return r[dict[str, list[str]]].ok({})
         if isinstance(attrs, dict):
-            return r[dict[str, list[str]]].ok(dict(attrs))
+            # Convert dict values to list[str]
+            converted_attrs: dict[str, list[str]] = {
+                k: [str(v)] if not isinstance(v, list) else [str(vi) for vi in v]
+                for k, v in attrs.items()
+            }
+            return r[dict[str, list[str]]].ok(converted_attrs)
         return r[dict[str, list[str]]].fail(
             f"Unknown attributes container type: {type(attrs)}",
         )

@@ -2139,6 +2139,9 @@ class FlextLdifConstants(FlextConstants):
             server-specific Constants.
             """
 
+            # ACL special match tuple size (for rule parsing)
+            SPECIAL_MATCH_MIN_SIZE: Final[int] = 2
+
             # ACL operation types
             GRANT: Final[str] = "grant"
             DENY: Final[str] = "deny"

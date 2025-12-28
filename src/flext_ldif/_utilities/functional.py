@@ -696,8 +696,7 @@ class FlextFunctional:
             # If then is callable, call it to get the value
             if callable(then):
                 # Type narrowing: callable() returns T
-                result = then()
-                return result
+                return then()
             # Direct value
             if then is not None:
                 return then
@@ -866,8 +865,7 @@ class FlextFunctional:
         # If result is callable, call it with value
         if callable(result):
             # Type narrowing: callable(value) returns U
-            case_result = result(value)
-            return case_result
+            return result(value)
         return result
 
     sw = switch
