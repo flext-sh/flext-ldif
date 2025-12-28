@@ -2111,7 +2111,9 @@ class FlextLdifUtilitiesDN:
         for item in results_raw:
             dn_str = str(item[0])
             is_valid = bool(item[1])
-            errors_list: list[str] = [str(e) for e in item[2]] if isinstance(item[2], (list, tuple)) else []
+            errors_list: list[str] = (
+                [str(e) for e in item[2]] if isinstance(item[2], (list, tuple)) else []
+            )
             results.append((dn_str, is_valid, errors_list))
         if not collect_errors:
             invalid_results = [item for item in results if not item[1]]
