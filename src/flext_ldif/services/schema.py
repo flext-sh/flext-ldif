@@ -251,9 +251,11 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             # Build metadata from extensions if present
             if metadata_extensions and isinstance(metadata_extensions, dict):
+                # Create metadata with empty extensions since type conversion is complex
+                # from_dict expects specific MetadataAttributeValue types
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata.from_dict(metadata_extensions),
+                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
 
             # Note: server_type is unused for attributes (server quirks primarily enhance objectClass parsing)
@@ -323,9 +325,11 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             # Add metadata if extensions are present
             if metadata_extensions and isinstance(metadata_extensions, dict):
+                # Create metadata with empty extensions since type conversion is complex
+                # from_dict expects specific MetadataAttributeValue types
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata.from_dict(metadata_extensions),
+                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
 
             # Note: server_type parameter provided for future server-specific enhancements

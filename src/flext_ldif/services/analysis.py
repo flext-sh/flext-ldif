@@ -285,10 +285,14 @@ class FlextLdifAnalysis(
             "objectClass",
             default=[],
         )
-        # Type narrowing: u.get returns object, but we know objectClass is list[str] | str
-        oc_values: list[str] | str = (
-            oc_values_raw if isinstance(oc_values_raw, (list, str)) else []
-        )
+        # Type narrowing: u.get returns GeneralValueType, need to convert to list[str] | str
+        if isinstance(oc_values_raw, str):
+            oc_values: list[str] | str = oc_values_raw
+        elif isinstance(oc_values_raw, list):
+            oc_values = [str(oc) for oc in oc_values_raw]
+        else:
+            oc_values = []
+
         # Type narrowing: oc_values is list[str] | str
         # Note: list may contain non-str items, so we validate each item
         if isinstance(oc_values, list):
