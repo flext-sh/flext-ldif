@@ -188,7 +188,9 @@ class FlextLdifTypes(FlextTypes):
 
         # Schema-related types (object is placeholder for p.Ldif.SchemaAttributeProtocol)
         # The actual type is enforced at runtime via isinstance checks
-        SchemaModelOrString: TypeAlias = str | object  # Schema model (via SchemaAttributeProtocol) or string
+        SchemaModelOrString: TypeAlias = (
+            str | object
+        )  # Schema model (via SchemaAttributeProtocol) or string
         ConvertibleModel: TypeAlias = object  # Model that can be converted
 
         # Metadata dictionary types (mutable variants)

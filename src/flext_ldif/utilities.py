@@ -603,7 +603,7 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def process_ldif_entries(
-            entries: Sequence[m.Ldif.Entry],
+            entries: Sequence[t.GeneralValueType],
             config: ProcessConfig | None,
             source_server: c.Ldif.ServerTypes,
             target_server: c.Ldif.ServerTypes | None,
@@ -611,7 +611,24 @@ class FlextLdifUtilities(u_core):
             _normalize_dns: bool,  # Unused: reserved for future DN normalization control
             _normalize_attrs: bool,  # Unused: reserved for future attribute normalization control
         ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Process LDIF entries with pipeline."""
+            """Process LDIF entries with pipeline.
+
+            Args:
+                entries: Sequence of Entry instances (validated at call site via is_entry_sequence)
+                config: Optional process configuration
+                source_server: Source LDAP server type
+                target_server: Optional target LDAP server type
+                _normalize_dns: Reserved for future DN normalization
+                _normalize_attrs: Reserved for future attribute normalization
+
+            Returns:
+                FlextLdifResult containing processed Entry list
+
+            Note:
+                Entries are validated at call site via is_entry_sequence() TypeGuard
+                which confirms all items have dn and attributes (Entry structure).
+
+            """
             if config is None:
                 # Create ProcessConfig with default factory
                 # Use model_copy to update server types (Pydantic v2 pattern)
@@ -670,10 +687,10 @@ class FlextLdifUtilities(u_core):
             return bool(exclude_keys and key in exclude_keys)
 
         @staticmethod
-        def evaluate_predicate[T](
-            predicate: object,
+        def evaluate_predicate(
+            predicate: Callable[..., bool],
             key: str,
-            value: T,
+            value: t.GeneralValueType,
         ) -> bool:
             """Evaluate predicate with automatic 1-arg or 2-arg detection."""
             if not callable(predicate):
@@ -968,8 +985,7 @@ class FlextLdifUtilities(u_core):
                 >>> result = FlextLdifUtilities.process(entries, source_server="oid")
                 >>> result = FlextLdifUtilities.process(
                 ...     entries,
-                ...     config=ProcessConfig
-                ...     .builder()
+                ...     config=ProcessConfig.builder()
                 ...     .source("oid")
                 ...     .target("oud")
                 ...     .normalize_dn(case="lower")
@@ -988,12 +1004,13 @@ class FlextLdifUtilities(u_core):
                 source_server,
                 target_server,
             ) and is_entry_sequence(items_or_entries):
-                # Type narrowing: items_or_entries is Sequence after is_entry_sequence check
-                # We know from is_ldif_process_call that entries contain m.Ldif.Entry instances
-                entries_obj: object = items_or_entries
-                if isinstance(entries_obj, (list, tuple)):
+                # Type narrowing: is_entry_sequence validates Entry structure at runtime
+                # All items confirmed to have dn and attributes attributes
+                if isinstance(items_or_entries, (list, tuple)):
+                    # Type narrowed by isinstance and runtime validation
+                    # Items validated via is_entry_sequence TypeGuard (have dn, attributes)
                     return FlextLdifUtilities.Ldif.process_ldif_entries(
-                        entries_obj,
+                        items_or_entries,
                         config,
                         source_server,
                         target_server,
@@ -1377,8 +1394,7 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities
-                ...     .dn("CN=Test, DC=Example, DC=Com")
+                ...     FlextLdifUtilities.dn("CN=Test, DC=Example, DC=Com")
                 ...     .normalize(case="lower")
                 ...     .clean()
                 ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
@@ -1400,8 +1416,7 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities
-                ...     .entry(entry)
+                ...     FlextLdifUtilities.entry(entry)
                 ...     .normalize_dn()
                 ...     .filter_attrs(exclude=["userPassword"])
                 ...     .attach_metadata(source="oid")
@@ -2091,8 +2106,7 @@ class FlextLdifUtilities(u_core):
             if target_type is str:
                 str_default = default if isinstance(default, str) else ""
                 return (
-                    FlextLdifUtilities.Ldif
-                    .conv(value)
+                    FlextLdifUtilities.Ldif.conv(value)
                     .to_str(default=str_default)
                     .safe()
                     .build()
@@ -2103,8 +2117,7 @@ class FlextLdifUtilities(u_core):
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
                 return (
-                    FlextLdifUtilities.Ldif
-                    .conv(value)
+                    FlextLdifUtilities.Ldif.conv(value)
                     .to_bool(default=bool_default)
                     .safe()
                     .build()
@@ -2115,8 +2128,7 @@ class FlextLdifUtilities(u_core):
                 if isinstance(default, list):
                     list_default = [str(item) for item in default]
                 return (
-                    FlextLdifUtilities.Ldif
-                    .conv(value)
+                    FlextLdifUtilities.Ldif.conv(value)
                     .str_list(default=list_default)
                     .safe()
                     .build()
@@ -2745,8 +2757,11 @@ class FlextLdifUtilities(u_core):
             if isinstance(data_or_items, dict):
                 items = list(data_or_items.items())
                 sliced = items[:n] if from_start else items[-n:]
-                # Return as object-typed dict; overloads handle narrowing
-                sliced_dict: dict[str, t.GeneralValueType] = dict(sliced)
+                # Return as properly typed dict using dict comprehension
+                # Filter to only include string keys, as type narrowed by isinstance
+                sliced_dict: dict[str, t.GeneralValueType] = {
+                    k: v for k, v in sliced if isinstance(k, str)
+                }
                 # The overload ensures callers get proper types; implementation returns object
                 return sliced_dict  # Overloads ensure type safety at call sites
             if isinstance(data_or_items, (list, tuple)):

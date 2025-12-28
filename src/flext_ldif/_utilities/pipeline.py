@@ -446,21 +446,19 @@ class ProcessingPipeline:
 
     def execute(
         self,
-        entries: Sequence[t.GeneralValueType],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
         """Execute the processing pipeline.
 
         Args:
-            entries: Entries to process (validated as Entry instances at call site)
+            entries: Entries to process (must be Entry instances)
 
         Returns:
             r containing processed entries or error
 
         """
-        # INTENTIONAL CAST: entries validated at call site via is_entry_sequence() TypeGuard
-        from typing import cast as typing_cast
-        entries_cast = typing_cast("Sequence[m.Ldif.Entry]", entries)  # INTENTIONAL CAST
-        return self._pipeline.execute(entries_cast)
+        # No cast needed - entries parameter is properly typed as Sequence[m.Ldif.Entry]
+        return self._pipeline.execute(entries)
 
     @property
     def config(self) -> TransformConfig:
@@ -526,22 +524,21 @@ class ValidationPipeline:
         if entry.dn is None:
             errors.append("Entry has no DN (RFC 2849 violation)")
         else:
-            # Validate DN - validate each RDN value separately
-            # is_valid_dn_string validates individual RDN values, not full DN strings
-            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
+            # Validate DN format - basic RFC 2253 compliance check
+            # Each RDN component must have at least one '=' separator
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
-            components = FlextLdifUtilitiesDN.split(dn_str)
+
+            # Split by comma to get RDN components
+            components = dn_str.split(",")
             for comp in components:
-                if "=" not in comp:
-                    errors.append(f"Invalid RDN (missing '='): {comp}")
+                comp_stripped = comp.strip()
+                if "=" not in comp_stripped:
+                    errors.append(f"Invalid RDN (missing '='): {comp_stripped}")
                     continue
-                _, _, value = comp.partition("=")
-                is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                    value.strip(),
-                )
-                if not is_valid:
-                    errors.extend([f"RDN value '{value}': {e}" for e in dn_errors])
+                # Basic validation: RDN has attribute type and value
+                _, _, value = comp_stripped.partition("=")
+                if not value.strip():
+                    errors.append(f"Invalid RDN (missing value): {comp_stripped}")
 
         # Check attributes exist
         if entry.attributes is None:
