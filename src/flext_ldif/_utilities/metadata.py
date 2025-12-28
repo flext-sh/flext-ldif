@@ -286,11 +286,14 @@ class FlextLdifUtilitiesMetadata:
                     item for item in v
                     if isinstance(item, (str, int, float, bool, type(None), datetime))
                 ]
-                list_typed: list[str | int | float | bool | datetime | None] = [str(item) if not isinstance(item, (str, int, float, bool, datetime, type(None))) else item for item in safe_list]
+                list_typed: list[str | int | float | bool | datetime | None] = [
+                    str(item) if not isinstance(item, (str, int, float, bool, datetime, type(None))) else item
+                    for item in safe_list
+                ]
                 metadata_typed[k] = list_typed
             elif isinstance(v, dict):
                 # Convert dict[GeneralValueType] to proper MetadataAttributeValue dict type
-                safe_dict_vals: dict[str, str | int | float | bool | None | datetime | list[str | int | float | bool | None | datetime]] = {}
+                safe_dict_vals: dict[str, str | int | float | bool | datetime | list[str | int | float | bool | datetime | None] | None] = {}
                 for k_inner, v_inner in v.items():
                     if not isinstance(k_inner, str):
                         continue
