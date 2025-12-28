@@ -384,7 +384,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         """
         if isinstance(entry, dict):
-            return FlextLdifEntries._extract_dn_from_dict(entry)
+            # Convert dict[str, GeneralValueType] to dict[str, str | list[str]]
+            typed_entry: dict[str, str | list[str]] = {}
+            for k, v in entry.items():
+                if not isinstance(k, str):
+                    continue
+                if isinstance(v, str):
+                    typed_entry[k] = v
+                elif isinstance(v, list):
+                    # Convert list[GeneralValueType] to list[str]
+                    typed_entry[k] = [str(item) for item in v]
+                else:
+                    # Convert other types to string
+                    typed_entry[k] = str(v)
+            return FlextLdifEntries._extract_dn_from_dict(typed_entry)
         if hasattr(entry, "dn"):
             dn_attr: object = getattr(entry, "dn", None)
             if dn_attr is None:
@@ -679,7 +692,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if isinstance(attribute, str):
             return r[list[str]].ok([attribute])
         if isinstance(attribute, list):
-            return r[list[str]].ok(attribute)
+            # Convert list[GeneralValueType] to list[str]
+            str_list: list[str] = [str(item) for item in attribute]
+            return r[list[str]].ok(str_list)
         # Check if it's a protocol with values attribute
         if hasattr(attribute, "values"):
             values = getattr(attribute, "values", None)
@@ -729,17 +744,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
         # Type narrowing: attribute values are str | list[str]
-        attr_value: str | list[str] = (
-            value_raw if isinstance(value_raw, (str, list)) else str(value_raw)
-        )
-
-        # Type-based normalization to list[str]
-        if isinstance(attr_value, str):
-            return r[list[str]].ok([attr_value])
-        if isinstance(attr_value, list):
-            return r[list[str]].ok(list(attr_value))
+        if isinstance(value_raw, str):
+            return r[list[str]].ok([value_raw])
+        if isinstance(value_raw, list):
+            # Convert list[GeneralValueType] to list[str]
+            str_list: list[str] = [str(item) for item in value_raw]
+            return r[list[str]].ok(str_list)
         # Convert to string list - this path should be unreachable
-        return r[list[str]].fail(f"Invalid attr_value type: {type(attr_value)}")
+        return r[list[str]].fail(f"Invalid attribute value type: {type(value_raw)}")
 
     @staticmethod
     def _normalize_string_value(value: str) -> r[str]:
