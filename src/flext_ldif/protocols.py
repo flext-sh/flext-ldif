@@ -949,8 +949,16 @@ class FlextLdifProtocols(FlextProtocols):
         class WritableProtocol(Protocol):
             """Protocol for writable output targets."""
 
-            def write(self, content: str) -> FlextResult[str]:
+            def write(self, content: str) -> FlextResult[str]:  # INTERFACE
                 """Write content to the target."""
+                ...
+
+        @runtime_checkable
+        class PredicateProtocol[T](Protocol):
+            """Protocol for predicate functions that test items."""
+
+            def __call__(self, item: T) -> bool:  # INTERFACE
+                """Test if item matches criteria, return True if it does."""
                 ...
 
         # =========================================================================

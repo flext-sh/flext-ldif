@@ -762,11 +762,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """
         # Ensure metadata is m.Ldif.QuirkMetadata (public facade)
         if not isinstance(metadata, m.Ldif.QuirkMetadata):
-            if hasattr(metadata, "model_dump"):
+            if isinstance(metadata, dict):
+                metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
+            elif hasattr(metadata, "model_dump"):
                 metadata_dict = metadata.model_dump()
                 metadata = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
-            elif isinstance(metadata, dict):
-                metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
             else:
                 return {}
 
@@ -1010,10 +1010,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if isinstance(metadata, m.Ldif.QuirkMetadata):
                 # Already public facade, use as-is
                 metadata_public = metadata
-            elif hasattr(metadata, "model_dump"):
-                # Domain model, convert to facade
-                metadata_dict_raw = metadata.model_dump()
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict_raw)
             elif isinstance(metadata, dict):
                 # Validate dict directly - preserve all fields including extensions
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)

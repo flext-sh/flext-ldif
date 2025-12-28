@@ -29,7 +29,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar
 
@@ -40,6 +39,7 @@ from pydantic import BaseModel, computed_field
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.detector import FlextLdifDetector
@@ -771,9 +771,9 @@ class FlextLdif(s[object]):
 
     def filter_entries(
         self,
-        entries: list[object],
-        filter_func: Callable[[object], bool],
-    ) -> r[list[object]]:
+        entries: list[t.GeneralValueType],
+        filter_func: p.Ldif.PredicateProtocol[t.GeneralValueType],
+    ) -> r[list[t.GeneralValueType]]:
         """Filter entries using predicate function.
 
         Args:
@@ -786,9 +786,9 @@ class FlextLdif(s[object]):
         """
         try:
             filtered = [entry for entry in entries if filter_func(entry)]
-            return r[list[object]].ok(filtered)
+            return r[list[t.GeneralValueType]].ok(filtered)
         except Exception as e:
-            return r[list[object]].fail(f"Filter error: {e}")
+            return r[list[t.GeneralValueType]].fail(f"Filter error: {e}")
 
     def get_entry_statistics(
         self,
@@ -818,8 +818,8 @@ class FlextLdif(s[object]):
 
     def filter_persons(
         self,
-        entries: list[object],
-    ) -> r[list[object]]:
+        entries: list[t.GeneralValueType],
+    ) -> r[list[t.GeneralValueType]]:
         """Filter entries to only person entries.
 
         Business Rules:
@@ -835,28 +835,40 @@ class FlextLdif(s[object]):
         """
         person_classes = {"person", "inetorgperson", "organizationalperson"}
 
-        def is_person(entry: p.Ldif.EntryWithDnProtocol | dict | None) -> bool:
-            # Type guard: verify entry has expected attributes
-            if entry is None:
-                return False
-            if isinstance(entry, dict):
-                objectclasses = entry.get("objectClass", [])
-            elif hasattr(entry, "attributes"):
-                attrs = entry.attributes
-                if attrs is None:
+        class IsPersonPredicate:
+            """Predicate class matching Protocol[T].__call__ signature."""
+
+            def __call__(self, item: t.GeneralValueType) -> bool:
+                """Check if entry is a person object class."""
+                entry = item
+                if entry is None:
                     return False
-                # Handle both dict-like and model-like attributes
-                if isinstance(attrs, dict) or hasattr(attrs, "get"):
-                    objectclasses = attrs.get("objectClass", []) if hasattr(attrs, "get") else []
+                if isinstance(entry, dict):
+                    objectclasses = entry.get("objectClass", [])
+                elif isinstance(entry, m.Ldif.Entry):
+                    # Use Protocol method for type safety
+                    attrs = entry.attributes
+                    if attrs is None:
+                        return False
+                    if isinstance(attrs, dict):
+                        objectclasses = attrs.get("objectClass", [])
+                    else:
+                        return False
                 else:
                     return False
-            else:
-                return False
-            if isinstance(objectclasses, str):
-                objectclasses = [objectclasses]
-            return any(oc.lower() in person_classes for oc in objectclasses)
 
-        return self.filter_entries(entries, is_person)
+                # Type narrowing: convert to list of strings
+                if isinstance(objectclasses, str):
+                    objectclasses_list: list[str] = [objectclasses]
+                elif isinstance(objectclasses, list):
+                    objectclasses_list = [str(oc) for oc in objectclasses]
+                else:
+                    # Not iterable or wrong type
+                    return False
+
+                return any(oc.lower() in person_classes for oc in objectclasses_list)
+
+        return self.filter_entries(entries, IsPersonPredicate())
 
     def execute(self) -> r[object]:
         """Execute service health check for FlextService pattern compliance.

@@ -672,9 +672,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     c.Ldif.DictKeys.OBJECTCLASS,
                     default=[],
                 )
-                object_classes: list[str] = (
-                    object_classes_raw if isinstance(object_classes_raw, list) else []
-                )
+                # Type narrowing and conversion
+                if isinstance(object_classes_raw, list):
+                    object_classes: list[str] = [str(oc) for oc in object_classes_raw]
+                else:
+                    object_classes = []
 
                 # Process attributes - work directly with dict[str, list[str]]
                 # Process binary values if any (convert bytes to base64 strings)

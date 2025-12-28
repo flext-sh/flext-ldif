@@ -2101,11 +2101,18 @@ class FlextLdifUtilitiesDN:
             )
         batch_data = batch_result.value
         tuple_length = 3
-        results = [
+        results_raw = [
             item
             for item in batch_data["results"]
             if isinstance(item, tuple) and len(item) == tuple_length
         ]
+        # Type narrowing: cast to proper type with explicit conversion
+        results: list[tuple[str, bool, list[str]]] = []
+        for item in results_raw:
+            dn_str = str(item[0])
+            is_valid = bool(item[1])
+            errors_list: list[str] = [str(e) for e in item[2]] if isinstance(item[2], (list, tuple)) else []
+            results.append((dn_str, is_valid, errors_list))
         if not collect_errors:
             invalid_results = [item for item in results if not item[1]]
             if invalid_results:
