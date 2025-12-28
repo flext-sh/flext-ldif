@@ -1367,7 +1367,7 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        mapping_type = u.match(
+        mapping_type = u.Ldif.match(
             (normalized_source, normalized_target),
             (
                 lambda pair: pair == ("oid", "oud"),

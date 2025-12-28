@@ -332,6 +332,9 @@ class FlextLdifUtilities(u_core):
                     return item
             return None
 
+        # Pattern matching - alias from flext-core
+        match = staticmethod(u_core.match)
+
         # === LDIF-specific utility classes ===
 
         class ACL(FlextLdifUtilitiesACL):
