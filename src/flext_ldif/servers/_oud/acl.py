@@ -22,15 +22,14 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
+from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
+class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format).
 
     Extends RFC baseline with Oracle OUD-specific Access Control Instruction (ACI) format.
@@ -493,7 +492,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
         **Utilities Used**:
 
         - ``FlextLdifUtilitiesACL.parse_aci()`` - Core ACI parsing
-        - ``FlextLdifServersOudConstants.get_parser_config()`` - OUD parser config
+        - ``FlextLdifServersOudUtilities.get_parser_config()`` - OUD parser config
 
         **RFC Override**: This method extends RFC behavior (RFC has no ACI parser).
 
@@ -508,7 +507,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfcAcl):
             - Oracle OUD ACI Syntax: https://docs.oracle.com/cd/E22289_01/html/821-1277/aci-syntax.html
 
         """
-        config_raw = FlextLdifServersOudConstants.get_parser_config()
+        config_raw = FlextLdifServersOudUtilities.get_parser_config()
         # Ensure config is m.Ldif.AciParserConfig (public facade)
         # Business Rule: get_parser_config returns FlextLdifModelsSettings.AciParserConfig
         # but parse_aci expects m.Ldif.AciParserConfig

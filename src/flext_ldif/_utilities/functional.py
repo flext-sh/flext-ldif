@@ -24,8 +24,8 @@ from typing import Literal, TypeVar, overload
 from flext_core import FlextTypes as t, T, U
 from flext_core.utilities import FlextUtilities as u
 
-# Type variable for callable types that are not object
-CallableType = TypeVar("CallableType", bound=type[object])
+# Type variable for callable types
+CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 
 
 class FlextFunctional:
@@ -396,7 +396,7 @@ class FlextFunctional:
     def map_filter[T](
         items: Sequence[T] | T,
         mapper: Callable[[T], T] | None = None,
-        predicate: Callable[[object], bool] = lambda x: x is not None,
+        predicate: Callable[[T], bool] = lambda x: x is not None,
     ) -> list[T]:
         """Map then filter items (mnemonic: mf).
 
@@ -433,7 +433,7 @@ class FlextFunctional:
         items: Sequence[T] | T,
         processor: Callable[[T], list[U] | tuple[U, ...] | U],
         *,
-        predicate: Callable[[object], bool] = lambda x: x is not None,
+        predicate: Callable[[U], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
     ) -> list[U]:
         """Process and flatten items (mnemonic: pf).
@@ -519,10 +519,10 @@ class FlextFunctional:
         cls,
         value: T | list[T] | tuple[T, ...] | None,
         *,
-        mapper: Callable[[T], object] | None = None,
-        predicate: Callable[[T | object], bool] | None = None,
-        default: list[T] | list[object] | None = None,
-    ) -> list[T] | list[object]:
+        mapper: Callable[[T], T] | None = None,
+        predicate: Callable[[T], bool] | None = None,
+        default: list[T] | None = None,
+    ) -> list[T]:
         """Normalize to list (mnemonic: nl).
 
         Converts any value to a list, with optional mapping and filtering.
@@ -564,7 +564,7 @@ class FlextFunctional:
 
         # Apply mapper if provided
         if mapper is not None:
-            items_mapped: list[object] = [mapper(item) for item in items]
+            items_mapped: list[T] = [mapper(item) for item in items]
             # Apply predicate if provided
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
@@ -895,7 +895,7 @@ class FlextFunctional:
             True
 
         """
-        type_map: dict[str, type[object]] = {
+        type_map: dict[str, type] = {
             "list": list,
             "dict": dict,
             "str": str,
@@ -907,7 +907,7 @@ class FlextFunctional:
         }
         for t_val in types:
             # Resolve type: if string, look up in map; if type, use directly
-            resolved_type: type[object] | None = (
+            resolved_type: type | None = (
                 type_map.get(t_val) if isinstance(t_val, str) else t_val
             )
             if resolved_type is not None and isinstance(value, resolved_type):
@@ -922,9 +922,9 @@ class FlextFunctional:
         | int
         | float
         | bool
-        | list[object]
-        | tuple[object, ...]
-        | set[object]
+        | list[t.GeneralValueType]
+        | tuple[t.GeneralValueType, ...]
+        | set[t.GeneralValueType]
         | dict[str, t.GeneralValueType]
     )
 
@@ -932,7 +932,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type[str] | Literal["str"],
         default: str | None = None,
@@ -942,7 +942,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type[bool] | Literal["bool"],
         default: bool | None = None,
@@ -952,7 +952,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type[int] | Literal["int"],
         default: int | None = None,
@@ -962,7 +962,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type[float] | Literal["float"],
         default: float | None = None,
@@ -972,37 +972,37 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        target: type[list[object]] | Literal["list"],
-        default: list[object] | None = None,
-    ) -> list[object] | None: ...
+        target: type[list[t.GeneralValueType]] | Literal["list"],
+        default: list[t.GeneralValueType] | None = None,
+    ) -> list[t.GeneralValueType] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        target: type[tuple[object, ...]] | Literal["tuple"],
-        default: tuple[object, ...] | None = None,
-    ) -> tuple[object, ...] | None: ...
+        target: type[tuple[t.GeneralValueType, ...]] | Literal["tuple"],
+        default: tuple[t.GeneralValueType, ...] | None = None,
+    ) -> tuple[t.GeneralValueType, ...] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        target: type[set[object]] | Literal["set"],
-        default: set[object] | None = None,
-    ) -> set[object] | None: ...
+        target: type[set[t.GeneralValueType]] | Literal["set"],
+        default: set[t.GeneralValueType] | None = None,
+    ) -> set[t.GeneralValueType] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type[dict[str, t.GeneralValueType]] | Literal["dict"],
         default: dict[str, t.GeneralValueType] | None = None,
@@ -1011,11 +1011,11 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        target: type[object] | str,
-        default: object | None = None,
-    ) -> object | None:
+        target: type[t.GeneralValueType] | str,
+        default: t.GeneralValueType | None = None,
+    ) -> t.GeneralValueType | None:
         """Safe cast (mnemonic: at).
 
         Args:
@@ -1033,7 +1033,7 @@ class FlextFunctional:
             0
 
         """
-        type_map: dict[str, type[object]] = {
+        type_map: dict[str, type[t.GeneralValueType]] = {
             "list": list,
             "dict": dict,
             "str": str,
@@ -1045,7 +1045,7 @@ class FlextFunctional:
         }
 
         # Resolve target type: if string, look up in map; if type, use directly
-        target_type: type[object] | None = (
+        target_type: type[t.GeneralValueType] | None = (
             type_map.get(target) if isinstance(target, str) else target
         )
 
@@ -1122,7 +1122,7 @@ class FlextFunctional:
                         # We've already checked target_type is not object above
                         try:
                             # Explicitly handle each known type to satisfy mypy
-                            converted: object | None = None
+                            converted: t.GeneralValueType | None = None
                             if target_type is str:
                                 converted = str(value)
                             elif target_type is int:
@@ -1165,17 +1165,12 @@ class FlextFunctional:
                                 # target_type is object - accept any value as-is
                                 converted = value
                             else:
-                                # For all other types (custom classes, etc.)
-                                # At this point target_type is not object
-                                # Try calling constructor - this works for most types
-                                try:
-                                    # Dynamic type construction
-                                    # We know target_type is callable and not object
-                                    # Use Callable signature that accepts one argument
-                                    factory: Callable[[object], object] = target_type
-                                    converted = factory(value)
-                                except Exception:
-                                    return default
+                                # For all other types (custom classes, BaseModel, etc.)
+                                # We cannot safely construct these dynamically since they
+                                # may require specific constructor arguments (e.g., datetime
+                                # needs year/month/day, Pydantic models need validation)
+                                # Return default for unhandled types
+                                return default
 
                             if converted is None:
                                 return default
@@ -1238,7 +1233,7 @@ class FlextFunctional:
     def props(
         cls,
         *keys: str,
-    ) -> Callable[[object], dict[str, t.GeneralValueType]]:
+    ) -> Callable[[t.GeneralValueType], dict[str, t.GeneralValueType]]:
         """Multiple property accessor (mnemonic: ps).
 
         Args:
@@ -1254,7 +1249,7 @@ class FlextFunctional:
 
         """
 
-        def accessor(obj: object) -> dict[str, t.GeneralValueType]:
+        def accessor(obj: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
             """Get multiple values from object by keys."""
             result_dict: dict[str, t.GeneralValueType] = {}
             for k in keys:
@@ -1274,10 +1269,10 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path[T](
+    def path(
         cls,
         *keys: str,
-    ) -> Callable[[T], object]:
+    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
         """Path accessor using chain() DSL (mnemonic: ph).
 
         Creates a getter that traverses a nested path.
@@ -1295,17 +1290,19 @@ class FlextFunctional:
 
         """
 
-        def make_getter(key: str) -> Callable[[object], object]:
+        def make_getter(
+            key: str,
+        ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: object) -> object:
+            def getter_fn(obj: t.GeneralValueType) -> t.GeneralValueType:
                 """Get value from object by key."""
                 if obj is None:
                     return None
                 if isinstance(obj, Mapping):
                     # mapper().get() returns the value or None
                     map_result = u.mapper().get(obj, key)
-                    # If result is the key itself (string), it means key not found, return None
+                    # If result is the key itself (string), it means key not found
                     if map_result == key and isinstance(key, str):
                         return None
                     return map_result
@@ -1316,14 +1313,16 @@ class FlextFunctional:
             return getter_fn
 
         # Create getters for each key in path
-        getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
+        getters: list[Callable[[t.GeneralValueType], t.GeneralValueType]] = [
+            make_getter(k) for k in keys
+        ]
 
-        def path_getter(obj: T) -> object:
+        def path_getter(obj: t.GeneralValueType) -> t.GeneralValueType:
             """Get value at path."""
             if obj is None:
                 return None
             # Chain through all getters
-            result: object = obj
+            result: t.GeneralValueType = obj
             for getter in getters:
                 if result is None:
                     return None

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import r
+from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -241,29 +241,29 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         acls: list[FlextLdifModelsDomains.Acl] = []
         failed_count = 0
 
-        def parse_single_acl(acl_value: str) -> r[m.Ldif.Acl]:
-            """Parse single ACL value - returns FlextResult for batch compatibility."""
+        def parse_acl_wrapper(acl_value: str) -> m.Ldif.Acl:
+            """Parse single ACL value - returns Acl directly for batch compatibility.
+
+            The batch function accepts Callable[[T], R | r[R]], meaning it can handle
+            both direct returns (R) and FlextResult returns (r[R]). We return R directly
+            and raise ValueError on failure so batch's exception handler can catch it.
+            """
             nonlocal failed_count
             parse_result = self.parse_acl_string(acl_value, server_type)
             if parse_result.is_success:
-                return r[m.Ldif.Acl].ok(parse_result.value)
+                return parse_result.value
             failed_count += 1
-            self.logger.warning(
+            logger = FlextLogger(__name__)
+            logger.warning(
                 "Failed to parse ACL value",
                 error=parse_result.error,
                 server_type=server_type,
             )
-            return r[m.Ldif.Acl].fail(parse_result.error or "Failed to parse ACL")
-
-        # Wrapper function with GeneralValueType signature for batch() compatibility
-        def parse_acl_wrapper(item: t.GeneralValueType) -> r[m.Ldif.Acl]:
-            """Wrapper that accepts GeneralValueType and returns FlextResult."""
-            if isinstance(item, str):
-                return parse_single_acl(item)
-            return r[m.Ldif.Acl].fail(f"Expected string, got {type(item).__name__}")
+            msg = parse_result.error or "Failed to parse ACL"
+            raise ValueError(msg)
 
         # Pass wrapper function to batch()
-        batch_result = u.batch(
+        batch_result = u.Collection.batch(
             list(acl_values),
             parse_acl_wrapper,
             on_error="skip",

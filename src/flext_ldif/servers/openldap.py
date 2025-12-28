@@ -25,7 +25,6 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -379,7 +378,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             # Just pass through to parent
             return super()._transform_objectclass_for_write(oc_data)
 
-    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
+    class Acl(FlextLdifServersRfc.Acl):
         """OpenLDAP 2.x ACL quirk (nested).
 
         Override: Extends base RFC Acl with OpenLDAP 2.x-specific ACL parsing.

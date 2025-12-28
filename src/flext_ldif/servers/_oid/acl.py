@@ -29,9 +29,6 @@ from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -46,7 +43,7 @@ logger = FlextLogger(__name__)
 _OidConstants = FlextLdifServersOidConstants
 
 
-class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
+class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     r"""Oracle Internet Directory (OID) ACL implementation.
 
     OID vs RFC ACL Differences
@@ -1056,23 +1053,23 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
         self,
         oid_subject_type: str,
         oid_subject_value: str,
-    ) -> tuple[str, str]:
+    ) -> tuple[c.Ldif.AclSubjectType, str]:
         """Map OID subject types to RFC subject types."""
         if oid_subject_type == "self":
-            return "self", "ldap:///self"
+            return c.Ldif.AclSubjectType.SELF, "ldap:///self"
         if oid_subject_type == "group_dn":
             # Map group_dn to "group" subject type
-            return "group", oid_subject_value
+            return c.Ldif.AclSubjectType.GROUP, oid_subject_value
         if oid_subject_type == "user_dn":
             # Map user_dn to "dn" subject type
-            return "dn", oid_subject_value
+            return c.Ldif.AclSubjectType.DN, oid_subject_value
         if oid_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
             # Map attribute-based types to "dn" with the attribute value
-            return "dn", oid_subject_value
+            return c.Ldif.AclSubjectType.DN, oid_subject_value
         if oid_subject_type == "*" or oid_subject_value == "*":
-            return "anonymous", "*"
+            return c.Ldif.AclSubjectType.ANONYMOUS, "*"
         # Default fallback: use "dn" for unknown types
-        return "dn", oid_subject_value
+        return c.Ldif.AclSubjectType.DN, oid_subject_value
 
     def _build_oid_acl_metadata(
         self,
@@ -1258,7 +1255,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfcAcl):
                     attributes=target_attrs or [],
                 ),
                 subject=m.Ldif.AclSubject(
-                    subject_type=rfc_subject_type,  # Pydantic validates Literal at runtime
+                    subject_type=rfc_subject_type.value,  # StrEnum value matches Literal
                     subject_value=rfc_subject_value,
                 ),
                 permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),

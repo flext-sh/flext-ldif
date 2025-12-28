@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 
 from flext_core import FlextLogger, FlextRuntime, t
 
@@ -145,16 +146,9 @@ class FlextLdifUtilitiesMetadata:
         if metadata_obj is None:
             metadata_obj = m.Metadata(attributes={})
 
-        if isinstance(metadata_obj, m.Metadata) and isinstance(
-            metadata_obj.attributes,
-            dict,
-        ):
+        if isinstance(metadata_obj, m.Metadata):
+            # attributes is typed as dict[str, MetadataAttributeValue]
             return dict(metadata_obj.attributes)
-        if isinstance(metadata_obj, m.Metadata) and isinstance(
-            metadata_obj.attributes,
-            FlextLdifModelsMetadata.DynamicMetadata,
-        ):
-            return dict(metadata_obj.attributes.model_dump())
         return {}
 
     @staticmethod
@@ -170,18 +164,12 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
-        if FlextRuntime.is_list_like(value_for_check):
-            # Type narrowing: is_list_like ensures it's a sequence
-            if isinstance(value_for_check, list):
-                value_list = value_for_check
-            elif isinstance(value_for_check, (tuple, Sequence)):
-                # Convert sequence to list
-                value_list = list(value_for_check)
-            else:
-                # Fallback: create new list
-                value_list = []
-            value_list.append(item_data)
-            metadata[metadata_key] = value_list
+        if FlextRuntime.is_list_like(value_for_check) and isinstance(
+            value_for_check,
+            list,
+        ):
+            value_for_check.append(item_data)
+            metadata[metadata_key] = value_for_check
         else:
             metadata[metadata_key] = [item_data]
 
@@ -198,19 +186,13 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
-        if FlextRuntime.is_dict_like(value_for_dict_check):
-            # Type narrowing: is_dict_like ensures it's a mapping
-            if isinstance(value_for_dict_check, dict):
-                value_dict = value_for_dict_check
-            elif isinstance(value_for_dict_check, Mapping):
-                # Convert mapping to dict
-                value_dict = dict(value_for_dict_check)
-            else:
-                # Fallback: create new dict
-                value_dict = {}
+        if FlextRuntime.is_dict_like(value_for_dict_check) and isinstance(
+            value_for_dict_check,
+            dict,
+        ):
             if isinstance(item_data, dict):
-                value_dict.update(item_data)
-                metadata[metadata_key] = value_dict
+                value_for_dict_check.update(item_data)
+                metadata[metadata_key] = value_for_dict_check
             else:
                 metadata[metadata_key] = item_data
         else:
@@ -306,27 +288,38 @@ class FlextLdifUtilitiesMetadata:
                 dict_typed: t.MetadataAttributeValue = dict(v)
                 metadata_typed[k] = dict_typed
             elif isinstance(v, Mapping):
-                # Convert Mapping to MetadataNestedDict (dict within MetadataAttributeValue)
-                # Filter values to only include MetadataNestedDict compatible types
-                # Note: MetadataNestedDict doesn't include datetime - that's in MetadataAttributeValue
-                nested_dict: t.MetadataNestedDict = {}
+                # Convert Mapping to dict compatible with MetadataAttributeValue
+                # Filter values to only include MetadataAttributeValue compatible types
+                nested_dict: dict[
+                    str,
+                    str
+                    | int
+                    | float
+                    | bool
+                    | datetime
+                    | list[str | int | float | bool | datetime | None]
+                    | None,
+                ] = {}
                 for mk, mv in v.items():
-                    if isinstance(mv, str | int | float | bool | type(None)):
+                    if isinstance(mv, str | int | float | bool | datetime | type(None)):
                         nested_dict[str(mk)] = mv
                     elif isinstance(mv, list):
                         nested_dict[str(mk)] = [
                             x
                             for x in mv
-                            if isinstance(x, str | int | float | bool | type(None))
+                            if isinstance(
+                                x, str | int | float | bool | datetime | type(None)
+                            )
                         ]
                 metadata_typed[k] = nested_dict
             elif isinstance(v, Sequence):
-                # Convert Sequence to MetadataListValue
-                # Note: MetadataListValue doesn't include datetime
-                list_from_seq: t.MetadataListValue = [
+                # Convert Sequence to list compatible with MetadataAttributeValue
+                list_from_seq: list[str | int | float | bool | datetime | None] = [
                     item
                     for item in v
-                    if isinstance(item, str | int | float | bool | type(None))
+                    if isinstance(
+                        item, str | int | float | bool | datetime | type(None)
+                    )
                 ]
                 metadata_typed[k] = list_from_seq
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -348,17 +341,11 @@ class FlextLdifUtilitiesMetadata:
         if not isinstance(source_metadata_obj, m.Metadata):
             return None
 
-        # Extract attributes from source metadata object (MUST be Metadata)
-        source_metadata_attr = source_metadata_obj.attributes
-        if isinstance(source_metadata_attr, FlextLdifModelsMetadata.DynamicMetadata):
-            return source_metadata_attr
-        # Convert dict to DynamicMetadata using model_validate
-        if isinstance(source_metadata_attr, dict):
-            return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-                source_metadata_attr,
-            )
-        # Fallback: create empty DynamicMetadata
-        return FlextLdifModelsMetadata.DynamicMetadata()
+        # attributes is typed as dict[str, MetadataAttributeValue]
+        # Convert to DynamicMetadata using model_validate
+        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+            source_metadata_obj.attributes,
+        )
 
     @staticmethod
     def _get_or_create_target_metadata(
@@ -372,16 +359,11 @@ class FlextLdifUtilitiesMetadata:
         ):
             target_metadata_obj = m.Metadata(attributes={})
 
-        target_metadata_attr = target_metadata_obj.attributes
-        if isinstance(target_metadata_attr, FlextLdifModelsMetadata.DynamicMetadata):
-            return target_metadata_attr
-        # Convert dict to DynamicMetadata using model_validate
-        if isinstance(target_metadata_attr, dict):
-            return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-                target_metadata_attr,
-            )
-        # Fallback: create empty DynamicMetadata
-        return FlextLdifModelsMetadata.DynamicMetadata()
+        # attributes is typed as dict[str, MetadataAttributeValue]
+        # Convert to DynamicMetadata using model_validate
+        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+            target_metadata_obj.attributes,
+        )
 
     @staticmethod
     def preserve_validation_metadata(
@@ -438,15 +420,15 @@ class FlextLdifUtilitiesMetadata:
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # Type narrowing: filter items that are dict-like (Mapping-compatible)
                 # Convert each Mapping to dict for proper typing
-                # Build list[t.GeneralValueType] for transformations attribute using comprehension
-                converted_objs: list[t.GeneralValueType] = [
+                # Build list[object] for transformations attribute using comprehension
+                converted_objs: list[object] = [
                     dict(item)
                     for item in transformations_obj
                     if isinstance(item, (dict, Mapping))
                 ]
                 # Add new transformation as dict
                 converted_objs.append(dict(transformation_dict))
-                # Widen to list[t.GeneralValueType] for assignment
+                # Assign to transformations
                 target_metadata.transformations = converted_objs
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
@@ -1244,13 +1226,8 @@ class FlextLdifUtilitiesMetadata:
         category: c.Ldif.LiteralTypes.CategoryLiteral,
     ) -> m.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
-        # Ensure return type is m.Ldif.EntryStatistics (facade)
-        updated = stats.model_copy(update={"category_assigned": category})
-        # Convert to facade type if needed
-        if not isinstance(updated, m.Ldif.EntryStatistics):
-            stats_dict = updated.model_dump()
-            return m.Ldif.EntryStatistics.model_validate(stats_dict)
-        return updated
+        # model_copy returns Self, which is m.Ldif.EntryStatistics
+        return stats.model_copy(update={"category_assigned": category})
 
     @staticmethod
     def _apply_filter_update(
@@ -1260,13 +1237,8 @@ class FlextLdifUtilitiesMetadata:
         passed: bool,
     ) -> m.Ldif.EntryStatistics:
         """Apply filter marking to stats."""
-        # mark_filtered returns Self, ensure it's facade type
-        updated = stats.mark_filtered(filter_type, passed=passed)
-        # Convert to facade type if needed
-        if not isinstance(updated, m.Ldif.EntryStatistics):
-            stats_dict = updated.model_dump()
-            return m.Ldif.EntryStatistics.model_validate(stats_dict)
-        return updated
+        # mark_filtered returns Self, which is m.Ldif.EntryStatistics
+        return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
@@ -1275,13 +1247,8 @@ class FlextLdifUtilitiesMetadata:
         reason: str,
     ) -> m.Ldif.EntryStatistics:
         """Apply rejection marking to stats."""
-        # mark_rejected returns Self, ensure it's facade type
-        updated = stats.mark_rejected(rejection_category, reason)
-        # Convert to facade type if needed
-        if not isinstance(updated, m.Ldif.EntryStatistics):
-            stats_dict = updated.model_dump()
-            return m.Ldif.EntryStatistics.model_validate(stats_dict)
-        return updated
+        # mark_rejected returns Self, which is m.Ldif.EntryStatistics
+        return stats.mark_rejected(rejection_category, reason)
 
     @staticmethod
     def _update_entry_with_stats(
@@ -1451,13 +1418,9 @@ class FlextLdifUtilitiesMetadata:
         write_opts = entry_data.metadata.write_options
         if write_opts is None:
             return None
+        # WriteOptions is a Pydantic model with model_extra for extra fields
         key = c.Ldif.MetadataKeys.WRITE_OPTIONS
-        if hasattr(write_opts, "model_extra"):
-            extras = write_opts.model_extra or {}
-        elif isinstance(write_opts, dict):
-            extras = write_opts
-        else:
-            return None
+        extras = getattr(write_opts, "model_extra", None) or {}
         if key not in extras:
             return None
         opt = extras.get(key)
@@ -1566,7 +1529,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_rfc_compliance_metadata(
         quirk_type: str,
-        **extra: t.ScalarValue,
+        **extra: t.GeneralValueType,
     ) -> dict[str, str | bool | list[str] | dict[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary.
 

@@ -116,7 +116,7 @@ sn: Test
         parse_result = ldif.parse(ldif_content)
         entries = parse_result.value
 
-        write_result = ldif.write(entries, output_file)
+        write_result = ldif.write_file(entries, output_file)
 
         if write_result.is_success:
             assert output_file.exists()

@@ -81,7 +81,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
-        result_raw = u.match(
+        result_raw = u.Ldif.match(
             format_options,
             (type(None), lambda _: m.Ldif.LdifResults.WriteFormatOptions()),
             (type, lambda t: t()),
@@ -93,14 +93,14 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
                         opts.model_dump(exclude_none=True),
                         lambda d: (
                             {
-                                "base64_encode_binary": u.take(
-                                    d,
-                                    "base64_encode_binary",
-                                    as_type=bool,
+                                "base64_encode_binary": (
+                                    d.get("base64_encode_binary")
+                                    if isinstance(d, dict)
+                                    else None
                                 ),
                             }
-                            if u.take(d, "base64_encode_binary", as_type=bool)
-                            is not None
+                            if isinstance(d, dict)
+                            and d.get("base64_encode_binary") is not None
                             else {}
                         ),
                         m.Ldif.LdifResults.WriteFormatOptions.model_validate,

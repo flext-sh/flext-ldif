@@ -341,7 +341,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         schema_quirk = server.schema_quirk
 
         assert isinstance(schema_quirk, FlextLdifServersDs389.Schema)
-        assert hasattr(schema, "can_handle_objectclass")
+        assert hasattr(schema_quirk, "can_handle_objectclass")
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
 

@@ -81,9 +81,6 @@ class FlextLdifFilters:
         if hasattr(attrs, "attributes"):
             # Type narrowing: attrs.attributes is Mapping[str, list[str]]
             attrs_dict: Mapping[str, list[str]] = attrs.attributes
-        elif isinstance(attrs, Mapping):
-            # Type narrowing: attrs is already a Mapping
-            attrs_dict = attrs
         else:
             # attrs is neither Attributes nor Mapping, return True (include entry)
             return True

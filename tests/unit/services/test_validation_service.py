@@ -376,4 +376,4 @@ class TestsTestFlextLdifValidation(s):
             assert unwrapped is True  # String value should succeed
 
 
-__all__ = ["TestFlextLdifValidation"]
+__all__ = ["TestsTestFlextLdifValidation"]

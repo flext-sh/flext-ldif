@@ -212,13 +212,11 @@ class FlextLdifUtilities(u_core):
                     )
                     return u_core.to_str(self._value, default=str_default)
                 if self._target_type == "to_str_list":
-                    # Use parent convenience shortcut with proper type narrowing
+                    # Convert default to list of strings if needed
                     list_default: list[str] | None = None
-                    if isinstance(self._default, list) and all(
-                        isinstance(item, str) for item in self._default
-                    ):
-                        # Type narrowing: self._default is list[str] after isinstance check
-                        list_default = self._default
+                    if isinstance(self._default, list):
+                        # Safe conversion: convert each item to string
+                        list_default = [str(item) for item in self._default]
                     return u_core.to_str_list(self._value, default=list_default)
                 if self._target_type == "to_int":
                     if self._safe_mode:
@@ -1778,8 +1776,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def pairs(
             cls,
-            d: dict[str, t.GeneralValueType] | Mapping[str, object],
-        ) -> list[tuple[str, object]]:
+            d: dict[str, t.GeneralValueType] | Mapping[str, t.GeneralValueType],
+        ) -> list[tuple[str, t.GeneralValueType]]:
             """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
             return list(d.items())
 
@@ -1972,7 +1970,10 @@ class FlextLdifUtilities(u_core):
                 bool_default = default if isinstance(default, bool) else False
                 conv_result = conv_builder.to_bool(default=bool_default).build()
             elif target_type == "list":  # String comparison for target_type
-                list_default = default if isinstance(default, list) else []
+                # Ensure list_default is list[str] for str_list()
+                list_default: list[str] = []
+                if isinstance(default, list):
+                    list_default = [str(item) for item in default]
                 conv_result = conv_builder.str_list(default=list_default).build()
                 if predicate and isinstance(conv_result, list):
                     filtered = [item for item in conv_result if predicate(item)]
@@ -2106,7 +2107,10 @@ class FlextLdifUtilities(u_core):
                     .build()
                 )
             if target_type is list:
-                list_default = default if isinstance(default, list) else []
+                # Ensure list_default is list[str] for str_list()
+                list_default: list[str] = []
+                if isinstance(default, list):
+                    list_default = [str(item) for item in default]
                 return (
                     FlextLdifUtilities.Ldif
                     .conv(value)
@@ -2190,8 +2194,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def comp(
             cls,
-            *fns: Callable[[object], object],
-        ) -> Callable[[object], object]:
+            *fns: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
             """Compose using u.chain() (mnemonic: cp).
 
             Args:
@@ -2216,8 +2220,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def juxt(
             cls,
-            *fns: Callable[[object], object],
-        ) -> Callable[[object], tuple[object, ...]]:
+            *fns: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> Callable[[t.GeneralValueType], tuple[t.GeneralValueType, ...]]:
             """Juxtapose functions (mnemonic: jx).
 
             Args:
@@ -2778,10 +2782,10 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def let(
             cls,
-            value: object,
+            value: t.GeneralValueType,
             *,
-            fn: Callable[[object], object],
-        ) -> object:
+            fn: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> t.GeneralValueType:
             """Let using chain() (mnemonic: lt)."""
             return FlextLdifUtilities.Ldif.chain(value, fn)
 
@@ -2824,9 +2828,9 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def bind(
             cls,
-            value: object,
-            *fns: Callable[[object], object],
-        ) -> object:
+            value: t.GeneralValueType,
+            *fns: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> t.GeneralValueType:
             """Bind using chain() (mnemonic: bd)."""
             return FlextLdifUtilities.Ldif.chain(value, *fns)
 
@@ -2835,8 +2839,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def lift(
             cls,
-            fn: Callable[[object], object],
-        ) -> Callable[[object], object | None]:
+            fn: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> Callable[[t.GeneralValueType], t.GeneralValueType | None]:
             """Lift function for optionals (mnemonic: lf).
 
             Args:
@@ -2851,7 +2855,7 @@ class FlextLdifUtilities(u_core):
             """
 
             # Use ternary operator + FlextLdifUtilities.maybe() DSL for safe None handling
-            def lifted_fn(v: object) -> object | None:
+            def lifted_fn(v: t.GeneralValueType) -> t.GeneralValueType | None:
                 """Lifted function with safe None handling using DSL."""
                 return (
                     FlextLdifUtilities.Ldif.maybe(
@@ -2870,8 +2874,8 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def seq(
             cls,
-            *values: object,
-        ) -> list[object]:
+            *values: t.GeneralValueType,
+        ) -> list[t.GeneralValueType]:
             """Sequence constructor (mnemonic: sq).
 
             Args:
@@ -3191,7 +3195,7 @@ class FlextLdifUtilities(u_core):
         def path(
             cls,
             *keys: str,
-        ) -> Callable[[object], object]:
+        ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
             """Path accessor using u.chain() DSL (mnemonic: ph).
 
             Args:
@@ -3207,8 +3211,10 @@ class FlextLdifUtilities(u_core):
 
             # Use FlextLdifUtilities.Ldif.chain() to compose get operations
             # Create properly typed single-argument lambdas using closure factory
-            def make_getter(key: str) -> Callable[[object], object]:
-                def getter_fn(obj: object) -> object:
+            def make_getter(
+                key: str,
+            ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+                def getter_fn(obj: t.GeneralValueType) -> t.GeneralValueType:
                     """Get value from object by key."""
                     if isinstance(obj, Mapping):
                         return obj.get(key, None)
@@ -3218,7 +3224,9 @@ class FlextLdifUtilities(u_core):
 
                 return getter_fn
 
-            getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
+            getters: list[Callable[[t.GeneralValueType], t.GeneralValueType]] = [
+                make_getter(k) for k in keys
+            ]
             return lambda obj: cls.chain(obj, *getters) if obj is not None else None
 
         # Mnemonic helper
@@ -3294,11 +3302,11 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def maybe(
-            value: object | None,
+            value: t.GeneralValueType | None,
             *,
-            default: object | None = None,
-            mapper: Callable[[object], object] | None = None,
-        ) -> object:
+            default: t.GeneralValueType | None = None,
+            mapper: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
+        ) -> t.GeneralValueType:
             """Maybe monad pattern (mnemonic: mb)."""
             if value is None:
                 return default
@@ -3309,7 +3317,10 @@ class FlextLdifUtilities(u_core):
         mb = maybe
 
         @staticmethod
-        def chain(value: object, *funcs: Callable[[object], object]) -> object:
+        def chain(
+            value: t.GeneralValueType,
+            *funcs: Callable[[t.GeneralValueType], t.GeneralValueType],
+        ) -> t.GeneralValueType:
             """Chain function calls (DSL helper, mnemonic: ch)."""
             result = value
             for func in funcs:

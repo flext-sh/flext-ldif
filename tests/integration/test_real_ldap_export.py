@@ -13,6 +13,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
+# type: ignore
 
 from __future__ import annotations
 
@@ -328,7 +329,7 @@ class TestRealLdapExport:
         flext_entry = entry_result.value
 
         output_file = tmp_path / "export.ldif"
-        write_result = flext_api.write([flext_entry], output_path=output_file)
+        write_result = flext_api.write_file([flext_entry], output_file)
         assert write_result.is_success
 
         assert output_file.exists()

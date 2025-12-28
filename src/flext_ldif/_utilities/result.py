@@ -105,18 +105,17 @@ class FlextLdifResult[T]:
             inner: The underlying FlextResult or RuntimeResult to wrap
 
         """
-        # Convert RuntimeResult to FlextResult if needed
+        # FlextResult extends RuntimeResult, so check FlextResult first (more specific)
         inner_result: FlextResult[T]
-        if isinstance(inner, FlextRuntime.RuntimeResult):
-            # RuntimeResult is compatible with FlextResult interface
-            # Convert by creating new FlextResult with same value/error
-            if inner.is_success:
-                inner_result = r[T].ok(inner.value)
-            else:
-                error_msg = inner.error if hasattr(inner, "error") else str(inner)
-                inner_result = r[T].fail(error_msg)
-        else:
+        if isinstance(inner, FlextResult):
+            # Already a FlextResult, use directly
             inner_result = inner
+        # RuntimeResult (not FlextResult) - convert by creating new FlextResult
+        elif inner.is_success:
+            inner_result = r[T].ok(inner.value)
+        else:
+            error_msg = inner.error if hasattr(inner, "error") else str(inner)
+            inner_result = r[T].fail(error_msg)
         self._inner = inner_result
 
     # =========================================================================
@@ -361,15 +360,11 @@ class FlextLdifResult[T]:
             # After isinstance check, transform_result is T (not FlextResult)
             return FlextLdifResult.ok(transform_result)
 
-        # It's a callable (function or lambda)
-        if callable(transformer):
-            result = transformer(self.value)
-            if isinstance(result, FlextResult):
-                return FlextLdifResult.from_result(result)
-            return FlextLdifResult.ok(result)
-
-        # Invalid transformer type
-        return FlextLdifResult.fail(f"Invalid transformer type: {type(transformer)}")
+        # It's a callable (function or lambda) - type system guarantees this
+        result = transformer(self.value)
+        if isinstance(result, FlextResult):
+            return FlextLdifResult.from_result(result)
+        return FlextLdifResult.ok(result)
 
     def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifResult[str]:
         """Write operator: result >> output.

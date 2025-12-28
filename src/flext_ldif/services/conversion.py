@@ -436,7 +436,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: FlextTypes.GeneralValueType,
+        boolean_conversions: object,
         target_server_type: str,
     ) -> dict[str, dict[str, str]]:
         """Analyze boolean conversions for target compatibility."""
@@ -508,10 +508,15 @@ class FlextLdifConversion(
             return analysis
 
         # batch_result.value is BatchResultDict when success
-        batch_data = batch_result.map_or({})
-        results_list_raw = (
-            batch_data.get("results", []) if isinstance(batch_data, dict) else []
+        batch_data_raw: t.BatchResultDictBase | dict[str, t.GeneralValueType] = (
+            batch_result.map_or({})
         )
+        # Type narrowing: BatchResultDictBase is a TypedDict, extract results safely
+        results_list_raw: list[t.GeneralValueType] = []
+        if isinstance(batch_data_raw, dict):
+            results_raw = batch_data_raw.get("results", [])
+            if isinstance(results_raw, list):
+                results_list_raw = results_raw
         # Type narrowing: filter results_list_raw with isinstance checks
         results_list: list[tuple[str, dict[str, str]]] = [
             item
@@ -539,7 +544,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: FlextTypes.GeneralValueType,
+        original_attribute_case: object,
         target_server_type: str,
     ) -> dict[str, dict[str, t.MetadataAttributeValue]]:
         """Analyze attribute case for target compatibility."""
@@ -558,7 +563,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: FlextTypes.GeneralValueType,
+        original_format_details: object,
         target_server_type: str,
     ) -> dict[str, dict[str, t.MetadataAttributeValue]]:
         """Analyze DN spacing for target compatibility."""
@@ -1344,10 +1349,10 @@ class FlextLdifConversion(
                 converted_has_permissions=converted_has_permissions,
             )
 
-        # maybe expects mapper: Callable[[T], T], so wrap normalize_server_type
+        # maybe expects mapper: Callable[[GeneralValueType], GeneralValueType]
         def normalize_server_type_wrapper(
-            value: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            value: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             """Wrapper for normalize_server_type to match maybe signature."""
             if isinstance(value, str):
                 return u.Ldif.Server.normalize_server_type(value)
@@ -1362,7 +1367,7 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        mapping_type = u.match(
+        mapping_type = u.Ldif.match(
             (normalized_source, normalized_target),
             (
                 lambda pair: pair == ("oid", "oud"),
@@ -1733,7 +1738,7 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
             # Convert domain Acl to public Acl model
-            match_result = u.match(
+            match_result = u.Ldif.match(
                 domain_acl,
                 (
                     m.Ldif.Acl,
@@ -2379,7 +2384,7 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Get source/target format names
-        source_format_raw = u.match(
+        source_format_raw = u.Ldif.match(
             source,
             (str, lambda s: s),
             default=lambda src: u.Ldif.maybe(
@@ -2387,7 +2392,7 @@ class FlextLdifConversion(
                 default="unknown",
             ),
         )
-        target_format_raw = u.match(
+        target_format_raw = u.Ldif.match(
             target,
             (str, lambda t: t),
             default=lambda tgt: u.Ldif.maybe(

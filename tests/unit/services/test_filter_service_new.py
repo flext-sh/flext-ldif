@@ -27,6 +27,7 @@ import pytest
 from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.filters import FlextLdifFilters
 from tests import TestDeduplicationHelpers, c, s
@@ -101,7 +102,7 @@ class EdgeCaseScenario(StrEnum):
 
 
 @pytest.fixture
-def user_entries() -> list[FlextLdifModels.Entry]:
+def user_entries() -> list[m.Ldif.Entry]:
     """Create user entries for filtering tests."""
     return [
         create_entry(
@@ -131,7 +132,7 @@ def user_entries() -> list[FlextLdifModels.Entry]:
 
 
 @pytest.fixture
-def hierarchy_entries() -> list[FlextLdifModels.Entry]:
+def hierarchy_entries() -> list[m.Ldif.Entry]:
     """Create hierarchy/container entries."""
     return [
         create_entry(
@@ -156,7 +157,7 @@ def hierarchy_entries() -> list[FlextLdifModels.Entry]:
 
 
 @pytest.fixture
-def mixed_entries() -> list[FlextLdifModels.Entry]:
+def mixed_entries() -> list[m.Ldif.Entry]:
     """Create mixed entry types for categorization."""
     return [
         create_entry(
@@ -186,7 +187,7 @@ def mixed_entries() -> list[FlextLdifModels.Entry]:
 
 
 @pytest.fixture
-def schema_entries() -> list[FlextLdifModels.Entry]:
+def schema_entries() -> list[m.Ldif.Entry]:
     """Create schema entries."""
     return [
         create_entry(
@@ -238,8 +239,8 @@ class TestFilterOperations:
     def test_filter_operations(
         self,
         scenario: FilterOperationScenario,
-        user_entries: list[FlextLdifModels.Entry],
-        hierarchy_entries: list[FlextLdifModels.Entry],
+        user_entries: list[m.Ldif.Entry],
+        hierarchy_entries: list[m.Ldif.Entry],
     ) -> None:
         """Test various filter operations with parametrization."""
         if scenario == FilterOperationScenario.BY_DN_BASIC:
@@ -535,9 +536,9 @@ class TestSchemaOperations:
     def test_schema_scenarios(
         self,
         scenario: SchemaOperationScenario,
-        schema_entries: list[FlextLdifModels.Entry],
-        mixed_entries: list[FlextLdifModels.Entry],
-        user_entries: list[FlextLdifModels.Entry],
+        schema_entries: list[m.Ldif.Entry],
+        mixed_entries: list[m.Ldif.Entry],
+        user_entries: list[m.Ldif.Entry],
     ) -> None:
         """Test schema operations with parametrization."""
         if scenario == SchemaOperationScenario.IS_SCHEMA_DETECTION:
@@ -575,7 +576,7 @@ class TestEdgeCases:
     def test_edge_case_scenarios(
         self,
         scenario: EdgeCaseScenario,
-        user_entries: list[FlextLdifModels.Entry],
+        user_entries: list[m.Ldif.Entry],
     ) -> None:
         """Test edge cases with parametrization."""
         if scenario == EdgeCaseScenario.EMPTY_ENTRIES:

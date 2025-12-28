@@ -234,17 +234,17 @@ class FlextLdifProcessing(
             return r[list[m.Ldif.ProcessingResult]].fail(
                 batch_result.error or "Batch processing failed",
             )
-        # u.process returns list[R] | dict[str, R] depending on input
-        # Type narrowing: batch_result.value is list[m.Ldif.ProcessingResult] | dict[str, m.Ldif.ProcessingResult]
+        # u.Collection.process returns list[R] - extract results with type verification
         batch_value = batch_result.value
         if isinstance(batch_value, list):
-            results: list[m.Ldif.ProcessingResult] = batch_value
+            # Type narrowing via isinstance check
+            results: list[m.Ldif.ProcessingResult] = [
+                item
+                for item in batch_value
+                if isinstance(item, m.Ldif.ProcessingResult)
+            ]
             return r[list[m.Ldif.ProcessingResult]].ok(results)
-        # If dict, convert to list
-        if isinstance(batch_value, dict):
-            results = list(batch_value.values())
-            return r[list[m.Ldif.ProcessingResult]].ok(results)
-        # Fallback: empty list
+        # Unexpected batch value type - return empty result
         return r[list[m.Ldif.ProcessingResult]].ok([])
 
     @staticmethod

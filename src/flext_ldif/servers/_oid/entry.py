@@ -1111,12 +1111,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else:
                 extensions_data[key] = val
         # Add original_extensions with type widening for list
-        for key, val in original_extensions.items():
-            if isinstance(val, list):
-                widened_ext: t.MetadataAttributeValue = list(val)
-                extensions_data[key] = widened_ext
-            else:
-                extensions_data[key] = val
+        # original_extensions type is dict[str, str | int | bool | list[str]]
+        for ext_key, ext_val in original_extensions.items():
+            if isinstance(ext_val, list):
+                widened_ext: t.MetadataAttributeValue = list(ext_val)
+                extensions_data[ext_key] = widened_ext
+            elif isinstance(ext_val, (str, bool, int)):
+                widened_scalar: t.MetadataAttributeValue = ext_val
+                extensions_data[ext_key] = widened_scalar
         extensions_data[c.Ldif.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )

@@ -167,11 +167,11 @@ class TestsFlextLdifDnService(s):
         dn_service = FlextLdifDn()
         result = dn_service.parse_components(dn)
         if should_succeed:
-            components = self.assert_success(result)
+            components = tm.ok(result)
             if expected_len > 0:
                 assert len(components) == expected_len
         else:
-            self.assert_failure(result)
+            tm.fail(result)
 
     # ========================================================================
     # VALIDATION TESTS
@@ -182,7 +182,7 @@ class TestsFlextLdifDnService(s):
         """Test DN format validation against RFC 4514."""
         dn_service = FlextLdifDn()
         result = dn_service.validate_format(dn)
-        is_valid = self.assert_success(result)
+        is_valid = tm.ok(result)
         assert is_valid == expected_valid
 
     # ========================================================================
@@ -195,10 +195,10 @@ class TestsFlextLdifDnService(s):
         dn_service = FlextLdifDn()
         result = dn_service.normalize(dn)
         if should_succeed is True:
-            normalized = self.assert_success(result)
+            normalized = tm.ok(result)
             assert "cn=" in normalized.lower() or "ou=" in normalized.lower()
         elif should_succeed is False:
-            self.assert_failure(result)
+            tm.fail(result)
         # None means either success or failure is acceptable
 
     # ========================================================================
@@ -252,14 +252,14 @@ class TestsFlextLdifDnService(s):
         """Test DN comparison (case-insensitive)."""
         dn_service = FlextLdifDn()
         result = dn_service.compare_dns(dn1, dn2)
-        comparison_result = self.assert_success(result)
+        comparison_result = tm.ok(result)
         assert comparison_result == expected
 
     def test_compare_invalid_dn(self) -> None:
         """Compare with invalid DN should fail."""
         dn_service = FlextLdifDn()
         result = dn_service.compare_dns(c.DNs.TEST_USER, "invalid dn")
-        self.assert_failure(result)
+        tm.fail(result)
 
     # ========================================================================
     # RDN PARSING TESTS
@@ -274,11 +274,11 @@ class TestsFlextLdifDnService(s):
         dn_service = FlextLdifDn()
         result = dn_service.parse_rdn(rdn)
         if should_succeed:
-            pairs = self.assert_success(result)
+            pairs = tm.ok(result)
             if expected_len > 0:
                 assert len(pairs) == expected_len
         else:
-            self.assert_failure(result)
+            tm.fail(result)
 
     # ========================================================================
     # BUILDER PATTERN TESTS
@@ -318,11 +318,11 @@ class TestsFlextLdifDnService(s):
 
         # Test validate operation
         service2 = self.create_dn_service(dn=c.DNs.TEST_USER, operation="validate")
-        self.assert_success(service2.execute())
+        tm.ok(service2.execute())
 
         # Test validate invalid DN
         service3 = self.create_dn_service(dn="invalid dn", operation="validate")
-        self.assert_success(service3.execute())
+        tm.ok(service3.execute())
 
         # Test compare operation
         service4 = self.create_dn_service(
@@ -330,7 +330,7 @@ class TestsFlextLdifDnService(s):
             other_dn=f"CN={c.Values.TEST},{c.DNs.EXAMPLE}".upper(),
             operation="compare",
         )
-        self.assert_success(service4.execute())
+        tm.ok(service4.execute())
 
     # ========================================================================
     # DN REGISTRY TESTS
@@ -374,7 +374,7 @@ class TestsFlextLdifDnService(s):
         # Test 1: Single DN registration - consistent (True)
         registry1 = self.create_registry_with_dns(c.DNs.TEST_USER)
         result1 = registry1.validate_oud_consistency()
-        is_consistent = self.assert_success(result1)
+        is_consistent = tm.ok(result1)
         assert is_consistent
 
         # Test 2: Same DN registered with multiple case variants - inconsistent (False)
@@ -383,7 +383,7 @@ class TestsFlextLdifDnService(s):
         # Register the SAME DN with different case
         registry2.register_dn(f"cn={c.Values.ADMIN.lower()},dc=example,dc=com")
         result2 = registry2.validate_oud_consistency()
-        is_consistent2 = self.assert_success(result2)
+        is_consistent2 = tm.ok(result2)
         assert not is_consistent2
 
     def test_registry_clear(self) -> None:
@@ -437,13 +437,13 @@ class TestsFlextLdifDnService(s):
         dn = f"CN={c.Values.TEST} Doe,OU=Users,{c.DNs.EXAMPLE}"
 
         result = dn_service.validate_format(dn)
-        is_valid = self.assert_success(result)
+        is_valid = tm.ok(result)
         assert is_valid
 
-        components = self.assert_success(dn_service.parse_components(dn))
+        components = tm.ok(dn_service.parse_components(dn))
         assert len(components) == 4
 
-        normalized = self.assert_success(dn_service.normalize(dn))
+        normalized = tm.ok(dn_service.normalize(dn))
         assert "cn=" in normalized.lower()
 
     def test_workflow_clean_and_escape(self) -> None:
@@ -469,7 +469,7 @@ class TestsFlextLdifDnService(s):
             registry.register_dn(dn)
 
         result = registry.validate_oud_consistency()
-        is_consistent = self.assert_success(result)
+        is_consistent = tm.ok(result)
         assert not is_consistent
 
         canonical = registry.get_canonical_dn(c.DNs.TEST_USER)

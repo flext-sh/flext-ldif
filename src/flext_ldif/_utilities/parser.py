@@ -738,13 +738,13 @@ class FlextLdifUtilitiesParser:
             extensions_typed: dict[str, t.MetadataAttributeValue] = {}
             for key, val in metadata_extensions.items():
                 # Widen list[str] to MetadataAttributeValue
-                # pyrefly: ignore[bad-assignment] - list[str] is subtype of list[...] at runtime
+
                 typed_val: t.MetadataAttributeValue = list(val)
                 extensions_typed[key] = typed_val
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions_typed,  # pyrefly: ignore[bad-argument-type]
+                    extensions_typed,
                 ),
             )
 
@@ -971,7 +971,6 @@ class FlextLdifUtilitiesParser:
             if metadata_extensions:
                 extensions_typed: dict[str, t.MetadataAttributeValue] = {}
                 for key, val in metadata_extensions.items():
-                    # pyrefly: ignore[bad-assignment] - list[str] is subtype at runtime
                     typed_val: t.MetadataAttributeValue = list(val)
                     extensions_typed[key] = typed_val
                 metadata = m.Ldif.QuirkMetadata(

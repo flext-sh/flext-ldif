@@ -447,6 +447,6 @@ class TestACLConversionInfrastructure:
 __all__ = [
     "TestACLConversionInfrastructure",
     "TestACLConversionWithRealFixtures",
-    "TestOIDToOUDACLConversion",
+    "TestsFlextLdifOIDToOUDACLConversion",
     "TestOUDToOIDACLConversion",
 ]

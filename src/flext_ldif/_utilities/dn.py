@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
 from typing import Literal, overload
 
@@ -1603,7 +1603,8 @@ class FlextLdifUtilitiesDN:
         results_raw = batch_data.get("results", [])
         if isinstance(results_raw, list):
             return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
-        return entries
+        # Fallback: return empty list if results_raw is not a list
+        return []
 
     @staticmethod
     def transform_ldif_files_in_directory(
@@ -1836,8 +1837,6 @@ class FlextLdifUtilitiesDN:
         # Convert Attributes to dict for processing
         if hasattr(entry.attributes, "attributes"):
             attrs_dict = entry.attributes.attributes
-        elif isinstance(entry.attributes, Mapping):
-            attrs_dict = dict(entry.attributes)
         else:
             # Fallback for unknown attribute types
             attrs_dict = (
