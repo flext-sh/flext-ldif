@@ -283,27 +283,47 @@ class FlextLdifUtilitiesMetadata:
                 # Convert list[GeneralValueType] to list[str | int | float | bool | datetime | None]
                 # Filter out unsupported types (BaseModel, Path, Callable)
                 safe_list = [
-                    item for item in v
+                    item
+                    for item in v
                     if isinstance(item, (str, int, float, bool, type(None), datetime))
                 ]
                 list_typed: list[str | int | float | bool | datetime | None] = [
-                    str(item) if not isinstance(item, (str, int, float, bool, datetime, type(None))) else item
+                    str(item)
+                    if not isinstance(
+                        item, (str, int, float, bool, datetime, type(None))
+                    )
+                    else item
                     for item in safe_list
                 ]
                 metadata_typed[k] = list_typed
             elif isinstance(v, dict):
                 # Convert dict[GeneralValueType] to proper MetadataAttributeValue dict type
-                safe_dict_vals: dict[str, str | int | float | bool | datetime | list[str | int | float | bool | datetime | None] | None] = {}
+                safe_dict_vals: dict[
+                    str,
+                    str
+                    | int
+                    | float
+                    | bool
+                    | datetime
+                    | list[str | int | float | bool | datetime | None]
+                    | None,
+                ] = {}
                 for k_inner, v_inner in v.items():
                     if not isinstance(k_inner, str):
                         continue
                     if isinstance(v_inner, list):
                         # Convert list values to list[str | int | float | bool | datetime | None]
                         safe_dict_vals[k_inner] = [
-                            item if isinstance(item, (str, int, float, bool, datetime, type(None))) else str(item)
+                            item
+                            if isinstance(
+                                item, (str, int, float, bool, datetime, type(None))
+                            )
+                            else str(item)
                             for item in v_inner
                         ]
-                    elif isinstance(v_inner, (str, int, float, bool, datetime, type(None))):
+                    elif isinstance(
+                        v_inner, (str, int, float, bool, datetime, type(None))
+                    ):
                         safe_dict_vals[k_inner] = v_inner
                     else:
                         # Convert other types to string

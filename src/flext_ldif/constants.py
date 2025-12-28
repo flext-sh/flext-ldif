@@ -385,7 +385,6 @@ class FlextLdifConstants(FlextConstants):
 
             # Tuple/collection size constraints
             MIN_TUPLE_SIZE: Final[int] = 2  # Minimum tuple size for ACL operations
-            MIN_ERR_TUPLE_SIZE: Final[int] = 2  # Minimum error tuple size
 
             MIN_BUFFER_SIZE: Final[int] = 1024
             CONTENT_PREVIEW_LENGTH: Final[int] = 100
