@@ -1367,7 +1367,7 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        mapping_type = u.Ldif.match(
+        mapping_type = u.match(
             (normalized_source, normalized_target),
             (
                 lambda pair: pair == ("oid", "oud"),
@@ -1738,7 +1738,7 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
             # Convert domain Acl to public Acl model
-            match_result = u.Ldif.match(
+            match_result = u.match(
                 domain_acl,
                 (
                     m.Ldif.Acl,
@@ -2384,7 +2384,7 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Get source/target format names
-        source_format_raw = u.Ldif.match(
+        source_format_raw = u.match(
             source,
             (str, lambda s: s),
             default=lambda src: u.Ldif.maybe(
@@ -2392,7 +2392,7 @@ class FlextLdifConversion(
                 default="unknown",
             ),
         )
-        target_format_raw = u.Ldif.match(
+        target_format_raw = u.match(
             target,
             (str, lambda t: t),
             default=lambda tgt: u.Ldif.maybe(
