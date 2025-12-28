@@ -1049,13 +1049,13 @@ class FlextLdifUtilities(u_core):
                 # Type narrowing: results is list[R] from process_dict_items
                 return r[str].ok(results)
             if isinstance(items, (list, tuple)):
-                # Adapt predicate to match process_list_items signature
-                # process_list_items expects Callable[[T], bool] | None
-                # but predicate can be Callable[[T], bool] | Callable[[str, T], bool] | None
-                # process_list_items handles both, pass as-is
-                # Type narrowing: result is r[list[R] | dict[str, R]] from process_list_items
+                # Process list/tuple items with flexible predicate
+                # Type narrowing: result is r[list[R]] from process_list_items
+                # INTENTIONAL CAST: isinstance check validates list/tuple structure
+                from typing import cast as typing_cast
+                list_items = typing_cast(list[object] | tuple[object, ...], items)  # INTENTIONAL CAST
                 return FlextLdifUtilities.Ldif.process_list_items(
-                    items,
+                    list_items,
                     processor_func,
                     predicate,
                     on_error,
