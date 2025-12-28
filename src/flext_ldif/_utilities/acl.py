@@ -409,9 +409,9 @@ class FlextLdifUtilitiesACL:
             )
         if special_match:
             # Convert to tuple[str, str] for return
-            if len(special_match) >= 2:
+            if len(special_match) >= c.Ldif.Acl.SPECIAL_MATCH_MIN_SIZE:
                 return (str(special_match[0]), str(special_match[1]))
-            elif len(special_match) == 1:
+            if len(special_match) == 1:
                 return (str(special_match[0]), "")
 
         # Map the type
