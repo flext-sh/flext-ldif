@@ -695,11 +695,13 @@ class FlextFunctional:
         if condition:
             # If then is callable, call it to get the value
             if callable(then):
-                # Type narrowing: callable returns T
-                return then()
-            # Type narrowing: then is T | None
-            return then
-        # Type narrowing: else_ is T | None
+                # Type narrowing: callable() returns T
+                result = then()
+                return result
+            # Direct value
+            if then is not None:
+                return then
+        # Return else_
         return else_
 
     wh = when
@@ -863,8 +865,9 @@ class FlextFunctional:
         result = cases.get(value, default)
         # If result is callable, call it with value
         if callable(result):
-            # Type narrowing: callable returns U or None
-            return result(value)
+            # Type narrowing: callable(value) returns U
+            case_result = result(value)
+            return case_result
         return result
 
     sw = switch
@@ -1052,8 +1055,8 @@ class FlextFunctional:
         if target_type is None:
             return default
 
-        # Already the right type
-        if isinstance(value, target_type):
+        # Already the right type (only check for concrete types, not callables)
+        if isinstance(target_type, type) and isinstance(value, target_type):
             return value
 
         # Try to convert
@@ -1093,8 +1096,14 @@ class FlextFunctional:
                     return tuple(value)
                 return (value,)
             if target_type is set:
+                # Note: GeneralValueType may contain unhashable types (lists, dicts)
+                # So set conversion is best-effort only
                 if isinstance(value, (list, tuple, set)):
-                    return set(value)
+                    try:
+                        return set(value)
+                    except TypeError:
+                        # Value contains unhashable types
+                        return default
                 return {value}
             if target_type is dict:
                 if isinstance(value, dict):

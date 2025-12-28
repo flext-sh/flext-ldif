@@ -2471,12 +2471,6 @@ class TestDeduplicationHelpers:
         return converted_items
 
 
-class TestCategorization:
-    """Test categorization helpers."""
-
-    # Placeholder for categorization helper methods if needed
-
-
 # Short aliases per FLEXT convention
 tc = TestsFlextLdifConstants  # Primary test constants alias
 c = TestsFlextLdifConstants  # Alternative alias for compatibility
@@ -2484,10 +2478,7 @@ c = TestsFlextLdifConstants  # Alternative alias for compatibility
 __all__ = [
     "Filters",
     "OIDs",
-    "RfcTestHelpers",
     "Syntax",
-    "TestCategorization",
-    "TestDeduplicationHelpers",
     "TestsFlextLdifConstants",
     "c",
     "tc",
