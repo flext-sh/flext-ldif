@@ -85,34 +85,6 @@ class FlextLdifModels(FlextModels):
         Or: ``from flext_core import  m; entry = m.Ldif.Entry(...)``
     """
 
-    # Direct aliases for simple access (remove subnamespaces as per FLEXT standards)
-    Value = FlextModels.Value
-    Entity = FlextModels.Entity
-    AggregateRoot = FlextModels.AggregateRoot
-    DomainEvent = FlextModels.DomainEvent
-    Command = FlextModels.Command
-    Query = FlextModels.Query
-    Config = FlextModels.Config
-    ProcessingRequest = FlextModels.ProcessingRequest
-    BatchProcessingConfig = FlextModels.BatchProcessingConfig
-    ValidationConfiguration = FlextModels.ValidationConfiguration
-    Handler = FlextModels.Handler
-    HandlerRegistration = FlextModels.HandlerRegistration
-    HandlerExecutionConfig = FlextModels.HandlerExecutionConfig
-    HandlerDecoratorConfig = FlextModels.HandlerDecoratorConfig
-    HandlerFactoryDecoratorConfig = FlextModels.HandlerFactoryDecoratorConfig
-    CqrsHandler = FlextModels.CqrsHandler
-    ArbitraryTypesModel = FlextModels.ArbitraryTypesModel
-    FrozenStrictModel = FlextModels.FrozenStrictModel
-    IdentifiableMixin = FlextModels.IdentifiableMixin
-    TimestampableMixin = FlextModels.TimestampableMixin
-    TimestampedModel = FlextModels.TimestampedModel
-    VersionableMixin = FlextModels.VersionableMixin
-    CollectionsCategories = FlextModels.CollectionsCategories
-    Pagination = FlextModels.Pagination
-    Bus = FlextModels.Bus
-    Metadata = FlextModels.Metadata
-
     # LDIF format option aliases for test convenience
     ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
 
