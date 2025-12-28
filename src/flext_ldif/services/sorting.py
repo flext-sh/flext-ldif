@@ -828,13 +828,15 @@ class FlextLdifSorting(
 
         # Recursively visit all children (already sorted alphabetically)
         # Use u.get for unified extraction (DSL pattern)
-        # Type narrowing: u.mapper().get with default=[] returns list[str]
-        children_raw: list[str] | None = u.mapper().get(
+        # Type narrowing: u.mapper().get returns GeneralValueType, narrow to list[str]
+        children_raw = u.mapper().get(
             parent_to_children,
             dn,
             default=[],
         )
-        children = children_raw if children_raw is not None else []
+        children: list[str] = []
+        if isinstance(children_raw, Sequence) and not isinstance(children_raw, str):
+            children.extend(item for item in children_raw if isinstance(item, str))
         for child_dn in children:
             result.extend(
                 FlextLdifSorting._dfs_traverse(
@@ -988,15 +990,22 @@ class FlextLdifSorting(
                     if dn_key not in visited:
                         # Add all entries with this DN
                         # Use u.get for unified extraction (DSL pattern)
-                        # Type narrowing: u.mapper().get with default=[] returns list[m.Ldif.Entry]
-                        entries_for_dn_raw: list[m.Ldif.Entry] | None = u.mapper().get(
+                        # Type narrowing: u.mapper().get returns GeneralValueType
+                        entries_raw = u.mapper().get(
                             dn_to_entries,
                             dn_key,
                             default=[],
                         )
-                        entries_for_dn: list[m.Ldif.Entry] = (
-                            entries_for_dn_raw if entries_for_dn_raw is not None else []
-                        )
+                        # Narrow to list[Entry] by checking if Sequence
+                        entries_for_dn: list[m.Ldif.Entry] = []
+                        if isinstance(entries_raw, Sequence) and not isinstance(
+                            entries_raw, str
+                        ):
+                            entries_for_dn.extend(
+                                item
+                                for item in entries_raw
+                                if isinstance(item, m.Ldif.Entry)
+                            )
                         sorted_entries.extend(entries_for_dn)
                         visited.add(dn_key)
 

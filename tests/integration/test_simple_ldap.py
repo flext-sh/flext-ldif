@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 from ldap3 import Connection
@@ -31,7 +32,7 @@ def test_simple_ldap_search(
     ldap_container: GenericFieldsDict,
 ) -> None:
     """Test simple LDAP search."""
-    base_dn = str(ldap_container["base_dn"])
+    base_dn = str(cast(dict[str, object], ldap_container)["base_dn"])
 
     # Search for base DN
     result = ldap_connection.search(
@@ -53,7 +54,7 @@ def test_create_and_export_entry(
     make_test_username: Callable[[str], str],
 ) -> None:
     """Create LDAP entry and export to LDIF."""
-    base_dn = str(ldap_container["base_dn"])
+    base_dn = str(cast(dict[str, object], ldap_container)["base_dn"])
     unique_username = make_test_username("SimpleTest")
     test_dn = f"cn={unique_username},{base_dn}"
 
@@ -81,7 +82,7 @@ def test_create_and_export_entry(
 
     # Convert to FlextLdif entry
     api = FlextLdif.get_instance()
-    entry_result = api.models.Entry.create(
+    entry_result = cast(object, api).models.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes={
             attr: list(ldap_entry[attr].values) for attr in ldap_entry.entry_attributes

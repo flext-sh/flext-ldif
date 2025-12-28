@@ -249,8 +249,8 @@ sn: test
         # Create test entries
         entries = [
             m.Ldif.Entry(
-                dn="cn=test,dc=example,dc=com",
-                attributes={"cn": ["test"], "objectClass": ["person"]},
+                dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
             ),
         ]
 

@@ -11,7 +11,8 @@ import re
 from pathlib import Path
 from typing import Final
 
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests.utilities import FlextTestsUtilities  # type: ignore
+from flext_tests import tm  # type: ignore
 
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.constants import c as lib_c
@@ -78,7 +79,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)  # type: ignore
         content = output_file.read_text(encoding="utf-8")
 
         # Should be converted to RFC format
@@ -129,7 +130,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)  # type: ignore
         content = output_file.read_text(encoding="utf-8")
 
         # Should be converted to OID format
@@ -174,7 +175,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)  # type: ignore
         content = output_file.read_text(encoding="utf-8")
 
         # Should be converted to RFC format (aci)
@@ -216,7 +217,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)  # type: ignore
         content = output_file.read_text(encoding="utf-8")
 
         # Should be converted to OID format (orclaci)
@@ -257,7 +258,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         # Verify output file content
         output_file = output_dir / "migrated.ldif"
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)  # type: ignore
         content = output_file.read_text(encoding="utf-8")
 
         # Should be converted to RFC format (cn=schema)

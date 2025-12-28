@@ -17,7 +17,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
 
@@ -277,7 +276,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
+    class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL quirks implementation.
 
         Override: Extends base RFC Acl with Tivoli-specific ACL parsing.

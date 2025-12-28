@@ -14,7 +14,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdif
+from typing import cast
+
+from flext_ldif import FlextLdif, m
 from flext_ldif.protocols import p
 
 
@@ -48,7 +50,7 @@ class TestOidSchemaIntegration:
         assert len(entries) > 0, "No schema entries parsed"
 
         # Verify schema entry structure
-        schema_entry = entries[0]
+        schema_entry = cast(m.Ldif.Entry, entries[0])
         assert schema_entry.dn is not None
 
     def test_oracle_attributes_in_parsed_schema(
@@ -90,7 +92,7 @@ class TestOidSchemaIntegration:
             )
 
         oracle_attr_count = sum(
-            1 for attr in attrs if isinstance(attr, str) and "2.16.840.1.113894" in attr
+            1 for attr in (attrs or []) if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
 
         # Fixture may or may not contain Oracle attributes depending on the schema subset
@@ -137,7 +139,7 @@ class TestOidSchemaIntegration:
 
         oracle_oc_count = sum(
             1
-            for oc in object_classes
+            for oc in (object_classes or [])
             if isinstance(oc, str) and "2.16.840.1.113894" in oc
         )
 

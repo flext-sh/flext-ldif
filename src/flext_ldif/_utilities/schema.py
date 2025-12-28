@@ -742,7 +742,6 @@ class FlextLdifUtilitiesSchema:
         # Convert to dict[str, MetadataAttributeValue] by widening list types
         extensions: dict[str, t.MetadataAttributeValue] = {}
         for key, val in extensions_raw.items():
-            # pyrefly: ignore[bad-assignment] - list[str] is subtype at runtime
             typed_val: t.MetadataAttributeValue = list(val)
             extensions[key] = typed_val
 

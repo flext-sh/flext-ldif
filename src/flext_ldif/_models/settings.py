@@ -2157,7 +2157,7 @@ class FlextLdifModelsSettings:
             ...,
             description="Write method to call on source schema",
         )
-        parse_method: Callable[..., r[FlextTypes.GeneralValueType]] = Field(
+        parse_method: Callable[..., r[object]] = Field(
             ...,
             description="Parse method to call on target schema",
         )

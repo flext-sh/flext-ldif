@@ -12,9 +12,11 @@ PHASE 2: Detection Pattern Consolidation (2025-11-19)
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# ruff: noqa: SLF001  # Accessing own private methods within the same class
 
 from __future__ import annotations
 
+import importlib.util
 import re
 from typing import Literal, TypeGuard
 
@@ -97,19 +99,20 @@ class FlextLdifUtilitiesServer:
         # First try the nested class pattern with __qualname__
         if hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
-            try:
+            # Check if module exists before importing
+            module_spec = importlib.util.find_spec(target_cls.__module__)
+            if module_spec is not None:
                 parent_module = __import__(
                     target_cls.__module__,
                     fromlist=[parent_class_name],
                 )
                 parent_server_cls = getattr(parent_module, parent_class_name, None)
-                result = FlextLdifUtilitiesServer._extract_server_type_from_constants(
-                    parent_server_cls,
-                )
-                if result is not None:
-                    return result
-            except (AttributeError, ImportError):
-                pass
+                if parent_server_cls is not None:
+                    # Extract server type from parent class constants
+                    srv = FlextLdifUtilitiesServer
+                    result = srv._extract_server_type_from_constants(parent_server_cls)
+                    if result is not None:
+                        return result
 
         # Fallback: search through MRO for a class with Constants.SERVER_TYPE
         for mro_cls in target_cls.__mro__:
@@ -160,20 +163,26 @@ class FlextLdifUtilitiesServer:
         server_type_lower: str,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Import and return SERVER_TYPE from server constants module."""
-        try:
-            constants_module = __import__(
-                f"flext_ldif.servers._{server_type_lower}.constants",
-                fromlist=[f"FlextLdifServers{server_name}Constants"],
-            )
-            constants_cls = getattr(
-                constants_module,
-                f"FlextLdifServers{server_name}Constants",
-                None,
-            )
-            if constants_cls is not None:
-                return getattr(constants_cls, "SERVER_TYPE", None)
-        except ImportError:
-            pass
+        module_name = f"flext_ldif.servers._{server_type_lower}.constants"
+        # Check if module exists before importing - avoids try/except ImportError
+        module_spec = importlib.util.find_spec(module_name)
+        if module_spec is None:
+            return None
+        constants_module = __import__(
+            module_name,
+            fromlist=[f"FlextLdifServers{server_name}Constants"],
+        )
+        constants_cls = getattr(
+            constants_module,
+            f"FlextLdifServers{server_name}Constants",
+            None,
+        )
+        if constants_cls is not None:
+            server_type_value: object = getattr(constants_cls, "SERVER_TYPE", None)
+            if isinstance(server_type_value, str) and _is_valid_server_type_literal(
+                server_type_value,
+            ):
+                return server_type_value
         return None
 
     @staticmethod

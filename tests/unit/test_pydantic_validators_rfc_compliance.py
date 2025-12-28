@@ -271,7 +271,7 @@ class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
             "ds-cfg-enabled",
             "_internal_id",
         ]
-        test_extensions: GenericFieldsDict = {
+        test_extensions: dict[str, object] = {
             "rfc_violations": rfc_violations_list,
             "attribute_name_violations": attr_violations_list,
         }

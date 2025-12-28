@@ -325,7 +325,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return result
 
-    class Acl(FlextLdifServersRfc.Acl):  # pyrefly: ignore[bad-override]
+    class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk.
 
         Override: Extends base RFC Acl with Novell eDirectory-specific ACL parsing.

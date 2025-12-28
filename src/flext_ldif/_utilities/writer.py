@@ -1404,7 +1404,11 @@ class FlextLdifUtilitiesWriter:
         fold_long_lines = bool(u.mapper().get(config, "fold_long_lines", default=True))
 
         ldif_lines: list[str] = []
-        hidden: set[str] = hidden_attrs if isinstance(hidden_attrs, set) else set()
+        hidden: set[str] = set()
+        if isinstance(hidden_attrs, set):
+            for item in hidden_attrs:
+                if isinstance(item, str):
+                    hidden.add(item)
         width = (
             int(line_width_raw)
             if isinstance(line_width_raw, int | str)

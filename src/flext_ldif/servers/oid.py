@@ -153,7 +153,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     class Constants(FlextLdifServersOidConstants):
         """OID server constants."""
 
-    class Acl(FlextLdifServersOidAcl):  # pyrefly: ignore[bad-override]
+    class Acl(FlextLdifServersOidAcl):
         """OID ACL quirk.
 
         Override: Extends base RFC Acl with OID-specific ACL parsing.

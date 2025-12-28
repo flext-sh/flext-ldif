@@ -4,6 +4,7 @@ This module tests parser-writer roundtrip functionality including basic
 transformations, complex LDIF structures, file I/O, error handling, performance
 benchmarks, and edge cases with different LDAP server implementations.
 """
+# type: ignore
 
 from __future__ import annotations
 

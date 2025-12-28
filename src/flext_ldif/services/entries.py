@@ -333,16 +333,17 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return handle_str(dn_value_raw)
         if isinstance(dn_value_raw, list):
             return handle_list(dn_value_raw)
-        return r[str].fail("DN value has unexpected type")
+        # DN value has unexpected type - this path should be unreachable
+        return r[str].fail(f"DN value has unexpected type: {type(dn_value_raw)}")
 
     @staticmethod
-    def _extract_dn_from_object(dn_val_raw: t.GeneralValueType) -> r[str]:
-        """Extract DN from GeneralValueType with dn attribute."""
+    def _extract_dn_from_object(dn_val_raw: object) -> r[str]:
+        """Extract DN from object with dn attribute."""
         if dn_val_raw is None:
             return r[str].fail("Entry missing DN (dn is None)")
         if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
-            # Type narrowing: object with 'value' attribute, extract it
-            dn_value_raw_obj = u.mapper().get(dn_val_raw, "value")
+            # Type narrowing: object with 'value' attribute, extract it via getattr
+            dn_value_raw_obj: object = getattr(dn_val_raw, "value", None)
             # Type narrowing: value attribute is str | list[str] | None
             dn_value_extracted: str | list[str] | None
             if isinstance(dn_value_raw_obj, (str, list)):
@@ -385,7 +386,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if isinstance(entry, dict):
             return FlextLdifEntries._extract_dn_from_dict(entry)
         if hasattr(entry, "dn"):
-            return FlextLdifEntries._extract_dn_from_object(entry.dn)
+            dn_attr: object = getattr(entry, "dn", None)
+            if dn_attr is None:
+                return r[str].fail("Entry missing DN (dn is None)")
+            # Type narrowing for GeneralValueType
+            if isinstance(dn_attr, str):
+                return r[str].ok(dn_attr)
+            return FlextLdifEntries._extract_dn_from_object(dn_attr)
         return r[str].fail(
             "Entry does not implement EntryWithDnProtocol or Entry protocol",
         )
@@ -523,6 +530,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[list[str]].ok([objectclasses])
         if isinstance(objectclasses, list):
             return r[list[str]].ok(list(objectclasses))
+        # Invalid objectclasses type - this path should be unreachable
         return r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}")
 
     @staticmethod
@@ -725,7 +733,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[list[str]].ok([attr_value])
         if isinstance(attr_value, list):
             return r[list[str]].ok(list(attr_value))
-        return r[list[str]].ok([str(attr_value)])
+        # Convert to string list - this path should be unreachable
+        return r[list[str]].fail(f"Invalid attr_value type: {type(attr_value)}")
 
     @staticmethod
     def _normalize_string_value(value: str) -> r[str]:
@@ -744,9 +753,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         # Type-based dispatch for first element
         if isinstance(first, str):
             return FlextLdifEntries._normalize_string_value(first)
-        if first is not None:
-            return r[str].ok(str(first))
-        return r[str].fail("Cannot normalize empty list")
+        # Normalize non-string first element - this path should be unreachable
+        return r[str].fail(f"Cannot normalize non-string first element: {type(first)}")
 
     @staticmethod
     def normalize_attribute_value(
@@ -768,7 +776,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return FlextLdifEntries._normalize_string_value(value)
         if isinstance(value, list):
             return FlextLdifEntries._normalize_list_value(value)
-        return r[str].fail(f"Cannot normalize value of type {type(value)}")
+        # Cannot normalize unsupported value type - this path should be unreachable
+        return r[str].fail(f"Cannot normalize unsupported value type: {type(value)}")
 
     def get_normalized_attribute(
         self,

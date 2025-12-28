@@ -30,7 +30,6 @@ from flext_core.loggings import FlextLogger
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -735,7 +734,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _parse_acl(): Parses ACL with best-effort approach
         # - _write_acl(): Writes ACL to RFC format - stringify in relaxed mode
 
-    class Acl(FlextLdifServersRfcAcl):  # pyrefly: ignore[bad-override]
+    class Acl(FlextLdifServersRfc.Acl):
         """Relaxed ACL quirk for lenient LDIF processing.
 
         Override: Extends base RFC Acl with relaxed/lenient ACL parsing.

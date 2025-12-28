@@ -61,6 +61,7 @@ mail: jane.smith@example.com
         api = FlextLdif.get_instance()
 
         # Railway pattern with advanced type narrowing (PEP 742 ready)
+        server_type = "rfc"  # Default value
         match api.detect_server_type(ldif_content=self.SAMPLE_LDIF):
             case r.Ok(detected) if detected.detected_server_type:
                 server_type = detected.detected_server_type

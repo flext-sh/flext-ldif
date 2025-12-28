@@ -31,9 +31,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, override
+from typing import ClassVar
 
-from flext_core import r
+from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
 
 # Imports
@@ -134,7 +134,7 @@ class FlextLdif(s[object]):
         super().__init__(**kwargs)
         # Store services in model_extra dict to avoid frozen issues
         self.__dict__["_service_cache"] = {}
-        self.logger.info("FlextLdif facade initialized")
+        FlextLogger(__name__).info("FlextLdif facade initialized")
 
     def _get_service_cache(self) -> dict[str, t.GeneralValueType]:
         """Get service cache dict."""
@@ -338,7 +338,7 @@ class FlextLdif(s[object]):
     def process(
         self,
         processor_name: str,
-        entries: list[object],  # Lazy import: m.Ldif.Entry
+        entries: list[t.GeneralValueType],  # Lazy import: m.Ldif.Entry
         *,
         parallel: bool = False,
         batch_size: int = 100,
@@ -357,7 +357,7 @@ class FlextLdif(s[object]):
             FlextResult containing processed results.
 
         """
-        # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
+        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
         # Python 3.10+ pattern matching for type-safe conversion
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
@@ -411,7 +411,7 @@ class FlextLdif(s[object]):
 
     def get_entry_dn(
         self,
-        entry: object,
+        entry: m.Ldif.Entry | dict[str, str | list[str]] | t.GeneralValueType,
     ) -> r[str]:
         """Get entry DN string.
 
@@ -490,7 +490,7 @@ class FlextLdif(s[object]):
         content: str | Path,
         *,
         server_type: str | None = None,
-    ) -> r[list[object]]:
+    ) -> r[list[t.GeneralValueType]]:
         """Parse LDIF content from string or file.
 
         Business Rules:
@@ -525,18 +525,18 @@ class FlextLdif(s[object]):
             server_type=effective_type,
         )
         if parse_result.is_failure:
-            return r[list[object]].fail(str(parse_result.error))
+            return r[list[t.GeneralValueType]].fail(str(parse_result.error))
 
         response = parse_result.value
-        entries_list: list[object] = list(response.entries)
-        return r[list[object]].ok(entries_list)
+        entries_list: list[t.GeneralValueType] = list(response.entries)
+        return r[list[t.GeneralValueType]].ok(entries_list)
 
     def _parse_file(
         self,
         path: Path,
         *,
         server_type: str | None = None,
-    ) -> r[list[object]]:
+    ) -> r[list[t.GeneralValueType]]:
         """Parse LDIF file (internal helper).
 
         Business Rules:
@@ -553,12 +553,12 @@ class FlextLdif(s[object]):
 
         """
         if not path.exists():
-            return r[list[object]].fail(f"File not found: {path}")
+            return r[list[t.GeneralValueType]].fail(f"File not found: {path}")
 
         try:
             content = path.read_text(encoding="utf-8")
         except OSError as e:
-            return r[list[object]].fail(f"Failed to read file: {e}")
+            return r[list[t.GeneralValueType]].fail(f"Failed to read file: {e}")
 
         return self.parse(content, server_type=server_type)
 
@@ -661,7 +661,7 @@ class FlextLdif(s[object]):
 
     def write(
         self,
-        entries: list[object],
+        entries: list[t.GeneralValueType],
         *,
         server_type: str | None = None,
     ) -> r[str]:
@@ -680,7 +680,7 @@ class FlextLdif(s[object]):
             FlextResult containing LDIF formatted string.
 
         """
-        # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
+        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -702,7 +702,7 @@ class FlextLdif(s[object]):
 
     def write_file(
         self,
-        entries: list[object],
+        entries: list[t.GeneralValueType],
         path: Path,
         *,
         server_type: str | None = None,
@@ -737,7 +737,7 @@ class FlextLdif(s[object]):
 
     def validate_entries(
         self,
-        entries: list[object],
+        entries: list[t.GeneralValueType],
     ) -> r[m.Ldif.Results.ValidationResult]:
         """Validate list of entries.
 
@@ -753,7 +753,7 @@ class FlextLdif(s[object]):
             FlextResult containing True if all valid, error message otherwise.
 
         """
-        # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
+        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -803,7 +803,7 @@ class FlextLdif(s[object]):
             FlextResult containing EntriesStatistics model.
 
         """
-        # Type narrowing: entries is list[object], convert to list[m.Ldif.Entry]
+        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
         entries_typed: list[m.Ldif.Entry] = []
         for entry in _entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -853,7 +853,6 @@ class FlextLdif(s[object]):
 
         return self.filter_entries(entries, is_person)
 
-    @override
     def execute(self) -> r[object]:
         """Execute service health check for FlextService pattern compliance.
 
