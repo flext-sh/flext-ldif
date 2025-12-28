@@ -1200,14 +1200,17 @@ class FlextLdifUtilitiesACL:
             # Match case 1: tuple with expected length
             if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
                 # Type narrowing: value_raw is a tuple with at least 2 elements
-                operator_val = str(value_raw[0])
-                value_val = str(value_raw[1])
-                if operator_placeholder in format_template:
-                    return format_template.format(
-                        operator=operator_val,
-                        value=value_val,
-                    )
-                return format_template.format(value=value_val)
+                # Extract tuple elements to variables for type safety
+                tuple_items = list(value_raw) if value_raw else []
+                if len(tuple_items) >= 2:
+                    operator_val = str(tuple_items[0])
+                    value_val = str(tuple_items[1])
+                    if operator_placeholder in format_template:
+                        return format_template.format(
+                            operator=operator_val,
+                            value=value_val,
+                        )
+                    return format_template.format(value=value_val)
 
             # Match case 2: has operator placeholder and default operator
             if operator_placeholder in format_template and operator_default is not None:
@@ -1639,11 +1642,22 @@ class FlextLdifUtilitiesACL:
             raw_errors = batch_data.get("errors")
             errors_typed: list[tuple[int, str]] = []
             if isinstance(raw_errors, list):
-                errors_typed.extend([
-                    err
-                    for err in raw_errors
-                    if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR
-                ])
+                for err in raw_errors:
+                    if isinstance(err, tuple) and len(err) == TUPLE_LENGTH_PAIR:
+                        # Type conversion: tuple[GeneralValueType, ...] → tuple[int, str]
+                        err_list = list(err) if isinstance(err, (tuple, list)) else []
+                        if len(err_list) >= 2:
+                            try:
+                                # Convert first element to int (or int value)
+                                first_val = err_list[0]
+                                second_val = err_list[1]
+                                error_code = int(str(first_val)) if first_val is not None else 0
+                                error_msg = str(second_val)
+                                err_tuple: tuple[int, str] = (error_code, error_msg)
+                                errors_typed.append(err_tuple)
+                            except (ValueError, TypeError):
+                                # Skip non-convertible errors
+                                continue
             if errors_typed:
                 error_msgs = FlextLdifUtilitiesACL._format_batch_errors(
                     errors_typed,

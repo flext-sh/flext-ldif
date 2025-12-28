@@ -89,24 +89,13 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         elif isinstance(format_options, m.Ldif.LdifResults.WriteFormatOptions):
             result_raw = format_options
         elif isinstance(format_options, m.Ldif.LdifResults.WriteOptions):
-            result_raw = _extract_pipe_value(
-                u.Reliability.pipe(
-                    format_options.model_dump(exclude_none=True),
-                    lambda d: (
-                        {
-                            "base64_encode_binary": (
-                                d.get("base64_encode_binary")
-                                if isinstance(d, dict)
-                                else None
-                            ),
-                        }
-                        if isinstance(d, dict)
-                        and d.get("base64_encode_binary") is not None
-                        else {}
-                    ),
-                    m.Ldif.LdifResults.WriteFormatOptions.model_validate,
+            # Convert WriteOptions to WriteFormatOptions
+            dumped = format_options.model_dump(exclude_none=True)
+            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate({
+                "base64_encode_binary": (
+                    dumped.get("base64_encode_binary") if isinstance(dumped, dict) else None
                 ),
-            )
+            })
         elif isinstance(format_options, dict):
             result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
                 format_options

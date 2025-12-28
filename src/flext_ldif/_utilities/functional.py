@@ -995,16 +995,6 @@ class FlextFunctional:
         cls,
         value: t.GeneralValueType,
         *,
-        target: type[set[t.GeneralValueType]] | Literal["set"],
-        default: set[t.GeneralValueType] | None = None,
-    ) -> set[t.GeneralValueType] | None: ...
-
-    @overload
-    @classmethod
-    def as_type(
-        cls,
-        value: t.GeneralValueType,
-        *,
         target: type[dict[str, t.GeneralValueType]] | Literal["dict"],
         default: dict[str, t.GeneralValueType] | None = None,
     ) -> dict[str, t.GeneralValueType] | None: ...
@@ -1034,7 +1024,7 @@ class FlextFunctional:
             0
 
         """
-        type_map: dict[str, type[t.GeneralValueType]] = {
+        type_map: dict[str, type] = {
             "list": list,
             "dict": dict,
             "str": str,
@@ -1042,7 +1032,6 @@ class FlextFunctional:
             "bool": bool,
             "tuple": tuple,
             "float": float,
-            "set": set,
         }
 
         # Resolve target type: if string, look up in map; if type, use directly
@@ -1086,23 +1075,13 @@ class FlextFunctional:
                     return value.lower() in {"true", "1", "yes", "on"}
                 return bool(value)
             if target_type is list:
-                if isinstance(value, (list, tuple, set)):
+                if isinstance(value, (list, tuple)):
                     return list(value)
                 return [value]
             if target_type is tuple:
-                if isinstance(value, (list, tuple, set)):
+                if isinstance(value, (list, tuple)):
                     return tuple(value)
                 return (value,)
-            if target_type is set:
-                # Note: GeneralValueType may contain unhashable types (lists, dicts)
-                # So set conversion is best-effort only
-                if isinstance(value, (list, tuple, set)):
-                    try:
-                        return set(value)
-                    except TypeError:
-                        # Value contains unhashable types
-                        return default
-                return {value}
             if target_type is dict:
                 if isinstance(value, dict):
                     return value
@@ -1149,28 +1128,19 @@ class FlextFunctional:
                             elif target_type is list:
                                 converted = (
                                     list(value)
-                                    if isinstance(value, (list, tuple, set))
+                                    if isinstance(value, (list, tuple))
                                     else [value]
                                 )
                             elif target_type is tuple:
                                 converted = (
                                     tuple(value)
-                                    if isinstance(value, (list, tuple, set))
+                                    if isinstance(value, (list, tuple))
                                     else (value,)
-                                )
-                            elif target_type is set:
-                                converted = (
-                                    set(value)
-                                    if isinstance(value, (list, tuple, set))
-                                    else {value}
                                 )
                             elif target_type is dict:
                                 converted = (
                                     dict(value) if isinstance(value, dict) else default
                                 )
-                            elif target_type is object:
-                                # target_type is object - accept any value as-is
-                                converted = value
                             else:
                                 # For all other types (custom classes, BaseModel, etc.)
                                 # We cannot safely construct these dynamically since they

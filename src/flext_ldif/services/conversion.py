@@ -1741,7 +1741,7 @@ class FlextLdifConversion(
             match_result = u.match(
                 domain_acl,
                 (
-                    m.Ldif.Acl,
+                    lambda acl: isinstance(acl, m.Ldif.Acl),
                     lambda acl: acl,
                 ),
                 default=lambda acl: m.Ldif.Acl.model_validate(
@@ -2384,34 +2384,26 @@ class FlextLdifConversion(
         start_time = time.perf_counter()
 
         # Get source/target format names
-        source_format_raw = u.match(
-            source,
-            (str, lambda s: s),
-            default=lambda src: u.Ldif.maybe(
-                u.mapper().prop("server_name")(src),
-                default="unknown",
-            ),
-        )
-        target_format_raw = u.match(
-            target,
-            (str, lambda t: t),
-            default=lambda tgt: u.Ldif.maybe(
-                u.mapper().prop("server_name")(tgt),
-                default="unknown",
-            ),
-        )
-        # Type narrowing: match returns object, but we know it's str
-        # Type narrowing: source_format_raw and target_format_raw are already str after isinstance checks
-        source_format: str = (
-            source_format_raw
-            if isinstance(source_format_raw, str)
-            else str(source_format_raw)
-        )
-        target_format: str = (
-            target_format_raw
-            if isinstance(target_format_raw, str)
-            else str(target_format_raw)
-        )
+        # Extract server_name from object if not string
+        def extract_server_name(obj: t.GeneralValueType) -> str:
+            """Extract server name from object, fallback to 'unknown'."""
+            if isinstance(obj, str):
+                return obj
+            # obj is FlextLdifServersBase or similar
+            if isinstance(obj, dict):
+                # For dict, extract server_name key directly
+                server_name = obj.get("server_name")
+                if isinstance(server_name, str):
+                    return server_name
+            # For BaseModel or other objects with server_name attribute
+            if hasattr(obj, "server_name"):
+                server_name = getattr(obj, "server_name", "unknown")
+                if isinstance(server_name, str):
+                    return server_name
+            return "unknown"
+
+        source_format: str = extract_server_name(source)
+        target_format: str = extract_server_name(target)
 
         # Handle empty list case - succeed with empty result
         # No event emission for empty batches (no work done)
