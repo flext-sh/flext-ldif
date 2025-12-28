@@ -36,11 +36,11 @@ from typing import Self
 from flext_core import r
 
 from flext_ldif._utilities.configs import TransformConfig
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.typings import t
 
 
 # Sentinel for filtered out entries (since r.ok(None) is not allowed)
@@ -299,12 +299,12 @@ class Pipeline:
 
     def execute(
         self,
-        entries: Sequence[m.Ldif.Entry],
+        entries: Sequence[t.GeneralValueType],
     ) -> r[list[m.Ldif.Entry]]:
         """Execute pipeline on a sequence of entries.
 
         Args:
-            entries: Entries to process
+            entries: Entries to process (validated as Entry instances at call site)
 
         Returns:
             r containing list of processed entries or error
@@ -312,7 +312,7 @@ class Pipeline:
         """
 
         def process_entry(
-            entry: m.Ldif.Entry,
+            entry: t.GeneralValueType,
         ) -> r[m.Ldif.Entry] | None:
             """Process single entry through pipeline.
 
@@ -446,18 +446,21 @@ class ProcessingPipeline:
 
     def execute(
         self,
-        entries: Sequence[m.Ldif.Entry],
+        entries: Sequence[t.GeneralValueType],
     ) -> r[list[m.Ldif.Entry]]:
         """Execute the processing pipeline.
 
         Args:
-            entries: Entries to process
+            entries: Entries to process (validated as Entry instances at call site)
 
         Returns:
             r containing processed entries or error
 
         """
-        return self._pipeline.execute(entries)
+        # INTENTIONAL CAST: entries validated at call site via is_entry_sequence() TypeGuard
+        from typing import cast as typing_cast
+        entries_cast = typing_cast("Sequence[m.Ldif.Entry]", entries)  # INTENTIONAL CAST
+        return self._pipeline.execute(entries_cast)
 
     @property
     def config(self) -> TransformConfig:
@@ -525,6 +528,8 @@ class ValidationPipeline:
         else:
             # Validate DN - validate each RDN value separately
             # is_valid_dn_string validates individual RDN values, not full DN strings
+            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
             components = FlextLdifUtilitiesDN.split(dn_str)
             for comp in components:
