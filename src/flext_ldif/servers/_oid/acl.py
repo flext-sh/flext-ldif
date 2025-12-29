@@ -58,7 +58,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         aci: access to ... by ...
 
     OID Proprietary:
-        orclaci: access to Union[entry, attr]=(...) by subject (permissions)
+        orclaci: access to entry | attr=(...) by subject (permissions)
         orclentrylevelaci: (same format, entry-level scope)
 
     2. ACL FORMAT STRUCTURE
@@ -107,10 +107,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     5. ACL PARSING PATTERNS
     -----------------------
     Constants.ACL_TYPE_PATTERN:
-        r"^(Union[orclaci, orclentrylevelaci]):"
+        r"^(orclaci | orclentrylevelaci):"
 
     Constants.ACL_TARGET_PATTERN:
-        r"access to (Union[entry, attr]=\\(([^)]+)\\))"
+        r"access to (entry | attr=\\(([^)]+)\\))"
 
     Constants.ACL_SUBJECT_PATTERN:
         r"by\\s+(group=\"[^\"]+\"|...)"
@@ -257,7 +257,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         - "orclaci:" (LDIF attribute prefix)
         - "orclentrylevelaci:" (LDIF attribute prefix)
 
-        OID ACL: access to [Union[entry, attr]] by <subject> (<perms>)
+        OID ACL: access to [entry | attr] by <subject> (<perms>)
 
         Args:
             acl_line: Raw ACL line from LDIF or Acl model
@@ -274,7 +274,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not acl_line:
             return False
         # Type narrowing: after checking for Acl, remaining is str
-        # acl_line is str at this point (Union[str, Acl], and Acl was already checked)
+        # acl_line is str at this point (str | Acl, and Acl was already checked)
         acl_line_str: str = str(acl_line)
         acl_line_lower = acl_line_str.strip().lower()
 
@@ -1121,7 +1121,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         acl_line: str,
     ) -> FlextResult[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
-        # OID ACL format: orclaci: access to [Union[entry, attr]=(...)]
+        # OID ACL format: orclaci: access to [entry | attr=(...)]
         #   [by subject (permissions)] [filter=(...)] [added_object_constraint=()]
         try:
             # Extract target using OID-specific method
@@ -1476,7 +1476,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             str,
         ):
             return source_subject_type_raw
-        msg = f"Expected Optional[str], got {type(source_subject_type_raw)}"
+        msg = f"Expected str | None, got {type(source_subject_type_raw)}"
         raise TypeError(msg)
 
     def _map_bind_rules_to_oid(

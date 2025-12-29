@@ -896,9 +896,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if target_perms_dict and isinstance(target_perms_dict, dict):
                 # Type narrowing: filter to MetadataAttributeValue-compatible types
                 perms_data: t.Ldif.MetadataDictMutable = {}
-                for k, v in target_perms_dict.items():
-                    if not isinstance(k, str):
-                        continue
+                dict_items: list[tuple[str, t.GeneralValueType]] = [
+                    (str(key), val)
+                    for key, val in target_perms_dict.items()
+                    if isinstance(key, str)
+                ]
+                for k, v in dict_items:
                     if isinstance(v, Mapping):
                         continue
                     if isinstance(v, (str, bool, int, float)) or v is None:

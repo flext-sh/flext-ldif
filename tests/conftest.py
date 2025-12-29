@@ -9,15 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import tempfile
-from collections.abc import Generator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-from flext_core import r
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 
@@ -60,33 +57,19 @@ def flext_ldif() -> FlextLdif:
     return FlextLdif.get_instance()
 
 
-@pytest.fixture
-def flext_result_success() -> r[dict[str, object]]:
-    """Provide successful FlextResult for tests."""
-    return r.ok({"success": True})
-
-
-@pytest.fixture
-def flext_result_failure() -> r[object]:
-    """Provide failed FlextResult for tests."""
-    return r.fail("Test error")
-
-
-# =============================================================================
-# TEMPORARY RESOURCES
-# =============================================================================
-
-
-@pytest.fixture
-def temp_dir() -> Generator[Path]:
-    """Provide temporary directory for tests."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield Path(tmp_dir)
+# NOTE: flext_result_success and flext_result_failure are now consolidated
+# in flext-core/tests/conftest.py and available to all projects via pytest's
+# fixture discovery mechanism. Similarly, temp_dir is consolidated.
+# Projects can use flext-core's temp_dir fixture or define project-specific
+# variants (like the ldif-specific temp_file below)
 
 
 @pytest.fixture
 def temp_file(temp_dir: Path) -> Path:
-    """Provide temporary file for tests."""
+    """Provide temporary LDIF file for tests.
+
+    Uses the consolidated temp_dir fixture from flext-core.
+    """
     return temp_dir / "test_file.ldif"
 
 

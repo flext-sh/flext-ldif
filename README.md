@@ -853,6 +853,23 @@ else:
 
 ---
 
+## 🔧 Quality Assurance
+
+The FLEXT ecosystem provides comprehensive automated quality assurance:
+
+- **Pattern Analysis**: Automatic detection of architectural violations and duplication
+- **Consolidation Guidance**: SOLID-based refactoring recommendations
+- **Batch Operations**: Safe, automated fixes with backup and rollback
+- **Quality Gates**: Enterprise-grade validation before integration
+
+### Development Standards
+
+- **Architecture Compliance**: Changes maintain layering and dependencies
+- **Type Safety**: Complete type coverage maintained
+- **Test Coverage**: All changes include comprehensive tests
+- **Quality Validation**: Automated checks ensure standards are met
+
+
 ## 🔧 Development
 
 ### **Essential Commands**
@@ -968,6 +985,14 @@ See TODO.md for detailed development priorities.
 ---
 
 ## 🤝 Contributing
+### Quality Standards
+
+All contributions must:
+- Maintain architectural layering and dependency rules
+- Preserve complete type safety
+- Follow established testing patterns
+- Pass automated quality validation
+
 
 ### **FLEXT-Core Compliance**
 

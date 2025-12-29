@@ -27,10 +27,16 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeGuard, TypeIs, overload
+from typing import (
+    ClassVar,
+    Literal,
+    Self,
+    TypeGuard,
+    TypeIs,
+    overload,
+)
 
 from flext_core import FlextLogger, FlextResult, r
-from flext_core.protocols import p
 from flext_core.typings import t
 from flext_core.utilities import FlextUtilities as u_core
 
@@ -67,6 +73,7 @@ from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -312,24 +319,24 @@ class FlextLdifUtilities(u_core):
             return r[list[U]].ok(results)
 
         @staticmethod
-        def find[T](
-            items: Sequence[T],
+        def find(
+            items: Sequence[t.GeneralValueType],
             *,
-            predicate: Callable[[T], bool],
-        ) -> T | None:
+            predicate: p.Ldif.ValuePredicate,
+        ) -> t.GeneralValueType | None:
             """Find first item matching predicate.
 
             Args:
                 items: Sequence to search
-                predicate: Function to test each item
+                predicate: Protocol to test each item
 
             Returns:
                 First matching item or None
 
             """
-            for item in items:
-                if predicate(item):
-                    return item
+            for elem in items:
+                if predicate(elem):
+                    return elem
             return None
 
         # Pattern matching - alias from flext-core

@@ -477,7 +477,7 @@ class FlextLdifServersOidSchema(
                 ):
                     original_format = original_format_raw
                 else:
-                    msg = f"Expected Optional[str], got {type(original_format_raw)}"
+                    msg = f"Expected str | None, got {type(original_format_raw)}"
                     raise TypeError(msg)
 
             # Create new model with transformed values

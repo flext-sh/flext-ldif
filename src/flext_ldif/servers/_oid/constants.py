@@ -87,8 +87,8 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     Constants:
         ORCLACI = "orclaci"
         ORCLENTRYLEVELACI = "orclentrylevelaci"
-        ACL_TYPE_PATTERN = r"^(Union[orclaci, orclentrylevelaci]):"
-        ACL_TARGET_PATTERN = r"access to (Union[entry, attr]=\(([^)]+)\))"
+        ACL_TYPE_PATTERN = r"^(orclaci | orclentrylevelaci):"
+        ACL_TARGET_PATTERN = r"access to (entry | attr=\(([^)]+)\))"
         ACL_SUBJECT_PATTERN = r"by\s+(group=\"...\"|...)"
         ACL_PERMISSIONS_PATTERN = r"\(([^)]+)\)(?:\s*$)"
 
@@ -530,8 +530,8 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anonymous"
 
     # ACL parsing patterns
-    ACL_TYPE_PATTERN: ClassVar[str] = r"^(Union[orclaci, orclentrylevelaci]):"
-    ACL_TARGET_PATTERN: ClassVar[str] = r"access to (Union[entry, attr]=\(([^)]+)\))"
+    ACL_TYPE_PATTERN: ClassVar[str] = r"^(orclaci | orclentrylevelaci):"
+    ACL_TARGET_PATTERN: ClassVar[str] = r"access to (entry | attr=\(([^)]+)\))"
     ACL_SUBJECT_PATTERN: ClassVar[str] = (
         r"by\s+(group=\"[^\"]+\"|dnattr=\([^)]+\)|guidattr=\([^)]+\"|groupattr=\([^)]+\"|\"[^\"]+\"|self|\*)"
     )
@@ -566,7 +566,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_DENY_PERMS_EXTRACT: ClassVar[str] = r"\(deny\s+\(([^)]*)\)"
     # OID format: Extract permissions from final parentheses before filter/constraint/end
     ACL_PERMS_EXTRACT_OID: ClassVar[str] = (
-        r"\s\(([^()]+)\)(?:\s*(?:filter=|Union[added_object, bindmode]|Union[Deny, Append]|Union[bindip, constrain]|$))"
+        r"\s\(([^()]+)\)(?:\s*(?:filter=|added_object | bindmode|Deny | Append|bindip | constrain|$))"
     )
 
     # ACL pattern dictionary keys (used in _get_oid_patterns)

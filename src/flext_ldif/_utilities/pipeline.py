@@ -31,7 +31,7 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self
+from typing import Protocol, Self
 
 from flext_core import r
 
@@ -57,6 +57,12 @@ FILTERED = _Filtered()
 # =========================================================================
 
 
+class _StepFunction[TIn, TOut](Protocol):
+    """Protocol for pipeline step functions with type safety."""
+
+    def __call__(self, input_data: TIn) -> r[TOut]: ...
+
+
 class PipelineStep[TIn, TOut]:
     """A single step in a pipeline.
 
@@ -68,13 +74,13 @@ class PipelineStep[TIn, TOut]:
     def __init__(
         self,
         name: str,
-        func: Callable[[TIn], r[TOut]],
+        func: _StepFunction[TIn, TOut],
     ) -> None:
         """Initialize pipeline step.
 
         Args:
             name: Step name for logging
-            func: Function to execute
+            func: Function to execute (implements _StepFunction protocol)
 
         """
         self._name = name
@@ -456,7 +462,6 @@ class ProcessingPipeline:
             r containing processed entries or error
 
         """
-        # No cast needed - entries parameter is properly typed as Sequence[m.Ldif.Entry]
         return self._pipeline.execute(entries)
 
     @property

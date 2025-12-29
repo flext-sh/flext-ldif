@@ -961,6 +961,17 @@ class FlextLdifProtocols(FlextProtocols):
                 """Test if item matches criteria, return True if it does."""
                 ...
 
+        @runtime_checkable
+        class ValuePredicate(Protocol):
+            """Protocol for predicates that test GeneralValueType values.
+
+            Non-generic version for use with lambdas in utilities.find().
+            """
+
+            def __call__(self, value: t.GeneralValueType, /) -> bool:  # INTERFACE
+                """Test if value matches predicate condition."""
+                ...
+
         # =========================================================================
         # NAMESPACE ALIASES (for FlextLdifProtocols.Ldif.* access)
         # =========================================================================
