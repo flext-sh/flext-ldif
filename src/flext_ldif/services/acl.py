@@ -23,7 +23,6 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.base import s
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 
@@ -407,15 +406,13 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             """Check if ACL grants all required permissions."""
             return all(getattr(acl.permissions, perm, False) for perm in required_perms)
 
-        # Wrapper predicate with GeneralValueType signature for find() compatibility
-        def predicate_wrapper(item: t.GeneralValueType) -> bool:
-            """Wrapper that accepts GeneralValueType for find()."""
-            if isinstance(item, m.Ldif.Acl):
-                return acl_grants_all(item)
-            return False
+        # Predicate that evaluates if ACL grants all permissions
+        def predicate(value: m.Ldif.Acl) -> bool:
+            """Check if ACL grants all permissions."""
+            return acl_grants_all(value)
 
-        # Use find() with wrapper predicate
-        found_raw = u.find(acls, predicate=predicate_wrapper)
+        # Use find() with predicate
+        found_raw = u.find(acls, predicate=predicate)
 
         # Type narrowing: validate found result is m.Ldif.Acl
         if found_raw is not None and isinstance(found_raw, m.Ldif.Acl):
