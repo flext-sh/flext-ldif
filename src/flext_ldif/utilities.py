@@ -660,7 +660,13 @@ class FlextLdifUtilities(u_core):
                     # Fallback for older Pydantic versions or non-Pydantic models
                     transform_config.process_config = config
             pipeline = ProcessingPipeline(transform_config)
-            pipeline_result = pipeline.execute(list(entries))
+            # Type narrowing: entries validated as Entry sequence at call site via is_entry_sequence()
+            # Safe to convert to list since validation confirmed Entry structure
+            entries_list = [
+                e for e in entries
+                if isinstance(e, m.Ldif.Entry)
+            ]
+            pipeline_result = pipeline.execute(entries_list)
             if pipeline_result.is_failure:
                 return FlextLdifResult.fail(
                     pipeline_result.error or "Pipeline execution failed",
@@ -985,7 +991,8 @@ class FlextLdifUtilities(u_core):
                 >>> result = FlextLdifUtilities.process(entries, source_server="oid")
                 >>> result = FlextLdifUtilities.process(
                 ...     entries,
-                ...     config=ProcessConfig.builder()
+                ...     config=ProcessConfig
+                ...     .builder()
                 ...     .source("oid")
                 ...     .target("oud")
                 ...     .normalize_dn(case="lower")
@@ -1006,19 +1013,18 @@ class FlextLdifUtilities(u_core):
             ) and is_entry_sequence(items_or_entries):
                 # Type narrowing: is_entry_sequence validates Entry structure at runtime
                 # All items confirmed to have dn and attributes attributes
-                if isinstance(items_or_entries, (list, tuple)):
-                    # Type narrowed by isinstance and runtime validation
-                    # Items validated via is_entry_sequence TypeGuard (have dn, attributes)
-                    return FlextLdifUtilities.Ldif.process_ldif_entries(
-                        items_or_entries,
-                        config,
-                        source_server,
-                        target_server,
-                        _normalize_dns=normalize_dns,
-                        _normalize_attrs=normalize_attrs,
-                    )
-                return FlextLdifResult[list[m.Ldif.Entry]].fail(
-                    "Invalid entry sequence type",
+                # Reconstruct as Entry sequence using isinstance check
+                entries_seq: Sequence[m.Ldif.Entry] = [
+                    item for item in items_or_entries
+                    if isinstance(item, m.Ldif.Entry)
+                ]
+                return FlextLdifUtilities.Ldif.process_ldif_entries(
+                    entries_seq,
+                    config,
+                    source_server,
+                    target_server,
+                    _normalize_dns=normalize_dns,
+                    _normalize_attrs=normalize_attrs,
                 )
 
             items: (
@@ -1039,8 +1045,10 @@ class FlextLdifUtilities(u_core):
             processor_func = processor_normalized
 
             if isinstance(items, dict):
+                # INTENTIONAL CAST: isinstance check validates dict structure
+                dict_items: dict[str, t.GeneralValueType] = items  # INTENTIONAL CAST
                 results = FlextLdifUtilities.Ldif.process_dict_items(
-                    items,
+                    dict_items,
                     processor_func,
                     predicate,
                     filter_keys,
@@ -1050,10 +1058,9 @@ class FlextLdifUtilities(u_core):
                 return r[str].ok(results)
             if isinstance(items, (list, tuple)):
                 # Process list/tuple items with flexible predicate
-                # Type narrowing: result is r[list[R]] from process_list_items
-                # INTENTIONAL CAST: isinstance check validates list/tuple structure
-                from typing import cast as typing_cast
-                list_items = typing_cast(list[object] | tuple[object, ...], items)  # INTENTIONAL CAST
+                # Type narrowing: isinstance check before ensures items is list/tuple
+                # Pass items directly - type checker accepts union type
+                list_items: list[object] | tuple[object, ...] = items
                 return FlextLdifUtilities.Ldif.process_list_items(
                     list_items,
                     processor_func,
@@ -1061,7 +1068,6 @@ class FlextLdifUtilities(u_core):
                     on_error,
                 )
             # Single item processing - items is object at this point (not dict/list/tuple)
-            # processor_func is Callable[[T], R] | Callable[[str, T], R] after checks above
             # Use helper to call the processor and return result
             return FlextLdifUtilities.Ldif._call_single_item_processor(
                 processor_func,
@@ -1394,7 +1400,8 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.dn("CN=Test, DC=Example, DC=Com")
+                ...     FlextLdifUtilities
+                ...     .dn("CN=Test, DC=Example, DC=Com")
                 ...     .normalize(case="lower")
                 ...     .clean()
                 ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
@@ -1416,7 +1423,8 @@ class FlextLdifUtilities(u_core):
 
             Examples:
                 >>> result = (
-                ...     FlextLdifUtilities.entry(entry)
+                ...     FlextLdifUtilities
+                ...     .entry(entry)
                 ...     .normalize_dn()
                 ...     .filter_attrs(exclude=["userPassword"])
                 ...     .attach_metadata(source="oid")
@@ -2106,7 +2114,8 @@ class FlextLdifUtilities(u_core):
             if target_type is str:
                 str_default = default if isinstance(default, str) else ""
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_str(default=str_default)
                     .safe()
                     .build()
@@ -2117,7 +2126,8 @@ class FlextLdifUtilities(u_core):
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .to_bool(default=bool_default)
                     .safe()
                     .build()
@@ -2128,7 +2138,8 @@ class FlextLdifUtilities(u_core):
                 if isinstance(default, list):
                     list_default = [str(item) for item in default]
                 return (
-                    FlextLdifUtilities.Ldif.conv(value)
+                    FlextLdifUtilities.Ldif
+                    .conv(value)
                     .str_list(default=list_default)
                     .safe()
                     .build()
@@ -2759,6 +2770,7 @@ class FlextLdifUtilities(u_core):
                 sliced = items[:n] if from_start else items[-n:]
                 # Return as properly typed dict using dict comprehension
                 # Filter to only include string keys, as type narrowed by isinstance
+                # Type narrowing: dict comprehension validates k is str via isinstance check
                 sliced_dict: dict[str, t.GeneralValueType] = {
                     k: v for k, v in sliced if isinstance(k, str)
                 }

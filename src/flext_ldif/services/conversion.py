@@ -1367,25 +1367,18 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        mapping_type = u.Ldif.match(
-            (normalized_source, normalized_target),
-            (
-                lambda pair: pair == ("oid", "oud"),
-                lambda _pair: "oid_to_oud",
-            ),
-            (
-                lambda pair: pair == ("oud", "oid"),
-                lambda _pair: "oud_to_oid",
-            ),
-            (
-                lambda _pair: (
-                    not config.converted_has_permissions
-                    and config.original_acl.permissions is not None
-                ),
-                lambda _pair: "preserve_original",
-            ),
-            default=lambda _pair: "none",
-        )
+        # Determine ACL mapping strategy
+        if (normalized_source, normalized_target) == ("oid", "oud"):
+            mapping_type = "oid_to_oud"
+        elif (normalized_source, normalized_target) == ("oud", "oid"):
+            mapping_type = "oud_to_oid"
+        elif (
+            not config.converted_has_permissions
+            and config.original_acl.permissions is not None
+        ):
+            mapping_type = "preserve_original"
+        else:
+            mapping_type = "none"
 
         logger.debug(
             "ACL mapping decision",
@@ -1741,11 +1734,11 @@ class FlextLdifConversion(
             match_result = u.match(
                 domain_acl,
                 (
-                    lambda acl: isinstance(acl, m.Ldif.Acl),
-                    lambda acl: acl,
+                    lambda value: isinstance(value, m.Ldif.Acl),
+                    lambda value: value,
                 ),
-                default=lambda acl: m.Ldif.Acl.model_validate(
-                    acl.model_dump(),
+                default=lambda value: m.Ldif.Acl.model_validate(
+                    value.model_dump(),
                 ),
             )
             # Type narrowing: match_result is m.Ldif.Acl from u.match with m.Ldif.Acl pattern

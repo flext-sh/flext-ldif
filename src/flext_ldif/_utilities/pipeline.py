@@ -40,7 +40,6 @@ from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import t
 
 
 # Sentinel for filtered out entries (since r.ok(None) is not allowed)
@@ -299,12 +298,12 @@ class Pipeline:
 
     def execute(
         self,
-        entries: Sequence[t.GeneralValueType],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
         """Execute pipeline on a sequence of entries.
 
         Args:
-            entries: Entries to process (validated as Entry instances at call site)
+            entries: Entries to process
 
         Returns:
             r containing list of processed entries or error
@@ -312,7 +311,7 @@ class Pipeline:
         """
 
         def process_entry(
-            entry: t.GeneralValueType,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry] | None:
             """Process single entry through pipeline.
 
