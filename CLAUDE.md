@@ -7,45 +7,45 @@
 
 ---
 
-## 🔒 FLOCK PROTOCOL - Multi-Agent File Coordination
+## 🔧 Multi-Agent Development Coordination
 
 ### Purpose
 
-Prevent simultaneous file modifications that cause merge conflicts and corrupted code in multi-agent development environment.
+Ensure smooth collaboration in multi-agent development environments by preventing simultaneous modifications that could cause conflicts.
 
-### Protocol Overview
+### Coordination Protocol
 
-**Flock (File Lock)** establishes exclusive access to files during modification operations.
+**Exclusive Access** establishes controlled file modification to maintain code integrity during collaborative development.
 
-### Establishing a Flock
+### Access Coordination
 
-1. **Check .token** for existing locks on target file
-2. **Write lock** to .token: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
-3. **Re-read file** after lock is established (other agents may have modified)
-4. **Make changes** to the re-read content
-5. **Test changes** ensure they work
-6. **Release lock**: Update .token with `RELEASE_[AGENT_NAME]_[TARGET_FILE]`
+1. **Check coordination status** before modifying critical files
+2. **Establish access**: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
+3. **Re-verify content** after establishing access (other agents may have modified)
+4. **Apply changes** to the verified content
+5. **Validate changes** ensure functionality is maintained
+6. **Release access**: Clear coordination status
 
-### Lock Format
+### Coordination Format
 
 ```bash
-# Establish lock
+# Establish access
 FLOCK_[AGENT_NAME]_[TARGET_FILE]
 
 # Example
 FLOCK_AGENT_PLAN_EXECUTOR_flext_ldif/models.py
 
-# Release lock
+# Release access
 RELEASE_[AGENT_NAME]_[TARGET_FILE]
 ```
 
-### Critical Rules
+### Coordination Rules
 
-- **🔴 NEVER modify a file with active flock from another agent**
-- **🔄 ALWAYS re-read file after establishing your flock**
-- **⚡ RELEASE immediately after changes are complete and tested**
-- **🤝 COORDINATE with other agents if conflicts detected**
-- **📝 DOCUMENT your flock purpose in .token**
+- **🔴 NEVER modify files with active coordination from other agents**
+- **🔄 ALWAYS verify content after establishing coordination**
+- **⚡ RELEASE coordination immediately after validation**
+- **🤝 COORDINATE with team members when conflicts detected**
+- **📝 DOCUMENT coordination purpose for transparency**
 
 ---
 

@@ -1379,7 +1379,7 @@ class FlextLdifModelsDomains:
         Inherits from AclElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - server_type field with default "rfc"
-        - metadata field (Optional[QuirkMetadata])
+        - metadata field (QuirkMetadata | None)
         - validation_violations field (list[str])
         - is_valid computed field
         - has_server_quirks computed field

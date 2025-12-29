@@ -122,7 +122,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         schema_quirk = schema_class()
         result = schema_quirk.extract_schemas_from_ldif(ldif_content)
-        # Type narrowing: convert Union[dict[str, list[str], str]] to specific types
+        # Type narrowing: convert dict[str | list[str, str]] to specific types
         if result.is_success:
             data = result.value
             # Return schema extraction result with metadata

@@ -427,7 +427,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         raw = kwargs["ldif_text"]
         if raw is None or isinstance(raw, str):
             return raw
-        msg = f"Expected Optional[str] for ldif_text, got {type(raw)}"
+        msg = f"Expected str | None for ldif_text, got {type(raw)}"
         raise TypeError(msg)
 
     @staticmethod
@@ -441,7 +441,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         if raw is None:
             return None
         if not isinstance(raw, list):
-            msg = f"Expected Optional[list[Entry]] for entries, got {type(raw)}"
+            msg = f"Expected list[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg)
         if not raw:
             return []
