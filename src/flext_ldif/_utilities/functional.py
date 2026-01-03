@@ -766,9 +766,7 @@ class FlextFunctional:
         stored_cases = cases
         stored_default = default
 
-        def evaluator(
-            value: t.GeneralValueType, /
-        ) -> t.GeneralValueType | None:
+        def evaluator(value: t.GeneralValueType, /) -> t.GeneralValueType | None:
             for cond_fn, res_fn in stored_cases:
                 if cond_fn(value):
                     return res_fn(value)

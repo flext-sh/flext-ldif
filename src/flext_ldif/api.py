@@ -36,7 +36,7 @@ from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
 
 # Imports
-from flext_ldif.base import s
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
@@ -56,7 +56,7 @@ from flext_ldif.typings import t
 # Access types directly via composition - no type aliases needed
 
 
-class FlextLdif(s[object]):
+class FlextLdif(FlextLdifServiceBase):
     r"""Main API facade for LDIF operations using composition pattern.
 
     Provides a unified interface for LDIF parsing, writing, validation, and
