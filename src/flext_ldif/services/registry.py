@@ -64,7 +64,9 @@ class FlextLdifServiceRegistry(FlextRegistry):
         factory_raw = factory_result.value
         if not callable(factory_raw):
             return r[t.GeneralValueType].fail("Filter factory is not callable")
-        return r[t.GeneralValueType].ok(factory_raw())
+        # Execute factory and return result
+        service = factory_raw()
+        return r[t.GeneralValueType].ok(service)
 
     def get_categorization_service(
         self, server_type: str = "rfc"
@@ -78,7 +80,9 @@ class FlextLdifServiceRegistry(FlextRegistry):
         factory_raw = factory_result.value
         if not callable(factory_raw):
             return r[t.GeneralValueType].fail("Categorization factory is not callable")
-        return r[t.GeneralValueType].ok(factory_raw(server_type))
+        # Execute factory with server type and return result
+        service = factory_raw(server_type)
+        return r[t.GeneralValueType].ok(service)
 
     def is_initialized(self) -> bool:
         """Check if all factories are registered."""

@@ -669,10 +669,7 @@ class FlextLdifUtilities(u_core):
             pipeline = ProcessingPipeline(transform_config)
             # Type narrowing: entries validated as Entry sequence at call site via is_entry_sequence()
             # Safe to convert to list since validation confirmed Entry structure
-            entries_list = [
-                e for e in entries
-                if isinstance(e, m.Ldif.Entry)
-            ]
+            entries_list = [e for e in entries if isinstance(e, m.Ldif.Entry)]
             pipeline_result = pipeline.execute(entries_list)
             if pipeline_result.is_failure:
                 return FlextLdifResult.fail(
@@ -1022,8 +1019,7 @@ class FlextLdifUtilities(u_core):
                 # All items confirmed to have dn and attributes attributes
                 # Reconstruct as Entry sequence using isinstance check
                 entries_seq: Sequence[m.Ldif.Entry] = [
-                    item for item in items_or_entries
-                    if isinstance(item, m.Ldif.Entry)
+                    item for item in items_or_entries if isinstance(item, m.Ldif.Entry)
                 ]
                 return FlextLdifUtilities.Ldif.process_ldif_entries(
                     entries_seq,
@@ -1452,23 +1448,19 @@ class FlextLdifUtilities(u_core):
             cls,
             value: t.GeneralValueType,
             *,
-            mapper: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
-            predicate: Callable[[t.GeneralValueType], bool] | None = None,
             default: list[t.GeneralValueType] | None = None,
         ) -> list[t.GeneralValueType]:
             """Normalize to list using u.build() DSL (mnemonic: nl).
 
             Args:
                 value: Value to normalize (handles Result types)
-                mapper: Optional transformation
-                predicate: Optional filter
                 default: Default list
 
             Returns:
                 Normalized list
 
             Examples:
-                >>> items = cls.nl(result.value, mapper=str.strip, predicate=bool)
+                >>> items = cls.nl(result.value)
 
             """
             # Extract from Result using u.or_() DSL
@@ -1494,10 +1486,6 @@ class FlextLdifUtilities(u_core):
                 "ensure": "list",
                 "ensure_default": default_list,
             }
-            if mapper:
-                ops["map"] = mapper
-            if predicate:
-                ops["filter"] = predicate
             result = cls.build(extracted, ops=ops)
             # Ensure list[t.GeneralValueType] return type
             if isinstance(result, (list, tuple)):
@@ -2153,10 +2141,7 @@ class FlextLdifUtilities(u_core):
                 )
 
             # Fallback to u.build() for dict, tuple and other types
-            ops: dict[str, t.GeneralValueType] = {
-                "ensure": target_type,
-                "ensure_default": default,
-            }
+            ops: dict[str, t.GeneralValueType] = {}
             result = cls.build(value, ops=ops)
             # Ensure result is t.GeneralValueType for or_()
             if result is None:
@@ -2587,7 +2572,7 @@ class FlextLdifUtilities(u_core):
             return {}
 
         # Mnemonic helper
-        df = defaults
+        d = defaults
 
         @classmethod
         def deep_merge(

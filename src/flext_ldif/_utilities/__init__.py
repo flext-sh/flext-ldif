@@ -73,11 +73,6 @@ from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import c
 from flext_ldif.typings import t
 
-# Type alias using forward reference to break circular import
-# Cannot import FlextLdifModelsDomains at module level due to circular dependency
-# Use protocol-based type from typings instead
-# Entry: TypeAlias = t.Entry  # REMOVED: Use t.Entry directly (no redundant aliases for nested objects)
-
 __all__ = [
     "AndFilter",
     "ByAttrValueFilter",
@@ -97,7 +92,6 @@ __all__ = [
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
     "FlextLdifResult",
-    # FlextLdifUtilities removed - import from flext_ldif.utilities directly to avoid circular import
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesDN",
