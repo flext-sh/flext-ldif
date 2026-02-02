@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Final, cast
 
 import pytest
-from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import FlextLdif, FlextLdifProtocols, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
@@ -39,9 +38,12 @@ _MANY_ATTRS_REMOVE_COUNT: Final[int] = 50
 _UNICODE_DN: Final[str] = "cn=测试,dc=example,dc=com"
 _UNICODE_VALUE: Final[str] = "测试值"
 _VALID_ATTR_NAMES: Final[list[str]] = ["cn", "sn", "mail", "objectClass", "uid"]
-_INVALID_ATTR_NAMES: Final[list[str]] = ["2invalid", "invalid-name", "invalid name"]
+# RFC 4512 allows hyphens in attribute names, so "invalid-name" is actually valid!
+# Invalid names: starts with digit, contains @, contains space
+_INVALID_ATTR_NAMES: Final[list[str]] = ["2invalid", "invalid@name", "invalid name"]
 _BOOLEAN_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-_BOOLEAN_NAME: Final[str] = "Boolean"
+# NAME_TO_OID uses lowercase snake_case from OID_TO_NAME mapping
+_BOOLEAN_NAME: Final[str] = "boolean"
 
 # Fixtures path - tests/unit/services/ -> tests/fixtures/
 FIXTURES_ROOT = Path(__file__).parent.parent.parent / "fixtures"
@@ -729,7 +731,7 @@ class TestsFlextLdifEntries(s):
                 .execute(),
                 is_=list,
             )
-            tm.entries(result_list, all_have_attr=attrs_to_check)
+            # After removing operational attributes, entries should NOT have them
             for entry in result_list:
                 if attrs_to_check:
                     tm.entry(entry, not_has_attr=attrs_to_check)
@@ -961,7 +963,8 @@ class TestsFlextLdifEntries(s):
                 tm.ok(service.validate_attribute_name(name), eq=True)
 
         elif test_type == "validate_attr_name_invalid":
-            invalid_attr_names = ["2invalid", "invalid-name", "invalid name"]
+            # RFC 4512 allows hyphens, so use @ and space which are truly invalid
+            invalid_attr_names = ["2invalid", "invalid@name", "invalid name"]
             for name in invalid_attr_names:
                 tm.ok(service.validate_attribute_name(name), eq=False)
 
@@ -1025,9 +1028,8 @@ class TestsFlextLdifEntries(s):
             tm.ok(syntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7"))
 
         elif test_type == "lookup_name":
-            result = syntax.lookup_name("Boolean")
-            if not result.is_success:
-                result = syntax.lookup_name("Boolean".capitalize())
+            # NAME_TO_OID uses lowercase snake_case from OID_TO_NAME mapping
+            result = syntax.lookup_name(self.Constants.BOOLEAN_NAME)
             tm.ok(
                 result,
                 eq=self.Constants.BOOLEAN_OID,

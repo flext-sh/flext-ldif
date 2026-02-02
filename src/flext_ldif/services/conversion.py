@@ -1367,10 +1367,10 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
-        # Determine ACL mapping strategy
-        if (normalized_source, normalized_target) == ("oid", "oud"):
+        pair = (normalized_source, normalized_target)
+        if pair == ("oid", "oud"):
             mapping_type = "oid_to_oud"
-        elif (normalized_source, normalized_target) == ("oud", "oid"):
+        elif pair == ("oud", "oid"):
             mapping_type = "oud_to_oid"
         elif (
             not config.converted_has_permissions
@@ -1731,20 +1731,17 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
             # Convert domain Acl to public Acl model
-            match_result = u.match(
-                domain_acl,
-                (
-                    lambda value: isinstance(value, m.Ldif.Acl),
-                    lambda value: value,
-                ),
-                default=lambda value: m.Ldif.Acl.model_validate(
-                    value.model_dump(),
-                ),
-            )
-            # Type narrowing: match_result is m.Ldif.Acl from u.match with m.Ldif.Acl pattern
-            if not isinstance(match_result, m.Ldif.Acl):
-                return FlextResult.fail("Failed to match ACL model")
-            converted_acl: m.Ldif.Acl = match_result
+            # Use isinstance check directly for type narrowing
+            if isinstance(domain_acl, m.Ldif.Acl):
+                converted_acl: m.Ldif.Acl = domain_acl
+            else:
+                # Validate and convert from dict/model to m.Ldif.Acl
+                validation_result: r[m.Ldif.Acl] = r[m.Ldif.Acl].ok(
+                    m.Ldif.Acl.model_validate(domain_acl.model_dump())
+                )
+                if not validation_result.is_success:
+                    return FlextResult.fail("Failed to convert ACL model")
+                converted_acl = validation_result.value
 
             # Get target server type for permission mapping
             get_server_type = u.mapper().prop("server_type")
@@ -2376,27 +2373,26 @@ class FlextLdifConversion(
         # Track batch conversion duration (MANDATORY - eventos obrigatórios)
         start_time = time.perf_counter()
 
-        # Get source/target format names
-        # Extract server_name from object if not string
-        def extract_server_name(obj: t.GeneralValueType) -> str:
-            """Extract server name from object, fallback to 'unknown'."""
-            if isinstance(obj, str):
-                return obj
-            # obj is FlextLdifServersBase or similar
-            if isinstance(obj, dict):
-                # For dict, extract server_name key directly
-                server_name = obj.get("server_name")
-                if isinstance(server_name, str):
-                    return server_name
-            # For BaseModel or other objects with server_name attribute
-            if hasattr(obj, "server_name"):
-                server_name = getattr(obj, "server_name", "unknown")
-                if isinstance(server_name, str):
-                    return server_name
-            return "unknown"
+        # Get source/target format names using proper type checks
+        # Extract source format: direct string or server_name property
+        if isinstance(source, str):
+            source_format: str = source
+        else:
+            # Try to extract server_name from source object
+            source_name_result = u.mapper().prop("server_name")(source)
+            source_format = (
+                source_name_result if isinstance(source_name_result, str) else "unknown"
+            )
 
-        source_format: str = extract_server_name(source)
-        target_format: str = extract_server_name(target)
+        # Extract target format: direct string or server_name property
+        if isinstance(target, str):
+            target_format: str = target
+        else:
+            # Try to extract server_name from target object
+            target_name_result = u.mapper().prop("server_name")(target)
+            target_format = (
+                target_name_result if isinstance(target_name_result, str) else "unknown"
+            )
 
         # Handle empty list case - succeed with empty result
         # No event emission for empty batches (no work done)

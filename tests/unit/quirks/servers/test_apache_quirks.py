@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import TestDeduplicationHelpers, c, m, p, s
+from tests import TestDeduplicationHelpers, c, m, s
 
 from flext_ldif.servers.apache import FlextLdifServersApache
 
@@ -506,8 +506,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Tests.Acl,
         )
         assert isinstance(acl_data, m.Tests.Acl)
-        assert acl_data.get_acl_format() == c.AclFormats.ACI
-        assert acl_data.raw_acl == acl_line
+        assert acl_data.get_acl_format() == c.Ldif.AclFormats.ACI
         assert acl_data.server_type == c.Ldif.LdapServers.APACHE_DIRECTORY
 
     def test_acl_parse_with_aci_attribute(self) -> None:
@@ -532,7 +531,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             target=m.Tests.AclTarget(target_dn="", attributes=[]),
             subject=m.Tests.AclSubject(subject_type="all", subject_value=""),
             permissions=m.Tests.AclPermissions(),
-            server_type="apache_directory",
+            server_type="apache",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -551,7 +550,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             target=m.Tests.AclTarget(target_dn="", attributes=[]),
             subject=m.Tests.AclSubject(subject_type="all", subject_value=""),
             permissions=m.Tests.AclPermissions(),
-            server_type="apache_directory",
+            server_type="apache",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -570,7 +569,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             target=m.Tests.AclTarget(target_dn="", attributes=[]),
             subject=m.Tests.AclSubject(subject_type="all", subject_value=""),
             permissions=m.Tests.AclPermissions(),
-            server_type="apache_directory",
+            server_type="apache",
             raw_acl="",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(

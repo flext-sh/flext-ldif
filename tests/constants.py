@@ -63,6 +63,26 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ACTIVE: str = FlextLdifConstants.Ldif.AclSubjectTypes.ACTIVE
         DEPRECATED: str = FlextLdifConstants.Ldif.AclSubjectTypes.DEPRECATED
 
+    class Names:
+        """Standard LDAP attribute names for test fixtures."""
+
+        CN: Final[str] = "cn"
+        SN: Final[str] = "sn"
+        GIVEN_NAME: Final[str] = "givenName"
+        MAIL: Final[str] = "mail"
+        OBJECT_CLASS: Final[str] = "objectClass"
+        DESCRIPTION: Final[str] = "description"
+        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
+        STREET: Final[str] = "street"
+        LOCALITY: Final[str] = "l"
+        STATE_OR_PROVINCE: Final[str] = "st"
+        POSTAL_CODE: Final[str] = "postalCode"
+        ORGANIZATION: Final[str] = "o"
+        ORGANIZATIONAL_UNIT: Final[str] = "ou"
+        USER_PASSWORD: Final[str] = "userPassword"
+        JPEG_PHOTO: Final[str] = "jpegPhoto"
+        EMPLOYEE_ID: Final[str] = "employeeID"
+
     # =========================================================================
     # FIXTURE DIRECTORY CONSTANTS
     # =========================================================================

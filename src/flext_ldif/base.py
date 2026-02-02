@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import s, t
+from flext_core import FlextSettings, s
+from flext_core.protocols import p
 from flext_core.service import FlextService
 
 from flext_ldif.settings import FlextLdifSettings
@@ -38,7 +39,7 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
     """
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services.
 
         Business Rule: This method provides runtime bootstrap configuration for
@@ -73,7 +74,9 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
             FlextLdifSettings instance with LDIF-specific configuration settings
 
         """
-        return self.config.get_namespace("ldif", FlextLdifSettings)
+        return FlextSettings.get_global_instance().get_namespace(
+            "ldif", FlextLdifSettings
+        )
 
 
 # Short alias for service base (s is FlextService from flext-core)

@@ -33,7 +33,13 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     Access patterns:
     - tm.Tests.* - Test fixtures (ACL, Schema, etc.)
     - m.Ldif.* - Production domain models
+    - m.WriteFormatOptions - Root-level test aliases for common fixtures
+    - m.StatisticsResult - Root-level test aliases for common fixtures
     """
+
+    # Root-level aliases for frequently used test models
+    WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
+    StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
 
     class Tests:
         """Test fixture models namespace.
@@ -69,6 +75,7 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
         # Result models for testing
         ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
         ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
+        StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
 
         # Validation rules for testing
         ServerValidationRules = ServerValidationRules

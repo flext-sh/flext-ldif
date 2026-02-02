@@ -2262,9 +2262,9 @@ class FlextLdifUtilities(u_core):
         @classmethod
         def curry(
             cls,
-            fn: VariadicCallable[t.GeneralValueType],
+            fn: Callable[..., t.GeneralValueType],
             *args: t.GeneralValueType,
-        ) -> VariadicCallable[t.GeneralValueType]:
+        ) -> Callable[..., t.GeneralValueType]:
             """Curry function (mnemonic: cy).
 
             Args:
@@ -2328,12 +2328,8 @@ class FlextLdifUtilities(u_core):
                 # Return narrowed result
                 return u_core.Mapper.narrow_to_general_value_type(result)
 
-            # Return curried function - callable with variadic args returning GeneralValueType
-            # curried satisfies VariadicCallable protocol - type annotation narrows
-            curried_typed: FlextLdifUtilities.Ldif.VariadicCallable[
-                t.GeneralValueType
-            ] = curried
-            return curried_typed
+            # Return curried function - Callable[...] type matches nested function signature
+            return curried
 
         # Mnemonic helper
         cy = curry

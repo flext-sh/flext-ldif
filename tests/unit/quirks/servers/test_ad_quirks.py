@@ -264,7 +264,7 @@ class TestsTestFlextLdifAdQuirks(s):
             single_value=True,
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            schema,
+            schema_quirk,
             attr_model,
             write_method="_write_attribute",
             must_contain=["1.2.840.113556.1.4.221", "sAMAccountName", "SINGLE-VALUE"],
@@ -286,7 +286,7 @@ class TestsTestFlextLdifAdQuirks(s):
             may=["sAMAccountName"],
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            schema,
+            schema_quirk,
             oc_model,
             write_method="_write_objectclass",
             must_contain=[
@@ -309,7 +309,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         assert isinstance(acl_quirk, FlextLdifServersAd.Acl)
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl_quirk, acl_line)
         assert isinstance(acl_model, m.Ldif.Acl)
 
     def test_parse_acl_with_sddl_prefix(self) -> None:
@@ -319,7 +319,7 @@ class TestsTestFlextLdifAdQuirks(s):
 
         assert isinstance(acl_quirk, FlextLdifServersAd.Acl)
         acl_line = "O:BAG:BAD:S:"
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl_quirk, acl_line)
         assert isinstance(acl_model, m.Ldif.Acl)
 
     def test_parse_acl_with_base64_value(self) -> None:
@@ -384,7 +384,7 @@ class TestsTestFlextLdifAdQuirks(s):
             raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl,
+            acl_quirk,
             acl_model,
             write_method="write",
             must_contain=["nTSecurityDescriptor:", "O:BAG:BAD:S:"],

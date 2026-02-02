@@ -53,7 +53,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,  # RFC 2849 recommendation
             ),
@@ -64,7 +64,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
 
         # With folding ENABLED, long lines should be wrapped
         # Check if there are any continuation lines (starting with space)
-        if isinstance(output, m.WriteResponse) and output.content:
+        if isinstance(output, m.Ldif.LdifResults.WriteResponse) and output.content:
             lines = output.content.split("\n")
             has_continuation = any(line.startswith(" ") for line in lines if line)
             assert has_continuation, (
@@ -87,7 +87,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 fold_long_lines=False,
                 line_width=76,
             ),
@@ -100,7 +100,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         if isinstance(output, str):
             lines = output.split("\n")
             assert len(lines) > 0
-        elif isinstance(output, m.WriteResponse) and output.content:
+        elif isinstance(output, m.Ldif.LdifResults.WriteResponse) and output.content:
             assert output.content is not None
 
     def test_fold_long_lines_override(
@@ -113,7 +113,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 fold_long_lines=False,  # Disable line folding
                 line_width=76,
             ),
@@ -126,7 +126,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
         if isinstance(output, str):
             lines = output.split("\n")
             assert len(lines) > 0
-        elif isinstance(output, m.WriteResponse) and output.content:
+        elif isinstance(output, m.Ldif.LdifResults.WriteResponse) and output.content:
             assert output.content is not None
 
     def test_check_actual_line_lengths(
@@ -139,7 +139,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             entries=[long_value_entry],
             target_server_type="rfc",
             _output_target="string",
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,
             ),

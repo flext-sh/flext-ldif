@@ -709,7 +709,7 @@ class TestsFlextLdifWriterFormatOptions(s):
 
         assert result.is_success
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        assert output_file.exists(), f"Expected output file to exist: {output_file}"
 
         content = output_file.read_text(encoding="utf-8")
         assert "version: 1" in content

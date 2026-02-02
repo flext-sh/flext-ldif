@@ -19,38 +19,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from inspect import Parameter, signature
-from typing import Literal, Protocol, TypeVar, overload, runtime_checkable
+from typing import Literal, TypeVar, overload
 
 from flext_core import FlextTypes as t, T, U
 from flext_core.utilities import FlextUtilities as u
-
-
-@runtime_checkable
-class ConditionFn[T_co](Protocol):
-    """Protocol for condition functions in cond() pattern."""
-
-    def __call__(self, value: T_co, /) -> bool:  # INTERFACE
-        """Evaluate condition on value."""
-        ...
-
-
-@runtime_checkable
-class ResultFn[T_contra, U_co](Protocol):
-    """Protocol for result functions in cond() pattern."""
-
-    def __call__(self, value: T_contra, /) -> U_co:  # INTERFACE
-        """Transform value to result."""
-        ...
-
-
-@runtime_checkable
-class Evaluator[T_contra, U_co](Protocol):
-    """Protocol for evaluator returned by cond()."""
-
-    def __call__(self, value: T_contra, /) -> U_co | None:  # INTERFACE
-        """Evaluate value through conditions."""
-        ...
-
 
 # Type variable for callable types
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
@@ -572,20 +544,22 @@ class FlextFunctional:
 
         """
         # Build items from value
+        items: list[T]
         if value is None:
             if default is not None:
                 return list(default)
             return []
 
-        # Handle different input types and normalize to list[T]
-        items: list[T]
-        if isinstance(value, list):
+        # Handle different input types
+        if isinstance(value, (str, bytes)):
+            # str/bytes are sequences but should be treated as single items - cast to T
+            items = [value]  # Single item of type T
+        elif isinstance(value, list):
             items = value
         elif isinstance(value, tuple):
             items = list(value)
         else:
-            # Single item (including str/bytes) - wrap in list
-            # Type narrowing: value is T at this point
+            # Single item - wrap in list
             items = [value]
 
         # Apply mapper if provided
@@ -722,7 +696,6 @@ class FlextFunctional:
             # If then is callable, call it to get the value
             if callable(then):
                 # Type narrowing: callable() returns T
-                # Callable validates signature, result is T
                 return then()
             # Direct value
             if then is not None:
@@ -733,13 +706,10 @@ class FlextFunctional:
     wh = when
 
     @staticmethod
-    def cond(
-        *cases: tuple[
-            ConditionFn[t.GeneralValueType],
-            ResultFn[t.GeneralValueType, t.GeneralValueType],
-        ],
-        default: t.GeneralValueType | None = None,
-    ) -> Evaluator[t.GeneralValueType, t.GeneralValueType]:
+    def cond[T, U](
+        *cases: tuple[Callable[[T], bool], Callable[[T], U]],
+        default: U | None = None,
+    ) -> Callable[[T], U | None]:
         """Conditional expression returning curried function (mnemonic: cd).
 
         Creates a function that evaluates conditions in order and returns
@@ -747,12 +717,12 @@ class FlextFunctional:
 
         Args:
             *cases: Tuples of (condition_fn, result_fn)
-                - condition_fn: Protocol that takes 1 arg, returns bool
-                - result_fn: Protocol that takes 1 arg, returns value
+                - condition_fn: Callable that takes 1 arg, returns bool
+                - result_fn: Callable that takes 1 arg, returns value
             default: Default value if no condition matches
 
         Returns:
-            Evaluator Protocol that takes a value and evaluates conditions
+            Function that takes a value and evaluates conditions
 
         Example:
             >>> result = FlextFunctional.cond(
@@ -763,14 +733,12 @@ class FlextFunctional:
             'medium'
 
         """
-        stored_cases = cases
-        stored_default = default
 
-        def evaluator(value: t.GeneralValueType, /) -> t.GeneralValueType | None:
-            for cond_fn, res_fn in stored_cases:
-                if cond_fn(value):
-                    return res_fn(value)
-            return stored_default
+        def evaluator(value: T) -> U | None:
+            for condition_fn, result_fn in cases:
+                if condition_fn(value):
+                    return result_fn(value)
+            return default
 
         return evaluator
 
@@ -897,7 +865,6 @@ class FlextFunctional:
         # If result is callable, call it with value
         if callable(result):
             # Type narrowing: callable(value) returns U
-            # Callable validates signature, result is U
             return result(value)
         return result
 
@@ -1037,7 +1004,7 @@ class FlextFunctional:
         cls,
         value: t.GeneralValueType,
         *,
-        target: type[t.GeneralValueType] | str,
+        target: type | str,
         default: t.GeneralValueType | None = None,
     ) -> t.GeneralValueType | None:
         """Safe cast (mnemonic: at).
@@ -1057,6 +1024,7 @@ class FlextFunctional:
             0
 
         """
+        # Map of string type names to actual types
         type_map: dict[str, type] = {
             "list": list,
             "dict": dict,
@@ -1068,7 +1036,7 @@ class FlextFunctional:
         }
 
         # Resolve target type: if string, look up in map; if type, use directly
-        target_type: type[t.GeneralValueType] | None = (
+        target_type: type | None = (
             type_map.get(target) if isinstance(target, str) else target
         )
 
@@ -1077,7 +1045,9 @@ class FlextFunctional:
 
         # Already the right type (only check for concrete types, not callables)
         if isinstance(target_type, type) and isinstance(value, target_type):
-            return value
+            # Value is already the target type - return it directly
+            # isinstance check confirms value is the target type
+            return value  # type: GeneralValueType
 
         # Try to convert
         try:
@@ -1108,7 +1078,7 @@ class FlextFunctional:
                     return value.lower() in {"true", "1", "yes", "on"}
                 return bool(value)
             if target_type is list:
-                if isinstance(value, (list, tuple)):
+                if isinstance(value, (list, tuple, set)):
                     return list(value)
                 return [value]
             if target_type is tuple:
@@ -1119,11 +1089,8 @@ class FlextFunctional:
                 if isinstance(value, dict):
                     return value
                 return default
-            # Generic type conversion - skip object since object() doesn't accept args
-            if target_type is object:
-                return default
 
-            # Handle other callable types (excluding object)
+            # Handle other callable types
             if callable(target_type):
                 try:
                     try:
@@ -1161,7 +1128,7 @@ class FlextFunctional:
                             elif target_type is list:
                                 converted = (
                                     list(value)
-                                    if isinstance(value, (list, tuple))
+                                    if isinstance(value, (list, tuple, set))
                                     else [value]
                                 )
                             elif target_type is tuple:
@@ -1188,7 +1155,9 @@ class FlextFunctional:
                             return default
 
                         if isinstance(converted, target_type):
-                            return converted
+                            # Converted value matches target type
+                            # isinstance check confirms converted is the target type
+                            return converted  # type: GeneralValueType
                         return default
                     return default
                 except (TypeError, ValueError, AttributeError):
