@@ -10,13 +10,11 @@ from __future__ import annotations
 from typing import ClassVar, Literal
 
 import pytest
-
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.protocols import p
 from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.typings import t
 from tests import c, m, s
 
 # from flext_ldif.protocols import p
@@ -138,10 +136,7 @@ class TestsFlextLdifWriterValidationIntegration(s):
     ) -> None:
         """Test attribute name validation with parameterized test cases."""
         result = validation_service.validate_attribute_name(attr_name)
-        tm.ok(
-            result,
-            f"Validation should succeed for '{attr_name}'",
-        )
+        tm.ok(result)  # Validation should succeed
         is_valid = result.value
         assert is_valid == expected_valid, (
             f"Expected '{attr_name}' to be {'valid' if expected_valid else 'invalid'}"
@@ -164,14 +159,14 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 include_version_header=True,
                 fold_long_lines=False,
             ),
         )
 
-        unwrapped = tm.ok(result, "Write should succeed")
-        output = t.ResultExtractors.extract_content(unwrapped)
+        unwrapped = tm.ok(result)  # Write should succeed
+        output = unwrapped if isinstance(unwrapped, str) else (unwrapped.content or "")
         self.Helpers.assert_ldif_output_contains(
             output,
             "dn: cn=John Doe,ou=people,dc=example,dc=com",
@@ -188,14 +183,14 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(
+            format_options=m.Tests.WriteFormatOptions(
                 base64_encode_binary=True,
                 fold_long_lines=False,
             ),
         )
 
-        unwrapped = tm.ok(result, "Write should succeed")
-        output = t.ResultExtractors.extract_content(unwrapped)
+        unwrapped = tm.ok(result)  # Write should succeed
+        output = unwrapped if isinstance(unwrapped, str) else (unwrapped.content or "")
         assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
 
     def test_validate_multiple_entries_in_batch(
@@ -227,10 +222,10 @@ class TestsFlextLdifWriterValidationIntegration(s):
         result = writer.write(
             entries=entries,
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=m.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.Tests.WriteFormatOptions(fold_long_lines=False),
         )
 
-        unwrapped = tm.ok(result, "Write should succeed")
-        output = t.ResultExtractors.extract_content(unwrapped)
+        unwrapped = tm.ok(result)  # Write should succeed
+        output = unwrapped if isinstance(unwrapped, str) else (unwrapped.content or "")
         for i in range(1, self.Constants.BATCH_COUNT + 1):
             assert f"{self.Constants.TEST_USER_PREFIX}{i}" in output

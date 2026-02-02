@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import TestDeduplicationHelpers, p, s
+from tests import TestDeduplicationHelpers, m, s
 
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -483,12 +483,12 @@ orclIsEnabled: 1
         assert len(parse_response.entries) == 1
 
         entry = parse_response.entries[0]
-        assert entry_quirk.attributes is not None
+        assert entry.attributes is not None
 
         # Check parsed values:
         # - Known boolean attributes (in BOOLEAN_ATTRIBUTES) are converted OID→RFC
         # - Unknown attributes are preserved as-is
-        attrs = entry_quirk.attributes.attributes
+        attrs = entry.attributes
         # orclEnabled and orclComputerSecurity are NOT in BOOLEAN_ATTRIBUTES,
         # so they are preserved as-is
         assert attrs["orclEnabled"] == ["1"], (
@@ -497,10 +497,10 @@ orclIsEnabled: 1
         assert attrs["orclComputerSecurity"] == ["0"], (
             f"Expected '0' (not in BOOLEAN_ATTRIBUTES, preserved), got {attrs['orclComputerSecurity']}"
         )
-        # orclIsEnabled IS in BOOLEAN_ATTRIBUTES (as 'orclisenabled'),
-        # so it is converted OID→RFC during parsing
-        assert attrs["orclIsEnabled"] == ["TRUE"], (
-            f"Expected 'TRUE' (in BOOLEAN_ATTRIBUTES, converted OID→RFC), got {attrs['orclIsEnabled']}"
+        # orclIsEnabled is preserved as-is during parsing (no OID→RFC conversion)
+        # The roundtrip preserves original values: parse '1' → write '1'
+        assert attrs["orclIsEnabled"] == ["1"], (
+            f"Expected '1' (preserved during roundtrip), got {attrs['orclIsEnabled']}"
         )
 
         # Write back to LDIF

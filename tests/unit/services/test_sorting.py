@@ -438,7 +438,7 @@ class TestsTestFlextLdifSorting(s):
         ]
         with pytest.raises(
             ValidationError,
-            match=r"Input should be 'entries', 'attributes', 'acl', 'schema' or 'combined'",
+            match=r"Invalid sort_target.*Valid:.*acl.*attributes.*combined.*entries.*schema",
         ):
             _ = FlextLdifSorting(
                 entries=entries,

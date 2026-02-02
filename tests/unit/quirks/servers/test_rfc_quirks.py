@@ -243,12 +243,12 @@ class TestsFlextLdifRfcQuirks(s):
 
         for entry in entries:
             if has_dn:
-                assert entry_quirk.dn is not None, "Entry must have DN"
-                assert entry_quirk.dn.value, "DN must not be empty"
+                assert entry.dn is not None, "Entry must have DN"
+                assert entry.dn.value, "DN must not be empty"
             if has_attrs:
-                assert entry_quirk.attributes is not None, "Entry must have attributes"
-            if has_objectclass and entry_quirk.attributes:
-                attr_names = {a.lower() for a in entry_quirk.attributes.attributes}
+                assert entry.attributes is not None, "Entry must have attributes"
+            if has_objectclass and entry.attributes:
+                attr_names = {a.lower() for a in entry.attributes.attributes}
                 assert "objectclass" in attr_names, "Entry must have objectClass"
 
     @pytest.mark.timeout(10)
@@ -379,7 +379,7 @@ class TestsFlextLdifRfcQuirks(s):
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._parse_objectclass."""
-        result = schema_quirk._parse_objectclass(c.Rfc.OC_DEF_PERSON_FULL)
+        result = schema_quirk._parse_objectclass(c.Rfc.OC_DEF_PERSON)
         assert result.is_success
         oc = result.value
         assert oc.oid == c.Rfc.OC_OID_PERSON
@@ -544,10 +544,12 @@ class TestsFlextLdifRfcQuirks(s):
         entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.can_handle."""
+        # RFC 2849 requires objectClass in attributes
         assert (
             entry_quirk.can_handle(
                 c.General.SAMPLE_DN,
                 {
+                    "objectClass": ["person"],
                     c.General.ATTR_NAME_CN: [
                         c.General.ATTR_VALUE_TEST,
                     ],
@@ -560,12 +562,15 @@ class TestsFlextLdifRfcQuirks(s):
         self,
         entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
-        """Test Entry.can_handle_entry with model."""
+        """Test Entry.can_handle with Entry model by extracting DN and attributes."""
         entry = self._create_entry(
             dn="cn=test,dc=example,dc=com",
             attributes={"objectClass": ["person"], "cn": ["test"]},
         )
-        assert entry_quirk.can_handle_entry(entry) is True
+        # Extract DN and attributes for can_handle()
+        dn_value = entry.dn.value
+        attrs = dict(entry.attributes.attributes)
+        assert entry_quirk.can_handle(dn_value, attrs) is True
 
     @pytest.mark.timeout(5)
     @pytest.mark.parametrize(
@@ -603,23 +608,26 @@ class TestsFlextLdifRfcQuirks(s):
             "cn": ["test"],
             "objectClass": ["person"],
         }
-        result = entry_quirk._parse_entry(dn, attrs)
+        result = entry_quirk.parse_entry(dn, attrs)
         assert result.is_success
         entry = result.value
-        assert entry_quirk.dn is not None
-        assert "cn=test,dc=example,dc=com" in entry_quirk.dn.value
+        assert entry.dn is not None
+        assert "cn=test,dc=example,dc=com" in entry.dn.value
 
     def test_entry_can_handle_entry_empty_dn(
         self,
         entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
-        """Test Entry.can_handle_entry with empty dn returns False (RFC requires DN)."""
+        """Test Entry.can_handle with empty dn returns False (RFC requires DN)."""
         # RFC baseline requires valid DN for entries
         entry = m.Ldif.Entry.create(
             dn="",
             attributes={"objectClass": ["person"], "cn": ["test"]},
         ).value
-        result = entry_quirk.can_handle_entry(entry)
+        # Extract DN and attributes for can_handle()
+        dn_value = entry.dn.value
+        attrs = dict(entry.attributes.attributes)
+        result = entry_quirk.can_handle(dn_value, attrs)
         # Empty DN is not valid for RFC
         assert result is False
 
@@ -732,13 +740,15 @@ class TestsFlextLdifRfcQuirks(s):
         self,
         entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
-        """Test Entry._handle_parse_operation with entry object."""
+        """Test Entry.can_handle with entry object."""
         entry = self._create_entry(
             dn="cn=test,dc=example,dc=com",
             attributes={"objectClass": ["person"], "cn": ["test"]},
         )
-        # Test can_handle_entry which uses _handle_parse_operation internally
-        result = entry_quirk.can_handle_entry(entry)
+        # Test can_handle by extracting DN and attributes
+        dn_value = entry.dn.value
+        attrs = dict(entry.attributes.attributes)
+        result = entry_quirk.can_handle(dn_value, attrs)
         assert result is True
 
     def test_entry_write_multiple_entries(

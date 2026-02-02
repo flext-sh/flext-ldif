@@ -27,11 +27,38 @@ from flext_ldif.utilities import u
 
 
 def _extract_pipe_value(
-    pipe_result: r[object] | FlextRuntime.RuntimeResult[object],
-) -> object | None:
+    pipe_result: r[t.GeneralValueType] | FlextRuntime.RuntimeResult[t.GeneralValueType],
+) -> t.GeneralValueType | None:
     """Extract value from pipe result."""
     # Accept both FlextResult and RuntimeResult (compatible interfaces)
     return pipe_result.unwrap_or(None)
+
+
+def _extract_write_options(
+    write_options: m.Ldif.LdifResults.WriteOptions,
+) -> m.Ldif.LdifResults.WriteFormatOptions | None:
+    """Extract write format options from WriteOptions model."""
+    dumped = write_options.model_dump(exclude_none=True)
+    normalized = _normalize_write_format(dumped)
+    return m.Ldif.LdifResults.WriteFormatOptions.model_validate(normalized)
+
+
+def _normalize_write_format(d: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
+    """Normalize write format from dict."""
+    if not isinstance(d, dict):
+        return {}
+    return (
+        {
+            "base64_encode_binary": (
+                d.get("base64_encode_binary")
+                if isinstance(d, dict)
+                else None
+            ),
+        }
+        if isinstance(d, dict)
+        and d.get("base64_encode_binary") is not None
+        else {}
+    )
 
 
 class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
@@ -89,15 +116,11 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         elif isinstance(format_options, m.Ldif.LdifResults.WriteFormatOptions):
             result_raw = format_options
         elif isinstance(format_options, m.Ldif.LdifResults.WriteOptions):
-            # Convert WriteOptions to WriteFormatOptions
-            dumped = format_options.model_dump(exclude_none=True)
-            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate({
-                "base64_encode_binary": (
-                    dumped.get("base64_encode_binary")
-                    if isinstance(dumped, dict)
-                    else None
-                ),
-            })
+            extracted = _extract_write_options(format_options)
+            if extracted is None:
+                msg = f"Failed to extract write options from {type(format_options)}"
+                raise TypeError(msg)
+            result_raw = extracted
         elif isinstance(format_options, dict):
             result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
                 format_options

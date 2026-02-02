@@ -11,7 +11,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
-from tests import c, m, p, s
+from tests import c, m, s
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 
@@ -159,9 +159,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
                 assert parsed.oid is not None
                 assert parsed.metadata
                 assert (
-                    parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-                    == "relaxed"
-                    or "original_format" in parsed.metadata.extensions
+                    parsed.metadata.extensions.schema_source_server == "relaxed"
+                    or parsed.metadata.extensions.original_format is not None
                 )
         else:
             assert result.is_failure, f"Scenario {scenario}: expected failure"
@@ -213,7 +212,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert result.is_success
         parsed = result.value
         assert parsed.metadata
-        assert parsed.metadata.extensions.get("original_format") == original
+        assert parsed.metadata.extensions.original_format == original
 
     def test_write_attribute_to_rfc(
         self,
@@ -337,10 +336,9 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert result.is_success
         parsed = result.value
         assert parsed.metadata
-        assert parsed.metadata.extensions.get(
-            "original_format",
-        ) is not None or meta_keys.SCHEMA_SOURCE_SERVER in (
-            parsed.metadata.extensions or {}
+        assert (
+            parsed.metadata.extensions.original_format is not None
+            or parsed.metadata.extensions.schema_source_server is not None
         )
 
     @pytest.mark.parametrize(

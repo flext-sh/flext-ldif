@@ -41,6 +41,7 @@ from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
@@ -438,7 +439,9 @@ class FlextLdifServersBaseEntry(
         **Edge cases:**
         - Null entry -> return fail("Entry is None")
         - Missing DN -> return fail("Entry DN is None")
-        - Empty attributes -> return ok("dn: ...\n\n")
+        - Empty attributes -> return ok("dn: ...
+
+")
         - Special chars in DN -> proper escaping
 
         Args:
@@ -451,11 +454,62 @@ class FlextLdifServersBaseEntry(
         # Basic RFC 2849 LDIF writing implementation
         # ASCII printable range limit (0-127)
         ascii_printable_limit = 127
-        lines: list[str] = []
+        output_lines: list[str] = []
 
-        # Write DN
+        # Extract write options from metadata for line folding
+        fold_long_lines = True  # Default per RFC 2849
+        line_width = c.Ldif.Format.LINE_FOLD_WIDTH  # 76 bytes
+
+        if entry_data.metadata and entry_data.metadata.write_options:
+            write_opts = entry_data.metadata.write_options
+            # Check if write_options contains the nested write_options dict
+            if isinstance(write_opts, dict) and "write_options" in write_opts:
+                nested_opts = write_opts.get("write_options")
+                if hasattr(nested_opts, "fold_long_lines"):
+                    fold_long_lines = bool(nested_opts.fold_long_lines)
+                if hasattr(nested_opts, "line_width"):
+                    line_width = int(nested_opts.line_width or line_width)
+            elif hasattr(write_opts, "fold_long_lines"):
+                fold_long_lines = bool(write_opts.fold_long_lines)
+                if hasattr(write_opts, "line_width"):
+                    line_width = int(write_opts.line_width or line_width)
+
+        def fold_line(line: str) -> list[str]:
+            """Fold a line per RFC 2849 if fold_long_lines is enabled."""
+            if not fold_long_lines or len(line.encode("utf-8")) <= line_width:
+                return [line]
+            # RFC 2849 line folding: continuation lines start with single space
+            folded: list[str] = []
+            line_bytes = line.encode("utf-8")
+            pos = 0
+            while pos < len(line_bytes):
+                if not folded:
+                    # First line: full width
+                    chunk_end = min(pos + line_width, len(line_bytes))
+                else:
+                    # Continuation lines: width - 1 (space prefix takes 1 byte)
+                    chunk_end = min(pos + line_width - 1, len(line_bytes))
+                # Find valid UTF-8 boundary
+                while chunk_end > pos:
+                    try:
+                        chunk = line_bytes[pos:chunk_end].decode("utf-8")
+                        break
+                    except UnicodeDecodeError:
+                        chunk_end -= 1
+                else:
+                    chunk_end = pos + 1
+                    chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
+                if folded:
+                    folded.append(" " + chunk)
+                else:
+                    folded.append(chunk)
+                pos = chunk_end
+            return folded
+
+        # Write DN (with folding if enabled)
         if entry_data.dn:
-            lines.append(f"dn: {entry_data.dn.value}")
+            dn_line = f"dn: {entry_data.dn.value}"
+            output_lines.extend(fold_line(dn_line))
         else:
             return FlextResult.fail("Entry DN is None")
 
@@ -466,22 +520,24 @@ class FlextLdifServersBaseEntry(
                     for value in values:
                         # Simple encoding - for production this would be more complex
                         str_value = str(value)
-                        if any(ord(c) > ascii_printable_limit for c in str_value):
+                        if any(ord(char) > ascii_printable_limit for char in str_value):
                             # Base64 encode for non-ASCII
                             encoded = base64.b64encode(
                                 str_value.encode("utf-8"),
                             ).decode("ascii")
-                            lines.append(f"{attr_name}:: {encoded}")
+                            attr_line = f"{attr_name}:: {encoded}"
                         else:
-                            lines.append(f"{attr_name}: {str_value}")
+                            attr_line = f"{attr_name}: {str_value}"
+                        output_lines.extend(fold_line(attr_line))
                 else:
                     str_value = str(values)
-                    lines.append(f"{attr_name}: {str_value}")
+                    attr_line = f"{attr_name}: {str_value}"
+                    output_lines.extend(fold_line(attr_line))
 
         # Add blank line after entry
-        lines.append("")
+        output_lines.append("")
 
-        ldif_content = "\n".join(lines)
+        ldif_content = "\n".join(output_lines)
         return FlextResult.ok(ldif_content)
 
     def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:

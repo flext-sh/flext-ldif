@@ -249,7 +249,7 @@ class TestsTestFlextLdifValidation(s):
             service = FlextLdifValidation()
             result = service.execute()
             unwrapped = tm.ok(result)
-            assert isinstance(unwrapped, m.ValidationServiceStatus)
+            assert isinstance(unwrapped, m.Tests.ValidationServiceStatus)
             assert unwrapped.service == "ValidationService"
             assert unwrapped.status == "operational"
             assert "RFC 2849" in unwrapped.rfc_compliance
@@ -296,7 +296,7 @@ class TestsTestFlextLdifValidation(s):
                 .with_attribute_names(["cn", "2invalid"])
                 .build()
             )
-            assert isinstance(result, m.ValidationBatchResult)
+            assert isinstance(result, m.Tests.ValidationBatchResult)
             assert result.results["cn"] is True
             assert result.results["2invalid"] is False
 
@@ -307,7 +307,7 @@ class TestsTestFlextLdifValidation(s):
                 .with_objectclass_names(["person", "invalid class"])
                 .build()
             )
-            assert isinstance(result, m.ValidationBatchResult)
+            assert isinstance(result, m.Tests.ValidationBatchResult)
             assert result.results["person"] is True
             assert result.results["invalid class"] is False
 
@@ -319,14 +319,14 @@ class TestsTestFlextLdifValidation(s):
                 .with_objectclass_names(["person"])
                 .build()
             )
-            assert isinstance(result, m.ValidationBatchResult)
+            assert isinstance(result, m.Tests.ValidationBatchResult)
             assert result.results["cn"] is True
             assert result.results["person"] is True
 
         def test_build_with_empty_lists(self) -> None:
             """Test build() with empty lists returns empty results."""
             result = FlextLdifValidation.builder().build()
-            assert isinstance(result, m.ValidationBatchResult)
+            assert isinstance(result, m.Tests.ValidationBatchResult)
             assert result.results == {}
 
     class TestBatchValidation:

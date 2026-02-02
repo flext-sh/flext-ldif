@@ -56,6 +56,57 @@
     [tool.deptry]
         known_first_party = [
             "flext_ldif",
+            "flext_core",
+            "flext_cli",
+            "flext_ldap",
+            "flext_observability",
+        ]
+        pep621_dev_dependency_groups = [
+            "dev",
+            "test",
+            "typings",
+            "security",
+        ]
+
+    [tool.deptry.per_rule_ignores]
+        DEP002 = [
+            # CLI tools
+            "autoflake",
+            "bandit",
+            "black",
+            "codespell",
+            "commitizen",
+            "coverage",
+            "detect-secrets",
+            "isort",
+            "pip-audit",
+            "pre-commit",
+            "pylint",
+            "pyrefly",
+            "pyupgrade",
+            "radon",
+            "ruff",
+            "vulture",
+            # Type stubs
+            "types-docker",
+            "types-psutil",
+            "types-python-dateutil",
+            "types-pyyaml",
+            "types-redis",
+            "types-requests",
+            "types-setuptools",
+            "types-toml",
+            # Runtime deps used indirectly
+            "attrs",
+            "backoff",
+            "beartype",
+            "colorlog",
+            "faker",
+            "ldap3",
+            "pydantic-core",
+            "pytest",
+            "pytest-cov",
+            "structlog",
         ]
 
     [tool.poetry]

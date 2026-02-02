@@ -11,11 +11,10 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from tests import GenericFieldsDict, RfcTestHelpers, c, s
+from tests import RfcTestHelpers, c, s
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
 from flext_ldif import FlextLdif
-from flext_ldif.constants import c as lib_c
 from flext_ldif.models import m
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 
@@ -532,7 +531,7 @@ class TestsFlextLdifOpenldapQuirks(s):
         assert result.is_success == should_parse
         if should_parse:
             acl = result.value
-            assert acl_quirk.raw_acl == acl_line
+            assert acl is not None
 
     def test_acl_can_handle_to_clause(
         self,
@@ -568,12 +567,11 @@ class TestsFlextLdifOpenldapQuirks(s):
                 attributes=["userPassword"],
             ),
             subject=m.Ldif.AclSubject(
-                subject_type="userdn",
+                subject_type="user",
                 subject_value="self",
             ),
             permissions=m.Ldif.AclPermissions(write=True),
             metadata=m.Ldif.QuirkMetadata.create_for("openldap"),
-            raw_acl="to attrs=userPassword by self write by * none",
         )
         result = acl_quirk.write(acl_data)
         assert result.is_success

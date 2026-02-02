@@ -15,7 +15,6 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.constants import c as lib_c
-from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.settings import FlextLdifSettings
 from tests import c, m, s
@@ -24,7 +23,13 @@ from tests import c, m, s
 
 
 def _get_ldif_config() -> FlextLdifSettings:
-    """Get FlextLdifSettings instance for tests."""
+    """Get FlextLdifSettings instance for tests.
+
+    Note: FlextSettings uses singleton pattern via __new__. We must reset
+    the singleton before each test to avoid state pollution between tests.
+    """
+    # Reset singleton to ensure clean state for each test
+    FlextLdifSettings._reset_instance()
     return FlextLdifSettings()
 
 
@@ -410,7 +415,7 @@ class TestsFlextLdifServerDetector(s):
             status_result = detector.execute()
             tm.ok(status_result)
             status = status_result.value
-            assert isinstance(status, FlextLdifModelsResults.ClientStatus)
+            assert isinstance(status, m.Ldif.LdifResults.ClientStatus)
             assert status.config["service"] == "FlextLdifDetector"
             assert "detect_server_type" in status.services
 

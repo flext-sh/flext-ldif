@@ -45,7 +45,6 @@ class DynamicCounts(FlextLdifModelsBase):
     """
 
     model_config = ConfigDict(
-        frozen=True,
         extra="allow",  # Allow dynamic fields for server type scores
         use_enum_values=True,
         str_strip_whitespace=True,

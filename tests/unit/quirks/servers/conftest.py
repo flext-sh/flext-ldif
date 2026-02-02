@@ -91,6 +91,25 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> t.AclQuirk:
     return rfc_quirk.acl_quirk
 
 
+# Aliases for test compatibility (tests use entry_quirk, schema_quirk, acl_quirk)
+@pytest.fixture
+def entry_quirk(rfc_entry_quirk: t.EntryQuirk) -> t.EntryQuirk:
+    """Alias for rfc_entry_quirk for test compatibility."""
+    return rfc_entry_quirk
+
+
+@pytest.fixture
+def schema_quirk(rfc_schema_quirk: p.Quirks.SchemaProtocol) -> p.Quirks.SchemaProtocol:
+    """Alias for rfc_schema_quirk for test compatibility."""
+    return rfc_schema_quirk
+
+
+@pytest.fixture
+def acl_quirk(rfc_acl_quirk: t.AclQuirk) -> t.AclQuirk:
+    """Alias for rfc_acl_quirk for test compatibility."""
+    return rfc_acl_quirk
+
+
 @pytest.fixture
 def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
@@ -174,9 +193,9 @@ def sample_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_write_options() -> m.WriteFormatOptions:
+def sample_write_options() -> m.Tests.WriteFormatOptions:
     """Provides sample WriteFormatOptions for tests."""
-    return m.WriteFormatOptions()
+    return m.Tests.WriteFormatOptions()
 
 
 @pytest.fixture
@@ -212,7 +231,7 @@ def sample_entry_with_metadata() -> p.Entry:
             c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
         entry_metadata=m.Ldif.EntryMetadata(
-            write_options=m.WriteFormatOptions(),
+            write_options=m.Tests.WriteFormatOptions(),
         ),
     )
     entry_domain = result.value

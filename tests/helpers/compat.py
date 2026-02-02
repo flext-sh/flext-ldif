@@ -298,13 +298,61 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: p.SchemaProtocol,
-        data: list[p.Entry] | p.Entry,
+        quirk: object,
+        data: object,
         msg: str | None = None,
+        write_method: str | None = None,
+        must_contain: list[str] | None = None,
     ) -> str:
-        """Write using quirk - use service methods."""
-        result = quirk.write(data)
-        return tm.ok(result, msg=msg, is_=str)
+        """Write using quirk and unwrap result.
+
+        Args:
+            quirk: Schema quirk instance with write method
+            data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
+            msg: Optional message for assertion
+            write_method: Optional specific write method name (e.g., '_write_attribute')
+            must_contain: Optional list of strings that must appear in output
+
+        Returns:
+            Written string result
+
+        Raises:
+            AssertionError: If writing fails or must_contain strings not found
+
+        """
+        # Get the appropriate write method
+        if write_method:
+            method = getattr(quirk, write_method, None)
+            if method is None:
+                raise AssertionError(f"Quirk has no method '{write_method}'")
+            result = method(data)
+        else:
+            method = getattr(quirk, "write", None)
+            if method is None:
+                msg_text = "Quirk has no write method"
+                raise AssertionError(msg_text)
+            result = method(data)
+
+        # Handle FlextResult or direct string
+        if hasattr(result, "is_success"):
+            if result.is_failure:
+                raise AssertionError(msg or f"quirk.write() failed: {result.error}")
+            output = result.value
+        else:
+            output = result
+
+        if not isinstance(output, str):
+            raise TypeError(f"Expected str, got {type(output).__name__}")
+
+        # Check must_contain strings
+        if must_contain:
+            for substring in must_contain:
+                if substring not in output:
+                    raise AssertionError(
+                        f"'{substring}' not found in output: {output[:200]}...",
+                    )
+
+        return output
 
     @staticmethod
     def batch_parse_and_assert(

@@ -13,7 +13,7 @@ import pytest
 
 from flext_ldif.models import m
 from flext_ldif.services.dn import FlextLdifDn
-from tests import c, s
+from tests import c, s, tm
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 

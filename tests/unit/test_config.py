@@ -7,6 +7,7 @@ for LDIF processing configuration.
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Generator
 from enum import StrEnum
 
 import pytest
@@ -16,6 +17,20 @@ from flext_ldif import FlextLdifSettings
 from flext_ldif.constants import c as lib_c
 from flext_ldif.utilities import FlextLdifUtilities
 from tests import s
+
+
+@pytest.fixture(autouse=True)
+def reset_settings_singleton() -> Generator[None]:
+    """Reset FlextLdifSettings singleton before each test for isolation.
+
+    This fixture ensures each test starts with a fresh singleton instance,
+    preventing test pollution from previous tests that may have set custom values.
+    """
+    # Reset before test
+    FlextLdifSettings._reset_instance()
+    yield
+    # Reset after test (cleanup)
+    FlextLdifSettings._reset_instance()
 
 
 @dataclasses.dataclass(frozen=True)

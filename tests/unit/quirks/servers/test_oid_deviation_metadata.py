@@ -165,10 +165,10 @@ class TestsTestFlextLdifOidMetadata(s):
 
         # Entry should have metadata tracking the conversion
         assert entry is not None
-        if entry_quirk.metadata:
+        if entry.metadata:
             # If metadata is present, it should contain conversion info
             assert hasattr(entry.metadata, "extensions") or hasattr(
-                entry_quirk.metadata,
+                entry.metadata,
                 "quirk_type",
             )
 
@@ -205,8 +205,8 @@ class TestsTestFlextLdifOidMetadata(s):
 
         assert entry is not None
         # Verify entry has the attribute
-        if entry_quirk.attributes is not None and attr_name in entry_quirk.attributes:
-            assert entry_quirk.attributes[attr_name] is not None
+        if entry.attributes is not None and attr_name in entry.attributes:
+            assert entry.attributes[attr_name] is not None
 
     def test_multiple_boolean_attributes_metadata(
         self,
@@ -226,8 +226,8 @@ class TestsTestFlextLdifOidMetadata(s):
 
         assert entry is not None
         # Multiple boolean attrs should be handled
-        if entry_quirk.attributes is not None and "orclEnabled" in entry_quirk.attributes:
-            assert entry_quirk.attributes["orclEnabled"] is not None
+        if entry.attributes is not None and "orclEnabled" in entry.attributes:
+            assert entry.attributes["orclEnabled"] is not None
 
     # ═════════════════════════════════════════════════════════════════════════════
     # SCHEMA QUIRK METADATA TESTS
@@ -246,8 +246,8 @@ class TestsTestFlextLdifOidMetadata(s):
 
         assert entry is not None
         # Entry should exist after parsing
-        assert entry_quirk.dn is not None
-        assert entry_quirk.dn.value == "cn=metadata,dc=example,dc=com"
+        assert entry.dn is not None
+        assert entry.dn.value == "cn=metadata,dc=example,dc=com"
 
     def test_quirk_type_in_metadata(
         self,
@@ -267,8 +267,8 @@ class TestsTestFlextLdifOidMetadata(s):
         assert entry is not None
         # If entry has metadata, verify quirk type
         # OID entry quirk extends RFC, so quirk_type can be "oid", "rfc", or None
-        if entry_quirk.metadata and hasattr(entry.metadata, "quirk_type"):
-            assert entry_quirk.metadata.quirk_type in {"oid", "rfc", None}
+        if entry.metadata and hasattr(entry.metadata, "quirk_type"):
+            assert entry.metadata.quirk_type in {"oid", "rfc", None}
 
     @pytest.mark.parametrize(
         ("scenario", "dn", "attrs"),
@@ -299,8 +299,8 @@ class TestsTestFlextLdifOidMetadata(s):
         """Test various metadata scenarios."""
         entry = parse_entry_and_unwrap(oid_entry, dn, attrs)
         assert entry is not None
-        assert entry_quirk.dn is not None
-        assert entry_quirk.dn.value == dn
+        assert entry.dn is not None
+        assert entry.dn.value == dn
 
     def test_original_format_stored_in_extensions(
         self,
@@ -321,15 +321,15 @@ class TestsTestFlextLdifOidMetadata(s):
 
         entry = entries[0]
         # Entry should preserve original data
-        if entry_quirk.metadata and hasattr(entry.metadata, "extensions"):
+        if entry.metadata and hasattr(entry.metadata, "extensions"):
             # Extensions must be DynamicMetadata, not dict
             # Use actual metadata class, not facade (facade subclass != parent)
             assert (
                 isinstance(
-                    entry_quirk.metadata.extensions,
+                    entry.metadata.extensions,
                     FlextLdifModelsMetadata.DynamicMetadata,
                 )
-                or entry_quirk.metadata.extensions is None
+                or entry.metadata.extensions is None
             )
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -485,14 +485,14 @@ class TestsTestFlextLdifOidMetadata(s):
         )
 
         assert entry is not None
-        assert entry_quirk.attributes is not None
-        assert "cn" in entry_quirk.attributes
-        assert "objectClass" in entry_quirk.attributes
+        assert entry.attributes is not None
+        assert "cn" in entry.attributes
+        assert "objectClass" in entry.attributes
 
         # Metadata should track Oracle-specific conversions
         # OID entry quirk extends RFC, so quirk_type can be "oid", "rfc", or None
-        if entry_quirk.metadata:
-            assert entry_quirk.metadata.quirk_type in {"oid", "rfc", None}
+        if entry.metadata:
+            assert entry.metadata.quirk_type in {"oid", "rfc", None}
 
     def test_metadata_consistency_across_entries(
         self,
@@ -511,5 +511,5 @@ class TestsTestFlextLdifOidMetadata(s):
         # All entries should have consistent metadata structure
         for entry in entries:
             assert entry is not None
-            if entry_quirk.metadata:
+            if entry.metadata:
                 assert hasattr(entry.metadata, "quirk_type")
