@@ -42,7 +42,7 @@ from tests.test_helpers import (
     TestsFlextLdifTypes as _TestsFlextLdifTypesHelper,
     TestsFlextLdifValidators as tv,
 )
-from tests.typings import TestsFlextLdifTypes as t, tt
+from tests.typings import GenericFieldsDict, TestsFlextLdifTypes as t, tt
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 from tests.utilities import (
     RfcTestHelpers,
@@ -50,9 +50,6 @@ from tests.utilities import (
     TestDeduplicationHelpers,
     TestsFlextLdifUtilities as u,
 )
-
-# Export GenericFieldsDict from nested class for easier access
-GenericFieldsDict = t.Tests.Fixtures.GenericFieldsDict
 
 __all__ = [
     "Filters",

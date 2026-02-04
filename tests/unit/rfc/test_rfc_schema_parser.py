@@ -230,11 +230,11 @@ class TestRfcSchemaQuirkDirectUsage:
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.parse with attribute definition."""
-        _ = RfcTestHelpers.test_schema_parse_and_validate_complete(
+        _ = RfcTestHelpers.test_schema_parse_attribute(
             rfc_schema_quirk,
             c.Rfc.ATTR_DEF_CN_COMPLETE,
-            expected_oid=c.Rfc.ATTR_OID_CN,
-            expected_name=c.Rfc.ATTR_NAME_CN,
+            c.Rfc.ATTR_OID_CN,
+            c.Rfc.ATTR_NAME_CN,
         )
 
     @pytest.mark.timeout(5)

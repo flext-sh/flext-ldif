@@ -741,7 +741,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             entry.attributes.attributes, attribute_name
         )
         # Check for None or empty string (mapper returns "" for missing keys)
-        if value_raw is None or value_raw == "":
+        if value_raw is None or not value_raw:
             return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
         # Type narrowing: attribute values are str | list[str]
