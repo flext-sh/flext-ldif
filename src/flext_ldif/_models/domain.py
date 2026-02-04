@@ -14,7 +14,7 @@ import re
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
-from typing import ClassVar, Self, TypedDict, Unpack
+from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
@@ -135,52 +135,40 @@ class FlextLdifModelsDomains:
             original_dn: str | None = None,
             cleaned_dn: str | None = None,
             transformations: list[str] | None = None,
-            **transformation_flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
+            flags: FlextLdifModelsDomains.DNStatisticsFlagsModel | None = None,
         ) -> FlextLdifModelsDomains.DNStatistics:
-            """Create DNStatistics for this DN with transformation history.
-
-            Helper method for creating complete statistics from DN metadata.
-            Uses metadata to populate transformation flags automatically.
-
-            Args:
-                original_dn: Original DN before transformations (defaults to self.value)
-                cleaned_dn: DN after clean_dn() (defaults to self.value)
-                transformations: List of transformation types applied
-                **transformation_flags: Additional transformation flags
-
-            Returns:
-                DNStatistics instance tracking transformation history
-
-            Example:
-                dn = DN(value="cn=test,dc=example,dc=com")
-                stats = dn.create_statistics(
-                    original_dn="cn=test  ,dc=example,dc=com",
-                    transformations=[c.Ldif.TransformationType.SPACE_CLEANED],
-                    had_extra_spaces=True,
-                )
-
-            """
-            # Default to current value if not provided
+            """Create DNStatistics for this DN with transformation history."""
             final_dn = self.value
             orig_dn = original_dn or final_dn
             clean_dn = cleaned_dn or final_dn
 
-            # Extract flags from metadata if available
-            flags = transformation_flags.copy()
+            result_flags = flags or FlextLdifModelsDomains.DNStatisticsFlagsModel()
             if self.metadata:
-                if self.was_base64_encoded:
-                    _ = flags.setdefault("was_base64_encoded", True)
-                if getattr(self.metadata, "had_utf8_chars", False):
-                    _ = flags.setdefault("had_utf8_chars", True)
-                if getattr(self.metadata, "had_escape_sequences", False):
-                    _ = flags.setdefault("had_escape_sequences", True)
+                if self.was_base64_encoded and result_flags.was_base64_encoded is None:
+                    result_flags = result_flags.model_copy(
+                        update={"was_base64_encoded": True}
+                    )
+                if (
+                    getattr(self.metadata, "had_utf8_chars", False)
+                    and result_flags.had_utf8_chars is None
+                ):
+                    result_flags = result_flags.model_copy(
+                        update={"had_utf8_chars": True}
+                    )
+                if (
+                    getattr(self.metadata, "had_escape_sequences", False)
+                    and result_flags.had_escape_sequences is None
+                ):
+                    result_flags = result_flags.model_copy(
+                        update={"had_escape_sequences": True}
+                    )
 
             return FlextLdifModelsDomains.DNStatistics.create_with_transformation(
                 original_dn=orig_dn,
                 cleaned_dn=clean_dn,
                 normalized_dn=final_dn,
                 transformations=transformations if transformations is not None else [],
-                **flags,
+                flags=result_flags,
             )
 
         @classmethod
@@ -3000,26 +2988,39 @@ class FlextLdifModelsDomains:
             description="Human-readable reason for transformation",
         )
 
-    class DNStatisticsFlags(TypedDict, total=False):
+    class DNStatisticsFlagsModel(FlextLdifModelsBase):
         """Optional flags for DNStatistics.create_with_transformation().
 
-        Public TypedDict for type-safe DN transformation flags.
+        Pydantic model replacing TypedDict for type-safe DN transformation flags.
         Used by DNStatistics.create_with_transformation() and FlextLdifUtilitiesDN.
+        All fields are optional to match previous TypedDict total=False behavior.
         """
 
-        had_tab_chars: bool
-        had_trailing_spaces: bool
-        had_leading_spaces: bool
-        had_extra_spaces: bool
-        was_base64_encoded: bool
-        had_utf8_chars: bool
-        had_escape_sequences: bool
-        validation_status: str
-        validation_warnings: list[str]
-        validation_errors: list[str]
+        model_config = ConfigDict(frozen=False, extra="ignore")
 
-    # Backward compatibility alias (deprecated, use DNStatisticsFlags)
-    _DNStatisticsFlags = DNStatisticsFlags
+        had_tab_chars: bool | None = Field(default=None)
+        had_trailing_spaces: bool | None = Field(default=None)
+        had_leading_spaces: bool | None = Field(default=None)
+        had_extra_spaces: bool | None = Field(default=None)
+        was_base64_encoded: bool | None = Field(default=None)
+        had_utf8_chars: bool | None = Field(default=None)
+        had_escape_sequences: bool | None = Field(default=None)
+        validation_status: str | None = Field(default=None)
+        validation_warnings: list[str] | None = Field(default=None)
+        validation_errors: list[str] | None = Field(default=None)
+
+        def to_dict(self) -> dict[str, bool | str | list[str]]:
+            """Convert to dictionary, excluding None values."""
+            result: dict[str, bool | str | list[str]] = {}
+            for field_name in type(self).model_fields:
+                value = getattr(self, field_name)
+                if value is not None:
+                    result[field_name] = value
+            return result
+
+    # Backward compatibility aliases
+    DNStatisticsFlags = DNStatisticsFlagsModel
+    _DNStatisticsFlags = DNStatisticsFlagsModel
 
     class DNStatistics(FlextLdifModelsBase):
         """Statistics tracking for DN transformations and validation.
@@ -3155,24 +3156,35 @@ class FlextLdifModelsDomains:
             cleaned_dn: str,
             normalized_dn: str,
             transformations: list[str] | None = None,
-            **flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
+            flags: FlextLdifModelsDomains.DNStatisticsFlagsModel | None = None,
         ) -> Self:
-            """Create statistics with transformation details.
-
-            Args:
-                original_dn: Original DN string
-                cleaned_dn: Cleaned DN string
-                normalized_dn: Normalized DN string
-                transformations: List of transformation types applied
-                **flags: Optional DNStatistics fields (type-safe via DNStatisticsFlags)
-
-            """
+            """Create statistics with transformation details."""
+            warnings_val: list[str] = []
+            errors_val: list[str] = []
+            if flags:
+                if flags.validation_warnings:
+                    warnings_val = flags.validation_warnings
+                if flags.validation_errors:
+                    errors_val = flags.validation_errors
             return cls(
                 original_dn=original_dn,
                 cleaned_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
                 transformations=transformations if transformations is not None else [],
-                **flags,
+                had_tab_chars=bool(flags.had_tab_chars) if flags else False,
+                had_trailing_spaces=bool(flags.had_trailing_spaces) if flags else False,
+                had_leading_spaces=bool(flags.had_leading_spaces) if flags else False,
+                had_extra_spaces=bool(flags.had_extra_spaces) if flags else False,
+                was_base64_encoded=bool(flags.was_base64_encoded) if flags else False,
+                had_utf8_chars=bool(flags.had_utf8_chars) if flags else False,
+                had_escape_sequences=bool(flags.had_escape_sequences)
+                if flags
+                else False,
+                validation_status=flags.validation_status
+                if flags and flags.validation_status
+                else "valid",
+                validation_warnings=warnings_val,
+                validation_errors=errors_val,
             )
 
     class EntryStatistics(FlextLdifModelsBase):

@@ -508,10 +508,8 @@ class FlextLdifConversion(
             return analysis
 
         # batch_result.value is BatchResultDict when success
-        batch_data_raw: t.BatchResultDictBase | dict[str, t.GeneralValueType] = (
-            batch_result.map_or({})
-        )
-        # Type narrowing: BatchResultDictBase is a TypedDict, extract results safely
+        batch_data_raw: dict[str, t.GeneralValueType] = batch_result.map_or({})
+        # Type narrowing: BatchResultDict is a Pydantic model, extract results safely
         results_list_raw: list[t.GeneralValueType] = []
         if isinstance(batch_data_raw, dict):
             results_raw = batch_data_raw.get("results", [])
