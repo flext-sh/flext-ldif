@@ -64,7 +64,10 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 t = TestsFlextLdifTypes
 tt = TestsFlextLdifTypes
 
+GenericFieldsDict = TestsFlextLdifTypes.Tests.Fixtures.GenericFieldsDict
+
 __all__ = [
+    "GenericFieldsDict",
     "TestsFlextLdifTypes",
     "t",
     "tt",

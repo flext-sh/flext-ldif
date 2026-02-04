@@ -144,11 +144,8 @@ orcldasisenabled: 1
         assert original_entry.metadata is not None
         assert "original_dn_complete" in original_entry.metadata.extensions
 
-        # Write back to OID format
-        write_result = writer.write(
-            entries=[original_entry],
-            server_type="oid",
-        )
+        # Write back to OID format (FlextLdif.write accepts entries only)
+        write_result = writer.write(entries=[original_entry])
         assert write_result.is_success
 
         written_ldif = write_result.value

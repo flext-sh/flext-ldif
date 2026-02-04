@@ -71,6 +71,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         GIVEN_NAME: Final[str] = "givenName"
         MAIL: Final[str] = "mail"
         OBJECT_CLASS: Final[str] = "objectClass"
+        OBJECTCLASS: Final[str] = "objectClass"
         DESCRIPTION: Final[str] = "description"
         TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
         STREET: Final[str] = "street"
@@ -79,9 +80,16 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         POSTAL_CODE: Final[str] = "postalCode"
         ORGANIZATION: Final[str] = "o"
         ORGANIZATIONAL_UNIT: Final[str] = "ou"
+        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
         USER_PASSWORD: Final[str] = "userPassword"
         JPEG_PHOTO: Final[str] = "jpegPhoto"
         EMPLOYEE_ID: Final[str] = "employeeID"
+        DN: Final[str] = "dn"
+        UID: Final[str] = "uid"
+        PERSON: Final[str] = "person"
+        TOP: Final[str] = "top"
+        INETORGPERSON: Final[str] = "inetOrgPerson"
+        INET_ORG_PERSON: Final[str] = "inetOrgPerson"
 
     # =========================================================================
     # FIXTURE DIRECTORY CONSTANTS
@@ -259,21 +267,6 @@ uid: testuser
     # =========================================================================
     # FIXTURE CONSTANTS (Consolidated from tests/unit/quirks/servers/fixtures/)
     # =========================================================================
-
-    class Names:
-        """Common LDAP attribute names for testing."""
-
-        CN: Final[str] = "cn"
-        SN: Final[str] = "sn"
-        MAIL: Final[str] = "mail"
-        UID: Final[str] = "uid"
-        DN: Final[str] = "dn"
-        OBJECTCLASS: Final[str] = "objectClass"
-        PERSON: Final[str] = "person"
-        TOP: Final[str] = "top"
-        INETORGPERSON: Final[str] = "inetOrgPerson"  # Alias for backward compatibility
-        INET_ORG_PERSON: Final[str] = "inetOrgPerson"  # Matches source constants naming
-        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
 
     class General:
         """General test constants (from fixtures/general_constants.py)."""

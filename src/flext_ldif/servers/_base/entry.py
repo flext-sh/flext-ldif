@@ -441,7 +441,7 @@ class FlextLdifServersBaseEntry(
         - Missing DN -> return fail("Entry DN is None")
         - Empty attributes -> return ok("dn: ...
 
-")
+        ")
         - Special chars in DN -> proper escaping
 
         Args:
