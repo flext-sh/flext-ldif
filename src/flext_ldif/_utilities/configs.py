@@ -17,7 +17,7 @@ NOTE: All StrEnums are centralized in constants.py per FLEXT pattern.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, TypedDict
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,10 +47,18 @@ EscapeHandlingOption = c.Ldif.EscapeHandlingOption
 #     escapes: EscapeHandlingOption
 
 
-class MetadataPreserveParams(TypedDict, total=False):
-    original: bool
-    tracking: bool
-    validation: bool
+class MetadataPreserveConfig(BaseModel):
+    """Configuration for metadata preservation. Replaces TypedDict."""
+
+    model_config = ConfigDict(frozen=False)
+
+    original: bool = Field(default=False)
+    tracking: bool = Field(default=False)
+    validation: bool = Field(default=False)
+
+
+# Backward compatibility
+MetadataPreserveParams = MetadataPreserveConfig
 
 
 # =========================================================================

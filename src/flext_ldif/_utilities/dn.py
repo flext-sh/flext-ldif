@@ -813,11 +813,7 @@ class FlextLdifUtilitiesDN:
             validation_errors_raw if isinstance(validation_errors_raw, list) else []
         )
 
-        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
-            original_dn=original_dn,
-            cleaned_dn=result,
-            normalized_dn=result,
-            transformations=transformations,
+        stats_flags = FlextLdifModelsDomains.DNStatisticsFlagsModel(
             had_tab_chars=flags.get("had_tab_chars", False) is True,
             had_trailing_spaces=flags.get("had_trailing_spaces", False) is True,
             had_leading_spaces=flags.get("had_leading_spaces", False) is True,
@@ -828,6 +824,13 @@ class FlextLdifUtilitiesDN:
             validation_status=validation_status,
             validation_warnings=validation_warnings,
             validation_errors=validation_errors,
+        )
+        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+            original_dn=original_dn,
+            cleaned_dn=result,
+            normalized_dn=result,
+            transformations=transformations,
+            flags=stats_flags,
         )
         return result, stats_domain
 

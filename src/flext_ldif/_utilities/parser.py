@@ -10,9 +10,9 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
-from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -24,11 +24,16 @@ from flext_ldif.typings import t
 logger = FlextLogger(__name__)
 
 
-class MetadataDict(TypedDict, total=False):
-    """Type-safe dictionary for parsed metadata structures."""
+class MetadataModel(BaseModel):
+    """Pydantic model for parsed metadata structures. Replaces TypedDict."""
 
-    extensions: t.Ldif.Extensions.ExtensionsDict | None
-    # Other metadata fields
+    model_config = ConfigDict(frozen=False, extra="allow")
+
+    extensions: t.Ldif.Extensions.ExtensionsDict | None = Field(default=None)
+
+
+# Backward compatibility
+MetadataDict = MetadataModel
 
 
 # Type aliases moved to m.Types
@@ -50,10 +55,10 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def ext(
-        metadata: MetadataDict,
+        metadata: MetadataModel,
     ) -> t.Ldif.Extensions.ExtensionsDict:
         """Extract extension information from parsed metadata."""
-        result = metadata.get("extensions")
+        result = metadata.extensions
         if result is None or not isinstance(result, dict):
             empty: t.Ldif.Extensions.ExtensionsDict = {}
             return empty
