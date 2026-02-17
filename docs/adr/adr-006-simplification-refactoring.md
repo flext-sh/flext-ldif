@@ -433,7 +433,7 @@ tests/unit/
 
 - **ADR-001**: RFC-First Design - Foundation pattern maintained
 - **ADR-005**: Pluggable Quirks System - Structure preserved
-- **flext-core Documentation**: <https://github.com/flext/flext-core>
+- **flext-core Documentation**: <https://github.com/flext-sh/flext-core>
 - **Python 3.13+ Pattern Matching**: PEP 636
 - **Flat Module Structure Examples**: requests, httpx, pydantic
 

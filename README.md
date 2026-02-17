@@ -3,7 +3,7 @@
 > **Enterprise-grade LDIF processing for the FLEXT platform**
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](https://github.com/flext/flext-ldif)
+[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](https://github.com/flext-sh/flext-ldif)
 [![Type Safety](https://img.shields.io/badge/type%20safety-100%25-brightgreen.svg)](https://github.com/microsoft/pyright)
 [![Test Coverage](https://img.shields.io/badge/coverage-78%25-green.svg)](https://pytest.org)
 [![Tests](https://img.shields.io/badge/tests-1766%20passing-brightgreen.svg)](https://pytest.org)
@@ -11,7 +11,7 @@
 
 **LDIF (LDAP Data Interchange Format)** processing library providing RFC 2849/4512 compliant parsing, validation, and server-specific adaptations for enterprise directory migrations and data operations.
 
-Part of the [FLEXT](https://github.com/flext/flext) ecosystem.
+Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 
 ## 🚀 Quick Start
 
@@ -325,7 +325,7 @@ flext-ldif is part of the [FLEXT platform](https://github.com/flext) for enterpr
 
 ```bash
 # Clone repository
-git clone https://github.com/flext/flext-ldif.git
+git clone https://github.com/flext-sh/flext-ldif.git
 cd flext-ldif
 
 # Install dependencies
@@ -389,8 +389,8 @@ Part of the **FLEXT Ecosystem** - Enterprise data integration platform.
 ## 📞 Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: <https://github.com/flext/flext-ldif/issues>
-- **Discussions**: <https://github.com/flext/flext-ldif/discussions>
+- **Issues**: <https://github.com/flext-sh/flext-ldif/issues>
+- **Discussions**: <https://github.com/flext-sh/flext-ldif/discussions>
 - **Email**: <support@flext-platform.org>
 
 ---
