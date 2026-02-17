@@ -23,8 +23,9 @@ class TestsFlextLdifEntryResultHelpers(s):
             "cn=user2,dc=example,dc=com",
             {"cn": ["user2"], "objectClass": ["person"]},
         )
+        entries: list[m.Ldif.Entry] = [entry1, entry2]
         result = m.Ldif.EntryResult.from_entries(
-            [entry1, entry2],
+            entries,
             category="users",
         )
         # Verify entries_by_category using get() for type safety

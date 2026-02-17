@@ -107,6 +107,30 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             server_type=server_type_to_use,
         )
 
+    @staticmethod
+    def _to_optional_str(value: object) -> str | None:
+        if isinstance(value, str):
+            return value
+        if value and value is not True:
+            return str(value)
+        return None
+
+    @staticmethod
+    def _to_required_str(value: object, default: str = "") -> str:
+        if isinstance(value, str):
+            return value
+        if value:
+            return str(value)
+        return default
+
+    @staticmethod
+    def _to_optional_int(value: object) -> int | None:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value:
+            return int(value)
+        return None
+
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -219,76 +243,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 _server_type=server_type_value,
             )
 
-            oid_value = parsed["oid"]
-            oid: str = oid_value if isinstance(oid_value, str) else str(oid_value or "")
-
-            name_value = parsed["name"]
-            name: str = (
-                name_value
-                if isinstance(name_value, str)
-                else (str(name_value) if name_value else "")
-            )
-
-            desc_value = parsed["desc"]
-            desc: str | None = (
-                desc_value
-                if isinstance(desc_value, str)
-                else (
-                    str(desc_value) if desc_value and desc_value is not True else None
-                )
-            )
-
-            syntax_value = parsed["syntax"]
-            syntax: str | None = (
-                syntax_value
-                if isinstance(syntax_value, str)
-                else (
-                    str(syntax_value)
-                    if syntax_value and syntax_value is not True
-                    else None
-                )
-            )
-
-            length_value = parsed["length"]
-            if isinstance(length_value, int):
-                length: int | None = length_value
-            elif isinstance(length_value, str) and length_value:
-                length = int(length_value)
-            else:
-                length = None
-
-            equality_value = parsed["equality"]
-            equality: str | None = (
-                equality_value
-                if isinstance(equality_value, str)
-                else (
-                    str(equality_value)
-                    if equality_value and equality_value is not True
-                    else None
-                )
-            )
-
-            ordering_value = parsed["ordering"]
-            ordering: str | None = (
-                ordering_value
-                if isinstance(ordering_value, str)
-                else (
-                    str(ordering_value)
-                    if ordering_value and ordering_value is not True
-                    else None
-                )
-            )
-
-            substr_value = parsed["substr"]
-            substr: str | None = (
-                substr_value
-                if isinstance(substr_value, str)
-                else (
-                    str(substr_value)
-                    if substr_value and substr_value is not True
-                    else None
-                )
-            )
+            oid: str = self._to_required_str(parsed["oid"])
+            name: str = self._to_required_str(parsed["name"])
+            desc: str | None = self._to_optional_str(parsed["desc"])
+            syntax: str | None = self._to_optional_str(parsed["syntax"])
+            length: int | None = self._to_optional_int(parsed["length"])
+            equality: str | None = self._to_optional_str(parsed["equality"])
+            ordering: str | None = self._to_optional_str(parsed["ordering"])
+            substr: str | None = self._to_optional_str(parsed["substr"])
 
             single_value_value = parsed["single_value"]
             single_value: bool = (
@@ -300,23 +262,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 isinstance(no_user_mod_value, bool) and no_user_mod_value
             )
 
-            sup_value = parsed["sup"]
-            sup: str | None = (
-                sup_value
-                if isinstance(sup_value, str)
-                else (str(sup_value) if sup_value and sup_value is not True else None)
-            )
-
-            usage_value = parsed["usage"]
-            usage: str | None = (
-                usage_value
-                if isinstance(usage_value, str)
-                else (
-                    str(usage_value)
-                    if usage_value and usage_value is not True
-                    else None
-                )
-            )
+            sup: str | None = self._to_optional_str(parsed["sup"])
+            usage: str | None = self._to_optional_str(parsed["usage"])
 
             attribute = m.Ldif.SchemaAttribute(
                 oid=oid,
@@ -356,8 +303,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> dict[str, t.GeneralValueType]:
-
+        ) -> t.Ldif.ModelMetadata.ParsedObjectClassDict:
             return FlextLdifUtilitiesSchema.parse_objectclass(definition)
 
         parse_result: FlextResult[m.Ldif.SchemaObjectClass] = (
@@ -486,30 +432,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 metadata_extensions,
             )
 
-            oc_oid_value = parsed["oid"]
-            oc_oid: str = (
-                oc_oid_value
-                if isinstance(oc_oid_value, str)
-                else str(oc_oid_value or "")
-            )
-
-            oc_name_value = parsed["name"]
-            oc_name: str = (
-                oc_name_value
-                if isinstance(oc_name_value, str)
-                else (str(oc_name_value) if oc_name_value else "")
-            )
-
-            oc_desc_value = parsed["desc"]
-            oc_desc: str | None = (
-                oc_desc_value
-                if isinstance(oc_desc_value, str)
-                else (
-                    str(oc_desc_value)
-                    if oc_desc_value and oc_desc_value is not True
-                    else None
-                )
-            )
+            oc_oid: str = self._to_required_str(parsed["oid"])
+            oc_name: str = self._to_required_str(parsed["name"])
+            oc_desc: str | None = self._to_optional_str(parsed["desc"])
 
             oc_sup_value = parsed["sup"]
             if isinstance(oc_sup_value, str):
@@ -519,12 +444,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             else:
                 oc_sup = None
 
-            oc_kind_value = parsed["kind"]
-            oc_kind: str = (
-                oc_kind_value
-                if isinstance(oc_kind_value, str)
-                else str(oc_kind_value or "STRUCTURAL")
-            )
+            oc_kind: str = self._to_required_str(parsed["kind"], default="STRUCTURAL")
 
             oc_must_value = parsed["must"]
             oc_must: list[str] | None = (
@@ -759,7 +679,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_model: m.Ldif.SchemaAttribute | None = None,
         oc_model: m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
-    ) -> t.Ldif.SchemaModelOrString: ...
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     def __call__(
         self,
@@ -768,7 +688,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_model: m.Ldif.SchemaAttribute | None = None,
         oc_model: m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
-    ) -> t.Ldif.SchemaModelOrString:
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
         if attr_definition is not None:
@@ -782,13 +702,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         result = self.execute(data=data, operation=operation)
 
-        return result.value
+        if isinstance(result.value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)):
+            return result.value
+        raise TypeError(f"Unexpected return type: {type(result.value)}")
 
     def __new__(
         cls,
         schema_service: object | None = None,
         parent_quirk: object | None = None,
-        **kwargs: t.Ldif.FlexibleKwargsMutable,
+        **kwargs: t.GeneralValueType,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)

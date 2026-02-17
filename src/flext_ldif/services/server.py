@@ -73,6 +73,10 @@ class FlextLdifServer(FlextRegistry):
             return r[FlextLdifServersBase].ok(result.value)
         return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
 
+    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+        """Get base quirk for a given server type."""
+        return self.quirk(server_type)
+
     def list_registered_servers(self) -> list[str]:
         """List all registered server types."""
         return sorted(self.list_class_plugins(self.SERVERS).value or [])

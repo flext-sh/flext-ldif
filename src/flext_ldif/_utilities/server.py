@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import re
 from typing import Literal, TypeGuard
@@ -10,6 +11,7 @@ from typing import Literal, TypeGuard
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._shared import normalize_server_type as normalize_server_type_shared
 from flext_ldif.constants import c
 
 # Import FlextLdifModelsDomains for type annotations
@@ -58,10 +60,10 @@ class FlextLdifUtilitiesServer:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
-        constants = getattr(cls_with_constants, "Constants", None)
-        if constants is None:
+        constants_obj: object = getattr(cls_with_constants, "Constants", None)
+        if not isinstance(constants_obj, type):
             return None
-        server_type_raw: object = getattr(constants, "SERVER_TYPE", None)
+        server_type_raw: object = getattr(constants_obj, "SERVER_TYPE", None)
         if (
             server_type_raw is not None
             and isinstance(server_type_raw, str)
@@ -81,15 +83,18 @@ class FlextLdifUtilitiesServer:
             # Check if module exists before importing
             module_spec = importlib.util.find_spec(target_cls.__module__)
             if module_spec is not None:
-                parent_module = __import__(
-                    target_cls.__module__,
-                    fromlist=[parent_class_name],
+                parent_module = importlib.import_module(target_cls.__module__)
+                parent_server_cls_obj: object = getattr(
+                    parent_module,
+                    parent_class_name,
+                    None,
                 )
-                parent_server_cls = getattr(parent_module, parent_class_name, None)
-                if parent_server_cls is not None:
+                if isinstance(parent_server_cls_obj, type):
                     # Extract server type from parent class constants
                     srv = FlextLdifUtilitiesServer
-                    result = srv._extract_server_type_from_constants(parent_server_cls)
+                    result = srv._extract_server_type_from_constants(
+                        parent_server_cls_obj,
+                    )
                     if result is not None:
                         return result
 
@@ -147,17 +152,14 @@ class FlextLdifUtilitiesServer:
         module_spec = importlib.util.find_spec(module_name)
         if module_spec is None:
             return None
-        constants_module = __import__(
-            module_name,
-            fromlist=[f"FlextLdifServers{server_name}Constants"],
-        )
-        constants_cls = getattr(
+        constants_module = importlib.import_module(module_name)
+        constants_cls_obj: object = getattr(
             constants_module,
             f"FlextLdifServers{server_name}Constants",
             None,
         )
-        if constants_cls is not None:
-            server_type_value: object = getattr(constants_cls, "SERVER_TYPE", None)
+        if isinstance(constants_cls_obj, type):
+            server_type_value: object = getattr(constants_cls_obj, "SERVER_TYPE", None)
             if isinstance(server_type_value, str) and _is_valid_server_type_literal(
                 server_type_value,
             ):
@@ -306,46 +308,9 @@ class FlextLdifUtilitiesServer:
         "generic",
     ]:
         """Normalize server type string to canonical ServerTypes enum value."""
-        server_type_lower = server_type.lower().strip()
-        # Map aliases to canonical forms
-        # Use full path to ServerTypes to avoid name resolution issues
-        alias_map: dict[str, str] = {
-            "active_directory": c.Ldif.ServerTypes.AD.value,
-            "activedirectory": c.Ldif.ServerTypes.AD.value,
-            "oracle_oid": c.Ldif.ServerTypes.OID.value,
-            "oracleoid": c.Ldif.ServerTypes.OID.value,
-            "oracle_oud": c.Ldif.ServerTypes.OUD.value,
-            "oracleoud": c.Ldif.ServerTypes.OUD.value,
-            "openldap": c.Ldif.ServerTypes.OPENLDAP2.value,  # "openldap" maps to "openldap2"
-            "openldap1": c.Ldif.ServerTypes.OPENLDAP1.value,
-            "openldap2": c.Ldif.ServerTypes.OPENLDAP2.value,
-            "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
-            "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
-            "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI.value,
-            "novell_edirectory": c.Ldif.ServerTypes.NOVELL.value,
-            "novelledirectory": c.Ldif.ServerTypes.NOVELL.value,
-            "edirectory": c.Ldif.ServerTypes.NOVELL.value,
-            "apache_directory": c.Ldif.ServerTypes.APACHE.value,
-            "apachedirectory": c.Ldif.ServerTypes.APACHE.value,
-            "apacheds": c.Ldif.ServerTypes.APACHE.value,
-            "389ds": c.Ldif.ServerTypes.DS389.value,
-            "389directory": c.Ldif.ServerTypes.DS389.value,
-        }
-        # Check alias map first
-        if server_type_lower in alias_map:
-            # alias_map values are guaranteed valid ServerTypeLiterals
-            alias_value = alias_map[server_type_lower]
-            if _is_valid_server_type_literal(alias_value):
-                return alias_value
-        # Check if it's already a canonical value
-        # ServerTypes is a StrEnum, iterate over enum members
-        for server_enum in c.Ldif.ServerTypes.__members__.values():
-            if server_enum.value == server_type_lower:
-                enum_value = server_enum.value
-                if _is_valid_server_type_literal(enum_value):
-                    return enum_value
-        # Not found
-        # ServerTypes is a StrEnum, iterate over enum members
+        normalized = normalize_server_type_shared(server_type).value
+        if _is_valid_server_type_literal(normalized):
+            return normalized
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
         msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
         raise ValueError(msg)
@@ -358,11 +323,11 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_server_type_value(server_type: str) -> str:
         """Get server type enum value by name."""
-        server_enum = getattr(c.Ldif.ServerTypes, server_type.upper(), None)
+        server_enum = c.Ldif.ServerTypes.__members__.get(server_type.upper())
         if server_enum is None:
             error_msg = f"Server type {server_type} not found"
             raise AttributeError(error_msg)
-        return str(server_enum.value)
+        return server_enum.value
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
@@ -382,20 +347,20 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_sort_target_value(name: str) -> str:
         """Get sort target enum value by name."""
-        sort_target_enum = getattr(c.Ldif.SortTarget, name.upper(), None)
+        sort_target_enum = c.Ldif.SortTarget.__members__.get(name.upper())
         if sort_target_enum is None:
             error_msg = f"Sort target {name} not found"
             raise AttributeError(error_msg)
-        return str(sort_target_enum.value)
+        return sort_target_enum.value
 
     @staticmethod
     def get_sort_strategy_value(name: str) -> str:
         """Get sort strategy enum value by name."""
-        sort_strategy_enum = getattr(c.Ldif.SortStrategy, name.upper(), None)
+        sort_strategy_enum = c.Ldif.SortStrategy.__members__.get(name.upper())
         if sort_strategy_enum is None:
             error_msg = f"Sort strategy {name} not found"
             raise AttributeError(error_msg)
-        return str(sort_strategy_enum.value)
+        return sort_strategy_enum.value
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:

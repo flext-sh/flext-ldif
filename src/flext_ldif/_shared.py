@@ -39,6 +39,14 @@ def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
         "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
         "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
         "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
+        "novell_edirectory": c.Ldif.ServerTypes.NOVELL,
+        "novelledirectory": c.Ldif.ServerTypes.NOVELL,
+        "edirectory": c.Ldif.ServerTypes.NOVELL,
+        "apache_directory": c.Ldif.ServerTypes.APACHE,
+        "apachedirectory": c.Ldif.ServerTypes.APACHE,
+        "apacheds": c.Ldif.ServerTypes.APACHE,
+        "389ds": c.Ldif.ServerTypes.DS389,
+        "389directory": c.Ldif.ServerTypes.DS389,
     }
     # Check alias map first
     if server_type_lower in alias_map:

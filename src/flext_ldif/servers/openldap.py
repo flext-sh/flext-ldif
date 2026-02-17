@@ -13,7 +13,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -249,7 +248,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """OpenLDAP 2.x ACL quirk (nested)."""
 
-        def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
+        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)

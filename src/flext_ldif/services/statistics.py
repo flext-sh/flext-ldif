@@ -114,7 +114,7 @@ class FlextLdifStatistics(
         for entry in entries:
             object_class_distribution.update(entry.get_objectclass_names())
 
-            if entry.metadata and entry.metadata.extensions:
+            if entry.metadata is not None and entry.metadata.extensions is not None:
                 st_value = u.take(
                     entry.metadata.extensions,
                     "server_type",

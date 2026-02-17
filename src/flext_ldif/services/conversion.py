@@ -87,6 +87,19 @@ class FlextLdifConversion(
     """Facade for universal, model-driven quirk-to-quirk conversion."""
 
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
+    _PERMISSION_KEY_MAPPING: ClassVar[dict[str, t.GeneralValueType]] = {
+        "read": "read",
+        "write": "write",
+        "add": "add",
+        "delete": "delete",
+        "search": "search",
+        "compare": "compare",
+        "self_write": "selfwrite",
+        "proxy": "proxy",
+        "browse": "browse",
+        "auth": "auth",
+        "all": "all",
+    }
 
     @staticmethod
     def _default_dn_registry() -> m.Ldif.DnRegistry:
@@ -280,9 +293,7 @@ class FlextLdifConversion(
             return value if value is not None else ""
         if isinstance(value, (list, tuple)):
             return list(value)
-        if isinstance(value, dict):
-            return value
-
+        # Removed dict support - strict typing
         return str(value) if value is not None else ""
 
     @staticmethod
@@ -291,12 +302,8 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> dict[str, dict[str, str]]:
         """Analyze boolean conversions for target compatibility."""
-        analysis: dict[str, dict[str, str]] = {}
-        if not boolean_conversions:
-            return analysis
-
-        if not isinstance(boolean_conversions, dict):
-            return analysis
+        if not boolean_conversions or not isinstance(boolean_conversions, dict):
+            return {}
 
         boolean_conv_typed: dict[str, FlextTypes.GeneralValueType] = dict(
             boolean_conversions
@@ -350,7 +357,7 @@ class FlextLdifConversion(
         )
 
         if not batch_result.is_success:
-            return analysis
+            return {}
 
         batch_data = batch_result.map_or(None)
 
@@ -372,11 +379,9 @@ class FlextLdifConversion(
 
         reduced_raw = u.Ldif.reduce_dict(results_list)
 
-        evolved_raw = u.Ldif.evolve(dict(analysis), reduced_raw)
-
         result: dict[str, dict[str, str]] = {}
-        if isinstance(evolved_raw, dict):
-            for k, v in evolved_raw.items():
+        if isinstance(reduced_raw, dict):
+            for k, v in reduced_raw.items():
                 if isinstance(k, str) and isinstance(v, dict):
                     result[k] = {str(kk): str(vv) for kk, vv in v.items()}
         return result
@@ -903,21 +908,8 @@ class FlextLdifConversion(
         mapped_perms: dict[str, bool],
     ) -> dict[str, bool | None]:
         """Build permissions dict with standard keys."""
-        key_mapping: dict[str, t.GeneralValueType] = {
-            "read": "read",
-            "write": "write",
-            "add": "add",
-            "delete": "delete",
-            "search": "search",
-            "compare": "compare",
-            "self_write": "selfwrite",
-            "proxy": "proxy",
-            "browse": "browse",
-            "auth": "auth",
-            "all": "all",
-        }
         map_result = u.Ldif.map_dict(
-            key_mapping,
+            FlextLdifConversion._PERMISSION_KEY_MAPPING,
             mapper=lambda _key, mapped_key: u.take(
                 mapped_perms,
                 str(mapped_key) if mapped_key is not None else "",
@@ -1012,7 +1004,6 @@ class FlextLdifConversion(
         def normalize_server_type_wrapper(
             value: t.GeneralValueType,
         ) -> t.GeneralValueType:
-            """Wrapper for normalize_server_type to match maybe signature."""
             if isinstance(value, str):
                 return u.Ldif.Server.normalize_server_type(value)
             return value
@@ -1026,6 +1017,7 @@ class FlextLdifConversion(
             mapper=normalize_server_type_wrapper,
         )
 
+        mapping_type = "none"
         pair = (normalized_source, normalized_target)
         if pair == ("oid", "oud"):
             mapping_type = "oid_to_oud"
@@ -1036,8 +1028,6 @@ class FlextLdifConversion(
             and config.original_acl.permissions is not None
         ):
             mapping_type = "preserve_original"
-        else:
-            mapping_type = "none"
 
         logger.debug(
             "ACL mapping decision",
@@ -1306,7 +1296,7 @@ class FlextLdifConversion(
 
             entry_metadata = m.Ldif.QuirkMetadata.create_for(
                 source_server_type,
-                extensions={},
+                extensions=None,
             )
             entry_metadata.acls = [acl]
 
@@ -1670,7 +1660,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _parse_schema_item_with_schema(
-        parse_fn: Callable[[str], r[object]],
+        parse_fn: Callable[..., r[_TSchemaItem]],
         value: str,
         *,
         expected_type: type[_TSchemaItem],
@@ -1755,7 +1745,12 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        model_list: Sequence[t.Ldif.ConvertibleModel],
+        model_list: Sequence[
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ],
     ) -> r[
         list[
             m.Ldif.Entry
@@ -1961,6 +1956,9 @@ class FlextLdifConversion(
 
         return {
             "attribute": bool(support.get("attribute", 0)),
+            "objectClass": bool(
+                support.get("objectclass", 0),
+            ),
             "objectclass": bool(
                 support.get("objectclass", 0),
             ),

@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
+from typing import TypeGuard
 
 from flext_core import FlextLogger, FlextRuntime, t
 
@@ -143,6 +144,39 @@ class FlextLdifUtilitiesMetadata:
                 )
 
     @staticmethod
+    def _is_metadata_scalar(value: object) -> bool:
+        return isinstance(value, (str, int, float, bool, datetime, type(None)))
+
+    @staticmethod
+    def _is_metadata_scalar_typed(
+        value: object,
+    ) -> TypeGuard[str | int | float | bool | datetime | None]:
+        return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
+
+    @staticmethod
+    def _normalize_mapping_list(
+        values: Sequence[object],
+    ) -> list[str | int | float | bool | datetime | None]:
+        normalized: list[str | int | float | bool | datetime | None] = [
+            item
+            for item in values
+            if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item)
+        ]
+        return normalized
+
+    @staticmethod
+    def _normalize_dict_list(
+        values: Sequence[object],
+    ) -> list[str | int | float | bool | datetime | None]:
+        normalized: list[str | int | float | bool | datetime | None] = []
+        for item in values:
+            if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
+                normalized.append(item)
+            else:
+                normalized.append(str(item))
+        return normalized
+
+    @staticmethod
     def _track_metadata_item(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata_key: str,
@@ -181,20 +215,9 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(v, (str, bool, int, float)) or v is None:
                 metadata_typed[k] = v
             elif isinstance(v, list):
-                safe_list = [
-                    item
-                    for item in v
-                    if isinstance(item, (str, int, float, bool, type(None), datetime))
-                ]
-                list_typed: list[str | int | float | bool | datetime | None] = [
-                    str(item)
-                    if not isinstance(
-                        item, (str, int, float, bool, datetime, type(None))
-                    )
-                    else item
-                    for item in safe_list
-                ]
-                metadata_typed[k] = list_typed
+                metadata_typed[k] = FlextLdifUtilitiesMetadata._normalize_mapping_list(
+                    v
+                )
             elif isinstance(v, dict):
                 safe_dict_vals: dict[
                     str,
@@ -210,17 +233,10 @@ class FlextLdifUtilitiesMetadata:
                     if not isinstance(k_inner, str):
                         continue
                     if isinstance(v_inner, list):
-                        safe_dict_vals[k_inner] = [
-                            item
-                            if isinstance(
-                                item, (str, int, float, bool, datetime, type(None))
-                            )
-                            else str(item)
-                            for item in v_inner
-                        ]
-                    elif isinstance(
-                        v_inner, (str, int, float, bool, datetime, type(None))
-                    ):
+                        safe_dict_vals[k_inner] = (
+                            FlextLdifUtilitiesMetadata._normalize_dict_list(v_inner)
+                        )
+                    elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(v_inner):
                         safe_dict_vals[k_inner] = v_inner
                     else:
                         safe_dict_vals[k_inner] = str(v_inner)
@@ -237,26 +253,17 @@ class FlextLdifUtilitiesMetadata:
                     | None,
                 ] = {}
                 for mk, mv in v.items():
-                    if isinstance(mv, str | int | float | bool | datetime | type(None)):
+                    if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(mv):
                         nested_dict[str(mk)] = mv
                     elif isinstance(mv, list):
-                        nested_dict[str(mk)] = [
-                            x
-                            for x in mv
-                            if isinstance(
-                                x, str | int | float | bool | datetime | type(None)
-                            )
-                        ]
+                        nested_dict[str(mk)] = (
+                            FlextLdifUtilitiesMetadata._normalize_mapping_list(mv)
+                        )
                 metadata_typed[k] = nested_dict
             elif isinstance(v, Sequence):
-                list_from_seq: list[str | int | float | bool | datetime | None] = [
-                    item
-                    for item in v
-                    if isinstance(
-                        item, str | int | float | bool | datetime | type(None)
-                    )
-                ]
-                metadata_typed[k] = list_from_seq
+                metadata_typed[k] = FlextLdifUtilitiesMetadata._normalize_mapping_list(
+                    v
+                )
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed
         )
@@ -651,7 +658,19 @@ class FlextLdifUtilitiesMetadata:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             if isinstance(extracted_raw, dict):
-                combined.update(extracted_raw)
+                for key, value in extracted_raw.items():
+                    if not isinstance(key, str):
+                        continue
+                    if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
+                        combined[key] = value
+                    elif isinstance(value, list):
+                        combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
+                            value
+                        )
+                    elif isinstance(value, dict):
+                        combined[key] = str(value)
+                    else:
+                        combined[key] = str(value)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )

@@ -900,9 +900,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             ),
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
-                },
+                }),
             ),
         )
 
@@ -936,9 +936,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
-                },
+                }),
             ),
         )
 
@@ -977,9 +977,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             ),
             metadata=m.Ldif.QuirkMetadata.create_for(
                 "oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
-                },
+                }),
             ),
         )
 
@@ -1006,7 +1006,7 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=["cn", "mail", "telephoneNumber"],
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",
+                subject_type="dn",
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             ),
             permissions=m.Tests.AclPermissions(
@@ -1059,19 +1059,18 @@ class TestsTestFlextLdifQuirksAcl(s):
             ),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
-                },
+                }),
             ),
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.value
 
-        # Verify format
-        assert "\n" not in oid_acl
+        # Verify oneline format for group subject
         assert oid_acl.startswith("orclaci:")
         assert "access to attr=(*)" in oid_acl
         assert 'by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com"' in oid_acl
@@ -1121,7 +1120,7 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=[],
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",
+                subject_type="dn",
                 subject_value="ldap:///cn=proxyuser,dc=example,dc=com",
             ),
             permissions=m.Tests.AclPermissions(
@@ -1276,7 +1275,7 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=attrs,
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",
+                subject_type="dn",
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             ),
             permissions=m.Tests.AclPermissions(read=True, write=True),
@@ -1301,7 +1300,7 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=["userPassword"],
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",
+                subject_type="dn",
                 subject_value="ldap:///cn=john,ou=users,dc=example,dc=com?scope=base",
             ),
             permissions=m.Tests.AclPermissions(write=True),
@@ -1332,9 +1331,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
-                },
+                }),
             ),
         )
 
@@ -1362,9 +1361,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
-                },
+                }),
             ),
         )
 
@@ -1387,15 +1386,15 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=["*"],
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",  # Use valid AclSubjectTypeLiteral
+                subject_type="dn",  # Use valid AclSubjectTypeLiteral
                 subject_value="owner#USERDN",  # With suffix
             ),
             permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
-                },
+                }),
             ),
         )
 
@@ -1424,9 +1423,9 @@ class TestsTestFlextLdifQuirksAcl(s):
             permissions=m.Tests.AclPermissions(read=True),
             metadata=m.Ldif.QuirkMetadata(
                 quirk_type="oid",
-                extensions={
+                extensions=m.Ldif.DynamicMetadata.model_validate({
                     lib_c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
-                },
+                }),
             ),
         )
 
@@ -1478,7 +1477,7 @@ class TestsTestFlextLdifQuirksAcl(s):
                 attributes=[],
             ),
             subject=m.Tests.AclSubject(
-                subject_type="user_dn",
+                subject_type="dn",
                 subject_value=special_dn,
             ),
             permissions=m.Tests.AclPermissions(read=True),

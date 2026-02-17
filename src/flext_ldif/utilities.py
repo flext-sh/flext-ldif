@@ -2058,7 +2058,7 @@ class FlextLdifUtilities(u_core):
         ) -> dict[str, str]:
             """Invert dict using u.map_dict() pattern (mnemonic: iv)."""
             if isinstance(obj, dict):
-                str_dict: t.StringMapping = {k: str(v) for k, v in obj.items()}
+                str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
                 inverted = u.mapper().invert_dict(str_dict)
                 return dict(inverted)
             return {}

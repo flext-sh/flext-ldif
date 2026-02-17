@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -130,7 +130,7 @@ class FlextLdifUtilitiesDecorators:
             def wrapper(
                 self: object,
                 arg: str,
-            ) -> r[object]:
+            ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
 
@@ -175,19 +175,13 @@ class FlextLdifUtilitiesDecorators:
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
         ) -> t.Ldif.Decorators.WriteMethod:
-            """Wrapper function for write methods."""
-
             @wraps(func)
             def wrapper(
-                self: t.Ldif.Decorators.ProtocolType,
+                self: object,
                 arg: t.Ldif.Decorators.WriteMethodArg,
-            ) -> object:
-                """Call original function - write methods don't modify inputs."""
-                # Write methods typically return strings, not models
-                # So metadata attachment would be on the input model
+            ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
-            # Type narrowing: wrapper is compatible with WriteMethod type
             return wrapper
 
         return decorator
@@ -201,24 +195,18 @@ class FlextLdifUtilitiesDecorators:
         def decorator(
             func: t.Ldif.Decorators.SafeMethod,
         ) -> t.Ldif.Decorators.SafeMethod:
-            """Wrapper that adds error handling."""
-
             @wraps(func)
             def wrapper(
-                self: t.Ldif.Decorators.ProtocolType,
+                self: object,
                 arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> object:
-                """Execute function with automatic error handling."""
+            ) -> str | int | float | bool | list[str] | None:
                 try:
                     return func(self, arg)
                 except BaseException as e:
                     error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(
-                        error_msg,
-                    )  # Log error with message (no traceback for KeyboardInterrupt)
-                    return r[str].fail(error_msg)
+                    logger.exception(error_msg)
+                    return None
 
-            # Type narrowing: wrapper is compatible with SafeMethod type
             return wrapper
 
         return decorator

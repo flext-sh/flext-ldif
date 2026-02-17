@@ -17,7 +17,7 @@ from flext_ldif.typings import t
 
 class DynamicCounts(FlextLdifModelsBase):
     model_config = ConfigDict(
-        frozen=True,
+        frozen=False,
         extra="allow",
         use_enum_values=True,
         str_strip_whitespace=True,
@@ -25,6 +25,25 @@ class DynamicCounts(FlextLdifModelsBase):
 
     def set_count(self, key: str, value: int) -> None:
         setattr(self, key, value)
+
+    def __getitem__(self, key: str) -> int:
+        extra = self.__pydantic_extra__
+        if extra is not None and key in extra:
+            v = extra[key]
+            return int(v) if isinstance(v, (int, float)) else 0
+        msg = f"Key {key!r} not found"
+        raise KeyError(msg)
+
+    def get(self, key: str, default: int | None = None) -> int | None:
+        extra = self.__pydantic_extra__
+        if extra is not None and key in extra:
+            v = extra[key]
+            return int(v) if isinstance(v, (int, float)) else 0
+        return default
+
+    def __contains__(self, key: object) -> bool:
+        extra = self.__pydantic_extra__
+        return extra is not None and key in extra
 
     def __len__(self) -> int:
         extra = self.__pydantic_extra__
@@ -245,7 +264,7 @@ class FlextLdifModelsResults:
                 for cat, entries in value.items():
                     result.add_entries(str(cat), list(entries))
                 return result
-            return value
+            return _FlexibleCategories()
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             all_entries: list[FlextLdifModelsDomains.Entry] = []
@@ -471,7 +490,7 @@ class FlextLdifModelsResults:
                 "entries_written",
                 "file_size_bytes",
             }
-            updates: dict[str, object] = {
+            updates: dict[str, t.GeneralValueType] = {
                 field_name: getattr(self, field_name) + getattr(other, field_name)
                 for field_name in sum_fields
             }

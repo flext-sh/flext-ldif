@@ -69,7 +69,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             **filtered_kwargs,
         )
 
-    def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
+    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL (public method)."""
         if isinstance(acl_line, str):
             return self.can_handle_acl(acl_line)

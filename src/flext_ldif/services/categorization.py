@@ -469,24 +469,17 @@ class FlextLdifCategorization(
 
     def _normalize_rules(
         self,
-        rules: (
-            m.Ldif.LdifResults.CategoryRules
-            | Mapping[str, t.Ldif.MetadataAttributeValue]
-            | None
-        ),
+        rules: m.Ldif.LdifResults.CategoryRules | None,
     ) -> r[m.Ldif.LdifResults.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
             return r[m.Ldif.LdifResults.CategoryRules].ok(rules)
-        if isinstance(rules, dict):
-            try:
-                validated_rules = m.Ldif.LdifResults.CategoryRules.model_validate(rules)
-                return r[m.Ldif.LdifResults.CategoryRules].ok(validated_rules)
-            except Exception as e:
-                return r[m.Ldif.LdifResults.CategoryRules].fail(
-                    f"Invalid category rules: {e}"
-                )
-        return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
+        if rules is None:
+            return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
+        
+        return r[m.Ldif.LdifResults.CategoryRules].fail(
+            f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
+        )
 
     def _match_entry_to_category(
         self,
@@ -657,7 +650,9 @@ class FlextLdifCategorization(
         )
         batch_data = batch_result.map_or(None)
         if batch_data is not None:
-            for result_item in batch_data.results:
+            # Use dict access for BatchResultDict
+            results_list = batch_data.get("results") if isinstance(batch_data, dict) else getattr(batch_data, "results", [])
+            for result_item in results_list:
                 if (
                     result_item is not None
                     and isinstance(result_item, tuple)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, FlextResult as r
 
@@ -119,7 +119,8 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], dict[str, t.GeneralValueType]] | None = None,
+        parse_parts_hook: Callable[[str], Mapping[str, t.GeneralValueType]]
+        | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:

@@ -349,12 +349,6 @@ class FlextLdifServersOidSchema(
             oid_syntax = str(source_syntax) if source_syntax else None
         else:
             oid_syntax = str(attr_copy.syntax) if attr_copy.syntax else None
-        if oid_syntax:
-            mapped = FlextLdifServersOidConstants.SYNTAX_RFC_TO_OID.get(
-                str(attr_copy.syntax),
-            )
-            if mapped:
-                oid_syntax = mapped
 
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:

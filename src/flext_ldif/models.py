@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Mapping
 from typing import Literal, TypeAlias
 
 from flext_core import FlextModels, FlextTypes
@@ -29,9 +30,6 @@ from flext_ldif._models.settings import (
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-LdifEntryAttributesDict = dict[str, list[str]]
-LdifRawEntryDict = dict[str, str | list[str] | set[str]]
-
 
 class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
@@ -50,8 +48,8 @@ class FlextLdifModels(FlextModels):
     class Ldif:
         """LDIF namespace for cross-project access."""
 
-        EntryAttributesDict = dict[str, list[str]]
-        RawEntryDict = dict[str, str | list[str] | set[str]]
+        EntryAttributesDict: TypeAlias = Mapping[str, list[str]]
+        RawEntryDict: TypeAlias = Mapping[str, str | list[str] | set[str]]
 
         class AttributeTransformation(FlextLdifModelsDomains.AttributeTransformation):
             """Detailed tracking of attribute transformation operations."""
@@ -414,7 +412,7 @@ class FlextLdifModels(FlextModels):
 
             type BooleanFormat = Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"]
 
-            type AttributeMetadataMap = dict[str, dict[str, str | list[str]]]
+            type AttributeMetadataMap = Mapping[str, Mapping[str, str | list[str]]]
 
         class Schema:
             """Schema element type with protocol references."""
@@ -432,7 +430,7 @@ class FlextLdifModels(FlextModels):
         class Registry:
             """Registry-related type aliases using protocols."""
 
-            type QuirksDict = dict[
+            type QuirksDict = Mapping[
                 str,
                 p.Ldif.SchemaQuirkProtocol
                 | p.Ldif.AclQuirkProtocol

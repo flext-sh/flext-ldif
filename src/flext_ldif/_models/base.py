@@ -22,17 +22,8 @@ class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):
     )
 
 
-class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
+class SchemaElement(FlextLdifModelsBase):
     """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
-
-    model_config = ConfigDict(
-        strict=True,
-        validate_assignment=True,
-        extra="forbid",
-        validate_default=True,
-        use_enum_values=True,
-        str_strip_whitespace=True,
-    )
 
     @computed_field
     def has_metadata(self) -> bool:
@@ -63,6 +54,24 @@ class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
             extensions = metadata.extensions
             return bool(extensions)
         return False
+
+
+class FrozenLdifModel(FlextLdifModelsBase):
+    """Immutable LDIF model — FlextLdifModelsBase with frozen=True."""
+
+    model_config = ConfigDict(frozen=True)
+
+
+class FrozenIgnoreLdifModel(FlextModelsBase.ArbitraryTypesModel):
+    """Immutable LDIF model that silently ignores extra fields."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+
+class MutableIgnoreLdifModel(FlextLdifModelsBase):
+    """Mutable LDIF model that silently ignores extra fields."""
+
+    model_config = ConfigDict(frozen=False, extra="ignore")
 
 
 class AclElement(FlextModelsBase.ArbitraryTypesModel):

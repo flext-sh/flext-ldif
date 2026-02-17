@@ -41,7 +41,7 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
     StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
 
-    class Tests:
+    class Tests(FlextTestsModels.Tests):
         """Test fixture models namespace.
 
         Convenience aliases for test-only shortcuts.

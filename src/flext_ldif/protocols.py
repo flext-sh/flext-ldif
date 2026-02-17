@@ -26,7 +26,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             attributes: Mapping[str, Sequence[str]] | None
 
-            metadata: object | None
+            metadata: (
+                Mapping[str, str | int | float | bool | Sequence[str] | None] | None
+            )
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -71,8 +73,8 @@ class FlextLdifProtocols(FlextProtocols):
             name: str
             oid: str
             syntax: str | None
-            single_valued: bool
-            description: str | None
+            single_value: bool
+            desc: str | None
 
         @runtime_checkable
         class SchemaObjectClassProtocol(Protocol):
@@ -80,10 +82,10 @@ class FlextLdifProtocols(FlextProtocols):
 
             name: str
             oid: str
-            type: str
-            must_attributes: Sequence[str]
-            may_attributes: Sequence[str]
-            description: str | None
+            kind: str
+            must: list[str] | None
+            may: list[str] | None
+            desc: str | None
 
         @runtime_checkable
         class HasParseMethodProtocol(Protocol):
@@ -124,7 +126,15 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def parse_method(self) -> Callable[..., FlextResult[object]]:
+            def parse_method(
+                self,
+            ) -> Callable[
+                ...,
+                FlextResult[
+                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                ],
+            ]:
                 """Method to parse LDIF into schema object."""
                 ...
 
@@ -181,13 +191,13 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_attribute(
                 self,
                 attr_definition: str,
-            ) -> FlextResult[object]:
+            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaAttributeProtocol]:
                 """Parse individual attribute definition."""
                 ...
 
             def write_attribute(
                 self,
-                attribute: object,
+                attribute: FlextLdifProtocols.Ldif.SchemaAttributeProtocol,
             ) -> FlextResult[str]:
                 """Write individual attribute definition."""
                 ...
@@ -195,13 +205,13 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_objectclass(
                 self,
                 oc_definition: str,
-            ) -> FlextResult[object]:
+            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaObjectClassProtocol]:
                 """Parse individual objectClass definition."""
                 ...
 
             def write_objectclass(
                 self,
-                objectclass: object,
+                objectclass: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
             ) -> FlextResult[str]:
                 """Write individual objectClass definition."""
                 ...
@@ -247,7 +257,10 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entries: FlextLdifProtocols.Ldif.EntryProtocol
                 | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                format_options: object | None = None,
+                format_options: Mapping[
+                    str, str | int | float | bool | Sequence[str] | None
+                ]
+                | None = None,
             ) -> FlextResult[str]:
                 """Write entries to LDIF."""
                 ...
@@ -285,7 +298,9 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadataProtocol(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
-            validation_metadata: t.Ldif.MetadataType | None
+            validation_metadata: (
+                Mapping[str, str | int | float | bool | list[str] | None] | None
+            )
 
         @runtime_checkable
         class TransformerProtocol[T](Protocol):
@@ -307,7 +322,7 @@ class FlextLdifProtocols(FlextProtocols):
         class FilterProtocol[T](Protocol):
             """Protocol for filters in pipelines."""
 
-            def matches(self, item: object) -> bool:
+            def matches(self, item: T) -> bool:
                 """Check if item matches filter criteria."""
                 ...
 
@@ -336,7 +351,7 @@ class FlextLdifProtocols(FlextProtocols):
             def validate(
                 self,
                 item: T,
-            ) -> FlextResult[object]:
+            ) -> FlextResult[T]:
                 """Validate an item."""
                 ...
 

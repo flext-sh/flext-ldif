@@ -23,6 +23,9 @@ from pydantic import (
 from flext_ldif._models.base import (
     AclElement,
     FlextLdifModelsBase,
+    FrozenIgnoreLdifModel,
+    FrozenLdifModel,
+    MutableIgnoreLdifModel,
     SchemaElement,
 )
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -572,15 +575,6 @@ class FlextLdifModelsDomains:
     class ErrorDetail(FlextModelsBase.FrozenStrictModel):
         """Error detail information for failed operations."""
 
-        model_config = ConfigDict(
-            strict=True,
-            frozen=True,
-            extra="forbid",
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
         item: str = Field(...)
         error: str = Field(...)
         error_code: str | None = Field(default=None)
@@ -896,14 +890,8 @@ class FlextLdifModelsDomains:
             )
             return f"{short_server_type}_acl"
 
-    class AclWriteMetadata(FlextLdifModelsBase):
+    class AclWriteMetadata(FrozenLdifModel):
         """Metadata for ACL write formatting operations."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            strict=True,
-            validate_default=True,
-        )
 
         original_format: str | None = Field(
             default=None,
@@ -1848,10 +1836,8 @@ class FlextLdifModelsDomains:
             """Get this entry as a list for unified protocol."""
             return [self]
 
-    class AttributeTransformation(FlextLdifModelsBase):
+    class AttributeTransformation(FrozenLdifModel):
         """Detailed tracking of attribute transformation operations."""
-
-        model_config = ConfigDict(frozen=True, strict=True)
 
         original_name: str = Field(
             ...,
@@ -1873,10 +1859,8 @@ class FlextLdifModelsDomains:
             default="",
         )
 
-    class DNStatisticsFlagsModel(FlextLdifModelsBase):
+    class DNStatisticsFlagsModel(MutableIgnoreLdifModel):
         """Optional flags for DNStatistics.create_with_transformation()."""
-
-        model_config = ConfigDict(frozen=False, extra="ignore")
 
         had_tab_chars: bool | None = Field(default=None)
         had_trailing_spaces: bool | None = Field(default=None)
@@ -1898,13 +1882,8 @@ class FlextLdifModelsDomains:
                     result[field_name] = value
             return result
 
-    DNStatisticsFlags = DNStatisticsFlagsModel
-    _DNStatisticsFlags = DNStatisticsFlagsModel
-
-    class DNStatistics(FlextLdifModelsBase):
+    class DNStatistics(FrozenIgnoreLdifModel):
         """Statistics tracking for DN transformations and validation."""
-
-        model_config = ConfigDict(frozen=True, extra="ignore")
 
         original_dn: str = Field(
             ...,
@@ -2036,10 +2015,8 @@ class FlextLdifModelsDomains:
                 validation_errors=errors_val,
             )
 
-    class EntryStatistics(FlextLdifModelsBase):
+    class EntryStatistics(FrozenIgnoreLdifModel):
         """Statistics tracking for entry-level transformations and validation."""
-
-        model_config = ConfigDict(frozen=True, extra="ignore")
 
         was_parsed: bool = Field(
             default=True,
@@ -2275,15 +2252,8 @@ class FlextLdifModelsDomains:
                 },
             )
 
-    class ValidationMetadata(FlextLdifModelsBase):
+    class ValidationMetadata(FrozenLdifModel):
         """Validation results and error tracking metadata."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
 
         rfc_violations: list[str] = Field(
             default_factory=list,
@@ -2304,15 +2274,8 @@ class FlextLdifModelsDomains:
             default=None,
         )
 
-    class WriteOptions(FlextLdifModelsBase):
+    class WriteOptions(FrozenLdifModel):
         """LDIF writing configuration options."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
 
         format: str | None = Field(
             default=None,
@@ -2333,15 +2296,8 @@ class FlextLdifModelsDomains:
             default=False,
         )
 
-    class FormatDetails(FlextLdifModelsBase):
+    class FormatDetails(FrozenLdifModel):
         """Original formatting details for round-trip preservation."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
 
         dn_line: str | None = Field(
             default=None,
@@ -2359,15 +2315,8 @@ class FlextLdifModelsDomains:
             default=None,
         )
 
-    class SchemaFormatDetails(FlextLdifModelsBase):
+    class SchemaFormatDetails(FrozenLdifModel):
         """Schema formatting details for perfect round-trip conversion."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
 
         original_string_complete: str | None = Field(
             default=None,
@@ -2489,11 +2438,7 @@ class FlextLdifModelsDomains:
         def create_for(
             cls,
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
-            extensions: (
-                FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, t.MetadataAttributeValue]
-                | None
-            ) = None,
+            extensions: FlextLdifModelsMetadata.DynamicMetadata | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions."""
             default_quirk_type: c.Ldif.ServerTypes = (
@@ -2505,10 +2450,6 @@ class FlextLdifModelsDomains:
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
-            elif isinstance(extensions, dict):
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions
-                )
             else:
                 extensions_model = extensions
             return cls(

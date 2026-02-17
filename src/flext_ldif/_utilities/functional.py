@@ -3,13 +3,25 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from inspect import Parameter, signature
-from typing import Literal, TypeVar, overload
+from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
 from flext_core import FlextTypes as t, T, U
 from flext_core.utilities import FlextUtilities as u
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
+_TThunk_co = TypeVar("_TThunk_co", covariant=True)
+_TUnaryIn_contra = TypeVar("_TUnaryIn_contra", contravariant=True)
+_TUnaryOut_co = TypeVar("_TUnaryOut_co", covariant=True)
+
+
+@runtime_checkable
+class _Thunk(Protocol[_TThunk_co]):
+    def __call__(self) -> _TThunk_co: ...
+
+
+@runtime_checkable
+class _UnaryCase(Protocol[_TUnaryIn_contra, _TUnaryOut_co]):
+    def __call__(self, value: _TUnaryIn_contra) -> _TUnaryOut_co: ...
 
 
 class FlextFunctional:
@@ -323,12 +335,12 @@ class FlextFunctional:
     def when[T](
         *,
         condition: bool = False,
-        then: T | Callable[[], T] | None = None,
+        then: T | _Thunk[T] | None = None,
         else_: T | None = None,
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
         if condition:
-            if callable(then):
+            if isinstance(then, _Thunk):
                 return then()
             if then is not None:
                 return then
@@ -396,12 +408,12 @@ class FlextFunctional:
     def switch[T, U](
         cls,
         value: T,
-        cases: dict[T, U | Callable[[T], U]],
+        cases: dict[T, U | _UnaryCase[T, U]],
         default: U | None = None,
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
         result = cases.get(value, default)
-        if callable(result):
+        if isinstance(result, _UnaryCase):
             return result(value)
         return result
 
@@ -445,6 +457,56 @@ class FlextFunctional:
         | set[t.GeneralValueType]
         | dict[str, t.GeneralValueType]
     )
+
+    _TYPE_MAP: ClassVar[dict[str, type]] = {
+        "list": list,
+        "dict": dict,
+        "str": str,
+        "int": int,
+        "bool": bool,
+        "tuple": tuple,
+        "float": float,
+    }
+
+    @staticmethod
+    def _convert_with_target(
+        value: t.GeneralValueType,
+        target_type: type,
+        default: t.GeneralValueType | None,
+    ) -> t.GeneralValueType | None:
+        if target_type is str:
+            return str(value)
+        if target_type is int:
+            if isinstance(value, (str, bytes, bytearray, int, float)):
+                return int(value)
+            try:
+                return int(str(value))
+            except (TypeError, ValueError):
+                return default
+        if target_type is float:
+            if isinstance(value, (str, bytes, bytearray, int, float)):
+                return float(value)
+            try:
+                return float(str(value))
+            except (TypeError, ValueError):
+                return default
+        if target_type is bool:
+            if isinstance(value, str):
+                return value.lower() in {"true", "1", "yes", "on"}
+            return bool(value)
+        if target_type is list:
+            if isinstance(value, (list, tuple, set)):
+                return list(value)
+            return [value]
+        if target_type is tuple:
+            if isinstance(value, (list, tuple)):
+                return tuple(value)
+            return (value,)
+        if target_type is dict:
+            if isinstance(value, dict):
+                return value
+            return default
+        return default
 
     @overload
     @classmethod
@@ -525,142 +587,37 @@ class FlextFunctional:
         default: t.GeneralValueType | None = None,
     ) -> t.GeneralValueType | None:
         """Safe cast (mnemonic: at)."""
-        type_map: dict[str, type] = {
-            "list": list,
-            "dict": dict,
-            "str": str,
-            "int": int,
-            "bool": bool,
-            "tuple": tuple,
-            "float": float,
-        }
-
-        # Resolve target type: if string, look up in map; if type, use directly
         target_type: type | None = (
-            type_map.get(target) if isinstance(target, str) else target
+            cls._TYPE_MAP.get(target) if isinstance(target, str) else target
         )
 
         if target_type is None:
             return default
 
         if isinstance(target_type, type) and isinstance(value, target_type):
-            return value  # type: GeneralValueType
+            return value
 
         try:
-            if target_type is str:
-                return str(value)
-            if target_type is int:
-                if isinstance(value, (str, bytes, bytearray, int, float)):
-                    return int(value)
-                try:
-                    return int(str(value))
-                except (TypeError, ValueError):
-                    pass
-                return default
-            if target_type is float:
-                if isinstance(value, (str, bytes, bytearray, int, float)):
-                    return float(value)
-                try:
-                    return float(str(value))
-                except (TypeError, ValueError):
-                    pass
-                return default
-            if target_type is bool:
-                if isinstance(value, str):
-                    return value.lower() in {"true", "1", "yes", "on"}
-                return bool(value)
-            if target_type is list:
-                if isinstance(value, (list, tuple, set)):
-                    return list(value)
-                return [value]
-            if target_type is tuple:
-                if isinstance(value, (list, tuple)):
-                    return tuple(value)
-                return (value,)
-            if target_type is dict:
-                if isinstance(value, dict):
-                    return value
-                return default
-
-            if callable(target_type):
-                try:
-                    try:
-                        sig = signature(target_type)
-                        params = list(sig.parameters.values())
-                        accepts_args = params and params[0].kind in {
-                            Parameter.POSITIONAL_ONLY,
-                            Parameter.POSITIONAL_OR_KEYWORD,
-                        }
-                    except (ValueError, TypeError):
-                        accepts_args = True
-
-                    if accepts_args:
-                        try:
-                            converted: t.GeneralValueType | None = None
-                            if target_type is str:
-                                converted = str(value)
-                            elif target_type is int:
-                                if isinstance(value, (int, float, str, bool)):
-                                    converted = int(value)
-                                else:
-                                    return default
-                            elif target_type is bool:
-                                converted = bool(value)
-                            elif target_type is float:
-                                if isinstance(value, (int, float, str, bool)):
-                                    converted = float(value)
-                                else:
-                                    return default
-                            elif target_type is list:
-                                converted = (
-                                    list(value)
-                                    if isinstance(value, (list, tuple, set))
-                                    else [value]
-                                )
-                            elif target_type is tuple:
-                                converted = (
-                                    tuple(value)
-                                    if isinstance(value, (list, tuple))
-                                    else (value,)
-                                )
-                            elif target_type is dict:
-                                converted = (
-                                    dict(value) if isinstance(value, dict) else default
-                                )
-                            else:
-                                return default
-
-                            if converted is None:
-                                return default
-                        except (TypeError, ValueError):
-                            return default
-
-                        if isinstance(converted, target_type):
-                            return converted  # type: GeneralValueType
-                        return default
-                    return default
-                except (TypeError, ValueError, AttributeError):
-                    return default
-            return default
+            return cls._convert_with_target(value, target_type, default)
         except (TypeError, ValueError):
             return default
 
     at = as_type
 
     @classmethod
-    def prop[T](
+    def prop(
         cls,
         key: str,
-    ) -> Callable[[T], T | None]:
+    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
         """Property accessor (mnemonic: pp)."""
 
-        def getter(obj: T) -> T | None:
+        def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
             """Get value from object by key."""
             if isinstance(obj, Mapping):
-                value: T | None = obj.get(key)  # type narrowing via annotation
+                value: t.GeneralValueType = obj.get(key)
                 return value
             if hasattr(obj, key):
-                attr_val: T | None = getattr(obj, key)  # type narrowing via annotation
+                attr_val: t.GeneralValueType = getattr(obj, key, None)
                 return attr_val
             return None
 

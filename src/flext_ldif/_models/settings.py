@@ -472,7 +472,10 @@ class FlextLdifModelsSettings:
             | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
         ) = Field(...)
         write_method: Callable[..., r[str]] = Field(...)
-        parse_method: Callable[..., r[object]] = Field(...)
+        parse_method: Callable[
+            ...,
+            object,  # Relaxed from invariant Result for flexibility
+        ] = Field(...)
         item_name: str = Field(...)
 
     class PermissionMappingConfig(_StrictConfigValue):

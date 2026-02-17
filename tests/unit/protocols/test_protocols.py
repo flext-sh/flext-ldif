@@ -47,7 +47,6 @@ class TestsTestFlextLdifProtocols(s):
         SCHEMA = "SchemaQuirkProtocol"
         ACL = "AclQuirkProtocol"
         ENTRY = "EntryQuirkProtocol"
-        QUIRKS_PORT = "QuirksPortProtocol"
 
     # Protocol names list for parametrization (defined after enum)
     # Use list() to iterate over enum members
@@ -55,7 +54,6 @@ class TestsTestFlextLdifProtocols(s):
         ProtocolNames.SCHEMA.value,
         ProtocolNames.ACL.value,
         ProtocolNames.ENTRY.value,
-        ProtocolNames.QUIRKS_PORT.value,
     ]
 
     class ServerTypes(StrEnum):

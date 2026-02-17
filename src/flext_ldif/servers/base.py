@@ -369,7 +369,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def _route_model_to_write(
         self,
-        model: object,
+        model: m.Ldif.Entry
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Acl,
     ) -> r[str]:
         """Route a single model to appropriate write method."""
         if isinstance(model, m.Ldif.Entry):

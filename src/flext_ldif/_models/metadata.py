@@ -54,7 +54,7 @@ class FlextLdifModelsMetadata:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                if isinstance(field_value, str | float | bool | list | dict):
+                if isinstance(field_value, (str, int, float, bool, list)):
                     return field_value
                 if field_value is not None:
                     return str(field_value)
@@ -62,7 +62,7 @@ class FlextLdifModelsMetadata:
             if extra is not None and key in extra:
                 value = extra[key]
 
-                if isinstance(value, str | float | bool | list | dict):
+                if isinstance(value, (str, int, float, bool, list)):
                     return value
                 return str(value) if value is not None else None
             return default
@@ -71,14 +71,14 @@ class FlextLdifModelsMetadata:
             """Get value by key, raising KeyError if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                if isinstance(field_value, str | float | bool | list | dict):
+                if isinstance(field_value, (str, int, float, bool, list)):
                     return field_value
                 if field_value is not None:
                     return str(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list | dict):
+                if isinstance(value, (str, int, float, bool, list)):
                     return value
                 return str(value) if value is not None else None
             raise KeyError(key)
@@ -133,7 +133,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra.pop(key)
-                if isinstance(value, str | float | bool | list | dict):
+                if isinstance(value, (str, int, float, bool, list)):
                     return value
                 return str(value) if value is not None else None
             return default
@@ -182,7 +182,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list | dict):
+                if isinstance(value, (str, int, float, bool, list)):
                     return value
                 return str(value) if value is not None else None
             raise KeyError(key)
@@ -201,7 +201,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list | dict):
+                if isinstance(value, (str, int, float, bool, list)):
                     return value
                 return str(value) if value is not None else None
             return default
