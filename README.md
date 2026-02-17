@@ -11,7 +11,7 @@
 
 **LDIF (LDAP Data Interchange Format)** processing library providing RFC 2849/4512 compliant parsing, validation, and server-specific adaptations for enterprise directory migrations and data operations.
 
----
+Part of the [FLEXT](https://github.com/flext/flext) ecosystem.
 
 ## 🚀 Quick Start
 
