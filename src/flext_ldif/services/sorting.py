@@ -516,7 +516,13 @@ class FlextLdifSorting(
             )
 
         batch_data = batch_result.value
-        processed_raw = batch_data.results
+        if isinstance(batch_data, dict):
+            processed_raw_value = u.take(batch_data, "results", default=[])
+            processed_raw = (
+                processed_raw_value if isinstance(processed_raw_value, list) else []
+            )
+        else:
+            processed_raw = batch_data.results
 
         processed: list[m.Ldif.Entry] = [
             item for item in processed_raw if isinstance(item, m.Ldif.Entry)
@@ -532,22 +538,11 @@ class FlextLdifSorting(
         dn_to_entries: dict[str, list[m.Ldif.Entry]] = {}
 
         for entry in entries:
-            dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = FlextLdifSorting._entry_dn_value(entry)
             if not dn_value:
                 continue
 
-            norm_result = u.Ldif.DN.norm(dn_value)
-            normalized_dn = norm_result.map_or(None)
-            normalized_result = u.Ldif.normalize_ldif(
-                normalized_dn or dn_value,
-                case="lower",
-            )
-
-            dn_key: str = (
-                normalized_result
-                if isinstance(normalized_result, str)
-                else str(normalized_result)
-            )
+            dn_key = FlextLdifSorting._normalized_dn_key(dn_value)
 
             if dn_key not in dn_to_entries:
                 dn_to_entries[dn_key] = []
@@ -555,13 +550,7 @@ class FlextLdifSorting(
 
             if "," in dn_value:
                 parent_dn = dn_value.split(",", 1)[1]
-                parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                parent_normalized: str | None = parent_norm_result.map_or(None)
-                parent_key = (
-                    parent_normalized.lower()
-                    if parent_normalized
-                    else parent_dn.lower()
-                )
+                parent_key = FlextLdifSorting._normalized_parent_dn_key(parent_dn)
 
                 if parent_key not in parent_to_children:
                     parent_to_children[parent_key] = []
@@ -619,19 +608,13 @@ class FlextLdifSorting(
 
         for dn_key, entry_list in dn_to_entries.items():
             entry = entry_list[0]
-            dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = FlextLdifSorting._entry_dn_value(entry)
 
             if "," not in dn_value:
                 root_dns.append(dn_key)
             else:
                 parent_dn = dn_value.split(",", 1)[1]
-                parent_norm_result = u.Ldif.DN.norm(parent_dn)
-                parent_normalized: str | None = parent_norm_result.map_or(None)
-                parent_key = (
-                    parent_normalized.lower()
-                    if parent_normalized
-                    else parent_dn.lower()
-                )
+                parent_key = FlextLdifSorting._normalized_parent_dn_key(parent_dn)
 
                 if parent_key not in dn_to_entries:
                     root_dns.append(dn_key)
@@ -647,18 +630,12 @@ class FlextLdifSorting(
         """Level-order traversal (original behavior for backward compatibility)."""
 
         def sort_key(entry: m.Ldif.Entry) -> tuple[int, str]:
-            dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = FlextLdifSorting._entry_dn_value(entry)
             if not dn_value:
                 return (0, "")
 
             depth = dn_value.count(",") + 1
-            norm_result = u.Ldif.DN.norm(dn_value)
-            normalized = norm_result.map_or(None)
-
-            sort_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
-            sort_dn: str = (
-                sort_result if isinstance(sort_result, str) else str(sort_result)
-            )
+            sort_dn = FlextLdifSorting._normalized_dn_key(dn_value)
 
             return (depth, sort_dn)
 
@@ -687,20 +664,9 @@ class FlextLdifSorting(
                 )
 
             for entry in self.entries:
-                dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+                dn_value = FlextLdifSorting._entry_dn_value(entry)
                 if dn_value:
-                    norm_result = u.Ldif.DN.norm(dn_value)
-                    normalized = norm_result.map_or(None)
-                    normalized_result = u.Ldif.normalize_ldif(
-                        normalized or dn_value,
-                        case="lower",
-                    )
-
-                    dn_key: str = (
-                        normalized_result
-                        if isinstance(normalized_result, str)
-                        else str(normalized_result)
-                    )
+                    dn_key = FlextLdifSorting._normalized_dn_key(dn_value)
                     if dn_key not in visited:
                         entries_raw = u.mapper().get(
                             dn_to_entries,
@@ -734,18 +700,34 @@ class FlextLdifSorting(
         """Sort alphabetically by DN using RFC 4514 normalization."""
 
         def dn_sort_key(entry: m.Ldif.Entry) -> str:
-            dn_value = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = FlextLdifSorting._entry_dn_value(entry)
             if not dn_value:
                 return ""
-
-            norm_result = u.Ldif.DN.norm(dn_value)
-            normalized = norm_result.map_or(None)
-
-            result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
-            return result if isinstance(result, str) else str(result)
+            return FlextLdifSorting._normalized_dn_key(dn_value)
 
         sorted_entries = sorted(self.entries, key=dn_sort_key)
         return r[list[m.Ldif.Entry]].ok(sorted_entries)
+
+    @staticmethod
+    def _entry_dn_value(entry: m.Ldif.Entry) -> str:
+        return str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+
+    @staticmethod
+    def _normalized_dn_key(dn_value: str) -> str:
+        norm_result = u.Ldif.DN.norm(dn_value)
+        normalized = norm_result.map_or(None)
+        normalized_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
+        return (
+            normalized_result
+            if isinstance(normalized_result, str)
+            else str(normalized_result)
+        )
+
+    @staticmethod
+    def _normalized_parent_dn_key(parent_dn: str) -> str:
+        parent_norm_result = u.Ldif.DN.norm(parent_dn)
+        parent_normalized: str | None = parent_norm_result.map_or(None)
+        return parent_normalized.lower() if parent_normalized else parent_dn.lower()
 
     def _by_schema(self) -> r[list[m.Ldif.Entry]]:
         """Sort schema entries by OID."""

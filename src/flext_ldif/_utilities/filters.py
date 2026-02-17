@@ -385,24 +385,6 @@ class Filter:
         return ByAttrsFilter(*attrs, mode=mode, case_insensitive=case_insensitive)
 
     @staticmethod
-    def by_value(
-        attr: str,
-        pattern: str | Pattern[str],
-        *,
-        case_insensitive: bool = True,
-    ) -> ByAttrValueFilter:
-        """Create an attribute value filter."""
-        return ByAttrValueFilter(attr, pattern, case_insensitive=case_insensitive)
-
-    @staticmethod
-    def exclude_attrs(
-        *attrs: str,
-        case_insensitive: bool = True,
-    ) -> ExcludeAttrsFilter:
-        """Create an attribute exclusion filter."""
-        return ExcludeAttrsFilter(*attrs, case_insensitive=case_insensitive)
-
-    @staticmethod
     def is_schema(*, is_schema: bool = True) -> IsSchemaEntryFilter:
         """Create a schema entry filter."""
         return IsSchemaEntryFilter(is_schema=is_schema)

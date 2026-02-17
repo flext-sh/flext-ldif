@@ -5,9 +5,8 @@ from __future__ import annotations
 import base64
 import contextlib
 import re
-from collections.abc import Callable
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
+from flext_core import FlextLogger, FlextRuntime
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -28,15 +27,7 @@ class MetadataModel(BaseModel):
     extensions: t.Ldif.Extensions.ExtensionsDict | None = Field(default=None)
 
 
-# Backward compatibility
 MetadataDict = MetadataModel
-
-
-# Type aliases moved to m.Types
-# Use m.Ldif.EntryAttributesDict and m.Ldif.RawEntryDict
-
-
-# Type aliases removed - use types directly from FlextLdifTypes
 
 
 class FlextLdifUtilitiesParser:
@@ -59,7 +50,6 @@ class FlextLdifUtilitiesParser:
         if not definition or not isinstance(definition, str):
             return None
 
-        # Match OID pattern: opening parenthesis followed by numeric OID
         oid_pattern = re.compile(r"\(\s*([0-9.]+)")
         match = re.match(oid_pattern, definition.strip())
         return match.group(1) if match else None
@@ -104,7 +94,6 @@ class FlextLdifUtilitiesParser:
 
         extensions: t.Ldif.Extensions.ExtensionsDict = {}
 
-        # Extract X- extensions (custom properties)
         x_pattern = re.compile(
             r'X-([A-Z0-9_-]+)\s+["\']?([^"\']*)["\']?(?:\s|$)',
             re.IGNORECASE,
@@ -114,19 +103,16 @@ class FlextLdifUtilitiesParser:
             value = match.group(2).strip()
             extensions[key] = [value]
 
-        # Extract DESC (description) if present
         desc_pattern = re.compile(r"DESC\s+['\"]([^'\"]*)['\"]")
         desc_match = desc_pattern.search(definition)
         if desc_match:
             extensions["DESC"] = [desc_match.group(1)]
 
-        # Extract ORDERING if present
         ordering_pattern = re.compile(r"ORDERING\s+([A-Za-z0-9_-]+)")
         ordering_match = ordering_pattern.search(definition)
         if ordering_match:
             extensions["ORDERING"] = [ordering_match.group(1)]
 
-        # Extract SUBSTR if present
         substr_pattern = re.compile(r"SUBSTR\s+([A-Za-z0-9_-]+)")
         substr_match = substr_pattern.search(definition)
         if substr_match:
@@ -142,14 +128,11 @@ class FlextLdifUtilitiesParser:
         continuation_space = c.Ldif.Format.LINE_CONTINUATION_SPACE
 
         for raw_line in ldif_content.split(c.Ldif.Format.LINE_SEPARATOR):
-            if raw_line.startswith(continuation_space) and current_line:
-                # Continuation line - append to current (skip leading space)
-                current_line += raw_line[1:]
-            elif raw_line.startswith("\t") and current_line:
-                # RFC 2849: TAB is also valid continuation char
+            if (raw_line.startswith(continuation_space) and current_line) or (
+                raw_line.startswith("\t") and current_line
+            ):
                 current_line += raw_line[1:]
             else:
-                # New logical line
                 if current_line:
                     lines.append(current_line)
                 current_line = raw_line
@@ -167,61 +150,47 @@ class FlextLdifUtilitiesParser:
         entries: list[tuple[str, m.Ldif.EntryAttributesDict]],
     ) -> tuple[str | None, m.Ldif.EntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection."""
-        # RFC 2849 § 2: Empty lines terminate current entry
         if not line:
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
             return None, {}
 
-        # RFC 2849 § 2: Lines starting with # are comments (MUST be ignored)
         if line.startswith("#"):
             return current_dn, current_attrs
 
         if c.Ldif.LDIF_REGULAR_INDICATOR not in line:
             return current_dn, current_attrs
 
-        # ZERO DATA LOSS: Store original line string for metadata preservation
         original_line = line
 
-        # RFC 2849: Detect base64 (::) vs regular (:) indicator
         is_base64 = False
         if c.Ldif.LDIF_BASE64_INDICATOR in line:
-            # Base64-encoded value (RFC 2849 Section 2)
-            # Split on :: to get key and base64 value
             key, value = line.split(c.Ldif.LDIF_BASE64_INDICATOR, 1)
             key = key.strip()
             value = value.strip()
             is_base64 = True
 
-            # Decode base64 to UTF-8 string
             with contextlib.suppress(ValueError, UnicodeDecodeError):
                 value = base64.b64decode(value).decode(
                     c.Ldif.LDIF_DEFAULT_ENCODING,
                 )
         else:
-            # Regular text value (RFC 2849 Section 2)
             key, _, value = line.partition(c.Ldif.LDIF_REGULAR_INDICATOR)
             key = key.strip()
             value = value.lstrip()  # Preserve trailing spaces per RFC 2849
 
-        # Handle DN line (starts new entry)
         if key.lower() == "dn":
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
 
-            # Track if DN was base64-encoded (for metadata preservation)
             new_attrs: m.Ldif.EntryAttributesDict = {}
             if is_base64:
-                # Store metadata flag for server layer to preserve
                 new_attrs["_base64_dn"] = ["true"]
 
-            # ZERO DATA LOSS: Store original DN line for metadata
             new_attrs["_original_dn_line"] = [original_line]
 
             return value, new_attrs
 
-        # Regular attribute line (add to current entry)
-        # ZERO DATA LOSS: Store original line for each attribute
         if "_original_lines" not in current_attrs:
             current_attrs["_original_lines"] = []
         current_attrs["_original_lines"].append(original_line)
@@ -265,7 +234,6 @@ class FlextLdifUtilitiesParser:
         attr_name = attr_name.strip()
         attr_value = attr_value.strip()
 
-        # Check for base64 encoding (::)
         is_base64 = False
         if attr_value.startswith(":"):
             is_base64 = True
@@ -283,7 +251,6 @@ class FlextLdifUtilitiesParser:
         if not current_attr or not current_values:
             return
 
-        # Avoid overwriting _base64_attrs metadata
         if current_attr == "_base64_attrs":
             return
 
@@ -302,28 +269,20 @@ class FlextLdifUtilitiesParser:
         if attr_name not in entry_dict or attr_name == "_base64_attrs":
             return False
 
-        # Convert to list if needed
         existing = entry_dict[attr_name]
-        # Type narrowing: handle set[str] separately as it's not in t.GeneralValueType
         if isinstance(existing, set):
-            # Convert set to list before appending
             entry_dict[attr_name] = [*existing, attr_value]
             return True
-        # For str and other types, check if list-like using FlextRuntime
-        # Cast to t.GeneralValueType for type checker (set[str] already handled above)
         if not FlextRuntime.is_list_like(existing):
-            # Type narrowing: existing is str, convert to list
             if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
-            # Ensure existing is a mutable list before appending
             existing_list = (
                 list(existing) if not isinstance(existing, list) else existing
             )
             existing_list.append(attr_value)
-            # Type narrowing: convert to list[str] for m.Ldif.RawEntryDict
             entry_dict[attr_name] = [
                 str(item) if not isinstance(item, str) else item
                 for item in existing_list
@@ -342,45 +301,6 @@ class FlextLdifUtilitiesParser:
 
         if isinstance(entry_dict["_base64_attrs"], set):
             entry_dict["_base64_attrs"].add(attr_name)
-
-    @staticmethod
-    def process_ldif_attribute_line(
-        line: str,
-        current_attr: str | None,
-        current_values: list[str],
-        entry_dict: m.Ldif.RawEntryDict,
-    ) -> tuple[str | None, list[str]]:
-        """Process LDIF attribute line and update entry state."""
-        # Parse attribute line
-        parsed = FlextLdifUtilitiesParser.parse_attribute_line(line)
-        if not parsed:
-            return (current_attr, current_values)
-
-        attr_name, attr_value, is_base64 = parsed
-
-        # Save previous attribute
-        FlextLdifUtilitiesParser.finalize_pending_attribute(
-            current_attr,
-            current_values,
-            entry_dict,
-        )
-
-        # Decode base64 values (RFC 2849: :: indicates base64)
-        if is_base64:
-            FlextLdifUtilitiesParser.track_base64_attribute(attr_name, entry_dict)
-            # Decode base64 to UTF-8 string (keep original if decode fails)
-            with contextlib.suppress(ValueError, UnicodeDecodeError):
-                attr_value = base64.b64decode(attr_value).decode("utf-8")
-
-        # Handle multi-valued attributes
-        if FlextLdifUtilitiesParser.handle_multivalued_attribute(
-            attr_name,
-            attr_value,
-            entry_dict,
-        ):
-            return (None, [])
-
-        return (attr_name, [attr_value])
 
     @staticmethod
     def parse_ldif(
@@ -407,40 +327,6 @@ class FlextLdifUtilitiesParser:
         return entries
 
     @staticmethod
-    def extract_schema_definitions(
-        ldif_content: str,
-        definition_type: str = "attributeTypes",
-        parse_callback: Callable[[str], FlextTypes.GeneralValueType] | None = None,
-    ) -> list[FlextTypes.GeneralValueType]:
-        """Extract and parse schema definitions from LDIF content."""
-        definitions: list[FlextTypes.GeneralValueType] = []
-
-        for raw_line in ldif_content.split("\n"):
-            line = raw_line.strip()
-
-            # Case-insensitive match for definition type
-            if line.lower().startswith(f"{definition_type.lower()}:"):
-                definition = line.split(":", 1)[1].strip()
-                if parse_callback and callable(parse_callback):
-                    result = parse_callback(definition)
-                    # Handle FlextResult returns - check for both attributes
-                    is_success_attr = getattr(result, "is_success", None)
-                    unwrap_method = getattr(result, "unwrap", None)
-
-                    if is_success_attr is not None and unwrap_method is not None:
-                        # This is a FlextResult
-                        if is_success_attr:
-                            definitions.append(unwrap_method())
-                    # Direct return value (not FlextResult)
-                    elif result is not None:
-                        definitions.append(result)
-                else:
-                    # No callback, just collect definitions
-                    definitions.append(definition)
-
-        return definitions
-
-    @staticmethod
     def extract_regex_field(
         definition: str,
         pattern: str,
@@ -463,12 +349,6 @@ class FlextLdifUtilitiesParser:
             return (None, None)
 
         syntax = syntax_match.group(1)
-
-        # ARCHITECTURE: Parser ONLY captures data, does NOT transform
-        # Quirks are responsible for cleaning/normalizing syntax OIDs
-        # - OID quirk: removes quotes during parse
-        # - OUD quirk: ensures no quotes during write
-        # Parser preserves raw syntax value from LDIF
 
         length = int(syntax_match.group(2)) if syntax_match.group(2) else None
 
@@ -496,12 +376,10 @@ class FlextLdifUtilitiesParser:
         server_type: str | None = None,
     ) -> m.Ldif.QuirkMetadata | None:
         """Build metadata for attribute including extensions."""
-        # Extract extensions from definition
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
             attr_definition,
         )
 
-        # Track syntax OID validation
         if syntax:
             metadata_extensions["syntax_oid_valid"] = [
                 str(syntax_validation_error is None),
@@ -511,26 +389,18 @@ class FlextLdifUtilitiesParser:
                     syntax_validation_error,
                 ]
 
-        # Preserve original format
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
 
-        # Resolve quirk type (default to "rfc" if not specified)
-        # Use FlextLdifUtilitiesServer.normalize_server_type to ensure consistent format
         quirk_type = (
             FlextLdifUtilitiesServer.normalize_server_type(server_type)
             if server_type
             else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
 
-        # Create metadata
         if metadata_extensions:
-            # quirk_type is str from normalize_server_type, Pydantic validates Literal at runtime
-            # Widen dict[str, list[str]] to dict[str, MetadataAttributeValue] for from_dict
             extensions_typed: dict[str, t.MetadataAttributeValue] = {}
             for key, val in metadata_extensions.items():
-                # Widen list[str] to MetadataAttributeValue
-
                 typed_val: t.MetadataAttributeValue = list(val)
                 extensions_typed[key] = typed_val
             return m.Ldif.QuirkMetadata(
@@ -541,247 +411,6 @@ class FlextLdifUtilitiesParser:
             )
 
         return None
-
-    @staticmethod
-    def parse_rfc_attribute(
-        attr_definition: str,
-        *,
-        case_insensitive: bool = False,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
-        """Parse RFC 4512 attribute definition."""
-        try:
-            oid_match = re.match(
-                c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,
-                attr_definition,
-            )
-            if not oid_match:
-                return FlextResult.fail("RFC attribute parsing failed: missing an OID")
-            oid = oid_match.group(1)
-
-            # Extract all string fields using helper
-            name = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_NAME,
-                default=oid,
-            )
-            desc = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_DESC,
-            )
-            equality = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_EQUALITY,
-            )
-            substr = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_SUBSTR,
-            )
-            ordering = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_ORDERING,
-            )
-            sup = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_SUP,
-            )
-            usage = FlextLdifUtilitiesParser.extract_regex_field(
-                attr_definition,
-                c.Ldif.LdifPatterns.SCHEMA_USAGE,
-            )
-
-            # Extract syntax and length using helper
-            syntax, length = FlextLdifUtilitiesParser.extract_syntax_and_length(
-                attr_definition,
-            )
-
-            # Validate syntax using helper
-            syntax_validation_error = FlextLdifUtilitiesParser._validate_syntax_oid(
-                syntax,
-            )
-
-            # Extract boolean flags
-            single_value = (
-                re.search(
-                    c.Ldif.LdifPatterns.SCHEMA_SINGLE_VALUE,
-                    attr_definition,
-                )
-                is not None
-            )
-
-            no_user_modification = False
-            if case_insensitive:
-                no_user_modification = (
-                    re.search(
-                        c.Ldif.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
-                        attr_definition,
-                    )
-                    is not None
-                )
-
-            # Build metadata using helper
-            # (server_type not available in parse_rfc_attribute)
-            # Default to "rfc" for RFC parser,
-            # actual server_type set by server-specific parsers
-            metadata = FlextLdifUtilitiesParser._build_attribute_metadata(
-                attr_definition,
-                syntax,
-                syntax_validation_error,
-                server_type="rfc",
-            )
-
-            attribute = m.Ldif.SchemaAttribute(
-                oid=oid,
-                name=name or oid,
-                desc=desc,
-                syntax=syntax,
-                length=length,
-                equality=equality,
-                ordering=ordering,
-                substr=substr,
-                single_value=single_value,
-                no_user_modification=no_user_modification,
-                sup=sup,
-                usage=usage,
-                metadata=metadata,
-                x_origin=None,
-                x_file_ref=None,
-                x_name=None,
-                x_alias=None,
-                x_oid=None,
-            )
-
-            return FlextResult.ok(attribute)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception(
-                "RFC attribute parsing exception",
-                attr_definition=attr_definition[:100] if attr_definition else None,
-                error=str(e),
-                error_type=type(e).__name__,
-            )
-            return FlextResult.fail(f"RFC attribute parsing failed: {e}")
-
-    @staticmethod
-    def parse_rfc_objectclass(
-        oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-        """Parse RFC 4512 objectClass definition."""
-        try:
-            oid_match = re.match(
-                c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,
-                oc_definition,
-            )
-            if not oid_match:
-                return FlextResult.fail(
-                    "RFC objectClass parsing failed: missing an OID",
-                )
-            oid = oid_match.group(1)
-
-            name_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_NAME,
-                oc_definition,
-            )
-            name = name_match.group(1) if name_match else oid
-
-            desc_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_DESC,
-                oc_definition,
-            )
-            desc = desc_match.group(1) if desc_match else None
-
-            sup = None
-            sup_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
-                oc_definition,
-            )
-            if sup_match:
-                sup_value = sup_match.group(1) or sup_match.group(2)
-                sup_value = sup_value.strip()
-                if "$" in sup_value:
-                    sup = next(s.strip() for s in sup_value.split("$"))
-                else:
-                    sup = sup_value
-
-            kind_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
-                oc_definition,
-                re.IGNORECASE,
-            )
-            kind = (
-                kind_match.group(1).upper()
-                if kind_match
-                else c.Ldif.SchemaKind.STRUCTURAL.value
-            )
-
-            must = None
-            must_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
-                oc_definition,
-            )
-            if must_match:
-                must_value = must_match.group(1) or must_match.group(2)
-                must_value = must_value.strip()
-                if "$" in must_value:
-                    must = [m.strip() for m in must_value.split("$")]
-                else:
-                    must = [must_value]
-
-            may = None
-            may_match = re.search(
-                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
-                oc_definition,
-            )
-            if may_match:
-                may_value = may_match.group(1) or may_match.group(2)
-                may_value = may_value.strip()
-                if "$" in may_value:
-                    may = [m.strip() for m in may_value.split("$")]
-                else:
-                    may = [may_value]
-
-            metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-                oc_definition,
-            )
-
-            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = [
-                oc_definition.strip(),
-            ]
-
-            # Widen dict[str, list[str]] to dict[str, MetadataAttributeValue] for from_dict
-            metadata: m.Ldif.QuirkMetadata | None = None
-            if metadata_extensions:
-                extensions_typed: dict[str, t.MetadataAttributeValue] = {}
-                for key, val in metadata_extensions.items():
-                    typed_val: t.MetadataAttributeValue = list(val)
-                    extensions_typed[key] = typed_val
-                metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                        extensions_typed,
-                    ),
-                )
-
-            objectclass = m.Ldif.SchemaObjectClass(
-                oid=oid,
-                name=name,
-                desc=desc,
-                sup=sup,
-                kind=kind,
-                must=must,
-                may=may,
-                metadata=metadata,
-            )
-
-            return FlextResult.ok(objectclass)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception(
-                "RFC objectClass parsing exception",
-                oc_definition=oc_definition[:100] if oc_definition else None,
-                error=str(e),
-                error_type=type(e).__name__,
-            )
-            return FlextResult.fail(f"RFC objectClass parsing failed: {e}")
 
 
 __all__ = [

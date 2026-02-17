@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextTypes, t
-from flext_core._models.entity import FlextModelsEntity
+from flext_core import FlextLogger, t
 
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -101,49 +100,9 @@ class FlextLdifUtilitiesEvents:
     # EVENT STORAGE HELPERS
     # ════════════════════════════════════════════════════════════════════════
 
-    @staticmethod
-    def store_event_in_instance(
-        instance: FlextTypes.GeneralValueType,
-        event: FlextModelsEntity.DomainEvent,
-        attr_name: str = "_last_event",
-    ) -> None:
-        """Store event in Pydantic instance using object.__setattr__."""
-        setattr(instance, attr_name, event)
-
     # ════════════════════════════════════════════════════════════════════════
     # STATISTICS HELPERS
     # ════════════════════════════════════════════════════════════════════════
-
-    @staticmethod
-    def calculate_success_rate(
-        successful: int,
-        failed: int,
-    ) -> float:
-        """Calculate success rate percentage."""
-        total = successful + failed
-        if total == 0:
-            return 100.0
-        return (successful / total) * 100.0
-
-    @staticmethod
-    def calculate_throughput(
-        items: int,
-        duration_ms: float,
-    ) -> float:
-        """Calculate throughput in items per second."""
-        if duration_ms == 0:
-            return 0.0
-        return (items / duration_ms) * 1000.0
-
-    @staticmethod
-    def calculate_average(
-        total: float,
-        count: int,
-    ) -> float:
-        """Calculate average value."""
-        if count == 0:
-            return 0.0
-        return total / count
 
     # ════════════════════════════════════════════════════════════════════════
     # INTEGRATED LOGGING & EVENT HELPERS (FlextLogger Integration)
@@ -273,35 +232,6 @@ class FlextLdifUtilitiesEvents:
         )
 
     @staticmethod
-    def log_and_emit_migration_event(
-        logger: FlextLogger,
-        config: FlextLdifModelsEvents.MigrationEventConfig,
-        log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.MigrationEvent:
-        """Create MigrationEvent, log with context, and attach to logger context."""
-        # Create event
-        event = FlextLdifUtilitiesEvents.create_migration_event(config)
-
-        log_context, log_message = (
-            FlextLdifUtilitiesEvents._build_operation_event_logging(
-                event,
-                config,
-            )
-        )
-
-        # Delegate to generic helper for extras and logging
-        FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger,
-            log_context,
-            log_message,
-            log_level,
-            extras,
-        )
-
-        return event
-
-    @staticmethod
     def log_and_emit_conversion_event(
         logger: FlextLogger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
@@ -326,42 +256,6 @@ class FlextLdifUtilitiesEvents:
             log_message,
             log_level,
             extras,
-        )
-
-        return event
-
-    @staticmethod
-    def log_and_emit_schema_event(
-        logger: FlextLogger,
-        config: FlextLdifModelsEvents.SchemaEventConfig,
-        log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.SchemaEvent:
-        """Create SchemaEvent, log with context, and attach to logger context."""
-        # Create event
-        event = FlextLdifUtilitiesEvents.create_schema_event(config)
-
-        # Build log context with event data + computed metrics (explicit type annotation)
-        log_context: dict[str, t.ScalarValue] = {
-            "aggregate_id": event.aggregate_id,
-            "schema_operation": config.schema_operation,
-            "items_processed": config.items_processed,
-            "items_succeeded": config.items_succeeded,
-            "items_failed": config.items_failed,
-            "operation_duration_ms": config.operation_duration_ms,
-            "server_type": config.server_type,
-            "success_rate_pct": event.schema_success_rate,
-            "throughput_items_per_sec": event.throughput_items_per_sec,
-        }
-
-        # Log with context and extras using shared helper
-        log_message = f"Schema operation '{config.schema_operation}' on {config.server_type} completed"
-        FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger=logger,
-            log_context=log_context,
-            log_message=log_message,
-            log_level=log_level,
-            extras=extras,
         )
 
         return event

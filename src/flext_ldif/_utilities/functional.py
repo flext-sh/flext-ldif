@@ -9,14 +9,11 @@ from typing import Literal, TypeVar, overload
 from flext_core import FlextTypes as t, T, U
 from flext_core.utilities import FlextUtilities as u
 
-# Type variable for callable types
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 
 
 class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
-
-    # Core Functional Combinators
 
     @staticmethod
     def or_[T](
@@ -73,8 +70,6 @@ class FlextFunctional:
 
     pc = pick
 
-    # Dictionary Operations
-
     @staticmethod
     def map_dict[T, U](
         data: dict[str, T],
@@ -125,8 +120,6 @@ class FlextFunctional:
                     new_key = key_mapper(key)
                     result[new_key] = processor(key, value)
             return result
-        # When processor is None, T must be compatible with U for the overload
-        # but we return dict[str, T] which should be compatible
         result_no_proc: dict[str, T] = {}
         for key, value in data.items():
             if predicate(key, value):
@@ -178,8 +171,6 @@ class FlextFunctional:
 
     pr = pairs
 
-    # Collection Operations
-
     @staticmethod
     def fold[T, U](
         items: Sequence[T] | T,
@@ -189,7 +180,6 @@ class FlextFunctional:
         """Fold items using folder function (mnemonic: fd)."""
         if not isinstance(items, (list, tuple)):
             return initial
-        # Type assertion: after isinstance check, items is Sequence[T]
         sequence: Sequence[T] = items
         result = initial
         for item in sequence:
@@ -207,7 +197,6 @@ class FlextFunctional:
         """Map then filter items (mnemonic: mf)."""
         if not isinstance(items, (list, tuple)):
             return []
-        # Type assertion: after isinstance check, items is Sequence[T]
         sequence: Sequence[T] = items
         result: list[T] = []
         for item in sequence:
@@ -229,29 +218,20 @@ class FlextFunctional:
         """Process and flatten items (mnemonic: pf)."""
         if not isinstance(items, (list, tuple)):
             return []
-        # Type assertion: after isinstance check, items is Sequence[T]
         sequence: Sequence[T] = items
         result: list[U] = []
         for item in sequence:
             try:
                 processed = processor(item)
-                if isinstance(processed, list):
-                    # processed is list[U] - extend with filtered items
+                if isinstance(processed, (list, tuple)):
                     result.extend([
                         sub_item for sub_item in processed if predicate(sub_item)
                     ])
-                elif isinstance(processed, tuple):
-                    # processed is tuple[U, ...] - extend with filtered items
-                    result.extend([
-                        sub_item for sub_item in processed if predicate(sub_item)
-                    ])
-                # Single value case - processed is U (not list or tuple)
                 elif predicate(processed):
                     result.append(processed)
             except Exception:
                 if on_error == "stop":
                     raise
-                # "skip" and "collect" both continue processing
         return result
 
     pf = process_flatten
@@ -267,8 +247,6 @@ class FlextFunctional:
             result = op(result)
         return result
 
-    # List Normalization
-
     @classmethod
     def normalize_list[T](
         cls,
@@ -279,41 +257,32 @@ class FlextFunctional:
         default: list[T] | None = None,
     ) -> list[T]:
         """Normalize to list (mnemonic: nl)."""
-        # Build items from value
         items: list[T]
         if value is None:
             if default is not None:
                 return list(default)
             return []
 
-        # Handle different input types
         if isinstance(value, (str, bytes)):
-            # str/bytes are sequences but should be treated as single items - cast to T
             items = [value]  # Single item of type T
         elif isinstance(value, list):
             items = value
         elif isinstance(value, tuple):
             items = list(value)
         else:
-            # Single item - wrap in list
             items = [value]
 
-        # Apply mapper if provided
         if mapper is not None:
             items_mapped: list[T] = [mapper(item) for item in items]
-            # Apply predicate if provided
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
 
-        # No mapper - return items
         if predicate is not None:
             return [item for item in items if predicate(item)]
         return items
 
     nl = normalize_list
-
-    # Dictionary Operations
 
     @staticmethod
     def get[T](
@@ -322,7 +291,6 @@ class FlextFunctional:
         default: T | None = None,
     ) -> T | None:
         """Get value from dict with default (mnemonic: gt)."""
-        # Implement directly to preserve generic T type
         if isinstance(data, dict):
             return data.get(key, default)
         return default
@@ -351,8 +319,6 @@ class FlextFunctional:
 
     ev = evolve
 
-    # Conditional Operations
-
     @staticmethod
     def when[T](
         *,
@@ -362,14 +328,10 @@ class FlextFunctional:
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
         if condition:
-            # If then is callable, call it to get the value
             if callable(then):
-                # Type narrowing: callable() returns T
                 return then()
-            # Direct value
             if then is not None:
                 return then
-        # Return else_
         return else_
 
     wh = when
@@ -404,8 +366,6 @@ class FlextFunctional:
 
     pp = pipe
 
-    # Pattern Matching
-
     @classmethod
     def match[T, U](
         cls,
@@ -418,17 +378,14 @@ class FlextFunctional:
     ) -> U | None:
         """Pattern match (mnemonic: mt)."""
         for pattern, result in cases:
-            # Type matching
             if isinstance(pattern, type) and isinstance(value, pattern):
                 return result
-            # Predicate matching
             if callable(pattern) and not isinstance(pattern, type):
                 try:
                     if pattern(value):
                         return result
                 except (TypeError, ValueError):
                     continue
-            # Value matching
             if value == pattern:
                 return result
         return default
@@ -444,15 +401,11 @@ class FlextFunctional:
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
         result = cases.get(value, default)
-        # If result is callable, call it with value
         if callable(result):
-            # Type narrowing: callable(value) returns U
             return result(value)
         return result
 
     sw = switch
-
-    # Type Checking and Casting
 
     @classmethod
     def is_type[T](
@@ -482,7 +435,6 @@ class FlextFunctional:
 
     it = is_type
 
-    # Type alias for as_type return - union of all convertible types
     _ConvertibleType = (
         str
         | int
@@ -573,7 +525,6 @@ class FlextFunctional:
         default: t.GeneralValueType | None = None,
     ) -> t.GeneralValueType | None:
         """Safe cast (mnemonic: at)."""
-        # Map of string type names to actual types
         type_map: dict[str, type] = {
             "list": list,
             "dict": dict,
@@ -592,22 +543,16 @@ class FlextFunctional:
         if target_type is None:
             return default
 
-        # Already the right type (only check for concrete types, not callables)
         if isinstance(target_type, type) and isinstance(value, target_type):
-            # Value is already the target type - return it directly
-            # isinstance check confirms value is the target type
             return value  # type: GeneralValueType
 
-        # Try to convert
         try:
             if target_type is str:
                 return str(value)
             if target_type is int:
                 if isinstance(value, (str, bytes, bytearray, int, float)):
                     return int(value)
-                # For objects with numeric protocol
                 try:
-                    # Use str(value) then int() for general conversion
                     return int(str(value))
                 except (TypeError, ValueError):
                     pass
@@ -615,9 +560,7 @@ class FlextFunctional:
             if target_type is float:
                 if isinstance(value, (str, bytes, bytearray, int, float)):
                     return float(value)
-                # For objects with numeric protocol
                 try:
-                    # Use str(value) then float() for general conversion
                     return float(str(value))
                 except (TypeError, ValueError):
                     pass
@@ -639,7 +582,6 @@ class FlextFunctional:
                     return value
                 return default
 
-            # Handle other callable types
             if callable(target_type):
                 try:
                     try:
@@ -653,15 +595,11 @@ class FlextFunctional:
                         accepts_args = True
 
                     if accepts_args:
-                        # Call target_type constructor with value
-                        # We've already checked target_type is not object above
                         try:
-                            # Explicitly handle each known type to satisfy mypy
                             converted: t.GeneralValueType | None = None
                             if target_type is str:
                                 converted = str(value)
                             elif target_type is int:
-                                # int() needs specific types, so check first
                                 if isinstance(value, (int, float, str, bool)):
                                     converted = int(value)
                                 else:
@@ -669,7 +607,6 @@ class FlextFunctional:
                             elif target_type is bool:
                                 converted = bool(value)
                             elif target_type is float:
-                                # float() needs specific types, so check first
                                 if isinstance(value, (int, float, str, bool)):
                                     converted = float(value)
                                 else:
@@ -691,11 +628,6 @@ class FlextFunctional:
                                     dict(value) if isinstance(value, dict) else default
                                 )
                             else:
-                                # For all other types (custom classes, BaseModel, etc.)
-                                # We cannot safely construct these dynamically since they
-                                # may require specific constructor arguments (e.g., datetime
-                                # needs year/month/day, Pydantic models need validation)
-                                # Return default for unhandled types
                                 return default
 
                             if converted is None:
@@ -704,8 +636,6 @@ class FlextFunctional:
                             return default
 
                         if isinstance(converted, target_type):
-                            # Converted value matches target type
-                            # isinstance check confirms converted is the target type
                             return converted  # type: GeneralValueType
                         return default
                     return default
@@ -717,8 +647,6 @@ class FlextFunctional:
 
     at = as_type
 
-    # Property Accessors
-
     @classmethod
     def prop[T](
         cls,
@@ -729,11 +657,9 @@ class FlextFunctional:
         def getter(obj: T) -> T | None:
             """Get value from object by key."""
             if isinstance(obj, Mapping):
-                # Mapping.get returns value or None - type annotation narrows
                 value: T | None = obj.get(key)  # type narrowing via annotation
                 return value
             if hasattr(obj, key):
-                # getattr returns attribute value - type annotation narrows
                 attr_val: T | None = getattr(obj, key)  # type narrowing via annotation
                 return attr_val
             return None
@@ -754,7 +680,6 @@ class FlextFunctional:
             result_dict: dict[str, t.GeneralValueType] = {}
             for k in keys:
                 if isinstance(obj, Mapping):
-                    # Type assertion: obj is Mapping, get() returns value or None
                     value: t.GeneralValueType | None = u.mapper().get(obj, k)
                     result_dict[k] = value
                 elif hasattr(obj, k):
@@ -785,9 +710,7 @@ class FlextFunctional:
                 if obj is None:
                     return None
                 if isinstance(obj, Mapping):
-                    # mapper().get() returns the value or None
                     map_result = u.mapper().get(obj, key)
-                    # If result is the key itself (string), it means key not found
                     if map_result == key and isinstance(key, str):
                         return None
                     return map_result
@@ -797,7 +720,6 @@ class FlextFunctional:
 
             return getter_fn
 
-        # Create getters for each key in path
         getters: list[Callable[[t.GeneralValueType], t.GeneralValueType]] = [
             make_getter(k) for k in keys
         ]
@@ -806,7 +728,6 @@ class FlextFunctional:
             """Get value at path."""
             if obj is None:
                 return None
-            # Chain through all getters
             result: t.GeneralValueType = obj
             for getter in getters:
                 if result is None:
@@ -819,7 +740,6 @@ class FlextFunctional:
     ph = path
 
 
-# Short alias for the class
 f = FlextFunctional
 
 

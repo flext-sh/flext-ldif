@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import operator
 import re
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
@@ -224,41 +223,6 @@ class FlextLdifUtilitiesOID:
             return tuple(int(x) for x in oid.split("."))
         except ValueError:
             return None
-
-    @staticmethod
-    def filter_and_sort_by_oid(
-        values: list[str],
-        *,
-        allowed_oids: set[str] | None = None,
-        oid_pattern: re.Pattern[str] | None = None,
-    ) -> list[tuple[tuple[int, ...], str]]:
-        """Filter schema values by OID whitelist and sort numerically."""
-        # Default OID pattern: ( number.number.number... NAME ...
-        pattern = oid_pattern or re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
-
-        filtered_values: list[tuple[tuple[int, ...], str]] = []
-
-        for value in values:
-            # Extract OID from RFC format
-            match = pattern.search(value)
-            if not match:
-                continue
-
-            oid_str = match.group(1)
-
-            # Filter by whitelist if provided
-            if allowed_oids is not None and oid_str not in allowed_oids:
-                continue
-
-            # Parse OID for sorting
-            oid_tuple = FlextLdifUtilitiesOID.parse_to_tuple(oid_str)
-            if oid_tuple is None:
-                continue
-
-            filtered_values.append((oid_tuple, value))
-
-        # Sort by OID numerically
-        return sorted(filtered_values, key=operator.itemgetter(0))
 
     # Pre-compiled OID patterns for common LDAP servers
     # These eliminate the need for repeated re.compile() calls in server code

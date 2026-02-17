@@ -29,11 +29,7 @@ class EntryTransformer[T](ABC):
 
     def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
         """Apply transformation to a batch of items."""
-        # Apply transformation to each item using traverse pattern
         return r.traverse(items, self.apply)
-
-
-# NORMALIZE TRANSFORMERS - DN and Attribute normalization
 
 
 class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -72,25 +68,20 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""
-        # Apply case folding
         if self._case == "lower":
             normalized_dn = normalized_dn.lower()
         elif self._case == "upper":
             normalized_dn = normalized_dn.upper()
-        # "preserve" keeps as-is
 
-        # Apply space handling
         if self._spaces == "trim":
             normalized_dn = normalized_dn.strip()
         elif self._spaces == "normalize":
-            # Normalize internal spaces (single space between components)
             parts = normalized_dn.split(",")
             normalized_dn = ",".join(p.strip() for p in parts)
         return normalized_dn
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
-        # Type validation - ensure we received the correct type
         if not isinstance(item, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(
                 f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
@@ -99,14 +90,11 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
-        # Get DN string value
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
 
-        # Validate if requested
         if self._validate:
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
-                # Return failure as r[Entry] by mapping error
                 error_msg = (
                     str(validation_result.error)
                     if validation_result.error
@@ -114,7 +102,6 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
                 )
                 return r[m.Ldif.Entry].fail(error_msg)
 
-        # Normalize DN
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if norm_result.is_failure:
             return r[m.Ldif.Entry].fail(norm_result.error)
@@ -122,8 +109,6 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
-        # Update entry DN (create new DN)
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_dn = FlextLdifModelsDomains.DN(value=normalized_dn)
         update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
@@ -153,17 +138,13 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
-        # Get attributes dict
         attrs = (
             item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
         )
 
-        # Apply case folding to attribute names
-        # Note: u.map doesn't support key transformation, so we use dict comprehension
         if self._case_fold_names:
             attrs = {k.lower(): v for k, v in attrs.items()}
 
-        # Process values using u.map to transform each attribute's values
         def process_value_list(values: list[str]) -> list[str]:
             """Process a single attribute's values."""
             processed: list[str] = []
@@ -174,7 +155,6 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
                 processed.append(trimmed_value)
             return processed
 
-        # Use named function instead of lambda (DSL pattern)
         def map_process_value(_key: str, value: list[str]) -> list[str]:
             """Process value list for attribute."""
             return process_value_list(value)
@@ -187,9 +167,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             or new_attrs != attrs
         )
 
-        # Update entry with processed attributes if anything changed
         if needs_update:
-            # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
             new_attributes = FlextLdifModelsDomains.Attributes(attributes=new_attrs)
             update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
@@ -227,9 +205,6 @@ class Normalize:
         )
 
 
-# TRANSFORM UTILITIES - General transformations
-
-
 class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for replacing base DN in entries."""
 
@@ -254,19 +229,12 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
         dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
 
-        # Business Rule: Replace base DN in DN string for server migration
-        # Uses transform_dn_attribute which handles single DN string transformation
-        # This preserves RFC 4514 compliance and DN normalization per RFC 4514 Section 2
-        # Implication: Base DN replacement is critical for cross-server migrations where
-        # source and target directories have different base DNs (e.g., dc=example vs dc=example,dc=com)
         new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
             dn_str,
             self._old_base,
             self._new_base,
         )
 
-        # Create new DN and update entry
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_dn = FlextLdifModelsDomains.DN(value=new_dn_str)
         update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
@@ -291,14 +259,10 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Convert boolean attributes in an entry."""
-        # Business Rule: Convert boolean attribute values between formats (0/1 vs TRUE/FALSE)
-        # convert_boolean_attributes expects attributes dict and boolean_attr_names set
-        # Common LDAP boolean attributes that may need format conversion
         if item.attributes is None:
             return r[str].ok(item)
 
         attrs_dict = item.attributes.attributes
-        # Common boolean attribute names in LDAP (case-insensitive matching)
         boolean_attrs = {
             "userpassword",
             "pwdaccountlocked",
@@ -308,19 +272,15 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
             "passwordneverexpires",
         }
 
-        # Filter to specific attributes if provided
         if self._attributes:
             boolean_attrs = {attr.lower() for attr in self._attributes}
 
-        # Convert boolean attributes
         converted_attrs = FlextLdifUtilitiesEntry.convert_boolean_attributes(
             attributes=attrs_dict,
             boolean_attr_names=boolean_attrs,
             target_format=self._format,
         )
 
-        # Create new entry with converted attributes
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = FlextLdifModelsDomains.Attributes(attributes=converted_attrs)
         update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
@@ -352,10 +312,8 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
         )
 
-        # Apply include filter using u.filter (DSL pattern)
         if self._include is not None:
             include_lower = {i.lower() for i in self._include}
-            # Use named function instead of lambda (DSL pattern)
 
             def key_in_include(key: str, _value: object) -> bool:
                 """Check if key lowercase is in include set."""
@@ -363,10 +321,8 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
             attrs = {k: v for k, v in attrs.items() if key_in_include(k, v)}
 
-        # Apply exclude filter using u.filter (DSL pattern)
         if self._exclude:
             exclude_lower = {e.lower() for e in self._exclude}
-            # Use named function instead of lambda (DSL pattern)
 
             def key_not_in_exclude(key: str, _value: object) -> bool:
                 """Check if key lowercase is not in exclude set."""
@@ -374,8 +330,6 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
 
-        # Update entry with filtered attributes
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
         new_attributes = FlextLdifModelsDomains.Attributes(attributes=attrs)
         update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
@@ -394,11 +348,6 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Remove attributes from an entry."""
-        # Business Rule: Remove specified attributes from entry for data sanitization
-        # remove_attributes expects m.Ldif.Entry, but item is Entry (m.Ldif.Entry alias)
-        # Since m.Ldif.Entry inherits from FlextLdifModelsDomains.Entry, we can use
-        # model_validate to convert if needed, but Entry is already m.Ldif.Entry
-        # Type narrowing: Entry is m.Ldif.Entry, which is compatible
         updated_entry = FlextLdifUtilitiesEntry.remove_attributes(
             item,  # item is Entry (m.Ldif.Entry), which is what remove_attributes expects
             list(self._attributes),
@@ -484,18 +433,14 @@ class Transform:
 
 
 __all__ = [
-    # Type aliases
     "ConvertBooleansTransformer",
     "CustomTransformer",
-    # Base class
     "EntryTransformer",
     "FilterAttrsTransformer",
     "Normalize",
     "NormalizeAttrsTransformer",
-    # Normalize transformers
     "NormalizeDnTransformer",
     "RemoveAttrsTransformer",
-    # Transform utilities
     "ReplaceBaseDnTransformer",
     "Transform",
 ]

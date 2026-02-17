@@ -84,10 +84,7 @@ class TestsTestFlextLdifConstants(s):
         "LdifValidation.MAX_ENCODING_LENGTH": 50,
     }
 
-    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
-        "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
-        "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
-    }
+    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {}
 
     LDAP_SERVERS: ClassVar[dict[str, str]] = {
         "ACTIVE_DIRECTORY": "ad",
@@ -102,38 +99,27 @@ class TestsTestFlextLdifConstants(s):
     }
 
     ENUM_TEST_CASES: ClassVar[list[tuple[str, str, str]]] = [
-        ("PROCESSING_STAGE", "PARSING", "parsing"),
-        ("PROCESSING_STAGE", "VALIDATION", "validation"),
-        ("PROCESSING_STAGE", "ANALYTICS", "analytics"),
-        ("PROCESSING_STAGE", "WRITING", "writing"),
-        ("HEALTH_STATUS", "HEALTHY", "healthy"),
-        ("HEALTH_STATUS", "DEGRADED", "degraded"),
-        ("HEALTH_STATUS", "UNHEALTHY", "unhealthy"),
         ("ENTRY_TYPE", "PERSON", "person"),
         ("ENTRY_TYPE", "GROUP", "group"),
         ("ENTRY_TYPE", "ORGANIZATIONAL_UNIT", "organizationalunit"),
         ("ENTRY_TYPE", "DOMAIN", "domain"),
         ("ENTRY_TYPE", "OTHER", "other"),
-        ("ENTRY_MODIFICATION", "ADD", "add"),
-        ("ENTRY_MODIFICATION", "MODIFY", "modify"),
-        ("ENTRY_MODIFICATION", "DELETE", "delete"),
-        ("ENTRY_MODIFICATION", "MODRDN", "modrdn"),
+        ("CHANGE_TYPE", "ADD", "add"),
+        ("CHANGE_TYPE", "MODIFY", "modify"),
+        ("CHANGE_TYPE", "DELETE", "delete"),
+        ("CHANGE_TYPE", "MODRDN", "modrdn"),
     ]
 
     ENUM_CLASS_MAP: ClassVar[dict[str, type[object]]] = {
-        "PROCESSING_STAGE": lib_c.Ldif.ProcessingStage,
-        "HEALTH_STATUS": lib_c.Ldif.LdifHealthStatus,
         "ENTRY_TYPE": lib_c.Ldif.EntryType,
-        "ENTRY_MODIFICATION": lib_c.Ldif.EntryModification,
+        "CHANGE_TYPE": lib_c.Ldif.ChangeType,
     }
 
     # Classes that should be accessible under FlextLdifConstants.Ldif
     NAMESPACE_GROUPS: ClassVar[list[str]] = [
         "Format",
         "LdifProcessing",
-        "LdifGeneralValidation",
         "LdifValidation",
-        "QualityAnalysis",
         "ObjectClasses",
         "LdapServers",
         "RfcCompliance",
@@ -310,10 +296,10 @@ class TestsTestFlextLdifConstants(s):
         )
         assert lib_c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
         # Verify name length validation
-        assert lib_c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
+        assert lib_c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH >= 0
         assert (
-            lib_c.Ldif.LdifGeneralValidation.NAME_LENGTH_MAX
-            > lib_c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN
+            lib_c.Ldif.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH
+            > lib_c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH
         )
 
 

@@ -29,7 +29,6 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.validation import ServerValidationRules
 from flext_ldif._shared import normalize_server_type
 from flext_ldif.constants import c
-from flext_ldif.protocols import p
 
 u = FlextUtilities
 
@@ -136,22 +135,6 @@ class FlextLdifModelsDomains:
         def __str__(self) -> str:
             """Return DN value as string for str() conversion."""
             return self.value
-
-    class ExclusionInfo(FlextModelsBase.ArbitraryTypesModel):
-        """Metadata for excluded entries/schema items."""
-
-        excluded: bool = Field(
-            default=False,
-        )
-        exclusion_reason: str | None = Field(
-            default=None,
-        )
-        filter_criteria: str | None = Field(
-            default=None,
-        )
-        timestamp: str = Field(
-            ...,
-        )
 
     class SchemaAttribute(SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant)."""
@@ -605,16 +588,6 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
         )
 
-    class NormalizedEntryData(FlextLdifModelsBase):
-        """BaseModel for entry data with normalized DN references."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
     class DnRegistry(FlextLdifModelsBase):
         """Registry for tracking canonical DN case during conversions."""
 
@@ -763,26 +736,6 @@ class FlextLdifModelsDomains:
                 "total_variants": total_variants,
                 "dns_with_multiple_variants": multiple_variants,
             }
-
-    class QuirkCollection(m.Value):
-        """Collection of all quirks (Schema, ACL, Entry) for a single server type."""
-
-        model_config = ConfigDict(
-            arbitrary_types_allowed=True,
-            frozen=True,
-            validate_default=True,
-        )
-
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field()
-        schemas: list[p.Ldif.SchemaQuirkProtocol] = Field(
-            default_factory=list,
-        )
-        acls: list[p.Ldif.AclQuirkProtocol] = Field(
-            default_factory=list,
-        )
-        entrys: list[p.Ldif.EntryQuirkProtocol] = Field(
-            default_factory=list,
-        )
 
     class AclPermissions(FlextModelsBase.ArbitraryTypesModel):
         """ACL permissions for LDAP operations."""
@@ -1539,138 +1492,6 @@ class FlextLdifModelsDomains:
             if isinstance(result, dict):
                 return result
             return {}
-
-        class Builder:
-            """Builder pattern for Entry creation (reduces complexity, improves readability)."""
-
-            _outer_cls: type[FlextLdifModelsDomains.Entry]
-
-            def __init__(self, outer_cls: type[FlextLdifModelsDomains.Entry]) -> None:
-                """Initialize builder with reference to outer class."""
-                super().__init__()
-                self._outer_cls = outer_cls
-                self._dn: str | FlextLdifModelsDomains.DN | None = None
-                self._attributes: (
-                    dict[str, str | list[str]]
-                    | FlextLdifModelsDomains.Attributes
-                    | None
-                ) = None
-                self._metadata: FlextLdifModelsDomains.QuirkMetadata | None = None
-                self._acls: list[FlextLdifModelsDomains.Acl] | None = None
-                self._objectclasses: (
-                    list[FlextLdifModelsDomains.SchemaObjectClass] | None
-                ) = None
-                self._attributes_schema: (
-                    list[FlextLdifModelsDomains.SchemaAttribute] | None
-                ) = None
-                self._entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = (
-                    None
-                )
-                self._validation_metadata: (
-                    FlextLdifModelsDomains.ValidationMetadata | None
-                ) = None
-                self._server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
-                self._source_entry: str | None = None
-                self._unconverted_attributes: (
-                    FlextLdifModelsMetadata.DynamicMetadata | None
-                ) = None
-
-            def dn(
-                self,
-                dn: str | FlextLdifModelsDomains.DN,
-            ) -> Self:
-                self._dn = dn
-                return self
-
-            def attributes(
-                self,
-                attributes: dict[str, str | list[str]]
-                | FlextLdifModelsDomains.Attributes,
-            ) -> Self:
-                self._attributes = attributes
-                return self
-
-            def metadata(
-                self,
-                metadata: FlextLdifModelsDomains.QuirkMetadata,
-            ) -> Self:
-                self._metadata = metadata
-                return self
-
-            def acls(
-                self,
-                acls: list[FlextLdifModelsDomains.Acl],
-            ) -> Self:
-                self._acls = acls
-                return self
-
-            def objectclasses(
-                self,
-                objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass],
-            ) -> Self:
-                self._objectclasses = objectclasses
-                return self
-
-            def attributes_schema(
-                self,
-                attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute],
-            ) -> Self:
-                self._attributes_schema = attributes_schema
-                return self
-
-            def entry_metadata(
-                self,
-                entry_metadata: FlextLdifModelsMetadata.EntryMetadata,
-            ) -> Self:
-                self._entry_metadata = entry_metadata
-                return self
-
-            def server_type(
-                self,
-                server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
-            ) -> Self:
-                self._server_type = server_type
-                return self
-
-            def source_entry(
-                self,
-                source_entry: str,
-            ) -> Self:
-                self._source_entry = source_entry
-                return self
-
-            def unconverted_attributes(
-                self,
-                unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata,
-            ) -> Self:
-                self._unconverted_attributes = unconverted_attributes
-                return self
-
-            def build(self) -> FlextResult[FlextLdifModelsDomains.Entry]:
-                """Build the Entry using the accumulated parameters."""
-                if self._dn is None or self._attributes is None:
-                    return FlextResult[FlextLdifModelsDomains.Entry].fail(
-                        "DN and attributes are required",
-                    )
-
-                return self._outer_cls.create(
-                    dn=self._dn,
-                    attributes=self._attributes,
-                    metadata=self._metadata,
-                    acls=self._acls,
-                    objectclasses=self._objectclasses,
-                    attributes_schema=self._attributes_schema,
-                    entry_metadata=self._entry_metadata,
-                    validation_metadata=self._validation_metadata,
-                    server_type=self._server_type,
-                    source_entry=self._source_entry,
-                    unconverted_attributes=self._unconverted_attributes,
-                )
-
-        @classmethod
-        def builder(cls) -> Builder:
-            """Create a new Entry builder instance."""
-            return cls.Builder(outer_cls=cls)
 
         @classmethod
         def create(
@@ -2812,35 +2633,6 @@ class FlextLdifModelsDomains:
                 for key, value in attribute_case.items():
                     self.original_attribute_case[key] = value
             return self
-
-
-class SchemaDiscovery(FlextLdifModelsBase):
-    """Schema discovery operation configuration and state."""
-
-    server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc",
-    )
-    naming_contexts: list[str] = Field(
-        default_factory=list,
-    )
-    include_operational: bool = Field(
-        default=False,
-    )
-    max_entries: int | None = Field(
-        default=None,
-    )
-
-
-class SchemaLookup(FlextLdifModelsBase):
-    """Schema element lookup configuration and results."""
-
-    search_term: str = Field()
-    search_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc",
-    )
-    element_type: str | None = Field(
-        default=None,
-    )
 
 
 FlextLdifModelsDomains.Entry.model_rebuild(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -367,28 +367,6 @@ class FlextLdifUtilitiesWriters:
                 error=str(result.error),
             )
             return None
-
-        @staticmethod
-        def write_entries_fallback(
-            entries: Sequence[m.Ldif.Entry],
-            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
-            stats: Stats,
-        ) -> list[str]:
-            """Fallback manual processing if batch fails."""
-            # Manually process entries instead of using u.Collection.process
-            # to avoid complex generic type inference issues
-            results: list[str] = []
-            for entry in entries:
-                result = (
-                    FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
-                        entry,
-                        write_entry_hook,
-                        stats,
-                    )
-                )
-                if result is not None:
-                    results.append(result)
-            return results
 
         @staticmethod
         def write(

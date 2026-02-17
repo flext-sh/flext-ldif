@@ -20,9 +20,6 @@ logger = FlextLogger(__name__)
 class FlextLdifUtilitiesEntry:
     """Entry transformation utilities - pure helper functions."""
 
-    # Minimum length for base64 pattern matching (use constant from c.Ldif.Format.Rfc directly in methods)
-    # Note: Cannot use class attribute assignment with constants due to import order
-
     @staticmethod
     def _convert_single_boolean_value(
         value: str,
@@ -62,16 +59,13 @@ class FlextLdifUtilitiesEntry:
     ) -> t.Ldif.NormalizedAttributesDict:
         """Convert boolean attribute values between formats."""
         if not attributes or not boolean_attr_names:
-            # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
             normalized_result: t.Ldif.NormalizedAttributesDict = {}
             for attr_name in attributes:
-                # Type-safe access - get values with explicit type
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
                     attr_name
                 ]
-                # Normalize to list[str] - handle all input types
                 if isinstance(raw_values, (list, tuple)):
                     normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
@@ -90,35 +84,29 @@ class FlextLdifUtilitiesEntry:
         result: dict[str, list[str]] = {}
 
         for attr_name in attributes:
-            # Type-safe access - get values with explicit type
             attr_raw_values: list[str] | list[bytes] | bytes | str = attributes[
                 attr_name
             ]
-            # Normalize values to list[str] first - convert bytes to str immediately
             str_values: list[str]
             if isinstance(attr_raw_values, (list, tuple)):
-                # Convert bytes to str if needed
                 str_values = [
                     v.decode("utf-8", errors="replace")
                     if isinstance(v, bytes)
                     else str(v)
                     for v in attr_raw_values
                 ]
-            # Single value - convert bytes to str if needed, then wrap in list
             elif isinstance(attr_raw_values, bytes):
                 str_values = [attr_raw_values.decode("utf-8", errors="replace")]
             else:
                 str_values = [str(attr_raw_values)]
 
             if attr_name.lower() in boolean_attr_names:
-                # Convert boolean values
                 result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
                     str_values,
                     source_format,
                     target_format,
                 )
             else:
-                # Keep non-boolean attributes as-is (already converted to str)
                 result[attr_name] = str_values
 
         return result
@@ -136,7 +124,6 @@ class FlextLdifUtilitiesEntry:
             """Get normalized attribute name."""
             return case_map.get(attr_name.lower(), attr_name)
 
-        # Create normalized attributes dict
         result: t.Ldif.AttributesDict = {}
         for attr_name, values in attributes.items():
             normalized_name = get_normalized_name(attr_name)
@@ -146,36 +133,27 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def is_schema_entry(entry: m.Ldif.Entry, *, strict: bool = True) -> bool:
         """Check if entry is a REAL schema entry with schema definitions."""
-        # Entry with no attributes cannot be a schema entry
         if entry.attributes is None:
             return False
 
-        # Get attributes as lowercase set
         attrs_lower = {k.lower() for k in entry.attributes.attributes}
 
-        # Check for actual schema definition attributes
         schema_field_names = ["attributetypes", "objectclasses"]
         has_schema_attrs = any(sf.lower() in attrs_lower for sf in schema_field_names)
 
-        # Check DN patterns
         dn_lower = entry.dn.value.lower() if entry.dn else ""
         schema_dn_patterns = ["cn=subschemasubentry", "cn=subschema", "cn=schema"]
         has_schema_dn = any(pattern in dn_lower for pattern in schema_dn_patterns)
 
-        # Check objectClass
         object_classes = entry.attributes.get("objectClass", [])
         has_schema_objectclass = any(
             oc.lower() in {"subschema", "subentry"} for oc in object_classes
         )
 
         if strict:
-            # Strict mode: MUST have schema attrs AND DN pattern
-            # (filters.py logic - avoids false positives)
             if not has_schema_attrs:
                 return False
             return has_schema_dn
-        # Permissive mode: ANY of the criteria is sufficient
-        # (parser.py logic - more inclusive)
         return has_schema_dn or has_schema_objectclass or has_schema_attrs
 
     @staticmethod
@@ -187,15 +165,12 @@ class FlextLdifUtilitiesEntry:
         if not entry.attributes:
             return False
 
-        # Normalize to tuple
         if isinstance(objectclasses, str):
             objectclasses = (objectclasses,)
 
-        # Get objectClass values (case-insensitive comparison)
         entry_ocs = entry.attributes.get("objectClass", [])
         entry_ocs_lower = {oc.lower() for oc in entry_ocs}
 
-        # Check if any requested objectClass matches
         return any(oc.lower() in entry_ocs_lower for oc in objectclasses)
 
     @staticmethod
@@ -210,7 +185,6 @@ class FlextLdifUtilitiesEntry:
         if not entry.attributes:
             return False
 
-        # Case-insensitive attribute check
         entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
         return all(attr.lower() in entry_attrs_lower for attr in attributes)
 
@@ -226,7 +200,6 @@ class FlextLdifUtilitiesEntry:
         if not entry.attributes:
             return False
 
-        # Case-insensitive attribute check
         entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
         return any(attr.lower() in entry_attrs_lower for attr in attributes)
 
@@ -240,7 +213,6 @@ class FlextLdifUtilitiesEntry:
             return entry
 
         attrs_to_remove = {attr.lower() for attr in attributes}
-        # Direct iteration instead of u.Collection.filter
         filtered: dict[str, list[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()
@@ -266,25 +238,20 @@ class FlextLdifUtilitiesEntry:
         dict[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
-        # Default normalizer: lowercase
         normalize = normalize_attr_fn or (lambda x: x.lower())
 
-        # Analyze DN differences
         dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
             original=original_dn,
             converted=cleaned_dn if cleaned_dn != original_dn else None,
             context="dn",
         )
 
-        # Track original attribute case
         def extract_case_mapping(attr_name: str) -> tuple[str, str] | None:
             """Extract case mapping if different."""
             attr_str = str(attr_name)
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
 
-        # Direct iteration instead of u.Collection.process
-        # Extract case mappings from attribute names
         original_attribute_case: dict[str, str] = {}
         for attr_name in entry_attrs:
             try:
@@ -293,10 +260,8 @@ class FlextLdifUtilitiesEntry:
                     key, value = result
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
-                # Skip attributes that fail case mapping extraction due to data issues
                 continue
 
-        # Analyze attribute differences
         attribute_differences: dict[
             str,
             dict[str, t.MetadataAttributeValue],
@@ -307,34 +272,16 @@ class FlextLdifUtilitiesEntry:
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)
 
-            # Preserve original values
-            # Business Rule: LDIF attribute values are always ScalarValue or Sequence[ScalarValue]
-            # (never recursive t.GeneralValueType with nested Mappings).
-            # This method receives t.GeneralValueType from entry_attrs but converts to
-            # MetadataAttributeValue for metadata storage (which only accepts ScalarValue).
-            # Implication: Attribute values in LDIF are always primitive types, never nested structures.
-            # Type conversion: t.GeneralValueType -> MetadataAttributeValue is safe because
-            # LDIF attributes never contain nested Mappings in practice.
-            # Business Rule: original_values must be list[str] for iteration in string building
-            # Implication: Convert all values to list[str] format for consistent processing
             original_values_list: list[str] = []
             if isinstance(attr_values, (list, tuple)):
-                # Sequence of values - convert to list[str]
-                # Business Rule: LDIF attribute sequences are always Sequence[ScalarValue], never recursive
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
-                # Single value - wrap in list for consistency with metadata format
-                # Business Rule: Metadata stores attributes as sequences for consistency
                 original_values_list = [str(attr_values)]
-            # Store in original_attributes_complete dict
-            # Use t.MetadataAttributeValue annotation on the assignment target
             typed_list: t.MetadataAttributeValue = list(original_values_list)
             original_attributes_complete[original_attr_name] = typed_list
 
             converted_values = converted_attrs.get(canonical_name, [])
 
-            # Build string representations
-            # Business Rule: original_values_list is always list[str], safe for iteration
             original_str = f"{original_attr_name}: {', '.join(original_values_list)}"
             converted_str = (
                 f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
@@ -342,7 +289,6 @@ class FlextLdifUtilitiesEntry:
                 else None
             )
 
-            # Analyze differences
             attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
                 original=original_str,
                 converted=converted_str if converted_str != original_str else None,
@@ -367,28 +313,23 @@ class FlextLdifUtilitiesEntry:
         if not entry_dn or not attributes:
             return False
 
-        # Convert to dict and normalize attribute names
         attrs = dict(attributes) if not isinstance(attributes, dict) else attributes
         attr_names_lower = {k.lower() for k in attrs}
 
-        # Check DN patterns (OR of ANDs) - early return if match
         if config.dn_patterns and any(
             all(pattern in entry_dn for pattern in pattern_set)
             for pattern_set in config.dn_patterns
         ):
             return True
 
-        # Check attribute prefixes - early return if match
         if config.attr_prefixes and any(
             attr.startswith(prefix) for attr in attrs for prefix in config.attr_prefixes
         ):
             return True
 
-        # Check known attribute names - early return if match
         if config.attr_names and (attr_names_lower & set(config.attr_names)):
             return True
 
-        # Check keyword patterns in attribute names
         if config.keyword_patterns:
             return any(
                 keyword in attr
@@ -399,55 +340,6 @@ class FlextLdifUtilitiesEntry:
         return False
 
     @staticmethod
-    def denormalize_attributes_batch(
-        attributes: t.Ldif.AttributesDict,
-        *,
-        case_mappings: dict[str, str] | None = None,
-        boolean_mappings: dict[str, str] | None = None,
-        attr_name_mappings: dict[str, str] | None = None,
-        value_transformations: dict[str, dict[str, str]] | None = None,
-    ) -> t.Ldif.NormalizedAttributesDict:
-        """Batch denormalize attributes for output."""
-
-        def transform_value(attr_name: str, value: str) -> str:
-            """Transform single value for attribute."""
-            output_value = value
-            # Apply boolean mappings
-            if boolean_mappings and value in boolean_mappings:
-                output_value = boolean_mappings[value]
-            # Apply per-attribute value transformations
-            if value_transformations and attr_name.lower() in value_transformations:
-                attr_transforms = value_transformations[attr_name.lower()]
-                output_value = attr_transforms.get(output_value, output_value)
-            return output_value
-
-        def get_output_name(attr_name: str) -> str:
-            """Get output attribute name after case and name mappings."""
-            output_name = attr_name
-            # Step 1: Restore case
-            if case_mappings:
-                output_name = case_mappings.get(attr_name.lower(), attr_name)
-            # Step 2: Apply name mapping
-            if attr_name_mappings:
-                output_name = attr_name_mappings.get(output_name, output_name)
-            return output_name
-
-        result: dict[str, list[str]] = {}
-        for attr_name, values in attributes.items():
-            output_name = get_output_name(attr_name)
-            # Transform values - ensure they are strings first
-            output_values: list[str] = []
-            for value in values:
-                if isinstance(value, str):
-                    transformed = transform_value(attr_name, value)
-                    output_values.append(transformed)
-                else:
-                    # Skip non-string values or convert as needed
-                    output_values.append(str(value))
-            result[output_name] = output_values
-        return result
-
-    @staticmethod
     def normalize_attributes_batch(
         attributes: t.Ldif.AttributesDict,
         *,
@@ -455,9 +347,7 @@ class FlextLdifUtilitiesEntry:
         **kwargs: object,
     ) -> t.Ldif.AttributesDict:
         """Batch normalize attributes from server format to RFC format."""
-        # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
                 kwargs,
             )
@@ -470,27 +360,22 @@ class FlextLdifUtilitiesEntry:
             else set()
         )
         for attr_name, values in attributes.items():
-            # Step 1: Check if operational and should skip
             if config.strip_operational and attr_name.lower() in operational_lower:
                 continue
 
-            # Step 2: Normalize case
             output_name = attr_name.lower()
             if config.case_mappings:
                 output_name = config.case_mappings.get(attr_name, output_name)
 
-            # Step 3: Apply name mapping
             if config.attr_name_mappings:
                 output_name = config.attr_name_mappings.get(attr_name, output_name)
 
-            # Step 4: Transform values
             def normalize_value(value: str) -> str:
                 """Normalize single value."""
                 if config.boolean_mappings and value in config.boolean_mappings:
                     return config.boolean_mappings[value]
                 return value
 
-            # Apply normalization to each value
             output_values: list[str | bytes] = []
             for value in values:
                 if isinstance(value, str):
@@ -501,8 +386,6 @@ class FlextLdifUtilitiesEntry:
             result[output_name] = output_values
 
         return result
-
-    # BATCH METHODS - Power Method Support
 
     @staticmethod
     def _check_schema_criteria(entry: m.Ldif.Entry, *, is_schema: bool) -> bool:
@@ -516,7 +399,6 @@ class FlextLdifUtilitiesEntry:
         mode: Literal["any", "all"],
     ) -> bool:
         """Check objectClass criteria."""
-        # Direct iteration instead of u.Collection.filter
         matching_ocs: list[str] = [
             oc
             for oc in objectclasses
@@ -547,9 +429,7 @@ class FlextLdifUtilitiesEntry:
         **kwargs: object,
     ) -> bool:
         """Check multiple entry criteria in one call."""
-        # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
 
         checks: list[bool] = []
@@ -601,9 +481,7 @@ class FlextLdifUtilitiesEntry:
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
-        # Use provided config or build from kwargs
         if config is None:
-            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
 
         def transform_entry(
@@ -619,8 +497,6 @@ class FlextLdifUtilitiesEntry:
                 )
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
-                    # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
-                    # m.Ldif.DN is compatible via inheritance
                     dn_update: dict[str, t.GeneralValueType] = {
                         "dn": m.Ldif.DN(value=norm_result.value),
                     }
@@ -634,8 +510,6 @@ class FlextLdifUtilitiesEntry:
                     if config.attr_case == "upper"
                     else attrs
                 )
-                # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
-                # m.Ldif.Attributes. is compatible via inheritance
                 attrs_update: dict[str, t.GeneralValueType] = {
                     "attributes": m.Ldif.Attributes(attributes=new_attrs),
                 }
@@ -656,8 +530,6 @@ class FlextLdifUtilitiesEntry:
                     source_format=source_format,
                     target_format=target_format,
                 )
-                # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
-                # m.Ldif.Attributes. is compatible via inheritance
                 converted_attrs_update: dict[str, t.GeneralValueType] = {
                     "attributes": m.Ldif.Attributes(attributes=converted),
                 }
@@ -669,7 +541,6 @@ class FlextLdifUtilitiesEntry:
                 )
             return current
 
-        # Direct iteration instead of u.Collection.batch
         transformed_list: list[m.Ldif.Entry] = []
         errors: list[tuple[int, str]] = []
         for i, entry in enumerate(entries):
@@ -697,18 +568,14 @@ class FlextLdifUtilitiesEntry:
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Filter entries based on criteria."""
-        # Use provided config or build from kwargs
         if config is None:
-            # Handle exclude_schema as is_schema=False
             effective_is_schema = kwargs.get("is_schema")
             exclude_schema = kwargs.get("exclude_schema", False)
             if exclude_schema and effective_is_schema is None:
                 effective_is_schema = False
             kwargs["is_schema"] = effective_is_schema
-            # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
             config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
 
-        # Direct iteration instead of u.Collection.filter
         filtered: list[m.Ldif.Entry] = [
             entry
             for entry in entries

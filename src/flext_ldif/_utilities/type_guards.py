@@ -47,39 +47,3 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
             return False
         # Check if all items are Entry-like (have dn and attributes)
         return all(hasattr(item, "dn") and hasattr(item, "attributes") for item in obj)
-
-    @staticmethod
-    def is_schema_attribute(obj: t.GeneralValueType) -> TypeGuard[t.GeneralValueType]:
-        """Check if object is a SchemaAttribute Model instance.
-
-        Uses duck typing to avoid circular imports:
-        - Must have: oid, name, syntax attributes (Schema signatures)
-        - For runtime type narrowing in isinstance-like checks
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            True if object has SchemaAttribute structure
-
-        """
-        return hasattr(obj, "oid") and hasattr(obj, "name") and hasattr(obj, "syntax")
-
-    @staticmethod
-    def is_schema_object_class(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[t.GeneralValueType]:
-        """Check if object is a SchemaObjectClass Model instance.
-
-        Uses duck typing to avoid circular imports:
-        - Must have: oid, name, sup attributes (ObjectClass signatures)
-        - For runtime type narrowing in isinstance-like checks
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            True if object has SchemaObjectClass structure
-
-        """
-        return hasattr(obj, "oid") and hasattr(obj, "name") and hasattr(obj, "sup")

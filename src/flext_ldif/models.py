@@ -71,9 +71,6 @@ class FlextLdifModels(FlextModels):
         class AciParserConfig(FlextLdifModelsSettings.AciParserConfig):
             """ACI parser configuration."""
 
-        class AciWriterConfig(FlextLdifModelsSettings.AciWriterConfig):
-            """ACI writer configuration."""
-
         class Entry(FlextLdifModelsDomains.Entry):
             """LDIF entry with DN and attributes."""
 
@@ -138,9 +135,6 @@ class FlextLdifModels(FlextModels):
 
         CategoryRules: TypeAlias = FlextLdifModelsSettings.CategoryRules
         WhitelistRules: TypeAlias = FlextLdifModelsSettings.WhitelistRules
-        TransformationTrackingConfig: TypeAlias = (
-            FlextLdifModelsSettings.TransformationTrackingConfig
-        )
         SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
 
         ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
@@ -176,42 +170,23 @@ class FlextLdifModels(FlextModels):
         class Configuration:
             """Extended configuration models namespace."""
 
-            EntryParseConfig: TypeAlias = FlextLdifModelsSettings.EntryParseConfig
             EntryParseMetadataConfig: TypeAlias = (
                 FlextLdifModelsSettings.EntryParseMetadataConfig
-            )
-            EntryProcessingConfig: TypeAlias = (
-                FlextLdifModelsSettings.EntryProcessingConfig
             )
             EntryTransformConfig: TypeAlias = (
                 FlextLdifModelsSettings.EntryTransformConfig
             )
             EntryFilterConfig: TypeAlias = FlextLdifModelsSettings.EntryFilterConfig
             EntryWriteConfig: TypeAlias = FlextLdifModelsSettings.EntryWriteConfig
-            ObjectClassParseConfig: TypeAlias = (
-                FlextLdifModelsSettings.ObjectClassParseConfig
-            )
-            LdifContentParseConfig: TypeAlias = (
-                FlextLdifModelsSettings.LdifContentParseConfig
-            )
-            ParserParams: TypeAlias = FlextLdifModelsSettings.ParserParams
-            WriterParams: TypeAlias = FlextLdifModelsSettings.WriterParams
             ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
             BatchWriteConfig: TypeAlias = FlextLdifModelsSettings.BatchWriteConfig
             AttributeNormalizeConfig: TypeAlias = (
                 FlextLdifModelsSettings.AttributeNormalizeConfig
             )
-            AttributeDenormalizeConfig: TypeAlias = (
-                FlextLdifModelsSettings.AttributeDenormalizeConfig
-            )
             RdnProcessingConfig: TypeAlias = FlextLdifModelsSettings.RdnProcessingConfig
             DnCaseRules: TypeAlias = FlextLdifModelsSettings.DnCaseRules
             EncodingRules: TypeAlias = FlextLdifModelsSettings.EncodingRules
             AclFormatRules: TypeAlias = FlextLdifModelsSettings.AclFormatRules
-            MigrationPipelineParams: TypeAlias = (
-                FlextLdifModelsSettings.MigrationPipelineParams
-            )
-            MigrationConfig: TypeAlias = FlextLdifModelsSettings.MigrationConfig
             ServerValidationRules: TypeAlias = (
                 FlextLdifModelsSettings.ServerValidationRules
             )
@@ -223,7 +198,6 @@ class FlextLdifModels(FlextModels):
             MetadataTransformationConfig: TypeAlias = (
                 FlextLdifModelsSettings.MetadataTransformationConfig
             )
-            ConfigInfo: TypeAlias = FlextLdifModelsSettings.ConfigInfo
             PermissionMappingConfig: TypeAlias = (
                 FlextLdifModelsSettings.PermissionMappingConfig
             )
@@ -240,9 +214,7 @@ class FlextLdifModels(FlextModels):
             StatisticsSummary: TypeAlias = FlextLdifModelsResults.StatisticsSummary
             EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
             MigrationSummary: TypeAlias = FlextLdifModelsResults.MigrationSummary
-            CategorizedEntries: TypeAlias = FlextLdifModelsResults.CategorizedEntries
 
-            AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult
             EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
             ServerDetectionResult: TypeAlias = (
                 FlextLdifModelsResults.ServerDetectionResult
@@ -251,18 +223,9 @@ class FlextLdifModels(FlextModels):
             ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
             WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
 
-            SchemaDiscoveryResult: TypeAlias = (
-                FlextLdifModelsResults.SchemaDiscoveryResult
-            )
-            SchemaBuilderResult: TypeAlias = FlextLdifModelsResults.SchemaBuilderResult
-            SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
-
             AclResponse: TypeAlias = FlextLdifModelsResults.AclResponse
             AclEvaluationResult: TypeAlias = FlextLdifModelsResults.AclEvaluationResult
 
-            MigrationEntriesResult: TypeAlias = (
-                FlextLdifModelsResults.MigrationEntriesResult
-            )
             MigrationPipelineResult: TypeAlias = (
                 FlextLdifModelsResults.MigrationPipelineResult
             )
@@ -270,9 +233,6 @@ class FlextLdifModels(FlextModels):
             ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
             ValidationBatchResult: TypeAlias = (
                 FlextLdifModelsResults.ValidationBatchResult
-            )
-            LdifValidationResult: TypeAlias = (
-                FlextLdifModelsResults.LdifValidationResult
             )
 
             DynamicCounts = FlextLdifModelsResults.DynamicCounts
@@ -317,15 +277,6 @@ class FlextLdifModels(FlextModels):
             WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
             WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
 
-            SchemaDiscoveryResult: TypeAlias = (
-                FlextLdifModelsResults.SchemaDiscoveryResult
-            )
-            SchemaBuilderResult: TypeAlias = FlextLdifModelsResults.SchemaBuilderResult
-            SyntaxLookupResult: TypeAlias = FlextLdifModelsResults.SyntaxLookupResult
-
-            MigrationEntriesResult: TypeAlias = (
-                FlextLdifModelsResults.MigrationEntriesResult
-            )
             MigrationPipelineResult: TypeAlias = (
                 FlextLdifModelsResults.MigrationPipelineResult
             )
@@ -334,14 +285,10 @@ class FlextLdifModels(FlextModels):
             ValidationBatchResult: TypeAlias = (
                 FlextLdifModelsResults.ValidationBatchResult
             )
-            LdifValidationResult: TypeAlias = (
-                FlextLdifModelsResults.LdifValidationResult
-            )
 
             ServerDetectionResult: TypeAlias = (
                 FlextLdifModelsResults.ServerDetectionResult
             )
-            AnalysisResult: TypeAlias = FlextLdifModelsResults.AnalysisResult
             EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
 
             FlexibleCategories: TypeAlias = _FlexibleCategories

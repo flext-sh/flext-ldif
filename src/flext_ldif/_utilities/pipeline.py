@@ -227,16 +227,6 @@ class Pipeline:
             results.append(process_result.value)
         return r[list[m.Ldif.Entry]].ok(results)
 
-    @property
-    def step_count(self) -> int:
-        """Get number of steps in pipeline."""
-        return len(self._steps)
-
-    @property
-    def step_names(self) -> list[str]:
-        """Get names of all steps."""
-        return [name for name, _ in self._steps]
-
 
 # PROCESSING PIPELINE - Full processing with config
 

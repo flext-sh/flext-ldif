@@ -28,12 +28,8 @@ class ProcessConfigBuilder:
     __slots__ = (
         "_acl_config",
         "_attr_config",
-        "_convert_acls",
         "_dn_config",
         "_metadata_config",
-        "_normalize_attrs",
-        "_normalize_dns",
-        "_preserve_metadata",
         "_source_server",
         "_target_server",
         "_validation_config",
@@ -145,21 +141,6 @@ class ProcessConfigBuilder:
             include_processing_stats=preserve_tracking,
             preserve_validation=preserve_validation,
         )
-        return self
-
-    def enable_dn_normalization(self, *, enabled: bool = True) -> Self:
-        """Enable or disable DN normalization."""
-        self._normalize_dns = enabled
-        return self
-
-    def enable_attr_normalization(self, *, enabled: bool = True) -> Self:
-        """Enable or disable attribute normalization."""
-        self._normalize_attrs = enabled
-        return self
-
-    def enable_acl_conversion(self, *, enabled: bool = True) -> Self:
-        """Enable or disable ACL conversion."""
-        self._convert_acls = enabled
         return self
 
     def build(self) -> ProcessConfig:

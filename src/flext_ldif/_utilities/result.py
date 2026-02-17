@@ -8,12 +8,10 @@ from typing import IO, Self, overload
 
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.utilities import FlextUtilities
 
 from flext_ldif.protocols import p
 
 r = FlextResult
-u_core = FlextUtilities
 
 # Type variable for the result value type
 type ResultValue[T] = T
@@ -95,12 +93,6 @@ class FlextLdifResult[T]:
         """Unwrap the success value or return a default."""
         return self._inner.unwrap_or(default)
 
-    def unwrap_or_else(self, func: Callable[[], T]) -> T:
-        """Unwrap the success value or compute from error."""
-        if self.is_failure:
-            return func()
-        return self._inner.value
-
     def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
         """Map a function over the success value."""
         # map may return RuntimeResult, convert to FlextResult
@@ -112,16 +104,6 @@ class FlextLdifResult[T]:
         # flat_map may return RuntimeResult, convert to FlextResult
         mapped_result = self._inner.flat_map(func)
         return FlextLdifResult(mapped_result)
-
-    def map_error(self, func: Callable[[str], str]) -> FlextLdifResult[T]:
-        """Map a function over the error message."""
-        # map_error may return RuntimeResult, convert to FlextResult
-        mapped_result = self._inner.map_error(func)
-        return FlextLdifResult(mapped_result)
-
-    def to_inner(self) -> FlextResult[T]:
-        """Get the underlying FlextResult."""
-        return self._inner
 
     # DSL OPERATORS - LDIF-specific pipeline operations
 

@@ -284,37 +284,6 @@ class EntryOps:
 
         return self
 
-    def rename_attr(self, old_name: str, new_name: str) -> Self:
-        """Rename an attribute."""
-        if self._error:
-            return self
-
-        if self._entry.attributes is None:
-            self._error = "Entry has no attributes"
-            return self
-
-        attrs = (
-            self._entry.attributes.attributes
-            if hasattr(self._entry.attributes, "attributes")
-            else {}
-        )
-        new_attrs = {}
-
-        # Find and rename attribute (case-insensitive)
-        old_lower = old_name.lower()
-        for key, values in attrs.items():
-            if key.lower() == old_lower:
-                new_attrs[new_name] = values
-            else:
-                new_attrs[key] = values
-
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
-        new_attributes = m.Ldif.Attributes(attributes=new_attrs)
-        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
-        self._entry = self._entry.model_copy(update=update_dict)
-
-        return self
-
     def filter_attrs(
         self,
         *,

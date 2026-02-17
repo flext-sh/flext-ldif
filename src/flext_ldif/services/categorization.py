@@ -520,41 +520,6 @@ class FlextLdifCategorization(
 
         return (_cat("rejected"), "No category match")
 
-    def _categorize_by_priority(
-        self,
-        entry: m.Ldif.Entry,
-        constants: type,
-        priority_order: list[str],
-        category_map: dict[
-            str,
-            frozenset[str],
-        ],
-    ) -> tuple[str, str | None]:
-        """Categorize entry by iterating through priority order."""
-        acl_literal = _cat("acl")
-        for category in priority_order:
-            if category == acl_literal:
-                if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
-                    acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)
-                    if u.Ldif.Entry.has_any_attributes(
-                        entry,
-                        acl_attributes,
-                    ):
-                        return (acl_literal, None)
-                continue
-
-            category_objectclasses = category_map.get(category)
-            if not category_objectclasses:
-                continue
-
-            if u.Ldif.Entry.has_objectclass(
-                entry,
-                tuple(category_objectclasses),
-            ):
-                return (category, None)
-
-        return (_cat("rejected"), "No category match")
-
     def _update_metadata_for_filtered_entries(
         self,
         entries: list[m.Ldif.Entry],

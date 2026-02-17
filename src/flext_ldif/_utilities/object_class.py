@@ -51,30 +51,6 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.sup = "top"
 
     @staticmethod
-    def fix_auxiliary_without_sup(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> None:
-        """Fix AUXILIARY ObjectClass missing SUP (server-specific fix)."""
-        # Only fix AUXILIARY classes without SUP
-        schema_constants = _get_schema_constants()
-        if schema_oc.sup or schema_oc.kind != schema_constants.AUXILIARY:
-            return
-
-        # Known AUXILIARY classes from OID that are missing SUP top
-        auxiliary_without_sup = {
-            "orcldAsAttrCategory",  # orclDASAttrCategory
-            "orcldasattrcategory",
-        }
-        name_lower = str(schema_oc.name).lower() if schema_oc.name else ""
-
-        # If it's a known problematic class, fix it
-        if name_lower in auxiliary_without_sup:
-            schema_oc.sup = "top"
-        else:
-            # For unknown cases, use general fix
-            FlextLdifUtilitiesObjectClass.ensure_sup_for_auxiliary(schema_oc)
-
-    @staticmethod
     def fix_kind_mismatch(
         schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
         _server_type: str = "oid",

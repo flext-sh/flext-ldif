@@ -59,18 +59,6 @@ class FlextLdifServer(FlextRegistry):
             except (TypeError, AttributeError):
                 continue
 
-    def register_server_quirk(self, quirk: FlextLdifServersBase) -> r[bool]:
-        """Register a server quirk manually."""
-        server_type = getattr(quirk, "server_type", None)
-        if not isinstance(server_type, str):
-            return r[bool].fail("Quirk missing server_type")
-
-        quirk_class = type(quirk)
-        if not all(hasattr(quirk_class, c) for c in ("Schema", "Acl", "Entry")):
-            return r[bool].fail("Quirk missing nested classes")
-
-        return self.register_class_plugin(self.SERVERS, server_type, quirk)
-
     def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type."""
         try:
@@ -149,22 +137,6 @@ class FlextLdifServer(FlextRegistry):
             return r[type].ok(constants)
 
         return self.quirk(server_type).flat_map(validate_constants)
-
-    def get_detection_constants(self, server_type: str) -> r[type]:
-        """Get Constants class with detection attributes."""
-        required = ("DETECTION_PATTERN", "DETECTION_WEIGHT", "DETECTION_ATTRIBUTES")
-
-        def validate_detection_constants(base: FlextLdifServersBase) -> r[type]:
-            constants = getattr(type(base), "Constants", None)
-            if constants is None:
-                return r[type].fail(f"Server {server_type} missing Constants")
-            if not all(hasattr(constants, attr) for attr in required):
-                return r[type].fail(
-                    f"Server {server_type} missing DETECTION_* attributes",
-                )
-            return r[type].ok(constants)
-
-        return self.quirk(server_type).flat_map(validate_detection_constants)
 
     def get_registry_stats(self) -> dict[str, t.GeneralValueType]:
         """Get comprehensive registry statistics."""

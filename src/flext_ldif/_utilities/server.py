@@ -380,21 +380,6 @@ class FlextLdifUtilitiesServer:
         return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
 
     @staticmethod
-    def get_default_acl_attributes() -> list[str]:
-        """Get default ACL attributes list."""
-        return list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
-
-    @staticmethod
-    def get_sort_target_values() -> list[str]:
-        """Get all valid sort target values."""
-        return [t.value for t in c.Ldif.SortTarget.__members__.values()]
-
-    @staticmethod
-    def get_sort_strategy_values() -> list[str]:
-        """Get all valid sort strategy values."""
-        return [s.value for s in c.Ldif.SortStrategy.__members__.values()]
-
-    @staticmethod
     def get_sort_target_value(name: str) -> str:
         """Get sort target enum value by name."""
         sort_target_enum = getattr(c.Ldif.SortTarget, name.upper(), None)

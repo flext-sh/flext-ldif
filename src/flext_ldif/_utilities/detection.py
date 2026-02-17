@@ -92,40 +92,6 @@ class FlextLdifUtilitiesDetection:
                 return False
 
         @staticmethod
-        def can_handle_prefix(
-            data: (
-                str
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Entry
-                | m.Ldif.Acl
-                | None
-            ),
-            prefixes: frozenset[str],
-        ) -> bool:
-            """Check if data starts with any prefix (case-insensitive)."""
-            # String: direct match
-            if isinstance(data, str):
-                data_lower = data.lower()
-                return any(data_lower.startswith(p.lower()) for p in prefixes)
-
-            # Model with name field
-            name = getattr(data, "name", None)
-            if name:
-                name_lower = str(name).lower()
-                return any(name_lower.startswith(p.lower()) for p in prefixes)
-
-            # Try converting to string
-            try:
-                if data is not None:
-                    data_str = str(data).lower()
-                    return any(data_str.startswith(p.lower()) for p in prefixes)
-            except (TypeError, AttributeError):
-                pass
-
-            return False
-
-        @staticmethod
         def can_handle_in_set(
             data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
             items: frozenset[str],

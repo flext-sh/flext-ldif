@@ -85,10 +85,7 @@ class TestsTestFlextLdifConstants(s):
         "Ldif.LdifValidation.MAX_ENCODING_LENGTH": 50,
     }
 
-    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
-        "Ldif.QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
-        "Ldif.QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
-    }
+    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {}
 
     LDAP_SERVERS: ClassVar[dict[str, str]] = {
         "ACTIVE_DIRECTORY": "ad",
@@ -105,36 +102,27 @@ class TestsTestFlextLdifConstants(s):
     }
 
     ENUM_TEST_CASES: ClassVar[list[tuple[str, str, str]]] = [
-        ("PROCESSING_STAGE", "PARSING", "parsing"),
-        ("PROCESSING_STAGE", "VALIDATION", "validation"),
-        ("PROCESSING_STAGE", "ANALYTICS", "analytics"),
-        ("PROCESSING_STAGE", "WRITING", "writing"),
-        ("HEALTH_STATUS", "HEALTHY", "healthy"),
-        ("HEALTH_STATUS", "DEGRADED", "degraded"),
-        ("HEALTH_STATUS", "UNHEALTHY", "unhealthy"),
         ("ENTRY_TYPE", "PERSON", "person"),
         ("ENTRY_TYPE", "GROUP", "group"),
         ("ENTRY_TYPE", "ORGANIZATIONAL_UNIT", "organizationalunit"),
         ("ENTRY_TYPE", "DOMAIN", "domain"),
         ("ENTRY_TYPE", "OTHER", "other"),
-        ("ENTRY_MODIFICATION", "ADD", "add"),
-        ("ENTRY_MODIFICATION", "MODIFY", "modify"),
-        ("ENTRY_MODIFICATION", "DELETE", "delete"),
-        ("ENTRY_MODIFICATION", "MODRDN", "modrdn"),
+        ("CHANGE_TYPE", "ADD", "add"),
+        ("CHANGE_TYPE", "MODIFY", "modify"),
+        ("CHANGE_TYPE", "DELETE", "delete"),
+        ("CHANGE_TYPE", "MODRDN", "modrdn"),
     ]
 
     ENUM_CLASS_MAP: ClassVar[dict[str, type[object]]] = {
-        "PROCESSING_STAGE": c.Ldif.ProcessingStage,
-        "HEALTH_STATUS": c.Ldif.LdifHealthStatus,
         "ENTRY_TYPE": c.Ldif.EntryType,
-        "ENTRY_MODIFICATION": c.Ldif.EntryModification,
+        "CHANGE_TYPE": c.Ldif.ChangeType,
     }
 
     NAMESPACE_GROUPS: ClassVar[list[str]] = [
         "Encoding",
         "Format",
         "LdifProcessing",
-        "LdifGeneralValidation",
+        "LdifValidation",
         "Acl",
         "LdifFormatting",
     ]
@@ -253,9 +241,7 @@ class TestsTestFlextLdifConstants(s):
             ("ORGANIZATIONAL_PERSON", "organizationalPerson"),
         ],
     )
-    def test_person_object_classes(
-        self, attr_name: str, expected_value: str
-    ) -> None:
+    def test_person_object_classes(self, attr_name: str, expected_value: str) -> None:
         """Test person object class constants."""
         assert getattr(c.Ldif.ObjectClasses, attr_name) == expected_value
 
@@ -266,9 +252,7 @@ class TestsTestFlextLdifConstants(s):
             ("GROUP_OF_UNIQUE_NAMES", "groupOfUniqueNames"),
         ],
     )
-    def test_group_object_classes(
-        self, attr_name: str, expected_value: str
-    ) -> None:
+    def test_group_object_classes(self, attr_name: str, expected_value: str) -> None:
         """Test group object class constants."""
         assert getattr(c.Ldif.ObjectClasses, attr_name) == expected_value
 
@@ -350,8 +334,8 @@ class TestsTestFlextLdifConstants(s):
         assert c.Ldif.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
-        assert c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
+        assert c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH >= 0
         assert (
-            c.Ldif.LdifGeneralValidation.NAME_LENGTH_MAX
-            > c.Ldif.LdifGeneralValidation.NAME_LENGTH_MIN
+            c.Ldif.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH
+            > c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH
         )

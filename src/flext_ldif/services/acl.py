@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -27,6 +29,22 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             self,
             "_server",
             server if server is not None else FlextLdifServer(),
+        )
+
+    @staticmethod
+    def _build_acl_response(
+        acls: Sequence[FlextLdifModelsDomains.Acl],
+        *,
+        processed_entries: int = 1,
+        failed_entries: int = 0,
+    ) -> m.Ldif.LdifResults.AclResponse:
+        return m.Ldif.LdifResults.AclResponse(
+            acls=list(acls),
+            statistics=m.Ldif.LdifResults.Statistics(
+                processed_entries=processed_entries,
+                acls_extracted=len(acls),
+                failed_entries=failed_entries,
+            ),
         )
 
     def parse_acl_string(
@@ -62,11 +80,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         if parse_result.is_failure:
             return r[m.Ldif.Acl].fail(parse_result.error or "ACL parsing failed")
 
-        parsed_value = parse_result.value
-        if isinstance(parsed_value, m.Ldif.Acl):
-            return r[m.Ldif.Acl].ok(parsed_value)
-
-        return r[m.Ldif.Acl].ok(m.Ldif.Acl.model_validate(parsed_value))
+        return r[m.Ldif.Acl].ok(parse_result.value)
 
     def write_acl(
         self,
@@ -98,14 +112,8 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         )
 
         if not acl_attr_name:
-            return r[str].ok(
-                m.Ldif.LdifResults.AclResponse(
-                    acls=[],
-                    statistics=m.Ldif.LdifResults.Statistics(
-                        processed_entries=1,
-                        acls_extracted=0,
-                    ),
-                ),
+            return r[m.Ldif.LdifResults.AclResponse].ok(
+                self._build_acl_response([]),
             )
 
         acl_values = entry.get_attribute_values(
@@ -113,14 +121,8 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         )
 
         if not acl_values:
-            return r[str].ok(
-                m.Ldif.LdifResults.AclResponse(
-                    acls=[],
-                    statistics=m.Ldif.LdifResults.Statistics(
-                        processed_entries=1,
-                        acls_extracted=0,
-                    ),
-                ),
+            return r[m.Ldif.LdifResults.AclResponse].ok(
+                self._build_acl_response([]),
             )
 
         acls: list[FlextLdifModelsDomains.Acl] = []
@@ -152,16 +154,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
 
             acls.extend(item for item in results_raw if isinstance(item, m.Ldif.Acl))
 
-        response = m.Ldif.LdifResults.AclResponse(
-            acls=acls,
-            statistics=m.Ldif.LdifResults.Statistics(
-                processed_entries=1,
-                acls_extracted=len(acls),
-                failed_entries=failed_count,
-            ),
+        return r[m.Ldif.LdifResults.AclResponse].ok(
+            self._build_acl_response(acls, failed_entries=failed_count),
         )
-
-        return r[str].ok(response)
 
     @staticmethod
     def extract_acl_entries(
@@ -170,7 +165,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
     ) -> r[list[m.Ldif.Entry]]:
         """Extract entries that contain ACL attributes."""
         if not entries:
-            return r[str].ok([])
+            return r[list[m.Ldif.Entry]].ok([])
 
         if acl_attributes is None:
             acl_attributes = list(
@@ -212,7 +207,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         )
 
         if not acls:
-            return r[str].ok(
+            return r[m.Ldif.LdifResults.AclEvaluationResult].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=False,
                     matched_acl=None,
@@ -224,7 +219,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         required_perms = [p for p in perm_names if getattr(required, p, False)]
 
         if not required_perms:
-            return r[str].ok(
+            return r[m.Ldif.LdifResults.AclEvaluationResult].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=acls[0] if acls else None,
@@ -242,8 +237,8 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
 
         found_raw = u.find(acls, predicate=predicate)
 
-        if found_raw is not None and isinstance(found_raw, m.Ldif.Acl):
-            return r[str].ok(
+        if found_raw is not None:
+            return r[m.Ldif.LdifResults.AclEvaluationResult].ok(
                 m.Ldif.LdifResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=found_raw,
@@ -251,7 +246,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
                 ),
             )
 
-        return r[str].ok(
+        return r[m.Ldif.LdifResults.AclEvaluationResult].ok(
             m.Ldif.LdifResults.AclEvaluationResult(
                 granted=False,
                 matched_acl=None,
