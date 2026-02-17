@@ -1,16 +1,4 @@
-"""RFC 2849 Compliant LDIF Entry Parser and Writer for flext-ldif.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides RFC 2849 baseline LDIF entry parsing and manipulation.
-Server-specific entry handling extends this RFC base implementation.
-
-References:
-    - RFC 2849: LDIF Format Specification
-    - RFC 4512: LDAP Directory Information Models
-
-"""
+"""RFC 2849 Compliant LDIF Entry Parser and Writer for flext-ldif."""
 
 from __future__ import annotations
 
@@ -23,18 +11,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
-    """RFC 2849 Compliant LDIF Entry Processing.
-
-    Provides baseline entry parsing, validation, and manipulation
-    following RFC 2849 LDIF format specification.
-
-    Features:
-    - RFC 2849 compliant LDIF parsing
-    - Entry validation and transformation
-    - Safe attribute handling
-    - DN normalization
-
-    """
+    """RFC 2849 Compliant LDIF Entry Processing."""
 
     __doc_inline__ = True
 
@@ -47,58 +24,33 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         entry_dn: str,
         attributes: dict[str, list[str]],
     ) -> bool:
-        """Check if this RFC quirk can handle the entry.
-
-        RFC 2849 requires entries to have a non-empty DN and objectClass.
-
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes mapping
-
-        Returns:
-            True if entry has valid DN and objectClass
-
-        """
+        """Check if this RFC quirk can handle the entry."""
         if not entry_dn or not entry_dn.strip():
             return False
 
-        # Check for objectClass (case-insensitive)
         attr_lower = {k.lower(): v for k, v in attributes.items()}
         return "objectclass" in attr_lower
 
     def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
-        """Parse raw LDIF content string into Entry models (internal).
-
-        PRIMARY parsing entry point - implements base class abstract method.
-
-        Args:
-            ldif_content: Raw LDIF content as string
-
-        Returns:
-            FlextResult with list of Entry models
-
-        """
+        """Parse raw LDIF content string into Entry models (internal)."""
         if not ldif_content or not ldif_content.strip():
             return FlextResult[list[m.Ldif.Entry]].ok([])
 
         try:
             entries: list[m.Ldif.Entry] = []
 
-            # Split by empty lines to get entry blocks
             raw_entries = ldif_content.strip().split("\n\n")
 
             for raw_entry in raw_entries:
                 if not raw_entry.strip():
                     continue
 
-                # Handle version line (global header)
                 lines = raw_entry.strip().split("\n")
                 if lines and lines[0].lower().startswith("version:"):
                     lines = lines[1:]
                     if not lines:
                         continue
 
-                # Parse entry from lines
                 result = self._parse_entry_from_lines(lines)
                 if result.is_success:
                     entries.append(result.value)
@@ -115,15 +67,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return FlextResult[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
 
     def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
-        """Parse entry from LDIF lines.
-
-        Args:
-            lines: LDIF lines for a single entry
-
-        Returns:
-            FlextResult with parsed Entry
-
-        """
+        """Parse entry from LDIF lines."""
         dn: str = ""
         attrs: dict[str, list[str]] = {}
 
@@ -132,7 +76,6 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             if not line or line.startswith("#"):
                 continue
 
-            # Handle line folding (continuation lines start with space)
             if line.startswith(" ") and attrs:
                 last_key = list(attrs.keys())[-1]
                 if attrs[last_key]:
@@ -163,16 +106,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         dn: str,
         attributes: dict[str, list[str]],
     ) -> r[m.Ldif.Entry]:
-        """Create Entry from DN and attributes.
-
-        Args:
-            dn: Distinguished name (RFC 4512 format)
-            attributes: LDAP attributes (case-insensitive keys)
-
-        Returns:
-            FlextResult containing Entry or error
-
-        """
+        """Create Entry from DN and attributes."""
         if not dn or not isinstance(dn, str):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         if not isinstance(attributes, dict):
@@ -188,20 +122,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
 
     def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Validate RFC 2849 compliance.
-
-        Note: Named validate_entry to avoid conflict with Pydantic's validate method.
-
-        Args:
-            entry: Entry to validate
-
-        Returns:
-            FlextResult containing validated Entry or error
-
-        """
+        """Validate RFC 2849 compliance."""
         if not entry or not isinstance(entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
-        # Entry.dn is DN, not str - check .value
+
         if not entry.dn or not hasattr(entry.dn, "value"):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not isinstance(entry.attributes, dict):

@@ -1,17 +1,4 @@
-"""LDIF Server Utilities - Helpers for Server Type Resolution and Detection.
-
-Provides helper methods for resolving server type from nested classes,
-reducing code duplication in server quirk implementations.
-
-PHASE 1: DRY Refactoring (2025-11-19)
-- get_parent_server_type(): Extract SERVER_TYPE from parent class Constants
-
-PHASE 2: Detection Pattern Consolidation (2025-11-19)
-- matches_server_patterns(): Universal detection for can_handle_attribute/objectclass
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""LDIF Server Utilities - Helpers for Server Type Resolution and Detection."""
 # ruff: noqa: SLF001  # Accessing own private methods within the same class
 
 from __future__ import annotations
@@ -57,20 +44,12 @@ _CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
 def _is_valid_server_type_literal(
     value: str,
 ) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
-    """TypeGuard to narrow str to ServerTypeLiteral.
-
-    Validates that the value is a valid server type string.
-    """
+    """TypeGuard to narrow str to ServerTypeLiteral."""
     return value in _VALID_SERVER_TYPES
 
 
 class FlextLdifUtilitiesServer:
-    """Server utilities for LDIF server type resolution.
-
-    Provides helper methods for:
-    - Extracting server type from nested class parent via __qualname__
-    - Centralizing server-related utility functions
-    """
+    """Server utilities for LDIF server type resolution."""
 
     @staticmethod
     def _extract_server_type_from_constants(
@@ -189,40 +168,7 @@ class FlextLdifUtilitiesServer:
     def get_parent_server_type(
         nested_class_instance_or_type: type[object] | object,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-        """Get server_type from parent server class via __qualname__.
-
-        For nested classes like FlextLdifServersAd.Schema, extracts parent
-        class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
-
-        This is a DRY refactoring to eliminate duplicate code across Schema,
-        Acl, and Entry nested classes in base.py.
-
-        Args:
-            nested_class_instance_or_type: Instance or type of a nested class (Schema, Acl, Entry)
-
-        Returns:
-            Server type literal from parent Constants.SERVER_TYPE
-
-        Raises:
-            AttributeError: If parent server class or SERVER_TYPE not found
-
-        Example:
-            >>> class MyServer:
-            ...     class Constants:
-            ...         SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = (
-            ...             "oid"
-            ...         )
-            ...
-            ...     class Schema:
-            ...         def get_type(
-            ...             self,
-            ...         ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-            ...             return FlextLdifUtilitiesServer.get_parent_server_type(self)
-            >>> schema = MyServer.Schema()
-            >>> schema.get_type()
-            'oid'
-
-        """
+        """Get server_type from parent server class via __qualname__."""
         cls = (
             nested_class_instance_or_type
             if isinstance(nested_class_instance_or_type, type)
@@ -248,15 +194,7 @@ class FlextLdifUtilitiesServer:
         *,
         use_prefix_match: bool = False,
     ) -> bool:
-        """Check if name matches detection patterns (helper to reduce complexity).
-
-        Args:
-            name_lower: Lowercase name to check
-            detection_names: Set of names/prefixes to match against
-            detection_string: Optional string that must be contained
-            use_prefix_match: If True, check startswith; if False, check contains
-
-        """
+        """Check if name matches detection patterns (helper to reduce complexity)."""
         if detection_string and detection_string in name_lower:
             return True
         if name_lower in detection_names:
@@ -367,20 +305,7 @@ class FlextLdifUtilitiesServer:
         "ibm_tivoli",
         "generic",
     ]:
-        """Normalize server type string to canonical ServerTypes enum value.
-
-        Converts aliases and variations to canonical short form:
-        - "active_directory", "ad", "ActiveDirectory" → "ad"
-        - "oracle_oid", "oid", "OID" → "oid"
-        - etc.
-
-        Returns canonical ServerTypes enum value (short identifier).
-        Raises ValueError if server_type is not recognized.
-
-        Note: Return value is guaranteed to be a valid ServerTypeLiteral string,
-        but returned as `str` for type compatibility. All returned values are
-        validated against ServerTypes enum members.
-        """
+        """Normalize server type string to canonical ServerTypes enum value."""
         server_type_lower = server_type.lower().strip()
         # Map aliases to canonical forms
         # Use full path to ServerTypes to avoid name resolution issues
@@ -427,28 +352,12 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_all_server_types() -> list[str]:
-        """Get all supported server type values.
-
-        Returns:
-            List of all server type string values (e.g., ["oid", "oud", "rfc", ...])
-
-        """
+        """Get all supported server type values."""
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
     @staticmethod
     def get_server_type_value(server_type: str) -> str:
-        """Get server type enum value by name.
-
-        Args:
-            server_type: Server type name (e.g., "OID", "OUD", "RFC")
-
-        Returns:
-            Server type value string
-
-        Raises:
-            AttributeError: If server type not found
-
-        """
+        """Get server type enum value by name."""
         server_enum = getattr(c.Ldif.ServerTypes, server_type.upper(), None)
         if server_enum is None:
             error_msg = f"Server type {server_type} not found"
@@ -457,78 +366,37 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
-        """Get default max lines for server detection.
-
-        Returns:
-            Default max lines constant value
-
-        """
+        """Get default max lines for server detection."""
         return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
 
     @staticmethod
     def get_server_detection_confidence_threshold() -> float:
-        """Get confidence threshold for server detection.
-
-        Returns:
-            Confidence threshold constant value
-
-        """
+        """Get confidence threshold for server detection."""
         return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
 
     @staticmethod
     def get_server_detection_attribute_match_score() -> int:
-        """Get attribute match score for server detection.
-
-        Returns:
-            Attribute match score constant value
-
-        """
+        """Get attribute match score for server detection."""
         return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
 
     @staticmethod
     def get_default_acl_attributes() -> list[str]:
-        """Get default ACL attributes list.
-
-        Returns:
-            Default ACL attributes constant value
-
-        """
+        """Get default ACL attributes list."""
         return list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
 
     @staticmethod
     def get_sort_target_values() -> list[str]:
-        """Get all valid sort target values.
-
-        Returns:
-            List of all sort target string values
-
-        """
+        """Get all valid sort target values."""
         return [t.value for t in c.Ldif.SortTarget.__members__.values()]
 
     @staticmethod
     def get_sort_strategy_values() -> list[str]:
-        """Get all valid sort strategy values.
-
-        Returns:
-            List of all sort strategy string values
-
-        """
+        """Get all valid sort strategy values."""
         return [s.value for s in c.Ldif.SortStrategy.__members__.values()]
 
     @staticmethod
     def get_sort_target_value(name: str) -> str:
-        """Get sort target enum value by name.
-
-        Args:
-            name: Sort target name (e.g., "ENTRIES", "ATTRIBUTES")
-
-        Returns:
-            Sort target value string
-
-        Raises:
-            AttributeError: If sort target not found
-
-        """
+        """Get sort target enum value by name."""
         sort_target_enum = getattr(c.Ldif.SortTarget, name.upper(), None)
         if sort_target_enum is None:
             error_msg = f"Sort target {name} not found"
@@ -537,18 +405,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_sort_strategy_value(name: str) -> str:
-        """Get sort strategy enum value by name.
-
-        Args:
-            name: Sort strategy name (e.g., "HIERARCHY", "DN")
-
-        Returns:
-            Sort strategy value string
-
-        Raises:
-            AttributeError: If sort strategy not found
-
-        """
+        """Get sort strategy enum value by name."""
         sort_strategy_enum = getattr(c.Ldif.SortStrategy, name.upper(), None)
         if sort_strategy_enum is None:
             error_msg = f"Sort strategy {name} not found"
@@ -557,21 +414,6 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:
-        """Check if a server type matches any of the allowed types.
-
-        Args:
-            server_type: Server type to check (e.g., "oid", "oud")
-            *allowed_types: Allowed server types to match against
-
-        Returns:
-            True if server_type matches any allowed type, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesServer.matches("oid", "oid", "oud")
-            True
-            >>> FlextLdifUtilitiesServer.matches("ad", "oid", "oud")
-            False
-
-        """
+        """Check if a server type matches any of the allowed types."""
         normalized = server_type.lower().strip()
         return normalized in [t.lower().strip() for t in allowed_types]

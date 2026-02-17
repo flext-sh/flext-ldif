@@ -1,31 +1,4 @@
-"""Power Method Builders - Fluent builders for configuration objects.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides fluent builder classes for constructing configuration objects:
-    - ProcessConfigBuilder: Build ProcessConfig with method chaining
-    - TransformConfigBuilder: Build TransformConfig with method chaining
-    - FilterConfigBuilder: Build FilterConfig with method chaining
-    - WriteConfigBuilder: Build WriteConfig with method chaining
-
-Python 3.13+ features:
-    - Self type for method chaining
-    - PEP 695 type parameter syntax
-    - Keyword-only arguments
-
-Usage:
-    from flext_ldif._utilities.builders import ProcessConfigBuilder
-
-    config = (
-        ProcessConfigBuilder()
-        .source("oid")
-        .target("oud")
-        .normalize_dn(case="lower", spaces="trim")
-        .preserve_metadata(original=True, tracking=True)
-        .build()
-    )
-"""
+"""Power Method Builders - Fluent builders for configuration objects."""
 
 from __future__ import annotations
 
@@ -46,30 +19,11 @@ from flext_ldif._models.settings import (
 )
 from flext_ldif.constants import c
 
-# =========================================================================
 # PROCESS CONFIG BUILDER
-# =========================================================================
 
 
 class ProcessConfigBuilder:
-    """Fluent builder for ProcessConfig.
-
-    Provides a fluent interface for constructing ProcessConfig objects
-    with method chaining. Each method returns Self for chaining,
-    and build() returns the final ProcessConfig.
-
-    Examples:
-        >>> config = (
-        ...     ProcessConfigBuilder()
-        ...     .source("oid")
-        ...     .target("oud")
-        ...     .normalize_dn(case="lower", spaces="trim")
-        ...     .preserve_metadata(original=True, tracking=True)
-        ...     .validation(strict_rfc=True)
-        ...     .build()
-        ... )
-
-    """
+    """Fluent builder for ProcessConfig."""
 
     __slots__ = (
         "_acl_config",
@@ -96,28 +50,12 @@ class ProcessConfigBuilder:
         self._metadata_config: MetadataConfig | None = None
 
     def source(self, server: c.Ldif.ServerTypes) -> Self:
-        """Set the source server type.
-
-        Args:
-            server: Source server type (e.g., "oid", "oud", "openldap")
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set the source server type."""
         self._source_server = server
         return self
 
     def target(self, server: c.Ldif.ServerTypes) -> Self:
-        """Set the target server type.
-
-        Args:
-            server: Target server type for conversion
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set the target server type."""
         self._target_server = server
         return self
 
@@ -128,17 +66,7 @@ class ProcessConfigBuilder:
         spaces: c.Ldif.SpaceHandlingOption | None = None,
         escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
-        """Configure DN normalization.
-
-        Args:
-            case: Case folding option (lower, upper, preserve)
-            spaces: Space handling (trim, preserve, normalize)
-            escapes: Escape handling (preserve, unescape, normalize)
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Configure DN normalization."""
         # Create config with values in constructor to avoid frozen model issues
         config_kwargs = {}
         if case is not None:
@@ -159,18 +87,7 @@ class ProcessConfigBuilder:
         normalize_whitespace: bool = True,
         lowercase_keys: bool = False,
     ) -> Self:
-        """Configure attribute normalization.
-
-        Args:
-            sort_attributes: How to sort attributes (alphabetical, hierarchical, none)
-            sort_values: Sort attribute values
-            normalize_whitespace: Normalize whitespace in values
-            lowercase_keys: Convert attribute keys to lowercase
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Configure attribute normalization."""
         # Create config with values in constructor to avoid frozen model issues
         config_kwargs = {
             "sort_values": sort_values,
@@ -189,17 +106,7 @@ class ProcessConfigBuilder:
         preserve_original_aci: bool = False,
         map_server_specific: bool = True,
     ) -> Self:
-        """Configure ACL conversion.
-
-        Args:
-            convert_aci: Enable ACL conversion
-            preserve_original_aci: Preserve original ACL in metadata
-            map_server_specific: Map server-specific ACLs
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Configure ACL conversion."""
         # Create config with values in constructor to avoid frozen model issues
         self._acl_config = AclConversionConfig(
             convert_aci=convert_aci,
@@ -215,17 +122,7 @@ class ProcessConfigBuilder:
         allow_server_quirks: bool = True,
         validate_dn_format: bool = True,
     ) -> Self:
-        """Configure validation behavior.
-
-        Args:
-            strict_rfc: Enforce strict RFC 2849 compliance
-            allow_server_quirks: Allow server-specific quirks in validation
-            validate_dn_format: Validate DN format
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Configure validation behavior."""
         # Create config with values in constructor to avoid frozen model issues
         self._validation_config = ValidationConfig(
             strict_mode=strict_rfc,
@@ -241,17 +138,7 @@ class ProcessConfigBuilder:
         preserve_tracking: bool = True,
         preserve_validation: bool = False,
     ) -> Self:
-        """Configure metadata handling.
-
-        Args:
-            preserve_original: Preserve original metadata
-            preserve_tracking: Preserve transformation tracking
-            preserve_validation: Preserve validation results
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Configure metadata handling."""
         # Create config with values in constructor to avoid frozen model issues
         self._metadata_config = MetadataConfig(
             include_timestamps=preserve_original,
@@ -261,51 +148,22 @@ class ProcessConfigBuilder:
         return self
 
     def enable_dn_normalization(self, *, enabled: bool = True) -> Self:
-        """Enable or disable DN normalization.
-
-        Args:
-            enabled: Whether to normalize DNs
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Enable or disable DN normalization."""
         self._normalize_dns = enabled
         return self
 
     def enable_attr_normalization(self, *, enabled: bool = True) -> Self:
-        """Enable or disable attribute normalization.
-
-        Args:
-            enabled: Whether to normalize attributes
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Enable or disable attribute normalization."""
         self._normalize_attrs = enabled
         return self
 
     def enable_acl_conversion(self, *, enabled: bool = True) -> Self:
-        """Enable or disable ACL conversion.
-
-        Args:
-            enabled: Whether to convert ACLs
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Enable or disable ACL conversion."""
         self._convert_acls = enabled
         return self
 
     def build(self) -> ProcessConfig:
-        """Build the ProcessConfig.
-
-        Returns:
-            Configured ProcessConfig instance
-
-        """
+        """Build the ProcessConfig."""
         # Create config with all values in constructor to avoid frozen model issues
         return ProcessConfig(
             source_server=self._source_server,
@@ -319,24 +177,11 @@ class ProcessConfigBuilder:
         )
 
 
-# =========================================================================
 # TRANSFORM CONFIG BUILDER
-# =========================================================================
 
 
 class TransformConfigBuilder:
-    """Fluent builder for TransformConfig.
-
-    Examples:
-        >>> config = (
-        ...     TransformConfigBuilder()
-        ...     .fail_fast(True)
-        ...     .preserve_order(True)
-        ...     .track_changes(True)
-        ...     .build()
-        ... )
-
-    """
+    """Fluent builder for TransformConfig."""
 
     __slots__ = ("_fail_fast", "_preserve_order", "_track_changes")
 
@@ -347,51 +192,22 @@ class TransformConfigBuilder:
         self._track_changes: bool = True
 
     def fail_fast(self, *, enabled: bool = True) -> Self:
-        """Set fail-fast behavior.
-
-        Args:
-            enabled: Stop on first error
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set fail-fast behavior."""
         self._fail_fast = enabled
         return self
 
     def preserve_order(self, *, enabled: bool = True) -> Self:
-        """Set order preservation.
-
-        Args:
-            enabled: Preserve entry order
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set order preservation."""
         self._preserve_order = enabled
         return self
 
     def track_changes(self, *, enabled: bool = True) -> Self:
-        """Set change tracking.
-
-        Args:
-            enabled: Track changes in metadata
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set change tracking."""
         self._track_changes = enabled
         return self
 
     def build(self) -> TransformConfig:
-        """Build the TransformConfig.
-
-        Returns:
-            Configured TransformConfig instance
-
-        """
+        """Build the TransformConfig."""
         # Create config with all values at construction time (frozen model)
         return TransformConfig(
             fail_fast=self._fail_fast,
@@ -400,18 +216,11 @@ class TransformConfigBuilder:
         )
 
 
-# =========================================================================
 # FILTER CONFIG BUILDER
-# =========================================================================
 
 
 class FilterConfigBuilder:
-    """Fluent builder for FilterConfig.
-
-    Examples:
-        >>> config = FilterConfigBuilder().mode("all").case_sensitive(False).build()
-
-    """
+    """Fluent builder for FilterConfig."""
 
     __slots__ = ("_case_sensitive", "_include_metadata_matches", "_mode")
 
@@ -422,51 +231,22 @@ class FilterConfigBuilder:
         self._include_metadata_matches: bool = False
 
     def mode(self, mode: Literal["all", "any"]) -> Self:
-        """Set filter combination mode.
-
-        Args:
-            mode: "all" for AND, "any" for OR
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set filter combination mode."""
         self._mode = mode
         return self
 
     def case_sensitive(self, *, enabled: bool = True) -> Self:
-        """Set case sensitivity.
-
-        Args:
-            enabled: Case-sensitive matching
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set case sensitivity."""
         self._case_sensitive = enabled
         return self
 
     def include_metadata_matches(self, *, enabled: bool = True) -> Self:
-        """Include metadata in matching.
-
-        Args:
-            enabled: Match against metadata fields
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Include metadata in matching."""
         self._include_metadata_matches = enabled
         return self
 
     def build(self) -> FilterConfig:
-        """Build the FilterConfig.
-
-        Returns:
-            Configured FilterConfig instance
-
-        """
+        """Build the FilterConfig."""
         # Create config with all values at construction time (frozen model)
         return FilterConfig(
             mode=self._mode,
@@ -475,25 +255,11 @@ class FilterConfigBuilder:
         )
 
 
-# =========================================================================
 # WRITE CONFIG BUILDER
-# =========================================================================
 
 
 class WriteConfigBuilder:
-    """Fluent builder for WriteConfig.
-
-    Examples:
-        >>> config = (
-        ...     WriteConfigBuilder()
-        ...     .format("ldif")
-        ...     .line_width(76)
-        ...     .sort_by("dn")
-        ...     .attr_order(["dn", "objectClass", "cn"])
-        ...     .build()
-        ... )
-
-    """
+    """Fluent builder for WriteConfig."""
 
     __slots__ = (
         "_attr_order",
@@ -518,116 +284,47 @@ class WriteConfigBuilder:
         self._server: c.Ldif.ServerTypes | None = None
 
     def format(self, fmt: c.Ldif.Domain.OutputFormat) -> Self:
-        """Set output format.
-
-        Args:
-            fmt: Output format (ldif, json, yaml, csv)
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set output format."""
         self._format = fmt
         return self
 
     def line_width(self, width: int) -> Self:
-        """Set line width for folding.
-
-        Args:
-            width: Maximum line width
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set line width for folding."""
         self._line_width = width
         return self
 
     def fold_lines(self, *, enabled: bool = True) -> Self:
-        """Enable or disable line folding.
-
-        Args:
-            enabled: Whether to fold long lines
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Enable or disable line folding."""
         self._fold_lines = enabled
         return self
 
     def base64_attrs(self, attrs: Sequence[str] | Literal["auto"]) -> Self:
-        """Set attributes to base64 encode.
-
-        Args:
-            attrs: Attribute names or "auto"
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set attributes to base64 encode."""
         self._base64_attrs = attrs
         return self
 
     def sort_by(self, field: c.Ldif.SortOption) -> Self:
-        """Set sorting field.
-
-        Args:
-            field: Sort by (dn, objectclass, none)
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set sorting field."""
         self._sort_by = field
         return self
 
     def attr_order(self, order: Sequence[str]) -> Self:
-        """Set preferred attribute order.
-
-        Args:
-            order: Attribute names in preferred order
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set preferred attribute order."""
         self._attr_order = order
         return self
 
     def include_metadata(self, *, enabled: bool = True) -> Self:
-        """Include metadata in output.
-
-        Args:
-            enabled: Whether to include metadata
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Include metadata in output."""
         self._include_metadata = enabled
         return self
 
     def server(self, server: c.Ldif.ServerTypes) -> Self:
-        """Set target server for formatting.
-
-        Args:
-            server: Target server type
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set target server for formatting."""
         self._server = server
         return self
 
     def build(self) -> WriteConfig:
-        """Build the WriteConfig.
-
-        Returns:
-            Configured WriteConfig instance
-
-        """
+        """Build the WriteConfig."""
         # Create config with all values at construction time (frozen model)
         # Convert types to match WriteConfig expectations
         base64_attrs_value = (

@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -38,64 +34,11 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesWriter:
-    """Pure LDIF Formatting Operations - No Models, No Side Effects.
-
-    ╔══════════════════════════════════════════════════════════════════════╗
-    ║  PURE LDIF FORMATTING OPERATIONS                                     ║
-    ╠══════════════════════════════════════════════════════════════════════╣
-    ║  ✅ DN formatting with line folding                                    ║
-    ║  ✅ Line folding (RFC 2849)                                           ║
-    ║  ✅ Whitespace normalization                                          ║
-    ║  ✅ Attribute:value line formatting                                  ║
-    ║  ✅ Template rendering (Jinja2)                                      ║
-    ║  ✅ File writing (text operations)                                    ║
-    ║  ✅ 100% Pure functions (no models, no side effects)                  ║
-    ╚══════════════════════════════════════════════════════════════════════╝
-
-    ═══════════════════════════════════════════════════════════════════════
-    RESPONSIBILITY (SRP)
-
-    This class handles LDIF FORMATTING OPERATIONS ONLY:
-    - DN string formatting with line folding
-    - LDIF line folding (RFC 2849)
-    - Whitespace normalization
-    - Attribute:value line formatting
-    - Template rendering (Jinja2)
-    - File writing (text I/O)
-
-    What it does NOT do:
-    - Use models (works with primitives: str, list, dict)
-    - Handle server-specific quirks (quirks handle that)
-    - Perform business logic (services handle that)
-
-    ═══════════════════════════════════════════════════════════════════════
-    DESIGN NOTES
-
-    - All methods are @staticmethod (no instance state)
-    - Returns primitives (str, list[str]) or FlextResult for I/O operations
-    - Safe for services to use (no circular dependencies)
-    - No models used (pure string/file operations)
-    - No server-specific logic (quirks handle that)
-
-    """
+    """Pure LDIF Formatting Operations - No Models, No Side Effects."""
 
     @staticmethod
     def fmt_dn(dn_value: str, *, width: int = 78, fold: bool = True) -> list[str]:
-        """Format DN line with optional line folding (RFC 2849).
-
-        Args:
-            dn_value: DN string to format
-            width: Maximum line width (default: 78)
-            fold: Whether to fold long lines (default: True)
-
-        Returns:
-            List of formatted lines (unfolded: single line, folded: multiple lines)
-
-        Example:
-            >>> LdifWriter.fmt_dn("dn: cn=John,dc=example,dc=com", width=30)
-            ['dn: cn=John,dc=example,', ' dc=com']
-
-        """
+        """Format DN line with optional line folding (RFC 2849)."""
         if not dn_value:
             return [""]
 
@@ -110,30 +53,7 @@ class FlextLdifUtilitiesWriter:
         line: str,
         width: int = c.Ldif.Format.LINE_FOLD_WIDTH,
     ) -> list[str]:
-        """Fold long LDIF line according to RFC 2849 §3.
-
-        RFC 2849 §3: Lines longer than 76 BYTES should be folded with
-        a newline followed by a single space. The fold point should
-        not split multi-byte UTF-8 sequences.
-
-        ABNF Grammar (RFC 2849):
-            ldif-content = *LDIF-attrval
-            LDIF-attrval = LDIF-dn / LDIF-attr-value-record
-            ; Lines may be folded by inserting:
-            ; CRLF followed by exactly one space or TAB
-
-        Args:
-            line: Line to fold (UTF-8 string)
-            width: Maximum line width in bytes (default: 76 per RFC 2849)
-
-        Returns:
-            List of folded lines (first line + continuation lines with space prefix)
-
-        Example:
-            >>> FlextLdifUtilitiesWriter.fold("cn: very long value", width=10)
-            ['cn: very l', ' ong value']
-
-        """
+        """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
             return [line]
 
@@ -181,21 +101,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def fmt_attr(attr_name: str, value_str: str, *, use_base64: bool = False) -> str:
-        """Format attribute:value line for LDIF output.
-
-        Args:
-            attr_name: Attribute name
-            value_str: Attribute value
-            use_base64: Whether to use base64 encoding (default: False)
-
-        Returns:
-            Formatted attribute:value line
-
-        Example:
-            >>> LdifWriter.fmt_attr("cn", "John Doe")
-            'cn: John Doe'
-
-        """
+        """Format attribute:value line for LDIF output."""
         if not attr_name:
             return ""
 
@@ -210,23 +116,7 @@ class FlextLdifUtilitiesWriter:
         template_str: str,
         context: dict[str, t.GeneralValueType],
     ) -> FlextResult[str]:
-        """Render Jinja2 template with context.
-
-        Args:
-            template_str: Jinja2 template string
-            context: Template context variables
-
-        Returns:
-            FlextResult with rendered string or error
-
-        Example:
-            >>> result = LdifWriter.render_template(
-            ...     "Hello {{ name }}", {"name": "World"}
-            ... )
-            >>> result.value
-            'Hello World'
-
-        """
+        """Render Jinja2 template with context."""
         try:
             env = Environment(autoescape=True)
             template = env.from_string(template_str)
@@ -244,23 +134,7 @@ class FlextLdifUtilitiesWriter:
         file_path: Path,
         encoding: str = "utf-8",
     ) -> FlextResult[dict[str, str | int]]:
-        """Write content to file (pure I/O operation).
-
-        Args:
-            content: Content to write
-            file_path: Path to output file
-            encoding: File encoding (default: utf-8)
-
-        Returns:
-            FlextResult with file stats dict or error
-
-        Example:
-            >>> result = LdifWriter.write_file("content", Path("out.ldif"))
-            >>> stats = result.value
-            >>> stats["bytes_written"]
-            7
-
-        """
+        """Write content to file (pure I/O operation)."""
         try:
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -298,13 +172,7 @@ class FlextLdifUtilitiesWriter:
         attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
-        """Add syntax and length to attribute parts list.
-
-        ARCHITECTURE: Writer ONLY formats data, does NOT transform
-        Quirks are responsible for ensuring correct syntax format:
-        - RFC/OUD quirks: ensure syntax has no quotes before calling writer
-        - Writer preserves syntax value from model as-is
-        """
+        """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
             # Format syntax as-is from model (quirks ensure correct format)
             syntax_str = str(attr_data.syntax)
@@ -390,11 +258,7 @@ class FlextLdifUtilitiesWriter:
         attr_list: str | list[str] | None,
         keyword: str,
     ) -> None:
-        """Add MUST or MAY clause to objectClass definition parts.
-
-        RFC-compliant implementation - passes attribute names as-is from Entry model.
-        Server-specific normalization should happen in quirks layer during parsing.
-        """
+        """Add MUST or MAY clause to objectClass definition parts."""
         if not attr_list:
             return
 
@@ -483,20 +347,7 @@ class FlextLdifUtilitiesWriter:
         sort_alphabetical: bool = False,
         priority_attrs: list[str] | None = None,
     ) -> list[str]:
-        """Order attribute names using various strategies.
-
-        Pure ordering function - no models, no side effects.
-
-        Args:
-            attr_names: List of attribute names to order
-            use_rfc_order: If True, use RFC 2849 priority ordering
-            sort_alphabetical: If True, sort alphabetically
-            priority_attrs: Priority attributes for RFC ordering
-
-        Returns:
-            Ordered list of attribute names
-
-        """
+        """Order attribute names using various strategies."""
         # RFC 2849 priority ordering: priority attrs first, rest alphabetical
         if use_rfc_order:
             priority = priority_attrs or ["objectClass"]
@@ -515,15 +366,7 @@ class FlextLdifUtilitiesWriter:
     def determine_attribute_order(
         entry_data: dict[str, t.GeneralValueType],
     ) -> list[tuple[str, t.GeneralValueType]] | None:
-        """Determine attribute processing order from entry metadata.
-
-        Args:
-            entry_data: Entry dictionary with optional _metadata
-
-        Returns:
-            List of (attr_name, attr_value) tuples in order, or None for default order
-
-        """
+        """Determine attribute processing order from entry metadata."""
         if "_metadata" not in entry_data:
             return None
 
@@ -578,15 +421,7 @@ class FlextLdifUtilitiesWriter:
     def extract_base64_attrs(
         entry_data: dict[str, t.GeneralValueType],
     ) -> set[str]:
-        """Extract set of attribute names that require base64 encoding.
-
-        Args:
-            entry_data: Entry dictionary with optional _base64_attrs
-
-        Returns:
-            Set of attribute names requiring base64 encoding
-
-        """
+        """Extract set of attribute names that require base64 encoding."""
         if "_base64_attrs" not in entry_data:
             return set()
 
@@ -600,15 +435,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def should_skip_attribute(attr_name: str) -> bool:
-        """Check if attribute should be skipped during LDIF writing.
-
-        Args:
-            attr_name: Attribute name to check
-
-        Returns:
-            True if attribute should be skipped
-
-        """
+        """Check if attribute should be skipped during LDIF writing."""
         # Skip DN (written separately)
         if attr_name.lower() == c.Ldif.DictKeys.DN:
             return True
@@ -624,18 +451,7 @@ class FlextLdifUtilitiesWriter:
         is_base64: bool,
         attribute_case_map: dict[str, str] | None = None,
     ) -> list[str]:
-        """Format attribute into LDIF lines.
-
-        Args:
-            attr_name: Attribute name
-            attr_value: Attribute value (single or list)
-            is_base64: Whether to use base64 encoding marker
-            attribute_case_map: Optional case mapping dictionary
-
-        Returns:
-            List of formatted LDIF lines (empty list if value is empty)
-
-        """
+        """Format attribute into LDIF lines."""
         # Skip empty-valued attributes per RFC 2849
         if FlextRuntime.is_list_like(attr_value):
             # Type narrowing: ensure attr_value is iterable (list, tuple, or sequence)
@@ -673,26 +489,11 @@ class FlextLdifUtilitiesWriter:
 
         return [f"{attr_prefix} {attr_value}"]
 
-    # ==========================================================================
     # RFC 2849 Character Class Validation (ABNF-based)
-    # ==========================================================================
 
     @staticmethod
     def is_safe_char(char: str) -> bool:
-        """Check if char is SAFE-CHAR per RFC 2849 §2.
-
-        SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F
-        (excludes NUL, LF, CR)
-
-        Uses c.Ldif.Format.SAFE_CHAR_* for validation.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is SAFE-CHAR, False otherwise
-
-        """
+        """Check if char is SAFE-CHAR per RFC 2849 §2."""
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -703,20 +504,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def is_safe_init_char(char: str) -> bool:
-        """Check if char is SAFE-INIT-CHAR per RFC 2849 §2.
-
-        SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
-        (SAFE-CHAR excluding SPACE, COLON, LESS-THAN)
-
-        Uses c.Ldif.Format.SAFE_INIT_CHAR_EXCLUDE for exclusion set.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is SAFE-INIT-CHAR, False otherwise
-
-        """
+        """Check if char is SAFE-INIT-CHAR per RFC 2849 §2."""
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -728,37 +516,14 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def is_base64_char(char: str) -> bool:
-        """Check if char is BASE64-CHAR per RFC 2849 §2.
-
-        BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
-        (+ / 0-9 = A-Z a-z)
-
-        Uses c.Ldif.Format.BASE64_CHARS for validation.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is BASE64-CHAR, False otherwise
-
-        """
+        """Check if char is BASE64-CHAR per RFC 2849 §2."""
         if not char or len(char) != 1:
             return False
         return char in c.Ldif.Format.BASE64_CHARS
 
     @staticmethod
     def is_valid_safe_string(value: str) -> bool:
-        """Check if value is valid SAFE-STRING per RFC 2849 §2.
-
-        SAFE-STRING = [SAFE-INIT-CHAR *SAFE-CHAR]
-
-        Args:
-            value: String to validate
-
-        Returns:
-            True if value is valid SAFE-STRING, False otherwise
-
-        """
+        """Check if value is valid SAFE-STRING per RFC 2849 §2."""
         if not value:
             return True  # Empty string is valid
 
@@ -774,9 +539,7 @@ class FlextLdifUtilitiesWriter:
         # Trailing space is not allowed
         return value[-1] != " "
 
-    # ==========================================================================
     # RFC 2849 Encoding Helpers
-    # ==========================================================================
 
     @staticmethod
     def needs_base64_encoding(
@@ -784,28 +547,7 @@ class FlextLdifUtilitiesWriter:
         *,
         check_trailing_space: bool = True,
     ) -> bool:
-        """Check if value needs base64 encoding per RFC 2849 §2.
-
-        RFC 2849 §2 defines SAFE-CHAR and SAFE-INIT-CHAR:
-            SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F
-            SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F /
-                             %x21-39 / %x3B / %x3D-7F
-                             ; Any SAFE-CHAR except: SPACE, ':', '<'
-
-        Base64 encoding is required when:
-        - Value starts with SPACE ' ', COLON ':', or LESS-THAN '<'
-        - Value ends with SPACE ' ' (controllable via check_trailing_space)
-        - Value contains NUL, LF, CR, or non-ASCII chars
-
-        Args:
-            value: The attribute value to check
-            check_trailing_space: If True, trailing space requires base64
-                (default True per RFC, servers may override)
-
-        Returns:
-            True if value needs base64 encoding, False otherwise
-
-        """
+        """Check if value needs base64 encoding per RFC 2849 §2."""
         if not value:
             return False
 
@@ -836,15 +578,7 @@ class FlextLdifUtilitiesWriter:
     def write_modify_operations(
         entry_data: dict[str, t.GeneralValueType],
     ) -> list[str]:
-        """Write LDIF modify operations for schema additions.
-
-        Args:
-            entry_data: Entry dictionary with modify operations
-
-        Returns:
-            List of LDIF lines for modify operations
-
-        """
+        """Write LDIF modify operations for schema additions."""
         lines = []
 
         # Write modify-add operations for attributetypes
@@ -914,36 +648,7 @@ class FlextLdifUtilitiesWriter:
         entry_metadata: m.Ldif.QuirkMetadata,
         output_options: FlextLdifModelsSettings.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
-        """Apply output visibility options based on attribute status.
-
-        SRP: Writer determines output format based on marker status and options.
-
-        Args:
-            attr_name: Attribute name to check
-            attr_values: Attribute values to write
-            entry_metadata: Entry metadata containing marker status
-            output_options: Output visibility configuration
-
-        Returns:
-            - (attr_name, values): Write normally
-            - ("# " + attr_name, values): Write as comment
-            - None: Don't write at all (hide)
-
-        Example:
-            result = FlextLdifUtilitiesWriter._apply_output_options(
-                "telephoneNumber",
-                ["+1234567890"],
-                entry.metadata,
-                output_options
-            )
-            if result is None:
-                # Don't write this attribute
-                pass
-            else:
-                attr_name, values = result
-                # Write attribute (possibly as comment)
-
-        """
+        """Apply output visibility options based on attribute status."""
         # Get marked_attributes from metadata (type narrowing)
         marked_attrs_raw: dict[str, t.GeneralValueType] | object = u.mapper().get(
             entry_metadata.extensions, "marked_attributes", default={}
@@ -1102,20 +807,7 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         minimal_differences_attrs: dict[str, t.MetadataAttributeValue],
     ) -> bool:
-        """Check minimal differences and restore original attribute line if needed.
-
-        DRY utility for _write_single_attribute patterns across servers.
-
-        Args:
-            ldif_lines: Output lines list (mutated in-place if restoring)
-            attr_name: Attribute name to check
-            minimal_differences_attrs: Dict of attribute differences
-
-        Returns:
-            True if original was restored (caller should return early)
-            False if no restoration needed (caller should continue writing)
-
-        """
+        """Check minimal differences and restore original attribute line if needed."""
         # Check for minimal differences using both possible keys
         attr_diff = u.mapper().get(
             minimal_differences_attrs,
@@ -1144,17 +836,7 @@ class FlextLdifUtilitiesWriter:
     def extract_typed_attr_values(
         attr_values: t.GeneralValueType,
     ) -> list[str] | str:
-        """Type-safe extraction of attribute values.
-
-        DRY utility for _write_single_attribute patterns across servers.
-
-        Args:
-            attr_values: Raw attribute values (str, list, or other)
-
-        Returns:
-            Typed attribute values as list[str] or str
-
-        """
+        """Type-safe extraction of attribute values."""
         if isinstance(attr_values, str):
             return attr_values
         # Type narrowing: ensure attr_values is iterable before using list comprehension
@@ -1183,23 +865,7 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         value: bytes | str,
     ) -> str:
-        """Encode a single attribute value for LDIF output (RFC 2849).
-
-        Handles:
-        - bytes → base64 encoding
-        - str → UTF-8 validation + base64 if needed (control chars, etc.)
-        - Binary attributes → always base64
-
-        DRY utility replacing _write_modify_attribute_value patterns.
-
-        Args:
-            attr_name: Attribute name (for binary attribute check)
-            value: Value to encode (bytes or str)
-
-        Returns:
-            Formatted attribute line (e.g., "attr: value" or "attr:: base64value")
-
-        """
+        """Encode a single attribute value for LDIF output (RFC 2849)."""
         # Handle bytes - always base64
         if isinstance(value, bytes):
             encoded_value = base64.b64encode(value).decode("ascii")
@@ -1326,14 +992,7 @@ class FlextLdifUtilitiesWriter:
         format_type: str,
         changetype_config: dict[str, t.GeneralValueType],
     ) -> None:
-        """Add changetype lines based on format.
-
-        Args:
-            ldif_lines: List to append lines to
-            format_type: Format type ("add" or "modify")
-            changetype_config: Dict with keys: include_changetype, changetype_value, fold_long_lines, width
-
-        """
+        """Add changetype lines based on format."""
         # u.mapper().get works with any Mapping[str, object], no cast needed
         include_changetype = bool(
             u.mapper().get(changetype_config, "include_changetype"),
@@ -1370,27 +1029,7 @@ class FlextLdifUtilitiesWriter:
         format_config: dict[str, t.GeneralValueType] | None = None,
         **kwargs: t.GeneralValueType,
     ) -> list[str]:
-        """Build LDIF lines for an entry in ADD or MODIFY format.
-
-        Generalized method for both ADD and MODIFY formats (DRY consolidation).
-
-        Args:
-            dn_value: DN value (required)
-            attributes: Attributes dictionary {name: [values]}
-            format_config: Configuration dict with keys (all optional):
-                - format_type: "add" for content records, "modify" for change records (default: "add")
-                - modify_operation: For modify format: "add", "replace", or "delete" (default: "add")
-                - include_changetype: Whether to include changetype line (default: False)
-                - changetype_value: Explicit changetype value (for ADD format) (default: None)
-                - hidden_attrs: Attributes to skip (e.g., "changetype") (default: None)
-                - line_width: Maximum line width in bytes (None = use default 76) (default: None)
-                - fold_long_lines: Whether to fold lines exceeding line_width (default: True)
-            **kwargs: Alternative way to pass config (merged with format_config)
-
-        Returns:
-            List of LDIF lines (folded if fold_long_lines=True)
-
-        """
+        """Build LDIF lines for an entry in ADD or MODIFY format."""
         config = {**(format_config or {}), **kwargs}
         # u.mapper().get works with any Mapping[str, object], no cast needed
         format_type = str(u.mapper().get(config, "format_type", default="add"))
@@ -1460,15 +1099,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def finalize_ldif_text(ldif_lines: list[str]) -> str:
-        """Join LDIF lines and ensure proper trailing newline.
-
-        Args:
-            ldif_lines: List of LDIF lines
-
-        Returns:
-            Properly formatted LDIF text
-
-        """
+        """Join LDIF lines and ensure proper trailing newline."""
         ldif_text = "\n".join(ldif_lines)
         if ldif_text and not ldif_text.endswith("\n"):
             ldif_text += "\n"

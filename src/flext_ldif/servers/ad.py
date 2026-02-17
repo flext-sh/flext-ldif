@@ -1,17 +1,4 @@
-"""Active Directory Quirks Implementation.
-
-Provides Active Directory-specific schema, ACL, and entry handling so that
-FLEXT LDIF can recognise Microsoft schema extensions, parse nTSecurityDescriptor
-values, and normalise AD entries before handing them to the generic RFC logic.
-
-The implementation focuses on pragmatic heuristics that reliably detect
-Active Directory definitions without attempting to replicate the entire
-Windows schema parser. The goal is to surface meaningful structured data
-while keeping the interface aligned with the generic quirk contracts.
-
-Copyright (c) 2025 FLEXT Team.
-SPDX-License-Identifier: MIT
-"""
+"""Active Directory Quirks Implementation."""
 
 from __future__ import annotations
 
@@ -32,32 +19,21 @@ from flext_ldif.typings import t
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
-    """Active Directory server quirks implementation.
+    """Active Directory server quirks implementation."""
 
-    Extends RFC base quirks with Active Directory-specific handling for:
-    - Schema: Microsoft schema extensions and OID namespace
-    - ACL: nTSecurityDescriptor parsing and SDDL support
-    - Entry: AD-specific entry transformations and normalization
-    """
-
-    # =========================================================================
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Active Directory quirk."""
 
-        # Server identity and priority (defined at Constants level)
         SERVER_TYPE: ClassVar[str] = "ad"
         PRIORITY: ClassVar[int] = 10
 
-        # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
-        DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
-        DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
-        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
+        DEFAULT_PORT: ClassVar[int] = 389
+        DEFAULT_SSL_PORT: ClassVar[int] = 636
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
 
-        # Active Directory Global Catalog ports (AD-specific)
-        GLOBAL_CATALOG_PORT: ClassVar[int] = 3268  # Global Catalog LDAP port
-        GLOBAL_CATALOG_SSL_PORT: ClassVar[int] = 3269  # Global Catalog LDAPS port
+        GLOBAL_CATALOG_PORT: ClassVar[int] = 3268
+        GLOBAL_CATALOG_SSL_PORT: ClassVar[int] = 3269
 
-        # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["ad", "active_directory"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
@@ -68,11 +44,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # Active Directory ACL format constants
-        ACL_FORMAT: ClassVar[str] = "nTSecurityDescriptor"  # AD ACL format
-        ACL_ATTRIBUTE_NAME: ClassVar[str] = "nTSecurityDescriptor"  # ACL attribute name
+        ACL_FORMAT: ClassVar[str] = "nTSecurityDescriptor"
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "nTSecurityDescriptor"
 
-        # Active Directory DN patterns
         AD_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset(
             [
                 "CN=",
@@ -85,8 +59,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # Server detection patterns and weights
-        # Migrated from c.ServerDetection
         DETECTION_PATTERN: ClassVar[str] = r"1\.2\.840\.113556\."
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
@@ -98,16 +70,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         )
         DETECTION_WEIGHT: ClassVar[int] = 8
 
-        # ACL-specific regex patterns (migrated from nested Acl class)
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = r"^(O:|G:|D:|S:)"
 
-        # Encoding constants (migrated from _parse_acl method)
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
-        # ACL_SUBJECT_TYPE_SDDL removed - use c.AclSubjectType.SDDL
 
-        # Active Directory required object classes
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset(
             [
                 "top",
@@ -117,8 +85,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # Active Directory operational attributes (server-specific)
-        # Migrated from c.OperationalAttributeMappings
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
                 "objectGUID",
@@ -137,7 +103,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # Operational attributes to preserve during migration
         PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset(
             [
                 "whenCreated",
@@ -145,17 +110,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # AD extends RFC permissions with "control_access"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
             FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
             | frozenset(["control_access"])
         )
 
-        # NOTE: AD inherits RFC baseline for:
-        # - ATTRIBUTE_ALIASES, ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-
-        # === AD-SPECIFIC DETECTION PATTERNS ===
-        # (migrated from c.LdapServerDetection)
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.2\.840\.113556\."
         DETECTION_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
             [
@@ -199,7 +158,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 "ou=domain controllers",
             ],
         )
-        # DN marker constants for can_handle
+
         DN_MARKER_DC: ClassVar[str] = "dc="
         DN_MARKER_CN_CONFIGURATION: ClassVar[str] = "cn=configuration"
         DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
@@ -216,23 +175,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ],
         )
 
-        # AD-specific detection strings
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
             "microsoft active directory"
         )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
-
-        # === ACL AND ENCODING CONSTANTS (Centralized) ===
-        # Use centralized StrEnums from FlextLdifConstants directly
-        # No duplicate nested StrEnums - use c.Ldif.AclPermission,
-        # c.Ldif.AclAction, and c.Ldif.Encoding directly
-
-    # =========================================================================
-    # Server identification - accessed via Constants via properties in base.py
-    # =========================================================================
-    # NOTE: server_type and priority are accessed via properties in base.py
-    # which read from Constants.SERVER_TYPE and Constants.PRIORITY
-    # NOTE: __getattr__ delegation is inherited from FlextLdifServersBase
 
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
@@ -264,15 +210,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             self,
             attr_definition: str,
         ) -> r[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add AD metadata.
-
-            Args:
-                attr_definition: Attribute definition string
-
-            Returns:
-                r with SchemaAttribute marked with AD metadata
-
-            """
+            """Parse attribute definition and add AD metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.value
@@ -287,19 +225,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             self,
             oc_definition: str,
         ) -> r[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add AD metadata.
-
-            Args:
-                oc_definition: ObjectClass definition string
-
-            Returns:
-                r with SchemaObjectClass marked with AD metadata
-
-            """
+            """Parse objectClass definition and add AD metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.value
-                # Fix common ObjectClass issues (RFC 4512 compliance)
+
                 FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
@@ -309,27 +239,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
             return result
 
-        # Nested class references for Schema - allows Schema().Entry() pattern
-
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
-        # SDDL pattern moved to Constants.ACL_SDDL_PREFIX_PATTERN
-
-        # OVERRIDE: Active Directory uses "nTSecurityDescriptor" for ACL attributes
-        # ACL attribute name is obtained from Constants.ACL_ATTRIBUTE_NAME
-        # No instance variable needed - use Constants directly
-
         def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
-            """Check if this is an Active Directory ACL (public method).
-
-            Args:
-                acl_line: ACL line string or Acl model to check.
-
-            Returns:
-                True if this is Active Directory ACL format
-
-            """
+            """Check if this is an Active Directory ACL (public method)."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
             if isinstance(acl_line, m.Ldif.Acl):
@@ -430,7 +344,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 ):
                     decoded_sddl = raw_value
 
-                # Create Acl model with minimal fields for AD SDDL format
                 acl_model = m.Ldif.Acl(
                     name=attr_name,
                     target=m.Ldif.AclTarget(
@@ -447,7 +360,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     ),
                     raw_acl=acl_line,
                 )
-                # Set original_format in extensions after creation
+
                 if acl_model.metadata and acl_model.metadata.extensions is not None:
                     acl_model.metadata.extensions["original_format"] = acl_line
 
@@ -459,20 +372,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 )
 
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
-            """Write ACL data to RFC-compliant string format.
-
-            Active Directory ACLs use nTSecurityDescriptor format.
-            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
-
-            Args:
-            acl_data: ACL model (base or derived type)
-
-            Returns:
-            r with ACL string in AD nTSecurityDescriptor format
-
-            """
+            """Write ACL data to RFC-compliant string format."""
             try:
-                # Get the raw ACL value - fail if missing
                 if not acl_data.raw_acl:
                     return r[str].fail(
                         "Active Directory ACL write requires raw_acl value",
@@ -480,11 +381,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 raw_value = acl_data.raw_acl
                 acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
 
-                # Use the raw ACL value
                 sddl_value = raw_value
 
-                # Format as LDIF attribute line
-                # AD typically uses base64 encoding for nTSecurityDescriptor
                 if sddl_value:
                     acl_str = f"{acl_attribute}: {sddl_value}"
                 else:
@@ -497,13 +395,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     f"Active Directory ACL write failed: {exc}",
                 )
 
-    # Nested entry quirk
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing quirk."""
-
-        # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # These methods override the base class with AD-specific logic:
-        # - can_handle(): Detects AD entries by DN/attributes
 
         def can_handle(
             self,
@@ -520,7 +413,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
 
-            # Check for DC= prefix and cn=configuration marker from Constants
             if (
                 FlextLdifServersAd.Constants.DN_MARKER_DC in dn_lower
                 and FlextLdifServersAd.Constants.DN_MARKER_CN_CONFIGURATION in dn_lower
@@ -536,7 +428,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
 
-            # Get object classes directly from attributes
             raw_object_classes = attributes.get(
                 c.Ldif.DictKeys.OBJECTCLASS,
                 [],
@@ -553,10 +444,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     for oc in object_classes
                 ),
             )
-
-
-# Forward references resolved automatically by Pydantic
-# No suppress needed - circular import issues should be resolved architecturally
 
 
 __all__ = ["FlextLdifServersAd"]

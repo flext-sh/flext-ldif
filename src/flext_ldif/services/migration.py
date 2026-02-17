@@ -1,11 +1,4 @@
-"""Migration Pipeline Service - Server-to-Server LDIF Migration.
-
-Provides FlextLdifMigrationPipeline for migrating LDIF data between different
-LDAP server types (e.g., OID to OUD, OpenLDAP to 389DS).
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Migration Pipeline Service - Server-to-Server LDIF Migration."""
 
 from __future__ import annotations
 
@@ -29,23 +22,8 @@ logger: Final = FlextLogger(__name__)
 class FlextLdifMigrationPipeline(
     s[m.Ldif.LdifResults.MigrationPipelineResult],
 ):
-    """Migration Pipeline for Server-to-Server LDIF Migration.
+    """Migration Pipeline for Server-to-Server LDIF Migration."""
 
-    Orchestrates the migration of LDIF data between different LDAP server types.
-    Uses the ProcessingPipeline from _utilities for entry transformation.
-
-    Example:
-        >>> pipeline = FlextLdifMigrationPipeline(
-        ...     input_dir=Path("source_ldifs"),
-        ...     output_dir=Path("target_ldifs"),
-        ...     source_server_type="oid",
-        ...     target_server_type="oud",
-        ... )
-        >>> result = pipeline.execute()
-
-    """
-
-    # Instance state (stored as PrivateAttr for frozen model compatibility)
     _input_dir: Path | None = PrivateAttr(default=None)
     _output_dir: Path | None = PrivateAttr(default=None)
     _source_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
@@ -60,18 +38,9 @@ class FlextLdifMigrationPipeline(
         target_server_type: str = "rfc",
         **_kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize migration pipeline.
-
-        Args:
-            input_dir: Directory containing source LDIF files.
-            output_dir: Directory for output LDIF files.
-            source_server_type: Source server type (e.g., "oid", "openldap").
-            target_server_type: Target server type (e.g., "oud", "389ds").
-            **kwargs: Additional kwargs for base class.
-
-        """
+        """Initialize migration pipeline."""
         super().__init__()
-        # Store as instance attributes via setattr for frozen Pydantic compatibility
+
         object.__setattr__(self, "_input_dir", input_dir)
         object.__setattr__(self, "_output_dir", output_dir)
         object.__setattr__(self, "_source_type", source_server_type)
@@ -81,37 +50,29 @@ class FlextLdifMigrationPipeline(
     @property
     def input_dir(self) -> Path | None:
         """Get input directory."""
-        # Type narrowing: _input_dir is Path | None (defined as PrivateAttr)
         return getattr(self, "_input_dir", None)
 
     @property
     def output_dir(self) -> Path | None:
         """Get output directory."""
-        # Type narrowing: _output_dir is Path | None (defined as PrivateAttr)
         return getattr(self, "_output_dir", None)
 
     @property
     def source_server_type(self) -> c.Ldif.ServerTypes:
         """Get source server type."""
-        # Type narrowing: _source_type is c.Ldif.ServerTypes (defined as PrivateAttr)
         return getattr(self, "_source_type", c.Ldif.ServerTypes.RFC)
 
     @property
     def target_server_type(self) -> c.Ldif.ServerTypes:
         """Get target server type."""
-        # Type narrowing: _target_type is c.Ldif.ServerTypes (defined as PrivateAttr)
         return getattr(self, "_target_type", c.Ldif.ServerTypes.RFC)
 
     def _get_processing_pipeline(self) -> ProcessingPipeline:
         """Get or create processing pipeline instance."""
-        # Type narrowing: _processing_pipeline is ProcessingPipeline | None (defined as PrivateAttr)
         pipeline = getattr(self, "_processing_pipeline", None)
         if pipeline is None:
-            # Create TransformConfig with ProcessConfig inside
-            # Convert str to ServerType enum
             source_type = m.Ldif.ServerType(self.source_server_type)
             target_type = m.Ldif.ServerType(self.target_server_type)
-            # Use model_copy to update server types (Pydantic v2 pattern)
 
             config_base = ProcessConfig()
             process_config = config_base.model_copy(
@@ -120,7 +81,7 @@ class FlextLdifMigrationPipeline(
                     "target_server": target_type,
                 },
             )
-            # Create TransformConfig with ProcessConfig
+
             config = TransformConfig(process_config=process_config)
             pipeline = ProcessingPipeline(config)
             object.__setattr__(self, "_processing_pipeline", pipeline)
@@ -130,20 +91,10 @@ class FlextLdifMigrationPipeline(
         self,
         entries: list[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
-        """Migrate entries from source to target server format.
-
-        Args:
-            entries: Source entries to migrate.
-
-        Returns:
-            FlextResult with migrated entries.
-
-        """
+        """Migrate entries from source to target server format."""
         try:
             pipeline = self._get_processing_pipeline()
-            # pipeline.execute already returns r[list[m.Ldif.Entry]]
-            # Business Rule: pipeline.execute returns FlextResult[list[m.Ldif.Entry]],
-            # so we can return directly - no need to unwrap and re-wrap
+
             return pipeline.execute(entries)
 
         except Exception as e:
@@ -159,18 +110,8 @@ class FlextLdifMigrationPipeline(
         input_file: Path,
         output_file: Path | None = None,
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
-        """Migrate a single LDIF file.
-
-        Args:
-            input_file: Source LDIF file.
-            output_file: Target LDIF file (derived from input if not provided).
-
-        Returns:
-            FlextResult with migration result.
-
-        """
+        """Migrate a single LDIF file."""
         try:
-            # Read input file
             if not input_file.exists():
                 return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
@@ -178,8 +119,7 @@ class FlextLdifMigrationPipeline(
 
             content = input_file.read_text(encoding="utf-8")
 
-            # Parse entries
-            parser = FlextLdifParser()  # Uses default server registry
+            parser = FlextLdifParser()
             parse_result = parser.parse_string(
                 content,
                 server_type=self.source_server_type,
@@ -191,15 +131,12 @@ class FlextLdifMigrationPipeline(
                 )
 
             response = parse_result.value
-            # response.entries is Sequence[m.Ldif.Entry] - entries are already m.Ldif.Entry
-            # Type narrowing: response.entries contains m.Ldif.Entry
-            # Convert to list and ensure type compatibility
+
             entries_list: list[m.Ldif.Entry] = [
                 m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
                 for e in response.entries
             ]
 
-            # Migrate entries
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.is_failure:
                 return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
@@ -208,7 +145,6 @@ class FlextLdifMigrationPipeline(
 
             migrated = migrate_result.value
 
-            # Write output file
             if output_file is None:
                 out_dir = self.output_dir
                 if out_dir is None:
@@ -231,15 +167,10 @@ class FlextLdifMigrationPipeline(
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_text(write_result.value, encoding="utf-8")
 
-            # Return result using public model classes via m alias
-            # Convert m.Ldif.Entry to base Entry type for MigrationPipelineResult
-            # m.Ldif.Entry is the same class as FlextLdifModelsDomains.Entry (public facade)
-            # MigrationPipelineResult expects list[m.Ldif.Entry]
-            # Convert using model_validate to ensure type compatibility
             converted_entries: list[m.Ldif.Entry] = [
                 m.Ldif.Entry.model_validate(e.model_dump(mode="json")) for e in migrated
             ]
-            # Create result using facade class which accepts base Entry type
+
             result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_entries,
                 output_files=[str(output_file)],
@@ -262,12 +193,7 @@ class FlextLdifMigrationPipeline(
 
     @override
     def execute(self) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
-        """Execute migration pipeline for all files in input_dir.
-
-        Returns:
-            FlextResult with migration result.
-
-        """
+        """Execute migration pipeline for all files in input_dir."""
         in_dir = self.input_dir
         out_dir = self.output_dir
 
@@ -298,7 +224,7 @@ class FlextLdifMigrationPipeline(
                     res = result.value
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
-                    # res.entries is list[m.Ldif.Entry] - convert to m.Ldif.Entry
+
                     converted_res_entries: list[m.Ldif.Entry] = [
                         m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
                         for e in res.entries
@@ -312,15 +238,11 @@ class FlextLdifMigrationPipeline(
                         error=str(result.error),
                     )
 
-            # Convert m.Ldif.Entry to base Entry type for MigrationPipelineResult
-            # m.Ldif.Entry is the same class as FlextLdifModelsDomains.Entry (public facade)
-            # MigrationPipelineResult expects list[m.Ldif.Entry]
-            # Convert using model_validate to ensure type compatibility
             converted_all_entries: list[m.Ldif.Entry] = [
                 m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
                 for e in all_entries
             ]
-            # Create result using facade class which accepts base Entry type
+
             pipeline_result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_all_entries,
                 output_files=output_files,

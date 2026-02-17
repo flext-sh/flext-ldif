@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -90,23 +86,11 @@ class FlextLdifUtilitiesDN:
     # Use constant from c.Ldif.Rfc
     MIN_DN_LENGTH: int = c.Ldif.Format.MIN_DN_LENGTH
 
-    # ==========================================================================
     # RFC 4514 Character Class Validation (ABNF-based)
-    # ==========================================================================
 
     @staticmethod
     def is_lutf1_char(char: str) -> bool:
-        """Check if char is valid LUTF1 (lead char) per RFC 4514.
-
-        Uses c.Ldif.Format.DN_LUTF1_EXCLUDE for exclusion set.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is valid LUTF1, False otherwise
-
-        """
+        """Check if char is valid LUTF1 (lead char) per RFC 4514."""
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -121,17 +105,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_tutf1_char(char: str) -> bool:
-        """Check if char is valid TUTF1 (trail char) per RFC 4514.
-
-        Uses c.Ldif.Format.DN_TUTF1_EXCLUDE for exclusion set.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is valid TUTF1, False otherwise
-
-        """
+        """Check if char is valid TUTF1 (trail char) per RFC 4514."""
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -145,20 +119,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_sutf1_char(char: str) -> bool:
-        """Check if char is valid SUTF1 (string char) per RFC 4514.
-
-        SUTF1 = %x01-21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
-        (excludes special chars but allows SPACE and SHARP)
-
-        Uses c.Ldif.Format.DN_SUTF1_EXCLUDE for exclusion set.
-
-        Args:
-            char: Single character to validate
-
-        Returns:
-            True if char is valid SUTF1, False otherwise
-
-        """
+        """Check if char is valid SUTF1 (string char) per RFC 4514."""
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -209,20 +170,7 @@ class FlextLdifUtilitiesDN:
         *,
         strict: bool = True,
     ) -> tuple[bool, list[str]]:
-        """Validate DN attribute value per RFC 4514 string production.
-
-        RFC 4514 ABNF:
-            string = [ ( leadchar / pair ) [ *( stringchar / pair )
-                       ( trailchar / pair ) ] ]
-
-        Args:
-            value: DN attribute value to validate
-            strict: If True, apply strict RFC 4514 validation
-
-        Returns:
-            Tuple of (is_valid, list of validation errors)
-
-        """
+        """Validate DN attribute value per RFC 4514 string production."""
         errors: list[str] = []
 
         if not value:
@@ -263,23 +211,13 @@ class FlextLdifUtilitiesDN:
 
         return len(errors) == 0, errors
 
-    # ==========================================================================
     # Core DN Operations
-    # ==========================================================================
 
     @staticmethod
     def get_dn_value(
         dn: m.Ldif.DN | str | object,
     ) -> str:
-        """Extract DN string value from DN model or string (public utility method).
-
-        Args:
-            dn: DN model (Any) or DN string
-
-        Returns:
-            DN string value
-
-        """
+        """Extract DN string value from DN model or string (public utility method)."""
         # Check if it's a DN model (local import to avoid circular dependency)
 
         if isinstance(dn, m.Ldif.DN):
@@ -519,19 +457,7 @@ class FlextLdifUtilitiesDN:
     def parse(
         dn: str | m.Ldif.DN | None,
     ) -> r[list[tuple[str, str]]]:
-        """Parse DN into RFC 4514 components (attr, value pairs).
-
-        RFC 4514 Section 3 - Parsing a String Back to DN:
-        =================================================
-        1. Split on unescaped commas to get RDNs
-        2. For each RDN, split on unescaped plus signs for multi-valued
-        3. Each AVA is attributeType=attributeValue
-        4. Unescape the attributeValue
-
-        Returns:
-            r with [(attr1, value1), (attr2, value2), ...] or failure.
-
-        """
+        """Parse DN into RFC 4514 components (attr, value pairs)."""
         # Early validation - consolidate returns
         if dn is None:
             return r[list[tuple[str, str]]].fail("DN cannot be None")
@@ -591,11 +517,7 @@ class FlextLdifUtilitiesDN:
     def norm(
         dn: str | m.Ldif.DN | None,
     ) -> r[str]:
-        """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
-
-        Pure implementation without external dependencies.
-        Returns r with normalized DN string or failure.
-        """
+        """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
         # Early validation - consolidate returns
         if dn is None:
             return r[str].fail("DN cannot be None")
@@ -655,16 +577,7 @@ class FlextLdifUtilitiesDN:
         dn: str,
         original_dn: str | None = None,
     ) -> r[tuple[str, FlextLdifModelsDomains.DNStatistics]]:
-        """Normalize DN with statistics tracking.
-
-        Args:
-            dn: DN to normalize
-            original_dn: Original DN before any transformations (optional)
-
-        Returns:
-            r with tuple of (normalized_dn, DNStatistics) or failure
-
-        """
+        """Normalize DN with statistics tracking."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return r[tuple[str, FlextLdifModelsDomains.DNStatistics]].fail(
@@ -710,14 +623,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def clean_dn(dn: str | m.Ldif.DN) -> str:
-        """Clean DN string to fix spacing and escaping issues.
-
-        Removes spaces before '=', fixes trailing backslash+space,
-        normalizes whitespace around commas.
-
-        **DRY Optimization**: Uses u.LdifParser.apply_regex_pipeline()
-        to consolidate 5 sequential regex.sub() calls into one pipeline.
-        """
+        """Clean DN string to fix spacing and escaping issues."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return dn_str
@@ -838,15 +744,7 @@ class FlextLdifUtilitiesDN:
     def _apply_dn_transformations(
         original_dn: str,
     ) -> tuple[str, list[str], dict[str, bool | str | list[str]]]:
-        """Apply DN transformations and collect flags.
-
-        Extracted to reduce complexity of clean_dn_with_statistics.
-
-        Returns:
-            Tuple of (transformed_dn, transformations_list, flags_dict)
-            flags_dict follows m.TransformationFlags structure
-
-        """
+        """Apply DN transformations and collect flags."""
         transformations: list[str] = []
         flags: dict[str, bool | str | list[str]] = {
             "had_tab_chars": False,
@@ -1049,10 +947,7 @@ class FlextLdifUtilitiesDN:
         dn1: str | None,
         dn2: str | None,
     ) -> r[int]:
-        """Compare two DNs per RFC 4514 (case-insensitive).
-
-        Returns: r with -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2, or failure
-        """
+        """Compare two DNs per RFC 4514 (case-insensitive)."""
         try:
             if not dn1 or not dn2:
                 return r[int].fail("Both DNs must be provided for comparison")
@@ -1086,12 +981,7 @@ class FlextLdifUtilitiesDN:
         i: int,
         config: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
-        """Process single character in RDN parsing.
-
-        Returns: (current_attr, current_val, in_value, next_i, should_continue)
-        should_continue=True means skip normal increment
-        Updates config.pairs when a pair is completed.
-        """
+        """Process single character in RDN parsing."""
         current_attr = config.current_attr
         current_val = config.current_val
         in_value = config.in_value
@@ -1136,10 +1026,7 @@ class FlextLdifUtilitiesDN:
         position: int,
         config: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
-        """Advance position during RDN parsing and return new state.
-
-        Returns: (current_attr, current_val, in_value, next_position)
-        """
+        """Advance position during RDN parsing and return new state."""
         result = FlextLdifUtilitiesDN._process_rdn_char(
             char,
             rdn,
@@ -1151,10 +1038,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
-        """Parse a single RDN component per RFC 4514.
-
-        Returns r with list of (attr, value) pairs or failure.
-        """
+        """Parse a single RDN component per RFC 4514."""
         if not rdn or not isinstance(rdn, str):
             return r[list[tuple[str, str]]].fail(
                 "RDN must be a non-empty string",
@@ -1219,17 +1103,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def extract_rdn(dn: str) -> r[str]:
-        """Extract leftmost RDN from DN.
-
-        For DN "cn=John,ou=Users,dc=example,dc=com", returns "cn=John".
-
-        Args:
-            dn: Distinguished Name string
-
-        Returns:
-            r with leftmost RDN (attr=value) or failure
-
-        """
+        """Extract leftmost RDN from DN."""
         if not dn or "=" not in dn:
             return r[str].fail(
                 f"Invalid DN format: missing '=' separator in '{dn}'",
@@ -1247,18 +1121,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def extract_parent_dn(dn: str) -> r[str]:
-        """Extract parent DN (remove leftmost RDN).
-
-        For DN "cn=John,ou=Users,dc=example,dc=com",
-        returns "ou=Users,dc=example,dc=com".
-
-        Args:
-            dn: Distinguished Name string
-
-        Returns:
-            r with parent DN (without leftmost RDN) or failure if DN has ≤1 component
-
-        """
+        """Extract parent DN (remove leftmost RDN)."""
         if not dn or "=" not in dn:
             return r[str].fail(
                 f"Invalid DN format: missing '=' separator in '{dn}'",
@@ -1276,17 +1139,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_config_dn(dn: str) -> bool:
-        """Check if DN is in cn=config tree (OpenLDAP dynamic config).
-
-        Used by OpenLDAP and other servers for config DN detection.
-
-        Args:
-            dn: Distinguished Name string
-
-        Returns:
-            True if DN contains cn=config component, False otherwise
-
-        """
+        """Check if DN is in cn=config tree (OpenLDAP dynamic config)."""
         if not dn:
             return False
         return "cn=config" in dn.lower()
@@ -1298,27 +1151,7 @@ class FlextLdifUtilitiesDN:
         *,
         case_sensitive: bool = False,
     ) -> bool:
-        """Check if DN contains pattern substring.
-
-        Useful for DN filtering by organizational unit, DC, etc.
-
-        Args:
-            dn: Distinguished Name string
-            pattern: Pattern to search for (can be full component or substring)
-            case_sensitive: If True, match case exactly
-
-        Returns:
-            True if pattern is found in DN, False otherwise
-
-        Example:
-            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=users")
-            # Returns: True
-            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "OU=USERS")
-            # Returns: False (case mismatch)
-            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "OU=USERS", case_sensitive=False)
-            # Returns: True
-
-        """
+        """Check if DN contains pattern substring."""
         if not dn or not pattern:
             return False
 
@@ -1332,28 +1165,7 @@ class FlextLdifUtilitiesDN:
         dn: str | None,
         base_dn: str | None,
     ) -> bool:
-        """Check if DN is under base DN (hierarchical check).
-
-        Returns True if:
-        - DN exactly equals base_dn (case-insensitive)
-        - DN is a child/descendant of base_dn
-
-        Args:
-            dn: Distinguished Name to check
-            base_dn: Base DN to check against
-
-        Returns:
-            True if DN is equal to or under base_dn, False otherwise
-
-        Example:
-            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "dc=example")
-            # Returns: True
-            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=users,dc=example")
-            # Returns: True
-            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=other,dc=example")
-            # Returns: False
-
-        """
+        """Check if DN is under base DN (hierarchical check)."""
         # Validate inputs first
         if not dn or not base_dn:
             return False
@@ -1377,36 +1189,7 @@ class FlextLdifUtilitiesDN:
         context_dn: str | None,
         dn_label: str = "DN",
     ) -> r[bool]:
-        """Validate DN format and compare against context DN if provided.
-
-        Generic DN validation combining RFC 4514 format check and context comparison.
-        Used for ACL subject/target DN validation and similar use cases.
-
-        Args:
-            dn_value: DN string to validate (None or "*" treated as wildcard)
-            context_dn: Optional context DN to compare against
-            dn_label: Label for error messages (e.g., "subject DN", "target DN")
-
-        Returns:
-            r[bool]: Success if valid, failure with descriptive error
-
-        Example:
-            # Validate subject DN
-            result = validate_dn_with_context(
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                "subject DN"
-            )
-
-            # Wildcard DN (always valid)
-            result = validate_dn_with_context("*", None, "target DN")
-            # Returns: r.ok(True)
-
-            # Invalid DN format
-            result = validate_dn_with_context("invalid", None, "DN")
-            # Returns: r.fail("Invalid DN format per RFC 4514: invalid")
-
-        """
+        """Validate DN format and compare against context DN if provided."""
         # Wildcard or None is always valid
         if not dn_value or dn_value == "*":
             return r[bool].ok(True)
@@ -1457,28 +1240,7 @@ class FlextLdifUtilitiesDN:
         source_dn: str,
         target_dn: str,
     ) -> str:
-        """Transform a single DN attribute value by replacing base DN.
-
-        Used for transforming DN-syntax attributes (member, uniqueMember, manager, etc.)
-        when migrating from one LDAP server to another with different base DNs.
-
-        Args:
-            value: DN value to transform (str or DN model)
-            source_dn: Source base DN to replace (e.g., "dc=example")
-            target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
-
-        Returns:
-            Transformed DN with base DN replaced, or original value if no match
-
-        Example:
-            transform_dn_attribute(
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
-                "dc=example",
-                "dc=example,dc=com"
-            )
-            # Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-
-        """
+        """Transform a single DN attribute value by replacing base DN."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(value)
         if not dn_str or not source_dn or not target_dn:
             return dn_str
@@ -1519,36 +1281,7 @@ class FlextLdifUtilitiesDN:
         source_dn: str,
         target_dn: str,
     ) -> list[m.Ldif.Entry]:
-        """Replace base DN in all entries and DN-valued attributes.
-
-        Transforms:
-        - Entry DNs (dn property)
-        - DN-syntax attributes (member, uniqueMember, manager, owner, seeAlso, etc.)
-        - Any other DN references in attribute values
-
-        Used for server-to-server migration when source and target have different base DNs.
-
-        Args:
-            entries: List of Entry models to transform
-            source_dn: Source base DN to replace (e.g., "dc=example")
-            target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
-
-        Returns:
-            List of Entry models with all base DN references replaced
-
-        Example:
-            entries = [
-                Entry(
-                    dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
-                    attributes={"member": ["cn=user,dc=example"]}
-                ),
-                ...
-            ]
-            transformed = replace_base_dn(entries, "dc=example", "dc=example,dc=com")
-            # transformed[0].dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            # transformed[0].attributes["member"][0] == "cn=user,dc=example,dc=com"
-
-        """
+        """Replace base DN in all entries and DN-valued attributes."""
         if not entries or not source_dn or not target_dn:
             return entries
 
@@ -1602,12 +1335,7 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return entries
         batch_data = batch_result.value
-        # Type narrowing: batch_data["results"] is object, check if list
-        results_raw = batch_data.get("results", [])
-        if isinstance(results_raw, list):
-            return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
-        # Fallback: return empty list if results_raw is not a list
-        return []
+        return [item for item in batch_data.results if isinstance(item, m.Ldif.Entry)]
 
     @staticmethod
     def transform_ldif_files_in_directory(
@@ -1615,23 +1343,7 @@ class FlextLdifUtilitiesDN:
         source_basedn: str,
         target_basedn: str,
     ) -> r[dict[str, t.GeneralValueType]]:
-        """Transform BaseDN in all LDIF files in directory.
-
-        Reads all *.ldif files from directory, transforms BaseDN in entries,
-        and writes updated files back. Preserves file organization and metadata.
-
-        Args:
-            ldif_dir: Directory containing LDIF files
-            source_basedn: Source base DN to replace
-            target_basedn: Target base DN replacement
-
-        Returns:
-            r with dict containing:
-            - transformed_count: Number of successfully transformed files
-            - failed_count: Number of files that failed
-            - total_count: Total LDIF files processed
-
-        """
+        """Transform BaseDN in all LDIF files in directory."""
         try:
             if not ldif_dir.exists():
                 return r[dict[str, t.GeneralValueType]].fail(
@@ -1784,31 +1496,7 @@ class FlextLdifUtilitiesDN:
         source_dn: str,
         target_dn: str,
     ) -> m.Ldif.Entry:
-        """Transform DN and DN-valued attributes with metadata tracking.
-
-        RFC Compliant: Tracks all transformations in QuirkMetadata for round-trip support.
-        Uses c.Ldif.Format.Rfc.META_DN_* and MetadataKeys for standardized tracking.
-
-        Args:
-            entry: Entry to transform
-            source_dn: Source base DN to replace
-            target_dn: Target base DN replacement
-
-        Returns:
-            New Entry with transformed DN, attributes, and metadata tracking
-
-        Example:
-            >>> entry = m.Ldif.Entry(
-            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
-            ...     attributes={"member": ["cn=user,dc=example"]},
-            ... )
-            >>> transformed = FlextLdifUtilitiesDN.transform_dn_with_metadata(
-            ...     entry, "dc=example", "dc=example,dc=com"
-            ... )
-            >>> # DN transformed: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-            >>> # metadata.conversion_notes tracks the transformation
-
-        """
+        """Transform DN and DN-valued attributes with metadata tracking."""
         # Early returns for invalid inputs
         if not source_dn or not target_dn:
             return entry
@@ -1894,25 +1582,7 @@ class FlextLdifUtilitiesDN:
         source_dn: str,
         target_dn: str,
     ) -> list[m.Ldif.Entry]:
-        """Replace base DN in all entries with metadata tracking.
-
-        RFC Compliant: Tracks all transformations for audit trail and round-trip support.
-
-        Args:
-            entries: List of Entry models to transform
-            source_dn: Source base DN to replace
-            target_dn: Target base DN replacement
-
-        Returns:
-            List of Entry models with transformed DNs and metadata
-
-        Example:
-            >>> entries = FlextLdifUtilitiesDN.replace_base_dn_with_metadata(
-            ...     entries, "dc=example", "dc=example,dc=com"
-            ... )
-            >>> # Each entry.metadata.conversion_notes tracks transformation
-
-        """
+        """Replace base DN in all entries with metadata tracking."""
         if not entries or not source_dn or not target_dn:
             return entries
 
@@ -1933,15 +1603,12 @@ class FlextLdifUtilitiesDN:
         )
         if batch_result.is_success:
             batch_data = batch_result.value
-            # Type narrowing: batch_data["results"] is object, check if list
-            results_raw = batch_data.get("results", [])
-            if isinstance(results_raw, list):
-                return [item for item in results_raw if isinstance(item, m.Ldif.Entry)]
+            return [
+                item for item in batch_data.results if isinstance(item, m.Ldif.Entry)
+            ]
         return entries
 
-    # =========================================================================
     # BATCH METHODS - Power Method Support
-    # =========================================================================
 
     @staticmethod
     def norm_or_fallback(
@@ -2001,35 +1668,7 @@ class FlextLdifUtilitiesDN:
         fallback: Literal["lower", "upper", "original", "skip"] = "lower",
         fail_fast: bool = False,
     ) -> r[list[str]]:
-        """Normalize multiple DNs in one call.
-
-        Args:
-            dns: Sequence of DN strings to normalize
-            fallback: Strategy for failed normalizations:
-                - "lower": Use dn.lower() as fallback
-                - "upper": Use dn.upper() as fallback
-                - "original": Keep original DN unchanged
-                - "skip": Exclude failed DNs from results
-            fail_fast: If True, return error on first failure (ignores fallback)
-
-        Returns:
-            r containing list of normalized DNs
-
-        Examples:
-            >>> result = FlextLdifUtilitiesDN.norm_batch([
-            ...     "CN=User1,DC=Example",
-            ...     "CN=User2,DC=Example",
-            ... ])
-            >>> result.value
-            ['cn=user1,dc=example', 'cn=user2,dc=example']
-
-            >>> # With skip fallback for invalid DNs
-            >>> result = FlextLdifUtilitiesDN.norm_batch(
-            ...     ["CN=Valid", "invalid"],
-            ...     fallback="skip",
-            ... )
-
-        """
+        """Normalize multiple DNs in one call."""
 
         def normalize_dn(dn: str) -> r[str]:
             """Normalize single DN with fallback."""
@@ -2073,24 +1712,7 @@ class FlextLdifUtilitiesDN:
         *,
         collect_errors: bool = True,
     ) -> r[list[tuple[str, bool, list[str]]]]:
-        """Validate multiple DNs, returning validation status for each.
-
-        Args:
-            dns: Sequence of DN strings to validate
-            collect_errors: Collect all errors (vs. fail on first)
-
-        Returns:
-            r containing list of (dn, is_valid, errors) tuples
-
-        Examples:
-            >>> result = FlextLdifUtilitiesDN.validate_batch([
-            ...     "CN=Valid,DC=Example",
-            ...     "invalid-dn",
-            ... ])
-            >>> for dn, is_valid, errors in result.value:
-            ...     print(f"{dn}: {'valid' if is_valid else 'invalid'}")
-
-        """
+        """Validate multiple DNs, returning validation status for each."""
 
         def validate_dn(dn: str) -> tuple[str, bool, list[str]]:
             """Validate single DN."""
@@ -2106,7 +1728,7 @@ class FlextLdifUtilitiesDN:
         tuple_length = 3
         results_raw = [
             item
-            for item in batch_data["results"]
+            for item in batch_data.results
             if isinstance(item, tuple) and len(item) == tuple_length
         ]
         # Type narrowing: cast to proper type with explicit conversion
@@ -2132,27 +1754,7 @@ class FlextLdifUtilitiesDN:
         *,
         fail_fast: bool = False,
     ) -> r[list[str]]:
-        """Replace base DN in multiple DNs.
-
-        Args:
-            dns: Sequence of DN strings
-            old_base: Old base DN to replace
-            new_base: New base DN
-            fail_fast: Stop on first error
-
-        Returns:
-            r containing list of DNs with replaced bases
-
-        Examples:
-            >>> result = FlextLdifUtilitiesDN.replace_base_batch(
-            ...     ["cn=user1,dc=old,dc=com", "cn=user2,dc=old,dc=com"],
-            ...     "dc=old,dc=com",
-            ...     "dc=new,dc=com",
-            ... )
-            >>> result.value
-            ['cn=user1,dc=new,dc=com', 'cn=user2,dc=new,dc=com']
-
-        """
+        """Replace base DN in multiple DNs."""
         old_base_lower = old_base.lower()
 
         def replace_dn(dn: str) -> str:
@@ -2177,7 +1779,7 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return r[list[str]].fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value
-        results = [item for item in batch_data["results"] if isinstance(item, str)]
+        results = [item for item in batch_data.results if isinstance(item, str)]
         return r[list[str]].ok(results)
 
     @staticmethod
@@ -2189,42 +1791,7 @@ class FlextLdifUtilitiesDN:
         normalize: bool = True,
         parse: bool = False,
     ) -> r[str | list[tuple[str, str]]]:
-        """Complete DN processing pipeline in one call.
-
-        Applies processing steps in order: clean → validate → normalize → parse.
-
-        Args:
-            dn: DN string to process
-            clean: Clean whitespace and normalize escapes
-            validate: Validate DN structure
-            normalize: Normalize DN format
-            parse: If True, return parsed components instead of string
-
-        Returns:
-            r containing:
-                - Processed DN string if parse=False
-                - List of (attribute, value) tuples if parse=True
-
-        Examples:
-            >>> # Full processing
-            >>> result = FlextLdifUtilitiesDN.process_complete(
-            ...     "  CN = Test , DC = Example ",
-            ...     clean=True,
-            ...     validate=True,
-            ...     normalize=True,
-            ... )
-            >>> result.value
-            'cn=test,dc=example'
-
-            >>> # Parse into components
-            >>> result = FlextLdifUtilitiesDN.process_complete(
-            ...     "CN=Test,DC=Example",
-            ...     parse=True,
-            ... )
-            >>> result.value
-            [('cn', 'test'), ('dc', 'example')]
-
-        """
+        """Complete DN processing pipeline in one call."""
         current_dn = dn
 
         # Step 1: Clean (clean_dn returns str directly)

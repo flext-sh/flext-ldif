@@ -1,22 +1,4 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides RFC-compliant baseline implementations for LDAP directory operations.
-All server-specific quirks (OID, OUD, OpenLDAP, etc.) extend this RFC base.
-
-Architecture:
-    - RFC baseline: Strict RFC 2849/4512 compliance
-    - Server quirks: Extend RFC with server-specific enhancements
-    - No cross-server dependencies: Each server is isolated
-    - Generic conversions: All via RFC intermediate format
-
-References:
-    - RFC 2849: LDIF Format Specification
-    - RFC 4512: LDAP Directory Information Models
-
-"""
+"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 
@@ -24,7 +6,6 @@ from typing import Self, overload
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
-# Metadata access via m.Ldif namespace from models import
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.models import m
@@ -36,50 +17,16 @@ from flext_ldif.utilities import u
 logger = FlextLogger(__name__)
 
 
-# TypedDicts moved to typings.py - import from there
-
-
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
-    r"""LDAP ACL Quirk - Base Implementation.
-
-    Note: LDAP Access Control is NOT standardized in a single RFC.
-    RFC 2820 defines requirements, but implementations vary by vendor:
-    - OpenLDAP: Uses "olcAccess" with complex syntax
-    - Oracle OID: Uses "orclaci" attribute
-    - Oracle OUD: Uses "aci" attribute with OpenDS/DSEE syntax
-    - Active Directory: Uses ACE/ACL security descriptors
-
-    This base implementation provides common ACL parsing primitives
-    that server-specific quirks can extend with vendor-specific parsing.
-
-    Common ACL Concepts (RFC 2820 Requirements):
-    =============================================
-    - Subject: Who the ACL applies to (user, group, role)
-    - Target: What resource is being protected (entry, attribute)
-    - Permissions: What operations are allowed/denied (read, write, etc.)
-
-    """
+    """LDAP ACL Quirk - Base Implementation."""
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this quirk can handle the ACL definition.
-
-        RFC quirk handles all ACLs as it's the baseline implementation.
-
-        Args:
-            acl_line: ACL definition line string or Acl model
-
-        Returns:
-            True (RFC handles all ACLs)
-
-        """
-        _ = acl_line  # Unused - RFC handles all ACLs
+        """Check if this quirk can handle the ACL definition."""
+        _ = acl_line
         return True
 
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature.
-
-        Delegates to base class implementation.
-        """
+        """Check if this server supports a specific feature."""
         return super()._supports_feature(_feature_id)
 
     def _normalize_permission(
@@ -87,21 +34,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         permission: str,
         _metadata: dict[str, t.MetadataAttributeValue],
     ) -> tuple[str, str | None]:
-        """Normalize a server-specific permission to RFC standard.
-
-        Override to convert server-specific permissions to RFC equivalents.
-        Returns (rfc_permission, feature_id) where feature_id is set for
-        vendor-specific permissions that need metadata preservation.
-
-        Args:
-            permission: Server-specific permission string
-            _metadata: Metadata dict to store original value (unused in base)
-
-        Returns:
-            Tuple of (normalized_permission, feature_id or None)
-
-        """
-        # RFC implementation: permissions are already RFC-compliant
+        """Normalize a server-specific permission to RFC standard."""
         return permission, None
 
     def _denormalize_permission(
@@ -110,28 +43,11 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         _feature_id: str | None,
         _metadata: dict[str, t.MetadataAttributeValue],
     ) -> str:
-        """Convert RFC permission back to server-specific format.
-
-        Override to convert RFC permissions to server-specific equivalents.
-        Uses feature_id and metadata to restore original vendor values.
-
-        Args:
-            permission: RFC-normalized permission
-            _feature_id: Feature ID if vendor-specific (unused in base)
-            _metadata: Metadata dict with original values (unused in base)
-
-        Returns:
-            Server-specific permission string.
-
-        """
-        # RFC implementation: keep RFC permission as-is
+        """Convert RFC permission back to server-specific format."""
         return permission
 
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature.
-
-        Delegates to base class implementation.
-        """
+        """Get RFC fallback value for unsupported vendor feature."""
         return super()._get_feature_fallback(_feature_id)
 
     def _preserve_unsupported_feature(
@@ -140,18 +56,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         original_value: str,
         metadata: dict[str, t.MetadataAttributeValue],
     ) -> None:
-        """Preserve unsupported feature in metadata for round-trip.
-
-        Called when a feature cannot be translated. Stores the original
-        value in metadata so it can be restored if converting back.
-
-        Args:
-            feature_id: Feature ID that couldn't be translated
-            original_value: Original server-specific value
-            metadata: Metadata dict to store preservation info
-
-        """
-        # Use direct string key instead of constants
+        """Preserve unsupported feature in metadata for round-trip."""
         meta_key = "unsupported_features"
         if meta_key not in metadata:
             metadata[meta_key] = {}
@@ -160,27 +65,16 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             unsupported[feature_id] = original_value
 
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
-        """Parse RFC-compliant ACL line (implements abstract method).
-
-        Args:
-            acl_line: The raw ACL string from the LDIF.
-
-        Returns:
-            A FlextResult containing the Acl model.
-
-        """
+        """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
             return FlextResult.fail("ACL line must be a non-empty string.")
 
-        # Get server type from the actual server class (not hardcoded "rfc")
         server_type_str = self._get_server_type()
-        # Normalize server type using constants
+
         server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
             server_type_str,
         )
 
-        # RFC passthrough: store the raw line in the model.
-        # Use model_construct for DynamicMetadata to bypass Pydantic v2 validation
         extensions_meta = m.Ldif.DynamicMetadata.model_construct(
             _fields_set={"original_format"},
             original_format=acl_line,
@@ -195,66 +89,31 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         )
         return FlextResult.ok(acl_model)
 
-    # parse_acl() method is redundant - parse() already delegates to _parse_acl()
-    # Removed to use base.py.parse() which already handles this
-
-    # create_metadata(), convert_rfc_acl_to_aci(), format_acl_value()
-    # are now in base.py - these methods delegate to parent without RFC-specific logic
-
     def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
-        """Write ACL to RFC-compliant string format (internal).
-
-        RFC implementation of ACL writing using raw_acl or name fallback.
-        Accepts base Acl type for polymorphism - all Acl subclasses are valid.
-        """
-        # Use raw_acl if available and non-empty
+        """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return FlextResult[str].ok(acl_data.raw_acl)
-        # If raw_acl is empty but name exists, return minimal ACL with name
+
         if acl_data.name and u.Guards.is_string_non_empty(acl_data.name):
             return FlextResult[str].ok(f"{acl_data.name}:")
-        # No valid data to write
+
         return FlextResult[str].fail("ACL has no raw_acl or name to write")
 
     def can_handle_attribute(
         self,
         attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Check if quirk handles schema attributes.
-
-        ACL quirks don't handle schema attributes - that's handled by Schema quirks.
-
-        Args:
-            attribute: SchemaAttribute model
-
-        Returns:
-            False - ACL quirks don't handle attributes
-
-        """
-        _ = attribute  # Unused - ACL doesn't handle attributes
+        """Check if quirk handles schema attributes."""
+        _ = attribute
         return False
 
     def can_handle_objectclass(
         self,
         objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Check if quirk handles objectclasses.
-
-        ACL quirks don't handle objectclasses - that's handled by Schema quirks.
-
-        Args:
-            objectclass: SchemaObjectClass model
-
-        Returns:
-            False - ACL quirks don't handle objectclasses
-
-        """
-        _ = objectclass  # Unused - ACL doesn't handle objectclasses
+        """Check if quirk handles objectclasses."""
+        _ = objectclass
         return False
-
-    # execute() is now in base.py (via parent FlextService)
-    # This class only provides RFC-specific implementations of:
-    # - _parse_acl(), _write_acl()
 
     @overload
     def __call__(
@@ -286,59 +145,42 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         *,
         operation: str | None = None,
     ) -> m.Ldif.Acl | str:
-        """Callable interface - automatic polymorphic processor.
-
-        Pass ACL line string for parsing or Acl model for writing.
-        Type auto-detection handles routing automatically.
-        """
+        """Callable interface - automatic polymorphic processor."""
         result = self.execute(data=data, operation=operation)
         return result.value
 
     def __new__(
         cls,
-        _acl_service: object | None = None,  # Unused but required by interface
+        _acl_service: object | None = None,
         parent_quirk: object | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
-        # acl_service is passed to __init__ via super().__new__ and kwargs
         instance = super().__new__(cls)
-        # Remove auto-execute kwargs before passing to __init__
-        # Also filter parent_quirk to avoid passing it twice
+
         auto_execute_kwargs = {"data", "operation", "parent_quirk", "_parent_quirk"}
-        _ = {
-            k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
-        }  # Filtered
-        # Use explicit parent_quirk parameter or fallback to kwargs (_parent_quirk)
-        # Business Rule: parent_quirk must satisfy ParentQuirkProtocol
+        _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
+
         parent_quirk_raw = (
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
-        # Use hasattr check instead of isinstance for protocol compliance
+
         parent_quirk_value: object | None = (
             parent_quirk_raw
             if parent_quirk_raw is not None
             and hasattr(parent_quirk_raw, "_parent_quirk")
             else None
         )
-        # Initialize using super() to avoid mypy error about accessing
-        # __init__ on instance
-        # Use FlextLdifServersBase.Acl as the base class for super()
-        # Type narrowing: instance is Self (Acl subclass)
+
         acl_instance: Self = instance
-        # Store _parent_quirk after instance creation using object.__setattr__
-        # Note: __init__ will be called automatically by Python after __new__ returns
+
         if parent_quirk_value is not None:
             object.__setattr__(acl_instance, "_parent_quirk", parent_quirk_value)
 
         if cls.auto_execute:
-            # Type-safe extraction of kwargs
             data_raw = kwargs.get("data")
             data: str | m.Ldif.Acl | None = None
-            if isinstance(data_raw, str):
-                data = data_raw
-            elif isinstance(data_raw, m.Ldif.Acl):
-                # Type narrowing: isinstance check confirms m.Ldif.Acl type
+            if isinstance(data_raw, (str, m.Ldif.Acl)):
                 data = data_raw
             op_raw = kwargs.get("operation")
             op: str | None = None
@@ -346,8 +188,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 op = "parse"
             elif isinstance(op_raw, str) and op_raw == "write":
                 op = "write"
-            # Type narrowing: instance is Self (Acl subclass)
-            # Use acl_instance from above
+
             result = acl_instance.execute(data=data, operation=op)
             unwrapped: m.Ldif.Acl | str = result.value
             if isinstance(unwrapped, cls):
@@ -362,37 +203,23 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         parent_quirk: object | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
-        """Initialize RFC ACL quirk service.
-
-        Args:
-            acl_service: Injected FlextLdifAcl service (optional)
-            parent_quirk: Reference to parent quirk (optional)
-            **kwargs: Passed to parent class
-
-        """
-        # Business Rule: Filter parent_quirk from kwargs to avoid type errors
-        # Implication: parent_quirk is handled separately, not via Pydantic fields
+        """Initialize RFC ACL quirk service."""
         filtered_kwargs: dict[str, FlextTypes.GeneralValueType] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "parent_quirk"}
         }
-        # Business Rule: Call parent Acl.__init__ which accepts acl_service and _parent_quirk
-        # acl_service is already compatible with HasParseMethodProtocol
+
         acl_service_typed: object | None = (
             acl_service if acl_service is not None else None
         )
-        # Call base class __init__ directly to avoid mypy inference issues through nested class
+
         FlextLdifServersBaseSchemaAcl.__init__(
             self,
             acl_service=acl_service_typed,
-            _parent_quirk=None,  # Pass None, we handle parent_quirk separately
+            _parent_quirk=None,
             **filtered_kwargs,
         )
-        # Store _parent_quirk after initialization using object.__setattr__
+
         if parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", parent_quirk)
-
-    # parse() method inherited from base.py.Acl - delegates to _parse_acl()
-
-    # write() method inherited from base.py.Acl - delegates to _write_acl()

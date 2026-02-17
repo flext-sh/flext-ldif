@@ -1,11 +1,4 @@
-"""Attribute utilities for RFC 4512 § 2.5 compliance.
-
-Provides utilities for parsing and validating LDAP attribute descriptions,
-including support for attribute options (e.g., displayname;lang-ar).
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Attribute utilities for RFC 4512 § 2.5 compliance."""
 
 from __future__ import annotations
 
@@ -16,18 +9,7 @@ from flext_ldif.constants import c
 
 
 class FlextLdifUtilitiesAttribute:
-    """Attribute utilities for RFC-compliant attribute operations.
-
-    RFC 4512 § 2.5 - Attribute Descriptions:
-        attribute-description = AttributeType *(";" option)
-
-    Examples:
-        - displayname (base attribute only)
-        - displayname;lang-ar (attribute with language option)
-        - userCertificate;binary (attribute with binary option)
-        - cn;lang-ja;x-custom (attribute with multiple options)
-
-    """
+    """Attribute utilities for RFC-compliant attribute operations."""
 
     # Compiled patterns (compile once at class level for performance)
     _ATTRIBUTE_NAME_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -41,31 +23,7 @@ class FlextLdifUtilitiesAttribute:
     def split_attribute_description(
         attribute_description: str,
     ) -> tuple[str, list[str]]:
-        """Split attribute description into base name and options.
-
-        RFC 4512 § 2.5:
-            attribute-description = AttributeType *(";" option)
-
-        Args:
-            attribute_description: Full attribute description (e.g., "displayname;lang-ar")
-
-        Returns:
-            Tuple of (base_attribute, [options])
-
-        Raises:
-            ValueError: If attribute_description is empty or None
-
-        Examples:
-            >>> split_attribute_description("displayname")
-            ('displayname', [])
-
-            >>> split_attribute_description("displayname;lang-ar")
-            ('displayname', ['lang-ar'])
-
-            >>> split_attribute_description("cn;lang-ja;x-custom")
-            ('cn', ['lang-ja', 'x-custom'])
-
-        """
+        """Split attribute description into base name and options."""
         if not attribute_description:
             msg = "attribute_description cannot be empty or None"
             raise ValueError(msg)
@@ -81,35 +39,7 @@ class FlextLdifUtilitiesAttribute:
 
     @classmethod
     def validate_attribute_name(cls, attribute_name: str) -> bool:
-        """Validate base attribute name against RFC 4512 § 2.5.
-
-        RFC 4512 § 2.5:
-            AttributeType = ldap-oid / attr-descr
-            attr-descr = ALPHA *(attr-char)
-            attr-char = ALPHA / DIGIT / HYPHEN
-
-        Args:
-            attribute_name: Base attribute name (WITHOUT options)
-
-        Returns:
-            True if valid, False otherwise
-
-        Examples:
-            >>> validate_attribute_name("displayname")  # ✓ Valid
-            True
-
-            >>> validate_attribute_name("cn")  # ✓ Valid
-            True
-
-            >>> validate_attribute_name(
-            ...     "displayname;lang-ar"
-            ... )  # ❌ Invalid (has option)
-            False
-
-            >>> validate_attribute_name("123invalid")  # ❌ Invalid (starts with digit)
-            False
-
-        """
+        """Validate base attribute name against RFC 4512 § 2.5."""
         if not attribute_name:
             return False
 
@@ -122,39 +52,7 @@ class FlextLdifUtilitiesAttribute:
 
     @classmethod
     def validate_attribute_option(cls, option: str) -> bool:
-        """Validate attribute option against RFC 4512 § 2.5 + RFC 3066.
-
-        RFC 4512 § 2.5:
-            option = attr-option-name "=" attr-option-value
-                   / attr-option-name
-            attr-option-name = ALPHA *(attr-char / "_")
-
-        RFC 3066 (Language Tags):
-            Allows underscores in language tags (e.g., es_ES, pt_BR, fr_CA)
-
-        Args:
-            option: Single attribute option (WITHOUT leading semicolon)
-
-        Returns:
-            True if valid, False otherwise
-
-        Examples:
-            >>> validate_attribute_option("lang-ar")  # ✓ Valid
-            True
-
-            >>> validate_attribute_option("lang-es_es")  # ✓ Valid (RFC 3066)
-            True
-
-            >>> validate_attribute_option("binary")  # ✓ Valid
-            True
-
-            >>> validate_attribute_option("x-custom")  # ✓ Valid
-            True
-
-            >>> validate_attribute_option("123")  # ❌ Invalid (starts with digit)
-            False
-
-        """
+        """Validate attribute option against RFC 4512 § 2.5 + RFC 3066."""
         if not option:
             return False
 
@@ -171,30 +69,7 @@ class FlextLdifUtilitiesAttribute:
         cls,
         attribute_description: str,
     ) -> tuple[bool, list[str]]:
-        """Validate complete attribute description (base + options).
-
-        RFC 4512 § 2.5 compliant validation of full attribute description.
-
-        Args:
-            attribute_description: Full attribute description with options
-
-        Returns:
-            Tuple of (is_valid, [violations])
-
-        Examples:
-            >>> validate_attribute_description("displayname")
-            (True, [])
-
-            >>> validate_attribute_description("displayname;lang-ar")
-            (True, [])
-
-            >>> validate_attribute_description("123invalid")
-            (False, ["Invalid base attribute '123invalid'"])
-
-            >>> validate_attribute_description("cn;123bad")
-            (False, ["Invalid option '123bad'"])
-
-        """
+        """Validate complete attribute description (base + options)."""
         violations: list[str] = []
 
         # Split into base and options

@@ -1,18 +1,4 @@
-"""FLEXT LDIF Utilities - Reusable helpers for LDIF operations.
-
-This module provides LDIF-specific utility functions building on flext-core
-u, following SOLID and DRY principles.
-
-Provides power method infrastructure:
-    - FlextLdifResult: Extended result type with DSL operators
-    - Transformers: Entry transformation pipeline components
-    - Filters: Entry filtering with composable operators
-    - Fluent APIs: DnOps, EntryOps for method chaining
-    - Pipeline: Orchestration for multi-step processing
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT LDIF Utilities - Reusable helpers for LDIF operations."""
 # ruff: noqa: SLF001
 
 from __future__ import annotations
@@ -79,53 +65,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilities(u_core):
-    """FLEXT LDIF Utilities - Centralized helpers for LDIF operations.
-
-    Extends flext-core utility functions building on
-    flext-core, following SOLID and DRY principles.
-
-    Business Rules:
-    ───────────────
-    1. All utility methods MUST be static (no instance state)
-    2. All operations MUST return r[T] for error handling
-    3. LDIF-specific helpers MUST extend flext-core u
-    4. Common patterns MUST be consolidated here (DRY principle)
-
-    Power Methods:
-        - process() - Universal entry processor
-        - transform() - Transformation pipeline
-        - filter() - Entry filtering
-        - validate() - Universal validator
-        - write() - Universal writer
-        - dn() - Fluent DN operations
-        - entry() - Fluent entry operations
-
-    Submodules (LDIF-specific):
-        - ACL, Attribute, Constants, Decorators, Detection
-        - DN, Entry, Events, Metadata, ObjectClass
-        - OID, Parser, Parsers, Schema, Server
-        - Validation, Writer, Writers
-
-    Inherited from u
-        - Enum, Collection, Args, Model, Cache
-        - Validation, Generators, Text, Guards
-        - Reliability, Checker, Configuration, Context
-        - Mapper, Domain, Pagination, Parser
-        - Convenience shortcuts: is_enum_member, parse_enum, to_str, to_str_list
-
-    Usage:
-        # Import from facade (utilities.py)
-        from flext_ldif import u
-
-        # LDIF-specific access
-        u.DN.parse("cn=test,dc=example,dc=com")
-        u.Entry.has_objectclass(entry, "person")
-
-        # Power methods
-        result = u.process(entries, source_server="oid")
-        result = u.transform(entries, Normalize.dn())
-        result = u.filter(entries, Filter.by_objectclass("person"))
-    """
+    """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     # === EXPOSE BASE UTILITIES ===
     # Base utilities (mapper, count, err, Collection, Guards, Reliability, Generators)
@@ -135,17 +75,7 @@ class FlextLdifUtilities(u_core):
     # Project-specific namespace for LDIF utilities
     # Access via u.* pattern for better organization
     class Ldif:
-        """LDIF-specific utility namespace.
-
-        This namespace groups all LDIF-specific utilities for better organization
-        and cross-project access. Access via u.* pattern.
-
-        Example:
-            from flext_ldif import u
-            result = u.DN.parse("cn=test,dc=example")
-            entry = u.Entry.create("cn=test", attrs={"cn": ["test"]})
-
-        """
+        """LDIF-specific utility namespace."""
 
         # === EXPOSE BASE UTILITIES (from parent FlextLdifUtilities) ===
         # These attributes are accessible via u.Ldif.* pattern
@@ -157,23 +87,14 @@ class FlextLdifUtilities(u_core):
         type VariadicCallable[T] = p.VariadicCallable[T]
 
         class ConvBuilder:
-            """Conversion builder for type-safe value conversion (DSL pattern).
-
-            This builder uses parent u.Conversion utilities for actual
-            conversion operations, providing a fluent DSL interface on top.
-            """
+            """Conversion builder for type-safe value conversion (DSL pattern)."""
 
             def __init__(
                 self,
                 *,
                 value: t.GeneralValueType,
             ) -> None:
-                """Initialize conversion builder with a value.
-
-                Args:
-                    value: The value to convert.
-
-                """
+                """Initialize conversion builder with a value."""
                 self._value = value
                 self._default: t.GeneralValueType = None
                 self._target_type: str | None = None
@@ -259,35 +180,13 @@ class FlextLdifUtilities(u_core):
             *,
             default: T | None = None,
         ) -> T | None:
-            """Get value from mapping with default.
-
-            Type-safe wrapper around dict.get() that works with any Mapping type.
-            NOTE: Named differently from parent u.get() due to different signature.
-
-            Args:
-                mapping: Dictionary or Mapping to get value from
-                key: Key to look up
-                default: Default value if key not found
-
-            Returns:
-                Value from mapping or default
-
-            """
+            """Get value from mapping with default."""
             # Use dict protocol directly for type safety
             return mapping.get(key, default)
 
         @staticmethod
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
-            """Unwrap FlextResult with default value.
-
-            Args:
-                result: FlextResult to unwrap
-                default: Default value if failure
-
-            Returns:
-                Unwrapped value or default
-
-            """
+            """Unwrap FlextResult with default value."""
             if result.is_success:
                 return result.value
             return default
@@ -297,19 +196,7 @@ class FlextLdifUtilities(u_core):
             items: Sequence[T],
             func: Callable[[T], r[U]],
         ) -> r[list[U]]:
-            """Execute batch of operations with FlextResult (simplified).
-
-            NOTE: Named differently from parent u.batch() due to different signature.
-            The parent method has more advanced options (size, on_error, parallel, etc.).
-
-            Args:
-                items: Sequence of items to process
-                func: Function to apply to each item
-
-            Returns:
-                FlextResult with list of results or first error
-
-            """
+            """Execute batch of operations with FlextResult (simplified)."""
             results: list[U] = []
             for item in items:
                 result = func(item)
@@ -324,16 +211,7 @@ class FlextLdifUtilities(u_core):
             *,
             predicate: p.Ldif.ValuePredicate,
         ) -> t.GeneralValueType | None:
-            """Find first item matching predicate.
-
-            Args:
-                items: Sequence to search
-                predicate: Protocol to test each item
-
-            Returns:
-                First matching item or None
-
-            """
+            """Find first item matching predicate."""
             for elem in items:
                 if predicate(elem):
                     return elem
@@ -361,18 +239,7 @@ class FlextLdifUtilities(u_core):
 
             @classmethod
             def get_valid_values(cls, category: str) -> set[str]:
-                """Get valid values for a category.
-
-                Args:
-                    category: Category name ('server_type', 'encoding')
-
-                Returns:
-                    Set of valid values for the category
-
-                Raises:
-                    KeyError: If category is unknown
-
-                """
+                """Get valid values for a category."""
                 if category not in cls._CATEGORY_MAP:
                     msg = f"Unknown category: {category}"
                     raise KeyError(msg)
@@ -381,16 +248,7 @@ class FlextLdifUtilities(u_core):
 
             @classmethod
             def is_valid(cls, value: str, category: str) -> bool:
-                """Check if value is valid for a category.
-
-                Args:
-                    value: Value to check
-                    category: Category name ('server_type', 'encoding')
-
-                Returns:
-                    True if value is valid, False otherwise
-
-                """
+                """Check if value is valid for a category."""
                 if category not in cls._CATEGORY_MAP:
                     return False
                 valid_values = cls.get_valid_values(category)
@@ -403,19 +261,7 @@ class FlextLdifUtilities(u_core):
                 values: set[str],
                 category: str,
             ) -> tuple[bool, set[str]]:
-                """Validate multiple values for a category.
-
-                Args:
-                    values: Set of values to validate
-                    category: Category name ('server_type', 'encoding')
-
-                Returns:
-                    Tuple of (all_valid, set of invalid values)
-
-                Raises:
-                    KeyError: If category is unknown
-
-                """
+                """Validate multiple values for a category."""
                 if category not in cls._CATEGORY_MAP:
                     msg = f"Unknown category: {category}"
                     raise KeyError(msg)
@@ -574,16 +420,7 @@ class FlextLdifUtilities(u_core):
             source_server: c.Ldif.ServerTypes,
             target_server: c.Ldif.ServerTypes | None,
         ) -> bool:
-            """Check if this is an LDIF-specific process call.
-
-            Returns True only if:
-            1. items is a non-empty Sequence (not str/bytes/dict)
-            2. items contains at least one Entry object
-            3. LDIF-specific configuration is present
-
-            This prevents misrouting generic sequences (like list[Path])
-            to the LDIF entry processing pipeline.
-            """
+            """Check if this is an LDIF-specific process call."""
             is_sequence_entry = isinstance(items, Sequence) and not isinstance(
                 items,
                 (str, bytes, dict),
@@ -618,24 +455,7 @@ class FlextLdifUtilities(u_core):
             _normalize_dns: bool,  # Unused: reserved for future DN normalization control
             _normalize_attrs: bool,  # Unused: reserved for future attribute normalization control
         ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Process LDIF entries with pipeline.
-
-            Args:
-                entries: Sequence of Entry instances (validated at call site via is_entry_sequence)
-                config: Optional process configuration
-                source_server: Source LDAP server type
-                target_server: Optional target LDAP server type
-                _normalize_dns: Reserved for future DN normalization
-                _normalize_attrs: Reserved for future attribute normalization
-
-            Returns:
-                FlextLdifResult containing processed Entry list
-
-            Note:
-                Entries are validated at call site via is_entry_sequence() TypeGuard
-                which confirms all items have dn and attributes (Entry structure).
-
-            """
+            """Process LDIF entries with pipeline."""
             if config is None:
                 # Create ProcessConfig with default factory
                 # Use model_copy to update server types (Pydantic v2 pattern)
@@ -743,11 +563,7 @@ class FlextLdifUtilities(u_core):
         def is_two_arg_processor[T, R](
             func: Callable[[str, T], R] | Callable[[T], R],
         ) -> TypeGuard[Callable[[str, T], R]]:
-            """Check if processor function accepts 2 arguments.
-
-            Uses inspect to determine parameter count at runtime.
-            TypeGuard ensures MyPy understands the type narrowing.
-            """
+            """Check if processor function accepts 2 arguments."""
             try:
                 sig = inspect.signature(func)
                 return len(sig.parameters) >= FlextLdifUtilities.Ldif.TWO_ARG_THRESHOLD
@@ -775,11 +591,7 @@ class FlextLdifUtilities(u_core):
         def is_no_arg_callable[R](
             func: Callable[[], R] | Callable[[object], R] | object,
         ) -> TypeGuard[Callable[[], R]]:
-            """Check if callable accepts 0 arguments.
-
-            Uses inspect to determine parameter count at runtime.
-            TypeGuard ensures MyPy understands the type narrowing.
-            """
+            """Check if callable accepts 0 arguments."""
             if not callable(func):
                 return False
             try:
@@ -792,11 +604,7 @@ class FlextLdifUtilities(u_core):
         def is_object_arg_callable[R](
             func: Callable[[], R] | Callable[[object], R] | object,
         ) -> TypeGuard[Callable[[object], R]]:
-            """Check if callable accepts 1 object argument.
-
-            Uses inspect to determine parameter count at runtime.
-            TypeGuard ensures MyPy understands the type narrowing.
-            """
+            """Check if callable accepts 1 object argument."""
             if not callable(func):
                 return False
             try:
@@ -813,10 +621,7 @@ class FlextLdifUtilities(u_core):
             filter_keys: set[str] | None,
             exclude_keys: set[str] | None,
         ) -> list[R]:
-            """Process dictionary items.
-
-            Handles both 1-arg and 2-arg processor functions via runtime dispatch.
-            """
+            """Process dictionary items."""
             results: list[R] = []
             for key, value in items.items():
                 if FlextLdifUtilities.Ldif.should_skip_key(
@@ -847,12 +652,7 @@ class FlextLdifUtilities(u_core):
             processor_func: Callable[..., R],
             item: object,
         ) -> r[list[R]]:
-            """Call processor with single item, handling signature detection.
-
-            Uses signature inspection to determine if the callable accepts 1 or 2 args,
-            then calls it appropriately. Returns failure if 2-arg callable is used
-            with single item (no key available).
-            """
+            """Call processor with single item, handling signature detection."""
             try:
                 sig = inspect.signature(processor_func)
                 params = [
@@ -969,41 +769,7 @@ class FlextLdifUtilities(u_core):
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
         ) -> r[list[R]] | FlextLdifResult[list[m.Ldif.Entry]]:
-            """Universal entry processor.
-
-            Processes entries with DN normalization, attribute normalization,
-            and optional server-specific transformations.
-
-            Args:
-                items_or_entries: Items to process (base class) or entries (LDIF-specific)
-                processor_or_config: Processor function (base class) or
-                    ProcessConfig (LDIF-specific)
-                on_error: Error handling mode
-                predicate: Optional filter predicate
-                filter_keys: Keys to include
-                exclude_keys: Keys to exclude
-                config: ProcessConfig for detailed configuration (LDIF-specific)
-                source_server: Source server type (or "auto" for detection)
-                target_server: Target server type (optional)
-                normalize_dns: Enable DN normalization
-                normalize_attrs: Enable attribute normalization
-
-            Returns:
-                FlextResult or FlextLdifResult containing processed items/entries
-
-            Examples:
-                >>> result = FlextLdifUtilities.process(entries, source_server="oid")
-                >>> result = FlextLdifUtilities.process(
-                ...     entries,
-                ...     config=ProcessConfig
-                ...     .builder()
-                ...     .source("oid")
-                ...     .target("oud")
-                ...     .normalize_dn(case="lower")
-                ...     .build(),
-                ... )
-
-            """
+            """Universal entry processor."""
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
             )
@@ -1083,25 +849,7 @@ class FlextLdifUtilities(u_core):
             *transformers: EntryTransformer[m.Ldif.Entry],
             fail_fast: bool = True,
         ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Apply LDIF entry transformations via pipeline.
-
-            This is the LDIF-specific entry transformation method.
-            For dict/Mapping transformations, use the inherited transform() method.
-
-            Args:
-                entries: Sequence of LDIF entries to transform
-                *transformers: One or more EntryTransformer instances to apply
-                fail_fast: Stop on first error (default: True)
-
-            Returns:
-                FlextLdifResult containing list of transformed entries
-
-            Example:
-                >>> result = u.transform_entries(
-                ...     entries, Normalize.dn(), Normalize.attrs()
-                ... )
-
-            """
+            """Apply LDIF entry transformations via pipeline."""
             pipeline = Pipeline(fail_fast=fail_fast)
             # All transformers and pipeline now use m.Ldif.Entry, no conversion needed
             for transformer in transformers:
@@ -1146,29 +894,7 @@ class FlextLdifUtilities(u_core):
             | dict[str, t.GeneralValueType]
             | FlextLdifResult[list[m.Ldif.Entry]]
         ):
-            """Filter entries using composable filter predicates.
-
-            Args:
-                entries: Entries to filter
-                *filters: Filters to apply
-                mode: "all" for AND (default), "any" for OR
-
-            Returns:
-                FlextLdifResult containing filtered entries
-
-            Examples:
-                >>> result = FlextLdifUtilities.filter(
-                ...     entries,
-                ...     Filter.by_objectclass("person"),
-                ... )
-                >>> # Complex filter with operators
-                >>> result = FlextLdifUtilities.filter(
-                ...     entries,
-                ...     Filter.by_dn(r".*ou=users.*")
-                ...     & Filter.by_objectclass("inetOrgPerson"),
-                ... )
-
-            """
+            """Filter entries using composable filter predicates."""
             # Type narrowing: check if this is LDIF-specific call (entries with EntryFilter)
             # Base class filter - delegate to uCollection.filter when not EntryFilter
             if not isinstance(predicate_or_filter1, EntryFilter):
@@ -1284,14 +1010,7 @@ class FlextLdifUtilities(u_core):
         def _is_entry_sequence(
             value: object,
         ) -> TypeIs[Sequence[m.Ldif.Entry]]:
-            """Check if value is a Sequence of Entry objects.
-
-            Uses TypeIs for bidirectional type narrowing:
-            - True branch: narrows to Sequence[Entry]
-            - False branch: narrows to exclude Sequence[Entry]
-
-            Used for type narrowing in validate() overload dispatch.
-            """
+            """Check if value is a Sequence of Entry objects."""
             if not isinstance(value, Sequence):
                 return False
             if isinstance(value, (str, bytes)):
@@ -1310,10 +1029,7 @@ class FlextLdifUtilities(u_core):
             collect_all: bool,
             max_errors: int,
         ) -> FlextLdifResult[list[ValidationResult]]:
-            """Internal: Validate LDIF entries.
-
-            This is the LDIF-specific validation path for Entry sequences.
-            """
+            """Internal: Validate LDIF entries."""
             pipeline = ValidationPipeline(
                 strict=strict,
                 collect_all=collect_all,
@@ -1351,26 +1067,7 @@ class FlextLdifUtilities(u_core):
             collect_all: bool = True,
             max_errors: int = 0,
         ) -> FlextLdifResult[list[ValidationResult]] | r[t.GeneralValueType]:
-            """Validate entries against rules.
-
-            Args:
-                value_or_entries: Value to validate or entries list
-                validator_first: First validator (required for non-entry validation)
-                *validators_rest: Additional validators
-                strict: Use strict RFC validation
-                collect_all: Collect all errors vs fail on first
-                max_errors: Maximum errors to collect (0 = unlimited)
-
-            Returns:
-                FlextLdifResult containing list of ValidationResults or r[T]
-
-            Examples:
-                >>> result = FlextLdifUtilities.validate(entries, strict=True)
-                >>> for validation in result.value:
-                ...     if not validation.is_valid:
-                ...         print(validation.errors)
-
-            """
+            """Validate entries against rules."""
             # LDIF-specific validate with entries (no validators)
             # Use TypeIs for proper type narrowing
             if (
@@ -1393,48 +1090,12 @@ class FlextLdifUtilities(u_core):
 
         @classmethod
         def dn(cls, dn: str) -> DnOps:
-            """Create fluent DN operations.
-
-            Args:
-                dn: DN to operate on
-
-            Returns:
-                DnOps instance for method chaining
-
-            Examples:
-                >>> result = (
-                ...     FlextLdifUtilities
-                ...     .dn("CN=Test, DC=Example, DC=Com")
-                ...     .normalize(case="lower")
-                ...     .clean()
-                ...     .replace_base("dc=example,dc=com", "dc=new,dc=com")
-                ...     .build()
-                ... )
-
-            """
+            """Create fluent DN operations."""
             return DnOps(dn)
 
         @classmethod
         def entry(cls, entry: m.Ldif.Entry) -> EntryOps:
-            """Create fluent entry operations.
-
-            Args:
-                entry: Entry to operate on
-
-            Returns:
-                EntryOps instance for method chaining
-
-            Examples:
-                >>> result = (
-                ...     FlextLdifUtilities
-                ...     .entry(entry)
-                ...     .normalize_dn()
-                ...     .filter_attrs(exclude=["userPassword"])
-                ...     .attach_metadata(source="oid")
-                ...     .build()
-                ... )
-
-            """
+            """Create fluent entry operations."""
             return EntryOps(entry)
 
         # map_filter - use static method implementation below
@@ -1450,19 +1111,7 @@ class FlextLdifUtilities(u_core):
             *,
             default: list[t.GeneralValueType] | None = None,
         ) -> list[t.GeneralValueType]:
-            """Normalize to list using u.build() DSL (mnemonic: nl).
-
-            Args:
-                value: Value to normalize (handles Result types)
-                default: Default list
-
-            Returns:
-                Normalized list
-
-            Examples:
-                >>> items = cls.nl(result.value)
-
-            """
+            """Normalize to list using u.build() DSL (mnemonic: nl)."""
             # Extract from Result using u.or_() DSL
             # Type narrowing: check if value is Result before accessing attributes
             extracted_value: t.GeneralValueType | None
@@ -1553,28 +1202,7 @@ class FlextLdifUtilities(u_core):
             *,
             side_effect: Callable[[t.GeneralValueType], t.GeneralValueType] | None,
         ) -> t.GeneralValueType:
-            """Tap into pipeline for side effects (DSL pattern).
-
-            Executes side_effect function but returns original value.
-            Useful for logging/debugging in pipelines.
-
-            Args:
-                value: Value to tap
-                side_effect: Function to execute (receives value)
-
-            Returns:
-                Original value unchanged
-
-            Examples:
-                >>> # Log intermediate value
-                >>> result = FlextLdifUtilities.pipe(
-                ...     data,
-                ...     lambda x: x.split(","),
-                ...     lambda x: FlextLdifUtilities.tap(x, side_effect=print),
-                ...     lambda x: [s.strip() for s in x],
-                ... )
-
-            """
+            """Tap into pipeline for side effects (DSL pattern)."""
             if side_effect:
                 _ = side_effect(value)  # Explicitly ignore return value
             return value
@@ -1744,24 +1372,7 @@ class FlextLdifUtilities(u_core):
             *,
             case: str = "lower",
         ) -> str | list[str] | set[str] | bool:
-            """Normalize for LDIF comparison (mnemonic: nz).
-
-            Different from base normalize() which normalizes whitespace in strings.
-            This method normalizes case for LDIF attribute comparison.
-
-            Supports two usage patterns:
-            1. normalize_ldif(value, case="lower") -> normalized string
-            2. normalize_ldif(value, other) -> bool (comparison)
-
-            Args:
-                value: Value to normalize
-                other: Optional second value for comparison
-                case: Case folding option ("lower", "upper", "preserve")
-
-            Returns:
-                Normalized value or bool comparison result
-
-            """
+            """Normalize for LDIF comparison (mnemonic: nz)."""
 
             # Normalize single value based on case
             def normalize_single(v: str) -> str:
@@ -1828,19 +1439,7 @@ class FlextLdifUtilities(u_core):
             obj: dict[str, t.GeneralValueType],
             *keys: str,
         ) -> dict[str, t.GeneralValueType]:
-            """Omit keys using u.map_dict() DSL (mnemonic: om).
-
-            Args:
-                obj: Dict to omit from
-                *keys: Keys to omit
-
-            Returns:
-                New dict without keys
-
-            Examples:
-                >>> result = cls.om({"a": 1, "b": 2}, "b")
-
-            """
+            """Omit keys using u.map_dict() DSL (mnemonic: om)."""
             if not obj or not keys:
                 return dict(obj) if obj else {}
             # Use u.map_dict() with predicate to filter out keys
@@ -1870,26 +1469,7 @@ class FlextLdifUtilities(u_core):
             filter_none: bool = False,
             filter_empty: bool = False,
         ) -> r[dict[str, t.GeneralValueType]]:
-            """Merge multiple dicts with filtering options (mnemonic: mg).
-
-            Different from base merge() which takes exactly two dicts.
-            This method accepts variadic dicts with additional filtering options.
-
-            Args:
-                *dicts: Dicts to merge (variadic)
-                strategy: Merge strategy ("override", "deep", "append")
-                filter_none: Skip None values
-                filter_empty: Skip empty strings/lists/dicts
-
-            Returns:
-                FlextResult containing merged dict
-
-            Examples:
-                >>> result = cls.mg({"a": 1}, {"b": 2})
-                >>> if result.is_success:
-                ...     merged = result.value
-
-            """
+            """Merge multiple dicts with filtering options (mnemonic: mg)."""
             # Convert dicts to Mapping[str, t.GeneralValueType] for u.merge()
             # Use list comprehension for better performance
             # Type narrowing: isinstance already guarantees Mapping[str, t.GeneralValueType]
@@ -1948,25 +1528,7 @@ class FlextLdifUtilities(u_core):
             predicate: Callable[[t.GeneralValueType], bool] | None = None,
             default: t.GeneralValueType = None,
         ) -> t.GeneralValueType:
-            """Smart convert using u.build() DSL (mnemonic: sc).
-
-            Args:
-                value: Value to convert
-                target_type: "list", "dict", "str", etc.
-                predicate: Optional filter
-                default: Default value
-
-            Returns:
-                Converted value or default
-
-            Examples:
-                >>> result = cls.sc(
-                ...     data,
-                ...     target_type="list",
-                ...     predicate=lambda x: isinstance(x, dict),
-                ... )
-
-            """
+            """Smart convert using u.build() DSL (mnemonic: sc)."""
             # Extract from Result using native or
             extracted: t.GeneralValueType = (
                 value.value
@@ -2023,25 +1585,7 @@ class FlextLdifUtilities(u_core):
             value: object,
             type_spec: str | type | tuple[type, ...],
         ) -> bool:
-            """Type check using u.build() DSL (mnemonic: it).
-
-            Checks if value is instance of any type using u.build() ensure pattern.
-            Overrides base class to support multiple types via tuple.
-
-            Args:
-                value: Value to check
-                type_spec: Type specification (compatible with base class signature)
-
-            Returns:
-                True if value matches any type
-
-            Examples:
-                >>> if cls.it(value, dict):
-                ...     process(value)
-                >>> if cls.it(value, (dict, list)):
-                ...     process(value)
-
-            """
+            """Type check using u.build() DSL (mnemonic: it)."""
             # Convert type_spec to tuple if single type for compatibility
             types_tuple: tuple[str | type, ...] = (
                 type_spec if isinstance(type_spec, tuple) else (type_spec,)
@@ -2074,20 +1618,7 @@ class FlextLdifUtilities(u_core):
             target: type | str,
             default: t.GeneralValueType | None = None,
         ) -> t.GeneralValueType:
-            """Safe cast using u.convert() or u.ensure() (mnemonic: at).
-
-            Args:
-                value: Value to cast
-                target: Target type/name
-                default: Default if fails
-
-            Returns:
-                Casted value or default
-
-            Examples:
-                >>> items = cls.at(value, target="list", default=[])
-
-            """
+            """Safe cast using u.convert() or u.ensure() (mnemonic: at)."""
             # Use u.conv() builder DSL for type conversion
             type_map = {
                 "list": list,
@@ -2161,23 +1692,7 @@ class FlextLdifUtilities(u_core):
             check: Callable[[T], bool] | bool,
             default: T | None = None,
         ) -> T | None:
-            """Simple guard using check pattern (mnemonic: gd).
-
-            Simplified version of u.guard() for common use cases.
-            This is NOT an override of u.guard() - it's a separate method.
-
-            Args:
-                value: Value to guard
-                check: Check function/bool
-                default: Default if fails
-
-            Returns:
-                Value or default
-
-            Examples:
-                >>> result = cls.gd(data, check=lambda x: len(x) > 0, default=[])
-
-            """
+            """Simple guard using check pattern (mnemonic: gd)."""
             check_result = check(value) if callable(check) else bool(check)
             return value if check_result else default
 
@@ -2191,19 +1706,7 @@ class FlextLdifUtilities(u_core):
             *,
             fn: Callable[[object], object],
         ) -> object:
-            """Thru using direct call (mnemonic: th).
-
-            Args:
-                value: Value to pass through
-                fn: Function to apply
-
-            Returns:
-                Function result
-
-            Examples:
-                >>> result = cls.th(data, fn=lambda x: x.split(","))
-
-            """
+            """Thru using direct call (mnemonic: th)."""
             return fn(value)
 
         # Mnemonic helper
@@ -2214,20 +1717,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *fns: Callable[[t.GeneralValueType], t.GeneralValueType],
         ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
-            """Compose using u.chain() (mnemonic: cp).
-
-            Args:
-                *fns: Functions to compose
-
-            Returns:
-                Composed function
-
-            Examples:
-                >>> fn = cls.cp(
-                ...     lambda x: x.split(","), lambda x: [s.strip() for s in x]
-                ... )
-
-            """
+            """Compose using u.chain() (mnemonic: cp)."""
             if not fns:
                 return lambda x: x
             return lambda value: cls.chain(value, *fns)
@@ -2240,18 +1730,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *fns: Callable[[t.GeneralValueType], t.GeneralValueType],
         ) -> Callable[[t.GeneralValueType], tuple[t.GeneralValueType, ...]]:
-            """Juxtapose functions (mnemonic: jx).
-
-            Args:
-                *fns: Functions to apply
-
-            Returns:
-                Function returning tuple of results
-
-            Examples:
-                >>> fn = cls.jx(len, str.upper, str.lower)
-
-            """
+            """Juxtapose functions (mnemonic: jx)."""
             if not fns:
                 return lambda _x: ()
             return lambda value: tuple(fn(value) for fn in fns)
@@ -2265,19 +1744,7 @@ class FlextLdifUtilities(u_core):
             fn: Callable[..., t.GeneralValueType],
             *args: t.GeneralValueType,
         ) -> Callable[..., t.GeneralValueType]:
-            """Curry function (mnemonic: cy).
-
-            Args:
-                fn: Function to curry
-                *args: Arguments to apply
-
-            Returns:
-                Curried function
-
-            Examples:
-                >>> add5 = cls.cy(lambda x, y: x + y, 5)
-
-            """
+            """Curry function (mnemonic: cy)."""
 
             def curried(
                 *more_args: t.GeneralValueType,
@@ -2421,32 +1888,7 @@ class FlextLdifUtilities(u_core):
             *pairs: tuple[Callable[[], bool] | Callable[[object], bool] | bool, object],
             default: object | None = None,
         ) -> Callable[[], object] | Callable[[object], object]:
-            """Cond pattern (mnemonic: cd).
-
-            Returns a function that evaluates predicates. Supports both no-arg and value-arg predicates.
-
-            Args:
-                *pairs: (predicate, value) tuples
-                    - If predicate is callable with no args: returns function() -> value
-                    - If predicate is callable with 1 arg: returns function(value) -> value
-                default: Default if no match
-
-            Returns:
-                Function that evaluates predicates
-
-            Examples:
-                >>> # No-arg predicates: call with ()
-                >>> result_fn = cls.cd((lambda: True, "yes"), default="no")
-                >>> result = result_fn()
-                >>> # Value-arg predicates: call with (value)
-                >>> fn = cls.cd(
-                ...     (lambda x: x > 10, "big"),
-                ...     (lambda x: x > 5, "med"),
-                ...     default="small",
-                ... )
-                >>> result = fn(15)
-
-            """
+            """Cond pattern (mnemonic: cd)."""
             is_no_arg = cls._detect_predicate_type(pairs)
 
             if is_no_arg:
@@ -2500,20 +1942,7 @@ class FlextLdifUtilities(u_core):
             cases: dict[object, object],
             default: object | None = None,
         ) -> object:
-            """Switch using dict lookup (mnemonic: sw).
-
-            Args:
-                value: Value to switch on
-                cases: Dict mapping cases to results
-                default: Default if no match
-
-            Returns:
-                Matching result
-
-            Examples:
-                >>> result = cls.sw("a", {"a": 1, "b": 2}, default=0)
-
-            """
+            """Switch using dict lookup (mnemonic: sw)."""
             result = cases.get(value, default)
             return result(value) if callable(result) else result
 
@@ -2525,18 +1954,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *dicts: dict[str, t.GeneralValueType] | None,
         ) -> dict[str, t.GeneralValueType]:
-            """Defaults merge - first wins using u.flow() DSL (mnemonic: df).
-
-            Args:
-                *dicts: Dicts to merge (later = defaults)
-
-            Returns:
-                Merged dict
-
-            Examples:
-                >>> result = cls.df({"a": 1}, {"b": 2, "a": 3})  # {"a":1, "b":2}
-
-            """
+            """Defaults merge - first wins using u.flow() DSL (mnemonic: df)."""
             if not dicts:
                 return {}
             # Use u.fold() DSL to apply first-wins logic: first dict wins, later dicts fill missing/None keys
@@ -2575,20 +1993,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *dicts: Mapping[str, t.GeneralValueType] | None,
         ) -> dict[str, t.GeneralValueType]:
-            """Deep merge using u.merge() with deep strategy (mnemonic: dm).
-
-            Args:
-                *dicts: Dicts to merge
-
-            Returns:
-                Deeply merged dict
-
-            Examples:
-                >>> result = cls.dm(
-                ...     {"a": {"b": 1}}, {"a": {"c": 2}}
-                ... )  # {"a": {"b":1, "c":2}}
-
-            """
+            """Deep merge using u.merge() with deep strategy (mnemonic: dm)."""
             if not dicts:
                 return {}
             # Filter to get only mapping items
@@ -2614,20 +2019,7 @@ class FlextLdifUtilities(u_core):
             obj: dict[str, t.GeneralValueType],
             *updates: Mapping[str, t.GeneralValueType] | None,
         ) -> dict[str, t.GeneralValueType]:
-            """Update in-place using u.flow() pattern (mnemonic: ui).
-
-            Args:
-                obj: Dict to update
-                *updates: Dicts with updates
-
-            Returns:
-                Updated dict (same reference)
-
-            Examples:
-                >>> d = {"a": 1}
-                >>> cls.ui(d, {"b": 2})  # d mutated
-
-            """
+            """Update in-place using u.flow() pattern (mnemonic: ui)."""
             # Apply updates in-place
             for update in updates:
                 if update is not None and isinstance(update, Mapping):
@@ -2664,20 +2056,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *dicts: dict[str, t.GeneralValueType] | None,
         ) -> dict[str, t.GeneralValueType]:
-            """Deep defaults using u.merge() deep strategy + first wins (mnemonic: dd).
-
-            Args:
-                *dicts: Dicts to merge (first wins, deep merge nested)
-
-            Returns:
-                Deeply merged dict with defaults
-
-            Examples:
-                >>> result = cls.dd(
-                ...     {"a": {"b": 1}}, {"a": {"b": 2, "c": 3}}
-                ... )  # {"a": {"b":1, "c":3}}
-
-            """
+            """Deep defaults using u.merge() deep strategy + first wins (mnemonic: dd)."""
             if not dicts:
                 return {}
             # Filter and reverse dicts for first-wins logic
@@ -2711,27 +2090,7 @@ class FlextLdifUtilities(u_core):
             default: object | None = None,
             from_start: bool = True,
         ) -> dict[str, t.GeneralValueType] | list[object] | object | None:
-            """Take value from data with type guard (mnemonic: tk).
-
-            Supports two modes:
-            - Extraction mode (str key): Extract value from dict/object by key
-            - Slice mode (int n): Take first/last n items from sequence/dict
-
-            Args:
-                data_or_items: Source data or items
-                key_or_n: Key/attribute name (str) or number of items (int)
-                as_type: Type to guard/validate against
-                default: Default value if key not found or type mismatch
-                from_start: Take from start if True, from end if False (slice mode)
-
-            Returns:
-                Extracted value, sliced items, or default
-
-            Examples:
-                >>> port = cls.tk(config, "port", as_type=int, default=8080)
-                >>> first_two = cls.tk([1, 2, 3, 4], 2)  # [1, 2]
-
-            """
+            """Take value from data with type guard (mnemonic: tk)."""
             # Extraction mode - get value by key
             if isinstance(key_or_n, str):
                 value: object = None
@@ -2819,20 +2178,7 @@ class FlextLdifUtilities(u_core):
             *args: t.GeneralValueType,
             **kwargs: t.GeneralValueType,
         ) -> t.GeneralValueType:
-            """Apply function (mnemonic: ap).
-
-            Args:
-                fn: Function to apply or value to return
-                *args: Positional args
-                **kwargs: Keyword args
-
-            Returns:
-                Function result or fn value if not callable
-
-            Examples:
-                >>> result = cls.ap(process_data, "arg1", option=True)
-
-            """
+            """Apply function (mnemonic: ap)."""
             if callable(fn):
                 # Pass args and kwargs directly to the callable
                 return fn(*args, **kwargs)
@@ -2859,18 +2205,7 @@ class FlextLdifUtilities(u_core):
             cls,
             fn: Callable[[t.GeneralValueType], t.GeneralValueType],
         ) -> Callable[[t.GeneralValueType], t.GeneralValueType | None]:
-            """Lift function for optionals (mnemonic: lf).
-
-            Args:
-                fn: Function to lift
-
-            Returns:
-                Lifted function
-
-            Examples:
-                >>> safe_int = cls.lf(int)
-
-            """
+            """Lift function for optionals (mnemonic: lf)."""
 
             # Use ternary operator + FlextLdifUtilities.maybe() DSL for safe None handling
             def lifted_fn(v: t.GeneralValueType) -> t.GeneralValueType | None:
@@ -2894,18 +2229,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *values: t.GeneralValueType,
         ) -> list[t.GeneralValueType]:
-            """Sequence constructor (mnemonic: sq).
-
-            Args:
-                *values: Values to sequence
-
-            Returns:
-                List of values
-
-            Examples:
-                >>> items = cls.sq(1, 2, 3)
-
-            """
+            """Sequence constructor (mnemonic: sq)."""
             # Use u.mapper().ensure() or direct list conversion for multiple values
             # values is a tuple from *values, convert to list
             return list(values)
@@ -2920,20 +2244,7 @@ class FlextLdifUtilities(u_core):
             key: str,
             value: t.GeneralValueType,
         ) -> dict[str, t.GeneralValueType]:
-            """Associate key-value using u.merge() DSL (mnemonic: ac).
-
-            Args:
-                data: Source dict
-                key: Key to associate
-                value: Value to associate
-
-            Returns:
-                New dict with association
-
-            Examples:
-                >>> updated = cls.ac({"a": 1}, "b", 2)
-
-            """
+            """Associate key-value using u.merge() DSL (mnemonic: ac)."""
             # Use u.merge() for two-dict merge
             merge_result = u_core.merge(dict(data), {key: value}, strategy="override")
             if merge_result.is_success and isinstance(merge_result.value, dict):
@@ -2949,19 +2260,7 @@ class FlextLdifUtilities(u_core):
             data: Mapping[str, t.GeneralValueType],
             *keys: str,
         ) -> dict[str, t.GeneralValueType]:
-            """Dissociate keys using omit DSL (mnemonic: ds).
-
-            Args:
-                data: Source dict
-                *keys: Keys to remove
-
-            Returns:
-                New dict without keys
-
-            Examples:
-                >>> updated = cls.ds({"a": 1, "b": 2}, "b")
-
-            """
+            """Dissociate keys using omit DSL (mnemonic: ds)."""
             # Return new dict without specified keys
             return {k: v for k, v in data.items() if k not in keys}
 
@@ -2974,19 +2273,7 @@ class FlextLdifUtilities(u_core):
             data: Mapping[str, t.GeneralValueType],
             updates: Mapping[str, t.GeneralValueType],
         ) -> dict[str, t.GeneralValueType]:
-            """Update dict using u.merge() (mnemonic: ud).
-
-            Args:
-                data: Source dict
-                updates: Updates to apply
-
-            Returns:
-                New dict with updates
-
-            Examples:
-                >>> updated = cls.ud({"a": 1}, {"b": 2})
-
-            """
+            """Update dict using u.merge() (mnemonic: ud)."""
             # Use u.merge() for unified behavior
             merge_result = u_core.merge(dict(data), dict(updates), strategy="override")
             if merge_result.is_success and isinstance(merge_result.value, dict):
@@ -3003,19 +2290,7 @@ class FlextLdifUtilities(u_core):
             *transforms: Mapping[str, t.GeneralValueType]
             | Callable[[dict[str, t.GeneralValueType]], dict[str, t.GeneralValueType]],
         ) -> dict[str, t.GeneralValueType]:
-            """Evolve using u.flow() pattern (mnemonic: ev).
-
-            Args:
-                obj: Source object
-                *transforms: Dict updates or transform functions
-
-            Returns:
-                Evolved object
-
-            Examples:
-                >>> result = cls.ev({"a": 1}, {"b": 2}, lambda d: {**d, "c": 3})
-
-            """
+            """Evolve using u.flow() pattern (mnemonic: ev)."""
             # Apply transforms sequentially
             result: dict[str, t.GeneralValueType] = dict(obj)
             for transform in transforms:
@@ -3059,11 +2334,7 @@ class FlextLdifUtilities(u_core):
             *,
             default: list[T] | None = None,
         ) -> list[T]:
-            """Get values from dict (mnemonic: vl).
-
-            Different from base vals() which extracts values from FlextResult sequences.
-            This method extracts values from dicts or r[dict].
-            """
+            """Get values from dict (mnemonic: vl)."""
             if isinstance(items, r):
                 if items.is_success and isinstance(items.value, dict):
                     return list(items.value.values())
@@ -3079,18 +2350,7 @@ class FlextLdifUtilities(u_core):
             cls,
             obj: dict[str, t.GeneralValueType],
         ) -> dict[str, str]:
-            """Invert dict using u.map_dict() pattern (mnemonic: iv).
-
-            Args:
-                obj: Dict to invert
-
-            Returns:
-                Inverted dict
-
-            Examples:
-                >>> inverted = cls.iv({"a": 1, "b": 2})
-
-            """
+            """Invert dict using u.map_dict() pattern (mnemonic: iv)."""
             if isinstance(obj, dict):
                 # Convert values to strings for invert_dict (expects Mapping[str, str])
                 str_dict: t.StringMapping = {k: str(v) for k, v in obj.items()}
@@ -3110,19 +2370,7 @@ class FlextLdifUtilities(u_core):
             *,
             predicate: Callable[[str, object], bool] | None = None,
         ) -> dict[str, t.GeneralValueType]:
-            """Where using u.filter() (mnemonic: wh).
-
-            Args:
-                obj: Dict to filter
-                predicate: (k,v) -> bool
-
-            Returns:
-                Filtered dict
-
-            Examples:
-                >>> filtered = cls.wh({"a": 1, "b": 2}, predicate=lambda k, v: v > 1)
-
-            """
+            """Where using u.filter() (mnemonic: wh)."""
             if not isinstance(obj, dict):
                 return {}
             if predicate is None:
@@ -3144,18 +2392,7 @@ class FlextLdifUtilities(u_core):
             cls,
             key: str,
         ) -> Callable[[object], object]:
-            """Property accessor using u.get() (mnemonic: pp).
-
-            Args:
-                key: Property key
-
-            Returns:
-                Accessor function
-
-            Examples:
-                >>> get_name = cls.pp("name")
-
-            """
+            """Property accessor using u.get() (mnemonic: pp)."""
 
             def getter(obj: object) -> object:
                 """Get value from object by key."""
@@ -3176,18 +2413,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *keys: str,
         ) -> Callable[[object], dict[str, t.GeneralValueType]]:
-            """Props accessor using u.pick() directly (mnemonic: ps).
-
-            Args:
-                *keys: Property keys
-
-            Returns:
-                Accessor function returning dict
-
-            Examples:
-                >>> get_fields = cls.ps("name", "age")
-
-            """
+            """Props accessor using u.pick() directly (mnemonic: ps)."""
 
             def accessor(obj: object) -> dict[str, t.GeneralValueType]:
                 if isinstance(obj, (dict, Mapping)):
@@ -3214,18 +2440,7 @@ class FlextLdifUtilities(u_core):
             cls,
             *keys: str,
         ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
-            """Path accessor using u.chain() DSL (mnemonic: ph).
-
-            Args:
-                *keys: Path keys
-
-            Returns:
-                Path accessor function
-
-            Examples:
-                >>> get_nested = cls.ph("user", "profile", "name")
-
-            """
+            """Path accessor using u.chain() DSL (mnemonic: ph)."""
 
             # Use FlextLdifUtilities.Ldif.chain() to compose get operations
             # Create properly typed single-argument lambdas using closure factory
@@ -3255,15 +2470,7 @@ class FlextLdifUtilities(u_core):
         def sum(
             items: Sequence[int | float | object] | dict[str, int | float | object],
         ) -> int | float:
-            """Sum of numeric items.
-
-            Args:
-                items: Sequence of numbers or dict with numeric values
-
-            Returns:
-                Sum of numeric values
-
-            """
+            """Sum of numeric items."""
             if isinstance(items, dict):
                 total_dict: int | float = 0
                 for v in items.values():
@@ -3548,38 +2755,14 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def result_val_opt[T](result: r[T], default: T | None = None) -> T | None:
-            """Extract value from FlextResult with optional default (DSL helper).
-
-            Different from base result_val() which requires a non-None default.
-            This method allows None as default for optional extraction.
-
-            Args:
-                result: FlextResult to unwrap
-                default: Default value if result is failure (can be None)
-
-            Returns:
-                Result value if success, otherwise default
-
-            Examples:
-                >>> result = r.ok("value")
-                >>> value = u.result_val_opt(result, default="default")  # "value"
-                >>> failed = r.fail("error")
-                >>> value = u.result_val_opt(failed, default="default")  # "default"
-
-            """
+            """Extract value from FlextResult with optional default (DSL helper)."""
             if result.is_success:
                 return result.value
             return default
 
         # === Type Guards ===
         class TypeGuards(FlextLdifUtilitiesTypeGuards):
-            """Type guards for Model identification.
-
-            Safe type narrowing for SchemaAttribute and SchemaObjectClass
-            Models without circular imports.
-
-            Access via: u.TypeGuards.is_schema_attribute(obj)
-            """
+            """Type guards for Model identification."""
 
             # All methods inherited from FlextLdifUtilitiesTypeGuards
 

@@ -1,32 +1,4 @@
-"""Power Method Pipeline - Pipeline orchestration for entry processing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides pipeline classes for orchestrating entry transformations:
-    - Pipeline: Executes a sequence of transformers
-    - ProcessingPipeline: Full processing pipeline with config
-    - ValidationPipeline: Entry validation pipeline
-
-Python 3.13+ features:
-    - PEP 695 type parameter syntax
-    - Generic classes with type bounds
-    - Self type for method chaining
-
-Usage:
-    from flext_ldif._utilities.pipeline import Pipeline
-
-    # Create pipeline
-    pipeline = (
-        Pipeline()
-        .add(Normalize.dn())
-        .add(Transform.replace_base("dc=old", "dc=new"))
-        .add(Filter.by_objectclass("person"))
-    )
-
-    # Execute
-    result = pipeline.execute(entries)
-"""
+"""Power Method Pipeline - Pipeline orchestration for entry processing."""
 
 from __future__ import annotations
 
@@ -52,9 +24,7 @@ class _Filtered:
 FILTERED = _Filtered()
 
 
-# =========================================================================
 # PIPELINE STEP PROTOCOL
-# =========================================================================
 
 
 class _StepFunction[TIn, TOut](Protocol):
@@ -64,10 +34,7 @@ class _StepFunction[TIn, TOut](Protocol):
 
 
 class PipelineStep[TIn, TOut]:
-    """A single step in a pipeline.
-
-    Wraps a transformer or filter with metadata for logging and debugging.
-    """
+    """A single step in a pipeline."""
 
     __slots__ = ("_func", "_name")
 
@@ -76,13 +43,7 @@ class PipelineStep[TIn, TOut]:
         name: str,
         func: _StepFunction[TIn, TOut],
     ) -> None:
-        """Initialize pipeline step.
-
-        Args:
-            name: Step name for logging
-            func: Function to execute (implements _StepFunction protocol)
-
-        """
+        """Initialize pipeline step."""
         self._name = name
         self._func = func
 
@@ -92,49 +53,20 @@ class PipelineStep[TIn, TOut]:
         return self._name
 
     def execute(self, input_data: TIn) -> r[TOut]:
-        """Execute this step.
-
-        Args:
-            input_data: Input data
-
-        Returns:
-            r containing output or error
-
-        """
+        """Execute this step."""
         return self._func(input_data)
 
 
-# =========================================================================
 # TRANSFORMATION PIPELINE
-# =========================================================================
 
 
 class Pipeline:
-    """Pipeline for executing a sequence of transformations.
-
-    Supports adding transformers, filters, and custom functions.
-    All steps are executed in sequence, with early exit on failure.
-
-    Examples:
-        >>> pipeline = (
-        ...     Pipeline()
-        ...     .add(Normalize.dn())
-        ...     .add(Transform.replace_base("dc=old", "dc=new"))
-        ...     .filter(Filter.by_objectclass("person"))
-        ... )
-        >>> result = pipeline.execute(entries)
-
-    """
+    """Pipeline for executing a sequence of transformations."""
 
     __slots__ = ("_fail_fast", "_steps")
 
     def __init__(self, *, fail_fast: bool = True) -> None:
-        """Initialize pipeline.
-
-        Args:
-            fail_fast: Stop on first error (default True)
-
-        """
+        """Initialize pipeline."""
         self._steps: list[
             tuple[
                 str,
@@ -152,16 +84,7 @@ class Pipeline:
         *,
         name: str | None = None,
     ) -> Self:
-        """Add a transformer to the pipeline.
-
-        Args:
-            transformer: Transformer to add
-            name: Optional step name for logging
-
-        Returns:
-            Self for chaining
-
-        """
+        """Add a transformer to the pipeline."""
         # Business Rule: Add transformer step to pipeline
         # Transformers return r[Entry], but pipeline filters can return None
         # Wrap transformer.apply to match pipeline signature r[Entry | None]
@@ -170,13 +93,7 @@ class Pipeline:
         def wrapped_transformer(
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry | _Filtered]:
-            """Wrap transformer to match pipeline filter signature.
-
-            Business Rule:
-            - Transformers return r[Entry] (never None)
-            - Pipeline filters can return Entry | FILTERED (FILTERED = filter out)
-            - Wrap transformer result to match pipeline signature
-            """
+            """Wrap transformer to match pipeline filter signature."""
             transformer_result = transformer.apply(entry)
             if transformer_result.is_failure:
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
@@ -194,18 +111,7 @@ class Pipeline:
         *,
         name: str | None = None,
     ) -> Self:
-        """Add a filter to the pipeline.
-
-        Entries not matching the filter are removed (return None).
-
-        Args:
-            entry_filter: Filter to add
-            name: Optional step name for logging
-
-        Returns:
-            Self for chaining
-
-        """
+        """Add a filter to the pipeline."""
         step_name = name or entry_filter.__class__.__name__
 
         def filter_func(
@@ -228,27 +134,12 @@ class Pipeline:
         *,
         name: str = "custom",
     ) -> Self:
-        """Add a custom function to the pipeline.
-
-        Args:
-            func: Custom function (returns Entry, r[Entry], or None to filter)
-            name: Step name for logging
-
-        Returns:
-            Self for chaining
-
-        """
+        """Add a custom function to the pipeline."""
 
         def wrapped_func(
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry | _Filtered]:
-            """Wrap function to match pipeline filter signature.
-
-            Business Rule:
-            - Pipeline filters can return Entry (keep), None (filter out), or r
-            - Wraps all return types to consistent r[Entry | FILTERED] format
-            - None values are converted to FILTERED sentinel (r.ok(None) is not allowed)
-            """
+            """Wrap function to match pipeline filter signature."""
             func_result = func(entry)
             if func_result is None:
                 # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
@@ -272,15 +163,7 @@ class Pipeline:
         self,
         entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry | _Filtered]:
-        """Execute pipeline on a single entry.
-
-        Args:
-            entry: Entry to process
-
-        Returns:
-            r containing processed entry, FILTERED if filtered, or error
-
-        """
+        """Execute pipeline on a single entry."""
         current: m.Ldif.Entry | _Filtered = entry
 
         for step_name, step_func in self._steps:
@@ -306,25 +189,12 @@ class Pipeline:
         self,
         entries: Sequence[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
-        """Execute pipeline on a sequence of entries.
-
-        Args:
-            entries: Entries to process
-
-        Returns:
-            r containing list of processed entries or error
-
-        """
+        """Execute pipeline on a sequence of entries."""
 
         def process_entry(
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry] | None:
-            """Process single entry through pipeline.
-
-            Returns:
-                r[Entry] on success, None if filtered (not an error)
-
-            """
+            """Process single entry through pipeline."""
             result = self.execute_one(entry)
             if result.is_failure:
                 # For fail_fast, batch will stop on first error
@@ -368,47 +238,21 @@ class Pipeline:
         return [name for name, _ in self._steps]
 
 
-# =========================================================================
 # PROCESSING PIPELINE - Full processing with config
-# =========================================================================
 
 
 class ProcessingPipeline:
-    """Full processing pipeline with configuration.
-
-    Combines loading, transformation, validation, and output based on
-    ProcessConfig configuration.
-
-    Examples:
-        >>> config = TransformConfig(
-        ...     source_server="oid",
-        ...     target_server="oud",
-        ...     normalize_dns=True,
-        ... )
-        >>> pipeline = ProcessingPipeline(config)
-        >>> result = pipeline.execute(entries)
-
-    """
+    """Full processing pipeline with configuration."""
 
     __slots__ = ("_config", "_pipeline")
 
     def __init__(self, config: TransformConfig | None = None) -> None:
-        """Initialize processing pipeline.
-
-        Args:
-            config: Processing configuration (uses defaults if None)
-
-        """
+        """Initialize processing pipeline."""
         self._config = config or TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
-        """Build the internal pipeline based on configuration.
-
-        Returns:
-            Configured Pipeline instance
-
-        """
+        """Build the internal pipeline based on configuration."""
         pipeline = Pipeline()
 
         # Add DN normalization if enabled
@@ -453,15 +297,7 @@ class ProcessingPipeline:
         self,
         entries: Sequence[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
-        """Execute the processing pipeline.
-
-        Args:
-            entries: Entries to process (must be Entry instances)
-
-        Returns:
-            r containing processed entries or error
-
-        """
+        """Execute the processing pipeline."""
         return self._pipeline.execute(entries)
 
     @property
@@ -470,22 +306,11 @@ class ProcessingPipeline:
         return self._config
 
 
-# =========================================================================
 # VALIDATION PIPELINE
-# =========================================================================
 
 
 class ValidationPipeline:
-    """Pipeline for validating entries.
-
-    Validates entries against configured rules and returns a validation
-    report with errors and warnings.
-
-    Examples:
-        >>> pipeline = ValidationPipeline(strict=True)
-        >>> report = pipeline.validate(entries)
-
-    """
+    """Pipeline for validating entries."""
 
     __slots__ = ("_collect_all", "_max_errors", "_strict")
 
@@ -496,14 +321,7 @@ class ValidationPipeline:
         collect_all: bool = True,
         max_errors: int = 0,
     ) -> None:
-        """Initialize validation pipeline.
-
-        Args:
-            strict: Use strict RFC validation
-            collect_all: Collect all errors vs fail on first
-            max_errors: Maximum errors to collect (0 = unlimited)
-
-        """
+        """Initialize validation pipeline."""
         self._strict = strict
         self._collect_all = collect_all
         self._max_errors = max_errors
@@ -512,15 +330,7 @@ class ValidationPipeline:
         self,
         entry: m.Ldif.Entry,
     ) -> r[ValidationResult]:
-        """Validate a single entry.
-
-        Args:
-            entry: Entry to validate
-
-        Returns:
-            r containing ValidationResult
-
-        """
+        """Validate a single entry."""
         errors: list[str] = []
         warnings: list[str] = []
 
@@ -574,15 +384,7 @@ class ValidationPipeline:
         self,
         entries: Sequence[m.Ldif.Entry],
     ) -> r[list[ValidationResult]]:
-        """Validate a sequence of entries.
-
-        Args:
-            entries: Entries to validate
-
-        Returns:
-            r containing list of ValidationResults
-
-        """
+        """Validate a sequence of entries."""
         results: list[ValidationResult] = []
         total_errors = 0
 
@@ -608,16 +410,11 @@ class ValidationPipeline:
         return r[list[ValidationResult]].ok(results)
 
 
-# =========================================================================
 # VALIDATION RESULT
-# =========================================================================
 
 
 class ValidationResult:
-    """Result of entry validation.
-
-    Contains validation status, errors, and warnings.
-    """
+    """Result of entry validation."""
 
     __slots__ = ("_errors", "_is_valid", "_warnings")
 
@@ -628,14 +425,7 @@ class ValidationResult:
         errors: list[str] | None = None,
         warnings: list[str] | None = None,
     ) -> None:
-        """Initialize validation result.
-
-        Args:
-            is_valid: Whether validation passed
-            errors: List of error messages
-            warnings: List of warning messages
-
-        """
+        """Initialize validation result."""
         self._is_valid = is_valid
         self._errors = errors or []
         self._warnings = warnings or []

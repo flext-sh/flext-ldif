@@ -14,17 +14,13 @@ from flext_ldif import (
 )
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests import c, m, p
-
-
-@pytest.fixture(autouse=True)
-def cleanup_state() -> None:
-    """Autouse fixture to clean shared state between tests.
-
-    Runs after each test to prevent state pollution to subsequent tests.
-    Ensures test isolation even when fixtures have shared state.
-    """
-    return
-    # Post-test cleanup - ensures each test has clean state
+from tests.conftest_shared import (
+    _create_real_parser_service,
+    _create_real_writer_service,
+    _create_sample_acl,
+    _create_sample_schema_attribute,
+    _create_sample_schema_objectclass,
+)
 
 
 @pytest.fixture
@@ -60,52 +56,31 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
 @pytest.fixture
 def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return m.Ldif.SchemaAttribute(
-        oid=c.RFC.ATTR_OID_CN,
-        name=c.RFC.ATTR_NAME_CN,
-        desc=None,
-        sup=None,
-        equality=None,
-        ordering=None,
-        substr=None,
-        syntax=None,
-        length=None,
-        usage=None,
-        x_origin=None,
-        x_file_ref=None,
-        x_name=None,
-        x_alias=None,
-        x_oid=None,
-    )
+    return _create_sample_schema_attribute()
 
 
 @pytest.fixture
 def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return m.Ldif.SchemaObjectClass(
-        oid=c.RFC.OC_OID_PERSON,
-        name=c.RFC.OC_NAME_PERSON,
-        desc=None,
-        sup=None,
-    )
+    return _create_sample_schema_objectclass()
 
 
 @pytest.fixture
 def sample_acl() -> m.Ldif.Acl:
     """Provides a sample Acl for tests."""
-    return m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
+    return _create_sample_acl()
 
 
 @pytest.fixture
 def real_parser_service() -> FlextLdifParser:
     """Provides real parser service for RFC tests."""
-    return FlextLdifParser()
+    return _create_real_parser_service()
 
 
 @pytest.fixture
 def real_writer_service() -> FlextLdifWriter:
     """Provides real writer service for RFC tests."""
-    return FlextLdifWriter()
+    return _create_real_writer_service()
 
 
 @pytest.fixture

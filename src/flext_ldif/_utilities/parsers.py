@@ -1,13 +1,4 @@
-"""Master class for all LDIF parsing utilities.
-
-Python 3.13+ optimized implementation using:
-- Nested classes for organized structure
-- Protocol-based hooks for server customization
-- Generator expressions for lazy evaluation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Master class for all LDIF parsing utilities."""
 
 from __future__ import annotations
 
@@ -23,24 +14,9 @@ logger = structlog.get_logger(__name__)
 
 
 class FlextLdifUtilitiesParsers:
-    """Master class for all LDIF parsing utilities.
+    """Master class for all LDIF parsing utilities."""
 
-    Contains nested classes for each parsing operation:
-    - Entry: Parse individual entries
-    - Attribute: Parse attribute definitions
-    - ObjectClass: Parse objectClass definitions
-    - Content: Parse multiple entries
-
-    Example:
-        >>> result = FlextLdifUtilitiesParsers.Entry.parse(
-        ...     ldif_content, "oid", parse_attrs_hook
-        ... )
-
-    """
-
-    # =========================================================================
     # ENTRY PARSER - Parse individual LDIF entries
-    # =========================================================================
 
     class Entry:
         """Generalized entry parser with hook-based customization."""
@@ -105,20 +81,7 @@ class FlextLdifUtilitiesParsers:
             transform_entry_hook: TransformEntryHook | None = None,
             parse_comments_hook: ParseCommentsHook | None = None,
         ) -> r[m.Ldif.Entry]:
-            """Parse LDIF entry from content using hooks.
-
-            Args:
-                ldif_content: LDIF content to parse
-                server_type: Server type identifier
-                parse_attributes_hook: Core attributes parsing
-                parse_dn_hook: Optional DN parsing
-                transform_entry_hook: Optional entry transformation
-                parse_comments_hook: Optional comments parsing
-
-            Returns:
-                FlextResult with parsed Entry
-
-            """
+            """Parse LDIF entry from content using hooks."""
             try:
                 lines = ldif_content.strip().split("\n")
                 dn: str | None = None
@@ -168,9 +131,7 @@ class FlextLdifUtilitiesParsers:
                 )
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
-    # =========================================================================
     # ATTRIBUTE PARSER - Parse attribute type definitions
-    # =========================================================================
 
     class Attribute:
         """Generalized attribute definition parser."""
@@ -209,19 +170,7 @@ class FlextLdifUtilitiesParsers:
             transform_hook: TransformHook | None = None,
             parse_oid_hook: ParseOidHook | None = None,
         ) -> FlextResult[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition using hooks.
-
-            Args:
-                definition: Attribute definition string
-                server_type: Server type identifier
-                parse_parts_hook: Core parts parsing
-                transform_hook: Optional attribute transformation
-                parse_oid_hook: Optional OID parsing
-
-            Returns:
-                FlextResult with m.Ldif.SchemaAttribute
-
-            """
+            """Parse attribute definition using hooks."""
             try:
                 # Parse parts using hook
                 parts = parse_parts_hook(definition)
@@ -265,9 +214,7 @@ class FlextLdifUtilitiesParsers:
                 )
                 return FlextResult.fail(f"Failed to parse attribute: {e}")
 
-    # =========================================================================
     # OBJECTCLASS PARSER - Parse objectClass definitions
-    # =========================================================================
 
     class ObjectClass:
         """Generalized objectClass definition parser."""
@@ -300,18 +247,7 @@ class FlextLdifUtilitiesParsers:
             *,
             transform_hook: TransformHook | None = None,
         ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition using hooks.
-
-            Args:
-                definition: ObjectClass definition string
-                server_type: Server type identifier
-                parse_parts_hook: Core parts parsing
-                transform_hook: Optional objectClass transformation
-
-            Returns:
-                FlextResult with m.Ldif.SchemaObjectClass
-
-            """
+            """Parse objectClass definition using hooks."""
             try:
                 # Parse parts using hook
                 parts = parse_parts_hook(definition)
@@ -349,9 +285,7 @@ class FlextLdifUtilitiesParsers:
                 )
                 return FlextResult.fail(f"Failed to parse objectClass: {e}")
 
-    # =========================================================================
     # CONTENT PARSER - Parse multiple entries
-    # =========================================================================
 
     class Content:
         """Generalized content parser for multiple entries."""
@@ -388,18 +322,7 @@ class FlextLdifUtilitiesParsers:
             *,
             _parse_header_hook: ParseHeaderHook | None = None,
         ) -> r[list[m.Ldif.Entry]]:
-            """Parse multiple entries from LDIF content.
-
-            Args:
-                ldif_content: LDIF content to parse
-                server_type: Server type identifier
-                parse_entry_hook: Hook for parsing individual entries
-                _parse_header_hook: Optional header parsing (reserved for future use)
-
-            Returns:
-                FlextResult with list of parsed entries
-
-            """
+            """Parse multiple entries from LDIF content."""
             try:
                 entries: list[m.Ldif.Entry] = []
                 stats = FlextLdifUtilitiesParsers.Content.Stats()

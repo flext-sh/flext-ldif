@@ -1,18 +1,4 @@
-"""Configuration models for flext-ldif utilities.
-
-Provides configuration classes for LDIF processing:
-    - ProcessConfig: Main process configuration
-    - TransformConfig: Transformation pipeline configuration
-    - FilterConfig: Entry filtering configuration
-    - WriteConfig: LDIF output configuration
-    - And related configuration options (TypedDicts, etc.)
-
-Python 3.13+ features:
-    - PEP 695 type parameter syntax
-    - Keyword-only arguments
-
-NOTE: All StrEnums are centralized in constants.py per FLEXT pattern.
-"""
+"""Configuration models for flext-ldif utilities."""
 
 from __future__ import annotations
 
@@ -23,9 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif.constants import c
 
-# =========================================================================
 # ENUM ALIASES FROM CONSTANTS (CENTRALIZED SOURCE OF TRUTH)
-# =========================================================================
 # Per FLEXT pattern: StrEnums are ONLY in constants.py
 # These aliases provide backward compatibility for existing usages
 
@@ -35,9 +19,7 @@ SpaceHandlingOption = c.Ldif.SpaceHandlingOption
 EscapeHandlingOption = c.Ldif.EscapeHandlingOption
 
 
-# =========================================================================
 # TYPE ALIASES
-# =========================================================================
 
 
 # Type aliases for common configuration types - temporarily commented due to missing constants
@@ -61,9 +43,7 @@ class MetadataPreserveConfig(BaseModel):
 MetadataPreserveParams = MetadataPreserveConfig
 
 
-# =========================================================================
 # PYDANTIC CONFIGURATION MODELS
-# =========================================================================
 
 
 class DnNormalizationConfig(BaseModel):

@@ -1,11 +1,4 @@
-"""FLEXT LDIF Utilities - Internal package exports.
-
-This module exports all internal utility classes and functions.
-All implementations are in their respective modules.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT LDIF Utilities - Internal package exports."""
 
 from __future__ import annotations
 

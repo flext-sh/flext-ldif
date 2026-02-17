@@ -1,12 +1,4 @@
-"""Shared service base that provides typed LDIF configuration access.
-
-This module provides the base class for all LDIF services, extending s
-with LDIF-specific configuration access. All services inherit from this base to
-ensure consistent configuration handling across the codebase.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Shared service base that provides typed LDIF configuration access."""
 
 from __future__ import annotations
 
@@ -18,62 +10,16 @@ from flext_ldif.settings import FlextLdifSettings
 
 
 class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
-    """Base class for LDIF services with typed config helper.
-
-    Business Rule: All LDIF services inherit from this base class to ensure
-    consistent configuration access via the `ldif_config` property. Configuration
-    is accessed through FlextSettings's namespace system, providing type-safe
-    access to LDIF-specific settings.
-
-    Implication: Services can access LDIF configuration without direct dependency
-    on FlextSettings internals. The `ldif_config` property returns a properly typed
-    FlextLdifSettings instance, enabling IDE autocomplete and type checking. This
-    follows the Dependency Injection pattern from flext-core.
-
-    Usage:
-        class MyService(FlextLdifServiceBase[MyResponse]):
-            def some_method(self) -> None:
-                # Access LDIF config with proper typing
-                server_type = self.ldif_config.ldif_default_server_type
-                quirks_mode = self.ldif_config.quirks_detection_mode
-    """
+    """Base class for LDIF services with typed config helper."""
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-        """Return runtime bootstrap options for LDIF services.
-
-        Business Rule: This method provides runtime bootstrap configuration for
-        all LDIF services, ensuring they use FlextLdifSettings as the configuration
-        type. This enables proper DI integration and namespace access.
-
-        Implication: All services extending FlextLdifServiceBase automatically
-        use FlextLdifSettings for their runtime configuration, ensuring consistent
-        configuration handling across all LDIF services.
-
-        Returns:
-            Runtime bootstrap options with config_type set to FlextLdifSettings
-
-        """
-        return {"config_type": FlextLdifSettings}
+        """Return runtime bootstrap options for LDIF services."""
+        return p.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
 
     @property
     def ldif_config(self) -> FlextLdifSettings:
-        """Return the LDIF configuration namespace with proper typing.
-
-        Business Rule: Configuration access uses FlextSettings's namespace system
-        to retrieve LDIF-specific settings. The namespace "ldif" is registered
-        during FlextLdif initialization, ensuring all services have access to
-        consistent configuration.
-
-        Implication: This property provides type-safe access to LDIF configuration
-        without requiring services to know about FlextSettings internals. The returned
-        FlextLdifSettings instance contains all LDIF-specific settings (server types,
-        quirks detection mode, parsing options, etc.).
-
-        Returns:
-            FlextLdifSettings instance with LDIF-specific configuration settings
-
-        """
+        """Return the LDIF configuration namespace with proper typing."""
         return FlextSettings.get_global_instance().get_namespace(
             "ldif", FlextLdifSettings
         )

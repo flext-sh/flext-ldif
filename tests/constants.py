@@ -168,6 +168,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         OC_DEF_PERSON: Final[str] = (
             "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
         )
+        OC_DEF_PERSON_FULL: Final[str] = OC_DEF_PERSON
         OC_DEF_PERSON_BASIC: Final[str] = (
             "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
         )
@@ -833,7 +834,7 @@ class RfcTestHelpers:
         parser_service: object,
         content: str,
         expected_count: int,
-        server_type: str,
+        server_type: str = "rfc",
     ) -> list[object]:
         """Parse LDIF content and return entries.
 

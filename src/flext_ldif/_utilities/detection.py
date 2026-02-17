@@ -1,46 +1,4 @@
-"""Detection and Identification Mixins for LDIF Server Quirks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-This module provides reusable mixins that consolidate common detection logic
-across all 12 server implementations. Eliminates ~900-1,200 lines of duplication
-by extracting can_handle_* patterns into shared mixin classes.
-
-Works with ANY data type sent to detection methods:
-- String definitions (raw LDIF format)
-- Model objects (Pydantic models)
-- List/set/tuple of objectClasses
-- Raw ACL lines
-- Complex nested structures
-
-Usage in Schema:
-    class CustomSchema(FlextLdifServersRfc.Schema, FlextLdifUtilities.Detection.OidPatternMixin):
-        def can_handle_attribute(self, attr_def):
-            # Handles: str | SchemaAttribute
-            return self.can_handle_oid_pattern(
-                attr_def,
-                FlextLdifServersCustom.Constants.DETECTION_OID_PATTERN
-            )
-
-Usage in ACL:
-    class CustomAcl(FlextLdifServersRfcAcl, FlextLdifUtilities.Detection.AclDetectionMixin):
-        def can_handle_acl(self, acl_line):
-            # Handles: str | Acl
-            return self.can_handle_acl_attribute(
-                acl_line,
-                FlextLdifServersCustom.Constants.ACL_ATTRIBUTE_NAME
-            )
-
-Usage in Entry:
-    class CustomEntry(FlextLdifServersRfc.Entry, FlextLdifUtilities.Detection.ObjectClassDetectionMixin):
-        def can_handle(self, entry_dn, attributes):
-            # Handles: str DN + dict attributes
-            return self.can_handle_objectclass_in_entry(
-                attributes.get('objectClass'),
-                FlextLdifServersCustom.Constants.DETECTION_OBJECTCLASS_NAMES
-            )
-"""
+"""Detection and Identification Mixins for LDIF Server Quirks."""
 
 from __future__ import annotations
 
@@ -57,24 +15,13 @@ class FlextLdifUtilitiesDetection:
     """Detection utilities for LDIF server quirks."""
 
     class BaseDetectionMixin:
-        """Base mixin with shared _get_constants method.
-
-        Eliminates duplications of _get_constants across all detection mixins.
-        """
+        """Base mixin with shared _get_constants method."""
 
         def _get_constants(
             self,
             required_attr: str | None = None,
         ) -> type[p.Ldif.ServerConstantsProtocol] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Args:
-                required_attr: Optional attribute name that Constants must have
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
+            """Get Constants class from server class via MRO traversal."""
             # Traverse MRO to find the server class that has Constants
             for cls in self.__class__.__mro__:
                 # Look for server classes (FlextLdifServers*) with Constants
@@ -105,14 +52,7 @@ class FlextLdifUtilitiesDetection:
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):
-        """Mixin for regex pattern matching across different data types.
-
-        Core utility for matching patterns in:
-        - Raw string definitions
-        - Model OID fields
-        - Attribute names
-        - DN patterns
-        """
+        """Mixin for regex pattern matching across different data types."""
 
         @staticmethod
         def can_handle_pattern(
@@ -127,22 +67,7 @@ class FlextLdifUtilitiesDetection:
                 | None
             ),
         ) -> bool:
-            """Check if data matches regex pattern.
-
-            Handles:
-            - str: Direct pattern match
-            - obj with .oid: Match against oid field
-            - obj with .name: Match against name field
-            - Other types: Convert to string and match
-
-            Args:
-                pattern: Regex pattern to match
-                data: Data to check (str, model, or primitive type)
-
-            Returns:
-                True if data matches pattern
-
-            """
+            """Check if data matches regex pattern."""
             try:
                 # String: direct match
                 if isinstance(data, str):
@@ -178,22 +103,7 @@ class FlextLdifUtilitiesDetection:
             ),
             prefixes: frozenset[str],
         ) -> bool:
-            """Check if data starts with any prefix (case-insensitive).
-
-            Handles:
-            - str: Direct prefix match
-            - obj with .name: Match against name field
-            - obj with .oid: Extract name from OID definition
-            - Other types: Convert to string
-
-            Args:
-                data: Data to check
-                prefixes: Frozenset of prefixes to match
-
-            Returns:
-                True if data starts with any prefix (case-insensitive)
-
-            """
+            """Check if data starts with any prefix (case-insensitive)."""
             # String: direct match
             if isinstance(data, str):
                 data_lower = data.lower()
@@ -220,21 +130,7 @@ class FlextLdifUtilitiesDetection:
             data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
             items: frozenset[str],
         ) -> bool:
-            """Check if data is in set (case-insensitive).
-
-            Handles:
-            - str: Direct set membership
-            - obj with .name: Check name in set
-            - Other types: Convert to string
-
-            Args:
-                data: Data to check
-                items: Frozenset of items
-
-            Returns:
-                True if data is in set (case-insensitive)
-
-            """
+            """Check if data is in set (case-insensitive)."""
             # String: direct match
             if isinstance(data, str):
                 items_lower = {item.lower() for item in items}
@@ -257,33 +153,13 @@ class FlextLdifUtilitiesDetection:
             return False
 
     class OidPatternMixin(PatternDetectionMixin):
-        """Mixin for OID-based pattern detection in Schema.
-
-        Consolidates can_handle_attribute() and can_handle_objectclass() logic
-        across all servers that detect by OID pattern (e.g., 2.16.840.1.113894.*).
-
-        Works with:
-        - Raw attribute/objectClass definition strings
-        - SchemaAttribute/SchemaObjectClass models
-        - Various data types sent to detection methods
-        """
+        """Mixin for OID-based pattern detection in Schema."""
 
         def _can_handle_schema_item_by_pattern(
             self,
             schema_item: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
         ) -> bool:
-            """Generic method to check if schema item matches OID detection pattern.
-
-            Consolidated logic for both attributes and objectClasses.
-            Override in subclass and set DETECTION_OID_PATTERN constant.
-
-            Args:
-                schema_item: Schema definition (attribute or objectClass, string or model)
-
-            Returns:
-                True if schema item OID matches pattern, True if no pattern (match all)
-
-            """
+            """Generic method to check if schema item matches OID detection pattern."""
             # Get pattern from Constants class
             constants = self._get_constants()
             if constants is None:
@@ -298,63 +174,24 @@ class FlextLdifUtilitiesDetection:
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
-            """Check if attribute matches OID detection pattern.
-
-            Delegates to generic schema item handler.
-
-            Args:
-                attr_definition: Attribute definition (string or model)
-
-            Returns:
-                True if attribute OID matches pattern
-
-            """
+            """Check if attribute matches OID detection pattern."""
             return self._can_handle_schema_item_by_pattern(attr_definition)
 
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
-            """Check if objectClass matches OID detection pattern.
-
-            Delegates to generic schema item handler.
-
-            Args:
-                oc_definition: ObjectClass definition (string or model)
-
-            Returns:
-                True if objectClass OID matches pattern
-
-            """
+            """Check if objectClass matches OID detection pattern."""
             return self._can_handle_schema_item_by_pattern(oc_definition)
 
     class PrefixDetectionMixin(PatternDetectionMixin):
-        """Mixin for attribute name prefix-based detection in Schema.
-
-        Consolidates can_handle_attribute() logic for servers detected by
-        attribute name prefixes (e.g., "orcl*" for Oracle OID, "ds-*" for DS).
-
-        Works with:
-        - Raw attribute definition strings
-        - SchemaAttribute models
-        - Various data types sent to detection methods
-        """
+        """Mixin for attribute name prefix-based detection in Schema."""
 
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
-            """Check if attribute name matches detection prefixes.
-
-            Override in subclass and set DETECTION_ATTRIBUTE_PREFIXES constant.
-
-            Args:
-                attr_definition: Attribute definition (string or model)
-
-            Returns:
-                True if attribute name starts with any detection prefix
-
-            """
+            """Check if attribute name matches detection prefixes."""
             # Get prefixes from Constants class
             constants = self._get_constants()
             if constants is None:
@@ -376,16 +213,7 @@ class FlextLdifUtilitiesDetection:
             )
 
     class ObjectClassDetectionMixin(PatternDetectionMixin):
-        """Mixin for objectClass name-based detection in Entry.
-
-        Consolidates can_handle() logic for servers detected by objectClass names
-        (e.g., "orcldirectory" for Oracle OID, "olcConfig" for OpenLDAP).
-
-        Works with:
-        - Entry DN (string)
-        - Entry attributes (dict with objectClass key)
-        - Various combinations of attribute values
-        """
+        """Mixin for objectClass name-based detection in Entry."""
 
         def can_handle(
             self,
@@ -396,18 +224,7 @@ class FlextLdifUtilitiesDetection:
                 | m.Ldif.Entry
             ),
         ) -> bool:
-            """Check if entry objectClasses match detection list.
-
-            Override in subclass and set DETECTION_OBJECTCLASS_NAMES constant.
-
-            Args:
-                _entry_dn: Entry distinguished name (unused in base implementation)
-                attributes: Entry attributes dict with 'objectClass' key
-
-            Returns:
-                True if any entry objectClass is in detection list
-
-            """
+            """Check if entry objectClasses match detection list."""
             if not attributes:
                 return False
 
@@ -448,15 +265,7 @@ class FlextLdifUtilitiesDetection:
             return False
 
     class DnMarkerMixin(PatternDetectionMixin):
-        """Mixin for DN pattern-based detection in Entry.
-
-        Consolidates can_handle() logic for servers detected by DN patterns
-        (e.g., "cn=config" for OpenLDAP, "cn=orcl*" for Oracle OID).
-
-        Works with:
-        - Entry DN (string)
-        - Entry attributes (dict) - DN check is independent
-        """
+        """Mixin for DN pattern-based detection in Entry."""
 
         def can_handle(
             self,
@@ -468,18 +277,7 @@ class FlextLdifUtilitiesDetection:
                 | None
             ),
         ) -> bool:
-            """Check if entry DN matches detection markers.
-
-            Override in subclass and set DETECTION_DN_MARKERS constant.
-
-            Args:
-                entry_dn: Entry distinguished name
-                _attributes: Entry attributes (unused in base implementation)
-
-            Returns:
-                True if DN contains any detection marker
-
-            """
+            """Check if entry DN matches detection markers."""
             # Get DN markers from Constants class
             constants = self._get_constants()
             if constants is None:
@@ -495,32 +293,13 @@ class FlextLdifUtilitiesDetection:
             return any(marker.lower() in dn_lower for marker in markers)
 
     class AclDetectionMixin(PatternDetectionMixin):
-        """Mixin for ACL attribute-based detection in ACL.
-
-        Consolidates can_handle_acl() logic for servers with ACL attribute
-        detection (e.g., "orclaci" for Oracle OID, "aci" for RFC/OUD).
-
-        Works with:
-        - Raw ACL lines (strings)
-        - ACL models
-        - Various data types sent to detection methods
-        """
+        """Mixin for ACL attribute-based detection in ACL."""
 
         def can_handle_acl(
             self,
             acl_line: str | m.Ldif.Acl,
         ) -> bool:
-            """Check if ACL uses the expected ACL attribute.
-
-            Override in subclass and set ACL_ATTRIBUTE_NAME constant.
-
-            Args:
-                acl_line: ACL definition (string or model or any type)
-
-            Returns:
-                True if ACL uses the expected attribute
-
-            """
+            """Check if ACL uses the expected ACL attribute."""
             # Get ACL attribute name from Constants class
             constants = self._get_constants()
             if constants is None:

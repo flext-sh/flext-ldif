@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -44,14 +40,7 @@ MetadataDict = MetadataModel
 
 
 class FlextLdifUtilitiesParser:
-    """Generic LDIF parsing utilities - simple helper functions.
-
-    Extends FlextUtilities.Parser with LDIF-specific parsing methods.
-
-    # LEGACY: Was FlextLdifUtilities.LdifParser
-    # Now: Simple pure functions for schema/LDIF parsing
-    # Use: parser.py (FlextLdifParser) for full LDIF parsing with quirks
-    """
+    """Generic LDIF parsing utilities - simple helper functions."""
 
     @staticmethod
     def ext(
@@ -66,18 +55,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_oid(definition: str) -> str | None:
-        """Extract OID from schema definition string.
-
-        Generic method to extract OID (numeric dot-separated) from schema
-        definitions. Works for both attribute and objectClass definitions.
-
-        Args:
-            definition: Schema definition string (e.g., "( 2.5.4.3 NAME 'cn' ... )")
-
-        Returns:
-            Extracted OID string or None if not found
-
-        """
+        """Extract OID from schema definition string."""
         if not definition or not isinstance(definition, str):
             return None
 
@@ -92,19 +70,7 @@ class FlextLdifUtilitiesParser:
         pattern: re.Pattern[str] | str,
         default: str | None = None,
     ) -> str | None:
-        """Extract optional field via regex pattern.
-
-        Generic method to extract optional fields from schema definitions.
-
-        Args:
-            definition: Schema definition string
-            pattern: Compiled regex pattern or pattern string
-            default: Default value if not found
-
-        Returns:
-            Extracted value or default
-
-        """
+        """Extract optional field via regex pattern."""
         if not definition:
             return default
 
@@ -119,18 +85,7 @@ class FlextLdifUtilitiesParser:
         definition: str,
         pattern: re.Pattern[str] | str,
     ) -> bool:
-        """Check if boolean flag exists in definition.
-
-        Generic method to check for boolean flags in schema definitions.
-
-        Args:
-            definition: Schema definition string
-            pattern: Compiled regex pattern or pattern string
-
-        Returns:
-            True if flag found, False otherwise
-
-        """
+        """Check if boolean flag exists in definition."""
         if not definition:
             return False
 
@@ -143,13 +98,7 @@ class FlextLdifUtilitiesParser:
     def extract_extensions(
         definition: str,
     ) -> t.Ldif.Extensions.ExtensionsDict:
-        """Extract extension information from schema definition string.
-
-        Simple helper to extract X- extensions, DESC, ORDERING, SUBSTR from
-        schema attribute/objectClass definitions.
-
-        # LEGACY: Was part of LdifParser.extract_extensions
-        """
+        """Extract extension information from schema definition string."""
         if not definition or not isinstance(definition, str):
             return {}
 
@@ -187,24 +136,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def unfold_lines(ldif_content: str) -> list[str]:
-        """Unfold LDIF lines folded across multiple lines per RFC 2849 §3.
-
-        RFC 2849 §3: Folded lines are created by inserting a line separator
-        (CRLF or LF) followed by exactly one space. This function reverses
-        that process by joining continuation lines.
-
-        ABNF Grammar (RFC 2849):
-            ; Long lines may be folded by inserting:
-            ; SEP (CRLF or LF) followed by exactly one SPACE or HTAB
-            ; Continuation lines start with exactly one whitespace char
-
-        Args:
-            ldif_content: Raw LDIF content with potentially folded lines
-
-        Returns:
-            List of unfolded logical lines
-
-        """
+        """Unfold LDIF lines folded across multiple lines per RFC 2849 §3."""
         lines: list[str] = []
         current_line = ""
         continuation_space = c.Ldif.Format.LINE_CONTINUATION_SPACE
@@ -234,32 +166,7 @@ class FlextLdifUtilitiesParser:
         current_attrs: m.Ldif.EntryAttributesDict,
         entries: list[tuple[str, m.Ldif.EntryAttributesDict]],
     ) -> tuple[str | None, m.Ldif.EntryAttributesDict]:
-        """Process single LDIF line with RFC 2849 base64 detection.
-
-        Root Cause Fix: Correctly handle :: (base64) vs : (regular) indicators.
-
-        RFC 2849 Section 2:
-        - attr: value  → Regular value (text)
-        - attr:: base64 → Base64-encoded value (UTF-8, binary, special chars)
-        - attr:< URL   → URL-referenced value
-        - #comment     → Comment line (MUST be ignored)
-
-        Previous Bug: line.partition(":") split on FIRST colon only.
-        For "dn:: Y249...", it produced key="dn:", value=": Y249..." (extra colon!)
-        This caused base64.b64decode(": Y249...") to fail silently.
-
-        ZERO DATA LOSS: Preserves original line string in metadata for round-trip.
-
-        Args:
-            line: Unfolded LDIF line
-            current_dn: Current entry DN (or None if no entry yet)
-            current_attrs: Current entry attributes
-            entries: List to append completed entries
-
-        Returns:
-            Tuple of (updated_dn, updated_attrs)
-
-        """
+        """Process single LDIF line with RFC 2849 base64 detection."""
         # RFC 2849 § 2: Empty lines terminate current entry
         if not line:
             if current_dn is not None:
@@ -326,17 +233,7 @@ class FlextLdifUtilitiesParser:
     def parse_ldif_lines(
         ldif_content: str,
     ) -> list[tuple[str, m.Ldif.EntryAttributesDict]]:
-        """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant.
-
-        Returns list of (dn, {attr: [values...]}) tuples where:
-        - dn: Distinguished Name string
-        - attributes: dict mapping attribute names to lists of values
-
-        Handles: Multi-line folding, base64-encoded values, empty lines, multiple DNs.
-
-        # LEGACY: Was FlextLdifUtilities.LdifParser.parse_ldif_lines
-        # Used by: rfc.py Entry quirk for LDIF content parsing
-        """
+        """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant."""
         if not ldif_content or not isinstance(ldif_content, str):
             return []
 
@@ -360,15 +257,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def parse_attribute_line(line: str) -> tuple[str, str, bool] | None:
-        """Parse LDIF attribute line into name, value, and base64 flag.
-
-        Args:
-            line: LDIF attribute line (e.g., "cn: value" or "userCertificate:: base64")
-
-        Returns:
-            Tuple of (attr_name, attr_value, is_base64) or None if not an attribute line
-
-        """
+        """Parse LDIF attribute line into name, value, and base64 flag."""
         if ":" not in line:
             return None
 
@@ -390,14 +279,7 @@ class FlextLdifUtilitiesParser:
         current_values: list[str],
         entry_dict: m.Ldif.RawEntryDict,
     ) -> None:
-        """Finalize and save pending attribute to entry dictionary.
-
-        Args:
-            current_attr: Current attribute name
-            current_values: Accumulated attribute values
-            entry_dict: Entry dictionary to update
-
-        """
+        """Finalize and save pending attribute to entry dictionary."""
         if not current_attr or not current_values:
             return
 
@@ -416,17 +298,7 @@ class FlextLdifUtilitiesParser:
         attr_value: str,
         entry_dict: m.Ldif.RawEntryDict,
     ) -> bool:
-        """Handle multi-valued attribute accumulation.
-
-        Args:
-            attr_name: Attribute name
-            attr_value: New attribute value to add
-            entry_dict: Entry dictionary to update
-
-        Returns:
-            True if attribute was handled as multi-valued, False if new attribute
-
-        """
+        """Handle multi-valued attribute accumulation."""
         if attr_name not in entry_dict or attr_name == "_base64_attrs":
             return False
 
@@ -464,13 +336,7 @@ class FlextLdifUtilitiesParser:
         attr_name: str,
         entry_dict: m.Ldif.RawEntryDict,
     ) -> None:
-        """Track attribute that uses base64 encoding.
-
-        Args:
-            attr_name: Attribute name to track
-            entry_dict: Entry dictionary to update with metadata
-
-        """
+        """Track attribute that uses base64 encoding."""
         if "_base64_attrs" not in entry_dict:
             entry_dict["_base64_attrs"] = set()
 
@@ -484,24 +350,7 @@ class FlextLdifUtilitiesParser:
         current_values: list[str],
         entry_dict: m.Ldif.RawEntryDict,
     ) -> tuple[str | None, list[str]]:
-        """Process LDIF attribute line and update entry state.
-
-        Handles:
-        - Parsing attribute name/value
-        - Base64 tracking
-        - Multi-valued attribute accumulation
-        - Finalizing previous attribute
-
-        Args:
-            line: LDIF attribute line to process
-            current_attr: Current attribute name being accumulated
-            current_values: Current attribute values being accumulated
-            entry_dict: Entry dictionary to update
-
-        Returns:
-            Tuple of (new_current_attr, new_current_values) for state continuation
-
-        """
+        """Process LDIF attribute line and update entry state."""
         # Parse attribute line
         parsed = FlextLdifUtilitiesParser.parse_attribute_line(line)
         if not parsed:
@@ -537,11 +386,7 @@ class FlextLdifUtilitiesParser:
     def parse_ldif(
         ldif_lines: list[str],
     ) -> list[m.Ldif.RawEntryDict]:
-        """Parse list of LDIF lines into entries (simple version).
-
-        # LEGACY: Original simple parser (kept for backward compat if needed)
-        # Use: FlextLdifParser for full parsing with quirks
-        """
+        """Parse list of LDIF lines into entries (simple version)."""
         entries: list[m.Ldif.RawEntryDict] = []
         current_entry: m.Ldif.RawEntryDict = {}
 
@@ -567,23 +412,7 @@ class FlextLdifUtilitiesParser:
         definition_type: str = "attributeTypes",
         parse_callback: Callable[[str], FlextTypes.GeneralValueType] | None = None,
     ) -> list[FlextTypes.GeneralValueType]:
-        """Extract and parse schema definitions from LDIF content.
-
-        Generic line-by-line parser that:
-        1. Iterates LDIF lines
-        2. Identifies definition type (case-insensitive)
-        3. Calls parse_callback for each definition
-        4. Returns list of parsed models
-
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-            definition_type: Type to extract (attributeTypes, objectClasses, etc.)
-            parse_callback: Callable to parse each definition
-
-        Returns:
-            List of successfully parsed schema objects
-
-        """
+        """Extract and parse schema definitions from LDIF content."""
         definitions: list[FlextTypes.GeneralValueType] = []
 
         for raw_line in ldif_content.split("\n"):
@@ -617,20 +446,7 @@ class FlextLdifUtilitiesParser:
         pattern: str,
         default: str | None = None,
     ) -> str | None:
-        """Extract field from definition using regex pattern.
-
-        Generic helper to reduce duplication in schema parsing.
-        Made public for use by RFC parsers.
-
-        Args:
-            definition: Schema definition string
-            pattern: Regex pattern to match
-            default: Default value if not found
-
-        Returns:
-            Extracted value or default
-
-        """
+        """Extract field from definition using regex pattern."""
         match = re.search(pattern, definition)
         return match.group(1) if match else default
 
@@ -638,17 +454,7 @@ class FlextLdifUtilitiesParser:
     def extract_syntax_and_length(
         definition: str,
     ) -> tuple[str | None, int | None]:
-        """Extract syntax OID and optional length from definition.
-
-        Made public for use by RFC parsers.
-
-        Args:
-            definition: Schema definition string
-
-        Returns:
-            Tuple of (syntax_oid, length)
-
-        """
+        """Extract syntax OID and optional length from definition."""
         syntax_match = re.search(
             c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
             definition,
@@ -670,15 +476,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def _validate_syntax_oid(syntax: str | None) -> str | None:
-        """Validate syntax OID format.
-
-        Args:
-            syntax: Syntax OID to validate
-
-        Returns:
-            Error message if validation fails, None otherwise
-
-        """
+        """Validate syntax OID format."""
         if syntax is None or not syntax.strip():
             return None
 
@@ -697,18 +495,7 @@ class FlextLdifUtilitiesParser:
         syntax_validation_error: str | None,
         server_type: str | None = None,
     ) -> m.Ldif.QuirkMetadata | None:
-        """Build metadata for attribute including extensions.
-
-        Args:
-            attr_definition: Original attribute definition
-            syntax: Syntax OID
-            syntax_validation_error: Validation error if any
-            server_type: Server type identifier (e.g., "oid", "oud", "rfc")
-
-        Returns:
-            QuirkMetadata or None
-
-        """
+        """Build metadata for attribute including extensions."""
         # Extract extensions from definition
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
             attr_definition,
@@ -761,13 +548,7 @@ class FlextLdifUtilitiesParser:
         *,
         case_insensitive: bool = False,
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
-        """Parse RFC 4512 attribute definition.
-
-        Args:
-            attr_definition: RFC 4512 attribute definition string
-            case_insensitive: Whether to use case-insensitive pattern matching
-
-        """
+        """Parse RFC 4512 attribute definition."""
         try:
             oid_match = re.match(
                 c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,
@@ -884,12 +665,7 @@ class FlextLdifUtilitiesParser:
     def parse_rfc_objectclass(
         oc_definition: str,
     ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-        """Parse RFC 4512 objectClass definition.
-
-        Args:
-            oc_definition: ObjectClass definition string
-
-        """
+        """Parse RFC 4512 objectClass definition."""
         try:
             oid_match = re.match(
                 c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,

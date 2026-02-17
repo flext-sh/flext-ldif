@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -26,41 +22,11 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesOID:
-    """OID extraction and validation utilities.
-
-    Pure functions for extracting and validating OIDs from schema definitions.
-    Independent of quirks and services - only string/regex operations.
-
-    Methods:
-    - extract_from_definition: Extract OID from raw schema definition string
-    - extract_from_schema_object: Extract OID from schema model (metadata or field)
-    - matches_pattern: Check if OID matches a regex pattern
-
-    """
+    """OID extraction and validation utilities."""
 
     @staticmethod
     def extract_from_definition(definition: str) -> str | None:
-        """Extract OID from schema definition string.
-
-        Extracts OID from raw attribute or objectClass definition string.
-        Looks for OID in parentheses at start: ( 2.5.4.3 ...
-
-        This is a pure utility function with no dependencies on quirks or services.
-
-        Args:
-            definition: Raw attribute or objectClass definition string
-                       (e.g., "( 2.5.4.3 NAME 'cn' DESC 'Common Name' ...)")
-
-        Returns:
-            OID string (e.g., "2.5.4.3") or None if not found
-
-        Example:
-            oid = FlextLdifUtilitiesOID.extract_from_definition(
-                "( 2.16.840.1.113894.1.1.1 NAME 'orclGuid' ...)"
-            )
-            # Returns: "2.16.840.1.113894.1.1.1"
-
-        """
+        """Extract OID from schema definition string."""
         try:
             # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
             match = re.search(r"\(\s*([\d.]+)", definition)
@@ -78,21 +44,7 @@ class FlextLdifUtilitiesOID:
         schema_obj: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str | None:
-        """Extract OID from schema object metadata or model.
-
-        Checks both sources:
-        1. Original format in metadata (via regex extraction)
-        2. OID field in model (fallback)
-
-        This is a pure utility function with no dependencies on quirks or services.
-
-        Args:
-            schema_obj: Attribute or ObjectClass model (already parsed)
-
-        Returns:
-            OID string (e.g., "2.5.4.3") or None if not found
-
-        """
+        """Extract OID from schema object metadata or model."""
         # First try: Extract from original_format if available
         if schema_obj.metadata and schema_obj.metadata.extensions.get(
             "original_format",
@@ -169,32 +121,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def validate_format(oid: str) -> FlextResult[bool]:
-        """Validate OID format compliance with LDAP OID syntax.
-
-        Validates that OID follows the numeric dot-separated format:
-        - Must start with 0, 1, or 2 (standard LDAP root)
-        - Must contain at least one dot
-        - All segments must be numeric
-        - No leading zeros in segments (except single "0")
-
-        Args:
-            oid: OID string to validate (e.g., "1.3.6.1.4.1.1466.115.121.1.7")
-
-        Returns:
-            FlextResult containing True if valid OID format, False otherwise
-
-        Example:
-            >>> result = FlextLdifUtilitiesOID.validate_format(
-            ...     "1.3.6.1.4.1.1466.115.121.1.7"
-            ... )
-            >>> if result.is_success:
-            >>>     is_valid = result.value  # True
-
-        Note:
-            This is the canonical OID validation for all _utilities modules.
-            Replaces duplicated local validation functions.
-
-        """
+        """Validate OID format compliance with LDAP OID syntax."""
         if not oid:
             return FlextResult[bool].ok(False)
 
@@ -211,24 +138,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def is_oracle_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches Oracle Internet Directory pattern.
-
-        Convenience method that checks for Oracle OID pattern (2.16.840.1.113894.*).
-        Works with both raw definitions and extracted OIDs.
-
-        Args:
-            definition_or_oid: Either raw schema definition or extracted OID string
-
-        Returns:
-            True if matches Oracle pattern, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesOID.is_oracle_oid("( 2.16.840.1.113894.1.1.1 ...)")
-            True
-            >>> FlextLdifUtilitiesOID.is_oracle_oid("2.16.840.1.113894.1.1.1")
-            True
-
-        """
+        """Check if definition/OID matches Oracle Internet Directory pattern."""
         if not definition_or_oid:
             return False
 
@@ -244,18 +154,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def is_microsoft_ad_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches Microsoft Active Directory pattern.
-
-        Convenience method that checks for AD OID pattern (1.2.840.113556.*).
-        Works with both raw definitions and extracted OIDs.
-
-        Args:
-            definition_or_oid: Either raw schema definition or extracted OID string
-
-        Returns:
-            True if matches AD pattern, False otherwise
-
-        """
+        """Check if definition/OID matches Microsoft Active Directory pattern."""
         if not definition_or_oid:
             return False
 
@@ -269,18 +168,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def is_openldap_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches OpenLDAP pattern.
-
-        Convenience method that checks for OpenLDAP OID pattern (1.3.6.1.4.1.4203.*).
-        Works with both raw definitions and extracted OIDs.
-
-        Args:
-            definition_or_oid: Either raw schema definition or extracted OID string
-
-        Returns:
-            True if matches OpenLDAP pattern, False otherwise
-
-        """
+        """Check if definition/OID matches OpenLDAP pattern."""
         if not definition_or_oid:
             return False
 
@@ -294,26 +182,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def get_server_type_from_oid(definition_or_oid: str) -> str | None:
-        """Detect server type from OID pattern.
-
-        Analyzes OID and returns the likely server type based on OID prefix.
-        Useful for auto-detection logic.
-
-        Args:
-            definition_or_oid: Either raw schema definition or extracted OID string
-
-        Returns:
-            Server type string ("oid", "ad", "openldap", etc.) or None if unknown
-
-        Example:
-            >>> FlextLdifUtilitiesOID.get_server_type_from_oid(
-            ...     "2.16.840.1.113894.1.1.1"
-            ... )
-            'oid'
-            >>> FlextLdifUtilitiesOID.get_server_type_from_oid("1.2.840.113556.1.2.1")
-            'ad'
-
-        """
+        """Detect server type from OID pattern."""
         # Early checks for common patterns
         early_checks = [
             (FlextLdifUtilitiesOID.is_oracle_oid, "oid"),
@@ -350,24 +219,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def parse_to_tuple(oid: str) -> tuple[int, ...] | None:
-        """Parse OID string to tuple of integers for numeric sorting.
-
-        Converts dot-separated OID string to tuple of integers for comparison.
-        Returns None if OID is malformed or contains non-numeric segments.
-
-        Args:
-            oid: OID string (e.g., "2.16.840.1.113894")
-
-        Returns:
-            Tuple of integers (e.g., (2, 16, 840, 1, 113894)) or None if invalid
-
-        Example:
-            >>> FlextLdifUtilitiesOID.parse_to_tuple("2.16.840.1.113894")
-            (2, 16, 840, 1, 113894)
-            >>> FlextLdifUtilitiesOID.parse_to_tuple("invalid.oid")
-            None
-
-        """
+        """Parse OID string to tuple of integers for numeric sorting."""
         try:
             return tuple(int(x) for x in oid.split("."))
         except ValueError:
@@ -380,39 +232,7 @@ class FlextLdifUtilitiesOID:
         allowed_oids: set[str] | None = None,
         oid_pattern: re.Pattern[str] | None = None,
     ) -> list[tuple[tuple[int, ...], str]]:
-        """Filter schema values by OID whitelist and sort numerically.
-
-        Extracts OIDs from schema definition strings, filters by whitelist,
-        and returns sorted by OID numeric value. Used for consistent schema
-        ordering across server types (OID, OUD, etc.).
-
-        Args:
-            values: List of schema definition strings (RFC format)
-            allowed_oids: Optional set of allowed OIDs for filtering.
-                If None, all values are accepted (no filtering).
-            oid_pattern: Optional compiled regex for OID extraction.
-                If None, uses default pattern: ( number.number.number...
-
-        Returns:
-            List of tuples (oid_tuple, value) sorted by OID numerically.
-            Empty list if no valid OIDs found.
-
-        Example:
-            >>> values = [
-            ...     "( 2.16.840.1.113894.1.1.2 NAME 'attr2' ... )",
-            ...     "( 2.16.840.1.113894.1.1.1 NAME 'attr1' ... )",
-            ... ]
-            >>> result = FlextLdifUtilitiesOID.filter_and_sort_by_oid(
-            ...     values,
-            ...     allowed_oids={"2.16.840.1.113894.1.1.1"},
-            ... )
-            >>> # Returns: [((2, 16, 840, 1, 113894, 1, 1, 1), "( 2.16.840.1.113894.1.1.1 ... )")]
-
-        Note:
-            This replaces duplicated OID filtering/sorting logic in server quirks.
-            Uses Python 3.13 keyword-only args for clarity.
-
-        """
+        """Filter schema values by OID whitelist and sort numerically."""
         # Default OID pattern: ( number.number.number... NAME ...
         pattern = oid_pattern or re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
 

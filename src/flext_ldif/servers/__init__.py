@@ -1,23 +1,4 @@
-"""Server-Specific Quirks for LDIF/LDAP Parsing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-This module contains server-specific quirks that extend RFC-compliant
-LDIF/LDAP parsing with vendor-specific features.
-
-Available server quirks:
-- OID (Oracle Internet Directory) - Complete
-- OUD (Oracle Unified Directory) - Complete
-- OpenLDAP 2.x (cn=config) - Complete
-- OpenLDAP 1.x (slapd.conf legacy) - Complete
-- Relaxed Mode (lenient parsing for broken/non-compliant LDIF) - Complete
-- Active Directory (stub)
-- Apache Directory Server (stub)
-- 389 Directory Server (stub)
-- Novell eDirectory (stub)
-- IBM Tivoli Directory Server (stub)
-"""
+"""Server-Specific Quirks for LDIF/LDAP Parsing."""
 
 from __future__ import annotations
 
@@ -34,14 +15,10 @@ from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
-# Removed: from flext_ldif.typings import FlextLdifTypes (use direct types)
-
-# Compatibility alias - FlextLdifServer is base class for all server quirks
 FlextLdifServer = FlextLdifServersBase
 
-
 __all__ = [
-    "FlextLdifServer",  # Compatibility alias
+    "FlextLdifServer",
     "FlextLdifServersAd",
     "FlextLdifServersApache",
     "FlextLdifServersBase",

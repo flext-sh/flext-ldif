@@ -1,28 +1,4 @@
-"""Power Method Transformers - Entry transformation classes for pipelines.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides transformer classes for the power method pipeline system:
-    - EntryTransformer: Base class for entry transformations
-    - Normalize: DN and attribute normalization transformers
-    - Transform: General transformation utilities (replace_base, convert_booleans)
-
-Python 3.13+ features:
-    - PEP 695 type parameter syntax
-    - Self type for method chaining
-    - runtime_checkable protocols
-
-Usage:
-    from flext_ldif._utilities.transformers import Normalize, Transform
-
-    # Create transformation pipeline
-    result = (
-        FlextLdifResult.ok(entries)
-        | Normalize.dn(case="lower")
-        | Transform.replace_base("dc=old", "dc=new")
-    )
-"""
+"""Power Method Transformers - Entry transformation classes for pipelines."""
 
 from __future__ import annotations
 
@@ -38,72 +14,30 @@ from flext_ldif.constants import c
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.typings import t
 
-# =========================================================================
 # BASE TRANSFORMER CLASS
-# =========================================================================
 
 
 class EntryTransformer[T](ABC):
-    """Abstract base class for entry transformers.
-
-    Transformers implement the TransformerProtocol and can be used in
-    pipeline chains with the `|` operator on FlextLdifResult.
-
-    Type Parameters:
-        T: The type being transformed (typically Entry or list[Entry])
-
-    Subclasses must implement:
-        - apply(): Apply transformation to a single item
-    """
+    """Abstract base class for entry transformers."""
 
     __slots__ = ()
 
     @abstractmethod
     def apply(self, item: T) -> r[T]:
-        """Apply the transformation to an item.
-
-        Args:
-            item: The item to transform
-
-        Returns:
-            r containing transformed item or error
-
-        """
+        """Apply the transformation to an item."""
         ...
 
     def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
-        """Apply transformation to a batch of items.
-
-        Default implementation applies transformation sequentially.
-        Override for more efficient batch processing.
-
-        Args:
-            items: Sequence of items to transform
-
-        Returns:
-            r containing list of transformed items or error
-
-        """
+        """Apply transformation to a batch of items."""
         # Apply transformation to each item using traverse pattern
         return r.traverse(items, self.apply)
 
 
-# =========================================================================
 # NORMALIZE TRANSFORMERS - DN and Attribute normalization
-# =========================================================================
 
 
 class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer for DN normalization.
-
-    Normalizes Distinguished Names according to specified options.
-
-    Attributes:
-        case: Case folding option (lower, upper, preserve)
-        spaces: Space handling option (trim, preserve, normalize)
-        validate: Whether to validate DN before normalization
-
-    """
+    """Transformer for DN normalization."""
 
     __slots__ = ("_case", "_spaces", "_validate")
 
@@ -114,14 +48,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> None:
-        """Initialize DN normalization transformer.
-
-        Args:
-            case: Case folding option
-            spaces: Space handling option
-            validate: Validate DN before normalization
-
-        """
+        """Initialize DN normalization transformer."""
         self._case = case
         self._spaces = spaces
         self._validate = validate
@@ -162,15 +89,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         return normalized_dn
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Apply DN normalization to an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with normalized DN
-
-        """
+        """Apply DN normalization to an entry."""
         # Type validation - ensure we received the correct type
         if not isinstance(item, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(
@@ -213,16 +132,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer for attribute normalization.
-
-    Normalizes attribute names and optionally values.
-
-    Attributes:
-        case_fold_names: Whether to lowercase attribute names
-        trim_values: Whether to trim whitespace from values
-        remove_empty: Whether to remove empty attribute values
-
-    """
+    """Transformer for attribute normalization."""
 
     __slots__ = ("_case_fold_names", "_remove_empty", "_trim_values")
 
@@ -233,28 +143,13 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         trim_values: bool = True,
         remove_empty: bool = False,
     ) -> None:
-        """Initialize attribute normalization transformer.
-
-        Args:
-            case_fold_names: Lowercase attribute names
-            trim_values: Trim whitespace from values
-            remove_empty: Remove empty attribute values
-
-        """
+        """Initialize attribute normalization transformer."""
         self._case_fold_names = case_fold_names
         self._trim_values = trim_values
         self._remove_empty = remove_empty
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Apply attribute normalization to an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with normalized attributes
-
-        """
+        """Apply attribute normalization to an entry."""
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
@@ -303,16 +198,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class Normalize:
-    """Factory class for normalization transformers.
-
-    Provides static methods to create normalization transformers for
-    use in pipeline chains.
-
-    Examples:
-        >>> result = entries | Normalize.dn(case="lower")
-        >>> result = entries | Normalize.attrs(case_fold_names=True)
-
-    """
+    """Factory class for normalization transformers."""
 
     __slots__ = ()
 
@@ -323,17 +209,7 @@ class Normalize:
         spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> NormalizeDnTransformer:
-        """Create a DN normalization transformer.
-
-        Args:
-            case: Case folding option (lower, upper, preserve)
-            spaces: Space handling (trim, preserve, normalize)
-            validate: Validate DN before normalization
-
-        Returns:
-            NormalizeDnTransformer instance
-
-        """
+        """Create a DN normalization transformer."""
         return NormalizeDnTransformer(case=case, spaces=spaces, validate=validate)
 
     @staticmethod
@@ -343,17 +219,7 @@ class Normalize:
         trim_values: bool = True,
         remove_empty: bool = False,
     ) -> NormalizeAttrsTransformer:
-        """Create an attribute normalization transformer.
-
-        Args:
-            case_fold_names: Lowercase attribute names
-            trim_values: Trim whitespace from values
-            remove_empty: Remove empty attribute values
-
-        Returns:
-            NormalizeAttrsTransformer instance
-
-        """
+        """Create an attribute normalization transformer."""
         return NormalizeAttrsTransformer(
             case_fold_names=case_fold_names,
             trim_values=trim_values,
@@ -361,16 +227,11 @@ class Normalize:
         )
 
 
-# =========================================================================
 # TRANSFORM UTILITIES - General transformations
-# =========================================================================
 
 
 class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer for replacing base DN in entries.
-
-    Replaces the base DN suffix with a new one.
-    """
+    """Transformer for replacing base DN in entries."""
 
     __slots__ = ("_case_insensitive", "_new_base", "_old_base")
 
@@ -381,28 +242,13 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         *,
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize base DN replacement transformer.
-
-        Args:
-            old_base: Old base DN to replace
-            new_base: New base DN to use
-            case_insensitive: Case-insensitive matching
-
-        """
+        """Initialize base DN replacement transformer."""
         self._old_base = old_base
         self._new_base = new_base
         self._case_insensitive = case_insensitive
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Replace base DN in an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with replaced base DN
-
-        """
+        """Replace base DN in an entry."""
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
@@ -429,10 +275,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer for converting boolean attribute values.
-
-    Converts boolean values between different formats.
-    """
+    """Transformer for converting boolean attribute values."""
 
     __slots__ = ("_attributes", "_format")
 
@@ -442,32 +285,12 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         *,
         attributes: Sequence[str] | None = None,
     ) -> None:
-        """Initialize boolean conversion transformer.
-
-        Business Rule:
-        - Converts boolean attribute values between formats (0/1 vs TRUE/FALSE)
-        - Used for server-to-server migration where boolean formats differ
-        - Common use case: OID uses 0/1, OUD uses TRUE/FALSE
-        - If attributes not specified, converts all known boolean attributes
-
-        Args:
-            boolean_format: Target boolean format ("0/1" or "TRUE/FALSE")
-            attributes: Specific attributes to convert (None = all boolean attrs)
-
-        """
+        """Initialize boolean conversion transformer."""
         self._format = boolean_format
         self._attributes = attributes
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Convert boolean attributes in an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with converted booleans
-
-        """
+        """Convert boolean attributes in an entry."""
         # Business Rule: Convert boolean attribute values between formats (0/1 vs TRUE/FALSE)
         # convert_boolean_attributes expects attributes dict and boolean_attr_names set
         # Common LDAP boolean attributes that may need format conversion
@@ -506,10 +329,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer for filtering entry attributes.
-
-    Includes or excludes specific attributes from entries.
-    """
+    """Transformer for filtering entry attributes."""
 
     __slots__ = ("_exclude", "_include")
 
@@ -519,26 +339,12 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         include: Sequence[str] | None = None,
         exclude: Sequence[str] | None = None,
     ) -> None:
-        """Initialize attribute filter transformer.
-
-        Args:
-            include: Attributes to include (None = all)
-            exclude: Attributes to exclude (applied after include)
-
-        """
+        """Initialize attribute filter transformer."""
         self._include = set(include) if include else None
         self._exclude = set(exclude) if exclude else set()
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Filter attributes in an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with filtered attributes
-
-        """
+        """Filter attributes in an entry."""
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
@@ -583,24 +389,11 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     __slots__ = ("_attributes",)
 
     def __init__(self, *attributes: str) -> None:
-        """Initialize attribute removal transformer.
-
-        Args:
-            *attributes: Attribute names to remove
-
-        """
+        """Initialize attribute removal transformer."""
         self._attributes = {attr.lower() for attr in attributes}
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Remove attributes from an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing entry with removed attributes
-
-        """
+        """Remove attributes from an entry."""
         # Business Rule: Remove specified attributes from entry for data sanitization
         # remove_attributes expects m.Ldif.Entry, but item is Entry (m.Ldif.Entry alias)
         # Since m.Ldif.Entry inherits from FlextLdifModelsDomains.Entry, we can use
@@ -615,10 +408,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
-    """Transformer using a custom function.
-
-    Allows arbitrary transformations via a callable.
-    """
+    """Transformer using a custom function."""
 
     __slots__ = ("_func",)
 
@@ -629,24 +419,11 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
             m.Ldif.Entry | r[m.Ldif.Entry],
         ],
     ) -> None:
-        """Initialize custom transformer.
-
-        Args:
-            func: Transformation function (returns Entry or r[Entry])
-
-        """
+        """Initialize custom transformer."""
         self._func = func
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Apply custom transformation to an entry.
-
-        Args:
-            item: Entry to transform
-
-        Returns:
-            r containing transformed entry
-
-        """
+        """Apply custom transformation to an entry."""
         result = self._func(item)
         if isinstance(result, r):
             return result
@@ -654,16 +431,7 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
 
 
 class Transform:
-    """Factory class for general transformers.
-
-    Provides static methods to create transformation objects for
-    use in pipeline chains.
-
-    Examples:
-        >>> result = entries | Transform.replace_base("dc=old", "dc=new")
-        >>> result = entries | Transform.convert_booleans("TRUE/FALSE")
-
-    """
+    """Factory class for general transformers."""
 
     __slots__ = ()
 
@@ -674,17 +442,7 @@ class Transform:
         *,
         case_insensitive: bool = True,
     ) -> ReplaceBaseDnTransformer:
-        """Create a base DN replacement transformer.
-
-        Args:
-            old_base: Old base DN to replace
-            new_base: New base DN to use
-            case_insensitive: Case-insensitive matching
-
-        Returns:
-            ReplaceBaseDnTransformer instance
-
-        """
+        """Create a base DN replacement transformer."""
         return ReplaceBaseDnTransformer(
             old_base,
             new_base,
@@ -697,16 +455,7 @@ class Transform:
         *,
         attributes: Sequence[str] | None = None,
     ) -> ConvertBooleansTransformer:
-        """Create a boolean conversion transformer.
-
-        Args:
-            boolean_format: Target boolean format
-            attributes: Specific attributes to convert
-
-        Returns:
-            ConvertBooleansTransformer instance
-
-        """
+        """Create a boolean conversion transformer."""
         return ConvertBooleansTransformer(boolean_format, attributes=attributes)
 
     @staticmethod
@@ -715,29 +464,12 @@ class Transform:
         include: Sequence[str] | None = None,
         exclude: Sequence[str] | None = None,
     ) -> FilterAttrsTransformer:
-        """Create an attribute filter transformer.
-
-        Args:
-            include: Attributes to include (None = all)
-            exclude: Attributes to exclude
-
-        Returns:
-            FilterAttrsTransformer instance
-
-        """
+        """Create an attribute filter transformer."""
         return FilterAttrsTransformer(include=include, exclude=exclude)
 
     @staticmethod
     def remove_attrs(*attributes: str) -> RemoveAttrsTransformer:
-        """Create an attribute removal transformer.
-
-        Args:
-            *attributes: Attribute names to remove
-
-        Returns:
-            RemoveAttrsTransformer instance
-
-        """
+        """Create an attribute removal transformer."""
         return RemoveAttrsTransformer(*attributes)
 
     @staticmethod
@@ -747,15 +479,7 @@ class Transform:
             m.Ldif.Entry | r[m.Ldif.Entry],
         ],
     ) -> CustomTransformer:
-        """Create a custom transformer from a function.
-
-        Args:
-            func: Transformation function
-
-        Returns:
-            CustomTransformer instance
-
-        """
+        """Create a custom transformer from a function."""
         return CustomTransformer(func)
 
 

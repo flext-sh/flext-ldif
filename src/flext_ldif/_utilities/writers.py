@@ -1,13 +1,4 @@
-"""Master class for all LDIF writing utilities.
-
-Python 3.13+ optimized implementation using:
-- Nested classes for organized structure
-- Protocol-based hooks for server customization
-- Generator expressions for lazy evaluation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Master class for all LDIF writing utilities."""
 
 from __future__ import annotations
 
@@ -36,24 +27,9 @@ logger = structlog.get_logger(__name__)
 
 
 class FlextLdifUtilitiesWriters:
-    """Master class for all LDIF writing utilities.
+    """Master class for all LDIF writing utilities."""
 
-    Contains nested classes for each writing operation:
-    - Entry: Write individual entries
-    - Attribute: Write attribute definitions
-    - ObjectClass: Write objectClass definitions
-    - Content: Write multiple entries
-
-    Example:
-        >>> result = FlextLdifUtilitiesWriters.Entry.write(
-        ...     entry, "oud", write_attrs_hook
-        ... )
-
-    """
-
-    # =========================================================================
     # ENTRY WRITER - Write individual LDIF entries
-    # =========================================================================
 
     class Entry:
         """Generalized entry writer with hook-based customization."""
@@ -150,18 +126,7 @@ class FlextLdifUtilitiesWriters:
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
             **kwargs: object,
         ) -> r[str]:
-            """Write entry to LDIF string using hooks.
-
-            Args:
-                config: EntryWriteConfig with all writing parameters (preferred)
-                **kwargs: Optional parameters for EntryWriteConfig (entry, server_type,
-                    write_attributes_hook, write_comments_hook, transform_entry_hook,
-                    write_dn_hook, include_comments) - used only if config is None
-
-            Returns:
-                FlextResult with LDIF string
-
-            """
+            """Write entry to LDIF string using hooks."""
             # Use provided config or build from kwargs
             if config is None:
                 # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
@@ -214,9 +179,7 @@ class FlextLdifUtilitiesWriters:
                 )
                 return r[str].fail(f"Failed to write entry: {e}")
 
-    # =========================================================================
     # ATTRIBUTE WRITER - Write attribute type definitions
-    # =========================================================================
 
     class Attribute:
         """Generalized attribute definition writer."""
@@ -255,19 +218,7 @@ class FlextLdifUtilitiesWriters:
             transform_hook: TransformHook | None = None,
             format_oid_hook: FormatOidHook | None = None,
         ) -> r[str]:
-            """Write attribute definition using hooks.
-
-            Args:
-                attribute: Attribute model to write
-                server_type: Server type identifier
-                build_parts_hook: Core parts building
-                transform_hook: Optional attribute transformation
-                format_oid_hook: Optional OID formatting
-
-            Returns:
-                FlextResult with definition string
-
-            """
+            """Write attribute definition using hooks."""
             try:
                 # Transform if hook provided
                 if transform_hook:
@@ -288,9 +239,7 @@ class FlextLdifUtilitiesWriters:
                 logger.exception("Failed to write attribute", server_type=server_type)
                 return r[str].fail(f"Failed to write attribute: {e}")
 
-    # =========================================================================
     # OBJECTCLASS WRITER - Write objectClass definitions
-    # =========================================================================
 
     class ObjectClass:
         """Generalized objectClass definition writer."""
@@ -329,19 +278,7 @@ class FlextLdifUtilitiesWriters:
             transform_hook: TransformHook | None = None,
             transform_sup_hook: TransformSupHook | None = None,
         ) -> r[str]:
-            """Write objectClass definition using hooks.
-
-            Args:
-                objectclass: ObjectClass model to write
-                server_type: Server type identifier
-                build_parts_hook: Core parts building
-                transform_hook: Optional objectClass transformation
-                transform_sup_hook: Optional SUP transformation
-
-            Returns:
-                FlextResult with definition string
-
-            """
+            """Write objectClass definition using hooks."""
             try:
                 # Transform if hook provided
                 if transform_hook:
@@ -370,9 +307,7 @@ class FlextLdifUtilitiesWriters:
                 logger.exception("Failed to write objectClass", server_type=server_type)
                 return r[str].fail(f"Failed to write objectClass: {e}")
 
-    # =========================================================================
     # CONTENT WRITER - Write multiple entries
-    # =========================================================================
 
     class Content:
         """Generalized content writer for multiple entries."""
@@ -461,18 +396,7 @@ class FlextLdifUtilitiesWriters:
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
             **kwargs: object,
         ) -> r[str]:
-            """Write multiple entries to LDIF string.
-
-            Args:
-                config: BatchWriteConfig with all writing parameters (preferred)
-                **kwargs: Optional parameters for BatchWriteConfig (entries, server_type,
-                    write_entry_hook, write_header_hook, include_header, entry_separator) -
-                    used only if config is None
-
-            Returns:
-                FlextResult with complete LDIF string
-
-            """
+            """Write multiple entries to LDIF string."""
             # Use provided config or build from kwargs
             if config is None:
                 # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime

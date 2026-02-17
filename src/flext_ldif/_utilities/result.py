@@ -1,36 +1,4 @@
-"""FlextLdifResult - Extended FlextResult with LDIF-specific DSL operators.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides FlextLdifResult[T] class that extends FlextResult[T] with
-LDIF-specific operators for fluent pipeline operations:
-
-    - `|` (pipe) - Chain transformations
-    - `>>` (rshift) - Write to output
-    - `@` (matmul) - Attach metadata
-    - `&` (and) - Combine results
-
-Python 3.13+ features:
-    - PEP 695 type parameter syntax
-    - Generic class with type bounds
-    - Self type for method chaining
-
-Usage:
-    from flext_ldif._utilities.result import FlextLdifResult
-
-    # Pipe operator for transformations
-    result = FlextLdifResult.ok(entries) | Normalize.dn() | Filter.by_objectclass("person")
-
-    # Write operator for output
-    result >> Path("output.ldif")
-
-    # Metadata attachment
-    result = result @ {"source": "oid", "version": "1.0"}
-
-    # Combine results
-    combined = users_result & groups_result
-"""
+"""FlextLdifResult - Extended FlextResult with LDIF-specific DSL operators."""
 
 from __future__ import annotations
 
@@ -52,59 +20,16 @@ type ResultValue[T] = T
 
 
 class FlextLdifResult[T]:
-    """Extended FlextResult with LDIF-specific DSL operators.
-
-    Provides a fluent interface for LDIF operations through operator overloading:
-
-    Operators:
-        - `|` (pipe): Chain transformations - result | transform
-        - `>>` (rshift): Write to output - result >> path
-        - `@` (matmul): Attach metadata - result @ metadata
-        - `&` (and): Combine results - result1 & result2
-        - `~` (invert): Negate filter - ~filter
-
-    This class wraps FlextResult[T] and delegates all core operations to it,
-    adding operator support for LDIF-specific DSL patterns.
-
-    Type Parameters:
-        T: The type of the success value
-
-    Examples:
-        >>> # Create result
-        >>> result = FlextLdifResult.ok([entry1, entry2])
-
-        >>> # Pipe transformations
-        >>> result = (
-        ...     result | Normalize.dn(case="lower") | Filter.by_objectclass("person")
-        ... )
-
-        >>> # Write to file
-        >>> result >> Path("output.ldif")
-
-        >>> # Attach metadata
-        >>> result = result @ {"source": "oid"}
-
-        >>> # Combine multiple results
-        >>> combined = users_result & groups_result
-
-    """
+    """Extended FlextResult with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
 
     def __hash__(self) -> int:
-        """Hash implementation for FlextLdifResult.
-
-        Returns hash of inner FlextResult for use in sets and dict keys.
-        """
+        """Hash implementation for FlextLdifResult."""
         return hash(self._inner)
 
     def __init__(self, inner: FlextResult[T] | FlextRuntime.RuntimeResult[T]) -> None:
-        """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult.
-
-        Args:
-            inner: The underlying FlextResult or RuntimeResult to wrap
-
-        """
+        """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult."""
         # FlextResult extends RuntimeResult, so check FlextResult first (more specific)
         inner_result: FlextResult[T]
         if isinstance(inner, FlextResult):
@@ -118,53 +43,25 @@ class FlextLdifResult[T]:
             inner_result = r[T].fail(error_msg)
         self._inner = inner_result
 
-    # =========================================================================
     # FACTORY METHODS - Create new results
-    # =========================================================================
 
     @classmethod
     def ok(cls, value: T) -> FlextLdifResult[T]:
-        """Create a successful result with the given value.
-
-        Args:
-            value: The success value
-
-        Returns:
-            FlextLdifResult containing the success value
-
-        """
+        """Create a successful result with the given value."""
         return cls(r[T].ok(value))
 
     @classmethod
     def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
-        """Create a failed result with the given error.
-
-        Args:
-            error: The error message or exception
-
-        Returns:
-            FlextLdifResult containing the error
-
-        """
+        """Create a failed result with the given error."""
         error_msg = str(error) if isinstance(error, Exception) else error
         return cls(r.fail(error_msg))
 
     @classmethod
     def from_result(cls, result: FlextResult[T]) -> FlextLdifResult[T]:
-        """Wrap an existing FlextResult in FlextLdifResult.
-
-        Args:
-            result: The FlextResult to wrap
-
-        Returns:
-            FlextLdifResult wrapping the given result
-
-        """
+        """Wrap an existing FlextResult in FlextLdifResult."""
         return cls(result)
 
-    # =========================================================================
     # PROPERTIES - Delegate to inner FlextResult
-    # =========================================================================
 
     @property
     def is_success(self) -> bool:
@@ -183,122 +80,50 @@ class FlextLdifResult[T]:
 
     @property
     def error(self) -> str:
-        """Get the error message. Raises if result is a success.
-
-        Business Rule:
-        - Returns error message string from inner FlextResult
-        - Error is always non-empty string when result is failure
-        - Raises ValueError if result is success (per FlextResult contract)
-
-        Returns:
-            Error message string (never None)
-
-        """
+        """Get the error message."""
         error_msg = self._inner.error
         # Ensure we return str, not str | None
         return error_msg if error_msg is not None else "Unknown error"
 
-    # =========================================================================
     # CORE METHODS - Delegate to inner FlextResult
-    # =========================================================================
 
     def unwrap(self) -> T:
-        """Unwrap the success value or raise an exception.
-
-        Returns:
-            The success value
-
-        Raises:
-            ValueError: If the result is a failure
-
-        """
+        """Unwrap the success value or raise an exception."""
         return self._inner.value
 
     def unwrap_or(self, default: T) -> T:
-        """Unwrap the success value or return a default.
-
-        Args:
-            default: The default value to return on failure
-
-        Returns:
-            The success value or the default
-
-        """
+        """Unwrap the success value or return a default."""
         return self._inner.unwrap_or(default)
 
     def unwrap_or_else(self, func: Callable[[], T]) -> T:
-        """Unwrap the success value or compute from error.
-
-        Business Rule:
-        - If result is success, return the value
-        - If result is failure, call func() to compute default value
-        - Uses FlextResult.unwrap_or pattern for error handling
-
-        Args:
-            func: Function to compute default value (no arguments)
-
-        Returns:
-            The success value or computed default
-
-        """
+        """Unwrap the success value or compute from error."""
         if self.is_failure:
             return func()
         return self._inner.value
 
     def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
-        """Map a function over the success value.
-
-        Args:
-            func: Function to apply to the success value
-
-        Returns:
-            New FlextLdifResult with mapped value or propagated error
-
-        """
+        """Map a function over the success value."""
         # map may return RuntimeResult, convert to FlextResult
         mapped_result = self._inner.map(func)
         return FlextLdifResult(mapped_result)
 
     def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextLdifResult[U]:
-        """Flat map a function that returns FlextResult.
-
-        Args:
-            func: Function returning FlextResult to apply
-
-        Returns:
-            New FlextLdifResult with flat-mapped value or propagated error
-
-        """
+        """Flat map a function that returns FlextResult."""
         # flat_map may return RuntimeResult, convert to FlextResult
         mapped_result = self._inner.flat_map(func)
         return FlextLdifResult(mapped_result)
 
     def map_error(self, func: Callable[[str], str]) -> FlextLdifResult[T]:
-        """Map a function over the error message.
-
-        Args:
-            func: Function to transform error message
-
-        Returns:
-            New FlextLdifResult with mapped error or unchanged success
-
-        """
+        """Map a function over the error message."""
         # map_error may return RuntimeResult, convert to FlextResult
         mapped_result = self._inner.map_error(func)
         return FlextLdifResult(mapped_result)
 
     def to_inner(self) -> FlextResult[T]:
-        """Get the underlying FlextResult.
-
-        Returns:
-            The wrapped FlextResult
-
-        """
+        """Get the underlying FlextResult."""
         return self._inner
 
-    # =========================================================================
     # DSL OPERATORS - LDIF-specific pipeline operations
-    # =========================================================================
 
     @overload
     def __or__(
@@ -323,28 +148,7 @@ class FlextLdifResult[T]:
             | Callable[[T], FlextResult[T]]
         ),
     ) -> FlextLdifResult[T]:
-        """Pipe operator: result | transformer.
-
-        Applies a transformer to the success value. If this result is a failure,
-        the error is propagated without calling the transformer.
-
-        The transformer can be:
-        - A TransformerProtocol with apply() method
-        - A callable that transforms T -> T
-        - A callable that transforms T -> FlextResult[T]
-
-        Args:
-            transformer: The transformation to apply
-
-        Returns:
-            New FlextLdifResult with transformed value or propagated error
-
-        Examples:
-            >>> result = FlextLdifResult.ok(entries)
-            >>> result = result | Normalize.dn(case="lower")
-            >>> result = result | Filter.by_objectclass("person")
-
-        """
+        """Pipe operator: result | transformer."""
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
 
@@ -367,24 +171,7 @@ class FlextLdifResult[T]:
         return FlextLdifResult.ok(result)
 
     def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifResult[str]:
-        """Write operator: result >> output.
-
-        Writes the result value to the specified output. If this result is a
-        failure, the error is propagated without writing.
-
-        Args:
-            output: Path, string path, or file-like object to write to
-
-        Returns:
-            FlextLdifResult containing the written content as string,
-            or propagated error
-
-        Examples:
-            >>> result = FlextLdifResult.ok(entries)
-            >>> result >> Path("output.ldif")
-            >>> result >> "output.ldif"
-
-        """
+        """Write operator: result >> output."""
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
 
@@ -415,23 +202,7 @@ class FlextLdifResult[T]:
         self,
         metadata: Mapping[str, str | int | float | bool | list[str] | None],
     ) -> FlextLdifResult[T]:
-        """Metadata operator: result @ metadata.
-
-        Attaches metadata to all entries in the result value. If this result
-        is a failure, the error is propagated without attaching metadata.
-
-        Args:
-            metadata: Dictionary of metadata to attach
-
-        Returns:
-            New FlextLdifResult with metadata attached to entries,
-            or propagated error
-
-        Examples:
-            >>> result = FlextLdifResult.ok(entries)
-            >>> result = result @ {"source": "oid", "version": "1.0"}
-
-        """
+        """Metadata operator: result @ metadata."""
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
 
@@ -457,25 +228,7 @@ class FlextLdifResult[T]:
         )
 
     def __and__(self, other: FlextLdifResult[T]) -> FlextLdifResult[list[T]]:
-        """Combine operator: result1 & result2.
-
-        Combines two results into a single result containing both values.
-        If either result is a failure, the first error is propagated.
-
-        Args:
-            other: Another FlextLdifResult to combine with
-
-        Returns:
-            FlextLdifResult containing list of both values,
-            or propagated error from first failure
-
-        Examples:
-            >>> users = FlextLdifResult.ok(user_entries)
-            >>> groups = FlextLdifResult.ok(group_entries)
-            >>> combined = users & groups
-            >>> # combined.value == [user_entries, group_entries]
-
-        """
+        """Combine operator: result1 & result2."""
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
         if other.is_failure:
@@ -483,30 +236,13 @@ class FlextLdifResult[T]:
 
         return FlextLdifResult.ok([self.value, other.value])
 
-    # =========================================================================
     # UTILITY METHODS
-    # =========================================================================
 
     def filter(
         self,
         predicate: p.Ldif.FilterProtocol[T] | Callable[[T], bool],
     ) -> FlextLdifResult[T]:
-        """Filter the result value using a predicate.
-
-        For single values, returns the value if it matches the predicate,
-        or a failure if it doesn't match.
-
-        Note: For filtering elements within sequences (e.g., filtering entries
-        from list[Entry]), use the pipe operator with a filter transformer:
-            result | Filter.by_objectclass("person")
-
-        Args:
-            predicate: Filter predicate (p.Ldif.FilterProtocol or callable)
-
-        Returns:
-            FlextLdifResult with value if matched, or failure if not matched
-
-        """
+        """Filter the result value using a predicate."""
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
 
@@ -535,36 +271,18 @@ class FlextLdifResult[T]:
         return FlextLdifResult.fail("Value did not match filter predicate")
 
     def on_success(self, func: Callable[[T], None]) -> Self:
-        """Execute a function on success value without changing result.
-
-        Args:
-            func: Function to call with success value
-
-        Returns:
-            Self (unchanged result for chaining)
-
-        """
+        """Execute a function on success value without changing result."""
         if self.is_success:
             func(self.value)
         return self
 
     def on_failure(self, func: Callable[[str], None]) -> Self:
-        """Execute a function on error without changing result.
-
-        Args:
-            func: Function to call with error message
-
-        Returns:
-            Self (unchanged result for chaining)
-
-        """
+        """Execute a function on error without changing result."""
         if self.is_failure:
             func(self.error)
         return self
 
-    # =========================================================================
     # SPECIAL METHODS
-    # =========================================================================
 
     def __repr__(self) -> str:
         """Return string representation."""

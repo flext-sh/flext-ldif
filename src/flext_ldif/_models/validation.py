@@ -1,12 +1,4 @@
-"""Validation models for LDIF processing.
-
-This module contains validation-related models that are shared between
-domain and settings modules to avoid circular imports.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Validation models for LDIF processing."""
 
 from __future__ import annotations
 
@@ -42,10 +34,7 @@ class AclFormatRules(FlextModelsEntity.Value):
 
 
 class ServerValidationRules(FlextModelsEntity.Value):
-    """Generic server validation rules - server classes provide values.
-
-    No defaults - each server class must provide all values via Constants.
-    """
+    """Generic server validation rules - server classes provide values."""
 
     requires_objectclass: bool
     requires_naming_attr: bool

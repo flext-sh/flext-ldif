@@ -1,10 +1,4 @@
-"""OID (Oracle Internet Directory) Server Classes.
-
-This module exports the OID server quirk classes used by oid.py.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""OID (Oracle Internet Directory) Server Classes."""
 
 from __future__ import annotations
 

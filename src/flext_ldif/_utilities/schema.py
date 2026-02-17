@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -74,24 +70,7 @@ class FlextLdifUtilitiesSchema:
         substr_rules_in_equality: dict[str, str] | None = None,
         normalized_substr_values: dict[str, str] | None = None,
     ) -> tuple[str | None, str | None]:
-        """Normalize EQUALITY and SUBSTR matching rules.
-
-        Handles:
-        1. SUBSTR rule incorrectly in EQUALITY field → move to SUBSTR
-        2. Apply server-specific matching rule replacements
-        3. Normalize case variants (caseIgnoreSubStringsMatch → caseIgnoreSubstringsMatch)
-
-        Args:
-            equality: Current EQUALITY rule
-            substr: Current SUBSTR rule
-            replacements: Dict of custom replacements {old: new}
-            substr_rules_in_equality: Map of SUBSTR rules found in EQUALITY → correct EQUALITY
-            normalized_substr_values: Map of SUBSTR variants → normalized SUBSTR
-
-        Returns:
-            Tuple of (normalized_equality, normalized_substr)
-
-        """
+        """Normalize EQUALITY and SUBSTR matching rules."""
         result_equality = equality
         result_substr = substr
 
@@ -130,20 +109,7 @@ class FlextLdifUtilitiesSchema:
         *,
         replacements: dict[str, str] | None = None,
     ) -> str | None:
-        """Normalize SYNTAX OID field.
-
-        Transformations:
-        - Remove quotes (Oracle OID uses 'OID', RFC uses OID)
-        - Apply server-specific syntax OID replacements
-
-        Args:
-            syntax: Original SYNTAX OID
-            replacements: Dict of syntax OID replacements {old: new}
-
-        Returns:
-            Normalized syntax OID
-
-        """
+        """Normalize SYNTAX OID field."""
         if not syntax:
             return syntax
 
@@ -299,13 +265,7 @@ class FlextLdifUtilitiesSchema:
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
-        """Wrap transformation result with proper type.
-
-        Args:
-            transformed: The transformed schema object
-            _original_type: Original type (unused, kept for API compatibility)
-
-        """
+        """Wrap transformation result with proper type."""
         if isinstance(transformed, FlextLdifModelsDomains.SchemaAttribute):
             return FlextResult.ok(transformed)
         if isinstance(transformed, FlextLdifModelsDomains.SchemaObjectClass):
@@ -469,18 +429,7 @@ class FlextLdifUtilitiesSchema:
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
-        """Apply transformation pipeline to schema object.
-
-        Generic transformation pipeline accepting optional transformer callables.
-
-        Args:
-            schema_obj: SchemaAttribute or SchemaObjectClass (type annotation guarantees non-None)
-            field_transforms: Dict of {field_name: transform_callable}
-
-        Returns:
-            FlextResult with transformed schema object
-
-        """
+        """Apply transformation pipeline to schema object."""
         # Type annotation guarantees schema_obj is not None - no defensive check needed
 
         try:
@@ -514,18 +463,7 @@ class FlextLdifUtilitiesSchema:
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
-        """Copy schema model and set server_type in metadata.
-
-        Common pattern used by quirks when converting from RFC format.
-
-        Args:
-            model_instance: RFC-compliant schema model
-            server_type: Server type identifier (e.g., "oid", "oud")
-
-        Returns:
-            FlextResult with model copy containing server_type in metadata
-
-        """
+        """Copy schema model and set server_type in metadata."""
         if not model_instance:
             return FlextResult.ok(model_instance)
 
@@ -568,21 +506,7 @@ class FlextLdifUtilitiesSchema:
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
-        """Generic extraction of schema items from LDIF content lines.
-
-        Consolidated logic for extracting both attributes and objectClasses.
-        Iterates through LDIF lines, identifies definitions by prefix
-        (case-insensitive), and parses them using the provided callback.
-
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-            parse_callback: Parser function to call for each definition
-            line_prefix: Prefix to match (e.g., "attributetypes:", "objectclasses:")
-
-        Returns:
-            List of successfully parsed schema items
-
-        """
+        """Generic extraction of schema items from LDIF content lines."""
         items: list[
             FlextLdifModelsDomains.SchemaAttribute
             | FlextLdifModelsDomains.SchemaObjectClass
@@ -617,18 +541,7 @@ class FlextLdifUtilitiesSchema:
             FlextResult[FlextLdifModelsDomains.SchemaAttribute],
         ],
     ) -> list[FlextLdifModelsDomains.SchemaAttribute]:
-        """Extract and parse all attributeTypes from LDIF content lines.
-
-        Delegates to generic extraction method.
-
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-            parse_callback: Parser function to call for each attribute definition
-
-        Returns:
-            List of successfully parsed attribute models
-
-        """
+        """Extract and parse all attributeTypes from LDIF content lines."""
         items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
@@ -649,18 +562,7 @@ class FlextLdifUtilitiesSchema:
             FlextResult[FlextLdifModelsDomains.SchemaObjectClass],
         ],
     ) -> list[FlextLdifModelsDomains.SchemaObjectClass]:
-        """Extract and parse all objectClasses from LDIF content lines.
-
-        Delegates to generic extraction method.
-
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-            parse_callback: Parser function to call for each objectClass definition
-
-        Returns:
-            List of successfully parsed objectClass models
-
-        """
+        """Extract and parse all objectClasses from LDIF content lines."""
         items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
@@ -677,31 +579,7 @@ class FlextLdifUtilitiesSchema:
     def build_available_attributes_set(
         attributes: list[FlextLdifModelsDomains.SchemaAttribute],
     ) -> set[str]:
-        """Build set of available attribute names (lowercase) for dependency validation.
-
-        Used during schema extraction to build a set of all available attribute names
-        that can be referenced by objectClass definitions (in MUST/MAY lists).
-
-        This is commonly used by OUD, OID, and other servers that need to validate
-        objectClass dependencies during schema extraction.
-
-        Args:
-            attributes: List of parsed SchemaAttribute models
-
-        Returns:
-            Set of lowercase attribute names
-
-        Example:
-            >>> attrs = [SchemaAttribute(name="cn"), SchemaAttribute(name="sn")]
-            >>> available = FlextLdifUtilitiesSchema.build_available_attributes_set(
-            ...     attrs
-            ... )
-            >>> "cn" in available
-            True
-            >>> "uid" in available
-            False
-
-        """
+        """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()
 
         for attr_data in attributes:
@@ -723,19 +601,7 @@ class FlextLdifUtilitiesSchema:
         definition: str,
         additional_extensions: dict[str, t.MetadataAttributeValue] | None = None,
     ) -> dict[str, t.MetadataAttributeValue]:
-        """Build metadata extensions dictionary for schema definitions.
-
-        Generic method to build metadata from schema definition string.
-        Extracts extensions and adds original format and additional extensions.
-
-        Args:
-            definition: Original schema definition string
-            additional_extensions: Additional extension key-value pairs
-
-        Returns:
-            Dictionary of metadata extensions (empty if none)
-
-        """
+        """Build metadata extensions dictionary for schema definitions."""
         # Use Parser to extract extensions
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
         # ExtensionsDict is dict[str, list[str]]
@@ -911,36 +777,7 @@ class FlextLdifUtilitiesSchema:
         *,
         validate_syntax: bool = True,
     ) -> r[t.Ldif.ModelMetadata.ParsedAttributeDict]:
-        """Parse RFC 4512 attribute definition into structured data.
-
-        Generic parsing method that extracts all fields from attribute definition.
-        Used by server quirks to get base parsing logic without duplication.
-
-        Args:
-            attr_definition: RFC 4512 attribute definition string
-            validate_syntax: If True, validate syntax OID format
-
-        Returns:
-            Dictionary with parsed fields:
-            - oid: str (required)
-            - name: str | None
-            - desc: str | None
-            - syntax: str | None
-            - length: int | None
-            - equality: str | None
-            - ordering: str | None
-            - substr: str | None
-            - single_value: bool
-            - no_user_modification: bool
-            - sup: str | None
-            - usage: str | None
-            - metadata_extensions: dict[str, t.MetadataAttributeValue]
-            - syntax_validation: dict[str, t.MetadataAttributeValue] | None
-
-        Raises:
-            ValueError: If OID is missing or invalid
-
-        """
+        """Parse RFC 4512 attribute definition into structured data."""
         # Extract basic fields
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
@@ -1147,29 +984,7 @@ class FlextLdifUtilitiesSchema:
     def parse_objectclass(
         oc_definition: str,
     ) -> t.Ldif.ModelMetadata.ParsedObjectClassDict:
-        """Parse RFC 4512 objectClass definition into structured data.
-
-        Generic parsing method that extracts all fields from objectClass definition.
-        Used by server quirks to get base parsing logic without duplication.
-
-        Args:
-            oc_definition: RFC 4512 objectClass definition string
-
-        Returns:
-            Dictionary with parsed fields:
-            - oid: str (required)
-            - name: str | None
-            - desc: str | None
-            - sup: str | None
-            - kind: str (STRUCTURAL, AUXILIARY, or ABSTRACT)
-            - must: list[str] | None
-            - may: list[str] | None
-            - metadata_extensions: dict[str, t.MetadataAttributeValue]
-
-        Raises:
-            ValueError: If OID is missing or invalid
-
-        """
+        """Parse RFC 4512 objectClass definition into structured data."""
         # Extract basic fields
         oid, name, desc = FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(
             oc_definition,
@@ -1216,15 +1031,7 @@ class FlextLdifUtilitiesSchema:
     def _try_restore_original_format(
         attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str] | None:
-        """Try to restore original format from metadata for perfect round-trip.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model with potential metadata
-
-        Returns:
-            List with original format if available, None otherwise
-
-        """
+        """Try to restore original format from metadata for perfect round-trip."""
         if not (
             attr_data.metadata
             and attr_data.metadata.schema_format_details
@@ -1257,16 +1064,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_format: bool = False,
     ) -> str | None:
-        """Build NAME part with optional format restoration.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model
-            restore_format: If True, restore multiple names format from metadata
-
-        Returns:
-            NAME part string or None if no name
-
-        """
+        """Build NAME part with optional format restoration."""
         if not attr_data.name:
             return None
 
@@ -1297,15 +1095,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_position: bool = False,
     ) -> None:
-        """Build OBSOLETE part with optional position restoration.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model
-            parts: Parts list to modify
-            field_order: Field order from metadata (if available)
-            restore_position: If True, restore original position
-
-        """
+        """Build OBSOLETE part with optional position restoration."""
         has_obsolete = False
         if attr_data.metadata:
             schema_details = attr_data.metadata.schema_format_details
@@ -1337,16 +1127,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_format: bool = False,
     ) -> str | None:
-        """Build X-ORIGIN part with optional format restoration.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model
-            restore_format: If True, use metadata value if available
-
-        Returns:
-            X-ORIGIN part string or None
-
-        """
+        """Build X-ORIGIN part with optional format restoration."""
         if not attr_data.metadata:
             return None
 
@@ -1370,15 +1151,7 @@ class FlextLdifUtilitiesSchema:
     def _get_field_order(
         attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str] | None:
-        """Extract field order from metadata if available.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model
-
-        Returns:
-            Field order list or None
-
-        """
+        """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
 
@@ -1397,13 +1170,7 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         parts: list[str],
     ) -> None:
-        """Apply trailing spaces from metadata if available.
-
-        Args:
-            attr_data: FlextLdifModelsDomains.SchemaAttribute model
-            parts: Parts list to modify (modifies last element)
-
-        """
+        """Apply trailing spaces from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
 
@@ -1456,20 +1223,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_original: bool = True,
     ) -> list[str]:
-        """Build RFC 4512 attribute parts with full metadata restoration.
-
-        Generalized version that supports perfect round-trip by restoring
-        original format, NAME format, OBSOLETE position, X-ORIGIN, and
-        trailing spaces from metadata when available.
-
-        Args:
-            attr_data: SchemaAttribute model (accepts both facade and domain models)
-            restore_original: If True, try to restore original format first
-
-        Returns:
-            List of RFC-compliant attribute definition parts
-
-        """
+        """Build RFC 4512 attribute parts with full metadata restoration."""
         # Try original format restoration first (perfect round-trip)
         if restore_original:
             original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
@@ -1531,16 +1285,7 @@ class FlextLdifUtilitiesSchema:
         attr_list: str | list[str] | None,
         prefix: str,
     ) -> str | None:
-        """Format attribute list (MUST/MAY) for objectClass definition.
-
-        Args:
-            attr_list: Attribute list (single value or list)
-            prefix: Prefix string (MUST or MAY)
-
-        Returns:
-            Formatted string or None if empty
-
-        """
+        """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
             return None
 
@@ -1556,15 +1301,7 @@ class FlextLdifUtilitiesSchema:
     def _format_sup_list(
         sup_value: str | list[str] | None,
     ) -> str | None:
-        """Format SUP (superior) list for objectClass definition.
-
-        Args:
-            sup_value: SUP value (single value or list)
-
-        Returns:
-            Formatted string or None if empty
-
-        """
+        """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
 
@@ -1580,16 +1317,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_original: bool = True,
     ) -> list[str] | None:
-        """Try to restore original format from metadata for objectClass.
-
-        Args:
-            oc_data: FlextLdifModelsDomains.SchemaObjectClass model
-            restore_original: Whether to attempt restoration
-
-        Returns:
-            Original format parts if found, None otherwise
-
-        """
+        """Try to restore original format from metadata for objectClass."""
         if not restore_original or not oc_data.metadata:
             return None
 
@@ -1613,20 +1341,7 @@ class FlextLdifUtilitiesSchema:
         *,
         restore_original: bool = True,
     ) -> list[str]:
-        """Build RFC 4512 objectClass parts with full metadata restoration.
-
-        Generalized version that supports perfect round-trip by restoring
-        original format, NAME format, OBSOLETE position, SUP format, and
-        X-ORIGIN from metadata when available.
-
-        Args:
-            oc_data: FlextLdifModelsDomains.SchemaObjectClass model
-            restore_original: If True, try to restore original format first
-
-        Returns:
-            List of RFC-compliant objectClass definition parts
-
-        """
+        """Build RFC 4512 objectClass parts with full metadata restoration."""
         # Try original format restoration first (perfect round-trip)
         original_parts = (
             FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
@@ -1714,22 +1429,7 @@ class FlextLdifUtilitiesSchema:
         type_name: str,
         parts_builder: Callable[..., list[str]],
     ) -> str:
-        """Generic helper for writing schema elements (DRY pattern).
-
-        Args:
-            data: Schema model (attribute or objectclass)
-            expected_type: Expected type for validation
-            type_name: Name for error messages
-            parts_builder: Function to build parts list
-
-        Returns:
-            RFC 4512 formatted string
-
-        Raises:
-            TypeError: If data is wrong type
-            ValueError: If OID is missing
-
-        """
+        """Generic helper for writing schema elements (DRY pattern)."""
         if not isinstance(data, expected_type):
             msg = f"{type_name} must be {expected_type.__name__} model"
             raise TypeError(msg)
@@ -1745,21 +1445,7 @@ class FlextLdifUtilitiesSchema:
     def write_attribute(
         attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> str:
-        """Write RFC 4512 attribute definition string from SchemaAttribute model.
-
-        Generic writing method that builds RFC-compliant attribute definition string.
-        Used by server quirks to get base writing logic without duplication.
-
-        Args:
-            attr_data: SchemaAttribute model (oid required)
-
-        Returns:
-            RFC 4512 formatted string
-
-        Raises:
-            ValueError: If OID is missing
-
-        """
+        """Write RFC 4512 attribute definition string from SchemaAttribute model."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             attr_data,
             FlextLdifModelsDomains.SchemaAttribute,
@@ -1857,21 +1543,7 @@ class FlextLdifUtilitiesSchema:
     def write_objectclass(
         oc_data: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str:
-        """Write RFC 4512 objectClass definition string from SchemaObjectClass model.
-
-        Generic writing method that builds RFC-compliant objectClass definition string.
-        Used by server quirks to get base writing logic without duplication.
-
-        Args:
-            oc_data: SchemaObjectClass model (oid required)
-
-        Returns:
-            RFC 4512 formatted string
-
-        Raises:
-            ValueError: If OID is missing
-
-        """
+        """Write RFC 4512 objectClass definition string from SchemaObjectClass model."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             oc_data,
             FlextLdifModelsDomains.SchemaObjectClass,
@@ -1885,31 +1557,7 @@ class FlextLdifUtilitiesSchema:
         *,
         case_sensitive: bool = False,
     ) -> str | None:
-        """Normalize attribute name for case-insensitive comparisons.
-
-        Centralizes attribute name normalization used throughout server quirks
-        to reduce code duplication of `.lower()` calls.
-
-        Args:
-            attribute_name: Original attribute name
-            case_sensitive: If True, preserve case; if False, convert to lowercase
-
-        Returns:
-            Normalized attribute name or None if input is None
-
-        Example:
-            >>> FlextLdifUtilitiesSchema.normalize_attribute_name("CN")
-            "cn"
-
-            >>> FlextLdifUtilitiesSchema.normalize_attribute_name("givenName")
-            "givenname"
-
-            >>> FlextLdifUtilitiesSchema.normalize_attribute_name(
-            ...     "CN", case_sensitive=True
-            ... )
-            "CN"
-
-        """
+        """Normalize attribute name for case-insensitive comparisons."""
         if not attribute_name or not isinstance(attribute_name, str):
             return attribute_name
 
@@ -1920,27 +1568,7 @@ class FlextLdifUtilitiesSchema:
         attribute_name: str | None,
         boolean_attributes: set[str],
     ) -> bool:
-        """Check if attribute is in boolean attributes set (case-insensitive).
-
-        Centralizes boolean attribute checking to reduce duplication of
-        set comprehensions like `{attr.lower() for attr in list}`.
-
-        Args:
-            attribute_name: Attribute name to check
-            boolean_attributes: Set of boolean attribute names (will be normalized)
-
-        Returns:
-            True if attribute is in boolean set, False otherwise
-
-        Example:
-            >>> bool_attrs = {"boolean", "enabled", "active"}
-            >>> FlextLdifUtilitiesSchema.is_boolean_attribute("Enabled", bool_attrs)
-            True
-
-            >>> FlextLdifUtilitiesSchema.is_boolean_attribute("description", bool_attrs)
-            False
-
-        """
+        """Check if attribute is in boolean attributes set (case-insensitive)."""
         if not attribute_name or not boolean_attributes:
             return False
 
@@ -1962,32 +1590,7 @@ class FlextLdifUtilitiesSchema:
         attribute_name: str | None,
         attribute_list: list[str] | set[str] | None,
     ) -> bool:
-        """Check if attribute exists in list or set (case-insensitive).
-
-        Centralizes case-insensitive attribute list checking to reduce
-        duplication of `.lower()` comparisons in loops. Works with both
-        lists and sets for flexible usage.
-
-        Args:
-            attribute_name: Attribute name to check
-            attribute_list: List or set of attribute names to search
-
-        Returns:
-            True if attribute is in list/set, False otherwise
-
-        Example:
-            >>> attrs = ["cn", "mail", "objectClass"]
-            >>> FlextLdifUtilitiesSchema.is_attribute_in_list("CN", attrs)
-            True
-
-            >>> attrs_set = {"cn", "mail", "objectClass"}
-            >>> FlextLdifUtilitiesSchema.is_attribute_in_list("CN", attrs_set)
-            True
-
-            >>> FlextLdifUtilitiesSchema.is_attribute_in_list("description", attrs)
-            False
-
-        """
+        """Check if attribute exists in list or set (case-insensitive)."""
         if not attribute_name or not attribute_list:
             return False
 
@@ -2007,18 +1610,7 @@ class FlextLdifUtilitiesSchema:
         attr_list: list[str] | str | None,
         available_attributes: set[str],
     ) -> list[str]:
-        """Find attributes missing from available set.
-
-        Generic helper for validating MUST/MAY attribute dependencies.
-
-        Args:
-            attr_list: List of attribute names or single name
-            available_attributes: Set of available attributes
-
-        Returns:
-            List of missing attribute names
-
-        """
+        """Find attributes missing from available set."""
         if not attr_list:
             return []
 
@@ -2047,21 +1639,7 @@ class FlextLdifUtilitiesSchema:
         may_attrs: list[str] | str | None,
         available_attributes: set[str],
     ) -> tuple[bool, list[str]]:
-        """Validate objectclass attribute dependencies.
-
-        Checks if all MUST and MAY attributes exist in available set.
-
-        Args:
-            oc_name: ObjectClass name
-            oc_oid: ObjectClass OID
-            must_attrs: Required attributes list
-            may_attrs: Optional attributes list
-            available_attributes: Set of available attribute names
-
-        Returns:
-            Tuple of (is_valid, missing_attributes)
-
-        """
+        """Validate objectclass attribute dependencies."""
         if not oc_name or not oc_oid:
             return False, []
 
@@ -2085,35 +1663,7 @@ class FlextLdifUtilitiesSchema:
         substr: str | None,
         invalid_rules: Mapping[str, str | None],
     ) -> str | None:
-        """Replace invalid SUBSTR rule with valid replacement.
-
-        Centralizes invalid SUBSTR rule replacement logic used by multiple
-        server implementations (OID, OUD, etc.).
-
-        Args:
-            substr: Current SUBSTR rule value
-            invalid_rules: Mapping of invalid rules to replacements.
-                           If value is None, rule is removed (returns None).
-                           If value is str, rule is replaced with that value.
-
-        Returns:
-            Replacement SUBSTR rule, or original if not in invalid_rules
-
-        Example:
-            >>> invalid = {
-            ...     "caseExactSubstringsMatch": "caseIgnoreSubstringsMatch",
-            ...     "unsupportedRule": None,
-            ... }  # None = remove
-            >>> FlextLdifUtilitiesSchema.replace_invalid_substr_rule(
-            ...     "caseExactSubstringsMatch", invalid
-            ... )
-            'caseIgnoreSubstringsMatch'
-            >>> FlextLdifUtilitiesSchema.replace_invalid_substr_rule(
-            ...     "unsupportedRule", invalid
-            ... )
-            None
-
-        """
+        """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:
             return substr
 

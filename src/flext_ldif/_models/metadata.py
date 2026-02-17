@@ -1,13 +1,4 @@
-"""Metadata models for LDIF processing.
-
-Classes:
-    FlextLdifModelsMetadata: Container class with nested metadata models
-        - DynamicMetadata: Model with extra="allow" for flexible fields
-        - EntryMetadata: Model for entry processing metadata
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Metadata models for LDIF processing."""
 
 from __future__ import annotations
 
@@ -20,31 +11,10 @@ from pydantic import ConfigDict, Field
 
 
 class FlextLdifModelsMetadata:
-    """LDIF metadata models container.
-
-    Usage:
-        from flext_ldif._models.metadata import FlextLdifModelsMetadata
-
-        metadata = FlextLdifModelsMetadata.DynamicMetadata()
-        entry_meta = FlextLdifModelsMetadata.EntryMetadata()
-
-    """
+    """LDIF metadata models container."""
 
     class DynamicMetadata(FlextModelsBase.ArbitraryTypesModel):
-        """Model with extra="allow" for dynamic field storage.
-
-        Replaces ALL dict[str, ...] patterns with proper Pydantic model.
-        Extra fields stored in __pydantic_extra__ via Pydantic v2.
-
-        Provides dict-like interface for accessing extra fields.
-
-        Example:
-            meta = DynamicMetadata(custom_field="value")
-            assert meta.model_extra == {"custom_field": "value"}
-            assert meta["custom_field"] == "value"
-            assert meta.get("custom_field") == "value"
-
-        """
+        """Model with extra="allow" for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
@@ -55,27 +25,12 @@ class FlextLdifModelsMetadata:
             cls,
             data: Mapping[str, t.MetadataAttributeValue] | None = None,
         ) -> FlextLdifModelsMetadata.DynamicMetadata:
-            """Create DynamicMetadata from a dictionary.
-
-            Factory method that handles type-safe construction from dict.
-            Use this instead of DynamicMetadata(**kwargs) for better type safety.
-
-            Args:
-                data: Mapping of string keys to metadata values. Uses Mapping
-                    instead of dict for covariance - allows dict[str, list[str]]
-                    to be passed where dict[str, MetadataAttributeValue] expected.
-
-            Example:
-                meta = DynamicMetadata.from_dict({"custom_field": "value"})
-
-            """
+            """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
-            # Use model_validate to properly handle extra fields
-            # Convert Mapping to dict for Pydantic
+
             return cls.model_validate(dict(data))
 
-        # Common extension fields - defined statically for type safety
         original_format: str | None = Field(default=None)
         schema_source_server: str | None = Field(default=None)
         server_type: str | None = Field(default=None)
@@ -97,10 +52,16 @@ class FlextLdifModelsMetadata:
             default: t.MetadataAttributeValue = None,
         ) -> t.MetadataAttributeValue:
             """Get value by key, returning default if not found."""
+            if key in type(self).model_fields:
+                field_value = getattr(self, key)
+                if isinstance(field_value, str | float | bool | list | dict):
+                    return field_value
+                if field_value is not None:
+                    return str(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                # Type guard: ensure return matches MetadataValue
+
                 if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
@@ -108,6 +69,12 @@ class FlextLdifModelsMetadata:
 
         def __getitem__(self, key: str) -> t.MetadataAttributeValue:
             """Get value by key, raising KeyError if not found."""
+            if key in type(self).model_fields:
+                field_value = getattr(self, key)
+                if isinstance(field_value, str | float | bool | list | dict):
+                    return field_value
+                if field_value is not None:
+                    return str(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
@@ -117,11 +84,7 @@ class FlextLdifModelsMetadata:
             raise KeyError(key)
 
         def __setitem__(self, key: str, value: object) -> None:
-            """Set value by key using Pydantic's extra field handling.
-
-            Note: Uses `object` type to handle type invariance with list[str]
-            assignments. The underlying setattr accepts any object.
-            """
+            """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 
         def __contains__(self, key: str) -> bool:
@@ -205,16 +168,7 @@ class FlextLdifModelsMetadata:
             return dict(self.items())
 
     class EntryMetadata(FlextModelsBase.ArbitraryTypesModel):
-        """Entry metadata for tracking processing details.
-
-        Stores additional metadata about entries processed.
-        Uses extra="allow" for flexible field storage with dict-like interface.
-
-        Example:
-            meta = EntryMetadata(original_format="base64", source="oid")
-            assert meta["original_format"] == "base64"
-
-        """
+        """Entry metadata for tracking processing details."""
 
         model_config = ConfigDict(
             frozen=True,
@@ -253,19 +207,7 @@ class FlextLdifModelsMetadata:
             return default
 
     class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):
-        """Transformation step information stored in metadata.
-
-        Replaces TypedDict with Pydantic model for better validation and type safety.
-        Used to track transformation steps during LDIF processing.
-
-        Example:
-            info = TransformationInfo(
-                step="attribute_conversion",
-                server="oud",
-                changes=["cn converted", "sn normalized"]
-            )
-
-        """
+        """Transformation step information stored in metadata."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -273,13 +215,10 @@ class FlextLdifModelsMetadata:
         )
 
         step: str | None = None
-        """Transformation step identifier."""
 
         server: str | None = None
-        """Server type where transformation occurred."""
 
         changes: ClassVar[list[str]] = []
-        """List of changes made during transformation."""
 
 
 __all__ = ["FlextLdifModelsMetadata"]

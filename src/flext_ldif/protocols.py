@@ -1,22 +1,4 @@
-"""LDIF protocol definitions for flext-ldif domain.
-
-Protocol interfaces for LDIF processing quirks and operations.
-All protocols organized per FLEXT standardization with maximum 2 levels of nesting.
-
-Defines strict structural typing contracts for:
-- Schema quirks (attribute and objectClass processing)
-- ACL quirks (access control processing)
-- Entry quirks (LDAP entry processing)
-- Conversion operations (server-to-server transformations)
-- Registry operations (quirk discovery and management)
-
-ARCHITECTURE NOTE:
-Protocols are defined at module level or 1 level deep to ensure mypy recognizes
-them as valid types. Deeper nesting (3+ levels) causes mypy [valid-type] errors.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""LDIF protocol definitions for flext-ldif domain."""
 
 from __future__ import annotations
 
@@ -29,50 +11,22 @@ from flext_core import FlextProtocols, FlextResult
 from flext_ldif.constants import c
 from flext_ldif.typings import t
 
-# =========================================================================
-# NAMESPACE CLASS
-# =========================================================================
-
 
 class FlextLdifProtocols(FlextProtocols):
-    """Unified LDIF protocol definitions extending FlextProtocols.
-
-    Protocols are defined at module level and referenced here for
-    organized namespace access following FLEXT patterns.
-
-    Usage:
-        from flext_ldif.protocols import FlextLdifProtocols
-
-        # Access via namespace
-        entry: "FlextLdifProtocols.Ldif.EntryProtocol"  # p.Ldif.Entry.EntryProtocol
-        acl: "FlextLdifProtocols.Ldif.AclProtocol"      # AclProtocol
-    """
+    """Unified LDIF protocol definitions extending FlextProtocols."""
 
     class Ldif:
         """LDIF-specific protocol namespace."""
 
-        # =========================================================================
-        # MODULE-LEVEL PROTOCOL DEFINITIONS
-        # =========================================================================
-        # Define protocols at module level for mypy compatibility.
-        # Then reference them in the FlextLdifProtocols class for namespace access.
-
         @runtime_checkable
         class EntryProtocol(Protocol):
-            """Protocol for LDIF Entry models.
-
-            LDIF entries that all Entry implementations must satisfy.
-            Uses plain attributes (not @property) for Pydantic 2 structural typing.
-            """
+            """Protocol for LDIF Entry models."""
 
             dn: str | None
-            """Distinguished Name."""
 
             attributes: Mapping[str, Sequence[str]] | None
-            """Entry attributes (Mapping, Attributes model, or None)."""
 
             metadata: FlextLdifProtocols.Ldif.QuirkMetadataProtocol | None
-            """Optional metadata for processing context."""
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -93,17 +47,12 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for objects that have a DN attribute."""
 
             dn: str | None
-            """Distinguished Name."""
 
         @runtime_checkable
         class AttributeValueProtocol(Protocol):
             """Protocol for objects that have attribute values."""
 
             values: list[str] | str
-
-        # =========================================================================
-        # METADATA PROTOCOLS (for QuirkMetadata and related classes)
-        # =========================================================================
 
         @runtime_checkable
         class DynamicMetadataProtocol(Protocol):
@@ -161,31 +110,19 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class QuirkMetadataProtocol(Protocol):
-            """Protocol for QuirkMetadata model.
+            """Protocol for QuirkMetadata model."""
 
-            Matches all fields in FlextLdifModelsDomains.QuirkMetadata.
-            Uses exact types matching the Model for Protocol invariance.
-            """
-
-            # quirk_type can be ServerTypes enum or Literal string - use str for Protocol
             quirk_type: str
-            # Use list[str] to match Model exactly (Protocol attributes are invariant)
+
             rfc_violations: list[str]
             rfc_warnings: list[str]
             original_server_type: str | None
             target_server_type: str | None
             validation_violations: list[str]
 
-        # =========================================================================
-        # ACL PROTOCOLS
-        # =========================================================================
-
         @runtime_checkable
         class AclTargetProtocol(Protocol):
-            """Protocol for ACL target specification.
-
-            Uses list[str] to match Model exactly (Protocol attributes are invariant).
-            """
+            """Protocol for ACL target specification."""
 
             target_dn: str
             attributes: list[str]
@@ -209,21 +146,13 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class AclProtocol(Protocol):
-            """Protocol for LDIF ACL models.
-
-            Minimal structural protocol for ACL write operations.
-            Avoids nested Protocol types to prevent pyrefly invariance issues.
-            Uses scalar types only for reliable structural typing.
-            """
+            """Protocol for LDIF ACL models."""
 
             name: str
-            """ACL name."""
 
             raw_acl: str
-            """Original ACL string from LDIF."""
 
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
-            """LDAP server type using exact Literal type for invariance."""
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
@@ -248,10 +177,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class WriteFormatOptionsProtocol(Protocol):
-            """Protocol for write format options.
-
-            All attributes are read-only properties to match Pydantic model behavior.
-            """
+            """Protocol for write format options."""
 
             @property
             def line_width(self) -> int:
@@ -359,10 +285,6 @@ class FlextLdifProtocols(FlextProtocols):
 
             source_subject_type: str | None
 
-        # =========================================================================
-        # SERVICE PROTOCOLS
-        # =========================================================================
-
         @runtime_checkable
         class HasParseMethodProtocol(Protocol):
             """Protocol for objects with parse method."""
@@ -403,7 +325,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for objects that have an entries attribute."""
 
             entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-            """List of entries."""
 
         @runtime_checkable
         class HasContentProtocol(Protocol):
@@ -413,10 +334,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class SchemaConversionPipelineConfigProtocol(Protocol):
-            """Protocol for schema conversion pipeline configuration objects.
-
-            All attributes are read-only properties to match Pydantic model behavior.
-            """
+            """Protocol for schema conversion pipeline configuration objects."""
 
             @property
             def write_method(self) -> Callable[..., FlextResult[str]]:
@@ -465,7 +383,6 @@ class FlextLdifProtocols(FlextProtocols):
                 | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
                 | FlextLdifProtocols.Ldif.AclProtocol
             ]
-            """All entries."""
 
         @runtime_checkable
         class UnifiedWriteResultProtocol(Protocol):
@@ -493,10 +410,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for EntryResult model."""
 
             entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-            """All entries."""
 
             content: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-            """Alias for entries."""
 
             def __len__(self) -> int:
                 """Return the number of entries."""
@@ -586,28 +501,20 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for category rules configuration."""
 
             user_dn_patterns: list[str]
-            """DN patterns to match user entries."""
 
             group_dn_patterns: list[str]
-            """DN patterns to match group entries."""
 
             hierarchy_dn_patterns: list[str]
-            """DN patterns to match hierarchy entries."""
 
             schema_dn_patterns: list[str]
-            """DN patterns to match schema entries."""
 
             user_objectclasses: list[str]
-            """ObjectClass names that identify user entries."""
 
             group_objectclasses: list[str]
-            """ObjectClass names that identify group entries."""
 
             hierarchy_objectclasses: list[str]
-            """ObjectClass names that identify hierarchy entries."""
 
             acl_attributes: list[str]
-            """Attribute names that identify ACL entries."""
 
         @runtime_checkable
         class CategorizationServiceProtocol(Protocol):
@@ -658,21 +565,16 @@ class FlextLdifProtocols(FlextProtocols):
                 """Filter schema entries by allowed OIDs."""
                 ...
 
-        # =========================================================================
-        # QUIRK PROTOCOLS
-        # =========================================================================
-
         @runtime_checkable
         class ParentQuirkProtocol(Protocol):
             """Protocol for parent quirk (FlextLdifServersBase) instances."""
 
             server_type: str
-            """Server type identifier."""
 
             class Constants:
                 """Nested Constants class protocol."""
 
-                PRIORITY: int
+                PRIORITY: int = 0
 
         @runtime_checkable
         class SchemaQuirkProtocol(Protocol):
@@ -805,10 +707,6 @@ class FlextLdifProtocols(FlextProtocols):
                 """Register a quirk for server type."""
                 ...
 
-        # =========================================================================
-        # SERVER CONSTANTS PROTOCOLS
-        # =========================================================================
-
         @runtime_checkable
         class ServerConstantsProtocol(Protocol):
             """Protocol for server Constants classes."""
@@ -824,10 +722,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for models with validation_metadata attribute."""
 
             validation_metadata: t.Ldif.MetadataType | None
-
-        # =========================================================================
-        # UTILITY PROTOCOLS
-        # =========================================================================
 
         @runtime_checkable
         class TransformerProtocol[T](Protocol):
@@ -847,11 +741,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class FilterProtocol[T](Protocol):
-            """Protocol for filters in pipelines.
-
-            Note: matches accepts object for flexibility when filtering sequences.
-            Implementations should internally narrow to T.
-            """
+            """Protocol for filters in pipelines."""
 
             def matches(self, item: object) -> bool:
                 """Check if item matches filter criteria."""
@@ -880,13 +770,10 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for validation reports."""
 
             is_valid: bool
-            """Check if validation passed."""
 
             errors: list[str]
-            """Error messages."""
 
             warnings: list[str]
-            """Warning messages."""
 
         @runtime_checkable
         class ValidatorProtocol[T](Protocol):
@@ -904,7 +791,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for validation rules."""
 
             name: str
-            """Rule name."""
 
             def check(self, item: T) -> tuple[bool, str | None]:
                 """Check an item against this rule."""
@@ -915,7 +801,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for pipeline steps."""
 
             name: str
-            """Step name."""
 
             def execute(self, input_data: TIn) -> FlextResult[TOut]:
                 """Execute pipeline step."""
@@ -949,7 +834,7 @@ class FlextLdifProtocols(FlextProtocols):
         class WritableProtocol(Protocol):
             """Protocol for writable output targets."""
 
-            def write(self, content: str) -> FlextResult[str]:  # INTERFACE
+            def write(self, content: str) -> FlextResult[str]:
                 """Write content to the target."""
                 ...
 
@@ -957,43 +842,25 @@ class FlextLdifProtocols(FlextProtocols):
         class PredicateProtocol[T](Protocol):
             """Protocol for predicate functions that test items."""
 
-            def __call__(self, item: T) -> bool:  # INTERFACE
+            def __call__(self, item: T) -> bool:
                 """Test if item matches criteria, return True if it does."""
                 ...
 
         @runtime_checkable
         class ValuePredicate(Protocol):
-            """Protocol for predicates that test GeneralValueType values.
+            """Protocol for predicates that test GeneralValueType values."""
 
-            Non-generic version for use with lambdas in utilities.find().
-            """
-
-            def __call__(self, value: t.GeneralValueType, /) -> bool:  # INTERFACE
+            def __call__(self, value: t.GeneralValueType, /) -> bool:
                 """Test if value matches predicate condition."""
                 ...
 
-        # =========================================================================
-        # NAMESPACE ALIASES (for FlextLdifProtocols.Ldif.* access)
-        # =========================================================================
-
-        # Access protocols directly via composition - no aliases needed
-
-        # Nested constants class (for compatibility)
         class Constants:
             """Constants namespace for protocol access."""
 
-        # Quirks namespace for backward compatibility with tests
-        # Note: Protocol aliases must be added after class definition
-        # because nested class can't reference sibling protocols directly
         class Quirks:
             """Quirks namespace containing quirk protocol aliases."""
 
 
-# Runtime type compatibility: add protocol aliases to namespaces
-# These assignments work at runtime; mypy warnings are expected for dynamic assignments
-# Accessing via full names (e.g., p.Ldif.SchemaQuirkProtocol) is mypy-compatible
-
-# Runtime aliases
 p = FlextLdifProtocols
 fldif = FlextLdifProtocols
 

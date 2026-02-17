@@ -1,17 +1,4 @@
-"""Entries Service - Direct Entry Operations with flext-core APIs.
-
-This service provides direct entry operations using flext-core and flext-ldif APIs:
-- Direct use of m.Ldif.Entry for entry operations
-- Direct use of u for DN and attribute operations
-- No unnecessary validation wrappers or conversions
-- Railway-oriented error handling with r
-
-Single Responsibility: Provide entry operations using direct APIs.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Entries Service - Direct Entry Operations with flext-core APIs."""
 
 from __future__ import annotations
 
@@ -28,21 +15,7 @@ from flext_ldif.utilities import u
 
 
 class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
-    """Direct entry operations service using flext-core APIs.
-
-    Business Rule: Entries service provides fluent builder pattern for entry operations.
-    All operations delegate directly to m.Ldif.Entry and u,
-    ensuring consistent behavior across the codebase. Operations are immutable - each
-    operation returns new entry instances.
-
-    Implication: Service supports method chaining for fluent API usage. Operations like
-    remove_operational_attributes, normalize_dns, etc. maintain RFC compliance while
-    enabling server-specific transformations via utilities.
-
-    This service provides minimal, direct entry operations by delegating
-    to m.Ldif.Entry and u for all logic.
-    No unnecessary abstraction layers or validation wrappers.
-    """
+    """Direct entry operations service using flext-core APIs."""
 
     def __init__(
         self,
@@ -50,14 +23,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         operation: str | None = None,
         attributes_to_remove: list[str] | None = None,
     ) -> None:
-        """Initialize entries service.
-
-        Args:
-            entries: List of entries to operate on
-            operation: Operation to perform (for execute method)
-            attributes_to_remove: List of attribute names to remove (for remove_attributes operation)
-
-        """
+        """Initialize entries service."""
         super().__init__()
         self._entries = entries or []
         self._operation = operation
@@ -65,35 +31,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @classmethod
     def builder(cls) -> Self:
-        """Create fluent builder instance.
-
-        Returns:
-            Service instance for method chaining
-
-        Example:
-            result = (
-                FlextLdifEntries.builder()
-                .with_entries([entry])
-                .with_operation("remove_operational_attributes")
-                .build()
-            )
-
-        """
+        """Create fluent builder instance."""
         return cls()
 
     def with_entries(
         self,
         entries: list[m.Ldif.Entry],
     ) -> Self:
-        """Set entries for builder.
-
-        Args:
-            entries: List of entries to operate on
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set entries for builder."""
         self._entries = entries
         return self
 
@@ -101,15 +46,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         self,
         operation: str,
     ) -> Self:
-        """Set operation for builder.
-
-        Args:
-            operation: Operation to perform
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set operation for builder."""
         self._operation = operation
         return self
 
@@ -117,28 +54,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         self,
         attributes_to_remove: list[str],
     ) -> Self:
-        """Set attributes to remove for builder.
-
-        Args:
-            attributes_to_remove: List of attribute names to remove
-
-        Returns:
-            Self for method chaining
-
-        """
+        """Set attributes to remove for builder."""
         self._attributes_to_remove = attributes_to_remove
         return self
 
     def build(self) -> list[m.Ldif.Entry]:
-        """Build and execute the configured operation.
-
-        Returns:
-            List of processed entries
-
-        Raises:
-            RuntimeError: If the operation fails
-
-        """
+        """Build and execute the configured operation."""
         result = self.execute()
         if result.is_failure:
             error_msg = f"Build failed: {result.error}"
@@ -146,21 +67,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return result.value
 
     def execute(self) -> r[list[m.Ldif.Entry]]:
-        """Execute the configured operation on entries.
-
-        Business Rule: Execute method routes to appropriate batch operation based on
-        configured operation name. Supported operations: "remove_operational_attributes",
-        "remove_attributes". Missing operation or invalid configuration results in
-        fail-fast error responses.
-
-        Implication: This method enables fluent builder pattern execution. Operations
-        are applied to all entries in batch, with fail-fast behavior if any entry
-        processing fails.
-
-        Returns:
-            r containing processed entries (immutable - new instances)
-
-        """
+        """Execute the configured operation on entries."""
         if not self._operation:
             return r[list[m.Ldif.Entry]].fail("No operation specified")
 
@@ -181,36 +88,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def remove_operational_attributes_batch(
         entries: list[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
-        """Remove operational attributes from all entries.
+        """Remove operational attributes from all entries."""
 
-        Business Rule: Batch operation removes operational attributes (RFC 4512) from
-        all entries using FlextLdifUtilitiesEntry.remove_operational_attributes().
-        Operations are immutable - returns new entry instances. Fail-fast behavior:
-        if any entry processing fails, entire batch fails.
-
-        Implication: Operational attributes removal maintains RFC compliance while
-        cleaning entries for migration or export. Batch processing ensures consistent
-        behavior across all entries.
-
-        Args:
-            entries: List of entries to process
-
-        Returns:
-            r containing processed entries (operational attributes removed)
-
-        """
-
-        # batch() expects Callable[[T], R | r[R]]
-        # When operation returns r[R], batch extracts .value to get R
-        # So R = Entry (not r[Entry]), and batch returns r[BatchResultDict] with results: list[Entry]
         def remove_op_attrs_wrapper(
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry]:
             """Wrapper for remove_operational_attributes."""
             return FlextLdifEntries.remove_operational_attributes(entry)
 
-        # Type annotation helps mypy infer T = Entry, R = Entry
-        # Direct iteration instead of u.Collection.batch
         operation_fn: Callable[
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
@@ -219,7 +104,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         for entry in entries:
             try:
                 result = operation_fn(entry)
-                # Handle both direct return and FlextResult return
+
                 if isinstance(result, r):
                     if result.is_success and isinstance(result.value, m.Ldif.Entry):
                         results.append(result.value)
@@ -240,38 +125,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         entries: list[m.Ldif.Entry],
         attributes: list[str],
     ) -> r[list[m.Ldif.Entry]]:
-        """Remove specified attributes from all entries.
+        """Remove specified attributes from all entries."""
 
-        Business Rule: Batch operation removes specified attributes from all entries.
-        Operations are immutable - returns new entry instances. Fail-fast behavior:
-        if any entry processing fails, entire batch fails. Empty attribute list results
-        in entries returned unchanged.
-
-        Implication: Attribute removal enables selective filtering of entries for
-        migration or export. Batch processing ensures consistent behavior across
-        all entries.
-
-        Args:
-            entries: List of entries to process
-            attributes: List of attribute names to remove
-
-        Returns:
-            r containing processed entries (specified attributes removed)
-
-        """
-
-        # batch() expects Callable[[T], R | r[R]]
-        # When operation returns r[R], batch extracts .value to get R
-        # So R = Entry (not r[Entry]), and batch returns r[BatchResultDict] with results: list[Entry]
         def remove_attrs_wrapper(
             entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry]:
             """Wrapper for remove_attributes."""
             return FlextLdifEntries.remove_attributes(entry, attributes)
 
-        # Direct iteration instead of u.Collection.batch
-        # Type annotation helps mypy infer T = Entry, R = Entry
-        # When operation returns r[Entry], we extract .value, so R = Entry
         operation_fn: Callable[
             [m.Ldif.Entry],
             m.Ldif.Entry | r[m.Ldif.Entry],
@@ -280,7 +141,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         for entry in entries:
             try:
                 result = operation_fn(entry)
-                # Handle both direct return and FlextResult return
+
                 if isinstance(result, r):
                     if result.is_success and isinstance(result.value, m.Ldif.Entry):
                         results.append(result.value)
@@ -299,11 +160,10 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     @staticmethod
     def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> r[str]:
         """Extract DN from dict entry."""
-        # Type narrowing: dict entry has 'dn' key with str | list[str] value
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
-        # Type narrowing: dn_value is str | list[str] after None check
+
         return r[str].ok(str(dn_value))
 
     @staticmethod
@@ -312,7 +172,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     ) -> r[str]:
         """Extract DN string from value (str, list, or None) using DSL pattern."""
 
-        # Use named functions instead of lambdas for clarity (DSL pattern)
         def handle_none(_value: None) -> r[str]:
             """Handle None case."""
             return r[str].fail("DN value is None")
@@ -326,14 +185,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             first_dn = value_list[0] if value_list else ""
             return r[str].ok(str(first_dn))
 
-        # Type-based dispatch with explicit isinstance checks
         if dn_value_raw is None:
             return handle_none(None)
         if isinstance(dn_value_raw, str):
             return handle_str(dn_value_raw)
         if isinstance(dn_value_raw, list):
             return handle_list(dn_value_raw)
-        # DN value has unexpected type - this path should be unreachable
+
         return r[str].fail(f"DN value has unexpected type: {type(dn_value_raw)}")
 
     @staticmethod
@@ -342,9 +200,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if dn_val_raw is None:
             return r[str].fail("Entry missing DN (dn is None)")
         if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
-            # Type narrowing: object with 'value' attribute, extract it via getattr
             dn_value_raw_obj: object = getattr(dn_val_raw, "value", None)
-            # Type narrowing: value attribute is str | list[str] | None
+
             dn_value_extracted: str | list[str] | None
             if isinstance(dn_value_raw_obj, (str, list)):
                 dn_value_extracted = dn_value_raw_obj
@@ -353,7 +210,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return FlextLdifEntries._extract_dn_from_value(dn_value_extracted)
         if isinstance(dn_val_raw, str):
             return r[str].ok(dn_val_raw)
-        # Use try/except instead of u.try_
+
         try:
             result = str(dn_val_raw)
         except (ValueError, TypeError):
@@ -366,25 +223,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_entry_dn(
         entry: m.Ldif.Entry | dict[str, str | list[str]] | t.GeneralValueType,
     ) -> r[str]:
-        """Extract DN from entry.
-
-        Business Rule: DN extraction supports multiple entry formats (Entry model, dict,
-        EntryWithDnProtocol). Handles DN models with .value attribute and direct string
-        DNs. Missing or None DNs result in fail-fast error responses.
-
-        Implication: This method provides flexible DN extraction for various entry formats,
-        enabling compatibility with different data sources. DN normalization follows
-        RFC 4514 specification.
-
-        Args:
-            entry: Entry model, dict, or object implementing EntryWithDnProtocol
-
-        Returns:
-            r containing DN as string (RFC 4514 format)
-
-        """
+        """Extract DN from entry."""
         if isinstance(entry, dict):
-            # Convert dict[str, GeneralValueType] to dict[str, str | list[str]]
             typed_entry: dict[str, str | list[str]] = {}
             for k, v in entry.items():
                 if not isinstance(k, str):
@@ -392,17 +232,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 if isinstance(v, str):
                     typed_entry[k] = v
                 elif isinstance(v, list):
-                    # Convert list[GeneralValueType] to list[str]
                     typed_entry[k] = [str(item) for item in v]
                 else:
-                    # Convert other types to string
                     typed_entry[k] = str(v)
             return FlextLdifEntries._extract_dn_from_dict(typed_entry)
         if hasattr(entry, "dn"):
             dn_attr: object = getattr(entry, "dn", None)
             if dn_attr is None:
                 return r[str].fail("Entry missing DN (dn is None)")
-            # Type narrowing for GeneralValueType
+
             if isinstance(dn_attr, str):
                 return r[str].ok(dn_attr)
             return FlextLdifEntries._extract_dn_from_object(dn_attr)
@@ -415,19 +253,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         attrs: t.GeneralValueType,
     ) -> r[dict[str, list[str]]]:
         """Extract attributes from container GeneralValueType."""
-        # Type narrowing: check for EntryProtocol-like object with attributes property
         if hasattr(attrs, "attributes"):
-            # Type narrowing: attrs has attributes property, access it safely
             attrs_dict_raw = getattr(attrs, "attributes", None)
             if attrs_dict_raw is not None:
-                # Type narrowing: ensure attrs_dict is dict-like
                 attrs_dict: dict[str, list[str]] = (
                     dict(attrs_dict_raw) if isinstance(attrs_dict_raw, dict) else {}
                 )
                 return r[dict[str, list[str]]].ok(attrs_dict)
             return r[dict[str, list[str]]].ok({})
         if isinstance(attrs, dict):
-            # Convert dict values to list[str]
             converted_attrs: dict[str, list[str]] = {
                 k: [str(v)] if not isinstance(v, list) else [str(vi) for vi in v]
                 for k, v in attrs.items()
@@ -441,31 +275,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_entry_attributes(
         entry: m.Ldif.Entry,
     ) -> r[dict[str, list[str]]]:
-        """Extract attributes from entry.
-
-        Business Rule: Attribute extraction handles multiple entry formats per EntryProtocol:
-        - Attributes model (has .attributes attribute containing dict[str, list[str]])
-        - dict-like objects (used directly)
-        - Protocol-compliant objects (structural typing)
-
-        Returns dict[str, list[str]] format for compatibility with legacy code and RFC 2849.
-        Missing or None attributes result in fail-fast error responses. Empty attributes
-        return empty dict (valid per RFC 2849 § 2.1).
-
-        Implication: This method provides consistent attribute extraction format across
-        the codebase. Attribute values are always returned as lists, even for single-value
-        attributes. Exception handling ensures robust error reporting for malformed entries.
-
-        Args:
-            entry: Entry to extract attributes from (EntryProtocol-compliant)
-
-        Returns:
-            r containing attribute dictionary (dict[str, list[str]])
-
-        """
-        # Business Rule: Handle exceptions during attribute extraction
-        # EntryProtocol allows various attribute formats, so we need robust extraction
-        # Implication: ValueError and AttributeError are caught and converted to r failures
+        """Extract attributes from entry."""
         try:
             if not hasattr(entry, "attributes"):
                 return r[dict[str, list[str]]].fail(
@@ -480,8 +290,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[dict[str, list[str]]].ok({})
             return FlextLdifEntries._extract_attrs_from_container(attrs)
         except (AttributeError, ValueError) as e:
-            # Business Rule: Convert exceptions to r failures
-            # This ensures railway-oriented error handling throughout the codebase
             return r[dict[str, list[str]]].fail(
                 f"Failed to extract attributes: {e}",
             )
@@ -490,27 +298,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_entry_objectclasses(
         entry: m.Ldif.Entry,
     ) -> r[list[str]]:
-        """Extract objectClass values from entry.
-
-        Business Rule: objectClass extraction uses case-insensitive attribute matching
-        per RFC 4512 § 2.4. objectClass is mandatory per RFC 4511 § 4.1.3, but this
-        method handles missing objectClass gracefully by returning failure (not empty list).
-
-        Implication: Case-insensitive matching ensures compatibility with various LDAP
-        server implementations that may use different case conventions. Single string
-        values are normalized to list format for consistency.
-
-        Args:
-            entry: Entry to extract objectClasses from (EntryProtocol-compliant)
-
-        Returns:
-            r containing list of objectClass values (normalized to lowercase
-            if case-insensitive matching was used)
-
-        """
-        # Business Rule: Delegate to get_entry_attributes for attribute extraction
-        # This ensures consistent error handling and attribute format normalization
-        # Implication: If attribute extraction fails, objectClass extraction also fails
+        """Extract objectClass values from entry."""
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
             return r[list[str]].fail(
@@ -521,34 +309,22 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not attributes:
             return r[list[str]].ok([])
 
-        # Business Rule: Case-insensitive search for objectClass attribute per RFC 4512
-        # LDAP attribute names are case-insensitive, so we match "objectclass" regardless of case
-        # Implication: This handles entries with "objectClass", "objectclass", "OBJECTCLASS", etc.
-        # Type narrowing: u.find expects predicate: Callable[[T], bool] | Callable[[str, T], bool]
-        # where T = tuple[str, list[str]] for list of items
-        # Direct iteration instead of u.Collection.find
-        # Use str.lower() for case-insensitive comparison
         found_kv: tuple[str, str | list[str]] | None = None
         for attr_name, attr_value in attributes.items():
             if attr_name.lower() == "objectclass":
                 found_kv = (attr_name, attr_value)
                 break
 
-        # Type narrowing: found_kv is tuple[str, str | list[str]] | None
         if not found_kv:
             return r[list[str]].fail("Entry is missing objectClass attribute")
 
-        # Type narrowing: found_kv[1] is str | list[str] (attribute value)
         objectclasses: str | list[str] = found_kv[1]
 
-        # Business Rule: Normalize single string values to list format
-        # This ensures consistent return type (always list[str]) regardless of input format
-        # Implication: Single-value objectClass attributes are wrapped in list for consistency
         if isinstance(objectclasses, str):
             return r[list[str]].ok([objectclasses])
         if isinstance(objectclasses, list):
             return r[list[str]].ok(list(objectclasses))
-        # Invalid objectclasses type - this path should be unreachable
+
         return r[list[str]].fail(f"Invalid objectclasses type: {type(objectclasses)}")
 
     @staticmethod
@@ -557,27 +333,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         attributes: dict[str, str | list[str]],
         objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
-        """Create a new entry.
-
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Attribute dictionary
-            objectclasses: Optional objectClass values
-
-        Returns:
-            r containing new Entry
-
-        """
-        # Validate DN using FlextLdifUtilitiesDN
+        """Create a new entry."""
         if not FlextLdifUtilitiesDN.validate(dn):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
 
-        # Prepare attributes
         final_attrs = dict(attributes)
         if objectclasses:
             final_attrs["objectClass"] = objectclasses
 
-        # Use m.Ldif.Entry.create directly
         return m.Ldif.Entry.create(dn=dn, attributes=final_attrs)
 
     @staticmethod
@@ -585,31 +348,18 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         entry: m.Ldif.Entry,
         attributes_to_remove: list[str],
     ) -> r[m.Ldif.Entry]:
-        """Remove attributes from entry.
-
-        Args:
-            entry: Entry to modify
-            attributes_to_remove: List of attribute names to remove
-
-        Returns:
-            r containing modified entry
-
-        """
+        """Remove attributes from entry."""
         if not entry.attributes or not entry.attributes.attributes:
             return r[str].ok(entry)
 
-        # Normalize attribute names to lowercase for case-insensitive comparison
         attrs_to_remove_lower = {attr.lower() for attr in attributes_to_remove}
 
-        # Create new attributes dict without the specified attributes (case-insensitive)
-        # Use dict comprehension for type safety
         new_attrs: dict[str, list[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove_lower
         }
 
-        # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.Ldif.Attributes(attributes=new_attrs),
@@ -623,52 +373,32 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         entry: m.Ldif.Entry,
         objectclasses_to_remove: list[str],
     ) -> r[m.Ldif.Entry]:
-        """Remove specific objectClass values from entry.
-
-        Args:
-            entry: Entry to modify
-            objectclasses_to_remove: List of objectClass values to remove
-
-        Returns:
-            r containing modified entry
-
-        """
+        """Remove specific objectClass values from entry."""
         if not entry.attributes or not entry.attributes.attributes:
             return r[m.Ldif.Entry].ok(entry)
 
-        # Get current objectClass values
         objectclasses_result = FlextLdifEntries.get_entry_objectclasses(entry)
         if objectclasses_result.is_failure:
-            return r[m.Ldif.Entry].ok(
-                entry
-            )  # No objectClass attribute, nothing to remove
+            return r[m.Ldif.Entry].ok(entry)
 
         current_ocs = objectclasses_result.value
         if not current_ocs:
-            return r[m.Ldif.Entry].ok(
-                entry
-            )  # Empty objectClass list, nothing to remove
+            return r[m.Ldif.Entry].ok(entry)
 
-        # Normalize objectClass names to lowercase for case-insensitive comparison
         ocs_to_remove_lower = {oc.lower() for oc in objectclasses_to_remove}
 
-        # Filter out objectClasses to remove (case-insensitive)
-        # Use list comprehension for type safety
         new_ocs: list[str] = [
             oc for oc in current_ocs if oc.lower() not in ocs_to_remove_lower
         ]
 
-        # If all objectClasses were removed, return error
         if not new_ocs:
             return r[m.Ldif.Entry].fail(
                 "Cannot remove all objectClass values from entry",
             )
 
-        # Create new attributes dict with updated objectClass
         new_attrs = dict(entry.attributes.attributes)
         new_attrs["objectClass"] = new_ocs
 
-        # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.Ldif.Attributes(attributes=new_attrs),
@@ -680,22 +410,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_attribute_values(
         attribute: FlextTypes.GeneralValueType,
     ) -> r[list[str]]:
-        """Extract values from attribute.
-
-        Args:
-            attribute: Attribute value(s) to extract (str, list[str], or object with values attr)
-
-        Returns:
-            r containing list of string values
-
-        """
+        """Extract values from attribute."""
         if isinstance(attribute, str):
             return r[list[str]].ok([attribute])
         if isinstance(attribute, list):
-            # Convert list[GeneralValueType] to list[str]
             str_list: list[str] = [str(item) for item in attribute]
             return r[list[str]].ok(str_list)
-        # Check if it's a protocol with values attribute
+
         if hasattr(attribute, "values"):
             values = getattr(attribute, "values", None)
             if isinstance(values, str):
@@ -705,7 +426,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return r[list[str]].fail(
                 f"Attribute 'values' has unsupported type: {type(values).__name__}",
             )
-        # Try to iterate if it's iterable and contains strings (but not already handled above)
+
         if isinstance(attribute, (tuple, set, frozenset)):
             try:
                 str_list = [str(item) for item in attribute]
@@ -714,7 +435,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[list[str]].fail(
                     f"Cannot convert iterable to string list: {type(attribute).__name__}",
                 )
-        # Not a supported type
+
         return r[list[str]].fail(
             f"Unsupported attribute type: {type(attribute).__name__}",
         )
@@ -724,34 +445,23 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         entry: m.Ldif.Entry,
         attribute_name: str,
     ) -> r[list[str]]:
-        """Get a specific attribute from entry.
-
-        Args:
-            entry: Entry to extract attribute from
-            attribute_name: Name of attribute to get
-
-        Returns:
-            r containing attribute values as list
-
-        """
+        """Get a specific attribute from entry."""
         if not entry.attributes or not entry.attributes.attributes:
             return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
         value_raw: t.GeneralValueType = u.mapper().get(
             entry.attributes.attributes, attribute_name
         )
-        # Check for None or empty string (mapper returns "" for missing keys)
+
         if value_raw is None or not value_raw:
             return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
 
-        # Type narrowing: attribute values are str | list[str]
         if isinstance(value_raw, str):
             return r[list[str]].ok([value_raw])
         if isinstance(value_raw, list):
-            # Convert list[GeneralValueType] to list[str]
             str_list: list[str] = [str(item) for item in value_raw]
             return r[list[str]].ok(str_list)
-        # Convert to string list - this path should be unreachable
+
         return r[list[str]].fail(f"Invalid attribute value type: {type(value_raw)}")
 
     @staticmethod
@@ -768,33 +478,25 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not value or (isinstance(value, (list, dict, str)) and len(value) == 0):
             return r[str].fail("Cannot normalize empty list")
         first = value[0]
-        # Type-based dispatch for first element
+
         if isinstance(first, str):
             return FlextLdifEntries._normalize_string_value(first)
-        # Normalize non-string first element - this path should be unreachable
+
         return r[str].fail(f"Cannot normalize non-string first element: {type(first)}")
 
     @staticmethod
     def normalize_attribute_value(
         value: str | list[str] | None,
     ) -> r[str]:
-        """Normalize attribute value to single string.
-
-        Args:
-            value: Value to normalize (string, list, or None)
-
-        Returns:
-            r containing normalized string value
-
-        """
+        """Normalize attribute value to single string."""
         if value is None:
             return r[str].fail("Cannot normalize None value")
-        # Type-based dispatch for normalization
+
         if isinstance(value, str):
             return FlextLdifEntries._normalize_string_value(value)
         if isinstance(value, list):
             return FlextLdifEntries._normalize_list_value(value)
-        # Cannot normalize unsupported value type - this path should be unreachable
+
         return r[str].fail(f"Cannot normalize unsupported value type: {type(value)}")
 
     def get_normalized_attribute(
@@ -802,16 +504,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         entry: m.Ldif.Entry,
         attribute_name: str,
     ) -> r[str]:
-        """Get normalized (single string) value for attribute.
-
-        Args:
-            entry: Entry to extract attribute from
-            attribute_name: Name of attribute to get
-
-        Returns:
-            r containing normalized string value
-
-        """
+        """Get normalized (single string) value for attribute."""
         return self.get_entry_attribute(entry, attribute_name).flat_map(
             FlextLdifEntries.normalize_attribute_value,
         )
@@ -820,32 +513,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def remove_operational_attributes(
         entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
-        """Remove operational attributes from entry.
-
-        Business Rule: Operational attributes removal uses u.Entry
-        for RFC 4512 compliant detection. Operation is immutable - returns new entry
-        instance with operational attributes removed. Entry metadata is preserved.
-
-        Implication: This method enables cleaning entries for migration or export
-        while maintaining RFC compliance. Operational attributes are identified per
-        RFC 4512 specification.
-
-        Args:
-            entry: Entry to process
-
-        Returns:
-            r containing new entry instance (operational attributes removed)
-
-        Note:
-            Operational attributes typically include:
-            - createTimestamp
-            - modifyTimestamp
-            - creatorsName
-            - modifiersName
-            - entryUUID
-            - etc.
-
-        """
+        """Remove operational attributes from entry."""
         operational_attrs = {
             "createTimestamp",
             "modifyTimestamp",
@@ -865,18 +533,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if not entry.attributes or not entry.attributes.attributes:
             return r[str].ok(entry)
 
-        # Create normalized set for case-insensitive comparison
         operational_attrs_lower = {attr.lower() for attr in operational_attrs}
 
-        # Create new attributes dict without operational attributes (case-insensitive)
-        # Use dict comprehension for type safety (u.where expects dict[str, t.GeneralValueType])
         new_attrs: dict[str, list[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in operational_attrs_lower
         }
 
-        # Create new entry with modified attributes
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.Ldif.Attributes(attributes=new_attrs),

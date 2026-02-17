@@ -1,12 +1,4 @@
-"""Server quirk registry using FlextRegistry class-level plugin API.
-
-Provides discovery and caching of server-specific quirks for LDIF processing.
-Uses class-level storage for auto-discovery pattern - all instances share
-the same discovered servers.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Server quirk registry using FlextRegistry class-level plugin API."""
 
 from __future__ import annotations
 
@@ -30,31 +22,19 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServer(FlextRegistry):
-    """Server quirk registry using FlextRegistry class-level plugin API.
-
-    Auto-discovers server-specific quirks from flext_ldif.servers package.
-    Uses class-level storage so all instances see the same discovered servers.
-    """
+    """Server quirk registry using FlextRegistry class-level plugin API."""
 
     SERVERS: ClassVar[str] = "ldif_servers"
 
     def __init__(
         self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
     ) -> None:
-        """Initialize registry and trigger auto-discovery.
-
-        Auto-discovery uses class-level storage (register_class_plugin) so
-        it's idempotent - safe to call on every instance creation.
-        """
+        """Initialize registry and trigger auto-discovery."""
         super().__init__(dispatcher=dispatcher, **data)
         self._auto_discover()
 
     def _auto_discover(self) -> None:
-        """Discover and register concrete quirk classes from servers package.
-
-        Uses register_class_plugin() for class-level storage. Registration
-        is idempotent so multiple instances can call this safely.
-        """
+        """Discover and register concrete quirk classes from servers package."""
         for name, obj in inspect.getmembers(servers_package):
             if (
                 name.startswith("_")
@@ -70,7 +50,6 @@ class FlextLdifServer(FlextRegistry):
                 if not isinstance(server_type, str):
                     continue
 
-                # Validate nested quirk classes exist
                 quirk_class = type(instance)
                 if not all(hasattr(quirk_class, c) for c in ("Schema", "Acl", "Entry")):
                     continue
@@ -79,8 +58,6 @@ class FlextLdifServer(FlextRegistry):
 
             except (TypeError, AttributeError):
                 continue
-
-    # Core operations
 
     def register_server_quirk(self, quirk: FlextLdifServersBase) -> r[bool]:
         """Register a server quirk manually."""
@@ -103,7 +80,7 @@ class FlextLdifServer(FlextRegistry):
         result = self.get_class_plugin(self.SERVERS, normalized)
         if result.is_failure:
             return r[FlextLdifServersBase].fail(str(result.error))
-        # Type narrow: get_class_plugin returns r[t.GeneralValueType]
+
         if isinstance(result.value, FlextLdifServersBase):
             return r[FlextLdifServersBase].ok(result.value)
         return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
@@ -112,15 +89,13 @@ class FlextLdifServer(FlextRegistry):
         """List all registered server types."""
         return sorted(self.list_class_plugins(self.SERVERS).value or [])
 
-    # Quirk access methods
-
     def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
         quirk = base.schema_quirk
-        # Type check with concrete base class for proper typing
+
         if isinstance(quirk, FlextLdifServersBaseSchema):
             return quirk
         return None
@@ -131,7 +106,7 @@ class FlextLdifServer(FlextRegistry):
         if base is None:
             return None
         quirk = base.acl_quirk
-        # Type check with concrete base class for proper typing
+
         if isinstance(quirk, FlextLdifServersBaseSchemaAcl):
             return quirk
         return None
@@ -142,7 +117,7 @@ class FlextLdifServer(FlextRegistry):
         if base is None:
             return None
         quirk = base.entry_quirk
-        # Type check with concrete base class for proper typing
+
         if isinstance(quirk, FlextLdifServersBaseEntry):
             return quirk
         return None
@@ -215,8 +190,6 @@ class FlextLdifServer(FlextRegistry):
             "quirks_by_server": quirks_by_server,
             "server_priorities": priorities,
         }
-
-    # Global singleton
 
     _global_instance: ClassVar[FlextLdifServer | None] = None
 

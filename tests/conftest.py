@@ -51,7 +51,7 @@ def _rebuild_pydantic_models() -> None:
 # =============================================================================
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def flext_ldif() -> FlextLdif:
     """Provide FlextLdif instance for tests."""
     return FlextLdif.get_instance()

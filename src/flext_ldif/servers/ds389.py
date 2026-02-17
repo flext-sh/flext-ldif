@@ -1,20 +1,4 @@
-"""389 Directory Server Quirks - Stub Implementation.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides 389 Directory Server-specific quirks for schema, ACL, and entry processing.
-Inherits from RFC baseline without server-specific conversions.
-
-Architecture:
-- Parsers: LDIF → RFC parse_entry() → Entry Model RFC (inherited, no overrides)
-- Writers: Entry Model RFC → RFC _write_entry() → LDIF (inherited, no conversions)
-- RFC baseline: 100% RFC 2849/4512 compliance without 389-specific transformations
-- Auto-discovery: Server detection via quirks metadata only
-
-This is a stub implementation. Server-specific conversions can be added in _write_entry()
-when 389 Directory Server-specific LDIF format requirements are identified.
-"""
+"""389 Directory Server Quirks - Stub Implementation."""
 
 from __future__ import annotations
 
@@ -35,11 +19,9 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server quirks implementation."""
 
-    # =========================================================================
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for 389 Directory Server quirk."""
 
-        # Server identity and priority (defined at Constants level)
         SERVER_TYPE: ClassVar[str] = "ds389"
         PRIORITY: ClassVar[int] = 30
 
@@ -48,14 +30,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["389ds"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["389ds", "rfc"])
 
-        # 389 Directory Server ACL format constants
-        ACL_FORMAT: ClassVar[str] = (
-            "aci"  # RFC 4876 ACI attribute (389 DS uses standard ACI)
-        )
-        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
+        ACL_FORMAT: ClassVar[str] = "aci"
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
 
-        # 389 Directory Server operational attributes (server-specific)
-        # Migrated from c.OperationalAttributeMappings
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
                 "createTimestamp",
@@ -73,14 +50,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             ],
         )
 
-        # 389DS extends RFC permissions with "proxy" and "all"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
             FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
             | frozenset(["proxy", "all"])
         )
 
-        # Detection constants (server-specific)
-        # Migrated from c.LdapServerDetection
         DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113730\."
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
             [
@@ -90,8 +64,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             ],
         )
 
-        # Server detection patterns and weights
-        # Migrated from c.ServerDetection
         DETECTION_PATTERN: ClassVar[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
@@ -120,22 +92,15 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             ],
         )
 
-        # Schema DN for 389 DS (RFC 4512 standard)
         SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
 
-        # Schema attribute fields that are server-specific
-        # (migrated from c.SchemaConversionMappings)
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "x_ds_use"])
 
-        # NOTE: Permission names inherited from RFC.Constants
-
-        # ACL subject types specific to 389 DS
         ACL_SUBJECT_TYPE_USER: ClassVar[str] = "user"
         ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
         ACL_SUBJECT_TYPE_SELF: ClassVar[str] = "self"
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anyone"
 
-        # 389 Directory Server specific attributes (migrated from FlextLdifConstants)
         DS_389_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
             [
                 "nsuniqueId",
@@ -148,39 +113,31 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             ],
         )
 
-        # Schema attribute/objectClass parsing patterns
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+['\"]([\w-]+)['\"]"
         SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = r"NAME\s+['\"](\w+)['\"]"
 
-        # ACL-specific constants (migrated from nested Acl class)
         ACL_CLAUSE_PATTERN: ClassVar[str] = r"\([^()]+\)"
 
-        # 389 DS ACI parsing patterns (migrated from Acl class)
         ACL_NAME_PATTERN: ClassVar[str] = r"acl\s+\"([^\"]+)\""
         ACL_ALLOW_PATTERN: ClassVar[str] = r"allow\s*\(([^)]+)\)"
         ACL_TARGETATTR_PATTERN: ClassVar[str] = r"targetattr\s*=\s*\"([^\"]+)\""
-        # Override RFC pattern with 389DS-specific syntax
+
         ACL_USERDN_PATTERN: ClassVar[str] = r"userdn\s*=\s*\"([^\"]+)\""
         ACL_TARGET_PATTERN: ClassVar[str] = r"target\s*=\s*\"([^\"]+)\""
         ACL_DEFAULT_NAME: ClassVar[str] = "389 DS ACL"
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn:"
-        # Default anonymous subject for 389 DS
+
         ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
         ACL_VERSION_PREFIX: ClassVar[str] = "(version 3.0)"
         ACL_TARGETATTR_SEPARATOR: ClassVar[str] = ","
         ACL_TARGETATTR_SPACE_REPLACEMENT: ClassVar[str] = " "
-        ACL_ACI_PREFIX: ClassVar[str] = "aci:"  # ACL attribute prefix for 389 DS
-        ACL_ALLOW_PREFIX: ClassVar[str] = (
-            "allow"  # ACL allow clause prefix (without parentheses)
-        )
-        ACL_TARGETATTR_PREFIX: ClassVar[str] = (
-            "targetattr"  # ACL targetattr prefix (without =)
-        )
-        ACL_USERDN_PREFIX: ClassVar[str] = "userdn"  # ACL userdn prefix (without =)
-        ACL_TARGET_PREFIX: ClassVar[str] = 'target = "'  # ACL target prefix
-        ACL_WILDCARD_ATTRIBUTE: ClassVar[str] = "*"  # Wildcard for all attributes
+        ACL_ACI_PREFIX: ClassVar[str] = "aci:"
+        ACL_ALLOW_PREFIX: ClassVar[str] = "allow"
+        ACL_TARGETATTR_PREFIX: ClassVar[str] = "targetattr"
+        ACL_USERDN_PREFIX: ClassVar[str] = "userdn"
+        ACL_TARGET_PREFIX: ClassVar[str] = 'target = "'
+        ACL_WILDCARD_ATTRIBUTE: ClassVar[str] = "*"
 
-        # Error messages
         ERROR_ACL_PARSING_FAILED: ClassVar[str] = (
             "389 Directory Server ACL parsing failed: {exc}"
         )
@@ -190,11 +147,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ERROR_ENTRY_PROCESSING_FAILED: ClassVar[str] = (
             "389 Directory Server entry processing failed: {exc}"
         )
-
-        # === ACL AND ENCODING CONSTANTS (Centralized) ===
-        # Use centralized StrEnums from FlextLdifConstants directly
-        # No duplicate nested StrEnums - use c.Ldif.AclPermission,
-        # c.Ldif.AclAction, and c.Ldif.Encoding directly
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
@@ -211,7 +163,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     use_prefix_match=True,
                 )
-            # For string definitions, extract NAME and check prefix match
+
             if re.search(
                 FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                 attr_definition,
@@ -243,7 +195,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
-            # For string definitions, extract NAME and check exact match
+
             if re.search(
                 FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                 oc_definition,
@@ -266,15 +218,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             self,
             attr_definition: str,
         ) -> FlextResult[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add 389 DS metadata.
-
-            Args:
-                attr_definition: Attribute definition string
-
-            Returns:
-                FlextResult with SchemaAttribute marked with 389 DS metadata
-
-            """
+            """Parse attribute definition and add 389 DS metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.value
@@ -290,19 +234,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             self,
             oc_definition: str,
         ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add 389 DS metadata.
-
-            Args:
-                oc_definition: ObjectClass definition string
-
-            Returns:
-                FlextResult with SchemaObjectClass marked with 389 DS metadata
-
-            """
+            """Parse objectClass definition and add 389 DS metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.value
-                # Fix common ObjectClass issues (RFC 4512 compliance)
+
                 FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(
@@ -314,21 +250,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return result
 
     class Acl(FlextLdifServersRfc.Acl):
-        """389 Directory Server ACI quirk.
-
-        Override: Extends base RFC Acl with 389DS-specific ACL parsing.
-        """
+        """389 Directory Server ACI quirk."""
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is a 389 Directory Server ACL (public method).
-
-            Args:
-                acl_line: ACL line string or Acl model to check.
-
-            Returns:
-                True if this is 389 Directory Server ACL format
-
-            """
+            """Check if this is a 389 Directory Server ACL (public method)."""
             return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -365,7 +290,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """Parse 389 DS ACI definition."""
             try:
                 attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
-                _ = attr_name  # Unused but required for tuple unpacking
+                _ = attr_name
                 acl_name_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,
                     content,
@@ -397,10 +322,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     re.IGNORECASE,
                 )
 
-                # Parse target attributes, handling both space and comma separation
                 target_attributes: list[str] = []
                 if target_attr_match:
-                    # Replace commas with spaces and split
                     attr_string = target_attr_match.group(1).replace(
                         FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR,
                         FlextLdifServersDs389.Constants.ACL_TARGETATTR_SPACE_REPLACEMENT,
@@ -409,9 +332,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         attr.strip() for attr in attr_string.split() if attr.strip()
                     ]
 
-                # Extract target DN from the ACI target clause
-                # 389 DS ACLs use: target = "dn:<dn_pattern>"
-                target_dn = "*"  # Default wildcard
+                target_dn = "*"
                 target_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_TARGET_PATTERN,
                     content,
@@ -419,27 +340,24 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
                 if target_match:
                     target_clause = target_match.group(1)
-                    # Parse DN from "dn:<dn_pattern>" format
+
                     dn_prefix = FlextLdifServersDs389.Constants.ACL_TARGET_DN_PREFIX
                     if target_clause.lower().startswith(dn_prefix):
-                        # Extract after "dn:"
                         target_dn = target_clause[len(dn_prefix) :]
                     else:
                         target_dn = target_clause
 
-                # Build metadata
                 metadata = m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
                 metadata.extensions["original_format"] = acl_line.strip()
 
-                # Build Acl model
                 acl_name = (
                     acl_name_match.group(1)
                     if acl_name_match
                     else FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
-                # DS389: set permissions based on parsed permission list
+
                 perm_read = "read" in permissions
                 perm_write = "write" in permissions
                 perm_add = "add" in permissions
@@ -457,7 +375,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 acl = m.Ldif.Acl(
                     name=acl_name,
                     target=m.Ldif.AclTarget(
-                        target_dn=target_dn,  # DS389: extracted from target clause
+                        target_dn=target_dn,
                         attributes=target_attributes,
                     ),
                     subject=m.Ldif.AclSubject(
@@ -483,13 +401,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
-            """Write ACL data to RFC-compliant string format.
-
-            389 Directory Server ACLs use ACI format with structured clauses.
-            Accepts base Acl type for polymorphism - all Acl subclasses are valid.
-            """
+            """Write ACL data to RFC-compliant string format."""
             try:
-                # Use raw_acl if available (preserves original format)
                 if acl_data.raw_acl:
                     acl_str = (
                         f"{FlextLdifServersDs389.Constants.ACL_ACI_PREFIX} "
@@ -497,11 +410,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     )
                     return FlextResult[str].ok(acl_str)
 
-                # Build from model fields
                 acl_name = (
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
-                # Type narrowing: ensure correct types for ACL methods
+
                 permissions_raw = acl_data.permissions
                 if not isinstance(
                     permissions_raw,
@@ -526,7 +438,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     raise TypeError(msg)
                 userdn = self._resolve_acl_userdn(subject_raw)
 
-                # Build ACI string from structured fields
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)
 
             except (ValueError, TypeError, AttributeError) as exc:
@@ -643,9 +554,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             ):
                 return True
 
-            # Use lowercase objectClass key for normalized attributes
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
-            # Get objectClass from normalized attributes
+
             object_classes_raw = normalized_attrs.get(
                 objectclass_key,
                 [],
@@ -670,7 +580,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> FlextResult[m.Ldif.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
-                # Check if entry has attributes and DN
                 if not entry.attributes or not entry.dn:
                     return FlextResult[m.Ldif.Entry].ok(entry)
 
@@ -678,8 +587,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
 
-                # Store metadata in extensions - use centralized constant
-                # Pass StrEnum directly (compatible with Literal type)
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.DS389,
                 )

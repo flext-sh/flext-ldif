@@ -1,12 +1,4 @@
-"""Event and configuration models for LDIF processing.
-
-This module contains event models, configuration models, and related
-classes for LDIF processing operations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Event and configuration models for LDIF processing."""
 
 from __future__ import annotations
 
@@ -22,30 +14,10 @@ from flext_ldif.constants import c
 
 
 class FlextLdifModelsEvents:
-    """LDIF event and configuration models container class.
-
-    This class acts as a namespace container for LDIF event and configuration models.
-    All nested classes are accessed via FlextLdifModels.* in the main models.py.
-    """
-
-    # Event configuration classes would go here
+    """LDIF event and configuration models container class."""
 
     class DnEventConfig(FlextLdifModelsBase):
-        """Configuration for DN event creation.
-
-        Consolidates parameters for create_dn_event utility function.
-        Reduces function signature from 6 parameters to 1 model.
-
-        Example:
-            config = FlextLdifModels.DnEventConfig(
-                dn_operation="normalize",
-                input_dn="CN=Admin,DC=Example",
-                output_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
-                operation_duration_ms=1.2,
-            )
-            event = FlextLdifUtilities.Events.create_dn_event(config)
-
-        """
+        """Configuration for DN event creation."""
 
         dn_operation: str = Field(
             ...,
@@ -73,24 +45,7 @@ class FlextLdifModelsEvents:
         )
 
     class MigrationEventConfig(FlextLdifModelsBase):
-        """Configuration for migration event creation.
-
-        Consolidates parameters for create_migration_event utility function.
-        Reduces function signature from 8 parameters to 1 model.
-
-        Example:
-            config = FlextLdifModels.MigrationEventConfig(
-                migration_operation="full_migration",
-                source_server="oid",
-                target_server="oud",
-                entries_processed=1000,
-                entries_migrated=980,
-                entries_failed=20,
-                migration_duration_ms=5420.5,
-            )
-            event = FlextLdifUtilities.Events.create_migration_event(config)
-
-        """
+        """Configuration for migration event creation."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -125,32 +80,13 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: Sequence[object] | None = (
-            Field(  # Can contain ErrorDetail or dict
-                default=None,
-                description="Error information for failed entries",
-            )
+        error_details: Sequence[object] | None = Field(
+            default=None,
+            description="Error information for failed entries",
         )
 
     class ConversionEventConfig(FlextLdifModelsBase):
-        """Configuration for conversion event creation.
-
-        Consolidates parameters for create_conversion_event utility function.
-        Reduces function signature from 8 parameters to 1 model.
-
-        Example:
-            config = FlextLdifModels.ConversionEventConfig(
-                conversion_operation="acl_transform",
-                source_format="orclaci",
-                target_format="olcAccess",
-                items_processed=50,
-                items_converted=48,
-                items_failed=2,
-                conversion_duration_ms=125.3,
-            )
-            event = FlextLdifUtilities.Events.create_conversion_event(config)
-
-        """
+        """Configuration for conversion event creation."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -185,22 +121,13 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: Sequence[object] | None = (
-            Field(  # Can contain ErrorDetail or dict
-                default=None,
-                description="Error information for failed conversions",
-            )
+        error_details: Sequence[object] | None = Field(
+            default=None,
+            description="Error information for failed conversions",
         )
 
-    # =========================================================================
-    # DOMAIN EVENTS - Processing events
-    # =========================================================================
-
     class FilterEvent(m.DomainEvent):
-        """Event emitted when LDIF entries are filtered.
-
-        Tracks filtering operations including criteria applied and results.
-        """
+        """Event emitted when LDIF entries are filtered."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -229,10 +156,7 @@ class FlextLdifModelsEvents:
         )
 
     class ParseEvent(m.DomainEvent):
-        """Event emitted when LDIF content is parsed.
-
-        Tracks parsing operations including source type and results.
-        """
+        """Event emitted when LDIF content is parsed."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -328,10 +252,7 @@ class FlextLdifModelsEvents:
             })
 
     class WriteEvent(m.DomainEvent):
-        """Event emitted when LDIF content is written.
-
-        Tracks writing operations including target and results.
-        """
+        """Event emitted when LDIF content is written."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -364,10 +285,7 @@ class FlextLdifModelsEvents:
         )
 
     class CategoryEvent(m.DomainEvent):
-        """Event emitted when entries are categorized.
-
-        Tracks categorization operations including rules applied and results.
-        """
+        """Event emitted when entries are categorized."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -392,10 +310,7 @@ class FlextLdifModelsEvents:
         )
 
     class AclEvent(m.DomainEvent):
-        """Event emitted when ACLs are processed.
-
-        Tracks ACL parsing, transformation, and validation operations.
-        """
+        """Event emitted when ACLs are processed."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -428,10 +343,7 @@ class FlextLdifModelsEvents:
         )
 
     class DnEvent(m.DomainEvent):
-        """Event emitted when DNs are processed.
-
-        Tracks DN parsing, normalization, and validation operations.
-        """
+        """Event emitted when DNs are processed."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -468,10 +380,7 @@ class FlextLdifModelsEvents:
         )
 
     class MigrationEvent(m.DomainEvent):
-        """Event emitted during migration operations.
-
-        Tracks server-to-server migration progress and results.
-        """
+        """Event emitted during migration operations."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -516,10 +425,7 @@ class FlextLdifModelsEvents:
         )
 
     class ConversionEvent(m.DomainEvent):
-        """Event emitted during conversion operations.
-
-        Tracks format conversion progress and results.
-        """
+        """Event emitted during conversion operations."""
 
         model_config = ConfigDict(
             extra="forbid",
@@ -564,10 +470,7 @@ class FlextLdifModelsEvents:
         )
 
     class SchemaEvent(m.DomainEvent):
-        """Event emitted during schema processing.
-
-        Tracks schema parsing, validation, and transformation operations.
-        """
+        """Event emitted during schema processing."""
 
         model_config = ConfigDict(
             extra="forbid",

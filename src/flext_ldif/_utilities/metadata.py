@@ -1,23 +1,4 @@
-"""LDIF Metadata Utilities - Helpers for Validation Metadata Management.
-
-Provides helper methods for preserving, extracting, and tracking validation metadata
-during LDIF conversions between different LDAP servers (OID, OUD, OpenLDAP, etc.).
-
-FASE 3: Services Integration with Metadata
-- preserve_validation_metadata(): Copy metadata from source to target with transformations
-- extract_rfc_violations(): Extract all RFC violations from model metadata
-- track_conversion_step(): Add conversion step to transformation history
-
-PHASE 2: Zero Data Loss Tracking
-- track_transformation(): Populate AttributeTransformation in QuirkMetadata
-- preserve_original_format(): Store original formatting for round-trip
-- track_boolean_conversion(): Track boolean conversions (0/1 vs TRUE/FALSE)
-- validate_metadata_completeness(): Check all transformations are tracked
-- assert_no_data_loss(): Validation helper for testing round-trips
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""LDIF Metadata Utilities - Helpers for Validation Metadata Management."""
 
 from __future__ import annotations
 
@@ -45,29 +26,11 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesMetadata:
-    """Metadata utilities for LDIF validation metadata management.
-
-    Provides helper methods for:
-    - Preserving validation metadata during conversions
-    - Extracting RFC violations from models
-    - Tracking conversion steps in transformation history
-    """
+    """Metadata utilities for LDIF validation metadata management."""
 
     @staticmethod
     def _convert_transformation_to_metadata_value() -> Mapping[str, t.ScalarValue]:
-        """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict.
-
-        TransformationInfo has changes: list[str], which needs to be converted
-        to a format compatible with MetadataAttributeValue (Mapping[str, ScalarValue]).
-        We convert list[str] to a single string joined by commas for compatibility.
-
-        Args:
-            # transformation: TransformationInfo Pydantic model with step, server, changes
-
-        Returns:
-            Mapping compatible with MetadataAttributeValue
-
-        """
+        """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict."""
         # Business Rule: TransformationInfo has optional fields (all fields can be None)
         # We need to handle missing keys gracefully with defaults
         # Implication: When storing transformation info in metadata, missing fields
@@ -79,13 +42,7 @@ class FlextLdifUtilitiesMetadata:
         source_attributes: FlextLdifModelsMetadata.DynamicMetadata,
         target_attributes: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
-        """Copy violation fields from source to target metadata attributes.
-
-        Args:
-            source_attributes: Source metadata attributes with violations
-            target_attributes: Target metadata attributes to receive violations
-
-        """
+        """Copy violation fields from source to target metadata attributes."""
         # Preserve RFC violations from source
         for violation_key in [
             "rfc_violations",
@@ -107,13 +64,7 @@ class FlextLdifUtilitiesMetadata:
         model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
-        """Set validation_metadata on model (handles both mutable and frozen models).
-
-        Args:
-            model: Model to set metadata on
-            metadata: DynamicMetadata instance to set
-
-        """
+        """Set validation_metadata on model (handles both mutable and frozen models)."""
         # Safely set validation_metadata if the attribute exists
         try:
             if hasattr(model, "validation_metadata"):
@@ -133,9 +84,7 @@ class FlextLdifUtilitiesMetadata:
             # Ignore if attribute cannot be set
             pass
 
-    # =========================================================================
     # UNIFIED PARAMETERIZED METADATA TRACKER
-    # =========================================================================
 
     @staticmethod
     def _get_metadata_dict(
@@ -225,21 +174,7 @@ class FlextLdifUtilitiesMetadata:
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
-        """Generic helper to track items in model validation_metadata.
-
-        Consolidates common pattern of get-or-init metadata, add item, set back.
-
-        Args:
-            model: Model to update
-            metadata_key: Key in metadata to update (e.g., "transformations")
-            item_data: Dictionary data to add
-            append_to_list: If True, append to list; if False, set as dict
-            update_conversion_path: If set, update conversion_path with this server
-
-        Returns:
-            Model with updated metadata
-
-        """
+        """Generic helper to track items in model validation_metadata."""
         metadata = FlextLdifUtilitiesMetadata._get_metadata_dict(model)
 
         if metadata_key not in metadata:
@@ -413,20 +348,7 @@ class FlextLdifUtilitiesMetadata:
         target_model: p.Ldif.ModelWithValidationMetadataProtocol,
         # transformation: m.Ldif.Types.TransformationInfo,
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
-        """Copy validation_metadata from source to target, adding transformation.
-
-        Preserves RFC violations captured in FASE 1 validators and adds
-        conversion transformation metadata for audit trail.
-
-        Args:
-            source_model: Source model with validation_metadata to preserve
-            target_model: Target model to receive metadata
-            # transformation: Transformation details dictionary to add (step, server, changes)
-
-        Returns:
-            Target model with preserved metadata and added transformation
-
-        """
+        """Copy validation_metadata from source to target, adding transformation."""
         source_metadata = FlextLdifUtilitiesMetadata._extract_source_metadata(
             source_model,
         )
@@ -490,27 +412,7 @@ class FlextLdifUtilitiesMetadata:
     def extract_rfc_violations(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
     ) -> list[str]:
-        """Extract all RFC violations from model validation_metadata.
-
-        Aggregates violations from:
-        - rfc_violations: Direct RFC violations
-        - dn_violations: Distinguished Name RFC violations
-        - attribute_violations: Attribute name RFC violations
-
-        Args:
-            model: Model with validation_metadata containing violations
-
-        Returns:
-            List of all RFC violation messages (empty if no violations)
-
-        Example:
-            >>> violations = FlextLdifUtilitiesMetadata.extract_rfc_violations(entry)
-            >>> if violations:
-            ...     print(f"Found {len(violations)} RFC violations")
-            ...     for violation in violations:
-            ...         print(f"  - {violation}")
-
-        """
+        """Extract all RFC violations from model validation_metadata."""
         metadata = getattr(model, "validation_metadata", None)
         if metadata is None:
             return []
@@ -542,29 +444,7 @@ class FlextLdifUtilitiesMetadata:
         server: str,
         _changes: list[str],
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
-        """Add conversion step to model transformation history.
-
-        Tracks each step in the conversion pipeline for audit trail and debugging.
-        Creates validation_metadata if not present.
-
-        Args:
-            model: Model to track conversion step
-            _step: Conversion step name (e.g., "normalize_to_rfc", "denormalize_from_rfc")
-            server: Server type performing the step (e.g., "oid", "oud", "rfc")
-            _changes: List of changes applied in this step
-
-        Returns:
-            Model with updated transformation history
-
-        Example:
-            >>> entry = FlextLdifUtilitiesMetadata.track_conversion_step(
-            ...     model=entry,
-            ...     _step="normalize_to_rfc",
-            ...     server="oid",
-            ...     _changes=["DN lowercased", "ACL format normalized"],
-            ... )
-
-        """
+        """Add conversion step to model transformation history."""
         # Create TransformationInfo model (Pydantic model compatible with MetadataAttributeValue)
         # transformation_info = m.Ldif.Types.TransformationInfo(
         #     step=_step,
@@ -584,38 +464,14 @@ class FlextLdifUtilitiesMetadata:
             update_conversion_path=server,
         )
 
-    # =========================================================================
     # ZERO DATA LOSS TRACKING (Phase 2)
-    # =========================================================================
 
     @staticmethod
     def track_transformation(
         # metadata: m.Ldif.QuirkMetadata,
         config: FlextLdifModelsSettings.TransformationTrackingConfig,
     ) -> None:
-        """Track an attribute transformation in QuirkMetadata.
-
-        Populates the attribute_transformations dict with a complete
-        AttributeTransformation record for audit trail and round-trip support.
-
-        CRITICAL: This function ensures ALL transformations are tracked for zero data loss.
-        Every attribute change (rename, remove, modify, add) MUST be tracked here.
-
-        Args:
-            config: TransformationTrackingConfig with all transformation parameters
-
-        Example:
-            >>> config = FlextLdifModelsSettings.TransformationTrackingConfig(
-            ...     original_name="orcldasisenabled",
-            ...     target_name="orcldasisenabled",
-            ...     original_values=["1"],
-            ...     target_values=["TRUE"],
-            ...     transformation_type="modified",
-            ...     reason="OID boolean '1' -> RFC 'TRUE'",
-            ... )
-            >>> FlextLdifUtilitiesMetadata.track_transformation(entry.metadata, config)
-
-        """
+        """Track an attribute transformation in QuirkMetadata."""
         # transformation = m.Ldif.AttributeTransformation(
         #     original_name=config.original_name,
         #     target_name=config.target_name,
@@ -641,29 +497,7 @@ class FlextLdifUtilitiesMetadata:
         *,
         original_value: bool | str | list[str] | int | None,
     ) -> None:
-        """Preserve original formatting details for round-trip support.
-
-        Stores original format information in original_format_details dict.
-        Used for preserving DN spacing, boolean format, ACI indentation, etc.
-
-        Args:
-            metadata: QuirkMetadata instance to update
-            format_key: Key identifying the format type (e.g., 'dn_spacing')
-            original_value: Original format value to preserve
-
-        Example:
-            >>> FlextLdifUtilitiesMetadata.preserve_original_format(
-            ...     metadata=entry.metadata,
-            ...     format_key="boolean_format",
-            ...     original_value="0/1",
-            ... )
-            >>> FlextLdifUtilitiesMetadata.preserve_original_format(
-            ...     metadata=entry.metadata,
-            ...     format_key="dn_spacing",
-            ...     original_value="cn=test, dc=example",
-            ... )
-
-        """
+        """Preserve original formatting details for round-trip support."""
         # Pydantic v2: Use model_validate() to create/update FormatDetails
         if metadata.original_format_details is None:
             # Create new FormatDetails with the key using model_validate
@@ -1109,28 +943,7 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(
         definition: str,
     ) -> m.Ldif.SchemaFormatDetails:
-        """Analyze schema definition to extract ALL formatting details.
-
-        Captures EVERY minimal difference for perfect round-trip:
-        - SYNTAX quotes (OID uses quotes, OUD/RFC do not)
-        - SYNTAX spacing (spaces before/after SYNTAX keyword)
-        - Attribute/ObjectClass case (attributetypes vs attributeTypes)
-        - NAME format (single vs multiple names)
-        - X-ORIGIN presence, value, spacing, quotes
-        - OBSOLETE presence and position
-        - Field order and EXACT spacing between fields
-        - Trailing spaces, leading spaces
-        - Spaces after OID, before NAME, etc.
-        - Quotes in all string fields (NAME, DESC, X-ORIGIN)
-        - Semicolons, commas, and other punctuation
-
-        Args:
-            definition: Original schema definition string
-
-        Returns:
-            SchemaFormatDetails with ALL formatting details captured
-
-        """
+        """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
         preview_len = c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH
         logger.debug(
@@ -1152,22 +965,7 @@ class FlextLdifUtilitiesMetadata:
         metadata: FlextLdifModelsDomains.QuirkMetadata,
         definition: str,
     ) -> None:
-        """Preserve complete schema formatting details for round-trip.
-
-        Analyzes schema definition and stores ALL formatting details
-        in schema_format_details for perfect round-trip conversion.
-
-        Args:
-            metadata: QuirkMetadata instance to update
-            definition: Original schema definition string
-
-        Example:
-            >>> FlextLdifUtilitiesMetadata.preserve_schema_formatting(
-            ...     metadata=attr.metadata,
-            ...     definition="attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  ",
-            ... )
-
-        """
+        """Preserve complete schema formatting details for round-trip."""
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition,
         )
@@ -1188,28 +986,7 @@ class FlextLdifUtilitiesMetadata:
         converted_value: str,
         format_direction: str = "OID->RFC",
     ) -> None:
-        """Track boolean conversion for round-trip support.
-
-        Records boolean value conversion (e.g., '0'/'1' to 'TRUE'/'FALSE')
-        in the boolean_conversions dict for exact round-trip restoration.
-
-        Args:
-            metadata: QuirkMetadata instance to update
-            attr_name: Attribute name being converted
-            original_value: Original boolean value (e.g., "0", "1", "TRUE", "FALSE")
-            converted_value: Converted boolean value
-            format_direction: Direction of conversion (e.g., "OID->RFC" or "RFC->OID")
-
-        Example:
-            >>> FlextLdifUtilitiesMetadata.track_boolean_conversion(
-            ...     metadata=entry.metadata,
-            ...     attr_name="orcldasisenabled",
-            ...     original_value="1",
-            ...     converted_value="TRUE",
-            ...     format_direction="OID->RFC",
-            ... )
-
-        """
+        """Track boolean conversion for round-trip support."""
         # Store conversion mapping for bidirectional lookup
         if format_direction == "OID->RFC":
             key = f"{attr_name}:oid_value"
@@ -1234,17 +1011,7 @@ class FlextLdifUtilitiesMetadata:
         converted: str | None,
         context: str = "entry",
     ) -> dict[str, t.MetadataAttributeValue]:
-        """Analyze minimal differences between original and converted strings.
-
-        Args:
-            original: Original string
-            converted: Converted string (None if unchanged)
-            context: Context for analysis (dn, attribute, schema, etc.)
-
-        Returns:
-            Dictionary with difference analysis
-
-        """
+        """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif.MetadataKeys
         differences: dict[str, t.MetadataAttributeValue] = {
             mk.HAS_DIFFERENCES: False,
@@ -1323,21 +1090,7 @@ class FlextLdifUtilitiesMetadata:
         mark_rejected: tuple[str, str] | None = None,
         mark_filtered: tuple[str, bool] | None = None,
     ) -> m.Ldif.Entry:
-        """Update entry processing statistics using FlextLdifUtilities.
-
-        Centralized helper for updating EntryStatistics in entry metadata.
-        Uses Pydantic model_copy for immutable updates.
-
-        Args:
-            entry: Entry to update
-            category: Category to assign (optional)
-            mark_rejected: Tuple of (category, reason) to mark as rejected (optional)
-            mark_filtered: Tuple of (filter_type, passed) to mark as filtered (optional)
-
-        Returns:
-            Entry with updated metadata
-
-        """
+        """Update entry processing statistics using FlextLdifUtilities."""
         if not entry.metadata:
             return entry
 
@@ -1378,15 +1131,7 @@ class FlextLdifUtilitiesMetadata:
     def get_original_attr_lines_from_metadata(
         metadata: m.Ldif.QuirkMetadata | None,
     ) -> list[str]:
-        """Extract original attribute lines from entry metadata.
-
-        Args:
-            metadata: QuirkMetadata containing preservation data
-
-        Returns:
-            List of original attribute lines in LDIF format
-
-        """
+        """Extract original attribute lines from entry metadata."""
         if not metadata:
             return []
 
@@ -1404,15 +1149,7 @@ class FlextLdifUtilitiesMetadata:
     def get_minimal_differences_from_metadata(
         metadata: m.Ldif.QuirkMetadata | None,
     ) -> dict[str, list[str]]:
-        """Extract minimal differences (changed attributes) from entry metadata.
-
-        Args:
-            metadata: QuirkMetadata containing transformation data
-
-        Returns:
-            Dictionary mapping attribute names to their values showing only changes
-
-        """
+        """Extract minimal differences (changed attributes) from entry metadata."""
         if not metadata:
             return {}
 
@@ -1433,24 +1170,7 @@ class FlextLdifUtilitiesMetadata:
     def extract_write_options(
         entry_data: m.Ldif.Entry | FlextLdifModelsDomains.Entry,
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
-        """Extract write options from entry metadata.
-
-        Retrieves WriteFormatOptions from entry.metadata.write_options if present.
-        This is commonly used to determine formatting options during LDIF writing.
-
-        Args:
-            entry_data: Entry with optional metadata.write_options.
-
-        Returns:
-            WriteFormatOptions if found and properly typed, None otherwise.
-
-        Example:
-            >>> write_opts = FlextLdifUtilities.Metadata.extract_write_options(entry)
-            >>> if write_opts and write_opts.sort_attributes:
-            ...     # Apply attribute sorting
-            ...     pass
-
-        """
+        """Extract write options from entry metadata."""
         if not entry_data.metadata:
             return None
         # Type narrowing: check if metadata has write_options attribute
@@ -1475,15 +1195,7 @@ class FlextLdifUtilitiesMetadata:
         metadata: m.Ldif.QuirkMetadata | FlextLdifModelsMetadata.EntryMetadata,
         ldif_content: str,
     ) -> None:
-        """Preserve original LDIF content in metadata for round-trip.
-
-        Stub implementation for metadata preservation.
-
-        Args:
-            metadata: QuirkMetadata or EntryMetadata instance to update
-            ldif_content: Original LDIF content
-
-        """
+        """Preserve original LDIF content in metadata for round-trip."""
         # Business Rule: EntryMetadata uses extra="allow" for dynamic attributes
         # but is frozen, so we cannot modify it directly. This is a stub implementation
         # that doesn't actually modify the metadata (frozen models require model_copy).
@@ -1499,19 +1211,7 @@ class FlextLdifUtilitiesMetadata:
         _original_acl_format: str | None = None,
         **extra: t.ScalarValue,
     ) -> dict[str, str | int | bool]:
-        """Build metadata for ACL parsing as a dictionary.
-
-        Returns a dict that can be used as ACL metadata extensions.
-
-        Args:
-            quirk_type: Server type
-            _original_acl_format: Original ACL format (unused)
-            extra: Additional keyword arguments (stored in dict)
-
-        Returns:
-            Dictionary with quirk_type and source_server fields
-
-        """
+        """Build metadata for ACL parsing as a dictionary."""
         result: dict[str, str | int | bool] = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,
@@ -1526,19 +1226,7 @@ class FlextLdifUtilitiesMetadata:
     def build_entry_metadata_extensions(
         quirk_type: str,
     ) -> dict[str, t.MetadataAttributeValue]:
-        """Build metadata extensions for entry as a dictionary.
-
-        Returns a dict that can be modified and then passed to QuirkMetadata.create_for().
-        This allows dict-style item assignment before creating the final QuirkMetadata.
-        Supports nested structures via t.MetadataAttributeValue.
-
-        Args:
-            quirk_type: Server type
-
-        Returns:
-            Dictionary with quirk_type and source_server fields
-
-        """
+        """Build metadata extensions for entry as a dictionary."""
         return {
             "quirk_type": quirk_type,
             "source_server": quirk_type,
@@ -1549,16 +1237,7 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
         **extra: t.ScalarValue,
     ) -> m.Ldif.FormatDetails:
-        """Build original format details for round-trip preservation.
-
-        Args:
-            quirk_type: Server type (used for context, stored in trailing_info)
-            extra: Additional keyword arguments (original_dn, cleaned_dn, etc.)
-
-        Returns:
-            FormatDetails instance for QuirkMetadata.original_format_details
-
-        """
+        """Build original format details for round-trip preservation."""
         # Extract commonly used format details from extra kwargs
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
@@ -1573,18 +1252,7 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
         **extra: t.GeneralValueType,
     ) -> dict[str, str | bool | list[str] | dict[str, str | list[str]]]:
-        """Build RFC compliance metadata as a dictionary.
-
-        Returns a dict that can be merged into extensions for QuirkMetadata.create_for().
-
-        Args:
-            quirk_type: Server type
-            extra: Additional keyword arguments (rfc_violations, attribute_conflicts, etc.)
-
-        Returns:
-            Dictionary with RFC compliance metadata
-
-        """
+        """Build RFC compliance metadata as a dictionary."""
         result: dict[str, str | bool | list[str] | dict[str, str | list[str]]] = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,
@@ -1606,52 +1274,20 @@ class FlextLdifUtilitiesMetadata:
         metadata: FlextLdifModelsDomains.QuirkMetadata,
         **extra: t.ScalarValue,
     ) -> None:
-        """Store minimal differences in metadata (stub).
-
-        Args:
-            metadata: QuirkMetadata instance (internal or facade type)
-            extra: Additional keyword arguments (ignored)
-
-        """
+        """Store minimal differences in metadata (stub)."""
 
     @staticmethod
     def track_minimal_differences_in_metadata(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
         **extra: t.ScalarValue,
     ) -> None:
-        """Track minimal differences in metadata (stub).
-
-        Args:
-            metadata: QuirkMetadata instance (internal or facade type)
-            extra: Additional keyword arguments (ignored)
-
-        """
+        """Track minimal differences in metadata (stub)."""
 
     @staticmethod
     def build_entry_parse_metadata(
         config: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
-        """Build QuirkMetadata for entry parsing with format preservation.
-
-        Creates a QuirkMetadata instance capturing all entry parsing details
-        for preservation and round-trip support.
-
-        Args:
-            config: EntryParseMetadataConfig with all parsing parameters
-
-        Returns:
-            QuirkMetadata with all entry parsing details preserved
-
-        Example:
-            >>> config = FlextLdifModelsSettings.EntryParseMetadataConfig(
-            ...     quirk_type="oid",
-            ...     original_entry_dn="cn=test,dc=example",
-            ...     cleaned_dn="cn=test,dc=example",
-            ...     original_dn_line="dn: cn=test,dc=example",
-            ... )
-            >>> metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(config)
-
-        """
+        """Build QuirkMetadata for entry parsing with format preservation."""
         # Build server_specific_data as EntryMetadata
         # Build dict iteratively to avoid invariance issues with dict literals
         server_data_dict: dict[str, t.MetadataAttributeValue] = {}

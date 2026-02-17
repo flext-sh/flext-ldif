@@ -1,8 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
 
@@ -22,11 +18,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesEntry:
-    """Entry transformation utilities - pure helper functions.
-
-    Common entry transformations extracted from server quirks.
-    Servers can use these for consistent attribute handling.
-    """
+    """Entry transformation utilities - pure helper functions."""
 
     # Minimum length for base64 pattern matching (use constant from c.Ldif.Format.Rfc directly in methods)
     # Note: Cannot use class attribute assignment with constants due to import order
@@ -37,17 +29,7 @@ class FlextLdifUtilitiesEntry:
         source_format: str,
         target_format: str,
     ) -> str:
-        """Convert a single boolean value between formats.
-
-        Args:
-            value: Boolean value to convert
-            source_format: Input format ("0/1" or "TRUE/FALSE")
-            target_format: Output format ("0/1" or "TRUE/FALSE")
-
-        Returns:
-            Converted boolean value or original value if no conversion needed
-
-        """
+        """Convert a single boolean value between formats."""
         if source_format == "0/1" and target_format == "TRUE/FALSE":
             return "TRUE" if value == "1" else "FALSE"
         if source_format == "TRUE/FALSE" and target_format == "0/1":
@@ -60,17 +42,7 @@ class FlextLdifUtilitiesEntry:
         source_format: str,
         target_format: str,
     ) -> list[str]:
-        """Convert all boolean values in an attribute's value list.
-
-        Args:
-            values: List of attribute values as strings (bytes already converted)
-            source_format: Input format ("0/1" or "TRUE/FALSE")
-            target_format: Output format ("0/1" or "TRUE/FALSE")
-
-        Returns:
-            List of converted boolean values as strings
-
-        """
+        """Convert all boolean values in an attribute's value list."""
         return [
             FlextLdifUtilitiesEntry._convert_single_boolean_value(
                 value,
@@ -88,18 +60,7 @@ class FlextLdifUtilitiesEntry:
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
     ) -> t.Ldif.NormalizedAttributesDict:
-        """Convert boolean attribute values between formats.
-
-        Args:
-            attributes: Entry attributes {attr_name: [values]} - values can be str, bytes, or list
-            boolean_attr_names: Set of attribute names (lowercase) to convert
-            source_format: Input format ("0/1" or "TRUE/FALSE")
-            target_format: Output format ("0/1" or "TRUE/FALSE")
-
-        Returns:
-            New attributes dict with converted boolean values as strings
-
-        """
+        """Convert boolean attribute values between formats."""
         if not attributes or not boolean_attr_names:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
@@ -167,16 +128,7 @@ class FlextLdifUtilitiesEntry:
         attributes: t.Ldif.AttributesDict,
         case_map: dict[str, str],
     ) -> t.Ldif.AttributesDict:
-        """Normalize attribute names using case mapping.
-
-        Args:
-            attributes: Entry attributes dict
-            case_map: Dict mapping lowercase names → proper case
-
-        Returns:
-            New attributes dict with normalized attribute names
-
-        """
+        """Normalize attribute names using case mapping."""
         if not attributes or not case_map:
             return attributes
 
@@ -193,22 +145,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def is_schema_entry(entry: m.Ldif.Entry, *, strict: bool = True) -> bool:
-        """Check if entry is a REAL schema entry with schema definitions.
-
-        CRITICAL: This method detects ONLY real LDAP schema entries that
-        contain attributetypes or objectclasses definitions. Entries with
-        "cn=schema" in DN but NO schema attributes (like ODIP config
-        entries) are NOT schema in strict mode.
-
-        Args:
-            entry: Entry to check (m.Ldif.Entry)
-            strict: If True, requires BOTH schema attrs AND DN pattern (default).
-                   If False, any of: DN pattern OR objectClass OR schema attrs.
-
-        Returns:
-            True if entry is a schema entry, False otherwise
-
-        """
+        """Check if entry is a REAL schema entry with schema definitions."""
         # Entry with no attributes cannot be a schema entry
         if entry.attributes is None:
             return False
@@ -246,16 +183,7 @@ class FlextLdifUtilitiesEntry:
         entry: m.Ldif.Entry,
         objectclasses: str | tuple[str, ...],
     ) -> bool:
-        """Check if entry has any of the specified objectClasses.
-
-        Args:
-            entry: Entry to check
-            objectclasses: Single objectClass or tuple of objectClasses to check
-
-        Returns:
-            True if entry has at least one of the specified objectClasses
-
-        """
+        """Check if entry has any of the specified objectClasses."""
         if not entry.attributes:
             return False
 
@@ -275,16 +203,7 @@ class FlextLdifUtilitiesEntry:
         entry: m.Ldif.Entry,
         attributes: list[str],
     ) -> bool:
-        """Check if entry has ALL specified attributes.
-
-        Args:
-            entry: Entry to check
-            attributes: List of attribute names to check
-
-        Returns:
-            True if entry has all specified attributes
-
-        """
+        """Check if entry has ALL specified attributes."""
         if not attributes:
             return True
 
@@ -300,16 +219,7 @@ class FlextLdifUtilitiesEntry:
         entry: m.Ldif.Entry,
         attributes: list[str],
     ) -> bool:
-        """Check if entry has ANY of the specified attributes.
-
-        Args:
-            entry: Entry to check
-            attributes: List of attribute names to check
-
-        Returns:
-            True if entry has at least one of the specified attributes
-
-        """
+        """Check if entry has ANY of the specified attributes."""
         if not attributes:
             return False
 
@@ -325,16 +235,7 @@ class FlextLdifUtilitiesEntry:
         entry: m.Ldif.Entry,
         attributes: list[str],
     ) -> m.Ldif.Entry:
-        """Remove specified attributes from entry.
-
-        Args:
-            entry: Entry to modify
-            attributes: List of attribute names to remove (case-insensitive)
-
-        Returns:
-            New entry with specified attributes removed
-
-        """
+        """Remove specified attributes from entry."""
         if not attributes or entry.attributes is None or entry.dn is None:
             return entry
 
@@ -364,21 +265,7 @@ class FlextLdifUtilitiesEntry:
         dict[str, t.MetadataAttributeValue],
         dict[str, str],
     ]:
-        """Analyze DN and attribute differences for round-trip support (DRY utility).
-
-        Extracted from server quirks for reuse across RFC, OID, OUD, etc.
-
-        Args:
-            entry_attrs: Original raw attributes
-            converted_attrs: Converted attributes
-            original_dn: Original DN string
-            cleaned_dn: Cleaned/normalized DN
-            normalize_attr_fn: Optional function to normalize attribute names
-
-        Returns:
-            Tuple of (dn_differences, attribute_differences, original_attrs_complete, original_case)
-
-        """
+        """Analyze DN and attribute differences for round-trip support (DRY utility)."""
         # Default normalizer: lowercase
         normalize = normalize_attr_fn or (lambda x: x.lower())
 
@@ -476,31 +363,7 @@ class FlextLdifUtilitiesEntry:
         attributes: Mapping[str, FlextTypes.GeneralValueType],
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
-        """Check if entry matches server-specific patterns.
-
-        Generic pattern matcher for server detection. Servers provide patterns,
-        this utility does the matching.
-
-        Args:
-            entry_dn: Entry DN string
-            attributes: Entry attributes dict/mapping
-            config: ServerPatternsConfig with all pattern matching parameters
-
-        Returns:
-            True if entry matches any pattern set
-
-        Example:
-            config = FlextLdifModelsSettings.ServerPatternsConfig(
-                dn_patterns=(("ou=users",), ("cn=REDACTED_LDAP_BIND_PASSWORD",)),
-                attr_prefixes=("orcl", "oracle"),
-                attr_names={"orclaci", "orclentrylevelaci"},
-                keyword_patterns=("orcl", "oracle"),
-            )
-            matches = FlextLdifUtilitiesEntry.matches_server_patterns(
-                entry_dn, attributes, config
-            )
-
-        """
+        """Check if entry matches server-specific patterns."""
         if not entry_dn or not attributes:
             return False
 
@@ -544,49 +407,7 @@ class FlextLdifUtilitiesEntry:
         attr_name_mappings: dict[str, str] | None = None,
         value_transformations: dict[str, dict[str, str]] | None = None,
     ) -> t.Ldif.NormalizedAttributesDict:
-        """Batch denormalize attributes for output.
-
-        Inverse of normalization - converts RFC-normalized attributes back to
-        server-specific format. Consolidates denormalization patterns from
-        OID and OUD servers into a single parameterized utility.
-
-        Denormalization Steps
-        =====================
-
-        1. **Case Restoration**: Restores original attribute name case
-           - Example: objectclass -> objectClass (OID format)
-
-        2. **Boolean Conversion**: Converts TRUE/FALSE to server format
-           - OID: TRUE -> 1, FALSE -> 0
-           - OpenLDAP: Uses TRUE/FALSE (no change)
-
-        3. **Name Mapping**: Restores server-specific attribute names
-           - Example: cn -> commonName (if server prefers full name)
-
-        4. **Value Transformations**: Server-specific value adjustments
-           - Syntax conversions, encoding changes, etc.
-
-        Args:
-            attributes: Normalized attributes dictionary
-            case_mappings: Attribute case restoration {normalized: original}
-            boolean_mappings: Boolean value mappings {TRUE: "1", FALSE: "0"}
-            attr_name_mappings: Attribute name mappings {rfc_name: server_name}
-            value_transformations: Per-attribute value mappings
-
-        Returns:
-            Denormalized attributes dictionary for server-specific output
-
-        Example:
-            >>> normalized = {"objectclass": ["person"], "orclisvisible": ["TRUE"]}
-            >>> denorm = FlextLdifUtilitiesEntry.denormalize_attributes_batch(
-            ...     normalized,
-            ...     case_mappings={"objectclass": "objectClass"},
-            ...     boolean_mappings={"TRUE": "1", "FALSE": "0"},
-            ... )
-            >>> denorm
-            {"objectClass": ["person"], "orclisvisible": ["1"]}
-
-        """
+        """Batch denormalize attributes for output."""
 
         def transform_value(attr_name: str, value: str) -> str:
             """Transform single value for attribute."""
@@ -633,37 +454,7 @@ class FlextLdifUtilitiesEntry:
         config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
         **kwargs: object,
     ) -> t.Ldif.AttributesDict:
-        """Batch normalize attributes from server format to RFC format.
-
-        Consolidates normalization patterns from OID and OUD servers into
-        a single parameterized utility.
-
-        Normalization Steps
-        ===================
-
-        1. **Case Normalization**: Normalizes attribute names to lowercase
-           - objectClass -> objectclass
-
-        2. **Boolean Normalization**: Converts server booleans to RFC format
-           - OID: 1 -> TRUE, 0 -> FALSE
-           - Preserves original format in metadata
-
-        3. **Name Normalization**: Maps server names to RFC names
-           - Example: commonName -> cn (if preferred)
-
-        4. **Operational Removal**: Optionally removes operational attributes
-           - createTimestamp, modifyTimestamp, etc.
-
-        Args:
-            attributes: Server-specific attributes dictionary
-            config: AttributeNormalizeConfig with all normalization parameters
-            **kwargs: Optional parameters for AttributeNormalizeConfig (case_mappings, boolean_mappings,
-                attr_name_mappings, strip_operational, operational_attrs) - used only if config is None
-
-        Returns:
-            Normalized attributes dictionary in RFC format
-
-        """
+        """Batch normalize attributes from server format to RFC format."""
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
@@ -711,9 +502,7 @@ class FlextLdifUtilitiesEntry:
 
         return result
 
-    # =========================================================================
     # BATCH METHODS - Power Method Support
-    # =========================================================================
 
     @staticmethod
     def _check_schema_criteria(entry: m.Ldif.Entry, *, is_schema: bool) -> bool:
@@ -757,41 +546,7 @@ class FlextLdifUtilitiesEntry:
         config: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
         **kwargs: object,
     ) -> bool:
-        """Check multiple entry criteria in one call.
-
-        Replaces multiple conditional checks:
-            if is_schema_entry(entry) and has_objectclass(entry, 'person'):
-                if has_all_attributes(entry, ['cn', 'sn']):
-                    ...
-
-        With single call:
-            if matches_criteria(
-                entry,
-                is_schema=True,
-                objectclasses=['person'],
-                required_attrs=['cn', 'sn']
-            ):
-
-        Args:
-            entry: Entry to check
-            config: EntryCriteriaConfig with all criteria parameters
-            **kwargs: Optional parameters for EntryCriteriaConfig (objectclasses, objectclass_mode,
-                required_attrs, any_attrs, dn_pattern, is_schema) - used only if config is None
-
-        Returns:
-            True if all specified criteria are met
-
-        Examples:
-            >>> config = FlextLdifModelsSettings.EntryCriteriaConfig(
-            ...     is_schema=False,
-            ...     objectclasses=["inetOrgPerson", "person"],
-            ...     objectclass_mode="any",
-            ...     required_attrs=["cn", "sn"],
-            ... )
-            >>> FlextLdifUtilitiesEntry.matches_criteria(entry, config=config)
-            True
-
-        """
+        """Check multiple entry criteria in one call."""
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
@@ -845,32 +600,7 @@ class FlextLdifUtilitiesEntry:
         config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
-        """Transform multiple entries with common operations.
-
-        Applies transformations in order:
-        1. Normalize DNs
-        2. Normalize attribute names
-        3. Convert boolean values
-        4. Remove specified attributes
-
-        Args:
-            entries: Entries to transform
-            config: EntryTransformConfig with all transformation parameters
-            **kwargs: Optional parameters for EntryTransformConfig (normalize_dns, normalize_attrs,
-                attr_case, convert_booleans, remove_attrs, fail_fast) - used only if config is None
-
-        Returns:
-            FlextResult containing list of transformed entries
-
-        Examples:
-            >>> config = FlextLdifModelsSettings.EntryTransformConfig(
-            ...     normalize_attrs=True,
-            ...     attr_case="lower",
-            ...     remove_attrs=["userPassword", "pwdHistory"],
-            ... )
-            >>> result = FlextLdifUtilitiesEntry.transform_batch(entries, config=config)
-
-        """
+        """Transform multiple entries with common operations."""
         # Use provided config or build from kwargs
         if config is None:
             # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
@@ -966,25 +696,7 @@ class FlextLdifUtilitiesEntry:
         config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
         **kwargs: object,
     ) -> FlextResult[list[m.Ldif.Entry]]:
-        """Filter entries based on criteria.
-
-        Args:
-            entries: Entries to filter
-            config: EntryFilterConfig with all filter parameters
-            **kwargs: Optional parameters for EntryFilterConfig (objectclasses, objectclass_mode,
-                required_attrs, dn_pattern, is_schema, exclude_schema) - used only if config is None
-
-        Returns:
-            FlextResult containing filtered entries
-
-        Example:
-            >>> config = FlextLdifModelsSettings.EntryFilterConfig(
-            ...     objectclasses=["inetOrgPerson"],
-            ...     exclude_schema=True,
-            ... )
-            >>> result = FlextLdifUtilitiesEntry.filter_batch(entries, config=config)
-
-        """
+        """Filter entries based on criteria."""
         # Use provided config or build from kwargs
         if config is None:
             # Handle exclude_schema as is_schema=False

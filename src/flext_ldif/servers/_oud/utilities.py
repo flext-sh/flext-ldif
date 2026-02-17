@@ -1,10 +1,4 @@
-"""Oracle Unified Directory (OUD) Utilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides OUD-specific utility functions for ACL parsing configuration.
-"""
+"""Oracle Unified Directory (OUD) Utilities."""
 
 from __future__ import annotations
 
@@ -13,24 +7,14 @@ from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudUtilities:
-    """Oracle Unified Directory-specific utilities.
-
-    Provides factory methods and helpers for OUD server operations.
-    Moved from constants.py to comply with architecture rules
-    (constants.py must contain only constants).
-    """
+    """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
     def get_parser_config() -> FlextLdifModelsSettings.AciParserConfig:
-        """Create AciParserConfig for OUD ACL parsing.
-
-        Returns:
-            AciParserConfig with OUD-specific patterns from Constants.
-
-        """
+        """Create AciParserConfig for OUD ACL parsing."""
         constants = FlextLdifServersOudConstants
         return FlextLdifModelsSettings.AciParserConfig(
-            server_type="oud",  # Use literal string for ServerTypeLiteral compatibility
+            server_type="oud",
             aci_prefix="aci:",
             version_acl_pattern=constants.ACL_VERSION_ACL_PATTERN,
             targetattr_pattern=constants.ACL_TARGETATTR_PATTERN,

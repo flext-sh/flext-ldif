@@ -1,12 +1,4 @@
-"""Service Registry using FlextRegistry class-level plugin API.
-
-Provides factory registration for services that would otherwise cause
-circular imports. Uses class-level storage so all instances share
-the same registered factories.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Service Registry using FlextRegistry class-level plugin API."""
 
 from __future__ import annotations
 
@@ -17,18 +9,12 @@ from flext_core import FlextResult as r, FlextTypes as t
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 
-# Factory type aliases (using t.GeneralValueType for type-safe factories)
 type FilterFactoryType = Callable[[], t.GeneralValueType]
 type CategorizationFactoryType = Callable[[str], t.GeneralValueType]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
-    """Service registry using FlextRegistry class-level plugin API.
-
-    Breaks circular dependencies between categorization and filter services
-    by providing a central registry for factory functions. Uses class-level
-    storage so all instances see the same registered factories.
-    """
+    """Service registry using FlextRegistry class-level plugin API."""
 
     FACTORIES: ClassVar[str] = "ldif_factories"
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
@@ -38,8 +24,6 @@ class FlextLdifServiceRegistry(FlextRegistry):
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         super().__init__(dispatcher=dispatcher, **data)
-
-    # Factory registration using class-level plugin API
 
     def register_filter_factory(self, factory: FilterFactoryType) -> r[bool]:
         """Register factory function for filter service."""
@@ -52,8 +36,6 @@ class FlextLdifServiceRegistry(FlextRegistry):
         """Register factory for categorization service."""
         return self.register_class_plugin(self.FACTORIES, "categorization", factory)
 
-    # Service resolution using class-level plugin API
-
     def get_filter_service(self) -> r[t.GeneralValueType]:
         """Get filter service instance from registered factory."""
         factory_result = self.get_class_plugin(self.FACTORIES, "filter")
@@ -64,7 +46,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
         factory_raw = factory_result.value
         if not callable(factory_raw):
             return r[t.GeneralValueType].fail("Filter factory is not callable")
-        # Execute factory and return result
+
         service = factory_raw()
         return r[t.GeneralValueType].ok(service)
 
@@ -80,7 +62,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
         factory_raw = factory_result.value
         if not callable(factory_raw):
             return r[t.GeneralValueType].fail("Categorization factory is not callable")
-        # Execute factory with server type and return result
+
         service = factory_raw(server_type)
         return r[t.GeneralValueType].ok(service)
 
@@ -110,9 +92,6 @@ class FlextLdifServiceRegistry(FlextRegistry):
         if cls._global_instance is not None:
             cls._global_instance.reset()
         cls._global_instance = None
-
-
-# Global instance functions for backward compatibility
 
 
 def get_registry() -> FlextLdifServiceRegistry:

@@ -1,12 +1,4 @@
-"""Shared models for LDIF processing.
-
-This module contains models that are shared between domain and settings
-modules to avoid circular imports.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Shared models for LDIF processing."""
 
 from __future__ import annotations
 

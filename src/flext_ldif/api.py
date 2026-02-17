@@ -1,31 +1,4 @@
-"""FLEXT-LDIF API - Unified Facade for LDIF Operations.
-
-This module provides the primary entry point for all LDIF operations in the FLEXT
-ecosystem. The FlextLdif class serves as a facade for LDIF parsing, writing,
-validation, and server detection operations.
-
-Business Rules:
-    - All LDIF operations MUST flow through this facade (single entry point pattern)
-    - Service instances are created lazily on first use (performance optimization)
-    - FlextResult pattern is used for all operations (no exceptions raised)
-    - Server type detection supports auto/manual/disabled modes via config
-
-Audit Implications:
-    - All operations are logged via FlextLdifServiceBase.logger
-    - Parse/write operations create audit trail with entry counts
-    - Detection operations log confidence scores and detected types
-    - Error messages include operation context for forensic analysis
-
-Architecture Notes:
-    - Implements Facade pattern over service classes (Parser, Writer, Detector)
-    - Uses Singleton pattern for global instance access
-    - Context manager support for resource cleanup
-    - All services inherit from FlextLdifServiceBase for consistent config access
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""FLEXT-LDIF API - Unified Facade for LDIF Operations."""
 
 from __future__ import annotations
 
@@ -35,7 +8,6 @@ from typing import ClassVar
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
 
-# Imports
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -53,106 +25,35 @@ from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import t
 
-# Access types directly via composition - no type aliases needed
 
-
-class FlextLdif(FlextLdifServiceBase):
-    r"""Main API facade for LDIF operations using composition pattern.
-
-    Provides a unified interface for LDIF parsing, writing, validation, and
-    server type detection. All operations return FlextResult for consistent
-    error handling.
-
-    Business Rules:
-        - Single entry point for all LDIF operations (facade pattern)
-        - Lazy initialization of service instances for performance
-        - Server type can be auto-detected or explicitly configured
-        - All parse/write operations support server-specific quirks
-
-    Audit Implications:
-        - Facade initialization logged at INFO level
-        - All operations inherit logging from service base class
-        - Entry counts and statistics logged for compliance reporting
-        - Detection confidence scores logged for traceability
-
-    Architecture Notes:
-        - Implements FlextService pattern via ``FlextLdifServiceBase[Entry]``
-        - Uses dict for service caching (Pydantic-compatible)
-        - Singleton pattern via get_instance() for global access
-        - Context manager support for resource cleanup
-
-    Example:
-        >>> from flext_ldif import FlextLdif
-        >>> api = FlextLdif()
-        >>> result = api.parse("dn: cn=test\ncn: test\n\n")
-        >>> if result.is_success:
-        ...     entries = result.value
-        ...     print(f"Parsed {len(entries)} entries")
-
-    """
+class FlextLdif(FlextLdifServiceBase[object]):
+    """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
+    _service_cache: dict[str, t.GeneralValueType]
 
     @classmethod
     def get_instance(cls) -> FlextLdif:
-        """Get singleton instance of FlextLdif.
-
-        Python 3.13+ Features:
-            - Advanced type narrowing with walrus operator
-            - Computed properties for lazy initialization
-
-        Business Rules:
-             - Returns existing instance if available
-             - Creates new instance if none exists
-             - Thread-safe initialization (implied by GIL for simple assignment)
-
-        Returns:
-            Singleton instance of FlextLdif facade.
-
-        """
-        # Python 3.13: Advanced singleton pattern with proper type safety
+        """Get singleton instance of FlextLdif."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def __init__(self, **kwargs: str | float | bool | None) -> None:
-        """Initialize LDIF facade.
-
-        Business Rules:
-            - Service instances are NOT created during init (lazy initialization)
-            - Configuration is inherited from FlextSettings namespace system
-            - Initialization is logged at INFO level for audit trail
-
-        Audit Implications:
-            - Facade initialization logged with readiness flags
-            - No actual LDIF operations performed during init
-
-        Args:
-            **kwargs: Additional kwargs for FlextService base class.
-
-        """
+        """Initialize LDIF facade."""
         super().__init__(**kwargs)
-        # Store services in model_extra dict to avoid frozen issues
-        self.__dict__["_service_cache"] = {}
+
+        self._service_cache = {}
         FlextLogger(__name__).info("FlextLdif facade initialized")
 
     def _get_service_cache(self) -> dict[str, t.GeneralValueType]:
         """Get service cache dict."""
-        cache = self.__dict__.get("_service_cache")
-        if cache is None:
-            cache = {}
-            self.__dict__["_service_cache"] = cache
-        return cache
+        return self._service_cache
 
     @property
     @computed_field
     def service_stats(self) -> dict[str, bool]:
-        """Pydantic 2 computed field showing service initialization status.
-
-        Returns:
-            Dict mapping service names to initialization status.
-
-        """
+        """Pydantic 2 computed field showing service initialization status."""
         cache = self._get_service_cache()
         return {
             "parser": "parser" in cache,
@@ -168,12 +69,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def processing_service(self) -> FlextLdifProcessing:
-        """Get processing service instance (lazy initialization).
-
-        Returns:
-            FlextLdifProcessing instance for batch/parallel processing.
-
-        """
+        """Get processing service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "processing_service" not in cache:
             cache["processing_service"] = FlextLdifProcessing()
@@ -185,12 +81,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def acl_service(self) -> FlextLdifAcl:
-        """Get ACL service instance (lazy initialization).
-
-        Returns:
-            FlextLdifAcl instance for ACL operations.
-
-        """
+        """Get ACL service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "acl_service" not in cache:
             cache["acl_service"] = FlextLdifAcl(server=self.server)
@@ -212,12 +103,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def parser(self) -> FlextLdifParser:
-        """Get parser service instance (lazy initialization).
-
-        Returns:
-            FlextLdifParser instance for LDIF parsing operations.
-
-        """
+        """Get parser service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "parser" not in cache:
             cache["parser"] = FlextLdifParser(server=self.server)
@@ -229,12 +115,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def writer(self) -> FlextLdifWriter:
-        """Get writer service instance (lazy initialization).
-
-        Returns:
-            FlextLdifWriter instance for LDIF writing operations.
-
-        """
+        """Get writer service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "writer" not in cache:
             cache["writer"] = FlextLdifWriter()
@@ -246,12 +127,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def detector(self) -> FlextLdifDetector:
-        """Get detector service instance (lazy initialization).
-
-        Returns:
-            FlextLdifDetector instance for server type detection.
-
-        """
+        """Get detector service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "detector" not in cache:
             cache["detector"] = FlextLdifDetector()
@@ -263,12 +139,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def entries_service(self) -> FlextLdifEntries:
-        """Get entries service instance (lazy initialization).
-
-        Returns:
-            FlextLdifEntries instance for entry operations.
-
-        """
+        """Get entries service instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "entries_service" not in cache:
             cache["entries_service"] = FlextLdifEntries()
@@ -280,12 +151,7 @@ class FlextLdif(FlextLdifServiceBase):
 
     @property
     def server(self) -> FlextLdifServer:
-        """Get server registry instance (lazy initialization).
-
-        Returns:
-            FlextLdifServer instance for server-specific quirks.
-
-        """
+        """Get server registry instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "server" not in cache:
             cache["server"] = FlextLdifServer()
@@ -304,26 +170,11 @@ class FlextLdif(FlextLdifServiceBase):
         options: m.Ldif.MigrateOptions | None = None,
         **kwargs: str | float | bool | None,
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
-        """Migrate LDIF data between servers.
-
-        Args:
-            input_dir: Directory containing source LDIF files.
-            output_dir: Directory for output LDIF files.
-            source_server: Source server type.
-            target_server: Target server type.
-            options: Migration options (MigrateOptions model).
-            **kwargs: Additional arguments for migration pipeline (will be merged with options).
-
-        Returns:
-            FlextResult containing migration results.
-
-        """
-        # Merge options into kwargs if provided
+        """Migrate LDIF data between servers."""
         if options and hasattr(options, "write_options") and options.write_options:
             kwargs.setdefault("fold_long_lines", options.write_options.fold_long_lines)
             kwargs.setdefault("sort_attributes", options.write_options.sort_attributes)
-            # Add other MigrateOptions fields to kwargs as needed
-        # Type narrowing: str to ServerTypeLiteral (cast is safe as API validates server types)
+
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
         pipeline = FlextLdifMigrationPipeline(
@@ -338,39 +189,22 @@ class FlextLdif(FlextLdifServiceBase):
     def process(
         self,
         processor_name: str,
-        entries: list[t.GeneralValueType],  # Lazy import: m.Ldif.Entry
+        entries: list[t.GeneralValueType],
         *,
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
     ) -> r[list[m.Ldif.ProcessingResult]]:
-        """Process entries using processing service.
-
-        Args:
-            processor_name: Name of processor ("transform", "validate").
-            entries: List of entries to process.
-            parallel: Whether to use parallel processing.
-            batch_size: Batch size for sequential processing.
-            max_workers: Max workers for parallel processing.
-
-        Returns:
-            FlextResult containing processed results.
-
-        """
-        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
-        # Python 3.10+ pattern matching for type-safe conversion
+        """Process entries using processing service."""
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             match entry:
                 case m.Ldif.Entry():
-                    # Already the correct type, use directly
                     entries_typed.append(entry)
                 case BaseModel():
-                    # Other Pydantic model, use JSON mode to exclude computed properties
                     entry_json = entry.model_dump_json()
                     entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
                 case _:
-                    # Fallback: attempt direct validation
                     entries_typed.append(m.Ldif.Entry.model_validate(entry))
         return self.processing_service.process(
             processor_name,
@@ -384,22 +218,12 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         entry: object,
     ) -> r[m.Ldif.Results.AclResponse]:
-        """Extract ACLs from entry.
-
-        Args:
-            entry: Entry to extract ACLs from.
-
-        Returns:
-            FlextResult containing ACL response.
-
-        """
-        # Determine server type from entry metadata if available, else default to RFC
+        """Extract ACLs from entry."""
         server_type: str = "rfc"
-        # Type narrowing: entry is object, convert to m.Ldif.Entry
+
         if isinstance(entry, m.Ldif.Entry):
             entry_typed = entry
         elif isinstance(entry, BaseModel):
-            # Other Pydantic model, use JSON mode to exclude computed properties
             entry_json = entry.model_dump_json()
             entry_typed = m.Ldif.Entry.model_validate_json(entry_json)
         else:
@@ -413,31 +237,14 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         entry: m.Ldif.Entry | dict[str, str | list[str]] | t.GeneralValueType,
     ) -> r[str]:
-        """Get entry DN string.
-
-        Args:
-            entry: Entry object or dict.
-
-        Returns:
-            FlextResult containing DN string.
-
-        """
+        """Get entry DN string."""
         return FlextLdifEntries.get_entry_dn(entry)
 
     def get_entry_attributes(
         self,
-        entry: object,  # Lazy import: m.Ldif.Entry
+        entry: object,
     ) -> r[dict[str, list[str]]]:
-        """Get entry attributes dictionary.
-
-        Args:
-            entry: Entry object.
-
-        Returns:
-            FlextResult containing attributes dict.
-
-        """
-        # Type narrowing: entry is object, convert to m.Ldif.Entry
+        """Get entry attributes dictionary."""
         if isinstance(entry, m.Ldif.Entry):
             entry_typed = entry
         elif isinstance(entry, BaseModel):
@@ -449,18 +256,9 @@ class FlextLdif(FlextLdifServiceBase):
 
     def get_entry_objectclasses(
         self,
-        entry: object,  # Lazy import: m.Ldif.Entry
+        entry: object,
     ) -> r[list[str]]:
-        """Get entry objectClass values.
-
-        Args:
-            entry: Entry object.
-
-        Returns:
-            FlextResult containing objectClasses list.
-
-        """
-        # Type narrowing: entry is object, convert to m.Ldif.Entry
+        """Get entry objectClass values."""
         if isinstance(entry, m.Ldif.Entry):
             entry_typed = entry
         elif isinstance(entry, BaseModel):
@@ -474,15 +272,7 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         attribute: t.GeneralValueType,
     ) -> r[list[str]]:
-        """Get values from attribute object.
-
-        Args:
-            attribute: Attribute object (str, list, or object with values).
-
-        Returns:
-            FlextResult containing values list.
-
-        """
+        """Get values from attribute object."""
         return FlextLdifEntries.get_attribute_values(attribute)
 
     def parse(
@@ -491,35 +281,12 @@ class FlextLdif(FlextLdifServiceBase):
         *,
         server_type: str | None = None,
     ) -> r[list[t.GeneralValueType]]:
-        """Parse LDIF content from string or file.
-
-        Business Rules:
-            - Accepts both string content and file paths
-            - Server type can be specified or auto-detected
-            - Returns list of Entry models with parsed attributes
-            - Empty content returns empty list (not an error)
-
-        Audit Implications:
-            - Parse operations logged with entry counts
-            - Server type used for parsing logged for traceability
-            - Errors include content snippet for debugging
-
-        Args:
-            content: LDIF content as string or Path to file.
-            server_type: Optional server type for quirks (auto-detected if None).
-
-        Returns:
-            FlextResult containing list of parsed Entry models.
-
-        """
-        # Determine effective server type
+        """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
 
-        # Handle file path input
         if isinstance(content, Path):
             return self._parse_file(content, server_type=effective_type)
 
-        # Parse string content
         parse_result = self.parser.parse_string(
             content,
             server_type=effective_type,
@@ -537,21 +304,7 @@ class FlextLdif(FlextLdifServiceBase):
         *,
         server_type: str | None = None,
     ) -> r[list[t.GeneralValueType]]:
-        """Parse LDIF file (internal helper).
-
-        Business Rules:
-            - File must exist and be readable
-            - Large files loaded into memory (streaming not yet supported)
-            - Server type can be specified or auto-detected
-
-        Args:
-            path: Path to LDIF file.
-            server_type: Optional server type for quirks.
-
-        Returns:
-            FlextResult containing list of parsed Entry models.
-
-        """
+        """Parse LDIF file (internal helper)."""
         if not path.exists():
             return r[list[t.GeneralValueType]].fail(f"File not found: {path}")
 
@@ -568,22 +321,7 @@ class FlextLdif(FlextLdifServiceBase):
         attributes: dict[str, str | list[str]],
         objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
-        """Create a new Entry model.
-
-        Business Rules:
-            - DN is required and must be valid
-            - Attributes must be dict[str, str | list[str]] format
-            - Entry is validated during creation
-
-        Args:
-            dn: Distinguished name for the entry.
-            attributes: Entry attributes as dict of attribute name to values.
-            objectclasses: Optional list of objectClasses to add.
-
-        Returns:
-            FlextResult containing created Entry model.
-
-        """
+        """Create a new Entry model."""
         return FlextLdifEntries.create_entry(
             dn=dn,
             attributes=attributes,
@@ -594,26 +332,7 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         ldif_content: str | Path,
     ) -> r[m.Ldif.LdifResults.ServerDetectionResult]:
-        """Detect LDAP server type from LDIF content.
-
-        Business Rules:
-            - Analyzes content for server-specific patterns
-            - Returns detection result with confidence score
-            - Falls back to RFC if no patterns detected
-            - Minimum confidence threshold: 0.6
-
-        Audit Implications:
-            - Detection results logged with confidence scores
-            - Pattern matches logged for traceability
-
-        Args:
-            ldif_content: LDIF content to analyze.
-
-        Returns:
-            FlextResult containing ServerDetectionResult with server type and confidence.
-
-        """
-        # Convert Path to str if needed
+        """Detect LDAP server type from LDIF content."""
         content_str: str | None = None
         if isinstance(ldif_content, Path):
             try:
@@ -630,30 +349,11 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         ldif_content: str | None = None,
     ) -> r[str]:
-        """Get effective server type based on config and detection.
-
-        Business Rules:
-            - If quirks_detection_mode is "manual", returns configured type
-            - If quirks_detection_mode is "auto", detects from content
-            - If quirks_detection_mode is "disabled", returns "rfc"
-            - Falls back to "rfc" if detection fails or content is None
-
-        Args:
-            ldif_content: Optional LDIF content for auto-detection.
-
-        Returns:
-            FlextResult containing effective server type string.
-
-        """
+        """Get effective server type based on config and detection."""
         return self.detector.get_effective_server_type(ldif_content=ldif_content)
 
     def _get_effective_server_type_value(self) -> str:
-        """Get effective server type value (internal helper).
-
-        Returns:
-            Server type string (defaults to "rfc" on failure).
-
-        """
+        """Get effective server type value (internal helper)."""
         result = self.get_effective_server_type()
         if result.is_success:
             return result.value
@@ -665,22 +365,7 @@ class FlextLdif(FlextLdifServiceBase):
         *,
         server_type: str | None = None,
     ) -> r[str]:
-        """Write entries to LDIF format string.
-
-        Business Rules:
-            - Produces RFC 2849 compliant LDIF output
-            - Server type controls formatting quirks
-            - Empty entry list produces empty string
-
-        Args:
-            entries: List of Entry models to write.
-            server_type: Optional server type for formatting quirks.
-
-        Returns:
-            FlextResult containing LDIF formatted string.
-
-        """
-        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
+        """Write entries to LDIF format string."""
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -690,7 +375,7 @@ class FlextLdif(FlextLdifServiceBase):
                 entries_typed.append(m.Ldif.Entry.model_validate_json(entry_json))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        # Type narrowing: server_type str to ServerTypeLiteral
+
         effective_type = server_type or self._get_effective_server_type_value()
         server_type_typed: str | None = (
             str(effective_type) if effective_type is not None else None
@@ -707,22 +392,7 @@ class FlextLdif(FlextLdifServiceBase):
         *,
         server_type: str | None = None,
     ) -> r[bool]:
-        """Write entries to LDIF file.
-
-        Business Rules:
-            - Creates parent directories if needed
-            - Overwrites existing file
-            - Uses UTF-8 encoding
-
-        Args:
-            entries: List of Entry models to write.
-            path: Output file path.
-            server_type: Optional server type for formatting quirks.
-
-        Returns:
-            FlextResult containing True on success.
-
-        """
+        """Write entries to LDIF file."""
         write_result = self.write(entries, server_type=server_type)
         if write_result.is_failure:
             return r[bool].fail(str(write_result.error))
@@ -739,21 +409,7 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         entries: list[t.GeneralValueType],
     ) -> r[m.Ldif.Results.ValidationResult]:
-        """Validate list of entries.
-
-        Business Rules:
-            - Validates DN format for each entry
-            - Validates required attributes present
-            - Returns True if all entries valid
-
-        Args:
-            entries: List of Entry models to validate.
-
-        Returns:
-            FlextResult containing True if all valid, error message otherwise.
-
-        """
-        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
+        """Validate list of entries."""
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -762,7 +418,7 @@ class FlextLdif(FlextLdifServiceBase):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        # Use validation service for proper ValidationResult
+
         validation_service = FlextLdifValidation()
         return FlextLdifAnalysis.validate_entries(
             entries_typed,
@@ -774,16 +430,7 @@ class FlextLdif(FlextLdifServiceBase):
         entries: list[t.GeneralValueType],
         filter_func: p.Ldif.PredicateProtocol[t.GeneralValueType],
     ) -> r[list[t.GeneralValueType]]:
-        """Filter entries using predicate function.
-
-        Args:
-            entries: List of Entry models to filter.
-            filter_func: Predicate function returning True to include entry.
-
-        Returns:
-            FlextResult containing filtered list of entries.
-
-        """
+        """Filter entries using predicate function."""
         try:
             filtered = [entry for entry in entries if filter_func(entry)]
             return r[list[t.GeneralValueType]].ok(filtered)
@@ -794,16 +441,7 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         _entries: list[object],
     ) -> r[m.Ldif.Results.EntriesStatistics]:
-        """Get statistics for list of entries.
-
-        Args:
-            _entries: List of Entry models to analyze.
-
-        Returns:
-            FlextResult containing EntriesStatistics model.
-
-        """
-        # Type narrowing: entries is list[t.GeneralValueType], convert to list[m.Ldif.Entry]
+        """Get statistics for list of entries."""
         entries_typed: list[m.Ldif.Entry] = []
         for entry in _entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -812,7 +450,7 @@ class FlextLdif(FlextLdifServiceBase):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
             else:
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
-        # Use statistics service instead of direct model access
+
         stats_service = FlextLdifStatistics()
         return stats_service.calculate_for_entries(entries_typed)
 
@@ -820,19 +458,7 @@ class FlextLdif(FlextLdifServiceBase):
         self,
         entries: list[t.GeneralValueType],
     ) -> r[list[t.GeneralValueType]]:
-        """Filter entries to only person entries.
-
-        Business Rules:
-            - Filters by objectClass containing "person", "inetOrgPerson",
-              "organizationalPerson", or similar person object classes.
-
-        Args:
-            entries: List of Entry models to filter.
-
-        Returns:
-            FlextResult containing filtered list of person entries.
-
-        """
+        """Filter entries to only person entries."""
         person_classes = {"person", "inetorgperson", "organizationalperson"}
 
         class IsPersonPredicate:
@@ -846,7 +472,6 @@ class FlextLdif(FlextLdifServiceBase):
                 if isinstance(entry, dict):
                     objectclasses = entry.get("objectClass", [])
                 elif isinstance(entry, m.Ldif.Entry):
-                    # Use Protocol method for type safety
                     attrs = entry.attributes
                     if attrs is None:
                         return False
@@ -857,13 +482,11 @@ class FlextLdif(FlextLdifServiceBase):
                 else:
                     return False
 
-                # Type narrowing: convert to list of strings
                 if isinstance(objectclasses, str):
                     objectclasses_list: list[str] = [objectclasses]
                 elif isinstance(objectclasses, list):
                     objectclasses_list = [str(oc) for oc in objectclasses]
                 else:
-                    # Not iterable or wrong type
                     return False
 
                 return any(oc.lower() in person_classes for oc in objectclasses_list)
@@ -871,22 +494,12 @@ class FlextLdif(FlextLdifServiceBase):
         return self.filter_entries(entries, IsPersonPredicate())
 
     def execute(self) -> r[object]:
-        """Execute service health check for FlextService pattern compliance.
-
-        Business Rules:
-            - Returns success if facade is properly initialized
-            - Used by service orchestrators for readiness checks
-
-        Returns:
-            FlextResult indicating service health.
-
-        """
-        # Health check - verify services can be accessed
+        """Execute service health check for FlextService pattern compliance."""
         try:
             _ = self.parser
             _ = self.writer
             _ = self.detector
-            # Use domain model directly
+
             health_entry = m.Ldif.Entry.model_validate({
                 "dn": "cn=health-check",
                 "attributes": {"cn": ["health-check"]},
@@ -896,5 +509,4 @@ class FlextLdif(FlextLdifServiceBase):
             return r[object].fail(f"Health check failed: {e}")
 
 
-# Module-level convenience export
 __all__ = ["FlextLdif"]

@@ -1,10 +1,4 @@
-"""Base server classes for LDIF/LDAP processing.
-
-This module exports the base classes used by all server implementations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Base server classes for LDIF/LDAP processing."""
 
 from __future__ import annotations
 

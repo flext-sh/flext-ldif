@@ -1,10 +1,4 @@
-"""OUD (Oracle Unified Directory) Server Classes.
-
-This module exports the OUD server quirk classes used by oud.py.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""OUD (Oracle Unified Directory) Server Classes."""
 
 from __future__ import annotations
 

@@ -8,6 +8,13 @@ from __future__ import annotations
 
 import pytest
 from tests.conftest import FlextLdifFixtures
+from tests.conftest_shared import (
+    _create_real_parser_service,
+    _create_real_writer_service,
+    _create_sample_acl,
+    _create_sample_schema_attribute,
+    _create_sample_schema_objectclass,
+)
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
@@ -36,19 +43,6 @@ def ldif_api() -> FlextLdif:
     Each test gets a clean FlextLdif instance.
     """
     return FlextLdif.get_instance()
-
-
-@pytest.fixture(autouse=True)
-def cleanup_state() -> None:
-    """Autouse fixture to clean shared state between tests.
-
-    Runs after each test to prevent state pollution to subsequent tests.
-    Ensures test isolation even when fixtures have shared state.
-    """
-    return
-    # Post-test cleanup - if singleton state needs to be cleared,
-    # it would be done here. Currently, creating fresh FlextLdif instances
-    # in function-scoped ldif_api fixture provides sufficient isolation.
 
 
 @pytest.fixture
@@ -113,34 +107,13 @@ def acl_quirk(rfc_acl_quirk: t.AclQuirk) -> t.AclQuirk:
 @pytest.fixture
 def sample_schema_attribute() -> m.Ldif.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return m.Ldif.SchemaAttribute(
-        oid=c.RFC.ATTR_OID_CN,
-        name=c.RFC.ATTR_NAME_CN,
-        desc=None,
-        sup=None,
-        equality=None,
-        ordering=None,
-        substr=None,
-        syntax=None,
-        length=None,
-        usage=None,
-        x_origin=None,
-        x_file_ref=None,
-        x_name=None,
-        x_alias=None,
-        x_oid=None,
-    )
+    return _create_sample_schema_attribute()
 
 
 @pytest.fixture
 def sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return m.Ldif.SchemaObjectClass(
-        oid=c.RFC.OC_OID_PERSON,
-        name=c.RFC.OC_NAME_PERSON,
-        desc=None,
-        sup=None,
-    )
+    return _create_sample_schema_objectclass()
 
 
 @pytest.fixture
@@ -167,7 +140,7 @@ def sample_entry() -> p.Entry:
 @pytest.fixture
 def sample_acl() -> m.Ldif.Acl:
     """Provides a sample Acl for tests."""
-    return m.Ldif.Acl(raw_acl="test: acl", server_type="rfc")
+    return _create_sample_acl()
 
 
 @pytest.fixture
@@ -287,7 +260,7 @@ def oid_entry_quirk(
 
 
 @pytest.fixture
-def oid_fixtures() -> object:
+def oid_fixtures() -> FlextLdifFixtures.OID:
     """Provides OID fixture loader instance for tests.
 
     Uses lazy loading to defer fixture file loading until actually needed.
@@ -307,13 +280,13 @@ def oud_schema_quirk(
 @pytest.fixture
 def real_writer_service() -> FlextLdifWriter:
     """Provides real writer service for conversion tests."""
-    return FlextLdifWriter()
+    return _create_real_writer_service()
 
 
 @pytest.fixture
 def real_parser_service() -> FlextLdifParser:
     """Provides real parser service for conversion tests."""
-    return FlextLdifParser()
+    return _create_real_parser_service()
 
 
 # Conversion test constants are now in tests/constants.py as c.Conversion

@@ -1,11 +1,4 @@
-"""Filters service - LDIF Entry Filtering Operations.
-
-Provides filtering operations for LDIF entries including schema OID filtering.
-Follows FlextService patterns from flext-core.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Filters service - LDIF Entry Filtering Operations."""
 
 from __future__ import annotations
 
@@ -20,12 +13,7 @@ logger: Final = FlextLogger(__name__)
 
 
 class FlextLdifFilters:
-    """LDIF entry filtering service.
-
-    Provides static/classmethod-based filtering operations for LDIF entries.
-    Designed for use by FlextLdifCategorization and other services that need
-    to filter entries based on various criteria.
-    """
+    """LDIF entry filtering service."""
 
     @classmethod
     def _extract_allowed_oids(
@@ -47,12 +35,7 @@ class FlextLdifFilters:
         attr_keys: tuple[str, str],
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
-        """Check if schema OID matches allowed set.
-
-        Returns:
-            Tuple of (is_schema_entry, should_include)
-
-        """
+        """Check if schema OID matches allowed set."""
         key1, key2 = attr_keys
         if key1 not in attrs and key2 not in attrs:
             return False, True
@@ -77,15 +60,11 @@ class FlextLdifFilters:
         if attrs is None:
             return True
 
-        # Extract attributes dict from Attributes if needed
         if hasattr(attrs, "attributes"):
-            # Type narrowing: attrs.attributes is Mapping[str, list[str]]
             attrs_dict: Mapping[str, list[str]] = attrs.attributes
         else:
-            # attrs is neither Attributes nor Mapping, return True (include entry)
             return True
 
-        # Check each schema type
         is_attr, include_attr = cls._check_schema_oid(
             attrs_dict,
             ("attributeTypes", "attributetypes"),
@@ -118,32 +97,12 @@ class FlextLdifFilters:
         entries: list[m.Ldif.Entry],
         allowed_oids: Mapping[str, frozenset[str]],
     ) -> r[list[m.Ldif.Entry]]:
-        """Filter schema entries by allowed OIDs.
-
-        Filters schema entries based on OID whitelists for:
-        - attributeTypes (allowed_attribute_oids)
-        - objectClasses (allowed_objectclass_oids)
-        - matchingRules (allowed_matchingrule_oids)
-        - matchingRuleUse (allowed_matchingruleuse_oids)
-
-        Args:
-            entries: List of schema entries to filter
-            allowed_oids: Mapping of OID category to frozenset of allowed OIDs:
-                - allowed_attribute_oids: frozenset of allowed attribute OIDs
-                - allowed_objectclass_oids: frozenset of allowed objectclass OIDs
-                - allowed_matchingrule_oids: frozenset of allowed matching rule OIDs
-                - allowed_matchingruleuse_oids: frozenset of allowed matching rule use OIDs
-
-        Returns:
-            FlextResult containing filtered list of entries
-
-        """
+        """Filter schema entries by allowed OIDs."""
         try:
             allowed_attr, allowed_oc, allowed_mr, allowed_mru = (
                 cls._extract_allowed_oids(allowed_oids)
             )
 
-            # If no OID filters specified, return all entries
             if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
                 return r[list[m.Ldif.Entry]].ok(entries)
 
@@ -176,34 +135,18 @@ class FlextLdifFilters:
         cls,
         values: list[str],
     ) -> str | None:
-        """Extract OID from schema attribute value.
-
-        Schema attributes like attributeTypes contain definitions with OIDs.
-        Format: ( OID NAME ... )
-
-        Args:
-            values: List of schema attribute values
-
-        Returns:
-            Extracted OID string or None if not found
-
-        """
+        """Extract OID from schema attribute value."""
         if not values:
             return None
 
-        # Get first value (schema definitions are usually single-valued)
         value = values[0] if values else ""
 
-        # OID is typically the first token after opening parenthesis
-        # Format: ( 1.2.3.4 NAME 'foo' ... )
         value = value.strip()
         if value.startswith("("):
-            # Remove opening parenthesis and split
             parts = value[1:].strip().split()
             if parts:
-                # First part should be the OID
                 oid = parts[0]
-                # Validate it looks like an OID (starts with digit)
+
                 if oid and oid[0].isdigit():
                     return oid
 

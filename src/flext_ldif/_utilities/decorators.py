@@ -1,22 +1,4 @@
-"""Standardized decorators for quirk metadata assignment across all servers.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-This module provides reusable decorators for parse/write methods to automatically
-attach quirk metadata (quirk_type, timestamp, server_type) to parsing results.
-
-Eliminates ~200-300 lines of duplicate metadata assignment code by consolidating
-the pattern into a single decorator that can be applied to any parse_* or write_*
-method across all 12 server implementations.
-
-Usage:
-    class CustomSchema(FlextLdifServersRfc.Schema):
-        @FlextLdifUtilitiesDecorators.attach_parse_metadata("custom_server")
-        def _parse_attribute(self, attr_definition: str) -> r[SchemaAttribute]:
-            # Parse logic here...
-            result = self._do_parse(attr_definition)
-"""
+"""Standardized decorators for quirk metadata assignment across all servers."""
 
 from __future__ import annotations
 
@@ -35,12 +17,7 @@ logger = FlextLogger(__name__)
 
 
 def generate_iso_timestamp() -> str:
-    """Generate ISO 8601 timestamp string.
-
-    Returns:
-        ISO 8601 formatted timestamp string (e.g., "2025-01-15T10:30:00Z")
-
-    """
+    """Generate ISO 8601 timestamp string."""
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
@@ -58,17 +35,7 @@ class FlextLdifUtilitiesDecorators:
             | float
         ),
     ) -> str | None:
-        """Extract SERVER_TYPE from class Constants via MRO traversal.
-
-        Internal helper to reduce complexity in attach_parse_metadata.
-
-        Args:
-            obj: Object instance to extract server type from (any type with __class__)
-
-        Returns:
-            Server type string or None if not found
-
-        """
+        """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not hasattr(obj, "__class__"):
             return None
 
@@ -92,17 +59,7 @@ class FlextLdifUtilitiesDecorators:
         quirk_type: str,
         server_type: str | None,
     ) -> None:
-        """Attach metadata to result value if it has metadata attribute.
-
-        Internal helper to reduce complexity in attach_parse_metadata.
-        Mutates result_value by setting metadata attribute.
-
-        Args:
-            result_value: Unwrapped result value from FlextResult
-            quirk_type: Quirk type for metadata
-            server_type: Server type from Constants
-
-        """
+        """Attach metadata to result value if it has metadata attribute."""
         # Only attach metadata to models with metadata attribute
         if not (
             getattr(result_value, "metadata", None) is not None
@@ -162,26 +119,7 @@ class FlextLdifUtilitiesDecorators:
     def attach_parse_metadata(
         quirk_type: str,
     ) -> t.Ldif.Decorators.ParseMethodDecorator:
-        """Decorator to automatically attach metadata to parse method results.
-
-        Wraps parse_attribute, parse_objectclass, parse_acl, parse_entry methods
-        to attach consistent metadata (quirk_type, timestamp, server_type).
-
-        Args:
-            quirk_type: Server type (e.g., "oid", "oud", "rfc")
-
-        Returns:
-            Decorator function that wraps parse methods
-
-        Example:
-            @attach_parse_metadata("oid")
-            def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
-                result = ... # Parse logic
-                return result
-
-            # Result automatically has metadata attached with quirk_type="oid"
-
-        """
+        """Decorator to automatically attach metadata to parse method results."""
 
         def decorator(
             func: t.Ldif.Decorators.ParseMethod,
@@ -232,24 +170,7 @@ class FlextLdifUtilitiesDecorators:
     def attach_write_metadata(
         _quirk_type: str,
     ) -> t.Ldif.Decorators.WriteMethodDecorator:
-        """Decorator to automatically attach metadata to write method results.
-
-        Wraps write_attribute, write_objectclass, write_acl, write_entry methods
-        to attach consistent metadata during serialization operations.
-
-        Args:
-            _quirk_type: Server type (e.g., "oid", "oud", "rfc") - reserved for future use
-
-        Returns:
-            Decorator function that wraps write methods
-
-        Example:
-            @attach_write_metadata("oid")
-            def _write_attribute(self, definition: SchemaAttribute) -> r[str]:
-                result = ... # Write logic
-                return result
-
-        """
+        """Decorator to automatically attach metadata to write method results."""
 
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
@@ -275,18 +196,7 @@ class FlextLdifUtilitiesDecorators:
     def _safe_operation(
         operation_name: str,
     ) -> t.Ldif.Decorators.SafeMethodDecorator:
-        """Generic decorator to wrap methods with standardized error handling.
-
-        Internal helper used by safe_parse and safe_write decorators.
-        Eliminates 89 lines of duplication between parse/write decorators.
-
-        Args:
-            operation_name: Operation name for error messages
-
-        Returns:
-            Decorator that adds error handling
-
-        """
+        """Generic decorator to wrap methods with standardized error handling."""
 
         def decorator(
             func: t.Ldif.Decorators.SafeMethod,
@@ -317,47 +227,14 @@ class FlextLdifUtilitiesDecorators:
     def safe_parse(
         operation_name: str,
     ) -> t.Ldif.Decorators.SafeMethodDecorator:
-        """Decorator to wrap parse methods with standardized error handling.
-
-        Consolidates try/except patterns across all servers (eliminates 200-300 lines).
-        Automatically catches exceptions and returns r.fail with context.
-
-        Args:
-            operation_name: Operation name for error messages (e.g., "OID attribute parsing")
-
-        Returns:
-            Decorator that adds error handling
-
-        Example:
-            @FlextLdifUtilitiesDecorators.safe_parse("OID attribute parsing")
-            def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
-                # Parse logic - exceptions automatically caught
-                return r[str].ok(parsed_attr)
-
-        """
+        """Decorator to wrap parse methods with standardized error handling."""
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
     @staticmethod
     def safe_write(
         operation_name: str,
     ) -> t.Ldif.Decorators.SafeMethodDecorator:
-        """Decorator to wrap write methods with standardized error handling.
-
-        Consolidates try/except patterns for write operations across all servers.
-
-        Args:
-            operation_name: Operation name for error messages (e.g., "OID attribute writing")
-
-        Returns:
-            Decorator that adds error handling
-
-        Example:
-            @FlextLdifUtilitiesDecorators.safe_write("OID attribute writing")
-            def _write_attribute(self, attr: SchemaAttribute) -> r[str]:
-                # Write logic - exceptions automatically caught
-                return r[str].ok(ldif_str)
-
-        """
+        """Decorator to wrap write methods with standardized error handling."""
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
 

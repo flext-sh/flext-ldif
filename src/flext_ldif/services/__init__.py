@@ -1,13 +1,4 @@
-"""FLEXT-LDIF Services - Internal Business Logic Layer.
-
-Internal services for FLEXT-LDIF operations. These services are NOT part of
-the public API and should NOT be imported directly by external consumers.
-
-Use the FlextLdif facade for all LDIF operations instead.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT-LDIF Services - Internal Business Logic Layer."""
 
 from __future__ import annotations
 

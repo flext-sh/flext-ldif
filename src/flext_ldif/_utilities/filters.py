@@ -1,32 +1,4 @@
-"""Power Method Filters - Entry filtering classes for pipelines.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides filter classes for the power method pipeline system:
-    - EntryFilter: Base class for entry filters
-    - Filter: Factory class for creating filters
-    - Composable filters with &, |, ~ operators
-
-Python 3.13+ features:
-    - PEP 695 type parameter syntax
-    - Self type for method chaining
-    - Operator overloading for filter composition
-
-Usage:
-    from flext_ldif._utilities.filters import Filter
-
-    # Simple filter
-    result = FlextLdifUtilities.filter(entries, Filter.by_objectclass("person"))
-
-    # Composite filter with operators
-    filter = (
-        Filter.by_dn(r".*ou=users.*")
-        & Filter.by_objectclass("inetOrgPerson")
-        & ~Filter.by_attrs("disabled")
-    )
-    result = FlextLdifUtilities.filter(entries, filter)
-"""
+"""Power Method Filters - Entry filtering classes for pipelines."""
 
 from __future__ import annotations
 
@@ -39,196 +11,88 @@ from typing import Literal
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import FlextLdifModels as m
 
-# =========================================================================
 # BASE FILTER CLASS
-# =========================================================================
 
 
 class EntryFilter[T](ABC):
-    """Abstract base class for entry filters.
-
-    Filters implement the FilterProtocol and support operator composition:
-        - filter1 & filter2 - AND combination
-        - filter1 | filter2 - OR combination
-        - ~filter - NOT (negation)
-
-    Type Parameters:
-        T: The type being filtered (typically Entry)
-
-    Subclasses must implement:
-        - matches(): Check if an item matches the filter
-    """
+    """Abstract base class for entry filters."""
 
     __slots__ = ()
 
     @abstractmethod
     def matches(self, item: T) -> bool:
-        """Check if an item matches the filter criteria.
-
-        Args:
-            item: The item to check
-
-        Returns:
-            True if the item matches, False otherwise
-
-        """
+        """Check if an item matches the filter criteria."""
         ...
 
     def __and__(self, other: EntryFilter[T]) -> AndFilter[T]:
-        """AND combination: filter1 & filter2.
-
-        Args:
-            other: Another filter to combine with
-
-        Returns:
-            Combined AndFilter
-
-        """
+        """AND combination: filter1 & filter2."""
         return AndFilter(self, other)
 
     def __or__(self, other: EntryFilter[T]) -> OrFilter[T]:
-        """OR combination: filter1 | filter2.
-
-        Args:
-            other: Another filter to combine with
-
-        Returns:
-            Combined OrFilter
-
-        """
+        """OR combination: filter1 | filter2."""
         return OrFilter(self, other)
 
     def __invert__(self) -> NotFilter[T]:
-        """NOT negation: ~filter.
-
-        Returns:
-            Negated NotFilter
-
-        """
+        """NOT negation: ~filter."""
         return NotFilter(self)
 
     def filter(self, items: Sequence[T]) -> list[T]:
-        """Filter a sequence of items.
-
-        Args:
-            items: Sequence of items to filter
-
-        Returns:
-            List of items matching the filter
-
-        """
+        """Filter a sequence of items."""
         return [item for item in items if self.matches(item)]
 
 
-# =========================================================================
 # COMPOSITE FILTERS - AND, OR, NOT
-# =========================================================================
 
 
 class AndFilter[T](EntryFilter[T]):
-    """Filter that combines two filters with AND logic.
-
-    Both filters must match for the composite to match.
-    """
+    """Filter that combines two filters with AND logic."""
 
     __slots__ = ("_left", "_right")
 
     def __init__(self, left: EntryFilter[T], right: EntryFilter[T]) -> None:
-        """Initialize AND filter.
-
-        Args:
-            left: First filter
-            right: Second filter
-
-        """
+        """Initialize AND filter."""
         self._left = left
         self._right = right
 
     def matches(self, item: T) -> bool:
-        """Check if item matches both filters.
-
-        Args:
-            item: Item to check
-
-        Returns:
-            True if both filters match
-
-        """
+        """Check if item matches both filters."""
         return self._left.matches(item) and self._right.matches(item)
 
 
 class OrFilter[T](EntryFilter[T]):
-    """Filter that combines two filters with OR logic.
-
-    Either filter matching is sufficient.
-    """
+    """Filter that combines two filters with OR logic."""
 
     __slots__ = ("_left", "_right")
 
     def __init__(self, left: EntryFilter[T], right: EntryFilter[T]) -> None:
-        """Initialize OR filter.
-
-        Args:
-            left: First filter
-            right: Second filter
-
-        """
+        """Initialize OR filter."""
         self._left = left
         self._right = right
 
     def matches(self, item: T) -> bool:
-        """Check if item matches either filter.
-
-        Args:
-            item: Item to check
-
-        Returns:
-            True if either filter matches
-
-        """
+        """Check if item matches either filter."""
         return self._left.matches(item) or self._right.matches(item)
 
 
 class NotFilter[T](EntryFilter[T]):
-    """Filter that negates another filter.
-
-    Matches when the inner filter does NOT match.
-    """
+    """Filter that negates another filter."""
 
     __slots__ = ("_inner",)
 
     def __init__(self, inner: EntryFilter[T]) -> None:
-        """Initialize NOT filter.
-
-        Args:
-            inner: Filter to negate
-
-        """
+        """Initialize NOT filter."""
         self._inner = inner
 
     def matches(self, item: T) -> bool:
-        """Check if item does NOT match inner filter.
-
-        Args:
-            item: Item to check
-
-        Returns:
-            True if inner filter does NOT match
-
-        """
+        """Check if item does NOT match inner filter."""
         return not self._inner.matches(item)
 
 
-# =========================================================================
 # DN FILTERS
-# =========================================================================
 
 
 class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries by DN pattern.
-
-    Matches entries whose DN matches the given regex pattern.
-    """
+    """Filter entries by DN pattern."""
 
     __slots__ = ("_case_insensitive", "_pattern")
 
@@ -238,13 +102,7 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
         *,
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize DN filter.
-
-        Args:
-            pattern: Regex pattern to match against DN
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize DN filter."""
         if isinstance(pattern, str):
             flags = re.IGNORECASE if case_insensitive else 0
             self._pattern = re.compile(pattern, flags)
@@ -253,15 +111,7 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
         self._case_insensitive = case_insensitive
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry DN matches pattern.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if DN matches pattern
-
-        """
+        """Check if entry DN matches pattern."""
         if item.dn is None:
             return False
 
@@ -270,10 +120,7 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
 
 
 class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries by base DN.
-
-    Matches entries whose DN is under the specified base DN.
-    """
+    """Filter entries by base DN."""
 
     __slots__ = ("_base_dn", "_case_insensitive")
 
@@ -283,26 +130,12 @@ class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
         *,
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize base DN filter.
-
-        Args:
-            base_dn: Base DN to check
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize base DN filter."""
         self._base_dn = base_dn.lower() if case_insensitive else base_dn
         self._case_insensitive = case_insensitive
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry DN is under base DN.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if DN is under base DN
-
-        """
+        """Check if entry DN is under base DN."""
         if item.dn is None:
             return False
 
@@ -313,16 +146,11 @@ class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
         return dn_str.endswith((self._base_dn, f",{self._base_dn}"))
 
 
-# =========================================================================
 # OBJECTCLASS FILTERS
-# =========================================================================
 
 
 class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries by objectClass.
-
-    Matches entries that have any or all of the specified objectClasses.
-    """
+    """Filter entries by objectClass."""
 
     __slots__ = ("_case_insensitive", "_classes", "_mode")
 
@@ -332,14 +160,7 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
         mode: Literal["any", "all"] = "any",
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize objectClass filter.
-
-        Args:
-            *classes: objectClass names to match
-            mode: "any" matches if any class is present, "all" requires all
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize objectClass filter."""
         self._case_insensitive = case_insensitive
         self._classes = (
             {c.lower() for c in classes} if case_insensitive else set(classes)
@@ -347,15 +168,7 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
         self._mode = mode
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry has matching objectClasses.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if objectClass criteria is met
-
-        """
+        """Check if entry has matching objectClasses."""
         if item.attributes is None:
             return False
 
@@ -381,16 +194,11 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
         return self._classes <= entry_classes
 
 
-# =========================================================================
 # ATTRIBUTE FILTERS
-# =========================================================================
 
 
 class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries by attribute presence.
-
-    Matches entries that have any or all of the specified attributes.
-    """
+    """Filter entries by attribute presence."""
 
     __slots__ = ("_attrs", "_case_insensitive", "_mode")
 
@@ -400,28 +208,13 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         mode: Literal["any", "all"] = "any",
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize attribute filter.
-
-        Args:
-            *attrs: Attribute names to check
-            mode: "any" matches if any attr is present, "all" requires all
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize attribute filter."""
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
         self._mode = mode
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry has matching attributes.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if attribute criteria is met
-
-        """
+        """Check if entry has matching attributes."""
         if item.attributes is None:
             return False
 
@@ -439,10 +232,7 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
 
 
 class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries by attribute value.
-
-    Matches entries where a specific attribute has a matching value.
-    """
+    """Filter entries by attribute value."""
 
     __slots__ = ("_attr", "_case_insensitive", "_pattern")
 
@@ -453,14 +243,7 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
         *,
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize attribute value filter.
-
-        Args:
-            attr: Attribute name to check
-            pattern: Regex pattern to match against value
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize attribute value filter."""
         self._attr = attr.lower() if case_insensitive else attr
         if isinstance(pattern, str):
             flags = re.IGNORECASE if case_insensitive else 0
@@ -470,15 +253,7 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
         self._case_insensitive = case_insensitive
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry has attribute with matching value.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if attribute value matches pattern
-
-        """
+        """Check if entry has attribute with matching value."""
         if item.attributes is None:
             return False
 
@@ -496,10 +271,7 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
 
 
 class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter entries that do NOT have specific attributes.
-
-    Matches entries that are missing any of the specified attributes.
-    """
+    """Filter entries that do NOT have specific attributes."""
 
     __slots__ = ("_attrs", "_case_insensitive")
 
@@ -508,26 +280,12 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         *attrs: str,
         case_insensitive: bool = True,
     ) -> None:
-        """Initialize exclude attributes filter.
-
-        Args:
-            *attrs: Attribute names to exclude
-            case_insensitive: Whether matching is case-insensitive
-
-        """
+        """Initialize exclude attributes filter."""
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry is missing any of the specified attributes.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if entry does NOT have any of the specified attributes
-
-        """
+        """Check if entry is missing any of the specified attributes."""
         if item.attributes is None:
             return True
 
@@ -541,38 +299,20 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         return not bool(entry_attrs & self._attrs)
 
 
-# =========================================================================
 # SPECIAL FILTERS
-# =========================================================================
 
 
 class IsSchemaEntryFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter for schema entries.
-
-    Matches entries that are schema entries (contain schema definitions).
-    """
+    """Filter for schema entries."""
 
     __slots__ = ("_is_schema",)
 
     def __init__(self, *, is_schema: bool = True) -> None:
-        """Initialize schema entry filter.
-
-        Args:
-            is_schema: True to match schema entries, False to exclude them
-
-        """
+        """Initialize schema entry filter."""
         self._is_schema = is_schema
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry is a schema entry.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if schema status matches expected value
-
-        """
+        """Check if entry is a schema entry."""
         # Use facade Entry type directly
         entry_facade: m.Ldif.Entry = item
         result = FlextLdifUtilitiesEntry.is_schema_entry(entry_facade)
@@ -580,10 +320,7 @@ class IsSchemaEntryFilter(EntryFilter["m.Ldif.Entry"]):
 
 
 class CustomFilter(EntryFilter["m.Ldif.Entry"]):
-    """Filter using a custom predicate function.
-
-    Allows arbitrary filtering via a callable.
-    """
+    """Filter using a custom predicate function."""
 
     __slots__ = ("_predicate",)
 
@@ -591,53 +328,19 @@ class CustomFilter(EntryFilter["m.Ldif.Entry"]):
         self,
         predicate: Callable[[m.Ldif.Entry], bool],
     ) -> None:
-        """Initialize custom filter.
-
-        Args:
-            predicate: Function that returns True for matching entries
-
-        """
+        """Initialize custom filter."""
         self._predicate = predicate
 
     def matches(self, item: m.Ldif.Entry) -> bool:
-        """Check if entry matches custom predicate.
-
-        Args:
-            item: Entry to check
-
-        Returns:
-            True if predicate returns True
-
-        """
+        """Check if entry matches custom predicate."""
         return self._predicate(item)
 
 
-# =========================================================================
 # FILTER FACTORY
-# =========================================================================
 
 
 class Filter:
-    """Factory class for creating entry filters.
-
-    Provides static methods to create filter objects for use in
-    pipeline chains. Filters support composition via operators:
-        - filter1 & filter2 - AND combination
-        - filter1 | filter2 - OR combination
-        - ~filter - NOT (negation)
-
-    Examples:
-        >>> # Simple filter
-        >>> result = entries | Filter.by_objectclass("person")
-
-        >>> # Composite filter
-        >>> filter = (
-        ...     Filter.by_dn(r".*ou=users.*")
-        ...     & Filter.by_objectclass("inetOrgPerson")
-        ...     & ~Filter.by_attrs("disabled")
-        ... )
-
-    """
+    """Factory class for creating entry filters."""
 
     __slots__ = ()
 
@@ -647,16 +350,7 @@ class Filter:
         *,
         case_insensitive: bool = True,
     ) -> ByDnFilter:
-        """Create a DN pattern filter.
-
-        Args:
-            pattern: Regex pattern to match against DN
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ByDnFilter instance
-
-        """
+        """Create a DN pattern filter."""
         return ByDnFilter(pattern, case_insensitive=case_insensitive)
 
     @staticmethod
@@ -665,16 +359,7 @@ class Filter:
         *,
         case_insensitive: bool = True,
     ) -> ByDnUnderBaseFilter:
-        """Create a base DN filter.
-
-        Args:
-            base_dn: Base DN to check
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ByDnUnderBaseFilter instance
-
-        """
+        """Create a base DN filter."""
         return ByDnUnderBaseFilter(base_dn, case_insensitive=case_insensitive)
 
     @staticmethod
@@ -683,17 +368,7 @@ class Filter:
         mode: Literal["any", "all"] = "any",
         case_insensitive: bool = True,
     ) -> ByObjectClassFilter:
-        """Create an objectClass filter.
-
-        Args:
-            *classes: objectClass names to match
-            mode: "any" matches if any class is present, "all" requires all
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ByObjectClassFilter instance
-
-        """
+        """Create an objectClass filter."""
         return ByObjectClassFilter(
             *classes,
             mode=mode,
@@ -706,17 +381,7 @@ class Filter:
         mode: Literal["any", "all"] = "any",
         case_insensitive: bool = True,
     ) -> ByAttrsFilter:
-        """Create an attribute presence filter.
-
-        Args:
-            *attrs: Attribute names to check
-            mode: "any" matches if any attr is present, "all" requires all
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ByAttrsFilter instance
-
-        """
+        """Create an attribute presence filter."""
         return ByAttrsFilter(*attrs, mode=mode, case_insensitive=case_insensitive)
 
     @staticmethod
@@ -726,17 +391,7 @@ class Filter:
         *,
         case_insensitive: bool = True,
     ) -> ByAttrValueFilter:
-        """Create an attribute value filter.
-
-        Args:
-            attr: Attribute name to check
-            pattern: Regex pattern to match against value
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ByAttrValueFilter instance
-
-        """
+        """Create an attribute value filter."""
         return ByAttrValueFilter(attr, pattern, case_insensitive=case_insensitive)
 
     @staticmethod
@@ -744,46 +399,19 @@ class Filter:
         *attrs: str,
         case_insensitive: bool = True,
     ) -> ExcludeAttrsFilter:
-        """Create an attribute exclusion filter.
-
-        Matches entries that do NOT have the specified attributes.
-
-        Args:
-            *attrs: Attribute names to exclude
-            case_insensitive: Whether matching is case-insensitive
-
-        Returns:
-            ExcludeAttrsFilter instance
-
-        """
+        """Create an attribute exclusion filter."""
         return ExcludeAttrsFilter(*attrs, case_insensitive=case_insensitive)
 
     @staticmethod
     def is_schema(*, is_schema: bool = True) -> IsSchemaEntryFilter:
-        """Create a schema entry filter.
-
-        Args:
-            is_schema: True to match schema entries, False to exclude them
-
-        Returns:
-            IsSchemaEntryFilter instance
-
-        """
+        """Create a schema entry filter."""
         return IsSchemaEntryFilter(is_schema=is_schema)
 
     @staticmethod
     def custom(
         predicate: Callable[[m.Ldif.Entry], bool],
     ) -> CustomFilter:
-        """Create a custom filter from a predicate function.
-
-        Args:
-            predicate: Function that returns True for matching entries
-
-        Returns:
-            CustomFilter instance
-
-        """
+        """Create a custom filter from a predicate function."""
         return CustomFilter(predicate)
 
 

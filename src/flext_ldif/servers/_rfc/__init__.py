@@ -1,11 +1,4 @@
-"""RFC 4512 Compliant Server Classes for LDIF/LDAP processing.
-
-This module exports the RFC base classes used by rfc.py.
-All server-specific implementations extend these RFC classes.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""RFC 4512 Compliant Server Classes for LDIF/LDAP processing."""
 
 from __future__ import annotations
 
