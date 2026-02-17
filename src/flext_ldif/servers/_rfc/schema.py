@@ -9,8 +9,8 @@ from typing import Literal, Self, overload
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -136,188 +136,81 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_definition: str,
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
-        self._get_server_type()
-
-        def parse_parts_hook(
-            definition: str,
-        ) -> dict[str, str | bool | None]:
-
-            parse_result = FlextLdifUtilitiesSchema.parse_attribute(definition)
-            if parse_result.is_failure:
-                return {}
-
-            if isinstance(parse_result.value, dict):
-                return {
-                    k: v
-                    for k, v in parse_result.value.items()
-                    if isinstance(k, str) and (isinstance(v, (str, bool)) or v is None)
-                }
-            return {}
-
-        parse_result_temp = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
-        if parse_result_temp.is_failure:
-            return FlextResult[m.Ldif.SchemaAttribute].fail(
-                parse_result_temp.error or "Failed to parse attribute",
-            )
-
-        parse_result_raw = parse_result_temp.value
-
-        model_fields = {
-            k: v
-            for k, v in parse_result_raw.items()
-            if k not in {"metadata_extensions", "syntax_validation"}
-        }
-        parse_result: FlextResult[m.Ldif.SchemaAttribute] = FlextResult[
-            m.Ldif.SchemaAttribute
-        ].ok(m.Ldif.SchemaAttribute.model_validate(model_fields))
-
-        if parse_result.is_failure:
-            return parse_result
-
-        return self._hook_post_parse_attribute(parse_result.value)
-
-    def _parse_attribute_core(
-        self,
-        attr_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
-        """Core RFC 4512 attribute parsing per Section 4.1.2."""
-        try:
-            parsed_result = self.parse_attribute(attr_definition)
-            if parsed_result.is_failure:
-                return parsed_result
-            parsed = (
-                parsed_result.value.model_dump()
-                if hasattr(parsed_result.value, "model_dump")
-                else {}
-            )
-
-            syntax_validation_error: str | None = None
-            syntax_validation = parsed.get("syntax_validation")
-            if syntax_validation and isinstance(syntax_validation, dict):
-                error_value = syntax_validation.get(
-                    c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR,
-                )
-                if isinstance(error_value, str):
-                    syntax_validation_error = error_value
-
-            syntax_val = parsed.get("syntax")
-            syntax_for_meta: str | None = (
-                syntax_val if isinstance(syntax_val, str | type(None)) else None
-            )
-
-            oid_val = parsed.get("oid")
-            oid_for_meta: str | None = (
-                oid_val if isinstance(oid_val, str | type(None)) else None
-            )
-
-            eq_val = parsed.get("equality")
-            eq_for_meta: str | None = (
-                eq_val if isinstance(eq_val, str | type(None)) else None
-            )
-
-            ord_val = parsed.get("ordering")
-            ord_for_meta: str | None = (
-                ord_val if isinstance(ord_val, str | type(None)) else None
-            )
-
-            sub_val = parsed.get("substr")
-            sub_for_meta: str | None = (
-                sub_val if isinstance(sub_val, str | type(None)) else None
-            )
-
-            sup_val = parsed.get("sup")
-            sup_for_meta: str | None = (
-                sup_val if isinstance(sup_val, str | type(None)) else None
-            )
-
-            server_type_value = self._get_server_type()
-            metadata = self._build_attribute_metadata(
-                attr_definition,
-                syntax_for_meta,
-                syntax_validation_error,
-                attribute_oid=oid_for_meta,
-                equality_oid=eq_for_meta,
-                ordering_oid=ord_for_meta,
-                substr_oid=sub_for_meta,
-                sup_oid=sup_for_meta,
-                _server_type=server_type_value,
-            )
-
-            oid: str = self._to_required_str(parsed["oid"])
-            name: str = self._to_required_str(parsed["name"])
-            desc: str | None = self._to_optional_str(parsed["desc"])
-            syntax: str | None = self._to_optional_str(parsed["syntax"])
-            length: int | None = self._to_optional_int(parsed["length"])
-            equality: str | None = self._to_optional_str(parsed["equality"])
-            ordering: str | None = self._to_optional_str(parsed["ordering"])
-            substr: str | None = self._to_optional_str(parsed["substr"])
-
-            single_value_value = parsed["single_value"]
-            single_value: bool = (
-                isinstance(single_value_value, bool) and single_value_value
-            )
-
-            no_user_mod_value = parsed["no_user_modification"]
-            no_user_modification: bool = (
-                isinstance(no_user_mod_value, bool) and no_user_mod_value
-            )
-
-            sup: str | None = self._to_optional_str(parsed["sup"])
-            usage: str | None = self._to_optional_str(parsed["usage"])
-
-            attribute = m.Ldif.SchemaAttribute(
-                oid=oid,
-                name=name,
-                desc=desc,
-                syntax=syntax,
-                length=length,
-                equality=equality,
-                ordering=ordering,
-                substr=substr,
-                single_value=single_value,
-                no_user_modification=no_user_modification,
-                sup=sup,
-                usage=usage,
-                metadata=metadata,
-                x_origin=None,
-                x_file_ref=None,
-                x_name=None,
-                x_alias=None,
-                x_oid=None,
-            )
-
-            return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC attribute parsing exception")
-            return FlextResult[m.Ldif.SchemaAttribute].fail(
-                f"RFC attribute parsing failed: {e}",
-            )
-
-    def _parse_objectclass(
-        self,
-        oc_definition: str,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-        """Parse RFC 4512 objectClass definition using generalized parser."""
         server_type = self._get_server_type()
 
         def parse_parts_hook(
             definition: str,
-        ) -> t.Ldif.ModelMetadata.ParsedObjectClassDict:
-            return FlextLdifUtilitiesSchema.parse_objectclass(definition)
+        ) -> FlextResult[dict[str, t.GeneralValueType]]:
+            return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
-        parse_result: FlextResult[m.Ldif.SchemaObjectClass] = (
-            FlextLdifUtilitiesObjectClass.parse(
-                definition=oc_definition,
-                server_type=server_type,
-                parse_parts_hook=parse_parts_hook,
-            )
+        parse_result_raw = FlextLdifUtilitiesAttribute.parse(
+            definition=attr_definition,
+            server_type=server_type,
+            parse_parts_hook=parse_parts_hook,
         )
 
-        if parse_result.is_failure:
-            return parse_result
+        if parse_result_raw.is_failure:
+            return FlextResult[m.Ldif.SchemaAttribute].fail(
+                parse_result_raw.error or "Attribute parsing failed",
+            )
 
-        return self._hook_post_parse_objectclass(parse_result.value)
+        parsed = parse_result_raw.value
+
+        metadata_extensions: dict[str, list[str] | str | bool | None] = {}
+        extensions_raw = parsed.get("metadata_extensions")
+        if isinstance(extensions_raw, dict):
+            metadata_extensions.update({
+                k: v
+                for k, v in extensions_raw.items()
+                if isinstance(k, str)
+                and (isinstance(v, (str, bool, list)) or v is None)
+            })
+
+        syntax = parsed.get("syntax")
+        syntax_str = str(syntax) if syntax is not None else None
+
+        syntax_validation_error = None
+        syntax_validation = parsed.get("syntax_validation")
+        if isinstance(syntax_validation, dict):
+            err = syntax_validation.get("syntax_validation_error")
+            if isinstance(err, str):
+                syntax_validation_error = err
+
+        attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
+
+        metadata = self._build_attribute_metadata(
+            attr_definition,
+            syntax_str,
+            syntax_validation_error,
+            attribute_oid=attribute_oid,
+            equality_oid=str(parsed.get("equality"))
+            if parsed.get("equality")
+            else None,
+            ordering_oid=str(parsed.get("ordering"))
+            if parsed.get("ordering")
+            else None,
+            substr_oid=str(parsed.get("substr")) if parsed.get("substr") else None,
+            sup_oid=str(parsed.get("sup")) if parsed.get("sup") else None,
+            _server_type=server_type,
+        )
+
+        attr_model = m.Ldif.SchemaAttribute(
+            oid=self._to_required_str(parsed.get("oid")),
+            name=self._to_optional_str(parsed.get("name")),
+            desc=self._to_optional_str(parsed.get("desc")),
+            equality=self._to_optional_str(parsed.get("equality")),
+            ordering=self._to_optional_str(parsed.get("ordering")),
+            substr=self._to_optional_str(parsed.get("substr")),
+            syntax=self._to_optional_str(parsed.get("syntax")),
+            length=self._to_optional_int(parsed.get("length")),
+            single_value=bool(parsed.get("single_value")),
+            no_user_modification=bool(parsed.get("no_user_modification")),
+            usage=self._to_optional_str(parsed.get("usage")),
+            sup=self._to_optional_str(parsed.get("sup")),
+            metadata=metadata,
+        )
+
+        return self._hook_post_parse_attribute(attr_model)
 
     def _validate_oid_list(
         self,
@@ -354,6 +247,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             oc_definition,
         )
         return metadata
+
+    def _parse_objectclass(
+        self,
+        oc_definition: str,
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        """Parse RFC 4512 objectClass definition using core parser."""
+        parse_result = self._parse_objectclass_core(oc_definition)
+
+        if parse_result.is_failure:
+            return parse_result
+
+        return self._hook_post_parse_objectclass(parse_result.value)
 
     def _parse_objectclass_core(
         self,
@@ -702,9 +607,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         result = self.execute(data=data, operation=operation)
 
-        if isinstance(result.value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)):
+        if isinstance(
+            result.value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
+        ):
             return result.value
-        raise TypeError(f"Unexpected return type: {type(result.value)}")
+        msg = f"Unexpected return type: {type(result.value)}"
+        raise TypeError(msg)
 
     def __new__(
         cls,
@@ -791,22 +699,20 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def create_metadata(
         self,
         original_format: str,
-        extensions: t.Ldif.MetadataDictMutable | None = None,
+        extensions: m.Ldif.DynamicMetadata | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create quirk metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
 
-        all_extensions: t.Ldif.MetadataDictMutable = {
-            c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
-        }
+        all_extensions = m.Ldif.DynamicMetadata()
+        all_extensions[c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT] = original_format
+
         if extensions:
-            all_extensions.update(extensions)
+            all_extensions.update(extensions.to_dict())
 
         return m.Ldif.QuirkMetadata(
             quirk_type=server_type_value,
-            extensions=m.Ldif.DynamicMetadata.model_validate(all_extensions)
-            if all_extensions
-            else m.Ldif.DynamicMetadata(),
+            extensions=all_extensions,
         )
 
     def extract_schemas_from_ldif(

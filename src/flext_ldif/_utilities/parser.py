@@ -7,7 +7,6 @@ import contextlib
 import re
 
 from flext_core import FlextLogger, FlextRuntime
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -19,30 +18,32 @@ from flext_ldif.typings import t
 logger = FlextLogger(__name__)
 
 
-class MetadataModel(BaseModel):
-    """Pydantic model for parsed metadata structures. Replaces TypedDict."""
-
-    model_config = ConfigDict(frozen=False, extra="allow")
-
-    extensions: t.Ldif.Extensions.ExtensionsDict | None = Field(default=None)
-
-
-MetadataDict = MetadataModel
-
-
 class FlextLdifUtilitiesParser:
     """Generic LDIF parsing utilities - simple helper functions."""
 
     @staticmethod
     def ext(
-        metadata: MetadataModel,
-    ) -> t.Ldif.Extensions.ExtensionsDict:
+        metadata: m.Ldif.DynamicMetadata,
+    ) -> dict[str, list[str]]:
         """Extract extension information from parsed metadata."""
-        result = metadata.extensions
+        if metadata is None:
+            return {}
+        result = metadata.get("extensions")
         if result is None or not isinstance(result, dict):
-            empty: t.Ldif.Extensions.ExtensionsDict = {}
-            return empty
-        return result
+            extensions: dict[str, list[str]] = {
+                k: v
+                for k, v in metadata.items()
+                if isinstance(v, list) and all(isinstance(i, str) for i in v)
+            }
+            return extensions
+
+        # Ensure result is strictly dict[str, list[str]]
+        strict_result: dict[str, list[str]] = {
+            k: v
+            for k, v in result.items()
+            if isinstance(v, list) and all(isinstance(i, str) for i in v)
+        }
+        return strict_result
 
     @staticmethod
     def extract_oid(definition: str) -> str | None:
@@ -87,12 +88,12 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_extensions(
         definition: str,
-    ) -> t.Ldif.Extensions.ExtensionsDict:
+    ) -> dict[str, list[str]]:
         """Extract extension information from schema definition string."""
         if not definition or not isinstance(definition, str):
             return {}
 
-        extensions: t.Ldif.Extensions.ExtensionsDict = {}
+        extensions: dict[str, list[str]] = {}
 
         x_pattern = re.compile(
             r'X-([A-Z0-9_-]+)\s+["\']?([^"\']*)["\']?(?:\s|$)',

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -189,23 +189,23 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _safe_operation(
         operation_name: str,
-    ) -> t.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.ParseMethodDecorator:
         """Generic decorator to wrap methods with standardized error handling."""
 
         def decorator(
-            func: t.Ldif.Decorators.SafeMethod,
-        ) -> t.Ldif.Decorators.SafeMethod:
+            func: t.Ldif.Decorators.ParseMethod,
+        ) -> t.Ldif.Decorators.ParseMethod:
             @wraps(func)
             def wrapper(
                 self: object,
                 arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> str | int | float | bool | list[str] | None:
+            ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
                     return func(self, arg)
                 except BaseException as e:
                     error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg)
-                    return None
+                    logger.exception(error_msg, operation_name=operation_name)
+                    return FlextResult.fail(error_msg)
 
             return wrapper
 
@@ -214,15 +214,20 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def safe_parse(
         operation_name: str,
-    ) -> t.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.ParseMethodDecorator:
         """Decorator to wrap parse methods with standardized error handling."""
+        # Use _safe_operation which now returns FlextResult (Failure) on error
+        # This matches the ParseMethodDecorator signature
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
     @staticmethod
     def safe_write(
         operation_name: str,
-    ) -> t.Ldif.Decorators.SafeMethodDecorator:
+    ) -> t.Ldif.Decorators.WriteMethodDecorator:
         """Decorator to wrap write methods with standardized error handling."""
+        # Write methods also return FlextResult now in tests, so we reuse the same logic
+        # Cast to WriteMethodDecorator for typing compliance (they are structurally identical)
+        # However, WriteMethodArg/Return might differ slightly in alias but implementation is generic
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
 

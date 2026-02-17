@@ -11,7 +11,6 @@ from typing import ClassVar, Self
 from flext_core import FlextLogger, FlextResult, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.models import m
 from pydantic import (
     ConfigDict,
     Field,
@@ -933,7 +932,7 @@ class FlextLdifModelsDomains:
             """Check if original ACL format is available for name replacement."""
             return self.original_format is not None and len(self.original_format) > 0
 
-    class Entry(m.Entity):
+    class Entry(FlextModelsEntity.Entry):
         """LDIF entry domain model."""
 
         model_config = ConfigDict(
@@ -1549,18 +1548,16 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> dict[str, t.MetadataAttributeValue]:
+        ) -> dict[str, t.JsonValue]:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: dict[str, t.MetadataAttributeValue] = {}
+            ext_kwargs: dict[str, t.JsonValue] = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
                 unconverted_dump = unconverted_attributes.model_dump()
-
-                unconverted_typed: t.MetadataAttributeValue = unconverted_dump
-                ext_kwargs["unconverted_attributes"] = unconverted_typed
+                ext_kwargs["unconverted_attributes"] = unconverted_dump
             return ext_kwargs
 
         @classmethod

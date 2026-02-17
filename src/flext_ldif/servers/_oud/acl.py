@@ -151,17 +151,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
 
-        extensions: dict[str, t.MetadataAttributeValue] = {}
+        extensions = m.Ldif.DynamicMetadata()
         if acl.metadata and acl.metadata.extensions:
-            for key, val in dict(acl.metadata.extensions).items():
-                if isinstance(val, list):
-                    list_typed: t.MetadataAttributeValue = list(val)
-                    extensions[key] = list_typed
-                elif isinstance(val, dict):
-                    dict_typed: t.MetadataAttributeValue = dict(val)
-                    extensions[key] = dict_typed
-                else:
-                    extensions[key] = val
+            extensions.update(acl.metadata.extensions.to_dict())
 
         timeofday_match = re.search(
             FlextLdifServersOudConstants.ACL_TIMEOFDAY_PATTERN,
@@ -180,6 +172,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             extensions["acl_ssf"] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
 
         server_type_value = config.server_type if config else "oud"
+
         new_metadata = m.Ldif.QuirkMetadata.create_for(
             server_type_value,
             extensions=extensions,
@@ -286,6 +279,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> FlextResult[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
+        target_perms_dict = None
 
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
@@ -302,25 +296,23 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 )
             target_perms_dict = target_perms_dict_raw
 
-            if target_perms_dict and isinstance(target_perms_dict, dict):
-                perms_data: t.Ldif.MetadataDictMutable = {}
-                dict_items: list[tuple[str, t.GeneralValueType]] = [
-                    (str(key), val)
-                    for key, val in target_perms_dict.items()
-                    if isinstance(key, str)
-                ]
-                for k, v in dict_items:
-                    if isinstance(v, Mapping):
-                        continue
-                    if isinstance(v, (str, bool, int, float)) or v is None:
-                        perms_data[k] = v
-                    elif isinstance(v, list):
-                        str_list: list[str] = [
-                            str(item) for item in v if isinstance(item, str)
-                        ]
-                        perms_data[k] = str_list
-            else:
-                perms_data = {}
+        if target_perms_dict and isinstance(target_perms_dict, dict):
+            target_perms_dict_typed: dict[object, object] = target_perms_dict
+            perms_data: dict[str, object] = {}
+
+            for key, val in target_perms_dict_typed.items():
+                if not isinstance(key, str):
+                    continue
+                k = str(key)
+
+                if isinstance(val, Mapping):
+                    continue
+
+                if isinstance(val, (str, bool, int, float)) or val is None:
+                    perms_data[k] = val
+                elif isinstance(val, list):
+                    str_list = [str(item) for item in val if isinstance(item, str)]
+                    perms_data[k] = str_list
 
             if perms_data:
                 perms = m.Ldif.AclPermissions(

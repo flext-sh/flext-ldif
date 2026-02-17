@@ -35,24 +35,11 @@ class FlextLdifTypes(FlextTypes):
         ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
         ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
 
-        AttributesDict: TypeAlias = Mapping[str, list[AttributeValue]]
-        NormalizedAttributesDict: TypeAlias = dict[str, list[str]]
-
         class Extensions:
             """Extension-related type aliases for schema parsing."""
 
-            ExtensionsDict: TypeAlias = Mapping[str, list[str]]
             ExtensionValue: TypeAlias = str | list[str]
             ExtensionKey: TypeAlias = str
-
-        class ModelMetadata:
-            """Metadata type aliases for parsed schema objects."""
-
-            ParsedAttributeDict: TypeAlias = Mapping[str, FlextTypes.GeneralValueType]
-            ParsedObjectClassDict: TypeAlias = Mapping[str, FlextTypes.GeneralValueType]
-            ParsedSchemaDict: TypeAlias = Mapping[
-                str, list[FlextTypes.GeneralValueType]
-            ]
 
         class Decorators:
             """Decorator-related type aliases for quirk server decorators.
@@ -93,11 +80,6 @@ class FlextLdifTypes(FlextTypes):
             DistributionDict: TypeAlias = MutableMapping[str, int]
             AttributeDict: TypeAlias = Mapping[str, list[str]]
             AttributeDictGeneric: TypeAlias = Mapping[str, list[str] | str]
-
-        MetadataDictMutable: TypeAlias = MutableMapping[
-            str,
-            str | int | float | bool | list[str] | None,
-        ]
 
         TemplateValue: TypeAlias = str | int | float | bool | None
 

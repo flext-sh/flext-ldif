@@ -28,6 +28,11 @@ class FlextLdifUtilitiesEntry:
     ) -> str:
         """Convert a single boolean value between formats."""
         if source_format == "0/1" and target_format == "TRUE/FALSE":
+            # DEBUG
+            if value != "1" and value != "0":
+                print(
+                    f"DEBUG: _convert_single_boolean_value val='{value}' src='{source_format}' tgt='{target_format}'"
+                )
             return "TRUE" if value == "1" else "FALSE"
         if source_format == "TRUE/FALSE" and target_format == "0/1":
             return "1" if value.upper() == "TRUE" else "0"
@@ -56,12 +61,12 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> t.Ldif.NormalizedAttributesDict:
+    ) -> dict[str, list[str]]:
         """Convert boolean attribute values between formats."""
         if not attributes or not boolean_attr_names:
             if not attributes:
                 return {}
-            normalized_result: t.Ldif.NormalizedAttributesDict = {}
+            normalized_result: dict[str, list[str]] = {}
             for attr_name in attributes:
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
                     attr_name
@@ -113,18 +118,18 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attribute_names(
-        attributes: t.Ldif.AttributesDict,
+        attributes: Mapping[str, list[t.Ldif.AttributeValue]],
         case_map: dict[str, str],
-    ) -> t.Ldif.AttributesDict:
+    ) -> dict[str, list[t.Ldif.AttributeValue]]:
         """Normalize attribute names using case mapping."""
         if not attributes or not case_map:
-            return attributes
+            return dict(attributes)
 
         def get_normalized_name(attr_name: str) -> str:
             """Get normalized attribute name."""
             return case_map.get(attr_name.lower(), attr_name)
 
-        result: t.Ldif.AttributesDict = {}
+        result: dict[str, list[t.Ldif.AttributeValue]] = {}
         for attr_name, values in attributes.items():
             normalized_name = get_normalized_name(attr_name)
             result[normalized_name] = values
@@ -227,7 +232,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def analyze_differences(
         entry_attrs: Mapping[str, FlextTypes.GeneralValueType],
-        converted_attrs: t.Ldif.AttributesDict,
+        converted_attrs: dict[str, list[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
@@ -341,11 +346,11 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: t.Ldif.AttributesDict,
+        attributes: dict[str, list[t.Ldif.AttributeValue]],
         *,
         config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
         **kwargs: object,
-    ) -> t.Ldif.AttributesDict:
+    ) -> dict[str, list[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(

@@ -130,8 +130,8 @@ class ProcessConfig(BaseModel):
 
     model_config = ConfigDict(frozen=False, validate_assignment=True)
 
-    # source_server: ServerType = Field(default=ServerType.RFC)
-    # target_server: ServerType = Field(default=ServerType.RFC)
+    source_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
+    target_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
     dn_config: DnNormalizationConfig = Field(default_factory=DnNormalizationConfig)
     attr_config: AttrNormalizationConfig = Field(
         default_factory=AttrNormalizationConfig,

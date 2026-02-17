@@ -5,16 +5,16 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from typing import ClassVar, Self, TypeGuard, TypeVar, override
+from typing import ClassVar, Self, TypeGuard, TypeVar, cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r
 from pydantic import Field
 
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
@@ -648,12 +648,194 @@ class FlextLdifConversion(
                 default="unknown",
             )
 
+            # Normalize server types for comparison
+            source_type_norm = str(source_quirk_name).lower()
+            target_type_norm = str(target_server_type_str).lower()
+
             converted_entry = self._update_entry_metadata(
                 converted_entry,
                 validated_quirk_type,
                 str(conversion_analysis) if conversion_analysis else None,
                 str(source_quirk_name),
             )
+
+            if (
+                source_type_norm == "oid"
+                and target_type_norm == "rfc"
+                and converted_entry.attributes
+            ):
+                current_attrs = dict(converted_entry.attributes.attributes)
+                updated_attrs = {}
+
+                if hasattr(source_quirk, "entry_quirk") and hasattr(
+                    source_quirk.entry_quirk, "_convert_boolean_attributes_to_rfc"
+                ):
+                    # dynamic dispatch to known method on OID quirk
+                    entry_quirk = getattr(source_quirk, "entry_quirk")
+                    method = getattr(entry_quirk, "_convert_boolean_attributes_to_rfc")
+                    (
+                        converted_bools,
+                        _,
+                        _,
+                    ) = method(current_attrs)
+                    current_attrs = converted_bools
+
+                mapping = (
+                    FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
+                )
+                for k, v in current_attrs.items():
+                    lower_k = k.lower()
+                    if lower_k in mapping:
+                        new_key = mapping[lower_k]
+                        updated_attrs[new_key] = v
+                    else:
+                        updated_attrs[k] = v
+
+                new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
+                converted_entry = converted_entry.model_copy(
+                    update={"attributes": new_attributes}
+                )
+
+            if source_type_norm == "rfc" and target_type_norm == "oid":
+                if hasattr(target_quirk, "entry_quirk") and hasattr(
+                    target_quirk.entry_quirk, "_restore_boolean_values_to_oid"
+                ):
+                    # dynamic dispatch to known method on OID quirk
+                    entry_quirk = getattr(target_quirk, "entry_quirk")
+                    method = getattr(entry_quirk, "_restore_boolean_values_to_oid")
+                    converted_entry = method(converted_entry)
+
+                if converted_entry.attributes:
+                    current_attrs = dict(converted_entry.attributes.attributes)
+                    updated_attrs = {}
+                    mapping = (
+                        FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
+                    )
+
+                    for k, v in current_attrs.items():
+                        lower_k = k.lower()
+                        if lower_k in mapping:
+                            new_key = mapping[lower_k]
+                            updated_attrs[new_key] = v
+                        else:
+                            updated_attrs[k] = v
+
+                    new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
+                    converted_entry = converted_entry.model_copy(
+                        update={"attributes": new_attributes}
+                    )
+
+            source_type_norm = str(source_quirk_name).lower()
+            target_type_norm = str(target_server_type_str).lower()
+
+            converted_entry = self._update_entry_metadata(
+                converted_entry,
+                validated_quirk_type,
+                str(conversion_analysis) if conversion_analysis else None,
+                str(source_quirk_name),
+            )
+
+            if not isinstance(converted_entry, m.Ldif.Entry):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail(f"Expected Entry model, got {type(converted_entry)}")
+
+            if (
+                source_type_norm == "oid"
+                and target_type_norm == "rfc"
+                and converted_entry.attributes
+                and converted_entry.attributes.attributes
+            ):
+                current_attrs = dict(converted_entry.attributes.attributes)
+                updated_attrs = {}
+
+                if hasattr(source_quirk, "entry_quirk") and hasattr(
+                    source_quirk.entry_quirk, "_convert_boolean_attributes_to_rfc"
+                ):
+                    try:
+                        # dynamic dispatch to known method on OID quirk
+                        entry_quirk = getattr(source_quirk, "entry_quirk")
+                        method = getattr(
+                            entry_quirk, "_convert_boolean_attributes_to_rfc"
+                        )
+                        (
+                            converted_bools,
+                            _,
+                            _,
+                        ) = method(current_attrs)
+                        current_attrs = converted_bools
+                    except Exception as e:
+                        logger.warning(f"Boolean conversion failed: {e}")
+
+                mapping = (
+                    FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
+                )
+                for k, v in current_attrs.items():
+                    lower_k = k.lower()
+                    if lower_k in mapping:
+                        new_key = mapping[lower_k]
+                        updated_attrs[new_key] = v
+                    else:
+                        updated_attrs[k] = v
+
+                new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
+                converted_entry = converted_entry.model_copy(
+                    update={"attributes": new_attributes}
+                )
+
+            if source_type_norm == "rfc" and target_type_norm == "oid":
+                if hasattr(target_quirk, "entry_quirk") and hasattr(
+                    target_quirk.entry_quirk, "_restore_boolean_values_to_oid"
+                ):
+                    try:
+                        # dynamic dispatch to known method on OID quirk
+                        entry_quirk = getattr(target_quirk, "entry_quirk")
+                        method = getattr(entry_quirk, "_restore_boolean_values_to_oid")
+                        converted_entry = method(converted_entry)
+                    except Exception as e:
+                        logger.warning(f"Boolean restoration failed: {e}")
+
+                if converted_entry.attributes and converted_entry.attributes.attributes:
+                    current_attrs = dict(converted_entry.attributes.attributes)
+                    updated_attrs = {}
+                    mapping = (
+                        FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
+                    )
+
+                    for k, v in current_attrs.items():
+                        lower_k = k.lower()
+                        if lower_k in mapping:
+                            new_key = mapping[lower_k]
+                            updated_attrs[new_key] = v
+                        else:
+                            updated_attrs[k] = v
+
+                    new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
+                    converted_entry = converted_entry.model_copy(
+                        update={"attributes": new_attributes}
+                    )
+
+            if converted_entry.dn:
+                dn_val = converted_entry.dn.value.lower()
+                if source_type_norm == "oid" and target_type_norm == "rfc":
+                    if "cn=subschemasubentry" in dn_val:
+                        new_dn_val = converted_entry.dn.value.replace(
+                            "cn=subschemasubentry", "cn=schema"
+                        )
+                        converted_entry = converted_entry.model_copy(
+                            update={"dn": m.Ldif.DN(value=new_dn_val)}
+                        )
+                elif source_type_norm == "rfc" and target_type_norm == "oid":
+                    if "cn=schema" in dn_val:
+                        new_dn_val = converted_entry.dn.value.replace(
+                            "cn=schema", "cn=subschemasubentry"
+                        )
+                        converted_entry = converted_entry.model_copy(
+                            update={"dn": m.Ldif.DN(value=new_dn_val)}
+                        )
 
             return r[
                 m.Ldif.Entry
@@ -808,7 +990,9 @@ class FlextLdifConversion(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: write_attr(attribute),
-                parse_method=lambda _t, ldif: parse_attr(ldif),
+                parse_method=lambda _t, ldif: cast(
+                    "r[p.Ldif.SchemaAttributeProtocol]", parse_attr(ldif)
+                ),
                 item_name="attribute",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
@@ -871,7 +1055,9 @@ class FlextLdifConversion(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: write_oc(objectclass),
-                parse_method=lambda _t, ldif: parse_oc(ldif),
+                parse_method=lambda _t, ldif: cast(
+                    "r[p.Ldif.SchemaObjectClassProtocol]", parse_oc(ldif)
+                ),
                 item_name="objectclass",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
@@ -943,7 +1129,7 @@ class FlextLdifConversion(
             }
         else:
             normalized_orig_perms = {}
-        mapped_perms = FlextLdifUtilitiesACL.map_oid_to_oud_permissions(
+        mapped_perms = FlextLdifConversion.map_oid_to_oud_permissions(
             normalized_orig_perms,
         )
         oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -961,7 +1147,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[dict[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
-        mapped_perms = FlextLdifUtilitiesACL.map_oud_to_oid_permissions(
+        mapped_perms = FlextLdifConversion.map_oud_to_oid_permissions(
             orig_perms_dict,
         )
         oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1167,29 +1353,8 @@ class FlextLdifConversion(
                     converted_list.append(str(item))
             return converted_list
         if isinstance(value, dict):
-            result_dict: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
-                | None,
-            ] = {}
-            for k, v in value.items():
-                converted = self._convert_to_metadata_attribute_value(v)
-                key = str(k)
-
-                if isinstance(
-                    converted, (str, int, float, bool, list, datetime, type(None))
-                ):
-                    result_dict[key] = converted
-                elif isinstance(converted, dict):
-                    result_dict[key] = str(converted)
-                else:
-                    result_dict[key] = str(converted)
-            return result_dict
+            # Dict not supported in strict MetadataAttributeValue, convert to string
+            return str(value)
         return str(value)
 
     def _preserve_acl_metadata(
@@ -1467,8 +1632,11 @@ class FlextLdifConversion(
 
     @staticmethod
     def _schema_passthrough_ok(value: object) -> r[_TSchemaConversionValue] | None:
-        if isinstance(value, (str, dict)):
+        if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
+        if isinstance(value, dict):
+            # Dict not supported in strict _TSchemaConversionValue, convert to string
+            return FlextLdifConversion._schema_conversion_ok(str(value))
         return None
 
     def _convert_attribute(
@@ -1687,7 +1855,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaAttribute]:
         return FlextLdifConversion._parse_schema_item_with_schema(
-            schema.parse_attribute,
+            cast("Callable[..., r[m.Ldif.SchemaAttribute]]", schema.parse_attribute),
             value,
             expected_type=m.Ldif.SchemaAttribute,
             expected_label="SchemaAttribute",
@@ -1702,7 +1870,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
         return FlextLdifConversion._parse_schema_item_with_schema(
-            schema.parse_objectclass,
+            cast("Callable[..., r[m.Ldif.SchemaObjectClass]]", schema.parse_objectclass),
             value,
             expected_type=m.Ldif.SchemaObjectClass,
             expected_label="SchemaObjectClass",

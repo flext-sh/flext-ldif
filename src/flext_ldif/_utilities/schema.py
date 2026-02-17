@@ -690,13 +690,13 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[t.Ldif.ModelMetadata.ParsedAttributeDict]:
+    ) -> r[dict[str, FlextTypes.GeneralValueType]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.is_failure:
-            return r[t.Ldif.ModelMetadata.ParsedAttributeDict].fail(
+            return r[dict[str, FlextTypes.GeneralValueType]].fail(
                 basic_fields_result.error,
             )
 
@@ -748,7 +748,7 @@ class FlextLdifUtilitiesSchema:
                 )
             )
 
-        parsed_dict: t.Ldif.ModelMetadata.ParsedAttributeDict = {
+        parsed_dict: dict[str, FlextTypes.GeneralValueType] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -764,7 +764,7 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[t.Ldif.ModelMetadata.ParsedAttributeDict].ok(parsed_dict)
+        return r[dict[str, FlextTypes.GeneralValueType]].ok(parsed_dict)
 
     @staticmethod
     def _extract_objectclass_basic_fields(
@@ -862,7 +862,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> t.Ldif.ModelMetadata.ParsedObjectClassDict:
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Parse RFC 4512 objectClass definition into structured data."""
         oid, name, desc = FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(
             oc_definition,
@@ -882,7 +882,7 @@ class FlextLdifUtilitiesSchema:
             extensions_raw,
         )
 
-        parsed_dict: t.Ldif.ModelMetadata.ParsedObjectClassDict = {
+        parsed_dict: dict[str, FlextTypes.GeneralValueType] = {
             "oid": oid,
             "name": name,
             "desc": desc,

@@ -9,11 +9,11 @@ from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
 from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
-from flext_ldif._utilities.pipeline import ProcessingPipeline
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.pipeline import ProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
 
 logger: Final = FlextLogger(__name__)
@@ -26,16 +26,19 @@ class FlextLdifMigrationPipeline(
 
     _input_dir: Path | None = PrivateAttr(default=None)
     _output_dir: Path | None = PrivateAttr(default=None)
-    _source_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
-    _target_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
+    _source_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
+    _target_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
     _processing_pipeline: ProcessingPipeline | None = PrivateAttr(default=None)
+
+    _output_filename: str | None = PrivateAttr(default=None)
 
     def __init__(
         self,
         input_dir: Path | None = None,
         output_dir: Path | None = None,
-        source_server_type: str = "rfc",
-        target_server_type: str = "rfc",
+        source_server: str = "rfc",
+        target_server: str = "rfc",
+        output_filename: str | None = None,
         **_kwargs: str | float | bool | None,
     ) -> None:
         """Initialize migration pipeline."""
@@ -43,8 +46,9 @@ class FlextLdifMigrationPipeline(
 
         object.__setattr__(self, "_input_dir", input_dir)
         object.__setattr__(self, "_output_dir", output_dir)
-        object.__setattr__(self, "_source_type", source_server_type)
-        object.__setattr__(self, "_target_type", target_server_type)
+        object.__setattr__(self, "_source_server", source_server)
+        object.__setattr__(self, "_target_server", target_server)
+        object.__setattr__(self, "_output_filename", output_filename)
         object.__setattr__(self, "_processing_pipeline", None)
 
     @property
@@ -60,12 +64,39 @@ class FlextLdifMigrationPipeline(
     @property
     def source_server_type(self) -> c.Ldif.ServerTypes:
         """Get source server type."""
-        return getattr(self, "_source_type", c.Ldif.ServerTypes.RFC)
+        val = getattr(self, "_source_server", c.Ldif.ServerTypes.RFC)
+        # Ensure we return ServerTypes enum member
+        if isinstance(val, c.Ldif.ServerTypes):
+            return val
+        # If it's a string, try to convert to enum
+        try:
+            return c.Ldif.ServerTypes(val)
+        except ValueError:
+            # Fallback or strict? Let's use RFC default if unknown string
+            # Or try case-insensitive match
+            for member in c.Ldif.ServerTypes:
+                if member.value == val.lower():
+                    return member
+            return c.Ldif.ServerTypes.RFC
 
     @property
     def target_server_type(self) -> c.Ldif.ServerTypes:
         """Get target server type."""
-        return getattr(self, "_target_type", c.Ldif.ServerTypes.RFC)
+        val = getattr(self, "_target_server", c.Ldif.ServerTypes.RFC)
+        if isinstance(val, c.Ldif.ServerTypes):
+            return val
+        try:
+            return c.Ldif.ServerTypes(val)
+        except ValueError:
+            for member in c.Ldif.ServerTypes:
+                if member.value == val.lower():
+                    return member
+            return c.Ldif.ServerTypes.RFC
+
+    @property
+    def output_filename(self) -> str | None:
+        """Get output filename override."""
+        return getattr(self, "_output_filename", None)
 
     def _get_processing_pipeline(self) -> ProcessingPipeline:
         """Get or create processing pipeline instance."""
@@ -73,6 +104,12 @@ class FlextLdifMigrationPipeline(
         if pipeline is None:
             source_type = m.Ldif.ServerType(self.source_server_type)
             target_type = m.Ldif.ServerType(self.target_server_type)
+
+            logger.debug(
+                "Creating processing pipeline",
+                source=source_type,
+                target=target_type,
+            )
 
             config_base = ProcessConfig()
             process_config = config_base.model_copy(
@@ -151,7 +188,8 @@ class FlextLdifMigrationPipeline(
                     return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                         "No output file or output_dir specified",
                     )
-                output_file = out_dir / input_file.name
+                filename = self.output_filename or input_file.name
+                output_file = out_dir / filename
 
             writer = FlextLdifWriter()
             write_result = writer.write_to_string(
@@ -166,6 +204,7 @@ class FlextLdifMigrationPipeline(
 
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_text(write_result.value, encoding="utf-8")
+            logger.debug(f"Wrote migrated file to: {output_file}")
 
             converted_entries: list[m.Ldif.Entry] = [
                 m.Ldif.Entry.model_validate(e.model_dump(mode="json")) for e in migrated
@@ -219,6 +258,7 @@ class FlextLdifMigrationPipeline(
             output_files: list[str] = []
 
             for input_file in in_dir.glob("*.ldif"):
+                logger.debug(f"Processing input file: {input_file}")
                 result = self.migrate_file(input_file)
                 if result.is_success:
                     res = result.value

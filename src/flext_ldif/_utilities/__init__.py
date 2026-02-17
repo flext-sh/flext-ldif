@@ -41,7 +41,6 @@ from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif._utilities.pipeline import (
     Pipeline,
     PipelineStep,
-    ProcessingPipeline,
     ValidationPipeline,
     ValidationResult,
 )
@@ -111,7 +110,6 @@ __all__ = [
     "Pipeline",
     "PipelineStep",
     "ProcessConfigBuilder",
-    "ProcessingPipeline",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
     "Transform",

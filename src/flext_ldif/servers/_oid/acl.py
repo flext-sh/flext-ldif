@@ -264,7 +264,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_oid_permissions(
-        permissions: t.Ldif.MetadataDictMutable,
+        permissions: m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
         permission_names = {
@@ -287,7 +287,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
 
         allowed_perms: list[str] = []
-        for perm, allowed in u.mapper().to_dict(permissions).items():
+        for perm, allowed in permissions.items():
             if allowed:
                 oid_perm_name = u.mapper().get(permission_names, perm, default=perm)
                 allowed_perms.append(oid_perm_name)
@@ -552,7 +552,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
 
-        permissions_metadata: t.Ldif.MetadataDictMutable = dict(permissions_dict)
+        permissions_metadata = m.Ldif.DynamicMetadata.from_dict(permissions_dict)
         permissions_clause = self._format_oid_permissions(permissions_metadata)
 
         return subject_clause, permissions_clause

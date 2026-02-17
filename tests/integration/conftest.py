@@ -14,10 +14,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import socket
+import time
+from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
+from ldap3 import ALL, Connection, Server
 
 from flext_ldif import (
     FlextLdif,
@@ -611,3 +615,79 @@ def ldap_container_shared() -> str:
         pytest.skip(f"Could not check LDAP container on port {port}")
 
     return f"ldap://localhost:{port}"
+
+
+@pytest.fixture
+def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
+    test_name = request.node.name if hasattr(request, "node") else "unknown"
+    test_name_clean = "".join(
+        ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
+    )[:20]
+    return f"{worker_id}-{int(time.time() * 1000)}-{test_name_clean}"
+
+
+@pytest.fixture
+def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
+    def _make(username: str) -> str:
+        return f"{username}-{unique_dn_suffix}"
+
+    return _make
+
+
+@pytest.fixture
+def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
+    base_dn = "dc=flext,dc=local"
+
+    def _make(ou: str) -> str:
+        return f"ou={ou}-{unique_dn_suffix},{base_dn}"
+
+    return _make
+
+
+@pytest.fixture
+def ldap_connection(ldap_container_shared: str) -> Generator[Connection]:
+    server = Server(ldap_container_shared, get_info=ALL)
+    conn = Connection(
+        server,
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+        password="REDACTED_LDAP_BIND_PASSWORD123",
+        auto_bind=False,
+    )
+    try:
+        if not conn.bind():
+            pytest.skip(f"LDAP server not available at {ldap_container_shared}")
+    except Exception as exc:
+        pytest.skip(f"LDAP server not available: {exc}")
+
+    yield conn
+    conn.unbind()
+
+
+@pytest.fixture
+def clean_test_ou(
+    ldap_connection: Connection,
+    make_test_base_dn: Callable[[str], str],
+) -> Generator[str]:
+    test_ou_dn = make_test_base_dn("FlextLdifTests")
+    with contextlib.suppress(Exception):
+        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+        if ldap_connection.entries:
+            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            for dn in reversed(dns_to_delete):
+                with contextlib.suppress(Exception):
+                    ldap_connection.delete(dn)
+
+    with contextlib.suppress(Exception):
+        ldap_connection.add(
+            test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
+        )
+
+    yield test_ou_dn
+
+    with contextlib.suppress(Exception):
+        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+        if ldap_connection.entries:
+            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            for dn in reversed(dns_to_delete):
+                with contextlib.suppress(Exception):
+                    ldap_connection.delete(dn)

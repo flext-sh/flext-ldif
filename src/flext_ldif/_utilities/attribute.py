@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import re
-from typing import Final
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Final
 
 from flext_ldif.constants import c
+
+if TYPE_CHECKING:
+    from flext_core import FlextResult, FlextTypes
 
 
 class FlextLdifUtilitiesAttribute:
@@ -18,6 +22,24 @@ class FlextLdifUtilitiesAttribute:
     _ATTRIBUTE_OPTION_PATTERN: Final[re.Pattern[str]] = re.compile(
         c.Ldif.LdifPatterns.ATTRIBUTE_OPTION,
     )
+
+    @staticmethod
+    def parse(
+        definition: str,
+        *,
+        server_type: str | None = None,
+        parse_parts_hook: Callable[
+            [str], FlextResult[dict[str, FlextTypes.GeneralValueType]]
+        ]
+        | None = None,
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        """Parse RFC 4512 attribute definition into structured data."""
+        from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+
+        if parse_parts_hook:
+            return parse_parts_hook(definition)
+
+        return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
     @staticmethod
     def split_attribute_description(

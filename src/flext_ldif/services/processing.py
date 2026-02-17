@@ -126,7 +126,6 @@ class FlextLdifProcessing(
         def _transform_func(
             entry: m.Ldif.Entry,
         ) -> m.Ldif.ProcessingResult:
-
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
@@ -153,7 +152,6 @@ class FlextLdifProcessing(
         def _validate_func(
             entry: m.Ldif.Entry,
         ) -> m.Ldif.ProcessingResult:
-
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)

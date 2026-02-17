@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
 import re
+import sys
 from typing import Literal, TypeGuard
 
 from flext_core.utilities import FlextUtilities
@@ -80,10 +79,9 @@ class FlextLdifUtilitiesServer:
         # First try the nested class pattern with __qualname__
         if hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
-            # Check if module exists before importing
-            module_spec = importlib.util.find_spec(target_cls.__module__)
-            if module_spec is not None:
-                parent_module = importlib.import_module(target_cls.__module__)
+            # Check if module is loaded (safe lookup without dynamic import)
+            parent_module = sys.modules.get(target_cls.__module__)
+            if parent_module:
                 parent_server_cls_obj: object = getattr(
                     parent_module,
                     parent_class_name,
@@ -120,14 +118,8 @@ class FlextLdifUtilitiesServer:
         if not server_name:
             return None
         server_type_lower = server_name.lower()
-        # Try import from constants module
-        imported_type = FlextLdifUtilitiesServer._import_server_type(
-            server_name,
-            server_type_lower,
-        )
-        if imported_type:
-            return imported_type
-        # Fallback: validate and return derived type
+
+        # Validate against known server types (No dynamic import)
         # Use TypeGuard to narrow to ServerTypeLiteral
         if _is_valid_server_type_literal(server_type_lower):
             return server_type_lower
@@ -139,31 +131,6 @@ class FlextLdifUtilitiesServer:
         for suffix in _CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
                 return name_without_prefix[: -len(suffix)] or None
-        return None
-
-    @staticmethod
-    def _import_server_type(
-        server_name: str,
-        server_type_lower: str,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
-        """Import and return SERVER_TYPE from server constants module."""
-        module_name = f"flext_ldif.servers._{server_type_lower}.constants"
-        # Check if module exists before importing - avoids try/except ImportError
-        module_spec = importlib.util.find_spec(module_name)
-        if module_spec is None:
-            return None
-        constants_module = importlib.import_module(module_name)
-        constants_cls_obj: object = getattr(
-            constants_module,
-            f"FlextLdifServers{server_name}Constants",
-            None,
-        )
-        if isinstance(constants_cls_obj, type):
-            server_type_value: object = getattr(constants_cls_obj, "SERVER_TYPE", None)
-            if isinstance(server_type_value, str) and _is_valid_server_type_literal(
-                server_type_value,
-            ):
-                return server_type_value
         return None
 
     @staticmethod

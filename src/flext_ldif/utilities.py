@@ -29,7 +29,7 @@ from flext_core.utilities import FlextUtilities as u_core
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
+from flext_ldif._utilities.configs import ProcessConfig
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
@@ -43,17 +43,13 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif._utilities.pipeline import (
-    Pipeline,
-    ProcessingPipeline,
     ValidationPipeline,
     ValidationResult,
 )
 from flext_ldif._utilities.result import FlextLdifResult
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif._utilities.transformers import EntryTransformer
 from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
-from flext_ldif._utilities.type_helpers import is_entry_sequence
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
@@ -423,57 +419,6 @@ class FlextLdifUtilities(u_core):
             return bool(is_sequence_entry and has_ldif_config)
 
         @staticmethod
-        def process_ldif_entries(
-            entries: Sequence[t.GeneralValueType],
-            config: ProcessConfig | None,
-            source_server: c.Ldif.ServerTypes,
-            target_server: c.Ldif.ServerTypes | None,
-            *,
-            _normalize_dns: bool,  # Unused: reserved for future DN normalization control
-            _normalize_attrs: bool,  # Unused: reserved for future attribute normalization control
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Process LDIF entries with pipeline."""
-            if config is None:
-                config_base = ProcessConfig()
-                config_base_model = config_base
-                process_config = config_base_model.model_copy(
-                    update={
-                        "source_server": source_server,
-                        "target_server": target_server or c.Ldif.ServerTypes.RFC,
-                    },
-                )
-                transform_config = TransformConfig()
-                if hasattr(transform_config, "model_copy"):
-                    transform_config = transform_config.model_copy(
-                        update={"process_config": process_config},
-                    )
-                else:
-                    transform_config.process_config = process_config
-            else:
-                transform_config = TransformConfig()
-                if hasattr(transform_config, "model_copy"):
-                    transform_config = transform_config.model_copy(
-                        update={"process_config": config},
-                    )
-                else:
-                    transform_config.process_config = config
-            pipeline = ProcessingPipeline(transform_config)
-            entries_list = [e for e in entries if isinstance(e, m.Ldif.Entry)]
-            pipeline_result = pipeline.execute(entries_list)
-            if pipeline_result.is_failure:
-                return FlextLdifResult.fail(
-                    pipeline_result.error or "Pipeline execution failed",
-                )
-            domain_entries = pipeline_result.value
-            converted_entries: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(
-                    entry.model_dump(exclude_computed_fields=True),
-                )
-                for entry in domain_entries
-            ]
-            return FlextLdifResult.ok(converted_entries)
-
-        @staticmethod
         def should_skip_key(
             key: str,
             filter_keys: set[str] | None,
@@ -726,25 +671,8 @@ class FlextLdifUtilities(u_core):
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
             )
-            if FlextLdifUtilities.Ldif.is_ldif_process_call(
-                items_or_entries,
-                processor_normalized,
-                processor,
-                config,
-                source_server,
-                target_server,
-            ) and is_entry_sequence(items_or_entries):
-                entries_seq: Sequence[m.Ldif.Entry] = [
-                    item for item in items_or_entries if isinstance(item, m.Ldif.Entry)
-                ]
-                return FlextLdifUtilities.Ldif.process_ldif_entries(
-                    entries_seq,
-                    config,
-                    source_server,
-                    target_server,
-                    _normalize_dns=normalize_dns,
-                    _normalize_attrs=normalize_attrs,
-                )
+            # Removed circular dependency with ProcessingPipeline (process_ldif_entries)
+            # Use FlextLdifProcessingService.process_ldif_entries from services layer instead if needed
 
             items: (
                 object
@@ -783,25 +711,6 @@ class FlextLdifUtilities(u_core):
                 processor_func,
                 items,
             )
-
-        @staticmethod
-        def transform_entries(
-            entries: Sequence[m.Ldif.Entry],
-            *transformers: EntryTransformer[m.Ldif.Entry],
-            fail_fast: bool = True,
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Apply LDIF entry transformations via pipeline."""
-            pipeline = Pipeline(fail_fast=fail_fast)
-            for transformer in transformers:
-                _ = pipeline.add(transformer)  # Explicitly ignore return value
-            entries_list = list(entries)
-            pipeline_result = pipeline.execute(entries_list)
-            if pipeline_result.is_failure:
-                return FlextLdifResult.fail(
-                    pipeline_result.error or "Pipeline execution failed",
-                )
-            transformed_entries = pipeline_result.value
-            return FlextLdifResult.ok(transformed_entries)
 
         @staticmethod
         def filter[T, R](

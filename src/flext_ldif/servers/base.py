@@ -60,6 +60,21 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
 
     @property
+    def acl_quirk(self) -> FlextLdifServersBaseSchemaAcl:
+        """Access to nested acl quirk instance (alias for acl)."""
+        return self._acl_quirk
+
+    @property
+    def schema_quirk(self) -> FlextLdifServersBaseSchema:
+        """Access to nested schema quirk instance (alias for schema)."""
+        return self._schema_quirk
+
+    @property
+    def entry_quirk(self) -> FlextLdifServersBaseEntry:
+        """Access to nested entry quirk instance (alias for entry)."""
+        return self._entry_quirk
+
+    @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
         """Access to nested acl quirk instance."""
         return self._acl_quirk

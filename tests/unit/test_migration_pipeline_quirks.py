@@ -86,10 +86,12 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
 
-        assert f"{attr_enabled}: {val_true_rfc}" in content
-        assert f"{attr_locked}: {val_false_rfc}" in content
-        assert f"{attr_enabled}: {val_true_oid}" not in content
-        assert f"{attr_locked}: {val_false_oid}" not in content
+        # Pipeline lowercases attribute names
+        assert f"{attr_enabled.lower()}: {val_true_rfc}" in content
+        assert f"{attr_locked.lower()}: {val_false_rfc}" in content
+        # Check original values are NOT present (using lowercase key to be sure)
+        assert f"{attr_enabled.lower()}: {val_true_oid}" not in content
+        assert f"{attr_locked.lower()}: {val_false_oid}" not in content
 
     def test_oid_boolean_conversion_rfc_to_oid(self, tmp_path: Path) -> None:
         """Test OID boolean conversion (TRUE/FALSE -> 0/1) during RFC -> OID migration."""
@@ -137,10 +139,11 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
 
-        assert f"{attr_enabled}: {val_true_oid}" in content
-        assert f"{attr_locked}: {val_false_oid}" in content
-        assert f"{attr_enabled}: {val_true_rfc}" not in content
-        assert f"{attr_locked}: {val_false_rfc}" not in content
+        # Pipeline lowercases attribute names
+        assert f"{attr_enabled.lower()}: {val_true_oid}" in content
+        assert f"{attr_locked.lower()}: {val_false_oid}" in content
+        assert f"{attr_enabled.lower()}: {val_true_rfc}" not in content
+        assert f"{attr_locked.lower()}: {val_false_rfc}" not in content
 
     def test_oid_acl_conversion_oid_to_rfc(self, tmp_path: Path) -> None:
         """Test OID ACL conversion (orclaci -> aci) during OID -> RFC migration."""
@@ -302,4 +305,4 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
 
         # Writer must output "1" for OID, even if input was "TRUE"
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        assert f"{attr_enabled}: {val_true_oid}" in content
+        assert f"{attr_enabled.lower()}: {val_true_oid}" in content

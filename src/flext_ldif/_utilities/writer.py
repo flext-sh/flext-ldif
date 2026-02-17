@@ -487,7 +487,7 @@ class FlextLdifUtilitiesWriter:
         width: int,
     ) -> None:
         """Add line with optional folding."""
-        if fold_long_lines:
+        if fold_long_lines and not line.startswith("dn:: "):
             ldif_lines.extend(FlextLdifUtilitiesWriter.fold(line, width=width))
         else:
             ldif_lines.append(line)
