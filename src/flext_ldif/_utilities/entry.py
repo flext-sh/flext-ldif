@@ -29,10 +29,8 @@ class FlextLdifUtilitiesEntry:
         """Convert a single boolean value between formats."""
         if source_format == "0/1" and target_format == "TRUE/FALSE":
             # DEBUG
-            if value != "1" and value != "0":
-                print(
-                    f"DEBUG: _convert_single_boolean_value val='{value}' src='{source_format}' tgt='{target_format}'"
-                )
+            if value not in {"1", "0"}:
+                pass
             return "TRUE" if value == "1" else "FALSE"
         if source_format == "TRUE/FALSE" and target_format == "0/1":
             return "1" if value.upper() == "TRUE" else "0"

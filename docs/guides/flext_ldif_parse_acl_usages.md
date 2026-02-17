@@ -19,7 +19,7 @@ The `parse()` and `format_acl()` methods are defined in the flext-ldif library a
 
 ### Base Class Definition
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/quirks/base.py`
+**File**: `flext-ldif/src/flext_ldif/quirks/base.py`
 
 ```python
 class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
@@ -38,7 +38,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 
 ### Protocol Definition
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
+**File**: `flext-ldif/src/flext_ldif/protocols.py`
 
 ```python
 class AclProtocol(Protocol):
@@ -87,7 +87,7 @@ Each server quirks class has:
 
 ### ACL Service
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/services/acl.py`
+**File**: `flext-ldif/src/flext_ldif/services/acl.py`
 
 **Method**: `parse()`
 
@@ -111,7 +111,7 @@ def parse(
 
 ### Categorized Pipeline
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Method**: `_transform_categories()`
 
@@ -170,7 +170,7 @@ def test_parse_oracle_oid():
 
 ### FlextLdifCategorizedMigrationPipeline
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Usage Context**:
 
@@ -182,7 +182,7 @@ def test_parse_oracle_oid():
 
 ### FlextLdif High-Level API
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/__init__.py`
+**File**: `flext-ldif/src/flext_ldif/__init__.py`
 
 **Exposure**:
 

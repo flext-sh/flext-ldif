@@ -28,7 +28,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
         ),
         "dn": lambda v: r[bool].ok("=" in v),
         "time": lambda v: r[bool].ok(bool(re.match(r"^\d{14}(\.\d+)?Z$", v))),
-        "binary": lambda _: r[bool].ok(True),
+        "binary": lambda _: r[bool].ok(value=True),
     }
 
     def __init__(self) -> None:
@@ -160,7 +160,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
     ) -> r[bool]:
         """Validate a value against its syntax type."""
         if not value or not syntax_oid:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         if syntax_oid not in c.Ldif.RfcSyntaxOids.OID_TO_NAME:
             return r[bool].fail(
@@ -176,14 +176,14 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
         type_category = resolve_result.value.type_category
         validator_raw = self._VALIDATOR_MAP.get(
             type_category,
-            lambda _: r[bool].ok(True),
+            lambda _: r[bool].ok(value=True),
         )
 
         if callable(validator_raw):
             validator: Callable[[str], r[bool]] = validator_raw
             return validator(value)
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def get_syntax_category(self, oid: str) -> r[str]:
         """Get type category for a syntax OID."""

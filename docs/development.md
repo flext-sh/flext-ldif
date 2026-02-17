@@ -106,18 +106,18 @@ result = api.parse_file("small_directory.ldif")
 
 ```python
 # LDIF-specific validation
-def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextResult[None]:
+def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format
         if not entry.dn.value:
-            return FlextResult[None].fail("Empty DN found")
+            return FlextResult[bool].fail("Empty DN found")
 
         # Check required attributes
         if "objectClass" not in entry.attributes.data:
-            return FlextResult[None].fail(f"Missing objectClass in {entry.dn.value}")
+            return FlextResult[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return FlextResult[None].ok(None)
+    return FlextResult[bool].| ok(value=True)
 ```
 
 #### Memory-Conscious Processing

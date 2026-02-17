@@ -1870,7 +1870,9 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
         return FlextLdifConversion._parse_schema_item_with_schema(
-            cast("Callable[..., r[m.Ldif.SchemaObjectClass]]", schema.parse_objectclass),
+            cast(
+                "Callable[..., r[m.Ldif.SchemaObjectClass]]", schema.parse_objectclass
+            ),
             value,
             expected_type=m.Ldif.SchemaObjectClass,
             expected_label="SchemaObjectClass",

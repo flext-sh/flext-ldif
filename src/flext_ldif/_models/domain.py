@@ -657,7 +657,7 @@ class FlextLdifModelsDomains:
             if inconsistencies:
                 return FlextResult[bool].ok(False)
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def normalize_dn_references(
             self,
@@ -2571,11 +2571,6 @@ class FlextLdifModelsDomains:
                 for key, value in attribute_case.items():
                     self.original_attribute_case[key] = value
             return self
-
-
-FlextLdifModelsDomains.Entry.model_rebuild(
-    _types_namespace={"FlextModelsEntity": FlextModelsEntity},
-)
 
 
 __all__ = ["FlextLdifModelsDomains"]

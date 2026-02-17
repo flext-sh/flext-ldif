@@ -1275,7 +1275,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _validate_aci_macros(self, _aci_value: str) -> FlextResult[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def _hook_pre_write_entry_static(

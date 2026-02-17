@@ -192,7 +192,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                 if validation_result.is_failure or not validation_result.value:
                     return r[bool].fail(f"Invalid SYNTAX OID: {attr.syntax}")
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         except Exception as e:
             error_msg = f"Error validating attribute: {e}"
@@ -228,7 +228,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                     f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}",
                 )
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         except Exception as e:
             error_msg = f"Error validating objectclass: {e}"

@@ -147,7 +147,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                     "OUD only allows single SUP (use AUXILIARY classes "
                     "for additional features).",
                 )
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     def _validate_objectclass_oid_and_sup(
         self,

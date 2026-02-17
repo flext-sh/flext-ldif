@@ -64,7 +64,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
             return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
-        return r[bool].ok(True)  # Validation passed
+        return r[bool].ok(value=True)  # Validation passed
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""

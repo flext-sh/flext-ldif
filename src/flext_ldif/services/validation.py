@@ -99,7 +99,7 @@ class FlextLdifValidation(
         """Validate LDAP attribute value length and format."""
         try:
             if not value:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             max_len = (
                 max_length
@@ -109,7 +109,7 @@ class FlextLdifValidation(
             if len(value) > max_len:
                 return r[bool].ok(False)
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate attribute value: {e}")
@@ -128,7 +128,7 @@ class FlextLdifValidation(
             if not isinstance(value, str):
                 return r[bool].ok(False)
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate DN component: {e}")

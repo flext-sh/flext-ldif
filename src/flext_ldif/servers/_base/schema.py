@@ -268,7 +268,7 @@ class FlextLdifServersBaseSchema(
         """Hook for server-specific attribute validation during schema extraction."""
         _ = attributes
         _ = available_attrs
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def validate_and_track_oid(

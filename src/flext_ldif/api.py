@@ -401,7 +401,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except OSError as e:
             return r[bool].fail(f"Failed to write file: {e}")
 

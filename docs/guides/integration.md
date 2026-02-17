@@ -339,17 +339,17 @@ class LdifCLIService(FlextCliService):
         super().__init__()
         self._ldif_api = FlextLdif()
 
-    def parse_command(self, input_file: str, output_format: str = 'summary') -> FlextResult[None]:
+    def parse_command(self, input_file: str, output_format: str = 'summary') -> FlextResult[bool]:
         """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)
 
         # Check file size before processing
         if not file_path.exists():
-            return FlextResult[None].fail(f"LDIF file not found: {input_file}")
+            return FlextResult[bool].fail(f"LDIF file not found: {input_file}")
 
         file_size = file_path.stat().st_size
         if file_size > 100 * 1024 * 1024:  # 100MB limit
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"LDIF file too large ({file_size} bytes). "
                 f"Current implementation limited to 100MB."
             )
@@ -360,7 +360,7 @@ class LdifCLIService(FlextCliService):
             .map_error(lambda error: f"LDIF CLI parse failed: {error}")
         )
 
-    def _output_ldif_results(self, entries, format_type: str) -> FlextResult[None]:
+    def _output_ldif_results(self, entries, format_type: str) -> FlextResult[bool]:
         """Output LDIF parsing results in specified format."""
         if format_type == 'summary':
             print(f"LDIF Processing Summary:")
@@ -378,7 +378,7 @@ class LdifCLIService(FlextCliService):
             print(f"  Person entries: {len(persons)}")
             print(f"  Group entries: {len(groups)}")
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].| ok(value=True)
         elif format_type == 'json':
             import json
             output = json.dumps([
@@ -391,9 +391,9 @@ class LdifCLIService(FlextCliService):
                 for entry in entries
             ], indent=2)
             print(output)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].| ok(value=True)
         else:
-            return FlextResult[None].fail(f"Unsupported LDIF output format: {format_type}")
+            return FlextResult[bool].fail(f"Unsupported LDIF output format: {format_type}")
 ```
 
 ## LDIF Data Pipeline Integration
