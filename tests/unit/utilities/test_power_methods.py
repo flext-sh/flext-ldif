@@ -36,12 +36,12 @@ from flext_ldif._utilities import (
     ValidationPipeline,
     ValidationResult,
 )
-from flext_ldif.services import ProcessingPipeline
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.configs import CaseFoldOption
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services import ProcessingPipeline
 from flext_ldif.utilities import FlextLdifUtilities
 
 # =========================================================================

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import cast
 
 import pytest
 from tests import RfcTestHelpers, TestDeduplicationHelpers, s

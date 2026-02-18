@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Final
 
 from flext_tests import tm  # type: ignore
-from flext_tests.utilities import FlextTestsUtilities  # type: ignore
 
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.constants import c as lib_c

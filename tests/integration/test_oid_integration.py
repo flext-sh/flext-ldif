@@ -50,7 +50,7 @@ class TestOidSchemaIntegration:
         assert len(entries) > 0, "No schema entries parsed"
 
         # Verify schema entry structure
-        schema_entry = cast(m.Ldif.Entry, entries[0])
+        schema_entry = cast("m.Ldif.Entry", entries[0])
         assert schema_entry.dn is not None
 
     def test_oracle_attributes_in_parsed_schema(

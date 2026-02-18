@@ -14,7 +14,7 @@ import pytest
 
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
-from tests import c, s, tf
+from tests import c, s
 
 m = FlextLdifModels
 

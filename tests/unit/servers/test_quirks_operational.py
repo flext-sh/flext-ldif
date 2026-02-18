@@ -19,7 +19,7 @@ from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests import c, p, s, tf
+from tests import c, s, tf
 
 # TypeVar for generic validation methods
 T = TypeVar("T")

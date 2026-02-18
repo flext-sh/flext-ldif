@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import m, s, p
+from tests import m, p, s
 from tests.typings import GenericFieldsDict
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py

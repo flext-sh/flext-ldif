@@ -15,7 +15,6 @@ from typing import ClassVar, cast
 import pytest
 from flext_core import FlextSettings
 from flext_tests import tm
-from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.constants import c as lib_c

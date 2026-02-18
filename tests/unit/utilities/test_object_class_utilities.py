@@ -12,7 +12,6 @@ from enum import StrEnum
 from tests import c, m, s
 
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif.protocols import p
 
 
 class ObjectClassTestCase(StrEnum):

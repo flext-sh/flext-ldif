@@ -26,7 +26,6 @@ from typing import ClassVar
 import pytest
 from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.filters import FlextLdifFilters

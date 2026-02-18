@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import p, s
+from tests import s
 from tests.conftest import FlextLdifFixtures
 from tests.helpers.compat import TestDeduplicationHelpers
 

@@ -13,7 +13,7 @@ import pytest
 
 from flext_ldif import FlextLdifParser
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, c, p, s
+from tests import RfcTestHelpers, c, s
 
 
 class TestsFlextLdifRfcSchemaParserInitialization(s):

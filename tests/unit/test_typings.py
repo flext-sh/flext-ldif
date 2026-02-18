@@ -11,7 +11,7 @@ import pytest
 
 import flext_ldif
 from flext_ldif.typings import t as t_ldif
-from tests import GenericFieldsDict, OIDs, c, s
+from tests import OIDs, c, s
 
 
 class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (acceptable)
