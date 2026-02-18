@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-import structlog
 from flext_core import FlextRuntime, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -20,7 +19,7 @@ from flext_ldif.models import m
 # type SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute  # Use m.Ldif.SchemaAttribute or FlextLdifModelsDomains.SchemaAttribute directly
 # type SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass  # Use m.Ldif.SchemaObjectClass or FlextLdifModelsDomains.SchemaObjectClass directly
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 # REMOVED: EntryAttrs alias - use t.Entry.EntryAttrs directly (no redundant aliases for nested objects)
 # EntryAttrs = t.Entry.EntryAttrs

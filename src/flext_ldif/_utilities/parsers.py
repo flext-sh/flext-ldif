@@ -5,12 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-import structlog
-from flext_core import FlextResult, r
+from flext_core import FlextLogger, FlextResult, r
 
 from flext_ldif.models import m
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class FlextLdifUtilitiesParsers:

@@ -13,15 +13,17 @@
 
 **Reviewed**: 2026-02-17 | **Version**: 0.10.0-dev
 
-Part of the [FLEXT](https://github.com/flext/flext) ecosystem.
+Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 
-## 🚀 Quick Start
+## Quick Start
 
-### Installation
+## Installation
 
 ```bash
 pip install flext-ldif
 ```
+
+## Usage
 
 ### Basic Usage
 
