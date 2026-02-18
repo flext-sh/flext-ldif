@@ -171,7 +171,9 @@ class TestsTestFlextLdifMigrationPipeline(s):
 
         # Pipeline should succeed and create the output directory
         assert result.is_success
-        assert nonexistent_output.exists(), f"Output dir {nonexistent_output} not created"
+        assert nonexistent_output.exists(), (
+            f"Output dir {nonexistent_output} not created"
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # EMPTY INPUT TESTS
@@ -250,7 +252,9 @@ sn: test
         entries = [
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"cn": ["test"], "objectClass": ["person"]}
+                ),
             ),
         ]
 

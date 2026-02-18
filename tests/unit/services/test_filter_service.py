@@ -490,7 +490,8 @@ class TestsFlextLdifFilterService(s):
 
             elif scenario == BuilderPatternScenario.BUILDER_WITH_DN:
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(user_entries)
                     .with_dn_pattern(Filters.DN_PATTERN_USERS)
                     .build()
@@ -499,7 +500,8 @@ class TestsFlextLdifFilterService(s):
 
             elif scenario == BuilderPatternScenario.BUILDER_WITH_OBJECTCLASS:
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(user_entries)
                     .with_objectclass(Filters.OC_PERSON)
                     .with_required_attributes([Filters.ATTR_MAIL])
@@ -521,7 +523,8 @@ class TestsFlextLdifFilterService(s):
                     create_entry(Filters.DN_OU_GROUPS, {Filters.ATTR_CN: ["groups"]}),
                 ]
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(hierarchy_entries)
                     .with_base_dn(c.DNs.EXAMPLE)
                     .build()
@@ -530,7 +533,8 @@ class TestsFlextLdifFilterService(s):
 
             elif scenario == BuilderPatternScenario.BUILDER_WITH_MODE:
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(user_entries)
                     .with_dn_pattern(Filters.DN_PATTERN_USERS)
                     .with_mode(Filters.MODE_EXCLUDE)
@@ -553,7 +557,8 @@ class TestsFlextLdifFilterService(s):
                     ),
                 ]
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(entries)
                     .with_attributes([Filters.ATTR_MAIL, "phone"])
                     .with_match_all(match_all=True)
@@ -563,7 +568,8 @@ class TestsFlextLdifFilterService(s):
 
             elif scenario == BuilderPatternScenario.BUILDER_MULTIPLE_OBJECTCLASSES:
                 result = (
-                    FlextLdifFilters.builder()
+                    FlextLdifFilters
+                    .builder()
                     .with_entries(user_entries)
                     .with_objectclass(
                         Filters.OC_PERSON,

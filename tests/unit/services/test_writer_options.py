@@ -153,9 +153,11 @@ class TestsFlextLdifWriterFormatOptions(s):
                 c.Names.MAIL: ["john.doe@example.com"],
                 c.Names.TELEPHONE_NUMBER: ["+1-555-123-4567"],
                 c.Names.DESCRIPTION: [
-                    "A very long description that should definitely exceed the normal "
-                    "line width limit for LDIF formatting and trigger line folding "
-                    "behavior according to RFC 2849 specifications",
+                    (
+                        "A very long description that should definitely exceed the normal "
+                        "line width limit for LDIF formatting and trigger line folding "
+                        "behavior according to RFC 2849 specifications"
+                    ),
                 ],
             },
         )
@@ -231,8 +233,10 @@ class TestsFlextLdifWriterFormatOptions(s):
                 "objectClass": ["top", "subentry", "aci"],
                 "cn": ["acl-test"],
                 "aci": [
-                    '(targetattr="cn||sn")(version 3.0; acl "default-name"; '
-                    'allow(read,search) userdn="ldap:///self";)',
+                    (
+                        '(targetattr="cn||sn")(version 3.0; acl "default-name"; '
+                        'allow(read,search) userdn="ldap:///self";)'
+                    ),
                 ],
             },
             metadata=metadata,
@@ -332,7 +336,9 @@ class TestsFlextLdifWriterFormatOptions(s):
         # Convert target_server to proper type
         server_type: lib_c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
         if isinstance(target_server, str):
-            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(target_server)
+            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(
+                target_server
+            )
             if normalized is not None:
                 server_type = normalized
         result = writer.write(

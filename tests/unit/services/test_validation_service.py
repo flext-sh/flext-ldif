@@ -292,7 +292,8 @@ class TestsTestFlextLdifValidation(s):
         def test_build_with_attribute_names(self) -> None:
             """Test build() validates attribute names."""
             result = (
-                FlextLdifValidation.builder()
+                FlextLdifValidation
+                .builder()
                 .with_attribute_names(["cn", "2invalid"])
                 .build()
             )
@@ -303,7 +304,8 @@ class TestsTestFlextLdifValidation(s):
         def test_build_with_objectclass_names(self) -> None:
             """Test build() validates objectClass names."""
             result = (
-                FlextLdifValidation.builder()
+                FlextLdifValidation
+                .builder()
                 .with_objectclass_names(["person", "invalid class"])
                 .build()
             )
@@ -314,7 +316,8 @@ class TestsTestFlextLdifValidation(s):
         def test_build_with_both(self) -> None:
             """Test build() validates both attribute and objectClass names."""
             result = (
-                FlextLdifValidation.builder()
+                FlextLdifValidation
+                .builder()
                 .with_attribute_names(["cn"])
                 .with_objectclass_names(["person"])
                 .build()

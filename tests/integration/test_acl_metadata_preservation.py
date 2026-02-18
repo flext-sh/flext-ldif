@@ -160,7 +160,9 @@ cn: test
         entry = entries[0]
 
         # Verify all extensions present
-        assert entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_BINDMODE) == "Simple"
+        assert (
+            entry.metadata.extensions.get(c.Ldif.MetadataKeys.ACL_BINDMODE) == "Simple"
+        )
         assert (
             entry.metadata.extensions.get(
                 c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,

@@ -480,7 +480,7 @@ class TestFlextLdifServersBaseRegisterInRegistry:
 
     def test_register_in_registry_no_register_method(self) -> None:
         """Test _register_in_registry with registry without register method."""
-        rfc = FlextLdifServersRfc()
+        FlextLdifServersRfc()
         # Create a registry without register method
 
         class NoRegisterRegistry:
@@ -496,7 +496,9 @@ class TestFlextLdifServersBaseRegisterInRegistry:
         # We can test this by checking the method signature expects this scenario
         # The _register_in_registry implementation should use hasattr internally
         # Test passes if no exception is raised when registry lacks required method
-        assert registry.data == []  # Registry state unchanged since no registration happened
+        assert (
+            registry.data == []
+        )  # Registry state unchanged since no registration happened
 
 
 class TestFlextLdifServersBaseNestedSchema:
@@ -1398,7 +1400,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
 
     def test_register_in_registry_with_non_callable(self) -> None:
         """Test _register_in_registry with non-callable register attribute."""
-        rfc = FlextLdifServersRfc()
+        FlextLdifServersRfc()
 
         class RegistryWithNonCallable:
             def __init__(self) -> None:
@@ -2360,7 +2362,6 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         schema_quirk = rfc.schema_quirk
         # Type narrowing: schema_quirk is actually FlextLdifServersRfc.Schema at runtime
         assert isinstance(schema_quirk, FlextLdifServersRfc.Schema)
-        schema: FlextLdifServersRfc.Schema = schema_quirk
         # Create LDIF with attribute definitions
         ldif_content = f"dn: cn=schema\n{c.Rfc.ATTR_DEF_CN}\n"
         # Call extract_schemas_from_ldif with validate_dependencies=True

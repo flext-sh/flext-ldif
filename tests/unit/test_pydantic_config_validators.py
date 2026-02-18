@@ -114,10 +114,22 @@ class TestsTestFlextLdifSettingsValidators(s):
         ServerTypeScenario.OUD_VALID: ("oud", True),
         ServerTypeScenario.OPENLDAP_VALID: ("openldap", True),
         ServerTypeScenario.OPENLDAP1_VALID: ("openldap1", True),
-        ServerTypeScenario.AD_VALID: ("ad", True),  # canonical is "ad", not "active_directory"
-        ServerTypeScenario.DS389_VALID: ("ds389", True),  # canonical is "ds389", not "389ds"
-        ServerTypeScenario.APACHE_VALID: ("apache", True),  # canonical is "apache", not "apache_directory"
-        ServerTypeScenario.NOVELL_VALID: ("novell", True),  # canonical is "novell", not "novell_edirectory"
+        ServerTypeScenario.AD_VALID: (
+            "ad",
+            True,
+        ),  # canonical is "ad", not "active_directory"
+        ServerTypeScenario.DS389_VALID: (
+            "ds389",
+            True,
+        ),  # canonical is "ds389", not "389ds"
+        ServerTypeScenario.APACHE_VALID: (
+            "apache",
+            True,
+        ),  # canonical is "apache", not "apache_directory"
+        ServerTypeScenario.NOVELL_VALID: (
+            "novell",
+            True,
+        ),  # canonical is "novell", not "novell_edirectory"
         ServerTypeScenario.TIVOLI_VALID: ("ibm_tivoli", True),
         ServerTypeScenario.RELAXED_VALID: ("relaxed", True),
         ServerTypeScenario.GENERIC_VALID: ("generic", True),
@@ -212,7 +224,9 @@ class TestsTestFlextLdifSettingsValidators(s):
             config = FlextLdifSettings(server_type=server_type)
             # The validator normalizes aliases to canonical form
             # So we should expect the normalized value, not the original
-            expected_server_type = FlextLdifUtilities.Ldif.Server.normalize_server_type(server_type)
+            expected_server_type = FlextLdifUtilities.Ldif.Server.normalize_server_type(
+                server_type
+            )
             assert config.server_type == expected_server_type
         else:
             with pytest.raises(ValidationError) as exc_info:

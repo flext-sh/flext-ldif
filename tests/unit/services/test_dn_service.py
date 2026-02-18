@@ -539,7 +539,8 @@ class TestsFlextLdifDnService(s):
         def test_build(self) -> None:
             """Test build() executes and returns unwrapped result."""
             result = (
-                FlextLdifDn.builder()
+                FlextLdifDn
+                .builder()
                 .with_dn("CN=Test,DC=Example,DC=Com")
                 .with_operation("normalize")
                 .build()

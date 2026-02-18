@@ -353,7 +353,8 @@ class TestsFlextLdifExecuteAndBuilder(s):
     def test_builder_chaining(self) -> None:
         """Test builder method chaining."""
         service = (
-            FlextLdifSchema.builder()
+            FlextLdifSchema
+            .builder()
             .with_server_type("rfc")
             .with_server_type("oid")  # Override
             .build()

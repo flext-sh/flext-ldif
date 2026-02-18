@@ -1018,9 +1018,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return result
         entry = result.value
         original_dn = entry.dn.value if entry.dn else ""
-        original_attrs = (
-            dict(entry.attributes.attributes) if entry.attributes else {}
-        )
+        original_attrs = dict(entry.attributes.attributes) if entry.attributes else {}
         return self._hook_finalize_entry_parse(entry, original_dn, original_attrs)
 
     def _get_current_attrs_with_acl_equivalence(

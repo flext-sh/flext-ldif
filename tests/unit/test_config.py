@@ -342,7 +342,9 @@ class TestsTestFlextLdifSettings(s):
         def test_server_type_valid(self, server_type: str) -> None:
             """Test valid server_type values."""
             # Normalize and validate: Pydantic validates server_type at runtime
-            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(server_type)
+            normalized = FlextLdifUtilities.Ldif.Server.normalize_server_type(
+                server_type
+            )
             config = FlextLdifSettings(server_type=normalized)
             assert config.server_type == normalized
 

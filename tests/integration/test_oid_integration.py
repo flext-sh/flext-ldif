@@ -92,7 +92,9 @@ class TestOidSchemaIntegration:
             )
 
         oracle_attr_count = sum(
-            1 for attr in (attrs or []) if isinstance(attr, str) and "2.16.840.1.113894" in attr
+            1
+            for attr in (attrs or [])
+            if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
 
         # Fixture may or may not contain Oracle attributes depending on the schema subset

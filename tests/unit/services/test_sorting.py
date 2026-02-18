@@ -156,35 +156,50 @@ class TestsTestFlextLdifSorting(s):
                 TestsTestFlextLdifSorting.TestType,
                 Callable[[], FlextResult[list[p.Entry]]],
             ] = {
-                TestsTestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
-                    entries,
+                TestsTestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: (
+                    FlextLdifSorting.by_hierarchy(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSorting.TestType.BY_DN: lambda: FlextLdifSorting.by_dn(
-                    entries,
+                TestsTestFlextLdifSorting.TestType.BY_DN: lambda: (
+                    FlextLdifSorting.by_dn(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSorting.TestType.BY_SCHEMA: lambda: FlextLdifSorting.by_schema(
-                    entries,
+                TestsTestFlextLdifSorting.TestType.BY_SCHEMA: lambda: (
+                    FlextLdifSorting.by_schema(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSorting.TestType.BY_CUSTOM: lambda: FlextLdifSorting.by_custom(
-                    entries,
-                    TestsTestFlextLdifSorting.Helpers.sort_predicate,
+                TestsTestFlextLdifSorting.TestType.BY_CUSTOM: lambda: (
+                    FlextLdifSorting.by_custom(
+                        entries,
+                        TestsTestFlextLdifSorting.Helpers.sort_predicate,
+                    )
                 ),
-                TestsTestFlextLdifSorting.TestType.EXECUTE_EMPTY: lambda: FlextLdifSorting(
-                    entries=[],
-                    sort_by=test_case.sort_by,
-                ).execute(),
-                TestsTestFlextLdifSorting.TestType.EXECUTE_CUSTOM: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=test_case.sort_target,
-                    sort_by=test_case.sort_by,
-                    custom_predicate=TestsTestFlextLdifSorting.Helpers.sort_predicate,
-                ).execute(),
-                TestsTestFlextLdifSorting.TestType.SORT_CLASSMETHOD: lambda: FlextLdifSorting.sort(
-                    entries=entries,
-                    by=test_case.sort_by,
+                TestsTestFlextLdifSorting.TestType.EXECUTE_EMPTY: lambda: (
+                    FlextLdifSorting(
+                        entries=[],
+                        sort_by=test_case.sort_by,
+                    ).execute()
+                ),
+                TestsTestFlextLdifSorting.TestType.EXECUTE_CUSTOM: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=test_case.sort_target,
+                        sort_by=test_case.sort_by,
+                        custom_predicate=TestsTestFlextLdifSorting.Helpers.sort_predicate,
+                    ).execute()
+                ),
+                TestsTestFlextLdifSorting.TestType.SORT_CLASSMETHOD: lambda: (
+                    FlextLdifSorting.sort(
+                        entries=entries,
+                        by=test_case.sort_by,
+                    )
                 ),
                 TestsTestFlextLdifSorting.TestType.BUILDER_ATTRIBUTES: lambda: (
-                    FlextLdifSorting.builder()
+                    FlextLdifSorting
+                    .builder()
                     .with_entries(entries)
                     .with_target(test_case.sort_target)
                     .with_strategy(test_case.sort_by)
@@ -479,7 +494,8 @@ class TestsTestFlextLdifSorting(s):
             ),
         ]
         result = (
-            FlextLdifSorting.builder()
+            FlextLdifSorting
+            .builder()
             .with_entries(entries)
             .with_strategy(self.Constants.SORT_BY_HIERARCHY)
             .with_target(self.Constants.SORT_TARGET_COMBINED)

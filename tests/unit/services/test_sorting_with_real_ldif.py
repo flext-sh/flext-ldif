@@ -147,39 +147,55 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
                 TestsTestFlextLdifSortingWithRealLDIF.TestType,
                 Callable[[], FlextResult[list[p.Entry]]],
             ] = {
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
-                    entries,
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_HIERARCHY: lambda: (
+                    FlextLdifSorting.by_hierarchy(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_DN: lambda: FlextLdifSorting.by_dn(
-                    entries,
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_DN: lambda: (
+                    FlextLdifSorting.by_dn(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_SCHEMA: lambda: FlextLdifSorting.by_schema(
-                    entries,
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.BY_SCHEMA: lambda: (
+                    FlextLdifSorting.by_schema(
+                        entries,
+                    )
                 ),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_HIERARCHY: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ENTRIES,
-                    sort_by=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_BY_HIERARCHY,
-                ).execute(),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_ATTRIBUTES: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ATTRIBUTES,
-                ).execute(),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_COMBINED: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_COMBINED,
-                    sort_by=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_BY_HIERARCHY,
-                    sort_attributes=True,
-                ).execute(),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_SCHEMA: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_SCHEMA,
-                    sort_by="schema",
-                ).execute(),
-                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_ACL: lambda: FlextLdifSorting(
-                    entries=entries,
-                    sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ACL,
-                ).execute(),
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_HIERARCHY: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ENTRIES,
+                        sort_by=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_BY_HIERARCHY,
+                    ).execute()
+                ),
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_ATTRIBUTES: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ATTRIBUTES,
+                    ).execute()
+                ),
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_COMBINED: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_COMBINED,
+                        sort_by=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_BY_HIERARCHY,
+                        sort_attributes=True,
+                    ).execute()
+                ),
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_SCHEMA: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_SCHEMA,
+                        sort_by="schema",
+                    ).execute()
+                ),
+                TestsTestFlextLdifSortingWithRealLDIF.TestType.EXECUTE_ACL: lambda: (
+                    FlextLdifSorting(
+                        entries=entries,
+                        sort_target=TestsTestFlextLdifSortingWithRealLDIF.Constants.SORT_TARGET_ACL,
+                    ).execute()
+                ),
             }
 
             if test_type in operation_map:
@@ -541,7 +557,8 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             pytest.skip("No OID entries loaded")
 
         result = (
-            FlextLdifSorting.builder()
+            FlextLdifSorting
+            .builder()
             .with_entries(oid_entries)
             .with_strategy(self.Constants.SORT_BY_HIERARCHY)
             .with_attribute_sorting(alphabetical=True)

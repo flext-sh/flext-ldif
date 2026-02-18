@@ -122,8 +122,10 @@ class TestsTestFlextLdifTivoliQuirks(s):
         "schema_parse_attribute_success": (
             SchemaParseScenario.ATTRIBUTE_SUCCESS,
             "attribute",
-            "( 1.3.18.0.2.4.1 NAME 'ibm-entryUUID' DESC 'Entry UUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )",
+            (
+                "( 1.3.18.0.2.4.1 NAME 'ibm-entryUUID' DESC 'Entry UUID' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
+            ),
             True,
             "1.3.18.0.2.4.1",
         ),
@@ -137,16 +139,20 @@ class TestsTestFlextLdifTivoliQuirks(s):
         "schema_parse_attribute_with_ordering": (
             SchemaParseScenario.ATTRIBUTE_WITH_ORDERING,
             "attribute",
-            "( 1.3.18.0.2.4.2 NAME 'ids-timestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-            "ORDERING generalizedTimeOrderingMatch )",
+            (
+                "( 1.3.18.0.2.4.2 NAME 'ids-timestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
+                "ORDERING generalizedTimeOrderingMatch )"
+            ),
             True,
             "1.3.18.0.2.4.2",
         ),
         "schema_parse_attribute_with_substr": (
             SchemaParseScenario.ATTRIBUTE_WITH_SUBSTR,
             "attribute",
-            "( 1.3.18.0.2.4.3 NAME 'ibm-description' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
-            "SUBSTR caseIgnoreSubstringsMatch )",
+            (
+                "( 1.3.18.0.2.4.3 NAME 'ibm-description' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+                "SUBSTR caseIgnoreSubstringsMatch )"
+            ),
             True,
             "1.3.18.0.2.4.3",
         ),
@@ -167,8 +173,10 @@ class TestsTestFlextLdifTivoliQuirks(s):
         "schema_parse_objectclass_success": (
             SchemaParseScenario.OBJECTCLASS_SUCCESS,
             "objectclass",
-            "( 1.3.18.0.2.6.1 NAME 'ibm-ldapserver' DESC 'LDAP server configuration' "
-            "SUP top STRUCTURAL MUST ( cn $ ibm-serverVersion ) MAY ( ibm-serverPort ) )",
+            (
+                "( 1.3.18.0.2.6.1 NAME 'ibm-ldapserver' DESC 'LDAP server configuration' "
+                "SUP top STRUCTURAL MUST ( cn $ ibm-serverVersion ) MAY ( ibm-serverPort ) )"
+            ),
             True,
             "1.3.18.0.2.6.1",
         ),

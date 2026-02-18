@@ -292,7 +292,9 @@ class TestsFlextLdifCategorization(s):
             expected_category: str,
         ) -> None:
             """Test categorize_entry() categorizes by entry type."""
-            factory_method = getattr(TestsFlextLdifCategorization.Factories, entry_factory)
+            factory_method = getattr(
+                TestsFlextLdifCategorization.Factories, entry_factory
+            )
             entry = factory_method()
             service = FlextLdifCategorization(server_type=server_type)
             category, reason = service.categorize_entry(entry, None, server_type)
@@ -379,10 +381,26 @@ class TestsFlextLdifCategorization(s):
             service = FlextLdifCategorization()
             result = service.categorize_entries(entries)
             categories = tm.ok(result)
-            assert len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS]) == 1
-            assert len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_GROUPS]) == 1
-            assert len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_HIERARCHY]) == 1
-            assert len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA]) == 1
+            assert (
+                len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS])
+                == 1
+            )
+            assert (
+                len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_GROUPS])
+                == 1
+            )
+            assert (
+                len(
+                    categories[
+                        TestsFlextLdifCategorization.Constants.CATEGORY_HIERARCHY
+                    ]
+                )
+                == 1
+            )
+            assert (
+                len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA])
+                == 1
+            )
 
         def test_categorize_entries_tracks_metadata(self) -> None:
             """Test categorize_entries() tracks category in metadata."""
@@ -398,9 +416,9 @@ class TestsFlextLdifCategorization(s):
             service = FlextLdifCategorization()
             result = service.categorize_entries([entry_with_stats])
             categories = tm.ok(result)
-            categorized_entry = categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS][
-                0
-            ]
+            categorized_entry = categories[
+                TestsFlextLdifCategorization.Constants.CATEGORY_USERS
+            ][0]
             assert categorized_entry.metadata is not None
             assert categorized_entry.metadata.processing_stats is not None
             assert (
@@ -429,8 +447,15 @@ class TestsFlextLdifCategorization(s):
             service = FlextLdifCategorization()
             result = service.categorize_entries([entry_with_stats])
             categories = tm.ok(result)
-            assert len(categories[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED]) > 0
-            rejected = categories[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED][0]
+            assert (
+                len(
+                    categories[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED]
+                )
+                > 0
+            )
+            rejected = categories[
+                TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED
+            ][0]
             assert rejected.metadata is not None
             assert rejected.metadata.processing_stats is not None
             assert rejected.metadata.processing_stats.was_rejected
@@ -459,7 +484,10 @@ class TestsFlextLdifCategorization(s):
             categories = _FlexibleCategories()
             categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS]) == 2
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS])
+                == 2
+            )
 
         def test_filter_by_base_dn_excludes_outside_base(self) -> None:
             """Test filter_by_base_dn() excludes entries outside base DN."""
@@ -478,7 +506,10 @@ class TestsFlextLdifCategorization(s):
             categories = _FlexibleCategories()
             categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS]) == 1
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS])
+                == 1
+            )
             assert len(service.rejection_tracker["base_dn_filter"]) == 1
 
         def test_filter_by_base_dn_tracks_metadata(self) -> None:
@@ -497,9 +528,13 @@ class TestsFlextLdifCategorization(s):
             )
             # FlexibleCategories is a type alias, use the actual class
             categories = _FlexibleCategories()
-            categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS] = [entry_with_stats]
+            categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS] = [
+                entry_with_stats
+            ]
             filtered = service.filter_by_base_dn(categories)
-            filtered_entry = filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS][0]
+            filtered_entry = filtered[
+                TestsFlextLdifCategorization.Constants.CATEGORY_USERS
+            ][0]
             assert filtered_entry.metadata is not None
             assert filtered_entry.metadata.processing_stats is not None
             assert filtered_entry.metadata.processing_stats.was_filtered
@@ -520,13 +555,21 @@ class TestsFlextLdifCategorization(s):
             )
             # FlexibleCategories is a type alias, use the actual class
             categories = _FlexibleCategories()
-            categories[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA] = [schema_entry]
+            categories[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA] = [
+                schema_entry
+            ]
             categories[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED] = [
                 rejected_entry,
             ]
             filtered = service.filter_by_base_dn(categories)
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA]) == 1
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED]) == 1
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_SCHEMA])
+                == 1
+            )
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED])
+                == 1
+            )
 
         def test_filter_by_base_dn_no_base_dn_configured(self) -> None:
             """Test filter_by_base_dn() returns unchanged if no base DN."""
@@ -536,7 +579,10 @@ class TestsFlextLdifCategorization(s):
             categories = _FlexibleCategories()
             categories[TestsFlextLdifCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS]) == 1
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS])
+                == 1
+            )
 
     class TestSchemaOIDFiltering:
         """Test schema OID whitelist filtering."""
@@ -593,8 +639,14 @@ class TestsFlextLdifCategorization(s):
                 categories,
                 TestsFlextLdifCategorization.Constants.DN_BASE,
             )
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS]) == 1
-            assert len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED]) == 1
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_USERS])
+                == 1
+            )
+            assert (
+                len(filtered[TestsFlextLdifCategorization.Constants.CATEGORY_REJECTED])
+                == 1
+            )
 
     class TestDependencyInjection:
         """Test FlextLdifServer dependency injection."""

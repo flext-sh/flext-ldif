@@ -911,9 +911,11 @@ class TestsTestFlextLdifAclParser(s):
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OID:
-                parse_result_oid: FlextResult[m.Tests.Acl] = acl_service.parse_acl_string(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_oid: FlextResult[m.Tests.Acl] = (
+                    acl_service.parse_acl_string(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_oid, FlextResult)
                 assert parse_result_oid.is_success, (
@@ -924,9 +926,11 @@ class TestsTestFlextLdifAclParser(s):
                 assert parsed_acl.raw_acl == test_case.acl_line
 
             case AclParserTestType.PARSE_OUD:
-                parse_result_oud: FlextResult[m.Tests.Acl] = acl_service.parse_acl_string(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_oud: FlextResult[m.Tests.Acl] = (
+                    acl_service.parse_acl_string(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_oud, FlextResult)
                 assert parse_result_oud.is_success, (

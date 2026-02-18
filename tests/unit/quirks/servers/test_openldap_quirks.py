@@ -98,8 +98,10 @@ class TestsFlextLdifOpenldapQuirks(s):
         dict[AttributeTestType, tuple[str, bool, str | None]]
     ] = {
         AttributeTestType.OLC_PREFIX: (
-            "olcAttributeTypes: ( 1.2.3.4 NAME 'test' DESC 'Test attribute' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+            (
+                "olcAttributeTypes: ( 1.2.3.4 NAME 'test' DESC 'Test attribute' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            ),
             True,
             "1.2.3.4",
         ),
@@ -109,8 +111,10 @@ class TestsFlextLdifOpenldapQuirks(s):
             "2.5.4.3",
         ),
         AttributeTestType.WITH_SYNTAX: (
-            "( 2.5.4.2 NAME 'knowledgeInformation' DESC 'RFC2256' "
-            "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )",
+            (
+                "( 2.5.4.2 NAME 'knowledgeInformation' DESC 'RFC2256' "
+                "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )"
+            ),
             True,
             "2.5.4.2",
         ),
@@ -133,15 +137,19 @@ class TestsFlextLdifOpenldapQuirks(s):
         dict[ObjectClassTestType, tuple[str, bool, str | None, str | None]]
     ] = {
         ObjectClassTestType.OLC_PREFIX: (
-            "olcObjectClasses: ( 1.2.3.4 NAME 'testClass' DESC 'Test class' "
-            "SUP top STRUCTURAL MUST cn MAY description )",
+            (
+                "olcObjectClasses: ( 1.2.3.4 NAME 'testClass' DESC 'Test class' "
+                "SUP top STRUCTURAL MUST cn MAY description )"
+            ),
             True,
             "1.2.3.4",
             "STRUCTURAL",
         ),
         ObjectClassTestType.STANDARD: (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' "
-            "MUST ( sn $ cn ) MAY ( userPassword ) )",
+            (
+                "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' "
+                "MUST ( sn $ cn ) MAY ( userPassword ) )"
+            ),
             True,
             "2.5.6.6",
             None,

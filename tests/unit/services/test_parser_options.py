@@ -570,7 +570,9 @@ sn:"""
         response_obj = self.Helpers.parse_and_assert(
             parser_service,
             ldif,
-            format_options=None if expected_entries > 0 else m.Ldif.ParseFormatOptions(),
+            format_options=None
+            if expected_entries > 0
+            else m.Ldif.ParseFormatOptions(),
         )
         assert response_obj.statistics.parse_errors == expected_errors
         tm.assert_length_equals(response_obj.entries, expected_entries)
@@ -589,4 +591,6 @@ sn:"""
 
         # assert_failure returns error message, validate it contains expected text
         error_msg = self.assert_failure(result)
-        assert "server type" in error_msg.lower(), f"Expected 'server type' in: {error_msg}"
+        assert "server type" in error_msg.lower(), (
+            f"Expected 'server type' in: {error_msg}"
+        )

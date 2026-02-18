@@ -295,8 +295,7 @@ class TestFlextLdifFilterService(tt):
             elif test_case.expected_attr:
                 # At least one attribute present (any mode)
                 has_any = any(
-                    _entry_has_attribute(entry, attr)
-                    for attr in test_case.attributes
+                    _entry_has_attribute(entry, attr) for attr in test_case.attributes
                 )
                 assert has_any, (
                     f"Entry missing any of attributes {test_case.attributes}"

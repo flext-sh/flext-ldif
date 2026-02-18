@@ -159,7 +159,9 @@ class TestsTestFlextLdifUtilitiesAttribute(s):
         """Test split_attribute_description raises ValueError for None."""
         # Method raises ValueError per implementation (line 69-71)
         # Intentionally testing incorrect type
-        with pytest.raises((ValueError, AttributeError), match="cannot be empty or None"):
+        with pytest.raises(
+            (ValueError, AttributeError), match="cannot be empty or None"
+        ):
             FlextLdifUtilitiesAttribute.split_attribute_description(None)  # type: ignore[arg-type]
 
     @pytest.mark.parametrize("attribute_name", VALID_NAMES)

@@ -782,7 +782,8 @@ class TestsFlextLdifEntries(s):
         simple_entry = self.Factories.create_simple_entry()
 
         result1_list = (
-            FlextLdifEntries.builder()
+            FlextLdifEntries
+            .builder()
             .with_entries([simple_entry])
             .with_operation("remove_operational_attributes")
             .build()
@@ -791,7 +792,8 @@ class TestsFlextLdifEntries(s):
         tm.entry(result1[0], has_attr=c.Names.CN)
 
         result2 = (
-            FlextLdifEntries.builder()
+            FlextLdifEntries
+            .builder()
             .with_entries([simple_entry])
             .with_operation("remove_attributes")
             .with_attributes_to_remove([c.Names.MAIL, c.Names.SN])
@@ -1152,7 +1154,8 @@ class TestsFlextLdifEntries(s):
         assert len(oid_entries) > 0
 
         result = (
-            FlextLdifEntries.builder()
+            FlextLdifEntries
+            .builder()
             .with_entries(oid_entries)
             .with_operation("remove_operational_attributes")
             .build()
@@ -1301,8 +1304,12 @@ class TestsFlextLdifEntries(s):
                 if expected_normalized is not None:
                     normalized = tm.ok(result)
                     tm.that(
-                        normalized.lower() if isinstance(normalized, str) else normalized,
-                        eq=expected_normalized.lower() if isinstance(expected_normalized, str) else expected_normalized,
+                        normalized.lower()
+                        if isinstance(normalized, str)
+                        else normalized,
+                        eq=expected_normalized.lower()
+                        if isinstance(expected_normalized, str)
+                        else expected_normalized,
                     )
             elif expected_error:
                 tm.fail(result, has=expected_error)
@@ -1331,7 +1338,9 @@ class TestsFlextLdifEntries(s):
                     value = tm.ok(result)
                     tm.that(
                         value.lower() if isinstance(value, str) else value,
-                        eq=expected_value.lower() if isinstance(expected_value, str) else expected_value,
+                        eq=expected_value.lower()
+                        if isinstance(expected_value, str)
+                        else expected_value,
                     )
             else:
                 tm.fail(result)

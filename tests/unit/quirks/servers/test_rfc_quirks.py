@@ -495,7 +495,6 @@ class TestsFlextLdifRfcQuirks(s):
         acl_line, expected_server = data
         result = acl_quirk._parse_acl(acl_line)
         assert result.is_success
-        acl = result.value
         assert acl_quirk.server_type == expected_server
 
     def test_acl_parse_empty_fails(

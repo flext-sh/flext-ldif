@@ -100,8 +100,10 @@ class TestsTestFlextLdifOidSchemaWriting(s):
         AttributeWritingScenario.WITH_ALL_RFC_OPTIONS: (
             "2.16.840.1.113894.1.1.2",
             "orclPassword",
-            "( 2.16.840.1.113894.1.1.2 NAME ( 'orclPassword' 'oraclePwd' ) DESC 'Oracle password' "
-            "EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
+            (
+                "( 2.16.840.1.113894.1.1.2 NAME ( 'orclPassword' 'oraclePwd' ) DESC 'Oracle password' "
+                "EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+            ),
         ),
         AttributeWritingScenario.WITH_SINGLE_VALUE: (
             "2.16.840.1.113894.1.1.3",
@@ -215,16 +217,20 @@ class TestsTestFlextLdifOidSchemaWriting(s):
                 AttributeWritingScenario.WITH_ALL_RFC_OPTIONS,
                 "2.16.840.1.113894.1.1.2",
                 "orclPassword",
-                "( 2.16.840.1.113894.1.1.2 NAME ( 'orclPassword' 'oraclePwd' ) "
-                "DESC 'Oracle password storage' EQUALITY caseExactMatch "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
+                (
+                    "( 2.16.840.1.113894.1.1.2 NAME ( 'orclPassword' 'oraclePwd' ) "
+                    "DESC 'Oracle password storage' EQUALITY caseExactMatch "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+                ),
             ),
             (
                 AttributeWritingScenario.WITH_SINGLE_VALUE,
                 "2.16.840.1.113894.1.1.3",
                 "orclSingleAttr",
-                "( 2.16.840.1.113894.1.1.3 NAME 'orclSingleAttr' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
+                (
+                    "( 2.16.840.1.113894.1.1.3 NAME 'orclSingleAttr' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+                ),
             ),
         ],
     )
