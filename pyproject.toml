@@ -275,6 +275,8 @@ docker = ">=7.1.0"
 
     [tool.pyrefly]
         search-path = [
+            "../typings",
+            "../typings/generated",
             ".",
             "src",
             "tests",

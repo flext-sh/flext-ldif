@@ -956,6 +956,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         current_extensions: dict[str, t.MetadataAttributeValue] = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
+        mk = c.Ldif.MetadataKeys
+        current_extensions[mk.ORIGINAL_DN_COMPLETE] = str(original_dn)
 
         orclaci_raw = original_attrs.get("orclaci") if original_attrs else None
         if not orclaci_raw:
@@ -1008,6 +1010,18 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
 
         return FlextResult.ok(entry)
+
+    def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
+        """Parse entry from LDIF lines and finalize with OID metadata (original_dn_complete)."""
+        result = super()._parse_entry_from_lines(lines)
+        if result.is_failure:
+            return result
+        entry = result.value
+        original_dn = entry.dn.value if entry.dn else ""
+        original_attrs = (
+            dict(entry.attributes.attributes) if entry.attributes else {}
+        )
+        return self._hook_finalize_entry_parse(entry, original_dn, original_attrs)
 
     def _get_current_attrs_with_acl_equivalence(
         self,
