@@ -34,7 +34,10 @@ class FlextLdifUtilitiesAttribute:
         | None = None,
     ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Parse RFC 4512 attribute definition into structured data."""
-        from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+        _ = server_type
+        from flext_ldif._utilities.schema import (  # noqa: PLC0415
+            FlextLdifUtilitiesSchema,
+        )
 
         if parse_parts_hook:
             return parse_parts_hook(definition)

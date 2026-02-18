@@ -308,21 +308,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             cls._extract_operation(kwargs),
         )
 
-    @property
-    def schema_quirk(self) -> FlextLdifServersBaseSchema:
-        """Get the Schema quirk instance."""
-        return self._schema_quirk
-
-    @property
-    def acl_quirk(self) -> FlextLdifServersBaseSchemaAcl:
-        """Get the Acl quirk instance."""
-        return self._acl_quirk
-
-    @property
-    def entry_quirk(self) -> FlextLdifServersBaseEntry:
-        """Get the Entry quirk instance."""
-        return self._entry_quirk
-
     def parse(
         self,
         ldif_text: str,

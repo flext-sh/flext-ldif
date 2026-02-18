@@ -619,6 +619,7 @@ def ldap_container_shared() -> str:
 
 @pytest.fixture
 def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
+    """Build a unique suffix for LDAP DNs per test execution."""
     test_name = request.node.name if hasattr(request, "node") else "unknown"
     test_name_clean = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
@@ -628,6 +629,8 @@ def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture
 def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Return a factory that creates unique usernames."""
+
     def _make(username: str) -> str:
         return f"{username}-{unique_dn_suffix}"
 
@@ -636,6 +639,7 @@ def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
 
 @pytest.fixture
 def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Return a factory that creates unique test base DNs."""
     base_dn = "dc=flext,dc=local"
 
     def _make(ou: str) -> str:
@@ -646,6 +650,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 @pytest.fixture
 def ldap_connection(ldap_container_shared: str) -> Generator[Connection]:
+    """Provide a bound LDAP connection or skip when unavailable."""
     server = Server(ldap_container_shared, get_info=ALL)
     conn = Connection(
         server,
@@ -668,6 +673,7 @@ def clean_test_ou(
     ldap_connection: Connection,
     make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
+    """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")

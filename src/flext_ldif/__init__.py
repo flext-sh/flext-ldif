@@ -20,8 +20,6 @@ from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.typings import FlextLdifTypes, t
 from flext_ldif.utilities import FlextLdifUtilities, u
 
-__email__ = "dev@flext.com"
-
 __all__ = [
     # Classes (sorted alphabetically)
     "FlextLdif",

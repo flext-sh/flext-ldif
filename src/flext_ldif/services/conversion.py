@@ -828,14 +828,17 @@ class FlextLdifConversion(
                         converted_entry = converted_entry.model_copy(
                             update={"dn": m.Ldif.DN(value=new_dn_val)}
                         )
-                elif source_type_norm == "rfc" and target_type_norm == "oid":
-                    if "cn=schema" in dn_val:
-                        new_dn_val = converted_entry.dn.value.replace(
-                            "cn=schema", "cn=subschemasubentry"
-                        )
-                        converted_entry = converted_entry.model_copy(
-                            update={"dn": m.Ldif.DN(value=new_dn_val)}
-                        )
+                elif (
+                    source_type_norm == "rfc"
+                    and target_type_norm == "oid"
+                    and "cn=schema" in dn_val
+                ):
+                    new_dn_val = converted_entry.dn.value.replace(
+                        "cn=schema", "cn=subschemasubentry"
+                    )
+                    converted_entry = converted_entry.model_copy(
+                        update={"dn": m.Ldif.DN(value=new_dn_val)}
+                    )
 
             return r[
                 m.Ldif.Entry

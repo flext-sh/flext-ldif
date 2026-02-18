@@ -671,6 +671,7 @@ class FlextLdifUtilities(u_core):
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
             )
+            _ = (config, source_server, target_server, normalize_dns, normalize_attrs)
             # Removed circular dependency with ProcessingPipeline (process_ldif_entries)
             # Use FlextLdifProcessingService.process_ldif_entries from services layer instead if needed
 

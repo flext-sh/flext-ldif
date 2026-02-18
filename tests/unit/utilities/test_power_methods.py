@@ -30,13 +30,13 @@ from flext_ldif._utilities import (
     Pipeline,
     # Builders
     ProcessConfigBuilder,
-    ProcessingPipeline,
     ReplaceBaseDnTransformer,
     Transform,
     TransformConfigBuilder,
     ValidationPipeline,
     ValidationResult,
 )
+from flext_ldif.services import ProcessingPipeline
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.configs import CaseFoldOption
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
@@ -204,7 +204,8 @@ class TestBuilders:
         """Test ProcessConfigBuilder fluent API."""
         builder = ProcessConfigBuilder()
         config = (
-            builder.source("oid")
+            builder
+            .source("oid")
             .target("oud")
             .normalize_dn(case=CaseFoldOption.LOWER)
             .build()
@@ -405,7 +406,8 @@ class TestEntryOps:
         """Test EntryOps method chaining."""
         ops = EntryOps(sample_entry)
         result = (
-            ops.normalize_dn()
+            ops
+            .normalize_dn()
             .normalize_attrs()
             .filter_attrs(exclude=["userPassword"])
             .build()
@@ -428,7 +430,9 @@ class TestPipeline:
         assert result.is_success
         assert len(result.value) == len(sample_entries)
 
-    def test_pipeline_with_transformer(self, sample_entries: list[m.Ldif.Entry]) -> None:
+    def test_pipeline_with_transformer(
+        self, sample_entries: list[m.Ldif.Entry]
+    ) -> None:
         """Test pipeline with transformer."""
         pipeline = Pipeline().add(Normalize.attrs())
         result = pipeline.execute(sample_entries)
@@ -662,7 +666,9 @@ class TestEntryBatchMethods:
         # Only entries with inetOrgPerson should be included
         assert len(filtered) < len(sample_entries)
 
-    def test_filter_batch_exclude_schema(self, sample_entries: list[m.Ldif.Entry]) -> None:
+    def test_filter_batch_exclude_schema(
+        self, sample_entries: list[m.Ldif.Entry]
+    ) -> None:
         """Test filter_batch with exclude_schema."""
         result = FlextLdifUtilitiesEntry.filter_batch(
             sample_entries,
