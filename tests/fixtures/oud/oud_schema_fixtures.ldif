@@ -1,0 +1,37 @@
+version: 1
+
+dn: cn=schema
+objectClass: top
+objectClass: subentry
+objectClass: subschema
+cn: schema
+attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle GUID' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' DESC 'Oracle DB Name' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.3 NAME 'orclVersion' DESC 'Oracle Version' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.4 NAME 'orclNetDescString' DESC 'Oracle Net Descriptor' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.5 NAME 'orclPassword' DESC 'Oracle Password' EQUALITY octetStringMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.6 NAME 'orclIsEnabled' DESC 'Oracle Enabled Flag' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.7 NAME 'ds-sync-hist' DESC 'OUD sync history' EQUALITY octetStringMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.8 NAME 'ds-sync-state' DESC 'OUD sync state' EQUALITY octetStringMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.9 NAME 'ds-sync-generation-id' DESC 'OUD generation ID' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.10 NAME 'isMemberOf' DESC 'Membership' EQUALITY distinguishedNameMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.11 NAME 'ds-pwp-account-disabled' DESC 'Password policy disabled' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.12 NAME 'orclApplicationCommonName' DESC 'Oracle App Common Name' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.13 NAME 'orclAppID' DESC 'Oracle App ID' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.14 NAME 'orclHostName' DESC 'Host Name' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.15 NAME 'orclPort' DESC 'Port' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.16 NAME 'orclProtocol' DESC 'Protocol' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.17 NAME 'orclSubscriberID' DESC 'Subscriber ID' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.18 NAME 'orclURL' DESC 'URL' EQUALITY caseIgnoreIA5Match SUBSTR caseIgnoreIA5SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'Oracle Unified Directory' )
+attributeTypes: ( 2.16.840.1.113894.1.1.19 NAME 'entryUUID' DESC 'UUID' EQUALITY uuidMatch SYNTAX 1.3.6.1.1.16.1 SINGLE-VALUE X-ORIGIN 'OpenDS' )
+attributeTypes: ( 2.16.840.1.113894.1.1.20 NAME 'ds-privilege-name' DESC 'Privilege Name' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.1 NAME 'orclContext' DESC 'Oracle Context' SUP top STRUCTURAL MUST ( cn ) MAY ( description $ orclVersion $ orclGUID ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' DESC 'Oracle Container' SUP top STRUCTURAL MUST ( cn ) MAY ( description $ orclGUID ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.3 NAME 'orclDBServer' DESC 'Oracle DB Server' SUP orclContainer STRUCTURAL MUST ( cn $ orclDBName ) MAY ( orclHostName $ orclPort $ orclProtocol $ orclNetDescString ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.4 NAME 'orclApplicationEntity' DESC 'Oracle App Entity' SUP top STRUCTURAL MUST ( cn ) MAY ( orclAppID $ orclURL $ orclVersion ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.5 NAME 'orclPrivilegeGroup' DESC 'Oracle Privilege Group' SUP top STRUCTURAL MUST ( cn ) MAY ( description $ member ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.6 NAME 'orclSubscriber' DESC 'Oracle Subscriber' SUP inetOrgPerson STRUCTURAL MAY ( orclSubscriberID $ orclIsEnabled ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.7 NAME 'orclServiceAccount' DESC 'Oracle Service Account' SUP organizationalPerson AUXILIARY MAY ( orclIsEnabled $ orclPassword ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.8 NAME 'orclResourceProfile' DESC 'Oracle Resource Profile' SUP top AUXILIARY MAY ( orclDescription $ orclVersion ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.9 NAME 'orclNetService' DESC 'Oracle Net Service' SUP top STRUCTURAL MUST ( cn ) MAY ( orclNetDescString ) X-ORIGIN 'Oracle Unified Directory' )
+objectClasses: ( 2.16.840.1.113894.1.2.10 NAME 'dsSyncAccount' DESC 'OUD Sync Account' SUP inetOrgPerson AUXILIARY MAY ( ds-sync-hist $ ds-sync-state $ ds-sync-generation-id ) X-ORIGIN 'Oracle Unified Directory' )

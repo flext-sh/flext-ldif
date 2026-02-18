@@ -108,6 +108,8 @@ Desktop.ini
 *.ldif
 *.ldif.bak
 *.ldif.tmp
+# EXCEPTION: test fixture LDIF files MUST be tracked
+!tests/fixtures/**/*.ldif
 ldif_input/
 ldif_output/
 ldif_temp/
@@ -293,15 +295,13 @@ build/
 *_temp*
 *backup*
 
-# Validation and test scripts outside proper directories
-**/validate*.sh
-**/validate*.py
-**/validate*.yml
-**/validate*.yaml
-**/test*.sh
-**/test*.py
-**/test*.yml
-**/test*.yaml
+# Validation and test scripts outside proper directories (NOT in tests/ or scripts/)
+# NOTE: Do NOT use **/test*.py or **/validate*.py - they block legitimate test files
+/validate*.sh
+/validate*.py
+/validate*.yml
+/validate*.yaml
+/test*.sh
 
 # Temporary and working files
 *.tmp

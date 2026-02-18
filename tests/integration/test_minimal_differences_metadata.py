@@ -278,12 +278,12 @@ pwdlockout: 0
         assert entry.metadata is not None
         # Boolean conversions are stored in CONVERTED_ATTRIBUTES[CONVERSION_BOOLEAN_CONVERSIONS]
         converted_attrs = entry.metadata.extensions.get(
-            c.MetadataKeys.CONVERTED_ATTRIBUTES,
+            c.Ldif.MetadataKeys.CONVERTED_ATTRIBUTES,
             {},
         )
         if isinstance(converted_attrs, dict):
             boolean_conversions = converted_attrs.get(
-                c.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS,
+                c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )
         else:
@@ -297,8 +297,8 @@ pwdlockout: 0
             # Verify specific conversions
             conv = boolean_conversions["orcldasisenabled"]
             # Check structure: should have original_value and converted_value keys
-            original_key = c.MetadataKeys.CONVERSION_ORIGINAL_VALUE
-            converted_key = c.MetadataKeys.CONVERSION_CONVERTED_VALUE
+            original_key = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
+            converted_key = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
             assert original_key in conv
             assert converted_key in conv
             assert conv[original_key] == ["1"]
