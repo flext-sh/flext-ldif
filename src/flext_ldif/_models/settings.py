@@ -1962,7 +1962,7 @@ class FlextLdifModelsSettings:
         build_metadata_hook: (
             Callable[
                 [str, Mapping[str, list[str]]],
-                FlextTypes.Metadata | None,
+                dict[str, FlextTypes.MetadataAttributeValue] | None,
             ]
             | None
         ) = Field(
@@ -2157,7 +2157,13 @@ class FlextLdifModelsSettings:
             ...,
             description="Write method to call on source schema",
         )
-        parse_method: Callable[..., r[object]] = Field(
+        parse_method: Callable[
+            ...,
+            r[
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ],
+        ] = Field(
             ...,
             description="Parse method to call on target schema",
         )
