@@ -1,8 +1,9 @@
 # ADR-001: RFC-First Design with Zero Bypass Paths
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -23,10 +24,10 @@ The system needed to:
 Implement a **RFC-First Design with Zero Bypass Paths** where:
 
 1. **All parsing operations MUST go through RFC-compliant parsers first**
-2. **Server-specific quirks are applied as enhancements on top of RFC baseline**
-3. **No direct access to parsers** - all operations route through the facade
-4. **Mandatory quirk_registry parameter** for all RFC parser operations
-5. **CQRS pattern** separates parsing from writing operations
+1. **Server-specific quirks are applied as enhancements on top of RFC baseline**
+1. **No direct access to parsers** - all operations route through the facade
+1. **Mandatory quirk_registry parameter** for all RFC parser operations
+1. **CQRS pattern** separates parsing from writing operations
 
 **Key Implementation**:
 
@@ -67,12 +68,15 @@ result = ldif.parse(file_path)  # No direct parser access
 **Alternatives Considered**:
 
 1. **Direct Parser Access**: Allow direct use of parsers with optional quirks
+
    - **Rejected**: Would compromise standards compliance and create bypass paths
 
-2. **Server-Specific Parsers**: Separate parsers for each LDAP server
+1. **Server-Specific Parsers**: Separate parsers for each LDAP server
+
    - **Rejected**: Would duplicate RFC logic and complicate maintenance
 
-3. **Configuration-Driven Extensions**: Runtime configuration instead of code
+1. **Configuration-Driven Extensions**: Runtime configuration instead of code
+
    - **Rejected**: Less type-safe and harder to test server-specific logic
 
 **Related ADRs**:

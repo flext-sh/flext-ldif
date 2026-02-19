@@ -1,7 +1,7 @@
 # FLEXT LDIF Sorting Service - Universal Sorting Engine
 
-
 <!-- TOC START -->
+
 - [DN Handling (RFC 4514 Compliance)](#dn-handling-rfc-4514-compliance)
 - [What It Sorts (sort_target parameter)](#what-it-sorts-sorttarget-parameter)
 - [How It Sorts Entries (sort_by parameter)](#how-it-sorts-entries-sortby-parameter)
@@ -17,6 +17,7 @@
 - [Public Classmethod API](#public-classmethod-api)
 - [Quick Reference](#quick-reference)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 Flexible sorting for LDIF entries, attributes, ACL & schemas.

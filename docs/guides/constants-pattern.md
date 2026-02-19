@@ -1,11 +1,12 @@
 # Constants Pattern Guide
 
-
 <!-- TOC START -->
+
 - [RFC.Constants (Base)](#rfcconstants-base)
 - [Server.Constants (Específicos)](#serverconstants-especficos)
 - [Quando usar o quê](#quando-usar-o-qu)
 - [Benefícios](#benefcios)
+
 <!-- TOC END -->
 
 ## RFC.Constants (Base)

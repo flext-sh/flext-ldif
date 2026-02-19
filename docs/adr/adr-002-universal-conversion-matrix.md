@@ -1,8 +1,9 @@
 # ADR-002: Universal Conversion Matrix Architecture
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -33,9 +34,9 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 **Key Components**:
 
 1. **QuirksConversionMatrix**: Facade providing N×N conversion interface
-2. **DnCaseRegistry**: Tracks canonical DN case for OUD compatibility
-3. **QuirkBase Interface**: Defines `to_rfc()` and `from_rfc()` methods
-4. **RFC Intermediate Format**: Standards-compliant representation
+1. **DnCaseRegistry**: Tracks canonical DN case for OUD compatibility
+1. **QuirkBase Interface**: Defines `to_rfc()` and `from_rfc()` methods
+1. **RFC Intermediate Format**: Standards-compliant representation
 
 **Implementation**:
 
@@ -77,12 +78,15 @@ result = matrix.convert(
 **Alternatives Considered**:
 
 1. **Direct Server-to-Server Conversions**: Implement each conversion pair directly
+
    - **Rejected**: O(n²) implementations, exponential complexity
 
-2. **Common Intermediate Format**: Use custom format instead of RFC
+1. **Common Intermediate Format**: Use custom format instead of RFC
+
    - **Rejected**: Would create proprietary standard, reduce interoperability
 
-3. **Runtime Translation Rules**: Configuration-driven translation instead of code
+1. **Runtime Translation Rules**: Configuration-driven translation instead of code
+
    - **Rejected**: Less type-safe, harder to handle complex server-specific logic
 
 **Related ADRs**:

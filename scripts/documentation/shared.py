@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Shared utilities for documentation maintenance scripts."""
 
 from __future__ import annotations
@@ -85,9 +87,12 @@ def write_markdown(path: Path, lines: list[str]) -> None:
 
 
 def iter_markdown_files(root: Path) -> list[Path]:
-    """Recursively collect markdown files under *root*, skipping excluded dirs."""
+    """Recursively collect markdown files under the docs scope."""
+
+    docs_root = root / "docs"
+    search_root = docs_root if docs_root.is_dir() else root
     return sorted(
         path
-        for path in root.rglob("*.md")
-        if not any(part in EXCLUDED_DIRS for part in path.parts)
+        for path in search_root.rglob("*.md")
+        if not any(part in EXCLUDED_DIRS or part.startswith(".") for part in path.parts)
     )

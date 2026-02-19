@@ -1,7 +1,7 @@
 # FLEXT-LDIF Architecture
 
-
 <!-- TOC START -->
+
 - [Architectural Goals](#architectural-goals)
 - [Package Layout](#package-layout)
 - [Core Components](#core-components)
@@ -16,6 +16,7 @@
   - [Migration and Conversion](#migration-and-conversion)
 - [Extensibility and Quality Considerations](#extensibility-and-quality-considerations)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.9.0 | **Updated**: 2025-02-17
@@ -127,17 +128,17 @@ encodings.
 ### Parsing LDIF Text
 
 1. Caller invokes `FlextLdif.parse` or `FlextLdifParser.parse`.
-2. The parser resolves the effective server type (default `rfc`) and requests the
+1. The parser resolves the effective server type (default `rfc`) and requests the
    entry quirk from `FlextLdifServer`.
-3. The quirk parses the content and returns entries; the parser wraps them in
+1. The quirk parses the content and returns entries; the parser wraps them in
    `ParseResponse` with statistics and server metadata.
 
 ### Writing LDIF Text
 
 1. Caller invokes `FlextLdif.write` with entries and optional format overrides.
-2. Writer options are merged through `u.Configuration.build_options_from_kwargs`
+1. Writer options are merged through `u.Configuration.build_options_from_kwargs`
    to combine defaults and explicit values.
-3. The writer uses the shared quirk registry to format entries for the chosen
+1. The writer uses the shared quirk registry to format entries for the chosen
    server type before emitting LDIF text or writing to disk.
 
 ### Migration and Conversion

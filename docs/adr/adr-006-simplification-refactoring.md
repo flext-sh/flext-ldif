@@ -1,7 +1,7 @@
 # ADR-006: Library Simplification and Deduplication
 
-
 <!-- TOC START -->
+
 - [Context](#context)
   - [**Structural Issues**](#structural-issues)
   - [**Over-Engineering**](#over-engineering)
@@ -27,6 +27,7 @@
 - [Validation Criteria](#validation-criteria)
 - [References](#references)
 - [Notes](#notes)
+
 <!-- TOC END -->
 
 **Date**: 2025-01-24
@@ -34,7 +35,7 @@
 **Deciders**: FLEXT Core Team
 **Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Quirks System)
 
----
+______________________________________________________________________
 
 ## Context
 
@@ -43,20 +44,20 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 ### **Structural Issues**
 
 1. **Subdirectory Overhead**: 11 subdirectories (`rfc/`, `services/`, `acl/`, `schema/`, `entry/`, `pipelines/`, `processors/`, `events/`) creating navigation friction
-2. **Deep Import Paths**: 4-5 level imports (`from flext_ldif.rfc.rfc_ldif_parser import ...`)
-3. **Test Misalignment**: Test subdirectories mirror old structure, creating maintenance burden
+1. **Deep Import Paths**: 4-5 level imports (`from flext_ldif.rfc.rfc_ldif_parser import ...`)
+1. **Test Misalignment**: Test subdirectories mirror old structure, creating maintenance burden
 
 ### **Over-Engineering**
 
 1. **Custom Processors**: `processors/ldif_processor.py` (160 lines) wraps `FlextProcessors` from flext-core unnecessarily
-2. **Wrapper Methods**: 600+ lines in `api.py` delegating to model methods (`get_entry_dn`, `get_entry_attributes`, `create_entry`)
-3. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`, `ldif.config`, `ldif.processors`)
+1. **Wrapper Methods**: 600+ lines in `api.py` delegating to model methods (`get_entry_dn`, `get_entry_attributes`, `create_entry`)
+1. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`, `ldif.config`, `ldif.processors`)
 
 ### **flext-core Under-Utilization**
 
 1. **FlextProcessors**: Not used directly - wrapped unnecessarily
-2. **FlextDecorators**: Not applied (`@log_operation`, `@track_performance`, `@retry`)
-3. **FlextService**: Services don't extend base class (missing automatic logging, context management)
+1. **FlextDecorators**: Not applied (`@log_operation`, `@track_performance`, `@retry`)
+1. **FlextService**: Services don't extend base class (missing automatic logging, context management)
 
 ### **Impact**
 
@@ -65,7 +66,7 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 - **Maintenance**: More code to maintain, test, and document
 - **Integration**: Indirect flext-core usage loses benefits
 
----
+______________________________________________________________________
 
 ## Decision
 
@@ -349,35 +350,40 @@ tests/unit/
 - Easier to find tests for modules
 - Consistent with flat module organization
 
----
+______________________________________________________________________
 
 ## Consequences
 
 ### **Positive**
 
 1. **Code Reduction**: 1500-2000 lines removed
+
    - Processors: ~200 lines
    - Wrapper methods: ~600 lines
    - Property accessors: ~100 lines
    - Unified method simplification: ~600 lines
 
-2. **Simpler Navigation**
+1. **Simpler Navigation**
+
    - Flat structure eliminates directory drilling
    - Direct module access
    - Clear module relationships
 
-3. **Better flext-core Integration**
+1. **Better flext-core Integration**
+
    - Direct `FlextProcessors` usage
    - `FlextDecorators` applied
    - `FlextService` inheritance
    - Maximum code reuse
 
-4. **Improved Observability**
+1. **Improved Observability**
+
    - Automatic operation logging
    - Performance tracking
    - Context propagation
 
-5. **Type Safety**
+1. **Type Safety**
+
    - Pattern matching with `Literal` types
    - Clearer type signatures
    - Better IDE support
@@ -385,16 +391,19 @@ tests/unit/
 ### **Negative**
 
 1. **Import Path Changes** (Internal Breaking Change)
+
    - All internal imports must be updated
    - External users importing internal modules affected
    - Migration script provided
 
-2. **Learning Curve**
+1. **Learning Curve**
+
    - Developers must learn new structure
    - Different from previous organization
    - Migration guide required
 
-3. **One-Time Migration Cost**
+1. **One-Time Migration Cost**
+
    - ~11 hours estimated effort
    - Documentation updates
    - Test reorganization
@@ -402,48 +411,51 @@ tests/unit/
 ### **Mitigation**
 
 1. **Public API Stability**
+
    - `from flext_ldif import FlextLdif` unchanged
    - Main API methods unchanged
    - No breaking changes for typical users
 
-2. **Automated Migration**
+1. **Automated Migration**
+
    - Scripts for import updates
    - Clear migration guide
    - Before/after examples
 
-3. **Documentation**
+1. **Documentation**
+
    - ADR documenting decision
    - Migration guide for users
    - Updated architecture docs
    - Professional README.md
 
----
+______________________________________________________________________
 
 ## Implementation
 
 ### **Phase 1: Documentation (4-5 hours)**
 
 1. Create this ADR
-2. Create migration guide (`docs/migration/v0.9-to-v1.0-migration.md`)
-3. Update README.md (professional public-facing)
-4. Update architecture.md
-5. Update api-reference.md
-6. Update getting-started.md
+1. Create migration guide (`docs/migration/v0.9-to-v1.0-migration.md`)
+1. Update README.md (professional public-facing)
+1. Update architecture.md
+1. Update api-reference.md
+1. Update getting-started.md
 
 ### **Phase 2: Code Refactoring (6-7 hours)**
 
 1. Delete `processors/` directory
-2. Flatten module structure
-3. Reorganize tests
-4. Apply `FlextDecorators`
-5. Refactor services to `FlextService`
-6. Remove wrapper methods
-7. Simplify with pattern matching
-8. Final validation
+1. Flatten module structure
+1. Reorganize tests
+1. Apply `FlextDecorators`
+1. Refactor services to `FlextService`
+1. Remove wrapper methods
+1. Simplify with pattern matching
+1. Final validation
 
 ### **Timeline**: 10-12 hours total
 
----
+______________________________________________________________________
 
 ## Validation Criteria
 
@@ -456,7 +468,7 @@ tests/unit/
 - ✅ Professional README.md
 - ✅ Migration guide for users
 
----
+______________________________________________________________________
 
 ## References
 
@@ -466,7 +478,7 @@ tests/unit/
 - **Python 3.13+ Pattern Matching**: PEP 636
 - **Flat Module Structure Examples**: requests, httpx, pydantic
 
----
+______________________________________________________________________
 
 ## Notes
 

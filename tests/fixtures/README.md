@@ -1,7 +1,7 @@
 # LDIF Fixture Documentation
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Fixture Sources and Licensing](#fixture-sources-and-licensing)
   - [RFC Fixtures](#rfc-fixtures)
@@ -18,6 +18,7 @@
 - [Fixture Content](#fixture-content)
 - [Best Practices](#best-practices)
 - [Fixture Validation](#fixture-validation)
+
 <!-- TOC END -->
 
 Comprehensive fixture collection for LDAP server testing and quirks validation.
@@ -34,9 +35,9 @@ This directory contains LDIF fixtures for 4 primary LDAP server types:
 Each server has 4 types of fixtures:
 
 1. **Schema** - LDAP schema definitions (attributeTypes, objectClasses)
-2. **Entries** - Example LDAP directory entries
-3. **ACL** - Access control configurations
-4. **Integration** - Complete directory structures for integration testing
+1. **Entries** - Example LDAP directory entries
+1. **ACL** - Access control configurations
+1. **Integration** - Complete directory structures for integration testing
 
 ## Fixture Sources and Licensing
 
@@ -144,10 +145,10 @@ Each includes realistic entry structures and ACL configurations.
 ## Best Practices
 
 1. Always validate fixtures before using in tests
-2. Use real fixture data for comprehensive testing
-3. Test conversion roundtrips
-4. Parametrize tests to test all fixture data
-5. Preserve semantic equivalence when testing conversions
+1. Use real fixture data for comprehensive testing
+1. Test conversion roundtrips
+1. Parametrize tests to test all fixture data
+1. Preserve semantic equivalence when testing conversions
 
 ## Fixture Validation
 

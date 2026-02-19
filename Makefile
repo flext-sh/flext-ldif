@@ -8,7 +8,7 @@ endif
 
 # === PROJECT-SPECIFIC TARGETS ===
 .PHONY: ldif-parse ldif-validate ldif-config ldif-operations
-.PHONY: test-unit test-integration build docs docs-serve shell
+.PHONY: test-unit test-integration build docs-serve shell
 
 ldif-parse: ## Test LDIF parsing
 	$(Q)PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest $(TESTS_DIR) -k "parse" -q
@@ -21,9 +21,6 @@ ldif-config: ## Test LDIF configuration
 
 ldif-operations: ## Test LDIF operations
 	$(Q)PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest $(TESTS_DIR) -k "operation" -q
-
-docs: ## Build documentation
-	$(Q)$(POETRY) run mkdocs build
 
 docs-serve: ## Serve documentation
 	$(Q)$(POETRY) run mkdocs serve

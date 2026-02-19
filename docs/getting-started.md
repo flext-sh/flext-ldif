@@ -1,14 +1,14 @@
 # Getting Started with FLEXT-LDIF
 
-
 <!-- TOC START -->
+
 - [Prerequisites](#prerequisites)
   - [System Requirements](#system-requirements)
   - [FLEXT Ecosystem Dependencies](#flext-ecosystem-dependencies)
 - [Installation](#installation)
   - [Development Installation](#development-installation)
   - [Development Commands](#development-commands)
-  - [⚠️ CRITICAL: PYTHONPATH Requirements](#-critical-pythonpath-requirements)
+  - [⚠️ CRITICAL: PYTHONPATH Requirements](#critical-pythonpath-requirements)
 - [First Steps](#first-steps)
   - [Basic LDIF Processing](#basic-ldif-processing)
   - [File Operations](#file-operations)
@@ -28,6 +28,7 @@
   - [Getting Help](#getting-help)
 - [Next Steps](#next-steps)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025
@@ -382,9 +383,9 @@ if result.is_success:
 Once you have FLEXT-LDIF installed and working:
 
 1. **Architecture**: Understand the service-oriented design
-2. **API Reference**: Explore all available operations
-3. **Examples**: See practical usage patterns
-4. **Integration**: Learn about FLEXT ecosystem integration
+1. **API Reference**: Explore all available operations
+1. **Examples**: See practical usage patterns
+1. **Integration**: Learn about FLEXT ecosystem integration
 
 ## Related Documentation
 
@@ -406,6 +407,6 @@ Once you have FLEXT-LDIF installed and working:
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
----
+______________________________________________________________________
 
 This getting started guide provides the foundation for using FLEXT-LDIF effectively within the FLEXT ecosystem while maintaining software development practices.

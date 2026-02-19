@@ -1,7 +1,7 @@
 # FLEXT-LDIF Examples
 
-
 <!-- TOC START -->
+
 - [Library Usage Examples](#library-usage-examples)
 - [🎯 Example Overview](#-example-overview)
   - [01_basic_usage.py - Core API Operations](#01basicusagepy-core-api-operations)
@@ -30,6 +30,7 @@
   - [Namespace Access (Example 08)](#namespace-access-example-08)
 - [💡 Tips](#-tips)
 - [🤝 Contributing](#-contributing)
+
 <!-- TOC END -->
 
 This directory contains examples demonstrating the functionality of the flext-ldif library.
@@ -314,9 +315,9 @@ Looking for specific features? Use this quick reference:
 ## 💡 Tips
 
 1. **Always use FlextResult** - Check `is_success` before `unwrap()`
-2. **Access through API** - Use `api.*` properties, not direct imports
-3. **Error composition** - Chain operations with early returns on failure
-4. **Type hints** - Examples show proper typing patterns
+1. **Access through API** - Use `api.*` properties, not direct imports
+1. **Error composition** - Chain operations with early returns on failure
+1. **Type hints** - Examples show proper typing patterns
 
 ## 🤝 Contributing
 
@@ -328,6 +329,6 @@ When adding examples:
 - Demonstrate specific functionality
 - Add clear docstrings
 
----
+______________________________________________________________________
 
 FLEXT-LDIF - RFC-compliant LDIF processing library

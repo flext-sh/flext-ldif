@@ -1,7 +1,7 @@
 # Phase 2.1 - Parser Service Extraction
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Operations Extracted](#operations-extracted)
   - [1. `parse()` - Unified parsing with single/batch/pagination support](#1-parse-unified-parsing-with-singlebatchpagination-support)
@@ -34,13 +34,14 @@
 - [Next Steps](#next-steps)
 - [Related Phases](#related-phases)
 - [Success Criteria](#success-criteria)
+
 <!-- TOC END -->
 
 **Date**: 2025-01-29
 **Status**: Complete - Ready for Integration
 **Goal**: Extract all parsing operations from FlextLdif facade into dedicated FlextLdifParser
 
----
+______________________________________________________________________
 
 ## Overview
 
@@ -48,7 +49,7 @@ Created new `FlextLdifParser` following FLEXT architectural patterns to consolid
 
 **New File**: `src/flext_ldif/services/parser.py` (576 lines)
 
----
+______________________________________________________________________
 
 ## Operations Extracted
 
@@ -103,7 +104,7 @@ Created new `FlextLdifParser` following FLEXT architectural patterns to consolid
   - Handle relaxed mode, manual mode, auto-detection, and RFC-only modes
   - Used internally by other parsing methods
 
----
+______________________________________________________________________
 
 ## Architecture
 
@@ -127,12 +128,12 @@ class FlextLdifParser(Flext[dict[str, object]]):
 ### Design Principles Applied
 
 1. **Single Responsibility Principle**: Service focuses only on parsing operations
-2. **Dependency Injection**: Client and config injected via constructor
-3. **Railway-Oriented Programming**: All methods return FlextResult[T]
-4. **Type Safety**: Full Python 3.13+ type annotations
-5. **FLEXT Patterns**: Inherits from FlextService, uses FlextResult
+1. **Dependency Injection**: Client and config injected via constructor
+1. **Railway-Oriented Programming**: All methods return FlextResult[T]
+1. **Type Safety**: Full Python 3.13+ type annotations
+1. **FLEXT Patterns**: Inherits from FlextService, uses FlextResult
 
----
+______________________________________________________________________
 
 ## Integration Plan
 
@@ -220,7 +221,7 @@ Add import for parser service:
 from flext_ldif.services.parser import FlextLdifParser
 ```
 
----
+______________________________________________________________________
 
 ## Quality Assurance
 
@@ -248,13 +249,13 @@ from flext_ldif.services.parser import FlextLdifParser
 
 ### FLEXT Compliance
 
-- ✅ Inherits from FlextService[dict[str, object]]
+- ✅ Inherits from FlextService\[dict[str, object]\]
 - ✅ Implements execute() method for health checks
 - ✅ Uses FlextResult for all operations
 - ✅ Uses FlextLogger for structured logging
 - ✅ Dependency injection via constructor
 
----
+______________________________________________________________________
 
 ## Testing Requirements
 
@@ -263,6 +264,7 @@ from flext_ldif.services.parser import FlextLdifParser
 Create `tests/unit/services/test_parser_service.py`:
 
 1. **Test parse() method**:
+
    - Single file parsing
    - Content string parsing
    - Batch parsing with multiple files
@@ -270,35 +272,41 @@ Create `tests/unit/services/test_parser_service.py`:
    - File not found error handling
    - Invalid batch input error handling
 
-2. **Test parse_schema_ldif()**:
+1. **Test parse_schema_ldif()**:
+
    - Schema file parsing
    - Modify operations extraction
    - AttributeTypes extraction
    - ObjectClasses extraction
    - File not found error handling
 
-3. **Test parse_with_auto_detection()**:
+1. **Test parse_with_auto_detection()**:
+
    - Auto-detection success
    - Auto-detection failure handling
    - File path vs content string handling
 
-4. **Test parse_relaxed()**:
+1. **Test parse_relaxed()**:
+
    - Relaxed mode parsing
    - Broken LDIF handling
    - Config override verification
 
-5. **Test detect_server_type()**:
+1. **Test detect_server_type()**:
+
    - File-based detection
    - Content-based detection
    - Confidence score validation
 
-6. **Test get_effective_server_type()**:
+1. **Test get_effective_server_type()**:
+
    - Relaxed mode priority
    - Manual mode handling
    - Auto-detection mode
    - RFC-only mode
 
-7. **Test execute() health check**:
+1. **Test execute() health check**:
+
    - Service status verification
    - Client health check delegation
 
@@ -307,16 +315,18 @@ Create `tests/unit/services/test_parser_service.py`:
 Add to existing integration tests:
 
 1. **End-to-end parsing workflows**:
+
    - Real LDIF file parsing through parser service
    - Schema parsing with real schema files
    - Auto-detection with real server LDIF files
 
-2. **Client integration**:
+1. **Client integration**:
+
    - Verify parser service correctly delegates to client
    - Verify configuration propagation
    - Verify error handling chain
 
----
+______________________________________________________________________
 
 ## Benefits
 
@@ -341,17 +351,17 @@ Add to existing integration tests:
 - **Service composition**: Other services can use parser service directly
 - **Reusability**: Parser service can be used in other contexts
 
----
+______________________________________________________________________
 
 ## Next Steps
 
 1. **Integrate into api.py**: Update FlextLdif to use FlextLdifParser
-2. **Remove duplicate code**: Delete original parse methods from api.py
-3. **Update tests**: Create comprehensive test suite for parser service
-4. **Verify integration**: Run existing tests to ensure no regressions
-5. **Document changes**: Update API documentation to reflect service architecture
+1. **Remove duplicate code**: Delete original parse methods from api.py
+1. **Update tests**: Create comprehensive test suite for parser service
+1. **Verify integration**: Run existing tests to ensure no regressions
+1. **Document changes**: Update API documentation to reflect service architecture
 
----
+______________________________________________________________________
 
 ## Related Phases
 
@@ -361,7 +371,7 @@ Add to existing integration tests:
 - **Phase 2.5**: Extract Migration Service (migrate operations)
 - **Phase 2.6**: Extract Filter Service (filter operations)
 
----
+______________________________________________________________________
 
 ## Success Criteria
 
@@ -374,6 +384,6 @@ Add to existing integration tests:
 - ⏳ Integration tests verified
 - ⏳ api.py reduced by ~415 lines
 
----
+______________________________________________________________________
 
 **Status**: Service extraction complete. Ready for integration approval.

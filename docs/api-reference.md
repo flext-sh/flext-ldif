@@ -1,8 +1,8 @@
 # FLEXT-LDIF API Reference
 
-
 <!-- TOC START -->
-- [🎯 Library Overview](#-library-overview)
+
+- [🎯 Library Overview](#library-overview)
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
   - [FlextLdif](#flextldif)
@@ -18,7 +18,7 @@
 - [Error Handling](#error-handling)
   - [FlextResult Integration](#flextresult-integration)
   - [Exception Types](#exception-types)
-- [⚠️ Library-Only Usage](#-library-only-usage)
+- [⚠️ Library-Only Usage](#library-only-usage)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
   - [Pipeline Processing](#pipeline-processing)
   - [Batch Processing](#batch-processing)
@@ -32,13 +32,14 @@
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
   - [FlextContainer Usage](#flextcontainer-usage)
   - [FlextLogger Integration](#flextlogger-integration)
-- [🚀 Quick Start Guide](#-quick-start-guide)
+- [🚀 Quick Start Guide](#quick-start-guide)
   - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
   - [Server-Specific Parsing with Quirks](#server-specific-parsing-with-quirks)
   - [Generic Migration Pipeline](#generic-migration-pipeline)
   - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
   - [Supported LDAP Servers](#supported-ldap-servers)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 | **Updated**: October 10, 2025
@@ -56,10 +57,10 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 **Critical Architecture Principles**:
 
 1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + quirks
-2. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
-3. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
-4. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
-5. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through FlextLdif facade
+1. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
+1. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
+1. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
+1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through FlextLdif facade
 
 **Architecture Benefits**:
 
@@ -948,9 +949,9 @@ rfc_parser = RfcSchemaParserService(
 **Why quirk_registry is MANDATORY**:
 
 1. **Enforces RFC-first architecture** - Zero bypass paths guarantee
-2. **Enables generic transformation** - Source → RFC → Target pipeline requires registry
-3. **Auto-discovery** - QuirkRegistryService automatically discovers all standard quirks
-4. **Future-proof** - New servers can be added without API changes
+1. **Enables generic transformation** - Source → RFC → Target pipeline requires registry
+1. **Auto-discovery** - QuirkRegistryService automatically discovers all standard quirks
+1. **Future-proof** - New servers can be added without API changes
 
 ## Migration Pipeline API
 
@@ -1353,7 +1354,7 @@ server_type=None  # Pure RFC 2849/4512 compliance
 server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
 ```
 
----
+______________________________________________________________________
 
 This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY quirk_registry, generic migration pipeline, and comprehensive quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
 

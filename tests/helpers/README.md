@@ -1,7 +1,7 @@
 # Test Helpers Module
 
-
 <!-- TOC START -->
+
 - [Módulos](#mdulos)
   - [`test_assertions.py`](#testassertionspy)
   - [`test_operations.py`](#testoperationspy)
@@ -11,6 +11,7 @@
 - [Benefícios](#benefcios)
 - [Uso em Testes Parametrizados](#uso-em-testes-parametrizados)
 - [Integração com Fixtures](#integrao-com-fixtures)
+
 <!-- TOC END -->
 
 Este módulo fornece helpers reutilizáveis para reduzir duplicação massiva de testes pytest, método a método.
@@ -135,10 +136,10 @@ def test_parse_another_attribute(self, schema_quirk):
 ## Benefícios
 
 1. **Redução de Duplicação**: Padrões comuns são centralizados
-2. **Consistência**: Todos os testes usam as mesmas validações
-3. **Manutenibilidade**: Mudanças em validações são feitas em um único lugar
-4. **Legibilidade**: Testes ficam mais concisos e focados no que está sendo testado
-5. **Reutilização**: Helpers podem ser usados em qualquer teste
+1. **Consistência**: Todos os testes usam as mesmas validações
+1. **Manutenibilidade**: Mudanças em validações são feitas em um único lugar
+1. **Legibilidade**: Testes ficam mais concisos e focados no que está sendo testado
+1. **Reutilização**: Helpers podem ser usados em qualquer teste
 
 ## Uso em Testes Parametrizados
 

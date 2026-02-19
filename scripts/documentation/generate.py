@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Generate project-level docs from workspace SSOT guides."""
 
 from __future__ import annotations
@@ -20,6 +22,9 @@ class GeneratedFile:
 
 HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
 ANCHOR_LINK_RE = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+TOC_START = "<!-- TOC START -->"
+TOC_END = "<!-- TOC END -->"
 
 
 def normalize_anchor(value: str) -> str:
@@ -32,13 +37,53 @@ def normalize_anchor(value: str) -> str:
 
 
 def sanitize_internal_anchor_links(content: str) -> str:
-    """Normalize generated guides by stripping in-page anchor links."""
+    """Normalize generated guides by stripping non-external markdown links."""
 
     def replace(match: re.Match[str]) -> str:
-        label, _anchor = match.groups()
+        label, target = match.groups()
+        lower = target.lower().strip()
+        if lower.startswith(("http://", "https://", "mailto:", "tel:")):
+            return match.group(0)
         return label
 
-    return ANCHOR_LINK_RE.sub(replace, content)
+    return MARKDOWN_LINK_RE.sub(replace, content)
+
+
+def build_toc(content: str) -> str:
+    items: list[str] = []
+    for level, title in re.findall(
+        r"^(##|###)\s+(.+?)\s*$", content, flags=re.MULTILINE
+    ):
+        anchor = normalize_anchor(title)
+        if not anchor:
+            continue
+        indent = "  " if level == "###" else ""
+        items.append(f"{indent}- [{title}](#{anchor})")
+    if not items:
+        items = ["- No sections found"]
+    return f"{TOC_START}\n" + "\n".join(items) + f"\n{TOC_END}"
+
+
+def update_toc(content: str) -> str:
+    toc = build_toc(content)
+    if TOC_START in content and TOC_END in content:
+        return re.sub(
+            r"<!-- TOC START -->.*?<!-- TOC END -->",
+            toc,
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
+    lines = content.splitlines()
+    if lines and lines[0].startswith("# "):
+        insert_at = 1
+        while insert_at < len(lines) and not lines[insert_at].strip():
+            insert_at += 1
+        lines.insert(insert_at, "")
+        lines.insert(insert_at + 1, toc)
+        lines.insert(insert_at + 2, "")
+        return "\n".join(lines).rstrip() + "\n"
+    return toc + "\n\n" + content.rstrip() + "\n"
 
 
 def write_if_needed(path: Path, content: str, *, apply: bool) -> GeneratedFile:
@@ -75,16 +120,18 @@ def project_guide_content(content: str, project: str, source_name: str) -> str:
             continue
         out.append(line)
     rendered = "\n".join(out).rstrip() + "\n"
-    return sanitize_internal_anchor_links(rendered)
+    return update_toc(sanitize_internal_anchor_links(rendered))
 
 
 def generate_root_docs(scope: Scope, *, apply: bool) -> list[GeneratedFile]:
     """Generate placeholder docs at the workspace root."""
-    changelog = (
+    changelog = update_toc(
         "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n"
     )
-    release = "# Latest Release\n\nNo tagged release notes were generated yet.\n"
-    roadmap = (
+    release = update_toc(
+        "# Latest Release\n\nNo tagged release notes were generated yet.\n"
+    )
+    roadmap = update_toc(
         "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n"
     )
     return [
@@ -116,6 +163,43 @@ def generate_project_guides(
     return files
 
 
+def generate_project_mkdocs(scope: Scope, *, apply: bool) -> list[GeneratedFile]:
+    """Generate mkdocs.yml for projects that do not have one yet."""
+    mkdocs_path = scope.path / "mkdocs.yml"
+    if mkdocs_path.exists():
+        return []
+    site_name = f"{scope.name} Documentation"
+    content = (
+        "\n".join([
+            f"site_name: {site_name}",
+            f"site_description: Standard guides for {scope.name}",
+            "site_url: https://github.com/flext-sh/flext",
+            "repo_name: flext-sh/flext",
+            "repo_url: https://github.com/flext-sh/flext",
+            f"edit_uri: edit/main/{scope.name}/docs/guides/",
+            "docs_dir: docs/guides",
+            "site_dir: .reports/docs/site",
+            "",
+            "theme:",
+            "  name: mkdocs",
+            "",
+            "plugins: []",
+            "",
+            "nav:",
+            "  - Home: README.md",
+            "  - Getting Started: getting-started.md",
+            "  - Configuration: configuration.md",
+            "  - Development: development.md",
+            "  - Testing: testing.md",
+            "  - Troubleshooting: troubleshooting.md",
+            "  - Security: security.md",
+            "  - Automation Skill Pattern: skill-automation-pattern.md",
+        ])
+        + "\n"
+    )
+    return [write_if_needed(mkdocs_path, content, apply=apply)]
+
+
 def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
     """Generate docs for *scope* and write reports."""
     if scope.name == "root":
@@ -125,6 +209,7 @@ def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
         files = generate_project_guides(
             scope=scope, workspace_root=workspace_root, apply=apply
         )
+        files.extend(generate_project_mkdocs(scope=scope, apply=apply))
         source = "workspace-docs-guides"
 
     generated = sum(1 for item in files if item.written)

@@ -1,7 +1,7 @@
 # FLEXT-LDIF Architecture Diagrams
 
-
 <!-- TOC START -->
+
 - [Diagram Overview](#diagram-overview)
   - [C4 Model Structure](#c4-model-structure)
   - [Diagram Categories](#diagram-categories)
@@ -20,6 +20,7 @@
   - [Review Process](#review-process)
   - [Tooling Integration](#tooling-integration)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
@@ -199,6 +200,6 @@ def generate_diagrams():
 - **../adr/**: Architecture Decision Records
 - **../../README.md**: Project overview and usage
 
----
+______________________________________________________________________
 
 **FLEXT-LDIF Architecture Diagrams**: Visual documentation using C4 Model and PlantUML for comprehensive system understanding.

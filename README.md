@@ -1,7 +1,7 @@
 # flext-ldif
 
-
 <!-- TOC START -->
+
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -82,6 +82,7 @@
   - [**Quality Standards**](#quality-standards)
 - [📄 License](#-license)
 - [🆘 Support](#-support)
+
 <!-- TOC END -->
 
 > **Enterprise-grade LDIF processing for the FLEXT platform**
@@ -133,7 +134,7 @@ else:
     print(f"❌ Error: {result.error}")
 ```
 
----
+______________________________________________________________________
 
 ## ✨ Key Features
 
@@ -163,7 +164,7 @@ else:
 - **Batch Processing** - Memory-efficient processing for large files
 - **FLEXT Integration** - Railway-oriented programming with FlextResult[T]
 
----
+______________________________________________________________________
 
 ## 📚 Documentation
 
@@ -175,7 +176,7 @@ else:
 - **[Migration Guide](docs/migration/v0.9-to-v1.0-migration.md)** - Upgrade from v0.9 to v1.0
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
----
+______________________________________________________________________
 
 ## 🏗️ Architecture
 
@@ -199,7 +200,7 @@ else:
 - **Clean Architecture** - Clear layer separation
 - **Type Safety** - 100% type coverage
 
----
+______________________________________________________________________
 
 ## 💡 Usage Examples
 
@@ -317,7 +318,7 @@ if person_result.is_success:
         print("✅ Entry written successfully")
 ```
 
----
+______________________________________________________________________
 
 ## 🔧 Advanced Usage
 
@@ -363,7 +364,7 @@ class MyService(FlextService):
         pass
 ```
 
----
+______________________________________________________________________
 
 ## 🎯 Use Cases
 
@@ -385,7 +386,7 @@ class MyService(FlextService):
 - **Validation**: Verify LDIF compliance before importing
 - **Analysis**: Extract statistics and patterns from directory data
 
----
+______________________________________________________________________
 
 ## 🤝 Integration
 
@@ -405,7 +406,7 @@ flext-ldif is part of the [FLEXT platform](https://github.com/flext) for enterpr
 - **Python 3.13+** - Modern Python features
 - **dependency-injector** - Type-safe dependency injection
 
----
+______________________________________________________________________
 
 ## 🧪 Development
 
@@ -456,13 +457,13 @@ See [CLAUDE.md](CLAUDE.md) for complete test helper documentation.
 
 See [Development Guide](docs/development.md) for development guidelines.
 
----
+______________________________________________________________________
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
----
+______________________________________________________________________
 
 ## 🙏 Acknowledgments
 
@@ -472,7 +473,7 @@ Part of the **FLEXT Ecosystem** - Enterprise data integration platform.
 **Used in production**: Oracle directory migrations (1M+ entries)
 **Maintained**: Active development and support
 
----
+______________________________________________________________________
 
 ## 📞 Support
 
@@ -481,7 +482,7 @@ Part of the **FLEXT Ecosystem** - Enterprise data integration platform.
 - **Discussions**: <https://github.com/flext-sh/flext-ldif/discussions>
 - **Email**: <support@flext-platform.org>
 
----
+______________________________________________________________________
 
 ## Features
 
@@ -629,7 +630,7 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 - **Quality Assessment** - Quality metrics and recommendations
 - **Error Recovery** - Graceful handling of malformed LDIF with detailed error reporting
 
----
+______________________________________________________________________
 
 ## 🏗️ Architecture and Patterns
 
@@ -671,7 +672,7 @@ graph TB
     Models --> ChangeRecord[Change Record Model]
 ```
 
----
+______________________________________________________________________
 
 ## 🚀 Quick Start
 
@@ -719,7 +720,7 @@ else:
     print(f"Parse error: {result.error}")
 ```
 
----
+______________________________________________________________________
 
 ## 📚 Advanced Usage Examples
 
@@ -939,7 +940,7 @@ else:
     print(f"Processing failed: {result.error}")
 ```
 
----
+______________________________________________________________________
 
 ## 🔧 Quality Assurance
 
@@ -976,7 +977,7 @@ make validate       # Validation pipeline
 - **Testing**: Unit and integration tests
 - **LDIF Compliance**: Basic RFC 2849 support
 
----
+______________________________________________________________________
 
 ## 🧪 Testing
 
@@ -999,7 +1000,7 @@ pytest -m integration                   # Integration tests only
 pytest --cov=src/flext_ldif             # Coverage report
 ```
 
----
+______________________________________________________________________
 
 ## 📊 Status and Metrics
 
@@ -1038,7 +1039,7 @@ pytest --cov=src/flext_ldif             # Coverage report
 - **Foundation**: flext-core (base patterns and utilities)
 - **Context**: LDAP directory processing within FLEXT ecosystem
 
----
+______________________________________________________________________
 
 ## 🗺️ Roadmap
 
@@ -1055,7 +1056,7 @@ Production-ready LDIF processing with comprehensive enterprise features includin
 
 See TODO.md for detailed development priorities.
 
----
+______________________________________________________________________
 
 ## 📚 Documentation
 
@@ -1069,7 +1070,7 @@ See TODO.md for detailed development priorities.
 - **[Examples](docs/examples/)** - Working code examples
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
----
+______________________________________________________________________
 
 ## 🤝 Contributing
 
@@ -1097,13 +1098,13 @@ All contributions must:
 - **Documentation**: Public APIs documented
 - **Architecture**: Service-oriented design patterns
 
----
+______________________________________________________________________
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
----
+______________________________________________________________________
 
 ## 🆘 Support
 
@@ -1111,7 +1112,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext-ldif/issues)
 - **Security**: Report security issues privately to maintainers
 
----
+______________________________________________________________________
 
 **FLEXT-LDIF v0.9.0** - Enterprise-grade LDIF processing library for LDAP data operations within the FLEXT ecosystem.
 

@@ -1,7 +1,7 @@
 # FLEXT-LDIF Ecosystem Integration
 
-
 <!-- TOC START -->
+
 - [LDIF Processing Integration](#ldif-processing-integration)
   - [Core LDIF Operations with FlextResult](#core-ldif-operations-with-flextresult)
   - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
@@ -19,6 +19,7 @@
 - [Performance Considerations](#performance-considerations)
   - [Current Implementation Limitations](#current-implementation-limitations)
   - [Recommended Usage Patterns](#recommended-usage-patterns)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
@@ -585,6 +586,6 @@ def process_large_ldif(file_path: Path) -> FlextResult[str]:
     return FlextResult[str].fail("Large file processing not yet implemented")
 ```
 
----
+______________________________________________________________________
 
 This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).

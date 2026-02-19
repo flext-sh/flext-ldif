@@ -1,8 +1,9 @@
 # ADR-005: Pluggable Quirks System
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -34,10 +35,10 @@ The challenge was creating an architecture that could:
 Implement a **pluggable quirks system** with:
 
 1. **QuirkBase abstract class** defining standard interfaces
-2. **Auto-discovery registry** for loading quirk implementations
-3. **Priority-based resolution** for handling conflicts
-4. **Nested quirk architecture** (Schema + ACL + Entry quirks)
-5. **Integration with RFC-first design** as enhancement layer
+1. **Auto-discovery registry** for loading quirk implementations
+1. **Priority-based resolution** for handling conflicts
+1. **Nested quirk architecture** (Schema + ACL + Entry quirks)
+1. **Integration with RFC-first design** as enhancement layer
 
 **Key Components**:
 
@@ -106,12 +107,15 @@ result = rfc_parser.parse_withs(
 **Alternatives Considered**:
 
 1. **Conditional Logic**: Hard-coded if/else statements for each server
+
    - **Rejected**: Inextensible, violates OCP, hard to maintain
 
-2. **Configuration Files**: External configuration instead of code
+1. **Configuration Files**: External configuration instead of code
+
    - **Rejected**: Cannot handle complex server-specific logic, less type-safe
 
-3. **Inheritance Hierarchy**: Complex inheritance instead of composition
+1. **Inheritance Hierarchy**: Complex inheritance instead of composition
+
    - **Rejected**: Tightly coupled, harder to test and maintain
 
 **Related ADRs**:

@@ -1,8 +1,9 @@
 # ADR-003: DN Case Registry for OUD Compatibility
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -25,9 +26,9 @@ The challenge was tracking canonical DN case during conversions while ensuring O
 Implement a **DN Case Registry** that:
 
 1. **Tracks canonical case** for each normalized DN during conversion
-2. **Ensures consistency** across all DN references in migrated data
-3. **Validates OUD compatibility** by detecting case conflicts
-4. **Integrates with conversion matrix** for seamless operation
+1. **Ensures consistency** across all DN references in migrated data
+1. **Validates OUD compatibility** by detecting case conflicts
+1. **Integrates with conversion matrix** for seamless operation
 
 **Key Components**:
 
@@ -88,12 +89,15 @@ result = registry.validate_oud_consistency()
 **Alternatives Considered**:
 
 1. **Manual DN Case Management**: Require users to specify canonical case
+
    - **Rejected**: Error-prone, requires domain expertise, not scalable
 
-2. **Case-Insensitive Storage**: Store all DNs in lowercase
+1. **Case-Insensitive Storage**: Store all DNs in lowercase
+
    - **Rejected**: Loses original case information needed for some servers
 
-3. **Runtime Case Resolution**: Resolve case conflicts during OUD operations
+1. **Runtime Case Resolution**: Resolve case conflicts during OUD operations
+
    - **Rejected**: Would cause runtime failures and poor user experience
 
 **Related ADRs**:

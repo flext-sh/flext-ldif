@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Standardize README.md files across workspace projects."""
 
 from __future__ import annotations

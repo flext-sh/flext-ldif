@@ -1,7 +1,7 @@
 # FLEXT-LDIF Troubleshooting
 
-
 <!-- TOC START -->
+
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Parse Errors](#parse-errors)
   - [Memory Issues](#memory-issues)
@@ -15,6 +15,7 @@
   - [Support Resources](#support-resources)
   - [Creating Support Requests](#creating-support-requests)
   - [Emergency Contacts](#emergency-contacts)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
@@ -620,11 +621,11 @@ def generate_support_info() -> dict[str, object]:
 For critical production issues:
 
 1. Check health status: `run_health_check()`
-2. Review logs for error patterns
-3. Attempt with debug configuration
-4. Document issue with support information
-5. Contact FLEXT support team with detailed report
+1. Review logs for error patterns
+1. Attempt with debug configuration
+1. Document issue with support information
+1. Contact FLEXT support team with detailed report
 
----
+______________________________________________________________________
 
 This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues while maintaining integration with FLEXT ecosystem support patterns.

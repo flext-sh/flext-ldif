@@ -1,7 +1,7 @@
 # Integration Test Suite for FlextLdif
 
-
 <!-- TOC START -->
+
 - [📋 Test Organization](#-test-organization)
   - [Test Structure](#test-structure)
   - [Test Categories](#test-categories)
@@ -40,6 +40,7 @@
   - [CI Configuration](#ci-configuration)
 - [📚 References](#-references)
 - [✅ Checklist for Test Development](#-checklist-for-test-development)
+
 <!-- TOC END -->
 
 Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
@@ -714,7 +715,7 @@ Tests run with:
 - [ ] Test passes linting and type checking
 - [ ] Test follows "Best Practices" guidelines above
 
----
+______________________________________________________________________
 
 **Integration Test Suite** for FlextLdif LDIF processing library.
 

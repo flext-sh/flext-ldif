@@ -1,7 +1,7 @@
 # FLEXT-LDIF Source Code
 
-
 <!-- TOC START -->
+
 - [Architecture Overview](#architecture-overview)
 - [Package Structure](#package-structure)
 - [Key Design Principles](#key-design-principles)
@@ -23,6 +23,7 @@
 - [Future Architecture Migration](#future-architecture-migration)
 - [Contributing](#contributing)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 This directory contains the source code for the FLEXT-LDIF library, organized following Clean Architecture and Domain-Driven Design principles.
@@ -177,10 +178,10 @@ src/flext_ldif/
 When contributing to the source code:
 
 1. **Follow architectural patterns**: Respect Clean Architecture boundaries
-2. **Maintain type safety**: Add comprehensive type annotations
-3. **Write tests**: Ensure 90%+ coverage for all new code
-4. **Document thoroughly**: Add comprehensive docstrings and examples
-5. **Validate quality**: Run all quality gates before submitting
+1. **Maintain type safety**: Add comprehensive type annotations
+1. **Write tests**: Ensure 90%+ coverage for all new code
+1. **Document thoroughly**: Add comprehensive docstrings and examples
+1. **Validate quality**: Run all quality gates before submitting
 
 ## Related Documentation
 

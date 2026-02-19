@@ -1,7 +1,7 @@
 # flext-ldif: parse() and format_acl() Usage Locations
 
-
 <!-- TOC START -->
+
 - [SUMMARY](#summary)
 - [1. METHOD DEFINITIONS](#1-method-definitions)
   - [Base Class Definition](#base-class-definition)
@@ -30,12 +30,13 @@
 - [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
   - [Projects Using flext-ldif](#projects-using-flext-ldif)
 - [CONCLUSION](#conclusion)
+
 <!-- TOC END -->
 
 **Analysis Date**: 2025-10-28
 **Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
 
----
+______________________________________________________________________
 
 ## SUMMARY
 
@@ -45,7 +46,7 @@ The `parse()` and `format_acl()` methods are defined in the flext-ldif library a
 **Lines of Code Affected**: ~520+ lines in quirks implementations + ~1000+ lines in tests
 **Risk Level**: HIGH - Extensive refactoring required
 
----
+______________________________________________________________________
 
 ## 1. METHOD DEFINITIONS
 
@@ -80,7 +81,7 @@ class AclProtocol(Protocol):
         """Parse ACL - returns FlextResult with dict or Acl model."""
 ```
 
----
+______________________________________________________________________
 
 ## 2. SERVER QUIRKS IMPLEMENTATIONS
 
@@ -113,7 +114,7 @@ Each server quirks class has:
 
 **Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
 
----
+______________________________________________________________________
 
 ## 3. SERVICE LAYER USAGE
 
@@ -164,7 +165,7 @@ def _transform_categories(
 
 **Lines Affected**: 100+ lines for ACL transformation logic
 
----
+______________________________________________________________________
 
 ## 4. TEST COVERAGE
 
@@ -196,7 +197,7 @@ def test_parse_oracle_oid():
 
 **Total Tests**: ~50+ test methods using parse()
 
----
+______________________________________________________________________
 
 ## 5. INTEGRATION POINTS
 
@@ -222,7 +223,7 @@ def test_parse_oracle_oid():
 - Higher-level API returns Entry models (not Acl models)
 - client-a-oud-mig uses this API (already compatible with Entry return)
 
----
+______________________________________________________________________
 
 ## 6. CURRENT DATA FLOW
 
@@ -238,42 +239,50 @@ Entry model with aci attributes (after transformation)
 Output LDIF with OUD format (aci:)
 ```
 
----
+______________________________________________________________________
 
 ## 7. AFFECTED CODE LOCATIONS (SUMMARY)
 
 ### Must Be Updated (High Impact)
 
 1. **Protocol Definition** (3-5 lines)
+
    - `/flext_ldif/protocols.py` - Update AclProtocol signature
 
-2. **Base Class** (10-15 lines)
+1. **Base Class** (10-15 lines)
+
    - `/flext_ldif/quirks/base.py` - Update FlextLdifServersBase.Acl.parse()
 
-3. **13 Server Quirks** (520-650 lines)
+1. **13 Server Quirks** (520-650 lines)
+
    - All 13 quirks files in `/flext_ldif/quirks/servers/`
    - Each file needs parse() method signature updated
 
-4. **Service Layer** (30-50 lines)
+1. **Service Layer** (30-50 lines)
+
    - `/flext_ldif/services/acl.py` - Update parse() wrapper
    - `/flext_ldif/categorized_pipeline.py` - Update transformation logic
 
-5. **Tests** (1000+ lines)
+1. **Tests** (1000+ lines)
+
    - 50+ test methods in 4+ test files
    - Mock returns, assertions, fixture data
 
 ### Should Review (Medium Impact)
 
 1. **Integration Tests** (tests/integration/)
+
    - May have parse() calls in fixtures or helpers
 
-2. **Examples** (examples/06_acl_processing.py)
+1. **Examples** (examples/06_acl_processing.py)
+
    - Documentation examples using parse()
 
-3. **Type Hints**
+1. **Type Hints**
+
    - Any type hints expecting Acl model need updating
 
----
+______________________________________________________________________
 
 ## 8. MIGRATION STRATEGY
 
@@ -303,7 +312,7 @@ Output LDIF with OUD format (aci:)
 
 **Total Estimated Time**: 10-15 hours of development
 
----
+______________________________________________________________________
 
 ## 9. ECOSYSTEM IMPACT
 
@@ -312,7 +321,7 @@ Output LDIF with OUD format (aci:)
 **Dependent on parse()/format_acl()**:
 
 1. client-a-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
-2. Any other projects importing from flext-ldif
+1. Any other projects importing from flext-ldif
 
 **Risk Assessment**:
 
@@ -320,19 +329,19 @@ Output LDIF with OUD format (aci:)
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
----
+______________________________________________________________________
 
 ## CONCLUSION
 
 The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact client-a-oud-mig** because:
 
 1. client-a-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
-2. client-a-oud-mig does not directly call parse() or format_acl()
-3. The change is internal to flext-ldif's quirks system
+1. client-a-oud-mig does not directly call parse() or format_acl()
+1. The change is internal to flext-ldif's quirks system
 
 **Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify client-a-oud-mig continues to work (should be automatic with no code changes).
 
----
+______________________________________________________________________
 
 **Generated By**: Claude Code
 **Tools Used**: Grep, Read, Bash

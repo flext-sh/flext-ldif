@@ -1,7 +1,7 @@
 # FLEXT-LDIF Test Suite
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Test Organization](#test-organization)
   - [Test Categories (Pytest Markers)](#test-categories-pytest-markers)
@@ -33,6 +33,7 @@
   - [Quality Metrics](#quality-metrics)
 - [Contributing Guidelines](#contributing-guidelines)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 This directory contains the test suite for FLEXT-LDIF, implementing testing standards with multiple test categories, fixtures, and quality validation patterns.
@@ -365,7 +366,7 @@ pytest -x                          # Stop on first failure
 ### Benchmark Targets
 
 - **Parsing Speed**: >1000 entries/second for standard LDIF
-- **Memory Usage**: <1MB per 1000 entries processed
+- **Memory Usage**: \<1MB per 1000 entries processed
 - **File Size**: Support files up to 1GB without memory issues
 - **Validation Speed**: >2000 entries/second for business rules
 
@@ -434,7 +435,7 @@ def test_new_feature_specification():
 
 ### Quality Metrics
 
-- **Test Execution Time**: <5 minutes for full suite
+- **Test Execution Time**: \<5 minutes for full suite
 - **Coverage Reporting**: Automated coverage tracking
 - **Performance Regression**: Automated benchmark comparison
 - **Flaky Test Detection**: Identify and fix unstable tests
@@ -444,11 +445,11 @@ def test_new_feature_specification():
 When adding new tests:
 
 1. **Follow Naming Conventions**: Use descriptive test names with behavior description
-2. **Use Appropriate Markers**: Tag tests with correct pytest markers
-3. **Maintain Coverage**: Ensure new code has 90%+ test coverage
-4. **Include Edge Cases**: Test boundary conditions and error scenarios
-5. **Performance Awareness**: Add performance tests for critical paths
-6. **Documentation**: Document complex test scenarios and fixtures
+1. **Use Appropriate Markers**: Tag tests with correct pytest markers
+1. **Maintain Coverage**: Ensure new code has 90%+ test coverage
+1. **Include Edge Cases**: Test boundary conditions and error scenarios
+1. **Performance Awareness**: Add performance tests for critical paths
+1. **Documentation**: Document complex test scenarios and fixtures
 
 ## Related Documentation
 

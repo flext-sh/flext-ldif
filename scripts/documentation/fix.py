@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Auto-fix broken links and insert/update TOC in markdown files."""
 
 from __future__ import annotations
@@ -52,7 +54,7 @@ def anchorize(text: str) -> str:
     value = text.strip().lower()
     value = re.sub(r"[^a-z0-9\s-]", "", value)
     value = re.sub(r"\s+", "-", value)
-    return re.sub(r"-+", "-", value)
+    return re.sub(r"-+", "-", value).strip("-")
 
 
 def build_toc(content: str) -> str:

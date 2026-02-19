@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Build MkDocs sites for workspace projects."""
 
 from __future__ import annotations

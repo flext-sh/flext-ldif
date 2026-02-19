@@ -1,7 +1,7 @@
 # FLEXT-LDIF Configuration
 
-
 <!-- TOC START -->
+
 - [Configuration Overview](#configuration-overview)
 - [Configuration Models](#configuration-models)
   - [FlextLdifModels.Config](#flextldifmodelsconfig)
@@ -29,6 +29,7 @@
 - [Configuration Reference](#configuration-reference)
   - [Complete Configuration Options](#complete-configuration-options)
   - [Environment Variable Mapping](#environment-variable-mapping)
+
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
@@ -40,9 +41,9 @@ This document covers configuration options for FLEXT-LDIF, including settings ma
 FLEXT-LDIF provides flexible configuration management through multiple layers:
 
 1. **Default Configuration**: Built-in sensible defaults
-2. **Global Configuration**: Process-wide settings
-3. **Instance Configuration**: Per-API instance settings
-4. **Operation Configuration**: Per-operation overrides
+1. **Global Configuration**: Process-wide settings
+1. **Instance Configuration**: Per-API instance settings
+1. **Operation Configuration**: Per-operation overrides
 
 ## Configuration Models
 
@@ -527,6 +528,6 @@ def get_config_version() -> str:
 | `FLEXT_LDIF_BUFFER_SIZE`          | `buffer_size`               | `16384`  |
 | `FLEXT_LDIF_LOG_LEVEL`            | `log_level`                 | `DEBUG`  |
 
----
+______________________________________________________________________
 
 This configuration guide provides comprehensive coverage of FLEXT-LDIF configuration options while maintaining integration with FLEXT ecosystem patterns and professional configuration management practices.

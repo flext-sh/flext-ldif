@@ -1,8 +1,9 @@
 # ADR-004: Memory-Bound Processing Architecture
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -32,9 +33,9 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 **Key Design Decisions**:
 
 1. **Complete File Loading**: Use `content.splitlines()` to load entire file into memory
-2. **File Size Warnings**: Recommend 100MB limit with explicit warnings
-3. **Single-Threaded Processing**: Focus on correctness over parallelism
-4. **Memory Usage Transparency**: Document memory requirements clearly
+1. **File Size Warnings**: Recommend 100MB limit with explicit warnings
+1. **Single-Threaded Processing**: Focus on correctness over parallelism
+1. **Memory Usage Transparency**: Document memory requirements clearly
 
 **Implementation**:
 
@@ -82,15 +83,18 @@ def parse_ldif_file(self, file_path: Path) -> FlextResult[list[Entry]]:
 **Alternatives Considered**:
 
 1. **Streaming Parser**: Process files incrementally without full memory load
+
    - **Rejected**: Would complicate type validation and RFC compliance checking
    - **Complexity**: Much harder to maintain complete file context for validation
    - **Performance**: Similar memory usage for validation of complex schemas
 
-2. **Chunked Processing**: Process file in configurable chunks
+1. **Chunked Processing**: Process file in configurable chunks
+
    - **Rejected**: Would break RFC compliance for cross-chunk validations
    - **Complexity**: Significant architectural complexity for marginal benefits
 
-3. **Memory-Mapped Files**: Use OS memory mapping for large files
+1. **Memory-Mapped Files**: Use OS memory mapping for large files
+
    - **Rejected**: Still loads entire file into virtual memory, doesn't solve RAM limits
    - **Platform Dependencies**: Memory mapping behavior varies by OS
 

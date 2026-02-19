@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 """Documentation validation script for FLEXT projects.
 
 Checks ADR skill references and generates validation reports per project scope.
@@ -60,7 +62,8 @@ def run_scope(scope: Scope, *, apply_mode: bool, check: str) -> int:
     status = "OK"
     message = "validation passed"
     details: dict[str, object] = {}
-    if scope.name == "root" and check in {"adr-skill", "all"}:
+    config_exists = (scope.path / "docs/architecture/architecture_config.json").exists()
+    if scope.name == "root" and config_exists and check in {"adr-skill", "all"}:
         code, missing = run_adr_skill_check(scope.path)
         details["missing_adr_skills"] = missing
         if code != 0:

@@ -1,14 +1,15 @@
 <!-- Generated from docs/guides/security.md for flext-ldif. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-ldif - Security Guide
 
 > Project profile: `flext-ldif`
 
-
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 Security practices are governed by project-specific policies and central architecture ADRs.

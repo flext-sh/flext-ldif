@@ -1,26 +1,27 @@
 # Server API Usage Pattern - Padrão Correto
 
-
 <!-- TOC START -->
-- [❌ PADRÃO INCORRETO (Deprecado)](#-padro-incorreto-deprecado)
-- [✅ PADRÃO CORRETO (Obrigatório)](#-padro-correto-obrigatrio)
-- [📝 Uso em Testes (Fixtures)](#-uso-em-testes-fixtures)
+
+- [❌ PADRÃO INCORRETO (Deprecado)](#padro-incorreto-deprecado)
+- [✅ PADRÃO CORRETO (Obrigatório)](#padro-correto-obrigatrio)
+- [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
   - [Fixtures Centralizadas (`conftest.py`)](#fixtures-centralizadas-conftestpy)
   - [Uso nas Funções de Teste](#uso-nas-funes-de-teste)
-- [🔄 Migração de Código Existente](#-migrao-de-cdigo-existente)
+- [🔄 Migração de Código Existente](#migrao-de-cdigo-existente)
   - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
   - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciao)
   - [Passo 3: Atualizar Type Hints](#passo-3-atualizar-type-hints)
-- [📊 Status de Migração](#-status-de-migrao)
-- [🎯 Servers Disponíveis via API](#-servers-disponveis-via-api)
-- [🔍 Verificação](#-verificao)
-- [📚 Referências](#-referncias)
+- [📊 Status de Migração](#status-de-migrao)
+- [🎯 Servers Disponíveis via API](#servers-disponveis-via-api)
+- [🔍 Verificação](#verificao)
+- [📚 Referências](#referncias)
+
 <!-- TOC END -->
 
 **Data**: 2025-11-18
 **Status**: PADRÃO OBRIGATÓRIO
 
----
+______________________________________________________________________
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
@@ -42,7 +43,7 @@ rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO
 - Quebra o padrão singleton/registry
 - Dificulta manutenção e testes
 
----
+______________________________________________________________________
 
 ## ✅ PADRÃO CORRETO (Obrigatório)
 
@@ -67,7 +68,7 @@ rfc_quirk: FlextLdifServersBase = server.quirk("rfc")
 - ✅ API única e consistente
 - ✅ Evita duplicação de funcionalidade
 
----
+______________________________________________________________________
 
 ## 📝 Uso em Testes (Fixtures)
 
@@ -122,7 +123,7 @@ def test_conversion_oid_to_oud(
     assert result.is_success
 ```
 
----
+______________________________________________________________________
 
 ## 🔄 Migração de Código Existente
 
@@ -163,7 +164,7 @@ def my_function(oid: FlextLdifServersBase) -> None:
     pass
 ```
 
----
+______________________________________________________________________
 
 ## 📊 Status de Migração
 
@@ -181,7 +182,7 @@ def my_function(oid: FlextLdifServersBase) -> None:
 - ⏳ `tests/integration/*.py` - Tests de integração
 - ⏳ `tests/helpers/*.py` - Helpers
 
----
+______________________________________________________________________
 
 ## 🎯 Servers Disponíveis via API
 
@@ -204,7 +205,7 @@ server.quirk("novell")   # Novell eDirectory
 server.quirk("tivoli")   # IBM Tivoli DS
 ```
 
----
+______________________________________________________________________
 
 ## 🔍 Verificação
 
@@ -221,7 +222,7 @@ grep -r "from flext_ldif.servers.\(oid\|oud\|rfc\) import" src/
 grep -r "server.quirk(" src/
 ```
 
----
+______________________________________________________________________
 
 ## 📚 Referências
 
@@ -230,6 +231,6 @@ grep -r "server.quirk(" src/
 - **Exemplo Correto**: `src/flext_ldif/services/conversion.py` - método `_resolve_quirk()`
 - **Fixtures Corretas**: `tests/conftest.py` - server, oid_quirk, oud_quirk, rfc_quirk
 
----
+______________________________________________________________________
 
 **IMPORTANTE**: Este padrão é OBRIGATÓRIO para todo código novo. Código existente deve ser migrado progressivamente.
