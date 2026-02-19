@@ -188,7 +188,7 @@ def test_parse_oracle_oid():
 
 - `FlextLdif.parse()` uses quirks internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
-- client-a-oud-mig uses this API (already compatible with Entry return)
+- flext-oud-mig uses this API (already compatible with Entry return)
 
 ---
 
@@ -267,7 +267,7 @@ Output LDIF with OUD format (aci:)
 
 - [ ] Run full test suite
 - [ ] Test with real LDIF data
-- [ ] Verify client-a-oud-mig compatibility (should be automatic)
+- [ ] Verify flext-oud-mig compatibility (should be automatic)
 
 **Total Estimated Time**: 10-15 hours of development
 
@@ -279,12 +279,12 @@ Output LDIF with OUD format (aci:)
 
 **Dependent on parse()/format_acl()**:
 
-1. client-a-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
+1. flext-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
 2. Any other projects importing from flext-ldif
 
 **Risk Assessment**:
 
-- client-a-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
+- flext-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
@@ -292,13 +292,13 @@ Output LDIF with OUD format (aci:)
 
 ## CONCLUSION
 
-The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact client-a-oud-mig** because:
+The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact flext-oud-mig** because:
 
-1. client-a-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
-2. client-a-oud-mig does not directly call parse() or format_acl()
+1. flext-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
+2. flext-oud-mig does not directly call parse() or format_acl()
 3. The change is internal to flext-ldif's quirks system
 
-**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify client-a-oud-mig continues to work (should be automatic with no code changes).
+**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify flext-oud-mig continues to work (should be automatic with no code changes).
 
 ---
 

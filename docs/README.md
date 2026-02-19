@@ -87,7 +87,7 @@ docs/
 **[Integration Guide](guides/integration.md)** - FLEXT ecosystem integration:
 
 - **FLEXT Core Patterns**: FlextResult, FlextContainer, FlextModels usage
-- **Project Integration**: Usage with client-a-oud-mig, flext-api, other projects
+- **Project Integration**: Usage with flext-oud-mig, flext-api, other projects
 - **Service Registration**: Dependency injection and service discovery
 - **Error Handling**: Consistent error patterns across ecosystem
 

@@ -553,7 +553,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return entry_data
 
         # Comment out ACL attributes in non-ACL phases (01/02/03)
-        # Use utility to comment ACL attributes - CRITICAL for client-a-oud-mig phase-aware handling
+        # Use utility to comment ACL attributes - CRITICAL for flext-oud-mig phase-aware handling
         # Convert to list if needed (acl_attrs can be frozenset, set, or list)
         acl_attrs_list = (
             list(acl_attrs)
@@ -747,7 +747,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> m.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata.
 
-        CRITICAL for client-a-oud-mig phase-aware ACL handling.
+        CRITICAL for flext-oud-mig phase-aware ACL handling.
         Removes ACL attributes from active attributes dict and stores values in metadata
         for later comment generation with [TRANSFORMED] and [SKIP TO 04] tags.
 

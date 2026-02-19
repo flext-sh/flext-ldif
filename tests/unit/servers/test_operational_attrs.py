@@ -47,7 +47,7 @@ class OpAttrTestCase:
 OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     OpAttrTestCase(
         OperationalAttrTestType.COMMON_STRIP,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person", "top"],
@@ -61,7 +61,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.OID_PRESERVE,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person"],
@@ -77,11 +77,11 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.USER_ATTRS,
-        "cn=user,ou=Users,dc=client-a",
+        "cn=user,ou=Users,dc=flext",
         {
             "cn": ["user"],
             "sn": ["User"],
-            "mail": ["user@client-a.com"],
+            "mail": ["user@flext.com"],
             "uid": ["user123"],
             "userPassword": ["{SSHA}abcdef"],
             "objectclass": ["inetOrgPerson", "person", "top"],
@@ -92,7 +92,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.CASE_INSENSITIVE,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person"],
@@ -138,7 +138,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.OUD_PRESERVE,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person"],
@@ -161,7 +161,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.OPENLDAP_PRESERVE,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person"],
@@ -183,7 +183,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.AD_PRESERVE,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectclass": ["person"],
@@ -212,7 +212,7 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.GENERIC_DEFAULT,
-        "cn=test,dc=client-a",
+        "cn=test,dc=flext",
         {
             "cn": ["test"],
             "objectClass": ["person"],
@@ -225,11 +225,11 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.MIXED_ATTRS,
-        "cn=mixed,dc=client-a",
+        "cn=mixed,dc=flext",
         {
             "cn": ["mixed"],
             "sn": ["Test"],
-            "mail": ["test@client-a.com"],
+            "mail": ["test@flext.com"],
             "objectclass": ["inetOrgPerson", "person", "top"],
             "createTimestamp": ["20250113100000Z"],
             "modifyTimestamp": ["20250113100000Z"],

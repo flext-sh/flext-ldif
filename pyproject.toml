@@ -1,19 +1,18 @@
 [build-system]
     build-backend = "poetry.core.masonry.api"
     requires = [
-        "poetry-core>=1.9.0",
+        "poetry-core>=2",
     ]
 
 [project]
     classifiers = [
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.13",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Typing :: Typed",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed"
     ]
     dependencies = [
         "colorlog (>=6.9.0)",
@@ -36,6 +35,7 @@
     readme = "README.md"
     requires-python = ">=3.13,<3.14"
     version = "0.10.0-dev"
+    license = "MIT"
     [[project.authors]]
         email = "team@flext.sh"
         name = "FLEXT Team"
@@ -43,9 +43,6 @@
     [[project.maintainers]]
         email = "team@flext.sh"
         name = "FLEXT Team"
-
-    [project.license]
-        text = "MIT"
 
     [project.urls]
         Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
@@ -200,18 +197,20 @@ docker = ">=7.1.0"
             "*/dependency_injector/*",
             "*.pyx",
         ]
+    source = ["src/flext_ldif"]
 
+[tool.coverage.report]
+fail_under = 65
+precision = 2
     [tool.pytest.ini_options]
         pythonpath = ["src"]
         addopts = [
-            "--cov-report=term-missing",
-            "--cov=src/",
-            "--strict-config",
-            "--strict-markers",
-            "--tb=short",
-            "-p no:sugar",
-            "-q",
-            "-ra",
+    "--strict-config",
+    "--strict-markers",
+    "--tb=short",
+    "-p no:sugar",
+    "-q",
+    "-ra"
         ]
         filterwarnings = [
             "ignore::DeprecationWarning:pyasn1(.*|$)",
@@ -275,6 +274,8 @@ docker = ">=7.1.0"
 
     [tool.pyrefly]
         search-path = [
+            "../typings",
+            "../typings/generated",
             ".",
             "src",
             "tests",
@@ -290,3 +291,6 @@ docker = ">=7.1.0"
                 "flext_ldif",
             ]
 
+
+[tool.bandit]
+skips = ["B404", "B603", "B607", "B105", "B608"]

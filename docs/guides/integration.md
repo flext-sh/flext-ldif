@@ -81,7 +81,7 @@ def process_ldif_with_memory_check(file_path: Path) -> FlextResult[t.Dict]:
 
 ## Enterprise Directory Migration Integration
 
-### client-a Oracle Unified Directory Migration
+### FLEXT Oracle Unified Directory Migration
 
 ```python
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -107,8 +107,8 @@ from flext_core import t
 from flext_core import u
 from pathlib import Path
 
-class client-aOUDMigrationService:
-    """client-a Oracle Unified Directory LDIF processing."""
+class FLEXTOUDMigrationService:
+    """FLEXT Oracle Unified Directory LDIF processing."""
 
     def __init__(self) -> None:
         self.logger = FlextLogger(__name__)
@@ -137,7 +137,7 @@ class client-aOUDMigrationService:
             # Categorize entries for migration-specific processing
             .flat_map(self._categorize_ldif_entries)
 
-            # Apply client-a-specific directory transformations
+            # Apply FLEXT-specific directory transformations
             .flat_map(self._apply_migration_transformations)
 
             # Generate migration-specific report
@@ -176,7 +176,7 @@ class client-aOUDMigrationService:
             return FlextResult[t.Dict].fail(f"LDIF entry categorization failed: {e}")
 
     def _apply_migration_transformations(self, categorized: dict) -> FlextResult[t.Dict]:
-        """Apply client-a-specific LDIF entry transformations."""
+        """Apply FLEXT-specific LDIF entry transformations."""
         # LDIF-specific transformations for OUD migration
 
         self.logger.info("Applying LDIF migration transformations", extra={
@@ -186,7 +186,7 @@ class client-aOUDMigrationService:
             'other_count': len(categorized['other'])
         })
 
-        # Apply client-a business rules to LDIF entries
+        # Apply FLEXT business rules to LDIF entries
         transformed_users = self._transform_user_entries(categorized['users'])
         transformed_groups = self._transform_group_entries(categorized['groups'])
 
@@ -199,12 +199,12 @@ class client-aOUDMigrationService:
         })
 
     def _transform_user_entries(self, user_entries):
-        """Transform user LDIF entries for client-a migration."""
+        """Transform user LDIF entries for FLEXT migration."""
         # LDIF-specific user entry transformations
         return user_entries
 
     def _transform_group_entries(self, group_entries):
-        """Transform group LDIF entries for client-a migration."""
+        """Transform group LDIF entries for FLEXT migration."""
         # LDIF-specific group entry transformations
         return group_entries
 

@@ -1286,7 +1286,7 @@ class FlextLdifModelsSettings:
                 "Default 'add' for schema/ACL phases."
             ),
         )
-        # NEW FIELDS FOR client-a OUD MIGRATION
+        # NEW FIELDS FOR FLEXT OUD MIGRATION
         # Phase-aware ACL handling and original entry commenting
         write_original_entry_as_comment: bool = Field(
             default=False,

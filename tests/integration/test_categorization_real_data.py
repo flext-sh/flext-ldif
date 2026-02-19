@@ -6,7 +6,7 @@ Tests categorization and base DN filtering with real-world scenarios including:
 - Entries that should be rejected vs categorized
 
 Note: These tests use generic examples (dc=example) to validate behavior.
-Real-world scenarios (like CTBC) are tested in client-a-oud-mig project.
+Real-world scenarios (like CTBC) are tested in flext-oud-mig project.
 
 All test outputs use pytest tmp_path fixture for proper cleanup.
 """
@@ -121,7 +121,7 @@ class TestCategorizationRealData:
         This prevents false positives like "dc=example2" matching "dc=example".
 
         Uses generic examples (dc=example) to validate behavior without knowing
-        about specific projects like client-a-oud-mig or CTBC.
+        about specific projects like flext-oud-mig or CTBC.
         """
         base_dn = "dc=example"
 
@@ -295,7 +295,7 @@ class TestCategorizationRealData:
         categories = categories_result.value
         acl_category = categories.get_entries(c.Ldif.Categories.ACL)
 
-        # Filter ACLs by base DN (simulating client-a-oud-mig logic)
+        # Filter ACLs by base DN (simulating flext-oud-mig logic)
         acls_with_basedn: list[p.Entry] = []
         acls_without_basedn: list[p.Entry] = []
 

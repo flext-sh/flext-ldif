@@ -10,7 +10,7 @@ System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with ser
 
 System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextResult, FlextContainer, FlextModels")
 System_Ext(ldap_servers, "LDAP Directory Servers", "OID, OUD, OpenLDAP, Active Directory, Apache DS, 389 DS, Novell, Tivoli")
-System_Ext(flext_projects, "FLEXT Projects", "client-a-oud-mig, flext-api, flext-ldap, flext-web, flext-auth")
+System_Ext(flext_projects, "FLEXT Projects", "flext-oud-mig, flext-api, flext-ldap, flext-web, flext-auth")
 System_Ext(data_sources, "Data Sources", "LDIF files, LDAP exports, directory dumps, API responses")
 
 System_Ext(cloud_infrastructure, "Cloud Infrastructure", "AWS, Azure, GCP directory services")

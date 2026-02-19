@@ -781,7 +781,7 @@ class FlextLdifSettings(FlextSettings):
 
             Note: Validations that require root config fields
             (max_workers, debug, trace)
-        should be performed at the root config level (e.g., client-aOudMigSettings).
+        should be performed at the root config level (e.g., FlextOudMigSettings).
         """
         # Validate analytics configuration
         if (

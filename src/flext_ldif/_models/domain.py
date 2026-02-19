@@ -1779,7 +1779,7 @@ class FlextLdifModelsDomains:
             # If metadata not provided or is None, initialize with default QuirkMetadata
             if data.get("metadata") is None:
                 # Use FlextLdifModelsDomains directly from this module scope
-                # This works correctly for subclasses in other modules (e.g., client-a-oud-mig)
+                # This works correctly for subclasses in other modules (e.g., flext-oud-mig)
                 # because we reference the class from flext_ldif._models.domain, not cls.__module__
 
                 # Create default QuirkMetadata with quirk_type from data if available

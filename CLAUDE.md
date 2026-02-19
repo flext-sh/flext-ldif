@@ -120,7 +120,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 
 ## Regra 0 — Alinhamento Cruzado
 
-- Este arquivo espelha o `../CLAUDE.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `CLAUDE.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `client-a-oud-mig/`.
+- Este arquivo espelha o `../CLAUDE.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `CLAUDE.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `flext-oud-mig/`.
 - Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `CLAUDE.md` raiz antes de codar.
 
 ## Project Overview

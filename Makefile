@@ -1,8 +1,5 @@
 # flext-ldif - LDIF Processing Library
 PROJECT_NAME := flext-ldif
-COV_DIR := flext_ldif
-MIN_COVERAGE := 65
-
 include ../base.mk
 
 # === PROJECT-SPECIFIC TARGETS ===
