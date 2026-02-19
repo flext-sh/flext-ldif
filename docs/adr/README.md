@@ -2,14 +2,14 @@
 
 
 <!-- TOC START -->
-- ADR Process
-  - When to Create an ADR
-  - ADR Template
-  - ADR Status Definitions
-  - ADR Numbering
-- Current ADRs
-- ADR Maintenance
-- Related Documentation
+- [ADR Process](#adr-process)
+  - [When to Create an ADR](#when-to-create-an-adr)
+  - [ADR Template](#adr-template)
+  - [ADR Status Definitions](#adr-status-definitions)
+  - [ADR Numbering](#adr-numbering)
+- [Current ADRs](#current-adrs)
+- [ADR Maintenance](#adr-maintenance)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 **Purpose**: This directory contains Architecture Decision Records (ADRs) that document architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and consequences of significant architectural choices.

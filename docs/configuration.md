@@ -2,33 +2,33 @@
 
 
 <!-- TOC START -->
-- Configuration Overview
-- Configuration Models
-  - FlextLdifModels.Config
-  - Configuration Usage
-- Global Configuration
-  - Initialization
-  - Environment Variables
-  - Environment Configuration Loading
-- Configuration Scenarios
-  - Development Configuration
-  - Production Configuration
-  - Migration Configuration
-- Advanced Configuration
-  - Configuration Validation
-  - Configuration Inheritance
-  - Configuration Profiles
-- Integration with FLEXT Configuration
-  - FlextContainer Integration
-  - Configuration Logging
-- Configuration Best Practices
-  - 1. Use Type-Safe Configuration
-  - 2. Validate Configuration Early
-  - 3. Use Environment-Specific Profiles
-  - 4. Document Configuration Changes
-- Configuration Reference
-  - Complete Configuration Options
-  - Environment Variable Mapping
+- [Configuration Overview](#configuration-overview)
+- [Configuration Models](#configuration-models)
+  - [FlextLdifModels.Config](#flextldifmodelsconfig)
+  - [Configuration Usage](#configuration-usage)
+- [Global Configuration](#global-configuration)
+  - [Initialization](#initialization)
+  - [Environment Variables](#environment-variables)
+  - [Environment Configuration Loading](#environment-configuration-loading)
+- [Configuration Scenarios](#configuration-scenarios)
+  - [Development Configuration](#development-configuration)
+  - [Production Configuration](#production-configuration)
+  - [Migration Configuration](#migration-configuration)
+- [Advanced Configuration](#advanced-configuration)
+  - [Configuration Validation](#configuration-validation)
+  - [Configuration Inheritance](#configuration-inheritance)
+  - [Configuration Profiles](#configuration-profiles)
+- [Integration with FLEXT Configuration](#integration-with-flext-configuration)
+  - [FlextContainer Integration](#flextcontainer-integration)
+  - [Configuration Logging](#configuration-logging)
+- [Configuration Best Practices](#configuration-best-practices)
+  - [1. Use Type-Safe Configuration](#1-use-type-safe-configuration)
+  - [2. Validate Configuration Early](#2-validate-configuration-early)
+  - [3. Use Environment-Specific Profiles](#3-use-environment-specific-profiles)
+  - [4. Document Configuration Changes](#4-document-configuration-changes)
+- [Configuration Reference](#configuration-reference)
+  - [Complete Configuration Options](#complete-configuration-options)
+  - [Environment Variable Mapping](#environment-variable-mapping)
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025

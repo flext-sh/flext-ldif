@@ -2,40 +2,40 @@
 
 
 <!-- TOC START -->
-- 🎯 Library Overview
-- Documentation Structure
-- 📚 Documentation Categories
-  - 🚀 Getting Started (`getting-started.md`)
-  - 🏗️ Architecture Documentation (`architecture.md`)
-  - 📚 API Reference (`api-reference.md`)
-  - ⚙️ Configuration (`configuration.md`)
-  - 🔧 Development (`development.md`)
-  - 🔗 Integration (`integration.md`)
-  - 💡 Examples (`examples/`)
-  - 🚨 Troubleshooting (`troubleshooting.md`)
-- 🌟 Key Features Documented
-  - Current Implementation (v0.9.9)
-  - Known Limitations
-  - Future Development Goals
-- 📖 Documentation Principles
-  - Accuracy and Honesty
-  - FLEXT Ecosystem Integration
-  - User-Focused Guidance
-- 🧭 Navigation Guide
-  - 🚀 Quick Start Path (New Users)
-  - 🛠️ Developer Path (Contributors)
-  - 🔧 Integration Path (FLEXT Ecosystem)
-- 📊 Documentation Quality Standards
-  - Completeness Standards
-  - Quality Validation
-- 🔗 Related Resources
-  - Project Documentation
-  - FLEXT Ecosystem Documentation
-  - External Standards and References
-- 🎯 Documentation Success Metrics
-  - Usability Indicators
-  - Technical Quality
-- 🤝 Contributing to Documentation
+- [🎯 Library Overview](#-library-overview)
+- [Documentation Structure](#documentation-structure)
+- [📚 Documentation Categories](#-documentation-categories)
+  - [🚀 Getting Started (`getting-started.md`)](#-getting-started-getting-startedmd)
+  - [🏗️ Architecture Documentation (`architecture.md`)](#-architecture-documentation-architecturemd)
+  - [📚 API Reference (`api-reference.md`)](#-api-reference-api-referencemd)
+  - [⚙️ Configuration (`configuration.md`)](#-configuration-configurationmd)
+  - [🔧 Development (`development.md`)](#-development-developmentmd)
+  - [🔗 Integration (`integration.md`)](#-integration-integrationmd)
+  - [💡 Examples (`examples/`)](#-examples-examples)
+  - [🚨 Troubleshooting (`troubleshooting.md`)](#-troubleshooting-troubleshootingmd)
+- [🌟 Key Features Documented](#-key-features-documented)
+  - [Current Implementation (v0.9.9)](#current-implementation-v099)
+  - [Known Limitations](#known-limitations)
+  - [Future Development Goals](#future-development-goals)
+- [📖 Documentation Principles](#-documentation-principles)
+  - [Accuracy and Honesty](#accuracy-and-honesty)
+  - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
+  - [User-Focused Guidance](#user-focused-guidance)
+- [🧭 Navigation Guide](#-navigation-guide)
+  - [🚀 Quick Start Path (New Users)](#-quick-start-path-new-users)
+  - [🛠️ Developer Path (Contributors)](#-developer-path-contributors)
+  - [🔧 Integration Path (FLEXT Ecosystem)](#-integration-path-flext-ecosystem)
+- [📊 Documentation Quality Standards](#-documentation-quality-standards)
+  - [Completeness Standards](#completeness-standards)
+  - [Quality Validation](#quality-validation)
+- [🔗 Related Resources](#-related-resources)
+  - [Project Documentation](#project-documentation)
+  - [FLEXT Ecosystem Documentation](#flext-ecosystem-documentation)
+  - [External Standards and References](#external-standards-and-references)
+- [🎯 Documentation Success Metrics](#-documentation-success-metrics)
+  - [Usability Indicators](#usability-indicators)
+  - [Technical Quality](#technical-quality)
+- [🤝 Contributing to Documentation](#-contributing-to-documentation)
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready

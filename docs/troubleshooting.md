@@ -2,19 +2,19 @@
 
 
 <!-- TOC START -->
-- Common Issues and Solutions
-  - Parse Errors
-  - Memory Issues
-  - Validation Errors
-  - Performance Issues
-  - Integration Issues
-- Diagnostic Tools
-  - Health Check Utility
-  - Debug Mode Configuration
-- Getting Help
-  - Support Resources
-  - Creating Support Requests
-  - Emergency Contacts
+- [Common Issues and Solutions](#common-issues-and-solutions)
+  - [Parse Errors](#parse-errors)
+  - [Memory Issues](#memory-issues)
+  - [Validation Errors](#validation-errors)
+  - [Performance Issues](#performance-issues)
+  - [Integration Issues](#integration-issues)
+- [Diagnostic Tools](#diagnostic-tools)
+  - [Health Check Utility](#health-check-utility)
+  - [Debug Mode Configuration](#debug-mode-configuration)
+- [Getting Help](#getting-help)
+  - [Support Resources](#support-resources)
+  - [Creating Support Requests](#creating-support-requests)
+  - [Emergency Contacts](#emergency-contacts)
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025

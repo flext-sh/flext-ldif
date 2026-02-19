@@ -2,32 +2,32 @@
 
 
 <!-- TOC START -->
-- Prerequisites
-  - System Requirements
-  - FLEXT Ecosystem Dependencies
-- Installation
-  - Development Installation
-  - Development Commands
-  - ⚠️ CRITICAL: PYTHONPATH Requirements
-- First Steps
-  - Basic LDIF Processing
-  - File Operations
-- Configuration
-  - Basic Configuration
-  - Advanced Configuration
-- Command Line Interface
-  - CLI Installation and Usage
-  - CLI Help
-- Common Use Cases
-  - Generic Schema Parsing with Server Quirks
-  - Generic Entry Migration Between Servers
-  - Working with Multiple Server Types
-  - Data Validation and Cleaning
-- Troubleshooting
-  - Common Issues
-  - Getting Help
-- Next Steps
-- Related Documentation
+- [Prerequisites](#prerequisites)
+  - [System Requirements](#system-requirements)
+  - [FLEXT Ecosystem Dependencies](#flext-ecosystem-dependencies)
+- [Installation](#installation)
+  - [Development Installation](#development-installation)
+  - [Development Commands](#development-commands)
+  - [⚠️ CRITICAL: PYTHONPATH Requirements](#-critical-pythonpath-requirements)
+- [First Steps](#first-steps)
+  - [Basic LDIF Processing](#basic-ldif-processing)
+  - [File Operations](#file-operations)
+- [Configuration](#configuration)
+  - [Basic Configuration](#basic-configuration)
+  - [Advanced Configuration](#advanced-configuration)
+- [Command Line Interface](#command-line-interface)
+  - [CLI Installation and Usage](#cli-installation-and-usage)
+  - [CLI Help](#cli-help)
+- [Common Use Cases](#common-use-cases)
+  - [Generic Schema Parsing with Server Quirks](#generic-schema-parsing-with-server-quirks)
+  - [Generic Entry Migration Between Servers](#generic-entry-migration-between-servers)
+  - [Working with Multiple Server Types](#working-with-multiple-server-types)
+  - [Data Validation and Cleaning](#data-validation-and-cleaning)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Getting Help](#getting-help)
+- [Next Steps](#next-steps)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025
