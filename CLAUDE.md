@@ -5,7 +5,7 @@
 **Last Update**: 2025-12-09
 **Architecture Refactoring**: Applied strict layering rules - removed prohibited imports, enforced namespace consistency
 
----
+______________________________________________________________________
 
 ## 🔧 Multi-Agent Development Coordination
 
@@ -20,11 +20,11 @@ Ensure smooth collaboration in multi-agent development environments by preventin
 ### Access Coordination
 
 1. **Check coordination status** before modifying critical files
-2. **Establish access**: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
-3. **Re-verify content** after establishing access (other agents may have modified)
-4. **Apply changes** to the verified content
-5. **Validate changes** ensure functionality is maintained
-6. **Release access**: Clear coordination status
+1. **Establish access**: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
+1. **Re-verify content** after establishing access (other agents may have modified)
+1. **Apply changes** to the verified content
+1. **Validate changes** ensure functionality is maintained
+1. **Release access**: Clear coordination status
 
 ### Coordination Format
 
@@ -47,7 +47,7 @@ RELEASE_[AGENT_NAME]_[TARGET_FILE]
 - **🤝 COORDINATE with team members when conflicts detected**
 - **📝 DOCUMENT coordination purpose for transparency**
 
----
+______________________________________________________________________
 
 ## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
 
@@ -98,7 +98,7 @@ Tier 3 - Application (Top Layer):
 - Proper layering ensures testability and maintainability
 - Each tier only depends on lower tiers, NEVER on higher tiers
 
----
+______________________________________________________________________
 
 ### Architecture Violation Quick Check
 
@@ -116,7 +116,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 
 **See [Ecosystem Standards](../CLAUDE.md) for complete prohibited patterns and remediation examples.**
 
----
+______________________________________________________________________
 
 ## Regra 0 — Alinhamento Cruzado
 
@@ -127,8 +127,8 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 
 **FLEXT-LDIF** provides RFC 2849/4512 compliant LDIF processing with server-specific quirks for FLEXT ecosystem projects working with LDAP directory data.
 
-**Version**: 0.9.0  
-**Status**: Production-ready  
+**Version**: 0.9.0\
+**Status**: Production-ready\
 **Python**: 3.13+ only
 
 **Current Quality Metrics** (Target Post-Refactoring):
@@ -140,30 +140,30 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 - ✅ Tests: 100% passing (no skipped tests)
 - ✅ Coverage: 100% (all testable code covered)
 - ✅ Mock Tests: 0 remaining (all use REAL implementations)
-- ✅ Test Structure: Unified Tests[FlextLdif]* classes with short name aliases
+- ✅ Test Structure: Unified Tests[FlextLdif]\* classes with short name aliases
 
 **Server Implementation Status**: See project documentation for server implementation details.
 
 - ✅ **RFC Stub Servers** (Detection + RFC Baseline): Apache, 389DS, Novell, Tivoli, AD - **174 tests passing**
-- ✅ **Real Implementations**: OpenLDAP 2.x (olc* format), OpenLDAP 1.x, OID, OUD
+- ✅ **Real Implementations**: OpenLDAP 2.x (olc\* format), OpenLDAP 1.x, OID, OUD
 - ✅ **Tests**: All stub servers 100% passing. OpenLDAP fixture tests blocked by RFC refactoring (other agents)
 
----
+______________________________________________________________________
 
 ## Regras Unificadas do Ecossistema FLEXT
 
 ### Zero Tolerância (Proibido Completamente)
 
 1. **TYPE_CHECKING**: ❌ PROIBIDO - Mover código que causa dependência circular para módulo apropriado
-2. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções
-3. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - Todas as metaclasses são proibidas (incluindo `__getattr__`)
-4. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry)
-5. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo
-6. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código
-7. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta
-8. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários)
-9. **Importação**: ❌ Sem root aliases, lazy imports ou fallbacks de ImportError; imports sempre no topo
-10. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade
+1. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções
+1. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - Todas as metaclasses são proibidas (incluindo `__getattr__`)
+1. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry)
+1. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo
+1. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código
+1. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta
+1. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários)
+1. **Importação**: ❌ Sem root aliases, lazy imports ou fallbacks de ImportError; imports sempre no topo
+1. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade
 
 ### Exemplos de Correções
 
@@ -263,7 +263,7 @@ def process(data: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
     """Process general value type data."""
 ```
 
----
+______________________________________________________________________
 
 ## Architecture
 
@@ -333,10 +333,10 @@ src/flext_ldif/
 **How Quirks Work**:
 
 1. **RFC Foundation**: All parsing starts with RFC-compliant parsers
-2. **Quirk Discovery**: `FlextLdifQuirksRegistry` auto-discovers server-specific quirks
-3. **Priority Resolution**: Quirks use priority system (lower number = higher priority)
-4. **Nested Quirks**: Schema quirks contain nested ACL and Entry quirks
-5. **Transformation Pipeline**: Source → RFC → Target via `QuirksConversionMatrix`
+1. **Quirk Discovery**: `FlextLdifQuirksRegistry` auto-discovers server-specific quirks
+1. **Priority Resolution**: Quirks use priority system (lower number = higher priority)
+1. **Nested Quirks**: Schema quirks contain nested ACL and Entry quirks
+1. **Transformation Pipeline**: Source → RFC → Target via `QuirksConversionMatrix`
 
 **Supported Servers**:
 
@@ -352,9 +352,9 @@ src/flext_ldif/
 **How Auto-Detection Works**:
 
 1. **Pattern Matching**: Scans LDIF content for server-specific OIDs, attributes, and patterns
-2. **Weighted Scoring**: Each server type receives points based on pattern matches
-3. **Confidence Calculation**: Determines confidence score (0.0-1.0) based on match strength
-4. **Fallback Strategy**: Returns RFC if confidence is below threshold (0.6)
+1. **Weighted Scoring**: Each server type receives points based on pattern matches
+1. **Confidence Calculation**: Determines confidence score (0.0-1.0) based on match strength
+1. **Fallback Strategy**: Returns RFC if confidence is below threshold (0.6)
 
 ### Configuration Modes
 
@@ -366,7 +366,7 @@ src/flext_ldif/
 - **manual**: Uses specified `quirks_server_type` from config, skips auto-detection
 - **disabled**: Uses only RFC 2849/4512, no server-specific quirks
 
----
+______________________________________________________________________
 
 ## 📦 Import and Namespace Guidelines (Critical Architecture)
 
@@ -591,28 +591,28 @@ Tier 3 - Application:
 
 ### 7. Module-Specific Import Rules
 
-| Source Module | Can Import From | Cannot Import From |
-|---------------|-----------------|-------------------|
-| constants.py | flext_core.constants | everything else |
-| typings.py | flext_core.typings | everything else |
-| protocols.py | flext_core.protocols, constants, typings | everything else |
-| _models/*.py | Tier 0, other _models/* | _utilities/*, services/, servers/, api.py |
-| models.py | _models/*, Tier 0 | services/, servers/, api.py |
-| _utilities/*.py | _models/*, Tier 0, models | services/, servers/, api.py |
-| utilities.py | _utilities/*, models, Tier 0 | services/, servers/, api.py |
-| servers/*.py | Tier 0, Tier 1 | services/, api.py |
-| quirks/*.py | Tier 0, Tier 1 | services/, api.py |
-| rfc/*.py | Tier 0, Tier 1 | services/, api.py |
-| services/*.py | ALL lower tiers | api.py |
-| api.py | ALL lower tiers | NOTHING prohibited |
+| Source Module     | Can Import From                          | Cannot Import From                          |
+| ----------------- | ---------------------------------------- | ------------------------------------------- |
+| constants.py      | flext_core.constants                     | everything else                             |
+| typings.py        | flext_core.typings                       | everything else                             |
+| protocols.py      | flext_core.protocols, constants, typings | everything else                             |
+| \_models/\*.py    | Tier 0, other \_models/\*                | \_utilities/\*, services/, servers/, api.py |
+| models.py         | \_models/\*, Tier 0                      | services/, servers/, api.py                 |
+| \_utilities/\*.py | \_models/\*, Tier 0, models              | services/, servers/, api.py                 |
+| utilities.py      | \_utilities/\*, models, Tier 0           | services/, servers/, api.py                 |
+| servers/\*.py     | Tier 0, Tier 1                           | services/, api.py                           |
+| quirks/\*.py      | Tier 0, Tier 1                           | services/, api.py                           |
+| rfc/\*.py         | Tier 0, Tier 1                           | services/, api.py                           |
+| services/\*.py    | ALL lower tiers                          | api.py                                      |
+| api.py            | ALL lower tiers                          | NOTHING prohibited                          |
 
----
+______________________________________________________________________
 
 ## Automated Fix Scripts
 
 For batch corrections (missing imports, undefined names), use `/tmp/fix_*.sh` scripts with 4 modes: `dry-run`, `backup`, `exec`, `rollback`. **See [../CLAUDE.md](../CLAUDE.md#automated-fix-scripts-batch-corrections)** for template and rules.
 
----
+______________________________________________________________________
 
 ## Essential Commands
 
@@ -716,7 +716,7 @@ entries = tf.create_entries([
 - **Type Safety**: Full type checking support
 - **Consistency**: Unified patterns across all tests
 
----
+______________________________________________________________________
 
 ## Key Patterns
 
@@ -835,7 +835,7 @@ if FlextRuntime.is_list_like(values):
     ...
 ```
 
----
+______________________________________________________________________
 
 ## Known Limitations
 
@@ -844,7 +844,7 @@ if FlextRuntime.is_list_like(values):
 - **Scale**: Recommended for files under 100MB due to memory constraints
 - **Features**: Production-ready core with room for streaming enhancements
 
----
+______________________________________________________________________
 
 ## Development Priorities
 
@@ -869,7 +869,7 @@ if FlextRuntime.is_list_like(values):
 - Better schema validation and conflict resolution
 - Extended CLI tools for directory management
 
----
+______________________________________________________________________
 
 **See Also**:
 
