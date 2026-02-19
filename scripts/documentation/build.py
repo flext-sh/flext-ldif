@@ -1,3 +1,5 @@
+"""Build MkDocs sites for workspace projects."""
+
 from __future__ import annotations
 
 import argparse
@@ -5,7 +7,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from _shared import (
+from shared import (
     Scope,
     build_scopes,
     write_json,
@@ -15,6 +17,8 @@ from _shared import (
 
 @dataclass(frozen=True)
 class BuildResult:
+    """Outcome of a single MkDocs build attempt."""
+
     scope: str
     result: str
     reason: str
@@ -22,6 +26,7 @@ class BuildResult:
 
 
 def run_mkdocs(scope: Scope) -> BuildResult:
+    """Run ``mkdocs build --strict`` for *scope* and return the result."""
     config = scope.path / "mkdocs.yml"
     if not config.exists():
         return BuildResult(
@@ -49,6 +54,7 @@ def run_mkdocs(scope: Scope) -> BuildResult:
 
 
 def write_reports(scope: Scope, result: BuildResult) -> None:
+    """Persist build JSON summary and markdown report for *scope*."""
     write_json(scope.report_dir / "build-summary.json", {"summary": asdict(result)})
     write_markdown(
         scope.report_dir / "build-report.md",
@@ -64,6 +70,7 @@ def write_reports(scope: Scope, result: BuildResult) -> None:
 
 
 def main() -> int:
+    """CLI entry point for the documentation build."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")

@@ -87,9 +87,9 @@ result = matrix.convert(
 
 **Related ADRs**:
 
-- [ADR-001](adr-001-rfc-first-design.md) - RFC-first foundation
-- [ADR-003](adr-003-dn-case-registry.md) - DN case handling
-- [ADR-005](adr-005-pluggable-quirks-system.md) - Server quirk implementations
+- ADR-001 - RFC-first foundation
+- ADR-003 - DN case handling
+- ADR-005 - Server quirk implementations
 
 **Notes**:
 The universal conversion matrix is a key innovation enabling FLEXT-LDIF's server migration capabilities. It reduces implementation complexity from O(n²) to O(n) while maintaining standards compliance. The DN case registry integration ensures OUD compatibility during conversions.

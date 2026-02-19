@@ -2,32 +2,32 @@
 
 
 <!-- TOC START -->
-- [Prerequisites](#prerequisites)
-  - [System Requirements](#system-requirements)
-  - [FLEXT Ecosystem Dependencies](#flext-ecosystem-dependencies)
-- [Installation](#installation)
-  - [Development Installation](#development-installation)
-  - [Development Commands](#development-commands)
-  - [⚠️ CRITICAL: PYTHONPATH Requirements](#-critical-pythonpath-requirements)
-- [First Steps](#first-steps)
-  - [Basic LDIF Processing](#basic-ldif-processing)
-  - [File Operations](#file-operations)
-- [Configuration](#configuration)
-  - [Basic Configuration](#basic-configuration)
-  - [Advanced Configuration](#advanced-configuration)
-- [Command Line Interface](#command-line-interface)
-  - [CLI Installation and Usage](#cli-installation-and-usage)
-  - [CLI Help](#cli-help)
-- [Common Use Cases](#common-use-cases)
-  - [Generic Schema Parsing with Server Quirks](#generic-schema-parsing-with-server-quirks)
-  - [Generic Entry Migration Between Servers](#generic-entry-migration-between-servers)
-  - [Working with Multiple Server Types](#working-with-multiple-server-types)
-  - [Data Validation and Cleaning](#data-validation-and-cleaning)
-- [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Getting Help](#getting-help)
-- [Next Steps](#next-steps)
-- [Related Documentation](#related-documentation)
+- Prerequisites
+  - System Requirements
+  - FLEXT Ecosystem Dependencies
+- Installation
+  - Development Installation
+  - Development Commands
+  - ⚠️ CRITICAL: PYTHONPATH Requirements
+- First Steps
+  - Basic LDIF Processing
+  - File Operations
+- Configuration
+  - Basic Configuration
+  - Advanced Configuration
+- Command Line Interface
+  - CLI Installation and Usage
+  - CLI Help
+- Common Use Cases
+  - Generic Schema Parsing with Server Quirks
+  - Generic Entry Migration Between Servers
+  - Working with Multiple Server Types
+  - Data Validation and Cleaning
+- Troubleshooting
+  - Common Issues
+  - Getting Help
+- Next Steps
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025
@@ -372,29 +372,29 @@ if result.is_success:
 
 ### Getting Help
 
-- **Documentation**: [Complete documentation](../docs/)
-- **API Reference**: [API documentation](api-reference.md)
-- **Examples**: [Usage examples](examples/)
+- **Documentation**: Complete documentation
+- **API Reference**: API documentation
+- **Examples**: Usage examples
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext-ldif/issues)
 
 ## Next Steps
 
 Once you have FLEXT-LDIF installed and working:
 
-1. **[Architecture](architecture.md)**: Understand the service-oriented design
-2. **[API Reference](api-reference.md)**: Explore all available operations
-3. **[Examples](examples/)**: See practical usage patterns
-4. **[Integration](guides/integration.md)**: Learn about FLEXT ecosystem integration
+1. **Architecture**: Understand the service-oriented design
+2. **API Reference**: Explore all available operations
+3. **Examples**: See practical usage patterns
+4. **Integration**: Learn about FLEXT ecosystem integration
 
 ## Related Documentation
 
 **Within Project**:
 
-- [Architecture](architecture.md) - Service-oriented design and RFC-first approach
-- [API Reference](api-reference.md) - Complete API documentation
-- [Configuration](configuration.md) - Settings and environment management
-- [Development](development.md) - Contributing and workflows
-- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+- Architecture - Service-oriented design and RFC-first approach
+- API Reference - Complete API documentation
+- Configuration - Settings and environment management
+- Development - Contributing and workflows
+- Integration Guide - FLEXT ecosystem integration
 
 **Across Projects**:
 

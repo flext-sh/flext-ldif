@@ -1,3 +1,5 @@
+"""Audit documentation for broken links and forbidden terms."""
+
 from __future__ import annotations
 
 import argparse
@@ -5,7 +7,7 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from _shared import (
+from shared import (
     Scope,
     build_scopes,
     iter_markdown_files,
@@ -18,6 +20,8 @@ LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 @dataclass(frozen=True)
 class Issue:
+    """Single documentation audit finding."""
+
     file: str
     issue_type: str
     severity: str
@@ -25,18 +29,18 @@ class Issue:
 
 
 def normalize_link(target: str) -> str:
-    value = target.strip()
-    value = value.split("#", maxsplit=1)[0]
-    value = value.split("?", maxsplit=1)[0]
-    return value
+    """Strip fragment and query-string from a markdown link target."""
+    return target.strip().split("#", maxsplit=1)[0].split("?", maxsplit=1)[0]
 
 
 def is_external(target: str) -> bool:
+    """Return True when *target* points outside the repository."""
     lower = target.lower()
     return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
 
 
 def broken_link_issues(scope: Scope) -> list[Issue]:
+    """Collect broken internal-link issues for all markdown files in *scope*."""
     issues: list[Issue] = []
     for md_file in iter_markdown_files(scope.path):
         content = md_file.read_text(encoding="utf-8", errors="ignore")
@@ -60,6 +64,7 @@ def broken_link_issues(scope: Scope) -> list[Issue]:
 
 
 def forbidden_term_issues(scope: Scope) -> list[Issue]:
+    """Collect forbidden-term issues for markdown files in *scope*."""
     issues: list[Issue] = []
     terms = ("client-a", "client-b")
     for md_file in iter_markdown_files(scope.path):
@@ -71,20 +76,21 @@ def forbidden_term_issues(scope: Scope) -> list[Issue]:
         elif not scope.name.startswith("flext-"):
             continue
         content = md_file.read_text(encoding="utf-8", errors="ignore").lower()
-        for term in terms:
-            if term in content:
-                issues.append(
-                    Issue(
-                        file=rel,
-                        issue_type="forbidden_term",
-                        severity="medium",
-                        message=f"contains forbidden term '{term}'",
-                    ),
-                )
+        issues.extend(
+            Issue(
+                file=rel,
+                issue_type="forbidden_term",
+                severity="medium",
+                message=f"contains forbidden term '{term}'",
+            )
+            for term in terms
+            if term in content
+        )
     return issues
 
 
 def to_markdown(scope: Scope, issues: list[Issue]) -> list[str]:
+    """Format audit issues as a markdown report."""
     return [
         "# Docs Audit Report",
         "",
@@ -101,7 +107,8 @@ def to_markdown(scope: Scope, issues: list[Issue]) -> list[str]:
     ]
 
 
-def run_scope(scope: Scope, strict: bool, check: str) -> tuple[int, int]:
+def run_scope(scope: Scope, *, strict: bool, check: str) -> tuple[int, int]:
+    """Run configured audit checks on *scope* and write reports."""
     checks = {part.strip() for part in check.split(",") if part.strip()}
     if not checks or "all" in checks:
         checks = {"links", "forbidden-terms"}
@@ -134,6 +141,7 @@ def run_scope(scope: Scope, strict: bool, check: str) -> tuple[int, int]:
 
 
 def main() -> int:
+    """CLI entry point for the documentation audit."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")

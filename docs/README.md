@@ -2,40 +2,40 @@
 
 
 <!-- TOC START -->
-- [🎯 Library Overview](#-library-overview)
-- [Documentation Structure](#documentation-structure)
-- [📚 Documentation Categories](#-documentation-categories)
-  - [🚀 Getting Started (`getting-started.md`)](#-getting-started-getting-startedmd)
-  - [🏗️ Architecture Documentation (`architecture.md`)](#-architecture-documentation-architecturemd)
-  - [📚 API Reference (`api-reference.md`)](#-api-reference-api-referencemd)
-  - [⚙️ Configuration (`configuration.md`)](#-configuration-configurationmd)
-  - [🔧 Development (`development.md`)](#-development-developmentmd)
-  - [🔗 Integration (`integration.md`)](#-integration-integrationmd)
-  - [💡 Examples (`examples/`)](#-examples-examples)
-  - [🚨 Troubleshooting (`troubleshooting.md`)](#-troubleshooting-troubleshootingmd)
-- [🌟 Key Features Documented](#-key-features-documented)
-  - [Current Implementation (v0.9.9)](#current-implementation-v099)
-  - [Known Limitations](#known-limitations)
-  - [Future Development Goals](#future-development-goals)
-- [📖 Documentation Principles](#-documentation-principles)
-  - [Accuracy and Honesty](#accuracy-and-honesty)
-  - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
-  - [User-Focused Guidance](#user-focused-guidance)
-- [🧭 Navigation Guide](#-navigation-guide)
-  - [🚀 Quick Start Path (New Users)](#-quick-start-path-new-users)
-  - [🛠️ Developer Path (Contributors)](#-developer-path-contributors)
-  - [🔧 Integration Path (FLEXT Ecosystem)](#-integration-path-flext-ecosystem)
-- [📊 Documentation Quality Standards](#-documentation-quality-standards)
-  - [Completeness Standards](#completeness-standards)
-  - [Quality Validation](#quality-validation)
-- [🔗 Related Resources](#-related-resources)
-  - [Project Documentation](#project-documentation)
-  - [FLEXT Ecosystem Documentation](#flext-ecosystem-documentation)
-  - [External Standards and References](#external-standards-and-references)
-- [🎯 Documentation Success Metrics](#-documentation-success-metrics)
-  - [Usability Indicators](#usability-indicators)
-  - [Technical Quality](#technical-quality)
-- [🤝 Contributing to Documentation](#-contributing-to-documentation)
+- 🎯 Library Overview
+- Documentation Structure
+- 📚 Documentation Categories
+  - 🚀 Getting Started (`getting-started.md`)
+  - 🏗️ Architecture Documentation (`architecture.md`)
+  - 📚 API Reference (`api-reference.md`)
+  - ⚙️ Configuration (`configuration.md`)
+  - 🔧 Development (`development.md`)
+  - 🔗 Integration (`integration.md`)
+  - 💡 Examples (`examples/`)
+  - 🚨 Troubleshooting (`troubleshooting.md`)
+- 🌟 Key Features Documented
+  - Current Implementation (v0.9.9)
+  - Known Limitations
+  - Future Development Goals
+- 📖 Documentation Principles
+  - Accuracy and Honesty
+  - FLEXT Ecosystem Integration
+  - User-Focused Guidance
+- 🧭 Navigation Guide
+  - 🚀 Quick Start Path (New Users)
+  - 🛠️ Developer Path (Contributors)
+  - 🔧 Integration Path (FLEXT Ecosystem)
+- 📊 Documentation Quality Standards
+  - Completeness Standards
+  - Quality Validation
+- 🔗 Related Resources
+  - Project Documentation
+  - FLEXT Ecosystem Documentation
+  - External Standards and References
+- 🎯 Documentation Success Metrics
+  - Usability Indicators
+  - Technical Quality
+- 🤝 Contributing to Documentation
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready
@@ -75,7 +75,7 @@ docs/
 
 ### 🚀 Getting Started (`getting-started.md`)
 
-**[getting-started.md](getting-started.md)** - Installation and first steps:
+**getting-started.md** - Installation and first steps:
 
 - **Prerequisites**: System requirements and dependencies
 - **Installation**: Development setup and verification
@@ -84,7 +84,7 @@ docs/
 
 ### 🏗️ Architecture Documentation (`architecture.md`)
 
-**[architecture.md](architecture.md)** - RFC-first design with quirks system:
+**architecture.md** - RFC-first design with quirks system:
 
 - **RFC-First Architecture**: Generic RFC 2849/4512 foundation with ZERO bypass paths
 - **Quirks System**: Priority-based server-specific extensions (4 complete, 5 stubs)
@@ -95,7 +95,7 @@ docs/
 
 ### 📚 API Reference (`api-reference.md`)
 
-**[api-reference.md](api-reference.md)** - Complete API documentation:
+**api-reference.md** - Complete API documentation:
 
 - **FlextLdif**: Unified interface for all LDIF operations
 - **Service Classes**: Parser, validator, writer, repository, analytics services
@@ -104,7 +104,7 @@ docs/
 
 ### ⚙️ Configuration (`configuration.md`)
 
-**[configuration.md](configuration.md)** - Settings and environment:
+**configuration.md** - Settings and environment:
 
 - **Configuration Management**: FlextLdifSettings and settings
 - **Environment Variables**: Runtime configuration options
@@ -113,7 +113,7 @@ docs/
 
 ### 🔧 Development (`development.md`)
 
-**[development.md](development.md)** - Contributing and workflows:
+**development.md** - Contributing and workflows:
 
 - **Development Setup**: Local environment and tools
 - **Code Quality**: Linting, type checking, testing standards
@@ -122,7 +122,7 @@ docs/
 
 ### 🔗 Integration (`integration.md`)
 
-**[Integration Guide](guides/integration.md)** - FLEXT ecosystem integration:
+**Integration Guide** - FLEXT ecosystem integration:
 
 - **FLEXT Core Patterns**: FlextResult, FlextContainer, FlextModels usage
 - **Project Integration**: Usage with client-a-oud-mig, flext-api, other projects
@@ -135,7 +135,7 @@ Working code examples organized by complexity:
 
 ### 🚨 Troubleshooting (`troubleshooting.md`)
 
-**[troubleshooting.md](troubleshooting.md)** - Common issues and solutions:
+**troubleshooting.md** - Common issues and solutions:
 
 - **Parse Errors**: LDIF format compliance and debugging
 - **Memory Issues**: Large file handling and optimization
@@ -210,19 +210,19 @@ Working code examples organized by complexity:
 
 ### 🚀 Quick Start Path (New Users)
 
-1. **[README.md](../README.md)** - Project overview and installation
-2. **[API Reference](api-reference.md)** - Core API interfaces and methods
+1. **README.md** - Project overview and installation
+2. **API Reference** - Core API interfaces and methods
 
 ### 🛠️ Developer Path (Contributors)
 
-1. **[Architecture](architecture.md)** - Architectural patterns
-2. **[API Reference](api-reference.md)** - Complete API reference for implementation details
+1. **Architecture** - Architectural patterns
+2. **API Reference** - Complete API reference for implementation details
 
 ### 🔧 Integration Path (FLEXT Ecosystem)
 
-1. **[Architecture](architecture.md)** - FLEXT integration patterns
-2. **[Integration Guide](guides/integration.md)** - Integration examples and patterns
-3. **[API Reference](api-reference.md)** - FlextResult and service integration details
+1. **Architecture** - FLEXT integration patterns
+2. **Integration Guide** - Integration examples and patterns
+3. **API Reference** - FlextResult and service integration details
 
 ## 📊 Documentation Quality Standards
 
@@ -244,13 +244,13 @@ Working code examples organized by complexity:
 
 ### Project Documentation
 
-- **[Main README](../README.md)** - Project overview, installation, and quick start
-- **[Development Roadmap](../TODO.md)** - Future enhancement plans and development goals
+- **Main README** - Project overview, installation, and quick start
+- **Development Roadmap** - Future enhancement plans and development goals
 
 ### FLEXT Ecosystem Documentation
 
 - **[flext-core Documentation](https://github.com/organization/flext/tree/main/flext-core/docs/)** - Foundation patterns and utilities
-- **[FLEXT Workspace Guide](../../README.md)** - Ecosystem-wide integration patterns
+- **FLEXT Workspace Guide** - Ecosystem-wide integration patterns
 
 ### External Standards and References
 

@@ -2,34 +2,34 @@
 
 
 <!-- TOC START -->
-- [SUMMARY](#summary)
-- [1. METHOD DEFINITIONS](#1-method-definitions)
-  - [Base Class Definition](#base-class-definition)
-  - [Protocol Definition](#protocol-definition)
-- [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
-  - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
-  - [Implementation Pattern](#implementation-pattern)
-- [3. SERVICE LAYER USAGE](#3-service-layer-usage)
-  - [ACL Service](#acl-service)
-  - [Categorized Pipeline](#categorized-pipeline)
-- [4. TEST COVERAGE](#4-test-coverage)
-  - [Unit Test Files Using parse()](#unit-test-files-using-parse)
-  - [Test Pattern](#test-pattern)
-- [5. INTEGRATION POINTS](#5-integration-points)
-  - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
-  - [FlextLdif High-Level API](#flextldif-high-level-api)
-- [6. CURRENT DATA FLOW](#6-current-data-flow)
-- [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
-  - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
-  - [Should Review (Medium Impact)](#should-review-medium-impact)
-- [8. MIGRATION STRATEGY](#8-migration-strategy)
-  - [Phase 1: Update Interfaces (2-3 hours)](#phase-1-update-interfaces-2-3-hours)
-  - [Phase 2: Update Implementations (4-6 hours)](#phase-2-update-implementations-4-6-hours)
-  - [Phase 3: Update Tests (2-3 hours)](#phase-3-update-tests-2-3-hours)
-  - [Phase 4: Validation (2-3 hours)](#phase-4-validation-2-3-hours)
-- [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
-  - [Projects Using flext-ldif](#projects-using-flext-ldif)
-- [CONCLUSION](#conclusion)
+- SUMMARY
+- 1. METHOD DEFINITIONS
+  - Base Class Definition
+  - Protocol Definition
+- 2. SERVER QUIRKS IMPLEMENTATIONS
+  - 13 Server Quirks Classes Implementing parse()
+  - Implementation Pattern
+- 3. SERVICE LAYER USAGE
+  - ACL Service
+  - Categorized Pipeline
+- 4. TEST COVERAGE
+  - Unit Test Files Using parse()
+  - Test Pattern
+- 5. INTEGRATION POINTS
+  - FlextLdifCategorizedMigrationPipeline
+  - FlextLdif High-Level API
+- 6. CURRENT DATA FLOW
+- 7. AFFECTED CODE LOCATIONS (SUMMARY)
+  - Must Be Updated (High Impact)
+  - Should Review (Medium Impact)
+- 8. MIGRATION STRATEGY
+  - Phase 1: Update Interfaces (2-3 hours)
+  - Phase 2: Update Implementations (4-6 hours)
+  - Phase 3: Update Tests (2-3 hours)
+  - Phase 4: Validation (2-3 hours)
+- 9. ECOSYSTEM IMPACT
+  - Projects Using flext-ldif
+- CONCLUSION
 <!-- TOC END -->
 
 **Analysis Date**: 2025-10-28

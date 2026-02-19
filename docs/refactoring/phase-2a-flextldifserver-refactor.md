@@ -2,29 +2,29 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Key Changes](#key-changes)
-  - [1. Eliminated 100+ Lines of DRY Violations](#1-eliminated-100-lines-of-dry-violations)
-  - [2. Simplified Method Names (No "\_quirk" Suffix)](#2-simplified-method-names-no-quirk-suffix)
-  - [3. Server-Agnostic API](#3-server-agnostic-api)
-  - [4. Backward Compatibility Preserved](#4-backward-compatibility-preserved)
-  - [5. Internal Optimization](#5-internal-optimization)
-- [Architecture Benefits](#architecture-benefits)
-- [Implementation Details](#implementation-details)
-  - [Generic Attribute Getter](#generic-attribute-getter)
-  - [Thin Wrappers](#thin-wrappers)
-- [Migration Guide](#migration-guide)
-  - [For New Code (Use Thin Interface)](#for-new-code-use-thin-interface)
-  - [For Existing Code (Backward Compatible)](#for-existing-code-backward-compatible)
-- [Code Metrics](#code-metrics)
-  - [Reduction in DRY Violations](#reduction-in-dry-violations)
-  - [Method Count](#method-count)
-  - [Complexity](#complexity)
-- [Testing](#testing)
-- [Files Modified](#files-modified)
-- [Why Not Create Separate Service Classes](#why-not-create-separate-service-classes)
-- [Next Steps (Phase 2.B+)](#next-steps-phase-2b)
-- [Success Criteria Met](#success-criteria-met)
+- Overview
+- Key Changes
+  - 1. Eliminated 100+ Lines of DRY Violations
+  - 2. Simplified Method Names (No "\_quirk" Suffix)
+  - 3. Server-Agnostic API
+  - 4. Backward Compatibility Preserved
+  - 5. Internal Optimization
+- Architecture Benefits
+- Implementation Details
+  - Generic Attribute Getter
+  - Thin Wrappers
+- Migration Guide
+  - For New Code (Use Thin Interface)
+  - For Existing Code (Backward Compatible)
+- Code Metrics
+  - Reduction in DRY Violations
+  - Method Count
+  - Complexity
+- Testing
+- Files Modified
+- Why Not Create Separate Service Classes
+- Next Steps (Phase 2.B+)
+- Success Criteria Met
 <!-- TOC END -->
 
 **Status**: COMPLETE ✓

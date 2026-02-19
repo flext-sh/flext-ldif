@@ -2,43 +2,43 @@
 
 
 <!-- TOC START -->
-- [🎯 Library Overview](#-library-overview)
-  - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
-- [Core API Classes](#core-api-classes)
-  - [FlextLdif](#flextldif)
-  - [QuirksConversionMatrix](#quirksconversionmatrix)
-  - [DnCaseRegistry](#dncaseregistry)
-- [Domain Models](#domain-models)
-  - [FlextLdifModels.Entry](#flextldifmodelsentry)
-  - [FlextLdifModels.Config](#flextldifmodelsconfig)
-  - [FlextLdifModels.Factory](#flextldifmodelsfactory)
-- [Configuration Management](#configuration-management)
-  - [Global Configuration](#global-configuration)
-  - [Instance Configuration](#instance-configuration)
-- [Error Handling](#error-handling)
-  - [FlextResult Integration](#flextresult-integration)
-  - [Exception Types](#exception-types)
-- [⚠️ Library-Only Usage](#-library-only-usage)
-- [Advanced Usage Patterns](#advanced-usage-patterns)
-  - [Pipeline Processing](#pipeline-processing)
-  - [Batch Processing](#batch-processing)
-  - [Custom Filtering](#custom-filtering)
-- [RFC Schema Parser API](#rfc-schema-parser-api)
-  - [RfcSchemaParserService](#rfcschemaparserservice)
-- [Migration Pipeline API](#migration-pipeline-api)
-  - [FlextLdifMigration](#flextldifmigration)
-- [Quirks Registry API](#quirks-registry-api)
-  - [QuirkRegistryService](#quirkregistryservice)
-- [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
-  - [FlextContainer Usage](#flextcontainer-usage)
-  - [FlextLogger Integration](#flextlogger-integration)
-- [🚀 Quick Start Guide](#-quick-start-guide)
-  - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
-  - [Server-Specific Parsing with Quirks](#server-specific-parsing-with-quirks)
-  - [Generic Migration Pipeline](#generic-migration-pipeline)
-  - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
-  - [Supported LDAP Servers](#supported-ldap-servers)
-- [Related Documentation](#related-documentation)
+- 🎯 Library Overview
+  - Generic RFC-Based Architecture with ZERO Bypass Paths
+- Core API Classes
+  - FlextLdif
+  - QuirksConversionMatrix
+  - DnCaseRegistry
+- Domain Models
+  - FlextLdifModels.Entry
+  - FlextLdifModels.Config
+  - FlextLdifModels.Factory
+- Configuration Management
+  - Global Configuration
+  - Instance Configuration
+- Error Handling
+  - FlextResult Integration
+  - Exception Types
+- ⚠️ Library-Only Usage
+- Advanced Usage Patterns
+  - Pipeline Processing
+  - Batch Processing
+  - Custom Filtering
+- RFC Schema Parser API
+  - RfcSchemaParserService
+- Migration Pipeline API
+  - FlextLdifMigration
+- Quirks Registry API
+  - QuirkRegistryService
+- Integration with FLEXT Ecosystem
+  - FlextContainer Usage
+  - FlextLogger Integration
+- 🚀 Quick Start Guide
+  - Basic Usage - Parse, Validate, Write
+  - Server-Specific Parsing with Quirks
+  - Generic Migration Pipeline
+  - Railway-Oriented Pipeline
+  - Supported LDAP Servers
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 0.9.9 | **Updated**: October 10, 2025
@@ -1361,9 +1361,9 @@ This API reference provides complete coverage of FLEXT-LDIF functionality, inclu
 
 **Within Project**:
 
-- [Getting Started](getting-started.md) - Installation and basic usage
-- [Architecture](architecture.md) - Architecture and design patterns
-- [Examples](../examples/) - Practical usage patterns
+- Getting Started - Installation and basic usage
+- Architecture - Architecture and design patterns
+- Examples - Practical usage patterns
 
 **Across Projects**:
 

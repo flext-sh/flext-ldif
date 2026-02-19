@@ -98,8 +98,8 @@ result = registry.validate_oud_consistency()
 
 **Related ADRs**:
 
-- [ADR-002](adr-002-universal-conversion-matrix.md) - Integration with conversion pipeline
-- [ADR-004](adr-004-memory-bound-architecture.md) - Memory usage implications
+- ADR-002 - Integration with conversion pipeline
+- ADR-004 - Memory usage implications
 
 **Notes**:
 The DN case registry is critical for OUD migrations from case-insensitive sources like OID. It ensures that all DN references in migrated data use consistent case, preventing the runtime failures that would occur in OUD's case-sensitive environment.

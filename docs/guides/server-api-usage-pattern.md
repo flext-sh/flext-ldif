@@ -2,19 +2,19 @@
 
 
 <!-- TOC START -->
-- [❌ PADRÃO INCORRETO (Deprecado)](#-padro-incorreto-deprecado)
-- [✅ PADRÃO CORRETO (Obrigatório)](#-padro-correto-obrigatrio)
-- [📝 Uso em Testes (Fixtures)](#-uso-em-testes-fixtures)
-  - [Fixtures Centralizadas (`conftest.py`)](#fixtures-centralizadas-conftestpy)
-  - [Uso nas Funções de Teste](#uso-nas-funes-de-teste)
-- [🔄 Migração de Código Existente](#-migrao-de-cdigo-existente)
-  - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
-  - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciao)
-  - [Passo 3: Atualizar Type Hints](#passo-3-atualizar-type-hints)
-- [📊 Status de Migração](#-status-de-migrao)
-- [🎯 Servers Disponíveis via API](#-servers-disponveis-via-api)
-- [🔍 Verificação](#-verificao)
-- [📚 Referências](#-referncias)
+- ❌ PADRÃO INCORRETO (Deprecado)
+- ✅ PADRÃO CORRETO (Obrigatório)
+- 📝 Uso em Testes (Fixtures)
+  - Fixtures Centralizadas (`conftest.py`)
+  - Uso nas Funções de Teste
+- 🔄 Migração de Código Existente
+  - Passo 1: Atualizar Imports
+  - Passo 2: Atualizar Instanciação
+  - Passo 3: Atualizar Type Hints
+- 📊 Status de Migração
+- 🎯 Servers Disponíveis via API
+- 🔍 Verificação
+- 📚 Referências
 <!-- TOC END -->
 
 **Data**: 2025-11-18

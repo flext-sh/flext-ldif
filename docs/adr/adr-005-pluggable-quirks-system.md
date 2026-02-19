@@ -116,8 +116,8 @@ result = rfc_parser.parse_withs(
 
 **Related ADRs**:
 
-- [ADR-001](adr-001-rfc-first-design.md) - RFC foundation that quirks enhance
-- [ADR-002](adr-002-universal-conversion-matrix.md) - Uses quirks for conversions
+- ADR-001 - RFC foundation that quirks enhance
+- ADR-002 - Uses quirks for conversions
 
 **Notes**:
 The pluggable quirks system enables FLEXT-LDIF's multi-server support while maintaining clean architecture. Each server gets its own module with complete implementation isolation. The priority system allows fine-tuned control over how different server requirements are resolved.

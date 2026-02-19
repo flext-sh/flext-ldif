@@ -2,24 +2,24 @@
 
 
 <!-- TOC START -->
-- [Diagram Overview](#diagram-overview)
-  - [C4 Model Structure](#c4-model-structure)
-  - [Diagram Categories](#diagram-categories)
-- [Rendering Diagrams](#rendering-diagrams)
-  - [Prerequisites](#prerequisites)
-  - [Rendering Commands](#rendering-commands)
-  - [VS Code Integration](#vs-code-integration)
-  - [Automated Rendering](#automated-rendering)
-- [Diagram Standards](#diagram-standards)
-  - [C4 Model Compliance](#c4-model-compliance)
-  - [Naming Conventions](#naming-conventions)
-  - [Style Guidelines](#style-guidelines)
-  - [Content Standards](#content-standards)
-- [Maintenance Guidelines](#maintenance-guidelines)
-  - [Version Control](#version-control)
-  - [Review Process](#review-process)
-  - [Tooling Integration](#tooling-integration)
-- [Related Documentation](#related-documentation)
+- Diagram Overview
+  - C4 Model Structure
+  - Diagram Categories
+- Rendering Diagrams
+  - Prerequisites
+  - Rendering Commands
+  - VS Code Integration
+  - Automated Rendering
+- Diagram Standards
+  - C4 Model Compliance
+  - Naming Conventions
+  - Style Guidelines
+  - Content Standards
+- Maintenance Guidelines
+  - Version Control
+  - Review Process
+  - Tooling Integration
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 0.9.9 | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
@@ -43,19 +43,19 @@ Following the [C4 Model](https://c4model.com/) for visualising software architec
 
 #### 📋 System Context Diagrams
 
-- **[system-context.puml](system-context.puml)**: C4 Level 1 - System in its environment
+- **system-context.puml**: C4 Level 1 - System in its environment
 - Shows external systems, users, and high-level interactions
 
 #### 🏗️ Architecture Diagrams
 
-- **[container-architecture.puml](container-architecture.puml)**: C4 Level 2 - Container architecture
-- **[component-architecture.puml](component-architecture.puml)**: C4 Level 3 - Component relationships
-- **[data-flow-architecture.puml](data-flow-architecture.puml)**: Data flow and processing pipeline
+- **container-architecture.puml**: C4 Level 2 - Container architecture
+- **component-architecture.puml**: C4 Level 3 - Component relationships
+- **data-flow-architecture.puml**: Data flow and processing pipeline
 
 #### 🔒 Security & Quality Diagrams
 
-- **[security-architecture.puml](security-architecture.puml)**: Security architecture and threat model
-- **[quality-attributes.puml](quality-attributes.puml)**: Quality attributes and cross-cutting concerns
+- **security-architecture.puml**: Security architecture and threat model
+- **quality-attributes.puml**: Quality attributes and cross-cutting concerns
 
 ## Rendering Diagrams
 
@@ -195,9 +195,9 @@ def generate_diagrams():
 
 ## Related Documentation
 
-- **[../architecture-overview.md](../architecture-overview.md)**: Comprehensive architecture documentation
-- **[../adr/](../adr/)**: Architecture Decision Records
-- **[../../README.md](../../README.md)**: Project overview and usage
+- **../architecture-overview.md**: Comprehensive architecture documentation
+- **../adr/**: Architecture Decision Records
+- **../../README.md**: Project overview and usage
 
 ---
 

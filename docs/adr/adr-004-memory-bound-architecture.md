@@ -96,7 +96,7 @@ def parse_ldif_file(self, file_path: Path) -> FlextResult[list[Entry]]:
 
 **Related ADRs**:
 
-- [ADR-006](ADR-006-streaming-parser-future.md) - Future streaming parser implementation
+- ADR-006 - Future streaming parser implementation
 
 **Notes**:
 The memory-bound architecture is appropriate for the current use case of directory migrations where files are typically under 100MB. The clear memory limits and warnings guide users to appropriate file sizes. Future versions will implement streaming parsers for larger files while maintaining the same API.

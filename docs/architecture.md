@@ -2,20 +2,20 @@
 
 
 <!-- TOC START -->
-- [Architectural Goals](#architectural-goals)
-- [Package Layout](#package-layout)
-- [Core Components](#core-components)
-  - [Facade (`api.py`)](#facade-apipy)
-  - [Service Base (`base.py`)](#service-base-basepy)
-  - [Services (`services/`)](#services-services)
-  - [Quirks (`services/server.py` and `servers/`)](#quirks-servicesserverpy-and-servers)
-  - [Models and Typing](#models-and-typing)
-- [Control Flow Examples](#control-flow-examples)
-  - [Parsing LDIF Text](#parsing-ldif-text)
-  - [Writing LDIF Text](#writing-ldif-text)
-  - [Migration and Conversion](#migration-and-conversion)
-- [Extensibility and Quality Considerations](#extensibility-and-quality-considerations)
-- [Related Documentation](#related-documentation)
+- Architectural Goals
+- Package Layout
+- Core Components
+  - Facade (`api.py`)
+  - Service Base (`base.py`)
+  - Services (`services/`)
+  - Quirks (`services/server.py` and `servers/`)
+  - Models and Typing
+- Control Flow Examples
+  - Parsing LDIF Text
+  - Writing LDIF Text
+  - Migration and Conversion
+- Extensibility and Quality Considerations
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 0.9.0 | **Updated**: 2025-02-17
@@ -166,11 +166,11 @@ new behaviours can be added without widening the public API beyond the
 
 **Within Project**:
 
-- [Getting Started](getting-started.md) - Installation and basic usage
-- [API Reference](api-reference.md) - Complete API documentation
-- [Configuration](configuration.md) - Settings and environment management
-- [Development](development.md) - Contributing and workflows
-- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+- Getting Started - Installation and basic usage
+- API Reference - Complete API documentation
+- Configuration - Settings and environment management
+- Development - Contributing and workflows
+- Integration Guide - FLEXT ecosystem integration
 
 **Across Projects**:
 

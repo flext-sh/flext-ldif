@@ -1,19 +1,48 @@
+"""Generate project-level docs from workspace SSOT guides."""
+
 from __future__ import annotations
 
 import argparse
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from _shared import Scope, build_scopes, write_json, write_markdown
+from shared import Scope, build_scopes, write_json, write_markdown
 
 
 @dataclass(frozen=True)
 class GeneratedFile:
+    """Record of a single generated file and whether it was written."""
+
     path: str
     written: bool
 
 
-def write_if_needed(path: Path, content: str, apply: bool) -> GeneratedFile:
+HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+ANCHOR_LINK_RE = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
+
+
+def normalize_anchor(value: str) -> str:
+    """Convert a heading to a GitHub-compatible anchor slug."""
+    text = value.strip().lower()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+def sanitize_internal_anchor_links(content: str) -> str:
+    """Normalize generated guides by stripping in-page anchor links."""
+
+    def replace(match: re.Match[str]) -> str:
+        label, _anchor = match.groups()
+        return label
+
+    return ANCHOR_LINK_RE.sub(replace, content)
+
+
+def write_if_needed(path: Path, content: str, *, apply: bool) -> GeneratedFile:
+    """Write *content* to *path* only when changed and *apply* is True."""
     exists = path.exists()
     current = path.read_text(encoding="utf-8") if exists else ""
     if current == content:
@@ -25,6 +54,7 @@ def write_if_needed(path: Path, content: str, apply: bool) -> GeneratedFile:
 
 
 def project_guide_content(content: str, project: str, source_name: str) -> str:
+    """Render workspace guide *content* with a project-specific heading."""
     lines = content.splitlines()
     out: list[str] = [
         f"<!-- Generated from docs/guides/{source_name} for {project}. -->",
@@ -35,17 +65,21 @@ def project_guide_content(content: str, project: str, source_name: str) -> str:
     for line in lines:
         if not heading_done and line.startswith("# "):
             title = line[2:].strip()
-            out.append(f"# {project} - {title}")
-            out.append("")
-            out.append(f"> Project profile: `{project}`")
-            out.append("")
+            out.extend([
+                f"# {project} - {title}",
+                "",
+                f"> Project profile: `{project}`",
+                "",
+            ])
             heading_done = True
             continue
         out.append(line)
-    return "\n".join(out).rstrip() + "\n"
+    rendered = "\n".join(out).rstrip() + "\n"
+    return sanitize_internal_anchor_links(rendered)
 
 
-def generate_root_docs(scope: Scope, apply: bool) -> list[GeneratedFile]:
+def generate_root_docs(scope: Scope, *, apply: bool) -> list[GeneratedFile]:
+    """Generate placeholder docs at the workspace root."""
     changelog = (
         "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n"
     )
@@ -61,8 +95,9 @@ def generate_root_docs(scope: Scope, apply: bool) -> list[GeneratedFile]:
 
 
 def generate_project_guides(
-    scope: Scope, workspace_root: Path, apply: bool
+    scope: Scope, workspace_root: Path, *, apply: bool
 ) -> list[GeneratedFile]:
+    """Copy workspace guides into a project, injecting the project name."""
     source_dir = workspace_root / "docs/guides"
     if not source_dir.exists():
         return []
@@ -81,7 +116,8 @@ def generate_project_guides(
     return files
 
 
-def run_scope(scope: Scope, apply: bool, workspace_root: Path) -> int:
+def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
+    """Generate docs for *scope* and write reports."""
     if scope.name == "root":
         files = generate_root_docs(scope=scope, apply=apply)
         source = "root-generated-artifacts"
@@ -122,6 +158,7 @@ def run_scope(scope: Scope, apply: bool, workspace_root: Path) -> int:
 
 
 def main() -> int:
+    """CLI entry point for the documentation generator."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")

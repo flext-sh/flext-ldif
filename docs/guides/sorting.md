@@ -2,21 +2,21 @@
 
 
 <!-- TOC START -->
-- [DN Handling (RFC 4514 Compliance)](#dn-handling-rfc-4514-compliance)
-- [What It Sorts (sort_target parameter)](#what-it-sorts-sorttarget-parameter)
-- [How It Sorts Entries (sort_by parameter)](#how-it-sorts-entries-sortby-parameter)
-- [Usage Examples](#usage-examples)
-  - [Pattern 1: Execute Method (V1 Style)](#pattern-1-execute-method-v1-style)
-  - [Pattern 2: Classmethod for Composable/Chainable Operations](#pattern-2-classmethod-for-composablechainable-operations)
-  - [Pattern 3: Fluent Builder Pattern](#pattern-3-fluent-builder-pattern)
-  - [Pattern 4: Public Classmethod Helpers (Most Direct)](#pattern-4-public-classmethod-helpers-most-direct)
-- [Attribute & ACL Sorting Options](#attribute-acl-sorting-options)
-  - [When sort_target="attributes"](#when-sorttargetattributes)
-  - [When sort_target="acl"](#when-sorttargetacl)
-- [Complex Sorting Examples](#complex-sorting-examples)
-- [Public Classmethod API](#public-classmethod-api)
-- [Quick Reference](#quick-reference)
-- [See Also](#see-also)
+- DN Handling (RFC 4514 Compliance)
+- What It Sorts (sort_target parameter)
+- How It Sorts Entries (sort_by parameter)
+- Usage Examples
+  - Pattern 1: Execute Method (V1 Style)
+  - Pattern 2: Classmethod for Composable/Chainable Operations
+  - Pattern 3: Fluent Builder Pattern
+  - Pattern 4: Public Classmethod Helpers (Most Direct)
+- Attribute & ACL Sorting Options
+  - When sort_target="attributes"
+  - When sort_target="acl"
+- Complex Sorting Examples
+- Public Classmethod API
+- Quick Reference
+- See Also
 <!-- TOC END -->
 
 Flexible sorting for LDIF entries, attributes, ACL & schemas.
@@ -206,5 +206,5 @@ sorted = FlextLdifSorting.by_custom(
 
 ## See Also
 
-- [API Reference](api-reference.md)
-- [Filters Documentation](filters.md)
+- API Reference
+- Filters Documentation

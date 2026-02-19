@@ -1,10 +1,15 @@
+"""Documentation validation script for FLEXT projects.
+
+Checks ADR skill references and generates validation reports per project scope.
+"""
+
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
 
-from _shared import (
+from shared import (
     Scope,
     build_scopes,
     write_json,
@@ -13,11 +18,13 @@ from _shared import (
 
 
 def has_adr_reference(skill_path: Path) -> bool:
+    """Check whether a skill file contains an ADR reference."""
     text = skill_path.read_text(encoding="utf-8", errors="ignore").lower()
     return "adr" in text
 
 
 def run_adr_skill_check(root: Path) -> tuple[int, list[str]]:
+    """Run ADR skill check and return exit code with missing skill names."""
     skills_root = root / ".claude/skills"
     required: list[str] = []
     config = root / "docs/architecture/architecture_config.json"
@@ -38,8 +45,9 @@ def run_adr_skill_check(root: Path) -> tuple[int, list[str]]:
     return (0 if not missing else 1), missing
 
 
-def maybe_write_todo(scope: Scope, apply: bool) -> bool:
-    if scope.name == "root" or not apply:
+def maybe_write_todo(scope: Scope, *, apply_mode: bool) -> bool:
+    """Write a TODOS.md file for the scope if apply mode is enabled."""
+    if scope.name == "root" or not apply_mode:
         return False
     path = scope.path / "TODOS.md"
     content = "# TODOS\n\n- [ ] Resolve documentation validation findings from `.reports/docs/validate-report.md`.\n"
@@ -47,7 +55,8 @@ def maybe_write_todo(scope: Scope, apply: bool) -> bool:
     return True
 
 
-def run_scope(scope: Scope, apply: bool, check: str) -> int:
+def run_scope(scope: Scope, *, apply_mode: bool, check: str) -> int:
+    """Run validation for a single project scope and write reports."""
     status = "OK"
     message = "validation passed"
     details: dict[str, object] = {}
@@ -57,7 +66,7 @@ def run_scope(scope: Scope, apply: bool, check: str) -> int:
         if code != 0:
             status = "FAIL"
             message = f"missing adr references in skills: {', '.join(missing)}"
-    wrote_todo = maybe_write_todo(scope, apply=apply)
+    wrote_todo = maybe_write_todo(scope, apply_mode=apply_mode)
     details["todo_written"] = wrote_todo
     write_json(
         scope.report_dir / "validate-summary.json",
@@ -66,7 +75,7 @@ def run_scope(scope: Scope, apply: bool, check: str) -> int:
                 "scope": scope.name,
                 "result": status,
                 "message": message,
-                "apply": apply,
+                "apply": apply_mode,
             },
             "details": details,
         },
@@ -87,6 +96,7 @@ def run_scope(scope: Scope, apply: bool, check: str) -> int:
 
 
 def main() -> int:
+    """Entry point for documentation validation CLI."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")
@@ -105,7 +115,7 @@ def main() -> int:
     )
     failures = 0
     for scope in scopes:
-        failures += run_scope(scope, apply=args.apply, check=args.check)
+        failures += run_scope(scope, apply_mode=args.apply, check=args.check)
     return 1 if failures else 0
 
 

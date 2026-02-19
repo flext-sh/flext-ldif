@@ -2,14 +2,14 @@
 
 
 <!-- TOC START -->
-- [ADR Process](#adr-process)
-  - [When to Create an ADR](#when-to-create-an-adr)
-  - [ADR Template](#adr-template)
-  - [ADR Status Definitions](#adr-status-definitions)
-  - [ADR Numbering](#adr-numbering)
-- [Current ADRs](#current-adrs)
-- [ADR Maintenance](#adr-maintenance)
-- [Related Documentation](#related-documentation)
+- ADR Process
+  - When to Create an ADR
+  - ADR Template
+  - ADR Status Definitions
+  - ADR Numbering
+- Current ADRs
+- ADR Maintenance
+- Related Documentation
 <!-- TOC END -->
 
 **Purpose**: This directory contains Architecture Decision Records (ADRs) that document architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and consequences of significant architectural choices.
@@ -82,11 +82,11 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 
 | ADR                                               | Title                                    | Status   | Date       |
 | ------------------------------------------------- | ---------------------------------------- | -------- | ---------- |
-| [ADR-001](adr-001-rfc-first-design.md)            | RFC-First Design with Zero Bypass Paths  | Accepted | 2025-10-10 |
-| [ADR-002](adr-002-universal-conversion-matrix.md) | Universal Conversion Matrix Architecture | Accepted | 2025-10-10 |
-| [ADR-003](adr-003-dn-case-registry.md)            | DN Case Registry for OUD Compatibility   | Accepted | 2025-10-10 |
-| [ADR-004](adr-004-memory-bound-architecture.md)   | Memory-Bound Processing Architecture     | Accepted | 2025-10-10 |
-| [ADR-005](adr-005-pluggable-quirks-system.md)     | Pluggable Quirks System                  | Accepted | 2025-10-10 |
+| ADR-001            | RFC-First Design with Zero Bypass Paths  | Accepted | 2025-10-10 |
+| ADR-002 | Universal Conversion Matrix Architecture | Accepted | 2025-10-10 |
+| ADR-003            | DN Case Registry for OUD Compatibility   | Accepted | 2025-10-10 |
+| ADR-004   | Memory-Bound Processing Architecture     | Accepted | 2025-10-10 |
+| ADR-005     | Pluggable Quirks System                  | Accepted | 2025-10-10 |
 
 ## ADR Maintenance
 
@@ -97,6 +97,6 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 
 ## Related Documentation
 
-- [Architecture Overview](../architecture.md) - High-level architecture documentation
+- Architecture Overview - High-level architecture documentation
 - **Architecture Diagrams** - Visual representations of architecture (_Documentation coming soon_)
-- [Development Guidelines](../development.md) - Implementation guidelines influenced by ADRs
+- Development Guidelines - Implementation guidelines influenced by ADRs

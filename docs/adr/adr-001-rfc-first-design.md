@@ -77,7 +77,7 @@ result = ldif.parse(file_path)  # No direct parser access
 
 **Related ADRs**:
 
-- [ADR-005](adr-005-pluggable-quirks-system.md) - Implementation details of quirks system
+- ADR-005 - Implementation details of quirks system
 
 **Notes**:
 This decision establishes the fundamental architectural pattern for FLEXT-LDIF. All subsequent development must maintain the RFC-first principle and zero bypass paths constraint. The facade pattern ensures consistent application of this principle across all operations.
