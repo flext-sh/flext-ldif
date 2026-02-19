@@ -1,5 +1,10 @@
 # ADR-003: DN Case Registry for OUD Compatibility
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Status**: Accepted
 
 **Date**: 2025-10-10

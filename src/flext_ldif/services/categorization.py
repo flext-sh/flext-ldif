@@ -7,6 +7,7 @@ from typing import Final, override
 
 from flext_core import FlextLogger, r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -469,13 +470,27 @@ class FlextLdifCategorization(
 
     def _normalize_rules(
         self,
-        rules: m.Ldif.LdifResults.CategoryRules | None,
+        rules: (
+            m.Ldif.LdifResults.CategoryRules
+            | Mapping[str, t.MetadataAttributeValue]
+            | None
+        ),
     ) -> r[m.Ldif.LdifResults.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
             return r[m.Ldif.LdifResults.CategoryRules].ok(rules)
         if rules is None:
             return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
+
+        if isinstance(rules, Mapping):
+            try:
+                return r[m.Ldif.LdifResults.CategoryRules].ok(
+                    m.Ldif.LdifResults.CategoryRules.model_validate(dict(rules))
+                )
+            except Exception as e:
+                return r[m.Ldif.LdifResults.CategoryRules].fail(
+                    f"Invalid rules mapping: {e}"
+                )
 
         return r[m.Ldif.LdifResults.CategoryRules].fail(
             f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
@@ -650,11 +665,9 @@ class FlextLdifCategorization(
         )
         batch_data = batch_result.map_or(None)
         if batch_data is not None:
-            # Use dict access for BatchResultDict
+            results_list_raw = batch_data.results
             results_list = (
-                batch_data.get("results")
-                if isinstance(batch_data, dict)
-                else getattr(batch_data, "results", [])
+                results_list_raw if isinstance(results_list_raw, list) else []
             )
             for result_item in results_list:
                 if (
@@ -774,7 +787,11 @@ class FlextLdifCategorization(
                     rejection_reason=f"DN not under base DN: {self._base_dn}",
                 )
 
-                filtered[category] = list(included_updated)
+                filtered[category] = [
+                    entry
+                    for entry in included_updated
+                    if isinstance(entry, FlextLdifModelsDomains.Entry)
+                ]
 
                 all_excluded_entries.extend(excluded_updated)
 
@@ -793,10 +810,10 @@ class FlextLdifCategorization(
 
         if all_excluded_entries:
             existing_rejected = filtered.get(_cat("rejected"), [])
-
-            filtered[_cat("rejected")] = list(existing_rejected) + list(
-                all_excluded_entries,
-            )
+            rejected_entries = [
+                entry for entry in existing_rejected if isinstance(entry, m.Ldif.Entry)
+            ]
+            filtered[_cat("rejected")] = rejected_entries + list(all_excluded_entries)
 
         return filtered
 
@@ -876,7 +893,11 @@ class FlextLdifCategorization(
                     base_dn,
                 )
 
-                filtered[category] = list(included)
+                filtered[category] = [
+                    entry
+                    for entry in included
+                    if isinstance(entry, FlextLdifModelsDomains.Entry)
+                ]
 
                 excluded_updated = [
                     FlextLdifCategorization._mark_entry_rejected(
@@ -893,10 +914,10 @@ class FlextLdifCategorization(
 
         if excluded_entries:
             existing_rejected = filtered.get(_cat("rejected"), [])
-
-            filtered[_cat("rejected")] = list(existing_rejected) + list(
-                excluded_entries,
-            )
+            rejected_entries = [
+                entry for entry in existing_rejected if isinstance(entry, m.Ldif.Entry)
+            ]
+            filtered[_cat("rejected")] = rejected_entries + list(excluded_entries)
 
         return filtered
 

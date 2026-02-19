@@ -1,5 +1,22 @@
 # Server API Usage Pattern - Padrão Correto
 
+
+<!-- TOC START -->
+- [❌ PADRÃO INCORRETO (Deprecado)](#-padro-incorreto-deprecado)
+- [✅ PADRÃO CORRETO (Obrigatório)](#-padro-correto-obrigatrio)
+- [📝 Uso em Testes (Fixtures)](#-uso-em-testes-fixtures)
+  - [Fixtures Centralizadas (`conftest.py`)](#fixtures-centralizadas-conftestpy)
+  - [Uso nas Funções de Teste](#uso-nas-funes-de-teste)
+- [🔄 Migração de Código Existente](#-migrao-de-cdigo-existente)
+  - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
+  - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciao)
+  - [Passo 3: Atualizar Type Hints](#passo-3-atualizar-type-hints)
+- [📊 Status de Migração](#-status-de-migrao)
+- [🎯 Servers Disponíveis via API](#-servers-disponveis-via-api)
+- [🔍 Verificação](#-verificao)
+- [📚 Referências](#-referncias)
+<!-- TOC END -->
+
 **Data**: 2025-11-18
 **Status**: PADRÃO OBRIGATÓRIO
 

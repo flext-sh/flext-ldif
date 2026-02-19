@@ -6,10 +6,9 @@ attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
-from tests import RfcTestHelpers, TestDeduplicationHelpers, s
-
 from flext_ldif.models import m
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 
 class TestsTestFlextLdifOpenldap1Quirks(s):

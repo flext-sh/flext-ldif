@@ -14,9 +14,9 @@ from typing import ClassVar, Final
 
 import pytest
 from flext_core import FlextResult
-
 from flext_ldif import FlextLdif
 from flext_ldif.services.sorting import FlextLdifSorting
+
 from tests import RfcTestHelpers, p, s
 
 
@@ -29,8 +29,6 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
     """
 
     oid_entries: ClassVar[list[p.Entry]]  # pytest fixture
-    oid_schema: ClassVar[list[p.Entry]]  # pytest fixture
-    oid_acl: ClassVar[list[p.Entry]]  # pytest fixture
     oid_schema: ClassVar[list[p.Entry]]  # pytest fixture
     oid_acl: ClassVar[list[p.Entry]]  # pytest fixture
 

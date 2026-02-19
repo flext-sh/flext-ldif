@@ -12,11 +12,10 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
 from flext_ldif import FlextLdifConstants, FlextLdifModels, FlextLdifSettings, services
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.statistics import FlextLdifStatistics
+from tests import s
 
 
 class TestsTestFlextLdifServiceAPIs(s):

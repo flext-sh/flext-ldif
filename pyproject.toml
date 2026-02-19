@@ -1,294 +1,241 @@
 [build-system]
-    build-backend = "poetry.core.masonry.api"
-    requires = [
-        "poetry-core>=1.9.0",
-    ]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core>=2",
+]
 
 [project]
-    classifiers = [
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.13",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Typing :: Typed",
-    ]
-    dependencies = [
-        "colorlog (>=6.9.0)",
-        "ldap3 (>=2.9.1)",
-        "pydantic (>=2.12.3)",
-        "pydantic-settings (>=2.11.0)",
-        "structlog (>=25.4.0)",
-        "pydantic-core (>=2.41.4)",
-        "beartype (>=0.22.6,<0.23.0)",
-    ]
-    description = "FLEXT LDIF - Enterprise LDIF Processing Library"
-    keywords = [
-        "adapter",
-        "enterprise",
-        "flext",
-        "integration",
-        "typed",
-    ]
-    name = "flext-ldif"
-    readme = "README.md"
-    requires-python = ">=3.13,<3.14"
-    version = "0.10.0-dev"
-    [[project.authors]]
-        email = "team@flext.sh"
-        name = "FLEXT Team"
-
-    [[project.maintainers]]
-        email = "team@flext.sh"
-        name = "FLEXT Team"
-
-    [project.license]
-        text = "MIT"
-
-    [project.urls]
-        Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
-        Homepage = "https://github.com/flext-sh/flext"
-        Repository = "https://github.com/flext-sh/flext"
+name = "flext-ldif"
+version = "0.10.0-dev"
+description = "FLEXT LDIF - Enterprise LDIF Processing Library"
+readme = "README.md"
+keywords = [
+  "adapter",
+  "enterprise",
+  "flext",
+  "integration",
+  "typed",
+]
+license = "MIT"
+maintainers = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+authors = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+requires-python = ">=3.13,<3.14"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+dependencies = [
+  "beartype>=0.22.6,<0.23",
+  "colorlog>=6.9",
+  "ldap3>=2.9.1",
+  "pydantic>=2.12.3",
+  "pydantic-core>=2.41.4",
+  "pydantic-settings>=2.11",
+  "structlog>=25.4",
+]
+urls.Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
+urls.Homepage = "https://github.com/flext-sh/flext"
+urls.Repository = "https://github.com/flext-sh/flext"
 
 [tool]
-    [tool.deptry]
-        known_first_party = [
-            "flext_ldif",
-            "flext_core",
-            "flext_cli",
-            "flext_ldap",
-            "flext_observability",
-        ]
-        pep621_dev_dependency_groups = [
-            "dev",
-            "test",
-            "typings",
-            "security",
-        ]
+[tool.poetry]
+dependencies.ldap3 = ">=2.9.1"
+dependencies.python = ">=3.13,<3.14"
+dependencies.flext-cli.develop = true
+dependencies.flext-cli.path = ".flext-deps/flext-cli"
+dependencies.flext-ldap.develop = true
+dependencies.flext-ldap.path = ".flext-deps/flext-ldap"
+dependencies.flext-observability.develop = true
+dependencies.flext-observability.path = ".flext-deps/flext-observability"
+dependencies.flext-quality.develop = true
+dependencies.flext-quality.optional = true
+dependencies.flext-quality.path = ".flext-deps/flext-quality"
+group.dev.dependencies.attrs = "^25.3.0"
+group.dev.dependencies.autoflake = ">=2.3.1"
+group.dev.dependencies.backoff = "^2.2.1"
+group.dev.dependencies.beartype = ">=0.18.0"
+group.dev.dependencies.black = ">=25.1.0"
+group.dev.dependencies.codespell = ">=2.3.0"
+group.dev.dependencies.commitizen = ">=4.8.3"
+group.dev.dependencies.detect-secrets = ">=1.5.0"
+group.dev.dependencies.isort = ">=6.0.1"
+group.dev.dependencies.pre-commit = ">=4.0.1"
+group.dev.dependencies.pylint = ">=3.3.0"
+group.dev.dependencies.pyrefly = "^0.46.3"
+group.dev.dependencies.pyupgrade = ">=3.19.0"
+group.dev.dependencies.radon = ">=6.0.1"
+group.dev.dependencies.ruff = ">=0.12.3"
+group.dev.dependencies.structlog = "^25.4.0"
+group.dev.dependencies.types-docker = "^7.1.0.20250916"
+group.dev.dependencies.vulture = ">=2.13"
+group.dev.dependencies.coverage = "^7.12.0"
+group.dev.dependencies.pytest = "^9.0.2"
+group.dev.dependencies.pytest-cov = "^7.0.0"
+group.dev.dependencies.faker = "^40.1.0"
+group.dev.dependencies.opentelemetry-api = ">=1.39.1"
+group.dev.dependencies.opentelemetry-sdk = ">=1.39.1"
+group.dev.dependencies.prompt-toolkit = ">=3.0.52"
+group.dev.dependencies.sqlparse = ">=0.5.5"
+group.dev.dependencies.bandit = ">=1.8.0"
+group.dev.dependencies.docker = ">=7.1.0"
+group.dev.dependencies.factory-boy = ">=3.3.1"
+group.dev.dependencies.hypothesis = ">=6.125.0"
+group.dev.dependencies.pip-audit = ">=2.7.3"
+group.dev.dependencies.pytest-benchmark = ">=5.1.0"
+group.dev.dependencies.pytest-clarity = ">=1.0.1"
+group.dev.dependencies.pytest-deadfixtures = ">=2.2.1"
+group.dev.dependencies.pytest-env = ">=1.1.5"
+group.dev.dependencies.pytest-mock = ">=3.14.0"
+group.dev.dependencies.pytest-sugar = ">=1.0.0"
+group.dev.dependencies.pytest-timeout = ">=2.4.0"
+group.dev.dependencies.pytest-xdist = ">=3.8.0"
+group.dev.dependencies.python-ldap = ">=3.4.4"
+group.dev.dependencies.types-psutil = ">=7.0.0"
+group.dev.dependencies.types-python-dateutil = ">=2.9.0"
+group.dev.dependencies.types-pyyaml = ">=6.0.12"
+group.dev.dependencies.types-redis = ">=4.6.0"
+group.dev.dependencies.types-requests = ">=2.32.4"
+group.dev.dependencies.types-setuptools = ">=80.9.0"
+group.dev.dependencies.types-toml = ">=0.10.8.20240310"
+packages = [ { from = "src", include = "flext_ldif" } ]
 
-    [tool.deptry.per_rule_ignores]
-        DEP002 = [
-            # CLI tools
-            "autoflake",
-            "bandit",
-            "black",
-            "codespell",
-            "commitizen",
-            "coverage",
-            "detect-secrets",
-            "isort",
-            "pip-audit",
-            "pre-commit",
-            "pylint",
-            "pyrefly",
-            "pyupgrade",
-            "radon",
-            "ruff",
-            "vulture",
-            # Type stubs
-            "types-docker",
-            "types-psutil",
-            "types-python-dateutil",
-            "types-pyyaml",
-            "types-redis",
-            "types-requests",
-            "types-setuptools",
-            "types-toml",
-            # Runtime deps used indirectly
-            "attrs",
-            "backoff",
-            "beartype",
-            "colorlog",
-            "faker",
-            "ldap3",
-            "pydantic-core",
-            "pytest",
-            "pytest-cov",
-            "structlog",
-        ]
+[tool.ruff]
+extend = "../ruff-shared.toml"
 
-    [tool.poetry]
-        [[tool.poetry.packages]]
-            from = "src"
-            include = "flext_ldif"
+[tool.deptry]
+known_first_party = [
+  "flext_ldif",
+  "flext_core",
+  "flext_cli",
+  "flext_ldap",
+  "flext_observability",
+]
+pep621_dev_dependency_groups = [
+  "dev",
+]
+per_rule_ignores.DEP002 = [
+  # CLI tools
+  "autoflake",
+  "bandit",
+  "black",
+  "codespell",
+  "commitizen",
+  "coverage",
+  "detect-secrets",
+  "isort",
+  "pip-audit",
+  "pre-commit",
+  "pylint",
+  "pyrefly",
+  "pyupgrade",
+  "radon",
+  "ruff",
+  "vulture",
+  # Type stubs
+  "types-docker",
+  "types-psutil",
+  "types-python-dateutil",
+  "types-pyyaml",
+  "types-redis",
+  "types-requests",
+  "types-setuptools",
+  "types-toml",
+  # Runtime deps used indirectly
+  "attrs",
+  "backoff",
+  "beartype",
+  "colorlog",
+  "faker",
+  "ldap3",
+  "pydantic-core",
+  "pytest",
+  "pytest-cov",
+  "structlog",
+]
 
-        [tool.poetry.dependencies]
-            ldap3 = ">=2.9.1"
-            python = ">=3.13,<3.14"
+[tool.pytest]
+ini_options.pythonpath = [ "src" ]
+ini_options.addopts = [ "--strict-config", "--strict-markers", "--tb=short", "-p no:sugar", "-q", "-ra" ]
+ini_options.filterwarnings = [
+  "ignore::DeprecationWarning:pyasn1(.*|$)",
+]
+ini_options.markers = [
+  " tests",
+  "benchmark: Benchmark tests",
+  "complexity: Complexity tests",
+  "concurrency: Concurrency tests",
+  "conversion: Quirk conversion operations",
+  "docker: Tests requiring Docker containers",
+  "e2e: End-to-end tests",
+  "fixtures: Tests using real LDIF fixtures",
+  "integration: Integration tests",
+  "ldif: LDIF-specific tests",
+  "memory: Memory tests",
+  "memory_limit: Memory limit tests",
+  "operational: Operational tests with real data",
+  "performance: Performance tests",
+  "quirks: LDAP server quirks tests",
+  "race_condition: Race condition tests",
+  "real_data: Tests using real fixture data",
+  "real_ldap: Tests requiring real LDAP container",
+  "regression: Regression tests",
+  "roundtrip: Bidirectional conversion tests",
+  "slow: Slow tests",
+  "smoke: Smoke tests",
+  "timeout: Timeout tests",
+  "unit: Unit tests",
+]
+ini_options.minversion = "8.0"
+ini_options.norecursedirs = [
+  ".git",
+  ".pytest_cache",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  "*.egg-info",
+  ".bak",
+  ".bak*",
+  "helpers.bak",
+  "fixtures.bak",
+  "unit.bak",
+  "integration.bak",
+]
+ini_options.python_classes = [
+  "Test*",
+  "Tests*",
+]
+ini_options.python_files = [
+  "*_test.py",
+  "test_*.py",
+]
+ini_options.python_functions = [
+  "test_*",
+]
+ini_options.testpaths = [
+  "tests",
+]
 
-            [tool.poetry.dependencies.flext-cli]
-                develop = true
-                path = "../flext-cli"
+[tool.coverage]
+run.source = [ "src/flext_ldif" ]
+report.fail_under = 100
+report.precision = 2
 
-            [tool.poetry.dependencies.flext-ldap]
-                develop = true
-                path = "../flext-ldap"
+[tool.pyrefly]
+search-path = [
+  "../typings",
+  "../typings/generated",
+  ".",
+  "src",
+  "tests",
+  "examples",
+  "scripts",
+]
 
-            [tool.poetry.dependencies.flext-observability]
-                develop = true
-                path = "../flext-observability"
-
-        [tool.poetry.dependencies.flext-quality]
-            develop = true
-            optional = true
-            path = "../flext-quality"
-
-        [tool.poetry.group.dev.dependencies]
-            attrs = "^25.3.0"
-            autoflake = ">=2.3.1"
-            backoff = "^2.2.1"
-            beartype = ">=0.18.0"
-            black = ">=25.1.0"
-            codespell = ">=2.3.0"
-            commitizen = ">=4.8.3"
-            detect-secrets = ">=1.5.0"
-            isort = ">=6.0.1"
-            pre-commit = ">=4.0.1"
-            pylint = ">=3.3.0"
-            pyrefly = "^0.46.3"
-            pyupgrade = ">=3.19.0"
-            radon = ">=6.0.1"
-            ruff = ">=0.12.3"
-            structlog = "^25.4.0"
-            types-docker = "^7.1.0.20250916"
-            vulture = ">=2.13"
-        coverage = "^7.12.0"
-        pytest = "^9.0.2"
-        pytest-cov = "^7.0.0"
-        faker = "^40.1.0"
-        opentelemetry-api = ">=1.39.1"
-        opentelemetry-sdk = ">=1.39.1"
-        prompt-toolkit = ">=3.0.52"
-        sqlparse = ">=0.5.5"
-
-        [tool.poetry.group.test.dependencies]
-            
-        
-docker = ">=7.1.0"
-            factory-boy = ">=3.3.1"
-            faker = ">=37.4.0"
-            hypothesis = ">=6.125.0"
-            pytest = ">=8.4.0"
-            pytest-benchmark = ">=5.1.0"
-            pytest-clarity = ">=1.0.1"
-            pytest-cov = ">=7.0.0"
-            pytest-deadfixtures = ">=2.2.1"
-            pytest-env = ">=1.1.5"
-            pytest-mock = ">=3.14.0"
-            pytest-sugar = ">=1.0.0"
-            pytest-timeout = ">=2.4.0"
-            pytest-xdist = ">=3.8.0"
-            python-ldap = ">=3.4.4"
-
-        [tool.poetry.group.typings.dependencies]
-            types-psutil = ">=7.0.0"
-            types-python-dateutil = ">=2.9.0"
-            types-pyyaml = ">=6.0.12"
-            types-redis = ">=4.6.0"
-            types-requests = ">=2.32.4"
-            types-setuptools = ">=80.9.0"
-            types-toml = ">=0.10.8.20240310"
-
-        [tool.poetry.group.security.dependencies]
-            bandit = ">=1.8.0"
-            pip-audit = ">=2.7.3"
-
-    [tool.coverage.run]
-        omit = [
-            "*/dependency_injector/*",
-            "*.pyx",
-        ]
-
-    [tool.pytest.ini_options]
-        pythonpath = ["src"]
-        addopts = [
-            "--cov-report=term-missing",
-            "--cov=src/",
-            "--strict-config",
-            "--strict-markers",
-            "--tb=short",
-            "-p no:sugar",
-            "-q",
-            "-ra",
-        ]
-        filterwarnings = [
-            "ignore::DeprecationWarning:pyasn1(.*|$)",
-        ]
-        markers = [
-            " tests",
-            "benchmark: Benchmark tests",
-            "complexity: Complexity tests",
-            "concurrency: Concurrency tests",
-            "conversion: Quirk conversion operations",
-            "docker: Tests requiring Docker containers",
-            "e2e: End-to-end tests",
-            "fixtures: Tests using real LDIF fixtures",
-            "integration: Integration tests",
-            "ldif: LDIF-specific tests",
-            "memory: Memory tests",
-            "memory_limit: Memory limit tests",
-            "operational: Operational tests with real data",
-            "performance: Performance tests",
-            "quirks: LDAP server quirks tests",
-            "race_condition: Race condition tests",
-            "real_data: Tests using real fixture data",
-            "real_ldap: Tests requiring real LDAP container",
-            "regression: Regression tests",
-            "roundtrip: Bidirectional conversion tests",
-            "slow: Slow tests",
-            "smoke: Smoke tests",
-            "timeout: Timeout tests",
-            "unit: Unit tests",
-        ]
-        minversion = "8.0"
-        norecursedirs = [
-            ".git",
-            ".pytest_cache",
-            "__pycache__",
-            "build",
-            "dist",
-            ".venv",
-            "*.egg-info",
-            ".bak",
-            ".bak*",
-            "helpers.bak",
-            "fixtures.bak",
-            "unit.bak",
-            "integration.bak",
-        ]
-        python_classes = [
-            "Test*",
-            "Tests*",
-        ]
-        python_files = [
-            "*_test.py",
-            "test_*.py",
-        ]
-        python_functions = [
-            "test_*",
-        ]
-        testpaths = [
-            "tests",
-        ]
-
-    [tool.pyrefly]
-        search-path = [
-            "../typings",
-            "../typings/generated",
-            ".",
-            "src",
-            "tests",
-            "examples",
-            "scripts",
-        ]
-
-    [tool.ruff]
-        extend = "../ruff-shared.toml"
-
-        [tool.ruff.lint.isort]
-            known-first-party = [
-                "flext_ldif",
-            ]
-
+[tool.bandit]
+skips = [ "B404", "B603", "B607", "B105", "B608" ]

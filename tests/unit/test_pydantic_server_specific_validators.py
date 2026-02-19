@@ -7,12 +7,20 @@ rules specific to different LDAP server implementations.
 
 from __future__ import annotations
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.validation import (
+    AclFormatRules,
+    DnCaseRules,
+    EncodingRules,
+    ServerValidationRules,
+)
+
 from tests import m, s
 
 
 def get_validation_metadata(
-    entry: object,
-) -> m.ValidationMetadata | None:
+    entry: m.Ldif.Entry,
+) -> FlextLdifModelsDomains.ValidationMetadata | None:
     """Helper to get validation_metadata from entry.metadata.validation_results."""
     if not hasattr(entry, "metadata"):
         return None
@@ -20,7 +28,7 @@ def get_validation_metadata(
     if not metadata or not hasattr(metadata, "validation_results"):
         return None
     result = getattr(metadata, "validation_results", None)
-    if isinstance(result, m.ValidationMetadata):
+    if isinstance(result, FlextLdifModelsDomains.ValidationMetadata):
         return result
     return None
 
@@ -30,15 +38,15 @@ def get_validation_metadata(
 # =============================================================================
 
 
-def inject_oud_validation_rules() -> m.ServerValidationRules:
+def inject_oud_validation_rules() -> ServerValidationRules:
     """Create OUD validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return ServerValidationRules(
         requires_objectclass=True,
         requires_naming_attr=True,
         requires_binary_option=True,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=DnCaseRules(preserve_case=True),
+        acl_format_rules=AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -50,15 +58,15 @@ def inject_oud_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_oid_validation_rules() -> m.ServerValidationRules:
+def inject_oid_validation_rules() -> ServerValidationRules:
     """Create OID validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return ServerValidationRules(
         requires_objectclass=False,  # OID is lenient
         requires_naming_attr=False,  # OID allows missing naming attr
         requires_binary_option=False,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=DnCaseRules(preserve_case=True),
+        acl_format_rules=AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -70,15 +78,15 @@ def inject_oid_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_openldap_validation_rules() -> m.ServerValidationRules:
+def inject_openldap_validation_rules() -> ServerValidationRules:
     """Create OpenLDAP validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return ServerValidationRules(
         requires_objectclass=False,  # OpenLDAP flexible schema
         requires_naming_attr=False,
         requires_binary_option=True,  # But strict on ;binary
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=DnCaseRules(preserve_case=True),
+        acl_format_rules=AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,
@@ -90,15 +98,15 @@ def inject_openldap_validation_rules() -> m.ServerValidationRules:
     )
 
 
-def inject_ad_validation_rules() -> m.ServerValidationRules:
+def inject_ad_validation_rules() -> ServerValidationRules:
     """Create Active Directory validation rules for injection into metadata.extensions."""
-    return m.ServerValidationRules(
+    return ServerValidationRules(
         requires_objectclass=True,  # AD is STRICT on objectClass
         requires_naming_attr=True,  # AD is STRICT - REQUIRES naming attr in entry
         requires_binary_option=False,
-        encoding_rules=m.EncodingRules(default_encoding="utf-8"),
-        dn_case_rules=m.DnCaseRules(preserve_case=True),
-        acl_format_rules=m.AclFormatRules(
+        encoding_rules=EncodingRules(default_encoding="utf-8"),
+        dn_case_rules=DnCaseRules(preserve_case=True),
+        acl_format_rules=AclFormatRules(
             format="aci",
             attribute_name="aci",
             requires_target=False,

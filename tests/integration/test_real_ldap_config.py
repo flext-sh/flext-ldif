@@ -23,10 +23,9 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextSettings
-from ldap3 import Connection
-
 from flext_ldif import FlextLdif
 from flext_ldif.settings import FlextLdifSettings
+from ldap3 import Connection
 
 # Note: flext-ldif cannot import flext-ldap (architecture layering)
 # LDAP-related configuration testing is handled in flext-ldap integration tests

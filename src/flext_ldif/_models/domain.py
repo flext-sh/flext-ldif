@@ -1410,7 +1410,12 @@ class FlextLdifModelsDomains:
             if "validation_rules" not in self.metadata.extensions:
                 return self
 
-            validation_rules = self.metadata.extensions.get("validation_rules")
+            extensions_extra = self.metadata.extensions.__pydantic_extra__
+            validation_rules = (
+                extensions_extra.get("validation_rules")
+                if isinstance(extensions_extra, dict)
+                else self.metadata.extensions.get("validation_rules")
+            )
             if not validation_rules:
                 return self
 
@@ -1548,16 +1553,17 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> dict[str, t.JsonValue]:
+        ) -> dict[str, t.MetadataAttributeValue]:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: dict[str, t.JsonValue] = {}
+            ext_kwargs: dict[str, t.MetadataAttributeValue] = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
-                unconverted_dump = unconverted_attributes.model_dump()
-                ext_kwargs["unconverted_attributes"] = unconverted_dump
+                ext_kwargs["unconverted_attributes"] = str(
+                    dict(unconverted_attributes.items())
+                )
             return ext_kwargs
 
         @classmethod

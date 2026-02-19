@@ -297,7 +297,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             target_perms_dict = target_perms_dict_raw
 
         if target_perms_dict and isinstance(target_perms_dict, dict):
-            target_perms_dict_typed: dict[object, object] = target_perms_dict
+            target_perms_dict_typed: Mapping[str, t.MetadataAttributeValue] = (
+                target_perms_dict
+            )
             perms_data: dict[str, object] = {}
 
             for key, val in target_perms_dict_typed.items():

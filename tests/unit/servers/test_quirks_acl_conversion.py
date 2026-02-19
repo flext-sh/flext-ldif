@@ -10,6 +10,7 @@ from __future__ import annotations
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
+
 from tests import s
 from tests.conftest import FlextLdifFixtures
 

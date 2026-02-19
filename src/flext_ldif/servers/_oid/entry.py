@@ -679,7 +679,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         metadata = m.Ldif.QuirkMetadata.create_for(
             self._get_server_type(),
-            extensions=extensions_data,
+            extensions=m.Ldif.DynamicMetadata.from_dict(extensions_data),
         )
 
         for attr_name, conv_data in boolean_conversions.items():
@@ -915,11 +915,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return
 
         parent = self._get_parent_quirk_safe()
-        if parent is None:
-            return
-        acl_quirk = getattr(parent, "_acl_quirk", None)
-        if not acl_quirk:
-            return
+        acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
 
         acl_list = (
             list(orclaci_values)
@@ -931,7 +927,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if not isinstance(acl_value, str):
                 continue
             self._extract_acl_metadata_from_string(acl_value, current_extensions)
-            self._merge_parsed_acl_extensions(acl_quirk, acl_value, current_extensions)
+            if acl_quirk is not None:
+                self._merge_parsed_acl_extensions(
+                    acl_quirk,
+                    acl_value,
+                    current_extensions,
+                )
 
     def _hook_finalize_entry_parse(
         self,
@@ -951,6 +952,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 "oid",
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+            )
+        elif entry.metadata.quirk_type != "oid":
+            entry.metadata = entry.metadata.model_copy(
+                update={"quirk_type": "oid"},
             )
 
         current_extensions: dict[str, t.MetadataAttributeValue] = (

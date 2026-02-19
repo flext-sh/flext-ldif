@@ -22,10 +22,10 @@ from flext_ldif.utilities import u
 
 TUPLE_LENGTH_PAIR = 2
 _TSchemaItem = TypeVar("_TSchemaItem", m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
-_TConvertedModel = (
+type _TConvertedModel = (
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 )
-_TSchemaConversionValue = (
+type _TSchemaConversionValue = (
     m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
 )
 
@@ -818,11 +818,13 @@ class FlextLdifConversion(
                         update={"attributes": new_attributes}
                     )
 
-            if converted_entry.dn:
-                dn_val = converted_entry.dn.value.lower()
+            entry_dn_model = converted_entry.dn
+            if entry_dn_model is not None:
+                dn_value = entry_dn_model.value
+                dn_val = dn_value.lower()
                 if source_type_norm == "oid" and target_type_norm == "rfc":
                     if "cn=subschemasubentry" in dn_val:
-                        new_dn_val = converted_entry.dn.value.replace(
+                        new_dn_val = dn_value.replace(
                             "cn=subschemasubentry", "cn=schema"
                         )
                         converted_entry = converted_entry.model_copy(
@@ -833,9 +835,7 @@ class FlextLdifConversion(
                     and target_type_norm == "oid"
                     and "cn=schema" in dn_val
                 ):
-                    new_dn_val = converted_entry.dn.value.replace(
-                        "cn=schema", "cn=subschemasubentry"
-                    )
+                    new_dn_val = dn_value.replace("cn=schema", "cn=subschemasubentry")
                     converted_entry = converted_entry.model_copy(
                         update={"dn": m.Ldif.DN(value=new_dn_val)}
                     )
@@ -989,13 +989,27 @@ class FlextLdifConversion(
             write_attr = source_schema.write_attribute
             parse_attr = target_schema.parse_attribute
 
+            def _parse_attribute_pipeline(
+                _target_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+                ldif: str,
+            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
+                parse_result = parse_attr(ldif)
+                if parse_result.is_failure:
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail(parse_result.error or "Failed to parse attribute")
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
+                ].ok(parse_result.value)
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: write_attr(attribute),
-                parse_method=lambda _t, ldif: cast(
-                    "r[p.Ldif.SchemaAttributeProtocol]", parse_attr(ldif)
-                ),
+                parse_method=_parse_attribute_pipeline,
                 item_name="attribute",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
@@ -1054,13 +1068,27 @@ class FlextLdifConversion(
             write_oc = source_schema.write_objectclass
             parse_oc = target_schema.parse_objectclass
 
+            def _parse_objectclass_pipeline(
+                _target_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+                ldif: str,
+            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
+                parse_result = parse_oc(ldif)
+                if parse_result.is_failure:
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail(parse_result.error or "Failed to parse objectclass")
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
+                ].ok(parse_result.value)
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=lambda _s: write_oc(objectclass),
-                parse_method=lambda _t, ldif: cast(
-                    "r[p.Ldif.SchemaObjectClassProtocol]", parse_oc(ldif)
-                ),
+                parse_method=_parse_objectclass_pipeline,
                 item_name="objectclass",
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
@@ -1132,7 +1160,7 @@ class FlextLdifConversion(
             }
         else:
             normalized_orig_perms = {}
-        mapped_perms = FlextLdifConversion.map_oid_to_oud_permissions(
+        mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(
             normalized_orig_perms,
         )
         oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1150,7 +1178,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[dict[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
-        mapped_perms = FlextLdifConversion.map_oud_to_oid_permissions(
+        mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
             orig_perms_dict,
         )
         oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
@@ -1565,36 +1593,6 @@ class FlextLdifConversion(
                 f"Acl conversion failed: {e}",
             )
 
-    @staticmethod
-    def _try_write_schema_item(
-        source_quirk: FlextLdifServersBase,
-        schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        write_method: Callable[
-            [
-                p.Ldif.SchemaQuirkProtocol,
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-            ],
-            r[str],
-        ],
-        fallback: str
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | t.MetadataAttributeValue,
-    ) -> r[
-        str
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | t.MetadataAttributeValue
-    ]:
-        """Try writing schema item, return fallback on error."""
-        try:
-            schema_quirk = _get_schema_quirk(source_quirk)
-            write_result = write_method(schema_quirk, schema_item)
-
-            return r.ok(write_result.map_or(fallback))
-        except TypeError:
-            return r[str].ok(fallback)
-
     def _write_attribute_to_rfc(
         self,
         source: str | FlextLdifServersBase,
@@ -1612,13 +1610,12 @@ class FlextLdifConversion(
             return r[str].ok(source_attr)
 
         source_quirk = self._resolve_quirk(source)
+        try:
+            schema_quirk = _get_schema_quirk(source_quirk)
+        except TypeError:
+            return r[str].ok(source_attr)
 
-        return FlextLdifConversion._try_write_schema_item(
-            source_quirk,
-            source_attr,
-            lambda s, attr: s.write_attribute(attr),
-            source_attr,
-        )
+        return r.ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
 
     @staticmethod
     def _schema_conversion_fail(
@@ -1738,12 +1735,13 @@ class FlextLdifConversion(
             raise TypeError(msg)
 
         source_quirk = self._resolve_quirk(source)
+        try:
+            schema_quirk = _get_schema_quirk(source_quirk)
+        except TypeError:
+            return r[_TSchemaConversionValue].ok(source_oc)
 
-        write_result = FlextLdifConversion._try_write_schema_item(
-            source_quirk,
-            source_oc,
-            lambda s, oc: s.write_objectclass(oc),
-            source_oc,
+        write_result: r[_TSchemaConversionValue] = r[_TSchemaConversionValue].ok(
+            schema_quirk.write_objectclass(source_oc).map_or(source_oc)
         )
         write_value = write_result.map_or(None)
         if write_value is not None and isinstance(write_value, str):
@@ -2189,7 +2187,7 @@ class FlextLdifConversion(
 
         attr_result = parse_attr(test_attr_def)
 
-        if isinstance(attr_result, r) and attr_result.is_success:
+        if isinstance(attr_result, FlextResult) and attr_result.is_success:
             support["attribute"] = 1
 
         return support
@@ -2217,7 +2215,7 @@ class FlextLdifConversion(
             return support
 
         oc_result = parse_oc(test_oc_def)
-        if isinstance(oc_result, r) and oc_result.map_or(None) is not None:
+        if isinstance(oc_result, FlextResult) and oc_result.map_or(None) is not None:
             support["objectclass"] = 1
 
         return support

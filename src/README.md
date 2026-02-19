@@ -1,5 +1,30 @@
 # FLEXT-LDIF Source Code
 
+
+<!-- TOC START -->
+- [Architecture Overview](#architecture-overview)
+- [Package Structure](#package-structure)
+- [Key Design Principles](#key-design-principles)
+  - [Clean Architecture Compliance](#clean-architecture-compliance)
+  - [Domain-Driven Design](#domain-driven-design)
+  - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
+- [Module Responsibilities](#module-responsibilities)
+  - [Core Business Logic](#core-business-logic)
+  - [Infrastructure Implementation](#infrastructure-implementation)
+  - [User Interfaces](#user-interfaces)
+  - [Cross-cutting Concerns](#cross-cutting-concerns)
+- [Development Standards](#development-standards)
+  - [Code Quality Requirements](#code-quality-requirements)
+  - [Code Standards](#code-standards)
+  - [Integration](#integration)
+- [Usage Examples](#usage-examples)
+  - [Direct Module Usage](#direct-module-usage)
+  - [Recommended Public API](#recommended-public-api)
+- [Future Architecture Migration](#future-architecture-migration)
+- [Contributing](#contributing)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 This directory contains the source code for the FLEXT-LDIF library, organized following Clean Architecture and Domain-Driven Design principles.
 
 ## Architecture Overview

@@ -1,5 +1,23 @@
 # FLEXT-LDIF Architecture
 
+
+<!-- TOC START -->
+- [Architectural Goals](#architectural-goals)
+- [Package Layout](#package-layout)
+- [Core Components](#core-components)
+  - [Facade (`api.py`)](#facade-apipy)
+  - [Service Base (`base.py`)](#service-base-basepy)
+  - [Services (`services/`)](#services-services)
+  - [Quirks (`services/server.py` and `servers/`)](#quirks-servicesserverpy-and-servers)
+  - [Models and Typing](#models-and-typing)
+- [Control Flow Examples](#control-flow-examples)
+  - [Parsing LDIF Text](#parsing-ldif-text)
+  - [Writing LDIF Text](#writing-ldif-text)
+  - [Migration and Conversion](#migration-and-conversion)
+- [Extensibility and Quality Considerations](#extensibility-and-quality-considerations)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 **Version**: 0.9.0 | **Updated**: 2025-02-17
 
 This document describes the architecture in `src/flext_ldif`. It connects the

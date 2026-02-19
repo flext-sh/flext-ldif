@@ -1,5 +1,41 @@
 # Phase 2.1 - Parser Service Extraction
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Operations Extracted](#operations-extracted)
+  - [1. `parse()` - Unified parsing with single/batch/pagination support](#1-parse-unified-parsing-with-singlebatchpagination-support)
+  - [2. `parse_schema_ldif()` - Schema LDIF parsing](#2-parseschemaldif-schema-ldif-parsing)
+  - [3. `parse_with_auto_detection()` - Automatic server type detection](#3-parsewithautodetection-automatic-server-type-detection)
+  - [4. `parse_relaxed()` - Lenient parsing for broken files](#4-parserelaxed-lenient-parsing-for-broken-files)
+  - [5. `detect_server_type()` - Manual server type detection](#5-detectservertype-manual-server-type-detection)
+  - [6. `get_effective_server_type()` - Server type resolution](#6-geteffectiveservertype-server-type-resolution)
+- [Architecture](#architecture)
+  - [Service Design](#service-design)
+  - [Dependencies](#dependencies)
+  - [Design Principles Applied](#design-principles-applied)
+- [Integration Plan](#integration-plan)
+  - [Step 1: Update api.py to use parser service](#step-1-update-apipy-to-use-parser-service)
+  - [Step 2: Remove original implementations from api.py](#step-2-remove-original-implementations-from-apipy)
+  - [Step 3: Update services/**init**.py](#step-3-update-servicesinitpy)
+  - [Step 4: Update imports in api.py](#step-4-update-imports-in-apipy)
+- [Quality Assurance](#quality-assurance)
+  - [Type Safety](#type-safety)
+  - [Error Handling](#error-handling)
+  - [Documentation](#documentation)
+  - [FLEXT Compliance](#flext-compliance)
+- [Testing Requirements](#testing-requirements)
+  - [Unit Tests Required](#unit-tests-required)
+  - [Integration Tests Required](#integration-tests-required)
+- [Benefits](#benefits)
+  - [Code Quality](#code-quality)
+  - [Architecture](#architecture)
+  - [Future Extensibility](#future-extensibility)
+- [Next Steps](#next-steps)
+- [Related Phases](#related-phases)
+- [Success Criteria](#success-criteria)
+<!-- TOC END -->
+
 **Date**: 2025-01-29
 **Status**: Complete - Ready for Integration
 **Goal**: Extract all parsing operations from FlextLdif facade into dedicated FlextLdifParser

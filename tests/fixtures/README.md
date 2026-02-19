@@ -1,5 +1,25 @@
 # LDIF Fixture Documentation
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Fixture Sources and Licensing](#fixture-sources-and-licensing)
+  - [RFC Fixtures](#rfc-fixtures)
+  - [OID/OUD Fixtures](#oidoud-fixtures)
+  - [OpenLDAP 2 Fixtures](#openldap-2-fixtures)
+- [Using Fixtures in Tests](#using-fixtures-in-tests)
+  - [Loading Fixtures](#loading-fixtures)
+  - [Running Tests with Fixtures](#running-tests-with-fixtures)
+  - [Pytest Markers](#pytest-markers)
+- [Helper Utilities](#helper-utilities)
+  - [Extract Schema Elements](#extract-schema-elements)
+  - [Validate Fixtures](#validate-fixtures)
+- [Example Test Pattern](#example-test-pattern)
+- [Fixture Content](#fixture-content)
+- [Best Practices](#best-practices)
+- [Fixture Validation](#fixture-validation)
+<!-- TOC END -->
+
 Comprehensive fixture collection for LDAP server testing and quirks validation.
 
 ## Overview

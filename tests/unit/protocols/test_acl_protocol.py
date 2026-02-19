@@ -10,12 +10,11 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
-from tests import s
-
 from flext_ldif.constants import c
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
+from tests import s
 
 
 # Test scenario enums

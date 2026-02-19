@@ -20,8 +20,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from flext_tests.constants import FlextTestsConstants
-
 from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
@@ -29,6 +27,7 @@ from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_tests.constants import FlextTestsConstants
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):

@@ -4,7 +4,6 @@ This module tests parser-writer roundtrip functionality including basic
 transformations, complex LDIF structures, file I/O, error handling, performance
 benchmarks, and edge cases with different LDAP server implementations.
 """
-# type: ignore
 
 from __future__ import annotations
 
@@ -15,11 +14,11 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import tm, tt, u
-
 from flext_ldif import FlextLdifParser, FlextLdifWriter
 from flext_ldif.models import m
 from flext_ldif.protocols import p
+from flext_tests import tm, tt, u
+
 from tests import OIDs, Syntax, c
 
 

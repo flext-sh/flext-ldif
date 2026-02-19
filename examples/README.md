@@ -1,5 +1,37 @@
 # FLEXT-LDIF Examples
 
+
+<!-- TOC START -->
+- [Library Usage Examples](#library-usage-examples)
+- [🎯 Example Overview](#-example-overview)
+  - [01_basic_usage.py - Core API Operations](#01basicusagepy-core-api-operations)
+  - [02_entry_operations.py - Entry Building & Manipulation](#02entryoperationspy-entry-building-manipulation)
+  - [03_validation_analysis.py - Validation & Analytics](#03validationanalysispy-validation-analytics)
+  - [04_server_migration.py - Server-Specific Operations](#04servermigrationpy-server-specific-operations)
+  - [05_schema_operations.py - Schema Building & Validation](#05schemaoperationspy-schema-building-validation)
+  - [06_acl_processing.py - ACL Operations](#06aclprocessingpy-acl-operations)
+  - [07_advanced_processing.py - Processors & Utilities](#07advancedprocessingpy-processors-utilities)
+  - [08_complete_workflow.py - Real-World Integration](#08completeworkflowpy-real-world-integration)
+- [🚀 Usage Patterns](#-usage-patterns)
+- [📖 Learning Path](#-learning-path)
+- [🎓 Example Features](#-example-features)
+  - [✅ What These Examples Are](#-what-these-examples-are)
+  - [❌ What These Examples Are NOT](#-what-these-examples-are-not)
+- [📝 Sample LDIF Files](#-sample-ldif-files)
+- [🔍 Finding Functionality](#-finding-functionality)
+- [🛠️ API Surface Coverage](#-api-surface-coverage)
+  - [Core Operations (Example 01)](#core-operations-example-01)
+  - [Entry Operations (Example 02)](#entry-operations-example-02)
+  - [Validation & Analysis (Example 03)](#validation-analysis-example-03)
+  - [Server Operations (Example 04)](#server-operations-example-04)
+  - [Schema Operations (Example 05)](#schema-operations-example-05)
+  - [ACL Operations (Example 06)](#acl-operations-example-06)
+  - [Advanced Operations (Example 07)](#advanced-operations-example-07)
+  - [Namespace Access (Example 08)](#namespace-access-example-08)
+- [💡 Tips](#-tips)
+- [🤝 Contributing](#-contributing)
+<!-- TOC END -->
+
 This directory contains examples demonstrating the functionality of the flext-ldif library.
 
 ## Library Usage Examples

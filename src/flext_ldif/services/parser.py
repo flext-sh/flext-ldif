@@ -138,11 +138,20 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         )
         if batch_result.is_success:
             processed_value = batch_result.value
+            processed_list: list[list[str]] = []
             if isinstance(processed_value, dict) and "results" in processed_value:
-                processed_list = processed_value["results"]
-                for entry_lines in processed_list:
-                    if isinstance(entry_lines, list):
-                        ldif_lines.extend([str(line) for line in entry_lines])
+                results_value = processed_value["results"]
+                if isinstance(results_value, list):
+                    processed_list = [
+                        entry for entry in results_value if isinstance(entry, list)
+                    ]
+            elif isinstance(processed_value, list):
+                processed_list = [
+                    entry for entry in processed_value if isinstance(entry, list)
+                ]
+
+            for entry_lines in processed_list:
+                ldif_lines.extend([str(line) for line in entry_lines])
 
         content = "\n".join(ldif_lines)
 

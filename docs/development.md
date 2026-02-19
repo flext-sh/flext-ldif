@@ -1,5 +1,29 @@
 # FLEXT-LDIF Development Guide
 
+
+<!-- TOC START -->
+- [Development Environment Setup](#development-environment-setup)
+  - [Prerequisites](#prerequisites)
+  - [Initial Setup](#initial-setup)
+  - [Development Commands](#development-commands)
+- [LDIF Processing Architecture](#ldif-processing-architecture)
+  - [Current Implementation (v0.9.9)](#current-implementation-v099)
+  - [LDIF-Specific Development Patterns](#ldif-specific-development-patterns)
+- [Testing LDIF Functionality](#testing-ldif-functionality)
+  - [LDIF Test Data](#ldif-test-data)
+  - [Memory Usage Testing](#memory-usage-testing)
+- [Performance Considerations](#performance-considerations)
+  - [Current Limitations](#current-limitations)
+  - [Performance Guidelines](#performance-guidelines)
+- [Contributing Guidelines](#contributing-guidelines)
+  - [LDIF-Specific Code Review](#ldif-specific-code-review)
+  - [Future Development Priorities](#future-development-priorities)
+- [Common LDIF Development Issues](#common-ldif-development-issues)
+  - [LDIF Format Edge Cases](#ldif-format-edge-cases)
+  - [Memory Debugging](#memory-debugging)
+- [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
+<!-- TOC END -->
+
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This guide covers LDIF-specific development workflows and technical considerations for contributing to FLEXT-LDIF.

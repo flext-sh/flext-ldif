@@ -11,12 +11,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import GenericFieldsDict, p, s
-
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers.oid import FlextLdifServersOid
+from tests import GenericFieldsDict, p, s
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py

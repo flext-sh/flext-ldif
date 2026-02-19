@@ -159,12 +159,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         metadata_extensions: dict[str, list[str] | str | bool | None] = {}
         extensions_raw = parsed.get("metadata_extensions")
         if isinstance(extensions_raw, dict):
-            metadata_extensions.update({
-                k: v
-                for k, v in extensions_raw.items()
-                if isinstance(k, str)
-                and (isinstance(v, (str, bool, list)) or v is None)
-            })
+            for key, value in extensions_raw.items():
+                if not isinstance(key, str):
+                    continue
+                if isinstance(value, (str, bool)) or value is None:
+                    metadata_extensions[key] = value
+                    continue
+                if isinstance(value, list) and all(
+                    isinstance(item, str) for item in value
+                ):
+                    metadata_extensions[key] = [
+                        item for item in value if isinstance(item, str)
+                    ]
 
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
@@ -194,9 +200,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             _server_type=server_type,
         )
 
+        attr_name = self._to_optional_str(parsed.get("name"))
+        if attr_name is None:
+            attr_name = self._to_required_str(parsed.get("oid"))
+
         attr_model = m.Ldif.SchemaAttribute(
             oid=self._to_required_str(parsed.get("oid")),
-            name=self._to_optional_str(parsed.get("name")),
+            name=attr_name,
             desc=self._to_optional_str(parsed.get("desc")),
             equality=self._to_optional_str(parsed.get("equality")),
             ordering=self._to_optional_str(parsed.get("ordering")),
@@ -541,7 +551,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_model: None = None,
         oc_model: None = None,
         operation: str | None = None,
-    ) -> object: ...
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(
@@ -552,7 +562,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_model: None = None,
         oc_model: None = None,
         operation: str | None = None,
-    ) -> object: ...
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(

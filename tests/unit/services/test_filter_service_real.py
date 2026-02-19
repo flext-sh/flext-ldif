@@ -24,10 +24,10 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import tt
-
 from flext_ldif import FlextLdif
 from flext_ldif._utilities.filters import Filter
+from flext_tests import tt
+
 from tests import Filters, c, p
 
 

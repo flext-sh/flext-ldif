@@ -1,5 +1,16 @@
 # Melhorias Aplicadas - Literals e Enums em tests/helpers
 
+
+<!-- TOC START -->
+- [Resumo das Melhorias](#resumo-das-melhorias)
+  - [✅ tests/helpers/constants.py](#-testshelpersconstantspy)
+  - [✅ tests/helpers/test_rfc_helpers.py](#-testshelperstestrfchelperspy)
+- [Padrões Aplicados](#padres-aplicados)
+- [Validações](#validaes)
+- [Estatísticas](#estatsticas)
+- [Observações](#observaes)
+<!-- TOC END -->
+
 ## Resumo das Melhorias
 
 ### ✅ tests/helpers/constants.py

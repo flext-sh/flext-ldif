@@ -10,10 +10,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
 from flext_ldif import FlextLdifConstants
 from flext_ldif.constants import c
+from tests import s
 
 
 class TestsTestFlextLdifConstants(s):

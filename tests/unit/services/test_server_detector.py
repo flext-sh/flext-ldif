@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 import pytest
-from flext_tests import tm
-
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.settings import FlextLdifSettings
+from flext_tests import tm
+
 from tests import c, m, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

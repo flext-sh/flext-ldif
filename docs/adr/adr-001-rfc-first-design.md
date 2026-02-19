@@ -1,5 +1,10 @@
 # ADR-001: RFC-First Design with Zero Bypass Paths
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Status**: Accepted
 
 **Date**: 2025-10-10

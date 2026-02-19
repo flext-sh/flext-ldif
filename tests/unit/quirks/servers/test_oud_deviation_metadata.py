@@ -10,11 +10,10 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
 from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oud import FlextLdifServersOud
+from tests import s
 
 # =============================================================================
 # TEST SCENARIO ENUMS & CONSTANTS

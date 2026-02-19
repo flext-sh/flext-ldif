@@ -1,5 +1,40 @@
 # FLEXT-LDIF Test Suite
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Test Organization](#test-organization)
+  - [Test Categories (Pytest Markers)](#test-categories-pytest-markers)
+  - [Test File Structure](#test-file-structure)
+- [Test Categories](#test-categories)
+  - [Unit Tests (`test_*_unit.py`)](#unit-tests-testunitpy)
+  - [Integration Tests (`test_*_integration.py`)](#integration-tests-testintegrationpy)
+  - [End-to-End Tests (`test_e2e_*.py`)](#end-to-end-tests-teste2epy)
+  - [LDIF-Specific Tests (`test_*_ldif.py`)](#ldif-specific-tests-testldifpy)
+  - [Performance Tests (`test_*_performance.py`)](#performance-tests-testperformancepy)
+- [Test Fixtures and Utilities](#test-fixtures-and-utilities)
+  - [Core Fixtures (`conftest.py`)](#core-fixtures-conftestpy)
+  - [Docker Integration Fixtures (`docker_fixtures.py`)](#docker-integration-fixtures-dockerfixturespy)
+- [Test Data Management](#test-data-management)
+  - [Sample LDIF Files](#sample-ldif-files)
+  - [Test Data Generation](#test-data-generation)
+- [Quality Assurance](#quality-assurance)
+  - [Coverage Requirements](#coverage-requirements)
+  - [Coverage Validation](#coverage-validation)
+  - [Quality Gates](#quality-gates)
+- [Performance Benchmarks](#performance-benchmarks)
+  - [Benchmark Targets](#benchmark-targets)
+  - [Benchmark Execution](#benchmark-execution)
+- [Development Workflow](#development-workflow)
+  - [Running Tests During Development](#running-tests-during-development)
+  - [Test-Driven Development](#test-driven-development)
+- [Continuous Integration](#continuous-integration)
+  - [CI Pipeline Integration](#ci-pipeline-integration)
+  - [Quality Metrics](#quality-metrics)
+- [Contributing Guidelines](#contributing-guidelines)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 This directory contains the test suite for FLEXT-LDIF, implementing testing standards with multiple test categories, fixtures, and quality validation patterns.
 
 ## Overview
@@ -297,16 +332,18 @@ uid: user{i:05d}
 ### Coverage Validation
 
 ```bash
-# Generate coverage report
-pytest --cov=src/flext_ldif --cov-report=html --cov-report=term-missing
+# Run tests with coverage (thresholds configured in pyproject.toml)
+make test
 
-# Enforce coverage thresholds
-pytest --cov=src/flext_ldif --cov-fail-under=90
+# Generate HTML coverage report
+pytest --cov --cov-report=html --cov-report=term-missing
 
 # Generate coverage by test category
-pytest -m unit --cov=src/flext_ldif --cov-report=term
-pytest -m integration --cov=src/flext_ldif --cov-report=term
+pytest -m unit --cov --cov-report=term
+pytest -m integration --cov --cov-report=term
 ```
+
+> Coverage thresholds are configured in `pyproject.toml` under `[tool.coverage.report]`.
 
 ### Quality Gates
 

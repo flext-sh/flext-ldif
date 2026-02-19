@@ -26,23 +26,29 @@ class FlextLdifUtilitiesParser:
         metadata: m.Ldif.DynamicMetadata,
     ) -> dict[str, list[str]]:
         """Extract extension information from parsed metadata."""
+
+        def _as_str_list(value: t.MetadataAttributeValue) -> list[str] | None:
+            if isinstance(value, list) and all(isinstance(item, str) for item in value):
+                return [item for item in value if isinstance(item, str)]
+            return None
+
         if metadata is None:
             return {}
         result = metadata.get("extensions")
         if result is None or not isinstance(result, dict):
-            extensions: dict[str, list[str]] = {
-                k: v
-                for k, v in metadata.items()
-                if isinstance(v, list) and all(isinstance(i, str) for i in v)
-            }
+            extensions: dict[str, list[str]] = {}
+            for key, value in metadata.items():
+                str_list = _as_str_list(value)
+                if str_list is not None:
+                    extensions[key] = str_list
             return extensions
 
         # Ensure result is strictly dict[str, list[str]]
-        strict_result: dict[str, list[str]] = {
-            k: v
-            for k, v in result.items()
-            if isinstance(v, list) and all(isinstance(i, str) for i in v)
-        }
+        strict_result: dict[str, list[str]] = {}
+        for key, value in result.items():
+            str_list = _as_str_list(value)
+            if str_list is not None:
+                strict_result[key] = str_list
         return strict_result
 
     @staticmethod

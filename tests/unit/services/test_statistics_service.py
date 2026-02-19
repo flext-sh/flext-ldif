@@ -7,16 +7,17 @@ handling with consolidated parametrized tests and helper methods.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
-
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_tests import tm
+
 from tests import c, m, s
 
 
@@ -489,7 +490,7 @@ class TestsTestFlextLdifStatistics(s):
             tm.ok(result)
             stats = result.value
             assert stats.total_entries == 0
-            assert stats.rejection_rate == 0.0
+            assert math.isclose(stats.rejection_rate, 0.0)
 
         def test_generate_statistics_handles_missing_attributes_key(self) -> None:
             """Test handling of entries without attributes key."""
@@ -603,7 +604,7 @@ class TestsTestFlextLdifStatistics(s):
             stats = result.value
             assert stats.total_entries == 10
             assert stats.rejection_count == 10
-            assert stats.rejection_rate == 1.0
+            assert math.isclose(stats.rejection_rate, 1.0)
 
     class TestCalculateForEntries:
         """Test calculate_for_entries method for entry-level statistics."""

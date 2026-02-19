@@ -20,12 +20,11 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings
-from flext_tests import FlextTestsDocker
-from ldap3 import ALL, Connection, Server
-
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
+from flext_tests import FlextTestsDocker
+from ldap3 import ALL, Connection, Server
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 # Use unified test helpers from tests/__init__.py instead of deprecated helpers
@@ -90,7 +89,7 @@ class FlextLdifTestConftest:
         Uses the FLEXT workspace root to ensure compose file paths
         are resolved correctly regardless of which project runs the tests.
         """
-        workspace_root = Path("/home/marlonsc/flext")
+        workspace_root = Path(__file__).resolve().parents[4]
         return FlextTestsDocker(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
@@ -223,7 +222,7 @@ class FlextLdifTestConftest:
         if start_result.is_failure:
             pytest.skip(
                 f"Container {container_name} not found. "
-                f"Start it manually with: cd /home/marlonsc/flext/docker && "
+                f"Start it manually with: cd {Path(__file__).resolve().parents[4] / 'docker'} && "
                 f"docker compose -f docker-compose.openldap.yml up -d",
             )
 

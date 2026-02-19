@@ -1,5 +1,10 @@
 # ADR-005: Pluggable Quirks System
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Status**: Accepted
 
 **Date**: 2025-10-10

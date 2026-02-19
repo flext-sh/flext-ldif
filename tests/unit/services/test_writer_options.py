@@ -14,13 +14,13 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextSettings
-from flext_tests import tm
-
 from flext_ldif import FlextLdifWriter
 from flext_ldif.constants import c as lib_c
 from flext_ldif.protocols import p
 from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import FlextLdifUtilities
+from flext_tests import tm
+
 from tests import c, m, s
 
 
@@ -33,7 +33,7 @@ class TestsFlextLdifWriterOptions(s):
 
 def config_to_write_options(
     config: FlextLdifSettings,
-) -> m.WriteFormatOptions | m.WriteOptions:
+) -> m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions:
     """Convert FlextLdifSettings to WriteOptions or WriteFormatOptions."""
     # Check if WriteFormatOptions fields are present
     has_format_options = any(
@@ -64,10 +64,10 @@ def config_to_write_options(
                     (bool, int, str, list, frozenset, dict),
                 ):
                     format_opts_dict[model_key] = value
-        return m.WriteFormatOptions.model_validate(format_opts_dict)
+        return m.Ldif.WriteFormatOptions.model_validate(format_opts_dict)
 
     # Create basic WriteOptions
-    return m.WriteOptions(
+    return m.Ldif.WriteOptions(
         format="rfc2849",
         base_dn=None,
         hidden_attrs=[],
@@ -290,7 +290,7 @@ class TestsFlextLdifWriterFormatOptions(s):
             )
         )
 
-        options: m.WriteFormatOptions | m.WriteOptions
+        options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions
         if has_format_options:
             # Create WriteFormatOptions from config_overrides
             format_opts_dict: dict[str, object] = {}
@@ -299,7 +299,7 @@ class TestsFlextLdifWriterFormatOptions(s):
                     value = config_overrides[config_key]
                     if isinstance(value, (bool, int, str, list, frozenset, dict)):
                         format_opts_dict[model_key] = value
-            options = m.WriteFormatOptions.model_validate(format_opts_dict)
+            options = m.Ldif.WriteFormatOptions.model_validate(format_opts_dict)
         else:
             # Create basic WriteOptions
             sort_entries_raw = config_overrides.get("ldif_write_sort_attributes", False)
@@ -326,7 +326,7 @@ class TestsFlextLdifWriterFormatOptions(s):
                 if isinstance(base64_encode_binary_raw, (bool, int))
                 else False
             )
-            options = m.WriteOptions(
+            options = m.Ldif.WriteOptions(
                 format="rfc2849",
                 sort_entries=sort_entries,
                 include_comments=include_comments,

@@ -595,7 +595,7 @@ class FlextFunctional:
             return default
 
         if isinstance(target_type, type) and isinstance(value, target_type):
-            return value
+            return u.Mapper.narrow_to_general_value_type(value)
 
         try:
             return cls._convert_with_target(value, target_type, default)

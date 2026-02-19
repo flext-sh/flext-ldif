@@ -125,7 +125,9 @@ class FlextLdifUtilitiesObjectClass:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
             # Parse to dict first
-            parsed_dict = FlextLdifUtilitiesSchema.parse_objectclass(definition)
+            parsed_dict: Mapping[str, t.GeneralValueType] = (
+                FlextLdifUtilitiesSchema.parse_objectclass(definition)
+            )
 
             # Apply server-specific parsing hook if provided
             if parse_parts_hook is not None:

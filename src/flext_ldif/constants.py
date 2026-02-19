@@ -1462,6 +1462,7 @@ class FlextLdifConstants(FlextConstants):
             ACL_DENY_GROUP_OVERRIDE: Final[str] = "deny_group_override"
             ACL_APPEND_TO_ALL: Final[str] = "append_to_all"
             ACL_BIND_IP_FILTER: Final[str] = "bind_ip_filter"
+            ACL_BIND_IP: Final[str] = ACL_BIND_IP_FILTER
             ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = "constrain_to_added_object"
 
             ACL_DN_ATTR: Final[str] = "dn_attr"

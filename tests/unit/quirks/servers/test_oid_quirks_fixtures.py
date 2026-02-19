@@ -11,9 +11,8 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from tests import s
-
 from flext_ldif import FlextLdif
+from tests import s
 
 from .test_utils import FlextLdifTestUtils
 

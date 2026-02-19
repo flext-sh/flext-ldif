@@ -103,7 +103,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 for k, vs in entry_attrs.attributes.attributes.items()
             }
 
-        result = super().parse_entry(entry_dn, entry_attrs_dict)
+        result = self._create_entry(entry_dn, entry_attrs_dict)
         if result.is_failure:
             return result
 
@@ -115,12 +115,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if isinstance(attr_name, str):
                     original_attribute_case[attr_name.lower()] = attr_name
 
+        original_attr_lines: list[str] = []
+        for attr_name, attr_values in entry_attrs_dict.items():
+            original_name = original_attribute_case.get(attr_name.lower(), attr_name)
+            original_attr_lines.extend(
+                f"{original_name}: {value}" for value in attr_values
+            )
+
         metadata_config = FlextLdifModelsSettings.EntryParseMetadataConfig(
             quirk_type="oud",
             original_entry_dn=entry_dn,
             cleaned_dn=entry.dn.value if entry.dn else entry_dn,
             original_dn_line=f"dn: {entry_dn}",
-            original_attr_lines=[],
+            original_attr_lines=original_attr_lines,
             dn_was_base64=False,
             original_attribute_case=original_attribute_case,
         )
@@ -130,7 +137,56 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         entry.metadata = metadata
 
+        post_result = self._hook_post_parse_entry(entry)
+        if post_result.is_failure:
+            return post_result
+        entry = post_result.value
+
+        finalize_result = self._hook_finalize_entry_parse(
+            entry,
+            entry_dn,
+            entry_attrs_dict,
+        )
+        if finalize_result.is_failure:
+            return finalize_result
+        entry = finalize_result.value
+
         return FlextResult.ok(entry)
+
+    def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
+        """Parse entry lines and preserve OUD metadata during entry creation."""
+        dn: str = ""
+        attrs: dict[str, list[str]] = {}
+
+        for raw_line in lines:
+            line = raw_line.rstrip()
+            if not line or line.startswith("#"):
+                continue
+
+            if line.startswith(" ") and attrs:
+                last_key = list(attrs.keys())[-1]
+                if attrs[last_key]:
+                    attrs[last_key][-1] += line[1:]
+                continue
+
+            if ":" not in line:
+                continue
+
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+
+            if key.lower() == "dn":
+                dn = value
+            else:
+                if key not in attrs:
+                    attrs[key] = []
+                attrs[key].append(value)
+
+        if not dn:
+            return FlextResult[m.Ldif.Entry].fail("No DN found in entry")
+
+        return self.parse_entry(dn, attrs)
 
     def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
@@ -1210,7 +1266,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
 
         acl_quirk = FlextLdifServersOudAcl()
-        parse_result = acl_quirk.parse(aci_value)
+        normalized_aci = aci_value.strip()
+        if not normalized_aci.startswith("aci:"):
+            normalized_aci = f"aci: {normalized_aci}"
+
+        parse_result = acl_quirk.parse(normalized_aci)
         if parse_result.is_success:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:

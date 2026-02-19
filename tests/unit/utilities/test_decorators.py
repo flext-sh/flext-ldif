@@ -8,10 +8,9 @@ transformations through decorated methods.
 from __future__ import annotations
 
 from flext_core import FlextResult
-from tests import m, s
-
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif.protocols import p
+from tests import m, s
 
 
 class MockSchemaQuirk:

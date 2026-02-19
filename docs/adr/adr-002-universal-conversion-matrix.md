@@ -1,5 +1,10 @@
 # ADR-002: Universal Conversion Matrix Architecture
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Status**: Accepted
 
 **Date**: 2025-10-10

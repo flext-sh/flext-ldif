@@ -48,8 +48,8 @@ class FlextLdifModels(FlextModels):
     class Ldif:
         """LDIF namespace for cross-project access."""
 
-        EntryAttributesDict: TypeAlias = Mapping[str, list[str]]
-        RawEntryDict: TypeAlias = Mapping[str, str | list[str] | set[str]]
+        EntryAttributesDict: TypeAlias = dict[str, list[str]]
+        RawEntryDict: TypeAlias = dict[str, str | list[str] | set[str]]
 
         class AttributeTransformation(FlextLdifModelsDomains.AttributeTransformation):
             """Detailed tracking of attribute transformation operations."""

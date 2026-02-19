@@ -102,14 +102,7 @@ class FlextLdifUtilitiesDecorators:
             # This is a Pydantic model with metadata field
             # Use model_copy to create updated instance (respects validate_assignment)
             try:
-                updated_model = result_value.model_copy(update={"metadata": metadata})
-                # Replace the original reference if possible
-                if hasattr(result_value, "__dict__"):
-                    result_value.__dict__.update(updated_model.__dict__)
-                elif hasattr(result_value, "__slots__"):
-                    # For slotted classes, we can't easily update in-place
-                    # This is a limitation we'll work around by not updating slotted models
-                    pass
+                setattr(result_value, "metadata", metadata)
             except Exception as e:
                 # If model_copy fails, skip metadata attachment
                 # This is safe - metadata attachment is optional for frozen models
@@ -225,10 +218,25 @@ class FlextLdifUtilitiesDecorators:
         operation_name: str,
     ) -> t.Ldif.Decorators.WriteMethodDecorator:
         """Decorator to wrap write methods with standardized error handling."""
-        # Write methods also return FlextResult now in tests, so we reuse the same logic
-        # Cast to WriteMethodDecorator for typing compliance (they are structurally identical)
-        # However, WriteMethodArg/Return might differ slightly in alias but implementation is generic
-        return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
+
+        def decorator(
+            func: t.Ldif.Decorators.WriteMethod,
+        ) -> t.Ldif.Decorators.WriteMethod:
+            @wraps(func)
+            def wrapper(
+                self: object,
+                arg: t.Ldif.Decorators.WriteMethodArg,
+            ) -> t.Ldif.Decorators.WriteMethodReturn:
+                try:
+                    return func(self, arg)
+                except BaseException as e:
+                    error_msg = f"{operation_name} failed: {e}"
+                    logger.exception(error_msg, operation_name=operation_name)
+                    return None
+
+            return wrapper
+
+        return decorator
 
 
 # Use FlextLdifUtilitiesDecorators directly - no aliases needed

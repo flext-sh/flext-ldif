@@ -576,7 +576,7 @@ class FlextLdifUtilities(u_core):
 
         @staticmethod
         def process_list_items[R](
-            items: list[object] | tuple[object, ...],
+            items: Sequence[object],
             processor_func: Callable[..., R],
             predicate: Callable[..., bool] | None,
             on_error: str,
@@ -691,7 +691,10 @@ class FlextLdifUtilities(u_core):
             processor_func = processor_normalized
 
             if isinstance(items, dict):
-                dict_items: dict[str, t.GeneralValueType] = items  # INTENTIONAL CAST
+                dict_items: dict[str, t.GeneralValueType] = {
+                    key: u_core.Mapper.narrow_to_general_value_type(value)
+                    for key, value in items.items()
+                }
                 results = FlextLdifUtilities.Ldif.process_dict_items(
                     dict_items,
                     processor_func,
@@ -701,7 +704,7 @@ class FlextLdifUtilities(u_core):
                 )
                 return r[str].ok(results)
             if isinstance(items, (list, tuple)):
-                list_items: list[object] | tuple[object, ...] = items
+                list_items = items
                 return FlextLdifUtilities.Ldif.process_list_items(
                     list_items,
                     processor_func,
@@ -944,8 +947,14 @@ class FlextLdifUtilities(u_core):
                 "ensure_default": default_list,
             }
             result = cls.build(extracted, ops=ops)
-            if isinstance(result, (list, tuple)):
-                return list(result)
+            if isinstance(result, list):
+                return [
+                    u_core.Mapper.narrow_to_general_value_type(item) for item in result
+                ]
+            if isinstance(result, tuple):
+                return [
+                    u_core.Mapper.narrow_to_general_value_type(item) for item in result
+                ]
             result_typed = u_core.Mapper.narrow_to_general_value_type(result)
             return [result_typed]
 
@@ -1764,7 +1773,9 @@ class FlextLdifUtilities(u_core):
                 items = list(data_or_items.items())
                 sliced = items[:n] if from_start else items[-n:]
                 sliced_dict: dict[str, t.GeneralValueType] = {
-                    k: v for k, v in sliced if isinstance(k, str)
+                    key: u_core.Mapper.narrow_to_general_value_type(value)
+                    for key, value in sliced
+                    if isinstance(key, str)
                 }
                 return sliced_dict  # Overloads ensure type safety at call sites
             if isinstance(data_or_items, (list, tuple)):

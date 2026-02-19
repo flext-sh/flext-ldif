@@ -38,16 +38,21 @@ class FlextLdifMigrationPipeline(
         output_dir: Path | None = None,
         source_server: str = "rfc",
         target_server: str = "rfc",
+        source_server_type: str | None = None,
+        target_server_type: str | None = None,
         output_filename: str | None = None,
         **_kwargs: str | float | bool | None,
     ) -> None:
         """Initialize migration pipeline."""
         super().__init__()
 
+        effective_source_server = source_server_type or source_server
+        effective_target_server = target_server_type or target_server
+
         object.__setattr__(self, "_input_dir", input_dir)
         object.__setattr__(self, "_output_dir", output_dir)
-        object.__setattr__(self, "_source_server", source_server)
-        object.__setattr__(self, "_target_server", target_server)
+        object.__setattr__(self, "_source_server", effective_source_server)
+        object.__setattr__(self, "_target_server", effective_target_server)
         object.__setattr__(self, "_output_filename", output_filename)
         object.__setattr__(self, "_processing_pipeline", None)
 

@@ -1,5 +1,29 @@
 # Phase 2: Proper Service Layer Implementation
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Current Architecture Problem](#current-architecture-problem)
+  - [As Is](#as-is)
+- [Target Architecture](#target-architecture)
+  - [To Be](#to-be)
+- [Implementation Plan](#implementation-plan)
+  - [Phase 2.A: Design Service Layer Architecture](#phase-2a-design-service-layer-architecture)
+  - [Phase 2.B: Create FlextLdiifSchema](#phase-2b-create-flextldiifschema)
+  - [Phase 2.C: Create FlextLdifAcl](#phase-2c-create-flextldifacl)
+  - [Phase 2.D: Create EntryTransformationService](#phase-2d-create-entrytransformationservice)
+  - [Phase 2.E: Create ServerConfig Abstraction](#phase-2e-create-serverconfig-abstraction)
+  - [Phase 2.F: Integrate Services into Servers](#phase-2f-integrate-services-into-servers)
+- [Service Composition Pattern](#service-composition-pattern)
+- [Migration Path](#migration-path)
+  - [Step 1: Create ServiceConfig abstraction](#step-1-create-serviceconfig-abstraction)
+  - [Step 2: Create services with new functionality](#step-2-create-services-with-new-functionality)
+  - [Step 3: Integrate services gradually](#step-3-integrate-services-gradually)
+  - [Step 4: Deprecate nested classes](#step-4-deprecate-nested-classes)
+- [Success Criteria](#success-criteria)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 ## Overview
 
 Phase 2 refactors the flext-ldif architecture to create a proper service layer where business logic is centralized in services, and servers become configuration providers.

@@ -10,12 +10,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from flext_ldif.models import m
+from flext_ldif.servers.oid import FlextLdifServersOid
 from tests import s
 from tests.conftest import FlextLdifFixtures
 from tests.helpers.compat import TestDeduplicationHelpers
-
-from flext_ldif.models import m
-from flext_ldif.servers.oid import FlextLdifServersOid
 
 
 class TestsTestFlextLdifOidSchemaWriting(s):

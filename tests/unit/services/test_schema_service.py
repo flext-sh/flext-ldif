@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-
 from flext_ldif.models import m
 from flext_ldif.services.schema import FlextLdifSchema
+
 from tests import c, s
 
 # ════════════════════════════════════════════════════════════════════════════

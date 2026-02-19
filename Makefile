@@ -1,9 +1,10 @@
 # flext-ldif - LDIF Processing Library
 PROJECT_NAME := flext-ldif
-COV_DIR := flext_ldif
-MIN_COVERAGE := 65
-
+ifneq ("$(wildcard ../base.mk)", "")
 include ../base.mk
+else
+include base.mk
+endif
 
 # === PROJECT-SPECIFIC TARGETS ===
 .PHONY: ldif-parse ldif-validate ldif-config ldif-operations

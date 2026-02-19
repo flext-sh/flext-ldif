@@ -184,17 +184,21 @@ class FlextLdifSorting(
 
             entries_final = [e for e in config.entries if isinstance(e, m.Ldif.Entry)]
             acl_attrs_final = config.acl_attributes or []
-            return cls(
+            sorting_instance = cls(
                 entries=entries_final,
                 sort_target=config.target,
                 sort_by=strategy,
                 traversal=config.traversal,
-                custom_predicate=config.predicate,
                 sort_attributes=config.sort_attributes,
                 attribute_order=config.attribute_order,
                 sort_acl=config.sort_acl,
                 acl_attributes=acl_attrs_final,
-            ).execute()
+            )
+            if config.predicate is not None:
+                sorting_instance = sorting_instance.model_copy(
+                    update={"custom_predicate": config.predicate}
+                )
+            return sorting_instance.execute()
 
         entries_list = list(entries) if entries is not None else []
         target_str = target if target is not None else default_target
@@ -203,17 +207,21 @@ class FlextLdifSorting(
             acl_attributes if acl_attributes is not None else default_acl_attrs
         )
 
-        return cls(
+        sorting_instance = cls(
             entries=entries_list,
             sort_target=target_str,
             sort_by=by_str,
             traversal=traversal,
-            custom_predicate=predicate,
             sort_attributes=sort_attributes,
             attribute_order=attribute_order,
             sort_acl=sort_acl,
             acl_attributes=acl_attrs_list,
-        ).execute()
+        )
+        if predicate is not None:
+            sorting_instance = sorting_instance.model_copy(
+                update={"custom_predicate": predicate}
+            )
+        return sorting_instance.execute()
 
     @classmethod
     def by_hierarchy(
@@ -265,7 +273,9 @@ class FlextLdifSorting(
             entries=list(entries),
             sort_target=c.Ldif.SortTarget.ENTRIES.value,
             sort_by=c.Ldif.SortStrategy.CUSTOM.value,
-            custom_predicate=predicate,
+        )
+        sorting_instance = sorting_instance.model_copy(
+            update={"custom_predicate": predicate}
         )
         return sorting_instance.execute()
 

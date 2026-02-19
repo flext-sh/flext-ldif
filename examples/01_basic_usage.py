@@ -24,7 +24,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import FlextContext, r
-
 from flext_ldif import FlextLdif, m
 
 

@@ -264,7 +264,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_oid_permissions(
-        permissions: m.Ldif.DynamicMetadata,
+        permissions: FlextLdifModelsMetadata.DynamicMetadata | m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
         permission_names = {

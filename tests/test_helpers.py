@@ -18,16 +18,15 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from flext_core.result import r
+from flext_ldif import FlextLdif
+from flext_ldif.protocols import p
+from flext_ldif.services.entries import FlextLdifEntries
 from flext_tests import (
     FlextTestsFactories as tf_base,
     FlextTestsMatchers as tm_base,
     FlextTestsValidator as tv_base,
     tt as tt_base,
 )
-
-from flext_ldif import FlextLdif
-from flext_ldif.protocols import p
-from flext_ldif.services.entries import FlextLdifEntries
 
 
 class TestsFlextLdifMatchers(tm_base):

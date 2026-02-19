@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping, Sequence
-from typing import overload
+from typing import cast, overload
 
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -137,7 +137,7 @@ class _BooleanFlags(FlextLdifModelsBase):
 
 
 class _FlexibleCategories(
-    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+    FlextModelsCollections.Categories,
 ):
     model_config = ConfigDict(extra="allow", frozen=False)
 
@@ -149,17 +149,21 @@ class _FlexibleCategories(
     def __eq__(self, other: object) -> bool:
         if isinstance(other, _FlexibleCategories):
             return self.categories == other.categories
-        if isinstance(other, FlextModelsCollections.Categories):
-            return self.categories == other.categories
         if isinstance(other, dict):
             return self.categories == other
         return False
 
     def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
-        return iter(self.categories.items())
+        return cast(
+            "Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]",
+            iter(self.categories.items()),
+        )
 
     def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-        return iter(self.categories.values())
+        return cast(
+            "Iterator[list[FlextLdifModelsDomains.Entry]]",
+            iter(self.categories.values()),
+        )
 
     def keys(self) -> Iterator[str]:
         return iter(self.categories.keys())
@@ -168,14 +172,24 @@ class _FlexibleCategories(
         return category in self.categories
 
     def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
-        return self.categories[category]
+        return cast(
+            "list[FlextLdifModelsDomains.Entry]",
+            self.categories[category],
+        )
 
     def __setitem__(
         self,
         category: str,
-        entries: list[FlextLdifModelsDomains.Entry],
+        entries: Sequence[object],
     ) -> None:
-        self.categories[category] = entries
+        categories = cast(
+            "dict[str, list[FlextLdifModelsDomains.Entry]]", self.categories
+        )
+        categories[category] = [
+            entry
+            for entry in entries
+            if isinstance(entry, FlextLdifModelsDomains.Entry)
+        ]
 
 
 type _DynCategoriesInput = dict[str, list[FlextLdifModelsDomains.Entry]]
@@ -248,17 +262,10 @@ class FlextLdifModelsResults:
         @classmethod
         def _convert_dict_to_categories(
             cls,
-            value: _FlexibleCategories
-            | FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]
-            | _DynCategoriesInput,
+            value: _FlexibleCategories | _DynCategoriesInput,
         ) -> _FlexibleCategories:
             if isinstance(value, _FlexibleCategories):
                 return value
-            if isinstance(value, FlextModelsCollections.Categories):
-                result = _FlexibleCategories()
-                for cat, entries in value.categories.items():
-                    result.add_entries(cat, list(entries))
-                return result
             if isinstance(value, dict):
                 result = _FlexibleCategories()
                 for cat, entries in value.items():

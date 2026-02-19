@@ -1,5 +1,37 @@
 # flext-ldif: parse() and format_acl() Usage Locations
 
+
+<!-- TOC START -->
+- [SUMMARY](#summary)
+- [1. METHOD DEFINITIONS](#1-method-definitions)
+  - [Base Class Definition](#base-class-definition)
+  - [Protocol Definition](#protocol-definition)
+- [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
+  - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
+  - [Implementation Pattern](#implementation-pattern)
+- [3. SERVICE LAYER USAGE](#3-service-layer-usage)
+  - [ACL Service](#acl-service)
+  - [Categorized Pipeline](#categorized-pipeline)
+- [4. TEST COVERAGE](#4-test-coverage)
+  - [Unit Test Files Using parse()](#unit-test-files-using-parse)
+  - [Test Pattern](#test-pattern)
+- [5. INTEGRATION POINTS](#5-integration-points)
+  - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
+  - [FlextLdif High-Level API](#flextldif-high-level-api)
+- [6. CURRENT DATA FLOW](#6-current-data-flow)
+- [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
+  - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
+  - [Should Review (Medium Impact)](#should-review-medium-impact)
+- [8. MIGRATION STRATEGY](#8-migration-strategy)
+  - [Phase 1: Update Interfaces (2-3 hours)](#phase-1-update-interfaces-2-3-hours)
+  - [Phase 2: Update Implementations (4-6 hours)](#phase-2-update-implementations-4-6-hours)
+  - [Phase 3: Update Tests (2-3 hours)](#phase-3-update-tests-2-3-hours)
+  - [Phase 4: Validation (2-3 hours)](#phase-4-validation-2-3-hours)
+- [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
+  - [Projects Using flext-ldif](#projects-using-flext-ldif)
+- [CONCLUSION](#conclusion)
+<!-- TOC END -->
+
 **Analysis Date**: 2025-10-28
 **Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
 

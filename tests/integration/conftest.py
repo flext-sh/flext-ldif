@@ -21,8 +21,6 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
-from ldap3 import ALL, Connection, Server
-
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
@@ -33,6 +31,8 @@ from flext_ldif import (
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
+from ldap3 import ALL, Connection, Server
+
 from tests.conftest import FlextLdifFixtures
 
 # ============================================================================
@@ -608,7 +608,7 @@ def ldap_container_shared() -> str:
         if result != 0:
             pytest.skip(
                 f"LDAP container not running on port {port}. "
-                f"Start with: cd /home/marlonsc/flext/docker && "
+                f"Start with: cd {Path(__file__).resolve().parents[3] / 'docker'} && "
                 f"docker compose -f docker-compose.openldap.yml up -d",
             )
     except OSError:

@@ -10,11 +10,10 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import s
-
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+from tests import s
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EXTERNAL ENUMS (outside class)

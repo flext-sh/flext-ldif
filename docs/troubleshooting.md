@@ -1,5 +1,22 @@
 # FLEXT-LDIF Troubleshooting
 
+
+<!-- TOC START -->
+- [Common Issues and Solutions](#common-issues-and-solutions)
+  - [Parse Errors](#parse-errors)
+  - [Memory Issues](#memory-issues)
+  - [Validation Errors](#validation-errors)
+  - [Performance Issues](#performance-issues)
+  - [Integration Issues](#integration-issues)
+- [Diagnostic Tools](#diagnostic-tools)
+  - [Health Check Utility](#health-check-utility)
+  - [Debug Mode Configuration](#debug-mode-configuration)
+- [Getting Help](#getting-help)
+  - [Support Resources](#support-resources)
+  - [Creating Support Requests](#creating-support-requests)
+  - [Emergency Contacts](#emergency-contacts)
+<!-- TOC END -->
+
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This document provides solutions to common issues encountered when using FLEXT-LDIF, including error diagnosis, performance problems, and integration issues.

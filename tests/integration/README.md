@@ -1,5 +1,47 @@
 # Integration Test Suite for FlextLdif
 
+
+<!-- TOC START -->
+- [📋 Test Organization](#-test-organization)
+  - [Test Structure](#test-structure)
+  - [Test Categories](#test-categories)
+- [🔧 Running Tests](#-running-tests)
+  - [Quick Start](#quick-start)
+  - [Running Test Categories](#running-test-categories)
+  - [Test Markers](#test-markers)
+  - [Running with Specific Fixtures](#running-with-specific-fixtures)
+- [📦 Centralized Fixtures (conftest.py)](#-centralized-fixtures-conftestpy)
+  - [Fixture Organization](#fixture-organization)
+  - [Available Fixtures](#available-fixtures)
+  - [Using Fixtures in Tests](#using-fixtures-in-tests)
+  - [Parametrized Testing with Fixtures](#parametrized-testing-with-fixtures)
+- [🛠️ Best Practices for Integration Tests](#-best-practices-for-integration-tests)
+  - [1. Use Centralized Fixtures](#1-use-centralized-fixtures)
+  - [2. Test Complete Roundtrips](#2-test-complete-roundtrips)
+  - [3. Validate Deep Content, Not Just Counts](#3-validate-deep-content-not-just-counts)
+  - [4. Use Parametrization for Server Compatibility](#4-use-parametrization-for-server-compatibility)
+  - [5. Handle FlextResult Patterns](#5-handle-flextresult-patterns)
+  - [6. Test Error Cases](#6-test-error-cases)
+- [📊 Test Coverage](#-test-coverage)
+  - [Coverage by Category](#coverage-by-category)
+  - [Running with Coverage Reports](#running-with-coverage-reports)
+- [🆕 Adding New Integration Tests](#-adding-new-integration-tests)
+  - [Step 1: Choose Test Location](#step-1-choose-test-location)
+  - [Step 2: Use Centralized Fixtures](#step-2-use-centralized-fixtures)
+  - [Step 3: Follow Naming Conventions](#step-3-follow-naming-conventions)
+  - [Step 4: Add Parametrization for Multi-Server Testing](#step-4-add-parametrization-for-multi-server-testing)
+  - [Step 5: Document Test Purpose](#step-5-document-test-purpose)
+- [🔍 Troubleshooting](#-troubleshooting)
+  - [Import Errors](#import-errors)
+  - [Fixture Not Found](#fixture-not-found)
+  - [Docker Container Errors](#docker-container-errors)
+  - [Type Checking Errors](#type-checking-errors)
+- [📈 Continuous Integration](#-continuous-integration)
+  - [CI Configuration](#ci-configuration)
+- [📚 References](#-references)
+- [✅ Checklist for Test Development](#-checklist-for-test-development)
+<!-- TOC END -->
+
 Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
 
 ## 📋 Test Organization

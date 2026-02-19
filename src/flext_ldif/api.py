@@ -14,6 +14,7 @@ from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.analysis import FlextLdifAnalysis
+from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
@@ -38,6 +39,20 @@ class FlextLdif(FlextLdifServiceBase[object]):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+    @classmethod
+    def categorization(
+        cls,
+        *,
+        base_dn: str | None = None,
+        server_type: str = "rfc",
+    ) -> FlextLdifCategorization:
+        """Create a categorization service with the global server registry."""
+        return FlextLdifCategorization(
+            base_dn=base_dn,
+            server_type=server_type,
+            server_registry=FlextLdifServer.get_global_instance(),
+        )
 
     def __init__(self, **kwargs: str | float | bool | None) -> None:
         """Initialize LDIF facade."""
@@ -177,12 +192,16 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
+        output_filename_raw = kwargs.get("output_filename")
+        output_filename: str | None = (
+            output_filename_raw if isinstance(output_filename_raw, str) else None
+        )
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type=source_server_typed,
             target_server_type=target_server_typed,
-            **kwargs,
+            output_filename=output_filename,
         )
         return pipeline.execute()
 

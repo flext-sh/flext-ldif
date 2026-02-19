@@ -14,9 +14,9 @@ from typing import Final
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif.services.sorting import FlextLdifSorting
 from pydantic import ValidationError
 
-from flext_ldif.services.sorting import FlextLdifSorting
 from tests import RfcTestHelpers, c, p, s
 
 

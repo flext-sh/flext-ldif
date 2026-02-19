@@ -11,9 +11,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests import TestDeduplicationHelpers, c, m, s
-
 from flext_ldif.servers.apache import FlextLdifServersApache
+from tests import TestDeduplicationHelpers, c, m, s
 
 
 class AttributeScenario(StrEnum):

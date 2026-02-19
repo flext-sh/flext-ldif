@@ -474,7 +474,10 @@ class FlextLdifModelsSettings:
         write_method: Callable[..., r[str]] = Field(...)
         parse_method: Callable[
             ...,
-            object,  # Relaxed from invariant Result for flexibility
+            r[
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ],
         ] = Field(...)
         item_name: str = Field(...)
 

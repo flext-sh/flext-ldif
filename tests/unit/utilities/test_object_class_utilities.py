@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from tests import c, m, s
-
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+from tests import c, m, s
 
 
 class ObjectClassTestCase(StrEnum):

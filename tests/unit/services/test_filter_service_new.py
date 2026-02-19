@@ -24,11 +24,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_tests import FlextTestsMatchers
-
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.filters import FlextLdifFilters
+from flext_tests import FlextTestsMatchers
+
 from tests import TestDeduplicationHelpers, c, s
 from tests.constants import Filters, OIDs
 

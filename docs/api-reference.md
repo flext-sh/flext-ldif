@@ -1,5 +1,46 @@
 # FLEXT-LDIF API Reference
 
+
+<!-- TOC START -->
+- [🎯 Library Overview](#-library-overview)
+  - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
+- [Core API Classes](#core-api-classes)
+  - [FlextLdif](#flextldif)
+  - [QuirksConversionMatrix](#quirksconversionmatrix)
+  - [DnCaseRegistry](#dncaseregistry)
+- [Domain Models](#domain-models)
+  - [FlextLdifModels.Entry](#flextldifmodelsentry)
+  - [FlextLdifModels.Config](#flextldifmodelsconfig)
+  - [FlextLdifModels.Factory](#flextldifmodelsfactory)
+- [Configuration Management](#configuration-management)
+  - [Global Configuration](#global-configuration)
+  - [Instance Configuration](#instance-configuration)
+- [Error Handling](#error-handling)
+  - [FlextResult Integration](#flextresult-integration)
+  - [Exception Types](#exception-types)
+- [⚠️ Library-Only Usage](#-library-only-usage)
+- [Advanced Usage Patterns](#advanced-usage-patterns)
+  - [Pipeline Processing](#pipeline-processing)
+  - [Batch Processing](#batch-processing)
+  - [Custom Filtering](#custom-filtering)
+- [RFC Schema Parser API](#rfc-schema-parser-api)
+  - [RfcSchemaParserService](#rfcschemaparserservice)
+- [Migration Pipeline API](#migration-pipeline-api)
+  - [FlextLdifMigration](#flextldifmigration)
+- [Quirks Registry API](#quirks-registry-api)
+  - [QuirkRegistryService](#quirkregistryservice)
+- [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
+  - [FlextContainer Usage](#flextcontainer-usage)
+  - [FlextLogger Integration](#flextlogger-integration)
+- [🚀 Quick Start Guide](#-quick-start-guide)
+  - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
+  - [Server-Specific Parsing with Quirks](#server-specific-parsing-with-quirks)
+  - [Generic Migration Pipeline](#generic-migration-pipeline)
+  - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
+  - [Supported LDAP Servers](#supported-ldap-servers)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 **Version**: 0.9.9 | **Updated**: October 10, 2025
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.

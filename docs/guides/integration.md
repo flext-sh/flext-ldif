@@ -1,5 +1,26 @@
 # FLEXT-LDIF Ecosystem Integration
 
+
+<!-- TOC START -->
+- [LDIF Processing Integration](#ldif-processing-integration)
+  - [Core LDIF Operations with FlextResult](#core-ldif-operations-with-flextresult)
+  - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
+- [Enterprise Directory Migration Integration](#enterprise-directory-migration-integration)
+  - [client-a Oracle Unified Directory Migration](#client-a-oracle-unified-directory-migration)
+- [LDIF-Specific Service Integration](#ldif-specific-service-integration)
+  - [LDIF API Service Integration](#ldif-api-service-integration)
+  - [LDIF CLI Service Integration](#ldif-cli-service-integration)
+- [LDIF Data Pipeline Integration](#ldif-data-pipeline-integration)
+  - [Batch LDIF Processing](#batch-ldif-processing)
+- [LDIF Integration Best Practices](#ldif-integration-best-practices)
+  - [1. Memory-Aware Processing](#1-memory-aware-processing)
+  - [2. LDIF-Specific Error Handling](#2-ldif-specific-error-handling)
+  - [3. LDIF Entry Type Processing](#3-ldif-entry-type-processing)
+- [Performance Considerations](#performance-considerations)
+  - [Current Implementation Limitations](#current-implementation-limitations)
+  - [Recommended Usage Patterns](#recommended-usage-patterns)
+<!-- TOC END -->
+
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).

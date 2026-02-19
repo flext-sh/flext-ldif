@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import Final
 
 import pytest
-from flext_tests import tm
-
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.server import FlextLdifServer
+from flext_tests import tm
+
 from tests import Filters, OIDs, c, m, p, s
 
 

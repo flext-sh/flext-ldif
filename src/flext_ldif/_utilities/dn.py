@@ -1385,7 +1385,7 @@ class FlextLdifUtilitiesDN:
         tuple_length = 3
         results_raw = [
             item
-            for item in batch_data["results"]
+            for item in batch_data.results
             if isinstance(item, tuple) and len(item) == tuple_length
         ]
         results: list[tuple[str, bool, list[str]]] = []
@@ -1435,7 +1435,7 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return r[list[str]].fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value
-        results = [item for item in batch_data["results"] if isinstance(item, str)]
+        results = [item for item in batch_data.results if isinstance(item, str)]
         return r[list[str]].ok(results)
 
     @staticmethod

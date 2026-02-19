@@ -1,5 +1,34 @@
 # ADR-006: Library Simplification and Deduplication
 
+
+<!-- TOC START -->
+- [Context](#context)
+  - [**Structural Issues**](#structural-issues)
+  - [**Over-Engineering**](#over-engineering)
+  - [**flext-core Under-Utilization**](#flext-core-under-utilization)
+  - [**Impact**](#impact)
+- [Decision](#decision)
+  - [**1. Flatten Module Structure**](#1-flatten-module-structure)
+  - [**2. Delete Over-Engineered Processors**](#2-delete-over-engineered-processors)
+  - [**3. Remove Wrapper Methods**](#3-remove-wrapper-methods)
+  - [**4. Remove Property Accessors**](#4-remove-property-accessors)
+  - [**5. Leverage FlextDecorators**](#5-leverage-flextdecorators)
+  - [**6. Refactor Services to FlextService**](#6-refactor-services-to-flextservice)
+  - [**7. Simplify with Python 3.13+ Pattern Matching**](#7-simplify-with-python-313-pattern-matching)
+  - [**8. Reorganize Tests**](#8-reorganize-tests)
+- [Consequences](#consequences)
+  - [**Positive**](#positive)
+  - [**Negative**](#negative)
+  - [**Mitigation**](#mitigation)
+- [Implementation](#implementation)
+  - [**Phase 1: Documentation (4-5 hours)**](#phase-1-documentation-4-5-hours)
+  - [**Phase 2: Code Refactoring (6-7 hours)**](#phase-2-code-refactoring-6-7-hours)
+  - [**Timeline**: 10-12 hours total](#timeline-10-12-hours-total)
+- [Validation Criteria](#validation-criteria)
+- [References](#references)
+- [Notes](#notes)
+<!-- TOC END -->
+
 **Date**: 2025-01-24
 **Status**: Approved
 **Deciders**: FLEXT Core Team

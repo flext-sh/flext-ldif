@@ -7,9 +7,9 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
+from flext_ldif import FlextLdif
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif
 from tests import GenericFieldsDict
 
 
@@ -82,7 +82,7 @@ def test_create_and_export_entry(
 
     # Convert to FlextLdif entry
     api = FlextLdif.get_instance()
-    entry_result = cast("object", api).models.Entry.create(
+    entry_result = api.models.Ldif.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes={
             attr: list(ldap_entry[attr].values) for attr in ldap_entry.entry_attributes

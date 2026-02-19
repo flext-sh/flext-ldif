@@ -1,5 +1,18 @@
 # Test Helpers Module
 
+
+<!-- TOC START -->
+- [Módulos](#mdulos)
+  - [`test_assertions.py`](#testassertionspy)
+  - [`test_operations.py`](#testoperationspy)
+- [Exemplo de Refatoração](#exemplo-de-refatorao)
+  - [Antes (Duplicação Massiva)](#antes-duplicao-massiva)
+  - [Depois (Usando Helpers)](#depois-usando-helpers)
+- [Benefícios](#benefcios)
+- [Uso em Testes Parametrizados](#uso-em-testes-parametrizados)
+- [Integração com Fixtures](#integrao-com-fixtures)
+<!-- TOC END -->
+
 Este módulo fornece helpers reutilizáveis para reduzir duplicação massiva de testes pytest, método a método.
 
 ## Módulos

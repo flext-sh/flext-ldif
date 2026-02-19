@@ -17,10 +17,10 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import tt
-
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
+from flext_tests import tt
+
 from tests import c
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

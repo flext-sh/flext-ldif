@@ -16,7 +16,6 @@ SRP: Each method does ONE thing, composition handles complexity
 from __future__ import annotations
 
 from flext_core import r
-
 from flext_ldif import FlextLdif, p
 
 

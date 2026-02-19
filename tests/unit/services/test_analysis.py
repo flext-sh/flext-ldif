@@ -6,11 +6,11 @@ entry statistics, quality metrics, and validation results.
 
 from __future__ import annotations
 
-from flext_tests import tm
-
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.validation import FlextLdifValidation
+from flext_tests import tm
+
 from tests import p, s
 
 

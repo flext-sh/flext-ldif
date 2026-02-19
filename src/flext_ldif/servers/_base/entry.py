@@ -183,16 +183,14 @@ class FlextLdifServersBaseEntry(
         if entry_data.metadata and entry_data.metadata.write_options:
             write_opts = entry_data.metadata.write_options
 
-            if isinstance(write_opts, dict) and "write_options" in write_opts:
-                nested_opts = write_opts.get("write_options")
-                if hasattr(nested_opts, "fold_long_lines"):
-                    fold_long_lines = bool(nested_opts.fold_long_lines)
-                if hasattr(nested_opts, "line_width"):
-                    line_width = int(nested_opts.line_width or line_width)
-            elif hasattr(write_opts, "fold_long_lines"):
+            if isinstance(write_opts, FlextLdifModelsSettings.WriteFormatOptions):
                 fold_long_lines = bool(write_opts.fold_long_lines)
-                if hasattr(write_opts, "line_width"):
-                    line_width = int(write_opts.line_width or line_width)
+                line_width = int(write_opts.line_width or line_width)
+            elif isinstance(write_opts, Mapping):
+                nested_opts = write_opts.get("write_options")
+                if isinstance(nested_opts, FlextLdifModelsSettings.WriteFormatOptions):
+                    fold_long_lines = bool(nested_opts.fold_long_lines)
+                    line_width = int(nested_opts.line_width or line_width)
 
         def fold_line(line: str) -> list[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""

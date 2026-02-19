@@ -83,10 +83,10 @@ class FlextLdifTypes(FlextTypes):
 
         TemplateValue: TypeAlias = str | int | float | bool | None
 
-        T: TypeVar = TypeVar("T")
-        TEntry: TypeVar = TypeVar("TEntry")
-        TAttribute: TypeVar = TypeVar("TAttribute")
-        TSchema: TypeVar = TypeVar("TSchema")
+        T = TypeVar("T")
+        TEntry = TypeVar("TEntry")
+        TAttribute = TypeVar("TAttribute")
+        TSchema = TypeVar("TSchema")
 
 
 t = FlextLdifTypes

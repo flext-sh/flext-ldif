@@ -1,5 +1,27 @@
 # FLEXT-LDIF Architecture Diagrams
 
+
+<!-- TOC START -->
+- [Diagram Overview](#diagram-overview)
+  - [C4 Model Structure](#c4-model-structure)
+  - [Diagram Categories](#diagram-categories)
+- [Rendering Diagrams](#rendering-diagrams)
+  - [Prerequisites](#prerequisites)
+  - [Rendering Commands](#rendering-commands)
+  - [VS Code Integration](#vs-code-integration)
+  - [Automated Rendering](#automated-rendering)
+- [Diagram Standards](#diagram-standards)
+  - [C4 Model Compliance](#c4-model-compliance)
+  - [Naming Conventions](#naming-conventions)
+  - [Style Guidelines](#style-guidelines)
+  - [Content Standards](#content-standards)
+- [Maintenance Guidelines](#maintenance-guidelines)
+  - [Version Control](#version-control)
+  - [Review Process](#review-process)
+  - [Tooling Integration](#tooling-integration)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 **Version**: 0.9.9 | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
 
 This directory contains architecture diagrams for FLEXT-LDIF using modern diagramming practices and tools.
