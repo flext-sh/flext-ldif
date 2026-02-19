@@ -1,4 +1,14 @@
-"""Configuration management for LDIF operations using Pydantic models with validation."""
+"""Configuration management for LDIF operations using Pydantic models with validation.
+
+This module manages all configuration aspects for flext-ldif package including
+parsing, writing, server detection, and validation settings. Provides
+comprehensive LDIF processing configuration with server-specific quirks
+handling, format options for parsing and writing, and advanced validation rules.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
 
 from __future__ import annotations
 
@@ -15,8 +25,38 @@ from flext_ldif.constants import c
 
 @FlextSettings.auto_register("ldif")
 class FlextLdifSettings(FlextSettings):
-    """Pydantic v2 configuration for LDIF operations (nested config pattern)."""
+    """Pydantic v2 configuration for LDIF operations (nested config pattern).
 
+    **ARCHITECTURAL PATTERN**: BaseSettings Configuration
+
+    This class provides:
+    - Environment variable support via FLEXT_LDIF_* prefix
+    - Namespace registration (accessible via FlextSettings.get_namespace)
+    - Pydantic v2 validation and type safety
+    - Complete LDIF processing configuration
+
+    **Features**:
+    - Pydantic v2 BaseSettings for configuration with env support
+    - Generic LDIF field names (ldif_*) - RFC 2849/4512 compliant
+    - Complete type safety and validation
+    - Supports both direct instantiation and nested usage
+
+    **Usage**:
+    # Get direct instance
+    config = FlextLdifSettings()
+
+    # Or via FlextSettings namespace
+    from flext_core import  FlextSettings
+    ldif_config = (
+        FlextSettings.get_global_instance()
+        .get_namespace("ldif", FlextLdifSettings)
+    )
+    """
+
+    # Model configuration (disable str_strip_whitespace for LDIF fields
+    # that need whitespace)
+    # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
+    # Use FlextSettings.resolve_env_file() to ensure all FLEXT configs use same .env
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
         env_file=FlextSettings.resolve_env_file(),
@@ -29,8 +69,12 @@ class FlextLdifSettings(FlextSettings):
         extra="ignore",
     )
 
+    # LDIF Format Configuration using FlextLdifConstants for defaults
+    # Note: Fields like max_workers, debug, trace, log_verbosity come from
+
     ldif_encoding: c.Ldif.LiteralTypes.EncodingLiteral = Field(
-        default="utf-8",
+        default="utf-8",  # Use literal value instead of constant for
+        # type compatibility
         description="Character encoding for LDIF files",
     )
 
@@ -56,6 +100,7 @@ class FlextLdifSettings(FlextSettings):
         description="Enable strict LDIF validation",
     )
 
+    # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
         default=c.Ldif.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=c.Performance.BatchProcessing.DEFAULT_SIZE,
@@ -70,6 +115,10 @@ class FlextLdifSettings(FlextSettings):
         description="Chunk size for LDIF processing",
     )
 
+    # max_workers inherited from FlextSettings (use self.max_workers)
+    # Override to respect debug mode constraints
+
+    # Memory and Performance Configuration - Fix default value
     memory_limit_mb: int = Field(
         default=c.Ldif.LdifProcessing.MIN_MEMORY_MB,
         ge=c.Ldif.LdifProcessing.MIN_MEMORY_MB,
@@ -77,6 +126,7 @@ class FlextLdifSettings(FlextSettings):
         description="Memory limit in MB",
     )
 
+    # Analytics Configuration
     ldif_enable_analytics: bool = Field(
         default=False,
         description="Enable LDIF analytics collection",
@@ -94,6 +144,7 @@ class FlextLdifSettings(FlextSettings):
         description="Analytics detail level (low, medium, high)",
     )
 
+    # Additional LDIF processing configuration
     ldif_line_separator: str = Field(
         default="\n",
         description="Line separator for LDIF output",
@@ -131,7 +182,7 @@ class FlextLdifSettings(FlextSettings):
     )
 
     ldif_default_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc",
+        default="rfc",  # Use literal value instead of enum for type compatibility
         description="Default server type for LDIF processing",
     )
 
@@ -140,6 +191,7 @@ class FlextLdifSettings(FlextSettings):
         description="Enable server-specific quirk handling",
     )
 
+    # Quirks Detection and Mode Configuration
     quirks_detection_mode: c.Ldif.LiteralTypes.DetectionModeLiteral = Field(
         default="auto",
         description=(
@@ -158,6 +210,7 @@ class FlextLdifSettings(FlextSettings):
         description="Enable relaxed mode for broken/non-compliant LDIF files",
     )
 
+    # Validation Configuration using FlextLdifConstants for defaults
     validation_level: c.Ldif.LiteralTypes.ValidationLevelLiteral = Field(
         default="strict",
         description="Validation strictness level",
@@ -168,15 +221,27 @@ class FlextLdifSettings(FlextSettings):
         description="Enable strict RFC 2849 compliance",
     )
 
+    # Server Configuration using FlextLdifConstants for defaults
     server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
         default="generic",
         description="Target LDAP server type",
     )
 
+    # Error Handling Configuration
     error_recovery_mode: c.Ldif.LiteralTypes.ErrorRecoveryModeLiteral = Field(
         default="continue",
         description="Error recovery mode (continue, stop, skip)",
     )
+
+    # Development and Debug Configuration
+    # debug, trace inherited from FlextSettings (use self.debug, self.trace)
+    # log_verbosity inherited from FlextSettings
+    # (use self.log_verbosity for detailed logging)
+
+    # =========================================================================
+    # WRITE FORMAT CONFIGURATION
+    # All fields from WriteFormatOptions consolidated here
+    # =========================================================================
 
     ldif_write_respect_attribute_order: bool = Field(
         default=True,
@@ -371,6 +436,11 @@ class FlextLdifSettings(FlextSettings):
         ),
     )
 
+    # =========================================================================
+    # PARSE FORMAT CONFIGURATION
+    # All fields from ParseFormatOptions consolidated here
+    # =========================================================================
+
     ldif_parse_auto_parse_schema: bool = Field(
         default=True,
         description=("If True, automatically parses schema definitions from entries."),
@@ -421,13 +491,32 @@ class FlextLdifSettings(FlextSettings):
         ),
     )
 
+    # =========================================================================
+    # FIELD VALIDATORS - Pydantic v2 Advanced Usage
+    # =========================================================================
+
     @field_validator("ldif_encoding", mode="after")
     @classmethod
     def validate_ldif_encoding(cls, v: str, info: ValidationInfo | None = None) -> str:
-        """Validate ldif_encoding is a valid Python codec."""
+        """Validate ldif_encoding is a valid Python codec.
+
+        RFC 2849 § 2: LDIF files SHOULD use UTF-8 encoding.
+        This validator ensures the specified encoding is supported by Python.
+
+        Args:
+            v: Encoding string to validate
+
+        Returns:
+            Validated encoding string
+
+        Raises:
+            ValueError: If encoding is not supported by Python
+
+        """
         try:
             _ = codecs.lookup(v)
         except LookupError as e:
+            # Suggest RFC-recommended encoding
             suggestion = "utf-8 (RFC 2849 recommended)"
             field_name = info.field_name if info else "unknown"
             msg = (
@@ -440,7 +529,22 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("server_type", mode="before")
     @classmethod
     def validate_server_type(cls, v: str, info: ValidationInfo | None = None) -> str:
-        """Validate server_type is a recognized LDAP server."""
+        """Validate server_type is a recognized LDAP server.
+
+        Ensures server_type is one of the supported server types defined in
+        c.Ldif.ServerTypes. Accepts both canonical forms and
+        common aliases.
+
+        Args:
+            v: Server type string to validate (canonical or alias)
+
+        Returns:
+            Normalized/validated server type string (canonical form)
+
+        Raises:
+            ValueError: If server_type is not recognized
+
+        """
         normalized = normalize_server_type(v)
 
         valid_servers = [
@@ -455,10 +559,13 @@ class FlextLdifSettings(FlextSettings):
             c.Ldif.ServerTypes.APACHE,
             c.Ldif.ServerTypes.NOVELL,
             c.Ldif.ServerTypes.IBM_TIVOLI,
+            # Fixed: IBM_TIVOLI not TIVOLI
             c.Ldif.ServerTypes.RELAXED,
             c.Ldif.ServerTypes.GENERIC,
+            # Use constant instead of hardcoded
         ]
         if normalized not in valid_servers:
+            # Suggest most common/useful server types
             common_servers = [
                 c.Ldif.ServerTypes.RFC,
                 c.Ldif.ServerTypes.OUD,
@@ -472,14 +579,29 @@ class FlextLdifSettings(FlextSettings):
                 f"Common choices: {', '.join(common_servers)}"
             )
             raise ValueError(msg)
-        return normalized
+        return normalized  # Return normalized form
 
     @field_validator("ldif_line_separator", mode="after")
     @classmethod
     def validate_ldif_line_separator(cls, v: str) -> str:
-        """Validate ldif_line_separator is RFC 2849 compliant."""
+        """Validate ldif_line_separator is RFC 2849 compliant.
+
+        RFC 2849 § 2: Line separator can be LF, CRLF, or CR.
+
+        Args:
+            v: Line separator string to validate
+
+        Returns:
+            Validated line separator string
+
+        Raises:
+            ValueError: If line separator is not RFC compliant
+
+        """
+        # RFC 2849 valid line separators
         valid_separators = ["\n", "\r\n", "\r"]
         if v not in valid_separators:
+            # Suggest most common separator
             msg = (
                 f"Invalid ldif_line_separator '{v!r}'.\n"
                 f"Must be one of: {', '.join(repr(s) for s in valid_separators)} "
@@ -495,7 +617,22 @@ class FlextLdifSettings(FlextSettings):
     def validate_ldif_version_string(
         cls, v: str, info: ValidationInfo | None = None
     ) -> str:
-        """Validate ldif_version_string is RFC 2849 compliant."""
+        """Validate ldif_version_string is RFC 2849 compliant.
+
+        RFC 2849 § 2: version-spec = "version:" FILL version-number
+        Currently only version 1 is defined.
+
+        Args:
+            v: Version string to validate
+
+        Returns:
+            Validated version string
+
+        Raises:
+            ValueError: If version string is not RFC 2849 compliant
+
+        """
+        # RFC 2849 version format: "version: 1"
         if not v.startswith("version:"):
             msg = (
                 f"Invalid ldif_version_string '{v}'. "
@@ -504,6 +641,7 @@ class FlextLdifSettings(FlextSettings):
             )
             raise ValueError(msg)
 
+        # Extract version number
         try:
             version_part = v.split(":", 1)[1].strip()
             version_num = int(version_part)
@@ -533,12 +671,28 @@ class FlextLdifSettings(FlextSettings):
     def validate_quirks_server_type(
         cls, v: str | None, info: ValidationInfo | None = None
     ) -> str | None:
-        """Validate quirks_server_type when specified is a recognized server."""
+        """Validate quirks_server_type when specified is a recognized server.
+
+        Ensures quirks_server_type (when not None) is one of the supported
+        server types defined in c.Ldif.ServerTypes.
+        Accepts both canonical forms and common aliases.
+
+        Args:
+            v: Server type string to validate (canonical or alias, or None)
+
+        Returns:
+            Normalized/validated server type string (canonical form) or None
+
+        Raises:
+            ValueError: If server_type is specified but not recognized
+
+        """
         if v is None:
             return v
 
         normalized = normalize_server_type(v)
 
+        # Use same validation logic as server_type field
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
             c.Ldif.ServerTypes.OID,
@@ -568,14 +722,28 @@ class FlextLdifSettings(FlextSettings):
                 f"Common choices: {', '.join(common_servers)}"
             )
             raise ValueError(msg)
-        return normalized
+        return normalized  # Return normalized form
 
     @field_validator("ldif_default_server_type", mode="after")
     @classmethod
     def validate_ldif_default_server_type(
         cls, v: str, info: ValidationInfo | None = None
     ) -> str:
-        """Validate ldif_default_server_type is a recognized server."""
+        """Validate ldif_default_server_type is a recognized server.
+
+        Ensures ldif_default_server_type is one of the supported server types.
+
+        Args:
+            v: Server type string to validate
+
+        Returns:
+            Validated server type string
+
+        Raises:
+            ValueError: If server_type is not recognized
+
+        """
+        # Use same validation logic as server_type field
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
             c.Ldif.ServerTypes.OID,
@@ -603,9 +771,19 @@ class FlextLdifSettings(FlextSettings):
             raise ValueError(msg)
         return v
 
+    # =========================================================================
+    # MODEL VALIDATOR - Cross-Field Validation
+    # =========================================================================
+
     @model_validator(mode="after")
     def validate_ldif_configuration_consistency(self) -> Self:
-        """Validate LDIF configuration consistency."""
+        """Validate LDIF configuration consistency.
+
+            Note: Validations that require root config fields
+            (max_workers, debug, trace)
+        should be performed at the root config level (e.g., FlextOudMigSettings).
+        """
+        # Validate analytics configuration
         if (
             self.ldif_enable_analytics
             and self.ldif_analytics_cache_size
@@ -614,6 +792,7 @@ class FlextLdifSettings(FlextSettings):
             msg = "Analytics cache size must be positive when analytics is enabled"
             raise ValueError(msg)
 
+        # Validate quirks configuration
         if self.quirks_detection_mode == "manual" and not self.quirks_server_type:
             msg = (
                 "quirks_server_type must be specified when "
@@ -623,11 +802,27 @@ class FlextLdifSettings(FlextSettings):
 
         return self
 
+    # =========================================================================
+    # UTILITY METHODS - Enhanced with FlextSettings integration
+    # =========================================================================
+
     def get_effective_encoding(self) -> str:
-        """Get effective encoding, considering environment and server type."""
+        """Get effective encoding, considering environment and server type.
+
+        Returns:
+        Effective character encoding to use
+
+        """
+        # Server-specific encoding preferences
         if self.server_type == c.Ldif.ServerTypes.AD.value:
             return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
+
+    # =========================================================================
+    # PUBLIC API - Direct access to models (no wrappers)
+    # =========================================================================
+    # WriteFormatOptions is deprecated - use FlextLdifSettings fields (ldif_write_*)
+    # Direct access via FlextLdifModelsSettings.WriteFormatOptions when needed
 
 
 __all__ = ["FlextLdifSettings"]

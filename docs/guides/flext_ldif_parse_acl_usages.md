@@ -1,42 +1,9 @@
 # flext-ldif: parse() and format_acl() Usage Locations
 
-<!-- TOC START -->
-
-- [SUMMARY](#summary)
-- [1. METHOD DEFINITIONS](#1-method-definitions)
-  - [Base Class Definition](#base-class-definition)
-  - [Protocol Definition](#protocol-definition)
-- [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
-  - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
-  - [Implementation Pattern](#implementation-pattern)
-- [3. SERVICE LAYER USAGE](#3-service-layer-usage)
-  - [ACL Service](#acl-service)
-  - [Categorized Pipeline](#categorized-pipeline)
-- [4. TEST COVERAGE](#4-test-coverage)
-  - [Unit Test Files Using parse()](#unit-test-files-using-parse)
-  - [Test Pattern](#test-pattern)
-- [5. INTEGRATION POINTS](#5-integration-points)
-  - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
-  - [FlextLdif High-Level API](#flextldif-high-level-api)
-- [6. CURRENT DATA FLOW](#6-current-data-flow)
-- [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
-  - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
-  - [Should Review (Medium Impact)](#should-review-medium-impact)
-- [8. MIGRATION STRATEGY](#8-migration-strategy)
-  - [Phase 1: Update Interfaces (2-3 hours)](#phase-1-update-interfaces-2-3-hours)
-  - [Phase 2: Update Implementations (4-6 hours)](#phase-2-update-implementations-4-6-hours)
-  - [Phase 3: Update Tests (2-3 hours)](#phase-3-update-tests-2-3-hours)
-  - [Phase 4: Validation (2-3 hours)](#phase-4-validation-2-3-hours)
-- [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
-  - [Projects Using flext-ldif](#projects-using-flext-ldif)
-- [CONCLUSION](#conclusion)
-
-<!-- TOC END -->
-
 **Analysis Date**: 2025-10-28
 **Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
 
-______________________________________________________________________
+---
 
 ## SUMMARY
 
@@ -46,13 +13,13 @@ The `parse()` and `format_acl()` methods are defined in the flext-ldif library a
 **Lines of Code Affected**: ~520+ lines in quirks implementations + ~1000+ lines in tests
 **Risk Level**: HIGH - Extensive refactoring required
 
-______________________________________________________________________
+---
 
 ## 1. METHOD DEFINITIONS
 
 ### Base Class Definition
 
-**File**: `flext-ldif/src/flext_ldif/quirks/base.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/quirks/base.py`
 
 ```python
 class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
@@ -71,7 +38,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 
 ### Protocol Definition
 
-**File**: `flext-ldif/src/flext_ldif/protocols.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
 
 ```python
 class AclProtocol(Protocol):
@@ -81,7 +48,7 @@ class AclProtocol(Protocol):
         """Parse ACL - returns FlextResult with dict or Acl model."""
 ```
 
-______________________________________________________________________
+---
 
 ## 2. SERVER QUIRKS IMPLEMENTATIONS
 
@@ -114,13 +81,13 @@ Each server quirks class has:
 
 **Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
 
-______________________________________________________________________
+---
 
 ## 3. SERVICE LAYER USAGE
 
 ### ACL Service
 
-**File**: `flext-ldif/src/flext_ldif/services/acl.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/services/acl.py`
 
 **Method**: `parse()`
 
@@ -144,7 +111,7 @@ def parse(
 
 ### Categorized Pipeline
 
-**File**: `flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Method**: `_transform_categories()`
 
@@ -165,7 +132,7 @@ def _transform_categories(
 
 **Lines Affected**: 100+ lines for ACL transformation logic
 
-______________________________________________________________________
+---
 
 ## 4. TEST COVERAGE
 
@@ -197,13 +164,13 @@ def test_parse_oracle_oid():
 
 **Total Tests**: ~50+ test methods using parse()
 
-______________________________________________________________________
+---
 
 ## 5. INTEGRATION POINTS
 
 ### FlextLdifCategorizedMigrationPipeline
 
-**File**: `flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Usage Context**:
 
@@ -215,15 +182,15 @@ ______________________________________________________________________
 
 ### FlextLdif High-Level API
 
-**File**: `flext-ldif/src/flext_ldif/__init__.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/__init__.py`
 
 **Exposure**:
 
 - `FlextLdif.parse()` uses quirks internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
-- client-a-oud-mig uses this API (already compatible with Entry return)
+- flext-oud-mig uses this API (already compatible with Entry return)
 
-______________________________________________________________________
+---
 
 ## 6. CURRENT DATA FLOW
 
@@ -239,50 +206,42 @@ Entry model with aci attributes (after transformation)
 Output LDIF with OUD format (aci:)
 ```
 
-______________________________________________________________________
+---
 
 ## 7. AFFECTED CODE LOCATIONS (SUMMARY)
 
 ### Must Be Updated (High Impact)
 
 1. **Protocol Definition** (3-5 lines)
-
    - `/flext_ldif/protocols.py` - Update AclProtocol signature
 
-1. **Base Class** (10-15 lines)
-
+2. **Base Class** (10-15 lines)
    - `/flext_ldif/quirks/base.py` - Update FlextLdifServersBase.Acl.parse()
 
-1. **13 Server Quirks** (520-650 lines)
-
+3. **13 Server Quirks** (520-650 lines)
    - All 13 quirks files in `/flext_ldif/quirks/servers/`
    - Each file needs parse() method signature updated
 
-1. **Service Layer** (30-50 lines)
-
+4. **Service Layer** (30-50 lines)
    - `/flext_ldif/services/acl.py` - Update parse() wrapper
    - `/flext_ldif/categorized_pipeline.py` - Update transformation logic
 
-1. **Tests** (1000+ lines)
-
+5. **Tests** (1000+ lines)
    - 50+ test methods in 4+ test files
    - Mock returns, assertions, fixture data
 
 ### Should Review (Medium Impact)
 
 1. **Integration Tests** (tests/integration/)
-
    - May have parse() calls in fixtures or helpers
 
-1. **Examples** (examples/06_acl_processing.py)
-
+2. **Examples** (examples/06_acl_processing.py)
    - Documentation examples using parse()
 
-1. **Type Hints**
-
+3. **Type Hints**
    - Any type hints expecting Acl model need updating
 
-______________________________________________________________________
+---
 
 ## 8. MIGRATION STRATEGY
 
@@ -308,11 +267,11 @@ ______________________________________________________________________
 
 - [ ] Run full test suite
 - [ ] Test with real LDIF data
-- [ ] Verify client-a-oud-mig compatibility (should be automatic)
+- [ ] Verify flext-oud-mig compatibility (should be automatic)
 
 **Total Estimated Time**: 10-15 hours of development
 
-______________________________________________________________________
+---
 
 ## 9. ECOSYSTEM IMPACT
 
@@ -320,28 +279,28 @@ ______________________________________________________________________
 
 **Dependent on parse()/format_acl()**:
 
-1. client-a-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
-1. Any other projects importing from flext-ldif
+1. flext-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
+2. Any other projects importing from flext-ldif
 
 **Risk Assessment**:
 
-- client-a-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
+- flext-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
-______________________________________________________________________
+---
 
 ## CONCLUSION
 
-The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact client-a-oud-mig** because:
+The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact flext-oud-mig** because:
 
-1. client-a-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
-1. client-a-oud-mig does not directly call parse() or format_acl()
-1. The change is internal to flext-ldif's quirks system
+1. flext-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
+2. flext-oud-mig does not directly call parse() or format_acl()
+3. The change is internal to flext-ldif's quirks system
 
-**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify client-a-oud-mig continues to work (should be automatic with no code changes).
+**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify flext-oud-mig continues to work (should be automatic with no code changes).
 
-______________________________________________________________________
+---
 
 **Generated By**: Claude Code
 **Tools Used**: Grep, Read, Bash

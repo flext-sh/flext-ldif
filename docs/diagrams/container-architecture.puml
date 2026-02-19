@@ -28,7 +28,7 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
         }
     }
 
-    Container(client-a_oud_mig, "client-a-oud-mig", "Python Application", "Oracle directory migration project")
+    Container(flext_oud_mig, "flext-oud-mig", "Python Application", "Oracle directory migration project")
     Container(flext_api, "flext-api", "Python Framework", "REST API framework with LDIF processing")
     Container(flext_ldap, "flext-ldap", "Python Library", "LDAP client operations library")
 }
@@ -49,7 +49,7 @@ Rel(rfc_parsing, domain_models, "Produces validated", "Type-safe domain objects"
 
 Rel(quirks_system, servers, "Manages implementations", "Auto-discovery and instantiation")
 
-Rel(client-a_oud_mig, api_facade, "Uses for", "Oracle directory migrations")
+Rel(flext_oud_mig, api_facade, "Uses for", "Oracle directory migrations")
 Rel(flext_api, api_facade, "Integrates for", "LDIF processing in APIs")
 Rel(flext_ldap, api_facade, "Uses for", "LDIF export/import operations")
 

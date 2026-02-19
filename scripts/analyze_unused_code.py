@@ -5,7 +5,7 @@ This script analyzes the flext-ldif codebase using AST to find:
 - Unused classes
 - Unused methods
 - Unused functions
-- Code not referenced by flext-ldif, flext-ldap, or client-a-oud-mig
+- Code not referenced by flext-ldif, flext-ldap, or flext-oud-mig
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,14 +21,14 @@ from pathlib import Path
 # Project roots
 FLEXT_LDIF_ROOT = Path(__file__).parent.parent
 FLEXT_LDAP_ROOT = FLEXT_LDIF_ROOT.parent / "flext-ldap"
-client-a_OUD_MIG_ROOT = FLEXT_LDIF_ROOT.parent / "client-a-oud-mig"
+FLEXT_OUD_MIG_ROOT = FLEXT_LDIF_ROOT.parent / "flext-oud-mig"
 
 # Directories to analyze
 _src_dirs_candidates: list[Path | None] = [
     FLEXT_LDIF_ROOT / "src" / "flext_ldif",
     FLEXT_LDAP_ROOT / "src" / "flext_ldap" if FLEXT_LDAP_ROOT.exists() else None,
-    client-a_OUD_MIG_ROOT / "src" / "client-a_oud_mig"
-    if client-a_OUD_MIG_ROOT.exists()
+    FLEXT_OUD_MIG_ROOT / "src" / "flext_oud_mig"
+    if FLEXT_OUD_MIG_ROOT.exists()
     else None,
 ]
 SRC_DIRS: list[Path] = [d for d in _src_dirs_candidates if d is not None and d.exists()]

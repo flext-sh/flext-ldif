@@ -396,7 +396,7 @@ flext-ldif is part of the [FLEXT platform](https://github.com/flext) for enterpr
 
 - **flext-core** - Foundation patterns (FlextResult, FlextContainer, FlextProcessors)
 - **flext-ldap** - LDAP client operations
-- **client-a-oud-mig** - Production Oracle directory migration project
+- **flext-oud-mig** - Production Oracle directory migration project
 - **flext-tap-ldif** - Singer tap for LDIF data extraction
 - **flext-target-ldif** - Singer target for LDIF data loading
 
@@ -1035,7 +1035,7 @@ ______________________________________________________________________
 
 ### **Ecosystem Integration**
 
-- **Primary User**: client-a-oud-mig (Oracle migration project)
+- **Primary User**: flext-oud-mig (Oracle migration project)
 - **Foundation**: flext-core (base patterns and utilities)
 - **Context**: LDAP directory processing within FLEXT ecosystem
 

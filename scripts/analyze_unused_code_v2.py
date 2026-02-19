@@ -9,7 +9,7 @@ This script analyzes the flext-ldif codebase using AST to find:
 Special handling:
 - Server classes are used via DI (auto-discovery in FlextLdifServer)
 - Code must be accessible via API (flext_ldif imports)
-- Code must be used in flext-ldif, flext-ldap, or client-a-oud-mig
+- Code must be used in flext-ldif, flext-ldap, or flext-oud-mig
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,34 +26,34 @@ from pathlib import Path
 FLEXT_ROOT = Path(__file__).parent.parent.parent
 FLEXT_LDIF_ROOT = FLEXT_ROOT / "flext-ldif"
 FLEXT_LDAP_ROOT = FLEXT_ROOT / "flext-ldap"
-client-a_OUD_MIG_ROOT = FLEXT_ROOT / "client-a-oud-mig"
+FLEXT_OUD_MIG_ROOT = FLEXT_ROOT / "flext-oud-mig"
 
 # Source directories to analyze
 FLEXT_LDIF_SRC = FLEXT_LDIF_ROOT / "src" / "flext_ldif"
 FLEXT_LDAP_SRC = (
     FLEXT_LDAP_ROOT / "src" / "flext_ldap" if FLEXT_LDAP_ROOT.exists() else None
 )
-client-a_OUD_MIG_SRC = (
-    client-a_OUD_MIG_ROOT / "src" / "client-a_oud_mig"
-    if client-a_OUD_MIG_ROOT.exists()
+FLEXT_OUD_MIG_SRC = (
+    FLEXT_OUD_MIG_ROOT / "src" / "flext_oud_mig"
+    if FLEXT_OUD_MIG_ROOT.exists()
     else None
 )
 
 # All source directories
 ALL_SRC_DIRS = [
-    d for d in [FLEXT_LDIF_SRC, FLEXT_LDAP_SRC, client-a_OUD_MIG_SRC] if d and d.exists()
+    d for d in [FLEXT_LDIF_SRC, FLEXT_LDAP_SRC, FLEXT_OUD_MIG_SRC] if d and d.exists()
 ]
 
 # Test directories
 FLEXT_LDIF_TESTS = FLEXT_LDIF_ROOT / "tests"
 FLEXT_LDAP_TESTS = FLEXT_LDAP_ROOT / "tests" if FLEXT_LDAP_ROOT.exists() else None
-client-a_OUD_MIG_TESTS = (
-    client-a_OUD_MIG_ROOT / "tests" if client-a_OUD_MIG_ROOT.exists() else None
+FLEXT_OUD_MIG_TESTS = (
+    FLEXT_OUD_MIG_ROOT / "tests" if FLEXT_OUD_MIG_ROOT.exists() else None
 )
 
 ALL_TEST_DIRS = [
     d
-    for d in [FLEXT_LDIF_TESTS, FLEXT_LDAP_TESTS, client-a_OUD_MIG_TESTS]
+    for d in [FLEXT_LDIF_TESTS, FLEXT_LDAP_TESTS, FLEXT_OUD_MIG_TESTS]
     if d and d.exists()
 ]
 
