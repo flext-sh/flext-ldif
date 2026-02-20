@@ -90,7 +90,12 @@ def _write_categories_to_file(
         )
 
         for entry in cat_entries:
-            _write_entry_to_file(entry, f, output_content_lines, include_attributes)
+            _write_entry_to_file(
+                entry,
+                f,
+                output_content_lines,
+                include_attributes=include_attributes,
+            )
 
 
 def _write_category_header(

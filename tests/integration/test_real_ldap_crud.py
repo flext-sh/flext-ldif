@@ -241,7 +241,7 @@ class TestRealLdapBatchOperations:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
 
-            result = flext_api.models.Entry.create(
+            result = m.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,
                 metadata=None,
@@ -260,7 +260,7 @@ class TestRealLdapBatchOperations:
                 entries.append(facade_entry)
 
         export_file = tmp_path / "batch_export.ldif"
-        write_result = flext_api.write(entries, export_file)
+        write_result = flext_api.write_file(entries, export_file)
         assert write_result.is_success
         assert export_file.exists()
 

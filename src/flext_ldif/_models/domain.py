@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import re
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
@@ -2233,6 +2234,19 @@ class FlextLdifModelsDomains:
                 except Exception:
                     # If validation fails, skip server-specific validation
                     # This is safe - Entry will still be RFC-compliant
+                    return self
+            elif isinstance(validation_rules, str):
+                try:
+                    parsed_rules = ast.literal_eval(validation_rules)
+                except (ValueError, SyntaxError):
+                    return self
+
+                if not isinstance(parsed_rules, dict):
+                    return self
+
+                try:
+                    rules = ServerValidationRules.model_validate(parsed_rules)
+                except Exception:
                     return self
             elif isinstance(
                 validation_rules,

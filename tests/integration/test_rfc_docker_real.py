@@ -173,12 +173,12 @@ class TestRfcDockerRealData:
 
         result = parser.parse_ldif_file(acl_file)
 
-        if result.is_success:
-            parse_response = result.value
-            entries = parse_response.entries
-            # OUD ACLs should have 'aci' attributes
-            # Attributes is a wrapper - access inner dict via .attributes
-            acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
+        assert result.is_success, f"Failed to parse {acl_file.name}: {result.error}"
+        parse_response = result.value
+        entries = parse_response.entries
+        # OUD ACLs should have 'aci' attributes
+        # Attributes is a wrapper - access inner dict via .attributes
+        acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
         assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
 
     def test_parse_edge_case_unicode(
@@ -192,15 +192,17 @@ class TestRfcDockerRealData:
             pytest.skip("Unicode fixtures not found")
 
         unicode_files = list(unicode_dir.glob("*.ldif"))
+        if not unicode_files:
+            pytest.skip("Unicode LDIF fixtures not found")
 
         for ldif_file in unicode_files:
             parser = FlextLdifParser()
 
             result = parser.parse_ldif_file(ldif_file)
             # Should handle Unicode gracefully
-        assert result.is_success or result.error, (
-            f"Parsing {ldif_file.name} should return valid result"
-        )
+            assert result.is_success or result.error, (
+                f"Parsing {ldif_file.name} should return valid result"
+            )
 
     def test_write_with_exception_handling(
         self,
@@ -275,10 +277,10 @@ class TestRfcDockerRealData:
 
         result = parser.parse_ldif_file(schema_file)
 
-        if result.is_success:
-            parse_response = result.value
-            entries = parse_response.entries
-            # Should have schema entries with attributeTypes or objectClasses
+        assert result.is_success, f"Failed to parse {schema_file.name}: {result.error}"
+        parse_response = result.value
+        entries = parse_response.entries
+        # Should have schema entries with attributeTypes or objectClasses
         assert len(entries) > 0
         # RFC 4512: Attribute names are case-insensitive
         assert any(

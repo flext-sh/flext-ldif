@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import ClassVar
@@ -179,6 +180,34 @@ class FlextLdifServersBaseEntry(
 
         fold_long_lines = True
         line_width = c.Ldif.Format.LINE_FOLD_WIDTH
+        include_dn_comments = False
+        normalize_attribute_names = False
+        write_empty_values = True
+        write_hidden_attributes_as_comments = False
+        write_metadata_as_comments = False
+        use_original_acl_format_as_name = False
+        hidden_attributes: set[str] = set()
+        acl_original_format: str | None = None
+
+        extensions_data: dict[str, t.GeneralValueType] = {}
+        if entry_data.metadata and entry_data.metadata.extensions is not None:
+            metadata_extensions = entry_data.metadata.extensions
+            if isinstance(metadata_extensions, Mapping):
+                extensions_data = dict(metadata_extensions)
+            elif hasattr(metadata_extensions, "model_dump"):
+                dumped = metadata_extensions.model_dump()
+                if isinstance(dumped, dict):
+                    extensions_data = dumped
+
+        hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
+        if isinstance(hidden_raw, list):
+            hidden_attributes = {
+                str(attr).lower() for attr in hidden_raw if isinstance(attr, str)
+            }
+
+        acl_original_raw = extensions_data.get(c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT)
+        if isinstance(acl_original_raw, str):
+            acl_original_format = acl_original_raw
 
         if entry_data.metadata and entry_data.metadata.write_options:
             write_opts = entry_data.metadata.write_options
@@ -186,15 +215,42 @@ class FlextLdifServersBaseEntry(
             if isinstance(write_opts, FlextLdifModelsSettings.WriteFormatOptions):
                 fold_long_lines = bool(write_opts.fold_long_lines)
                 line_width = int(write_opts.line_width or line_width)
+                include_dn_comments = bool(write_opts.include_dn_comments)
+                normalize_attribute_names = bool(write_opts.normalize_attribute_names)
+                write_empty_values = bool(write_opts.write_empty_values)
+                write_hidden_attributes_as_comments = bool(
+                    write_opts.write_hidden_attributes_as_comments,
+                )
+                write_metadata_as_comments = bool(write_opts.write_metadata_as_comments)
+                use_original_acl_format_as_name = bool(
+                    write_opts.use_original_acl_format_as_name,
+                )
             elif isinstance(write_opts, Mapping):
                 nested_opts = write_opts.get("write_options")
                 if isinstance(nested_opts, FlextLdifModelsSettings.WriteFormatOptions):
                     fold_long_lines = bool(nested_opts.fold_long_lines)
                     line_width = int(nested_opts.line_width or line_width)
+                    include_dn_comments = bool(nested_opts.include_dn_comments)
+                    normalize_attribute_names = bool(
+                        nested_opts.normalize_attribute_names,
+                    )
+                    write_empty_values = bool(nested_opts.write_empty_values)
+                    write_hidden_attributes_as_comments = bool(
+                        nested_opts.write_hidden_attributes_as_comments,
+                    )
+                    write_metadata_as_comments = bool(
+                        nested_opts.write_metadata_as_comments,
+                    )
+                    use_original_acl_format_as_name = bool(
+                        nested_opts.use_original_acl_format_as_name,
+                    )
 
         def fold_line(line: str) -> list[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""
-            if not fold_long_lines or len(line.encode("utf-8")) <= line_width:
+            effective_width = (
+                line_width if fold_long_lines else c.Ldif.Format.LINE_FOLD_WIDTH
+            )
+            if len(line.encode("utf-8")) <= effective_width:
                 return [line]
 
             folded: list[str] = []
@@ -202,9 +258,9 @@ class FlextLdifServersBaseEntry(
             pos = 0
             while pos < len(line_bytes):
                 if not folded:
-                    chunk_end = min(pos + line_width, len(line_bytes))
+                    chunk_end = min(pos + effective_width, len(line_bytes))
                 else:
-                    chunk_end = min(pos + line_width - 1, len(line_bytes))
+                    chunk_end = min(pos + effective_width - 1, len(line_bytes))
 
                 while chunk_end > pos:
                     try:
@@ -222,6 +278,67 @@ class FlextLdifServersBaseEntry(
                 pos = chunk_end
             return folded
 
+        def should_base64_encode(attr_name: str, value: str) -> bool:
+            if attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES:
+                return True
+            if not value:
+                return False
+            if value[0] in c.Ldif.Format.BASE64_START_CHARS:
+                return True
+            if value[-1] == " ":
+                return True
+            for char in value:
+                char_ord = ord(char)
+                if char_ord < 32 or char_ord > ascii_printable_limit:
+                    return True
+            return False
+
+        def maybe_replace_acl_name(attr_name: str, value: str) -> str:
+            if not use_original_acl_format_as_name:
+                return value
+            if attr_name.lower() != "aci" or not acl_original_format:
+                return value
+            safe_acl_name = acl_original_format.replace('"', "'")
+            return re.sub(
+                r'acl\s+"[^"]*"',
+                f'acl "{safe_acl_name}"',
+                value,
+                count=1,
+            )
+
+        def emit_attribute_line(attr_name: str, value: str) -> str:
+            effective_name = (
+                attr_name.lower() if normalize_attribute_names else attr_name
+            )
+            effective_value = maybe_replace_acl_name(attr_name, value)
+            if should_base64_encode(effective_name, effective_value):
+                encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
+                    "ascii"
+                )
+                return f"{effective_name}:: {encoded}"
+            return f"{effective_name}: {effective_value}"
+
+        acl_attribute_names: set[str] = {
+            name.lower() for name in c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES
+        }
+        acl_attribute_names.update(
+            name.lower() for name in c.Ldif.AclAttributeRegistry.RFC_FOUNDATION
+        )
+        for names in c.Ldif.AclAttributeRegistry.SERVER_QUIRKS.values():
+            acl_attribute_names.update(name.lower() for name in names)
+
+        def append_attribute_line(attr_name: str, line: str) -> None:
+            if attr_name.lower() in acl_attribute_names:
+                output_lines.append(line)
+                return
+            output_lines.extend(fold_line(line))
+
+        if write_metadata_as_comments and entry_data.metadata is not None:
+            output_lines.append("# Entry Metadata:")
+
+        if include_dn_comments and entry_data.dn:
+            output_lines.append(f"# DN: {entry_data.dn.value}")
+
         if entry_data.dn:
             dn_line = f"dn: {entry_data.dn.value}"
             output_lines.extend(fold_line(dn_line))
@@ -230,21 +347,24 @@ class FlextLdifServersBaseEntry(
 
         if hasattr(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
+                attr_is_hidden = attr_name.lower() in hidden_attributes
                 if isinstance(values, list):
                     for value in values:
                         str_value = str(value)
-                        if any(ord(char) > ascii_printable_limit for char in str_value):
-                            encoded = base64.b64encode(
-                                str_value.encode("utf-8"),
-                            ).decode("ascii")
-                            attr_line = f"{attr_name}:: {encoded}"
-                        else:
-                            attr_line = f"{attr_name}: {str_value}"
-                        output_lines.extend(fold_line(attr_line))
+                        if not str_value and not write_empty_values:
+                            continue
+                        attr_line = emit_attribute_line(attr_name, str_value)
+                        if attr_is_hidden and write_hidden_attributes_as_comments:
+                            attr_line = f"# {attr_line}"
+                        append_attribute_line(attr_name, attr_line)
                 else:
                     str_value = str(values)
-                    attr_line = f"{attr_name}: {str_value}"
-                    output_lines.extend(fold_line(attr_line))
+                    if not str_value and not write_empty_values:
+                        continue
+                    attr_line = emit_attribute_line(attr_name, str_value)
+                    if attr_is_hidden and write_hidden_attributes_as_comments:
+                        attr_line = f"# {attr_line}"
+                    append_attribute_line(attr_name, attr_line)
 
         output_lines.append("")
 
@@ -280,7 +400,7 @@ class FlextLdifServersBaseEntry(
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         """Resolve write options for header generation."""
         if write_options is None:
-            return None
+            return FlextLdifModelsSettings.WriteFormatOptions()
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
         if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):

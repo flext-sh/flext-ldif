@@ -361,34 +361,44 @@ class TestsFlextLdifWriterFormatOptions(s):
         ("option_field", "test_value", "expected_pattern", "check_absence"),
         [
             # Version header
-            (WriterOption.INCLUDE_VERSION_HEADER, True, r"^version:\s*1$", False),
-            (WriterOption.INCLUDE_VERSION_HEADER, False, r"^version:\s*1$", True),
+            (
+                WriterOption.INCLUDE_VERSION_HEADER,
+                True,
+                r"(?m)^version:\s*1$",
+                False,
+            ),
+            (
+                WriterOption.INCLUDE_VERSION_HEADER,
+                False,
+                r"(?m)^version:\s*1$",
+                True,
+            ),
             # Timestamps
             (
                 WriterOption.INCLUDE_TIMESTAMPS,
                 True,
-                r"# Timestamp:",
+                r"# Generated on:",
                 False,
             ),
             (
                 WriterOption.INCLUDE_TIMESTAMPS,
                 False,
-                r"# Timestamp:",
+                r"# Generated on:",
                 True,
             ),
             # Write hidden attrs as comments
             (
                 WriterOption.WRITE_HIDDEN_ATTRS_AS_COMMENTS,
                 True,
-                r"^#\s+\w+:",
+                r"(?m)^#\s+\w+:",
                 False,
             ),
             # Write empty values
-            (WriterOption.WRITE_EMPTY_VALUES, True, r"^\w+:\s*$", False),
-            (WriterOption.WRITE_EMPTY_VALUES, False, r"^\w+:\s*$", True),
+            (WriterOption.WRITE_EMPTY_VALUES, True, r"(?m)^\w+:\s*$", False),
+            (WriterOption.WRITE_EMPTY_VALUES, False, r"(?m)^\w+:\s*$", True),
             # Include DN comments
-            (WriterOption.INCLUDE_DN_COMMENTS, True, r"^# DN:", False),
-            (WriterOption.INCLUDE_DN_COMMENTS, False, r"^# DN:", True),
+            (WriterOption.INCLUDE_DN_COMMENTS, True, r"(?m)^# DN:", False),
+            (WriterOption.INCLUDE_DN_COMMENTS, False, r"(?m)^# DN:", True),
         ],
     )
     def test_boolean_option(

@@ -55,8 +55,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 if result.is_success:
                     entries.append(result.value)
                 else:
-                    logger.warning(
-                        "Failed to parse entry block",
+                    logger.debug(
+                        "Skipping invalid entry block",
                         error=result.error,
                     )
 
@@ -70,11 +70,13 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Parse entry from LDIF lines."""
         dn: str = ""
         attrs: dict[str, list[str]] = {}
+        original_content_lines: list[str] = []
 
         for raw_line in lines:
             line = raw_line.rstrip()
             if not line or line.startswith("#"):
                 continue
+            original_content_lines.append(line)
 
             if line.startswith(" ") and attrs:
                 last_key = list(attrs.keys())[-1]
@@ -99,7 +101,20 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         if not dn:
             return FlextResult[m.Ldif.Entry].fail("No DN found in entry")
 
-        return self._create_entry(dn, attrs)
+        create_result = self._create_entry(dn, attrs)
+        if create_result.is_failure:
+            return create_result
+
+        entry = create_result.value
+        if entry.metadata is None:
+            entry.metadata = m.Ldif.QuirkMetadata.create_for("rfc")
+
+        original_ldif = "\n".join(original_content_lines)
+        if original_ldif:
+            entry.metadata.original_strings["entry_original_ldif"] = original_ldif
+        entry.metadata.original_strings["dn_original"] = dn
+
+        return FlextResult[m.Ldif.Entry].ok(entry)
 
     def _create_entry(
         self,

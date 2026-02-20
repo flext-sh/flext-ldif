@@ -160,7 +160,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             aci_content,
         )
         if timeofday_match:
-            extensions["acl_bind_timeofday"] = (
+            extensions[c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY] = (
                 f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
             )
 
@@ -169,7 +169,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             aci_content,
         )
         if ssf_match:
-            extensions["acl_ssf"] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
+            extensions[c.Ldif.MetadataKeys.ACL_SSF] = (
+                f"{ssf_match.group(1)}{ssf_match.group(2)}"
+            )
 
         server_type_value = config.server_type if config else "oud"
 

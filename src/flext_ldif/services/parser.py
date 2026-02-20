@@ -95,7 +95,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             detected_server_type=effective_server_type,
         )
 
-        return r[str].ok(response)
+        return r[m.Ldif.LdifResults.ParseResponse].ok(response)
 
     def parse_ldif_file(
         self,
@@ -139,15 +139,18 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         if batch_result.is_success:
             processed_value = batch_result.value
             processed_list: list[list[str]] = []
+            raw_results: object | None = None
             if isinstance(processed_value, dict) and "results" in processed_value:
-                results_value = processed_value["results"]
-                if isinstance(results_value, list):
-                    processed_list = [
-                        entry for entry in results_value if isinstance(entry, list)
-                    ]
+                raw_results = processed_value["results"]
             elif isinstance(processed_value, list):
+                raw_results = processed_value
+
+            if raw_results is None:
+                raw_results = getattr(processed_value, "results", None)
+
+            if isinstance(raw_results, list):
                 processed_list = [
-                    entry for entry in processed_value if isinstance(entry, list)
+                    entry for entry in raw_results if isinstance(entry, list)
                 ]
 
             for entry_lines in processed_list:

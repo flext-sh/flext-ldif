@@ -273,9 +273,7 @@ class FlextLdifSorting(
             entries=list(entries),
             sort_target=c.Ldif.SortTarget.ENTRIES.value,
             sort_by=c.Ldif.SortStrategy.CUSTOM.value,
-        )
-        sorting_instance = sorting_instance.model_copy(
-            update={"custom_predicate": predicate}
+            custom_predicate=predicate,
         )
         return sorting_instance.execute()
 

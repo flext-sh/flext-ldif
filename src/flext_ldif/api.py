@@ -8,6 +8,7 @@ from typing import ClassVar
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
 
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -24,6 +25,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.typings import t
 
 
@@ -31,14 +33,28 @@ class FlextLdif(FlextLdifServiceBase[object]):
     """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
+    _init_config_overrides: ClassVar[dict[str, t.FlexibleValue] | None] = None
     _service_cache: dict[str, t.GeneralValueType]
+
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+        """Allow per-instance config overrides on initialization."""
+        base_options = super()._runtime_bootstrap_options()
+        overrides = cls._init_config_overrides
+        if not overrides:
+            return base_options
+        return base_options.model_copy(update={"config_overrides": dict(overrides)})
 
     @classmethod
     def get_instance(cls) -> FlextLdif:
         """Get singleton instance of FlextLdif."""
         if cls._instance is None:
             cls._instance = cls()
-        return cls._instance
+        instance = cls._instance
+        if instance is None:
+            msg = "FlextLdif singleton instance was not initialized"
+            raise RuntimeError(msg)
+        return instance
 
     @classmethod
     def categorization(
@@ -54,9 +70,23 @@ class FlextLdif(FlextLdifServiceBase[object]):
             server_registry=FlextLdifServer.get_global_instance(),
         )
 
-    def __init__(self, **kwargs: str | float | bool | None) -> None:
+    def __init__(
+        self,
+        *,
+        config: FlextLdifSettings | None = None,
+        **kwargs: str | float | bool | None,
+    ) -> None:
         """Initialize LDIF facade."""
-        super().__init__(**kwargs)
+        del kwargs
+
+        try:
+            if config is not None:
+                type(self)._init_config_overrides = config.model_dump(
+                    exclude_none=True,
+                )
+            super().__init__()
+        finally:
+            type(self)._init_config_overrides = None
 
         self._service_cache = {}
         FlextLogger(__name__).info("FlextLdif facade initialized")
@@ -296,18 +326,18 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
     def parse(
         self,
-        content: str | Path,
+        source: str | Path,
         *,
         server_type: str | None = None,
     ) -> r[list[t.GeneralValueType]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
 
-        if isinstance(content, Path):
-            return self._parse_file(content, server_type=effective_type)
+        if isinstance(source, Path):
+            return self._parse_file(source, server_type=effective_type)
 
         parse_result = self.parser.parse_string(
-            content,
+            source,
             server_type=effective_type,
         )
         if parse_result.is_failure:
@@ -332,7 +362,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         except OSError as e:
             return r[list[t.GeneralValueType]].fail(f"Failed to read file: {e}")
 
-        return self.parse(content, server_type=server_type)
+        return self.parse(source=content, server_type=server_type)
 
     def create_entry(
         self,
@@ -383,6 +413,12 @@ class FlextLdif(FlextLdifServiceBase[object]):
         entries: list[t.GeneralValueType],
         *,
         server_type: str | None = None,
+        format_options: (
+            m.Ldif.LdifResults.WriteFormatOptions
+            | m.Ldif.LdifResults.WriteOptions
+            | dict[str, t.GeneralValueType]
+            | None
+        ) = None,
     ) -> r[str]:
         """Write entries to LDIF format string."""
         entries_typed: list[m.Ldif.Entry] = []
@@ -402,6 +438,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         return self.writer.write_to_string(
             entries_typed,
             server_type=server_type_typed,
+            format_options=format_options,
         )
 
     def write_file(
@@ -410,9 +447,19 @@ class FlextLdif(FlextLdifServiceBase[object]):
         path: Path,
         *,
         server_type: str | None = None,
+        format_options: (
+            m.Ldif.LdifResults.WriteFormatOptions
+            | m.Ldif.LdifResults.WriteOptions
+            | dict[str, t.GeneralValueType]
+            | None
+        ) = None,
     ) -> r[bool]:
         """Write entries to LDIF file."""
-        write_result = self.write(entries, server_type=server_type)
+        write_result = self.write(
+            entries,
+            server_type=server_type,
+            format_options=format_options,
+        )
         if write_result.is_failure:
             return r[bool].fail(str(write_result.error))
 
@@ -455,6 +502,65 @@ class FlextLdif(FlextLdifServiceBase[object]):
             return r[list[t.GeneralValueType]].ok(filtered)
         except Exception as e:
             return r[list[t.GeneralValueType]].fail(f"Filter error: {e}")
+
+    def filter(
+        self,
+        entries: list[t.GeneralValueType],
+        *,
+        objectclass: str | None = None,
+        dn_pattern: str | None = None,
+        attributes: dict[str, object] | None = None,
+    ) -> r[list[t.GeneralValueType]]:
+        """Filter entries by objectClass, DN pattern and attribute criteria."""
+        entries_typed: list[m.Ldif.Entry] = []
+        for entry in entries:
+            if isinstance(entry, m.Ldif.Entry):
+                entries_typed.append(entry)
+            elif isinstance(entry, dict):
+                entries_typed.append(m.Ldif.Entry.model_validate(entry))
+            else:
+                entries_typed.append(m.Ldif.Entry.model_validate(entry))
+
+        if not objectclass and not dn_pattern and not attributes:
+            return r[list[t.GeneralValueType]].ok(list(entries_typed))
+
+        required_attrs: list[str] = list(attributes.keys()) if attributes else []
+        filtered: list[m.Ldif.Entry] = []
+        for entry in entries_typed:
+            if not FlextLdifUtilitiesEntry.matches_criteria(
+                entry,
+                objectclasses=[objectclass] if objectclass else [],
+                objectclass_mode="any",
+                dn_pattern=dn_pattern,
+                required_attrs=required_attrs,
+            ):
+                continue
+
+            if attributes and entry.attributes is not None:
+                attr_map = entry.attributes.attributes
+                matches_values = True
+                for attr_name, expected in attributes.items():
+                    entry_values = attr_map.get(attr_name)
+                    if expected is None:
+                        continue
+                    if entry_values is None:
+                        matches_values = False
+                        break
+                    expected_values: list[str] = (
+                        [str(v) for v in expected]
+                        if isinstance(expected, list)
+                        else [str(expected)]
+                    )
+                    existing_values = [str(v) for v in entry_values]
+                    if not any(value in existing_values for value in expected_values):
+                        matches_values = False
+                        break
+                if not matches_values:
+                    continue
+
+            filtered.append(entry)
+
+        return r[list[t.GeneralValueType]].ok(filtered)
 
     def get_entry_statistics(
         self,

@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import cast
 
-import pytest
 from flext_ldif import FlextLdif
 from ldap3 import Connection
 
@@ -14,9 +12,6 @@ from tests import GenericFieldsDict
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 def test_ldap_connection(ldap_connection: Connection) -> None:
     """Test basic LDAP connection."""
     assert ldap_connection.bound
@@ -24,15 +19,12 @@ def test_ldap_connection(ldap_connection: Connection) -> None:
     assert "dc=flext,dc=local" in ldap_connection.server.info.naming_contexts
 
 
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 def test_simple_ldap_search(
     ldap_connection: Connection,
     ldap_container: GenericFieldsDict,
 ) -> None:
     """Test simple LDAP search."""
-    base_dn = str(cast("dict[str, object]", ldap_container)["base_dn"])
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
 
     # Search for base DN
     result = ldap_connection.search(
@@ -45,16 +37,13 @@ def test_simple_ldap_search(
     assert len(ldap_connection.entries) >= 1
 
 
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 def test_create_and_export_entry(
     ldap_connection: Connection,
     ldap_container: GenericFieldsDict,
     make_test_username: Callable[[str], str],
 ) -> None:
     """Create LDAP entry and export to LDIF."""
-    base_dn = str(cast("dict[str, object]", ldap_container)["base_dn"])
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
     unique_username = make_test_username("SimpleTest")
     test_dn = f"cn={unique_username},{base_dn}"
 

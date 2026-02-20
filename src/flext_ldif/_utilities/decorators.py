@@ -232,7 +232,7 @@ class FlextLdifUtilitiesDecorators:
                 except BaseException as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
-                    return None
+                    return FlextResult.fail(error_msg)
 
             return wrapper
 

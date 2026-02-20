@@ -1577,6 +1577,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if not aci_values and entry.attributes and entry.attributes.attributes:
                 aci_values = self._find_aci_in_dict(entry.attributes.attributes)
 
+        if not aci_values and entry.metadata and entry.metadata.extensions:
+            commented_raw = entry.metadata.extensions.get("commented_attribute_values")
+            commented_values = self._parse_commented_values(commented_raw)
+            if commented_values:
+                for key, value in commented_values.items():
+                    if key.lower() == "aci":
+                        aci_values = self._normalize_aci_value_simple(value)
+                        if aci_values:
+                            break
+
         return aci_values
 
     def _process_parsed_acl_extensions(
@@ -1749,11 +1759,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
+            "bind_ip": mk.ACL_BIND_IP_FILTER,
             "dns": mk.ACL_BIND_DNS,
+            "bind_dns": mk.ACL_BIND_DNS,
             "dayofweek": mk.ACL_BIND_DAYOFWEEK,
+            "bind_dayofweek": mk.ACL_BIND_DAYOFWEEK,
             "timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "authmethod": "acl:vendor:bind_authmethod",
-            "ssf": "acl:vendor:bind_ssf",
+            "bind_timeofday": mk.ACL_BIND_TIMEOFDAY,
+            "authmethod": mk.ACL_AUTHMETHOD,
+            "ssf": mk.ACL_SSF,
             "targetcontrol": "targetcontrol",
             "targetscope": "targetscope",
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
@@ -1796,11 +1810,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
+            "bind_ip": mk.ACL_BIND_IP_FILTER,
             "dns": mk.ACL_BIND_DNS,
+            "bind_dns": mk.ACL_BIND_DNS,
             "dayofweek": mk.ACL_BIND_DAYOFWEEK,
+            "bind_dayofweek": mk.ACL_BIND_DAYOFWEEK,
             "timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "authmethod": "acl:vendor:bind_authmethod",
-            "ssf": "acl:vendor:bind_ssf",
+            "bind_timeofday": mk.ACL_BIND_TIMEOFDAY,
+            "authmethod": mk.ACL_AUTHMETHOD,
+            "ssf": mk.ACL_SSF,
             "targetcontrol": "targetcontrol",
             "targetscope": "targetscope",
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
@@ -1849,9 +1867,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 f"ACI macro validation failed: {validation_result.error}",
             )
 
+        normalized_aci = aci_value.strip()
+        if not normalized_aci.startswith("aci:"):
+            normalized_aci = f"aci: {normalized_aci}"
+
         # Parse ACL to extract metadata
         acl_quirk = FlextLdifServersOudAcl()
-        parse_result = acl_quirk.parse(aci_value)
+        parse_result = acl_quirk.parse(normalized_aci)
         if parse_result.is_success:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
@@ -2234,6 +2256,43 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
 
         return FlextResult.ok(entry)
+
+    def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
+        """Parse LDIF content and apply OUD post-processing hooks."""
+        parsed_result = super().parse(ldif_content)
+        if parsed_result.is_failure:
+            return parsed_result
+
+        processed_entries: list[m.Ldif.Entry] = []
+        for parsed_entry in parsed_result.value:
+            post_parse_result = self._hook_post_parse_entry(parsed_entry)
+            if post_parse_result.is_failure:
+                return FlextResult.fail(
+                    post_parse_result.error or "OUD post-parse failed"
+                )
+
+            entry_after_post = post_parse_result.value
+            original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
+            original_attrs = (
+                entry_after_post.attributes.attributes
+                if entry_after_post.attributes
+                and entry_after_post.attributes.attributes
+                else {}
+            )
+
+            finalize_result = self._hook_finalize_entry_parse(
+                entry_after_post,
+                original_dn,
+                original_attrs,
+            )
+            if finalize_result.is_failure:
+                return FlextResult.fail(
+                    finalize_result.error or "OUD finalize parse failed",
+                )
+
+            processed_entries.append(finalize_result.value)
+
+        return FlextResult.ok(processed_entries)
 
     def _hook_pre_write_entry(
         self,

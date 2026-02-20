@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-import socket
+import fcntl
 import time
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -31,9 +31,53 @@ from flext_ldif import (
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
+from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
 from tests.conftest import FlextLdifFixtures
+
+WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
+LDAP_CONTAINER_NAME = "flext-openldap-test"
+LDAP_COMPOSE_FILE = WORKSPACE_ROOT / "docker" / "docker-compose.openldap.yml"
+LDAP_SERVICE_NAME = "openldap"
+LDAP_PORT = 3390
+LDAP_BASE_DN = "dc=flext,dc=local"
+LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+
+
+@contextlib.contextmanager
+def _lock_file(worker_id: str) -> Generator[None]:
+    _ = worker_id
+    lock_path = Path.home() / ".flext" / f"{LDAP_CONTAINER_NAME}.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("w", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+
+
+def _wait_for_ldap_ready(server_url: str, max_wait: float = 60.0) -> bool:
+    waited = 0.0
+    interval = 1.0
+    while waited < max_wait:
+        with contextlib.suppress(Exception):
+            server = Server(server_url, get_info=ALL)
+            conn = Connection(
+                server,
+                user=LDAP_ADMIN_DN,
+                password=LDAP_ADMIN_PASSWORD,
+                auto_bind=False,
+            )
+            if conn.bind():
+                conn.unbind()
+                return True
+        time.sleep(interval)
+        waited += interval
+    return False
+
 
 # ============================================================================
 # API FIXTURES
@@ -586,35 +630,49 @@ def oud_acl_quirk(
 
 
 @pytest.fixture(scope="session")
-def ldap_container_shared() -> str:
-    """Provide LDAP connection URL for tests requiring Docker container.
+def ldap_container(worker_id: str) -> dict[str, object]:
+    """Ensure shared OpenLDAP container is available for integration tests."""
+    docker_control = FlextTestsDocker(
+        workspace_root=WORKSPACE_ROOT, worker_id=worker_id
+    )
+    server_url = f"ldap://localhost:{LDAP_PORT}"
 
-    This fixture provides the LDAP connection URL for integration tests that
-    need to interact with a real LDAP server. It skips tests if the container
-    is not running.
-
-    Returns:
-        str: LDAP connection URL (e.g., "ldap://localhost:3390")
-
-    """
-    port = 3390  # Default LDAP port from docker-compose.openldap.yml
-
-    # Check if port is available (container is running)
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        result = sock.connect_ex(("localhost", port))
-        sock.close()
-        if result != 0:
-            pytest.skip(
-                f"LDAP container not running on port {port}. "
-                f"Start with: cd {Path(__file__).resolve().parents[3] / 'docker'} && "
-                f"docker compose -f docker-compose.openldap.yml up -d",
+    with _lock_file(worker_id):
+        start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
+        if start_result.is_failure:
+            compose_result = docker_control.compose_up(
+                str(LDAP_COMPOSE_FILE),
+                LDAP_SERVICE_NAME,
             )
-    except OSError:
-        pytest.skip(f"Could not check LDAP container on port {port}")
+            if compose_result.is_failure:
+                pytest.skip(
+                    f"Could not start shared OpenLDAP container: {compose_result.error}"
+                )
 
-    return f"ldap://localhost:{port}"
+        port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 60)
+        if port_result.is_failure or not port_result.value:
+            pytest.skip(f"LDAP container port {LDAP_PORT} is not ready")
+
+        if not _wait_for_ldap_ready(server_url):
+            pytest.skip("LDAP container is running but bind is not ready")
+
+    return {
+        "server_url": server_url,
+        "host": "localhost",
+        "bind_dn": LDAP_ADMIN_DN,
+        "password": LDAP_ADMIN_PASSWORD,
+        "base_dn": LDAP_BASE_DN,
+        "port": LDAP_PORT,
+        "use_ssl": False,
+        "worker_id": worker_id,
+    }
+
+
+@pytest.fixture(scope="session")
+def ldap_container_shared(ldap_container: dict[str, object]) -> str:
+    """Provide LDAP connection URL for tests requiring Docker container."""
+    default_url = f"ldap://localhost:{LDAP_PORT}"
+    return str(ldap_container.get("server_url", default_url))
 
 
 @pytest.fixture

@@ -43,6 +43,7 @@ from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif._utilities.pipeline import (
+    Pipeline,
     ValidationPipeline,
     ValidationResult,
 )
@@ -682,11 +683,24 @@ class FlextLdifUtilities(u_core):
                 | dict[str, t.GeneralValueType]
                 | Mapping[str, object]
             ) = items_or_entries
-            if processor_normalized is None or isinstance(
-                processor_normalized,
-                ProcessConfig,
-            ):
+            if processor_normalized is None:
+                if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
+                    return FlextLdifUtilities.Ldif.Entry.transform_batch(
+                        items_or_entries,
+                        normalize_dns=normalize_dns,
+                        normalize_attrs=normalize_attrs,
+                    )
                 msg = "processor is required for base class process"
+                return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
+
+            if isinstance(processor_normalized, ProcessConfig):
+                if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
+                    return FlextLdifUtilities.Ldif.Entry.transform_batch(
+                        items_or_entries,
+                        normalize_dns=normalize_dns,
+                        normalize_attrs=normalize_attrs,
+                    )
+                msg = "ProcessConfig requires LDIF entry sequence"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
             processor_func = processor_normalized
 
@@ -836,6 +850,18 @@ class FlextLdifUtilities(u_core):
                 combined = combined & f if mode == "all" else combined | f
             filtered = [entry for entry in entries if combined.matches(entry)]
             return FlextLdifResult.ok(filtered)
+
+        @staticmethod
+        def transform_entries(
+            entries: Sequence[m.Ldif.Entry],
+            *transformers: object,
+            fail_fast: bool = True,
+        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
+            """Apply entry transformers to LDIF entries using pipeline semantics."""
+            pipeline = Pipeline(fail_fast=fail_fast)
+            for transformer in transformers:
+                pipeline.add(transformer)
+            return FlextLdifResult.from_result(pipeline.execute(entries))
 
         @staticmethod
         def _is_entry_sequence(

@@ -313,12 +313,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         ldif_text: str,
     ) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF text to Entry models."""
-        entry_class = getattr(type(self), "Entry", None)
-        if not entry_class:
+        entry_quirk = getattr(self, "entry_quirk", None)
+        if entry_quirk is None:
             return r[FlextLdifModelsResults.ParseResponse].fail(
-                "Entry nested class not available"
+                "Entry quirk not available"
             )
-        entry_quirk = entry_class()
+
         entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(
             ldif_text,
         )

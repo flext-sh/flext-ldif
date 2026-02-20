@@ -472,8 +472,8 @@ class TestsTestFlextLdifAclWithRealFixtures(s):
     def _get_fixture_path(server_type: lib_c.Ldif.ServerTypes) -> Path:
         """Get fixture path for server type."""
         fixture_map = {
-            lib_c.Ldif.ServerTypes.OID: "acl/oid_acl_fixture.ldif",
-            lib_c.Ldif.ServerTypes.OUD: "acl/oud_acl_fixture.ldif",
+            lib_c.Ldif.ServerTypes.OID: "oid/oid_acl_fixtures.ldif",
+            lib_c.Ldif.ServerTypes.OUD: "oud/oud_acl_fixtures.ldif",
         }
         fixture_rel_path = fixture_map[server_type]
         return Path(__file__).parent.parent / "fixtures" / fixture_rel_path

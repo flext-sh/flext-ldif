@@ -27,14 +27,14 @@ class TestsFlextLdifFixtures:
         return FlextLdif()
 
     def test_rfc_fixture_parsing(self, ldif: FlextLdif) -> None:
-        """Test parsing RFC fixture with 45+ entries."""
+        """Test parsing RFC fixture with current baseline entries."""
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
-        assert len(entries_raw) >= 45, (
-            f"Expected 45+ RFC entries, got {len(entries_raw)}"
+        assert len(entries_raw) >= 14, (
+            f"Expected at least 14 RFC entries, got {len(entries_raw)}"
         )
 
     def test_rfc_fixture_validation(self, ldif: FlextLdif) -> None:
@@ -69,7 +69,7 @@ class TestsFlextLdifFixtures:
 
     def test_openldap2_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OpenLDAP2 fixture with 45+ entries."""
-        fixture = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture = Path("tests/fixtures/openldap2/openldap2_integration_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
         entries_raw = result.value

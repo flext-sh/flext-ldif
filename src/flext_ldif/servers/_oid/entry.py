@@ -682,6 +682,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             extensions=m.Ldif.DynamicMetadata.from_dict(extensions_data),
         )
 
+        original_strings_data: dict[str, str] = {}
+        if original_entry.metadata and isinstance(
+            original_entry.metadata.original_strings, dict
+        ):
+            for key, value in original_entry.metadata.original_strings.items():
+                if isinstance(key, str) and isinstance(value, str):
+                    original_strings_data[key] = value
+
         for attr_name, conv_data in boolean_conversions.items():
             original_vals = conv_data.get(mk.CONVERSION_ORIGINAL_VALUE, [])
             converted_vals = conv_data.get(mk.CONVERSION_CONVERTED_VALUE, [])
@@ -707,6 +715,29 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             raw_lines = getattr(format_details, "original_attr_lines", [])
             if isinstance(raw_lines, (list, tuple)):
                 orig_attr_lines = [str(line) for line in list(raw_lines)]
+
+        if "entry_original_ldif" not in original_strings_data:
+            if orig_dn_line or orig_attr_lines:
+                original_parts: list[str] = []
+                if orig_dn_line:
+                    original_parts.append(orig_dn_line)
+                if orig_attr_lines:
+                    original_parts.extend(orig_attr_lines)
+                original_strings_data["entry_original_ldif"] = "\n".join(original_parts)
+            else:
+                fallback_parts: list[str] = [f"dn: {original_dn}"]
+                for attr_name, attr_values in original_attrs.items():
+                    for attr_value in attr_values:
+                        fallback_parts.append(f"{attr_name}: {attr_value}")
+                original_strings_data["entry_original_ldif"] = "\n".join(fallback_parts)
+
+        if "dn_original" not in original_strings_data:
+            original_strings_data["dn_original"] = original_dn
+
+        if original_strings_data:
+            metadata.original_strings = m.Ldif.DynamicMetadata.from_dict(
+                original_strings_data,
+            )
 
         converted_attrs_format_str: str | None = (
             json.dumps(list(converted_attrs)) if converted_attrs else None

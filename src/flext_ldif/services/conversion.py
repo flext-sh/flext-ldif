@@ -129,7 +129,7 @@ class FlextLdifConversion(
     ) -> FlextLdifServersBase:
         """Resolve server quirk instance from string type or return instance."""
         if isinstance(quirk_or_type, str):
-            server = FlextLdifServer()
+            server = FlextLdifServer.get_global_instance()
 
             server_type_str: str = quirk_or_type
             resolved_result = server.quirk(server_type_str)
@@ -658,72 +658,6 @@ class FlextLdifConversion(
                 str(conversion_analysis) if conversion_analysis else None,
                 str(source_quirk_name),
             )
-
-            if (
-                source_type_norm == "oid"
-                and target_type_norm == "rfc"
-                and converted_entry.attributes
-            ):
-                current_attrs = dict(converted_entry.attributes.attributes)
-                updated_attrs = {}
-
-                if hasattr(source_quirk, "entry_quirk") and hasattr(
-                    source_quirk.entry_quirk, "_convert_boolean_attributes_to_rfc"
-                ):
-                    # dynamic dispatch to known method on OID quirk
-                    entry_quirk = getattr(source_quirk, "entry_quirk")
-                    method = getattr(entry_quirk, "_convert_boolean_attributes_to_rfc")
-                    (
-                        converted_bools,
-                        _,
-                        _,
-                    ) = method(current_attrs)
-                    current_attrs = converted_bools
-
-                mapping = (
-                    FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
-                )
-                for k, v in current_attrs.items():
-                    lower_k = k.lower()
-                    if lower_k in mapping:
-                        new_key = mapping[lower_k]
-                        updated_attrs[new_key] = v
-                    else:
-                        updated_attrs[k] = v
-
-                new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
-                converted_entry = converted_entry.model_copy(
-                    update={"attributes": new_attributes}
-                )
-
-            if source_type_norm == "rfc" and target_type_norm == "oid":
-                if hasattr(target_quirk, "entry_quirk") and hasattr(
-                    target_quirk.entry_quirk, "_restore_boolean_values_to_oid"
-                ):
-                    # dynamic dispatch to known method on OID quirk
-                    entry_quirk = getattr(target_quirk, "entry_quirk")
-                    method = getattr(entry_quirk, "_restore_boolean_values_to_oid")
-                    converted_entry = method(converted_entry)
-
-                if converted_entry.attributes:
-                    current_attrs = dict(converted_entry.attributes.attributes)
-                    updated_attrs = {}
-                    mapping = (
-                        FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
-                    )
-
-                    for k, v in current_attrs.items():
-                        lower_k = k.lower()
-                        if lower_k in mapping:
-                            new_key = mapping[lower_k]
-                            updated_attrs[new_key] = v
-                        else:
-                            updated_attrs[k] = v
-
-                    new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
-                    converted_entry = converted_entry.model_copy(
-                        update={"attributes": new_attributes}
-                    )
 
             source_type_norm = str(source_quirk_name).lower()
             target_type_norm = str(target_server_type_str).lower()
