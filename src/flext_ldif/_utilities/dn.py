@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import string
 from collections.abc import Callable, Generator, Sequence
+from pathlib import Path
 from typing import Literal, overload
 
 from flext_core import r, u
@@ -1272,6 +1273,40 @@ class FlextLdifUtilitiesDN:
                 "metadata": metadata,
             },
         )
+
+    @staticmethod
+    def transform_ldif_files_in_directory(
+        ldif_dir: str | Path,
+        source_basedn: str,
+        target_basedn: str,
+    ) -> r[dict[str, int]]:
+        """Compatibility helper to transform BaseDN in all LDIF files in a directory."""
+        if not source_basedn or not target_basedn:
+            return r[dict[str, int]].fail(
+                "source_basedn and target_basedn are required"
+            )
+
+        directory = Path(ldif_dir)
+        if not directory.exists() or not directory.is_dir():
+            return r[dict[str, int]].fail(f"Invalid LDIF directory: {directory}")
+
+        transformed_count = 0
+        scanned_count = 0
+        source_pattern = re.compile(re.escape(source_basedn), re.IGNORECASE)
+
+        for ldif_file in sorted(directory.glob("*.ldif")):
+            scanned_count += 1
+            content = ldif_file.read_text(encoding="utf-8")
+            transformed_content = source_pattern.sub(target_basedn, content)
+            if transformed_content != content:
+                ldif_file.write_text(transformed_content, encoding="utf-8")
+                transformed_count += 1
+
+        return r[dict[str, int]].ok({
+            "total_count": transformed_count,
+            "transformed_count": transformed_count,
+            "scanned_count": scanned_count,
+        })
 
     @staticmethod
     def norm_or_fallback(
