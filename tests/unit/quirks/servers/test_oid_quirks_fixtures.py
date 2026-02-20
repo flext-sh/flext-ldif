@@ -6,6 +6,7 @@ with real LDIF fixture files to validate complete round-trip processing.
 
 from __future__ import annotations
 
+import copy
 from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar
@@ -59,6 +60,20 @@ def ldif_api() -> FlextLdif:
     return FlextLdif()
 
 
+@pytest.fixture(scope="class")
+def oid_fixture_cache(ldif_api: FlextLdif) -> dict[OidFixtureType, list[object]]:
+    """Pre-load OID fixture entries once per class."""
+    cache: dict[OidFixtureType, list[object]] = {}
+    for fixture_type in OidFixtureType:
+        fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
+        cache[fixture_type] = FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            "oid",
+            fixture_filename,
+        )
+    return cache
+
+
 # =============================================================================
 # TEST CLASS
 # =============================================================================
@@ -109,20 +124,27 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
         expected_objectclass: bool,
         _expected_oracle_attrs: bool,
         _expected_passwords: bool,
-        ldif_api: FlextLdif,
+        oid_fixture_cache: dict[OidFixtureType, list[object]],
     ) -> None:
         """Parametrized test for parsing OID fixture files."""
         fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
 
-        # Load fixture using helper
-        entries = FlextLdifTestUtils.load_fixture_and_validate_structure(
-            ldif_api,
-            "oid",
-            fixture_filename,
-            expected_has_objectclass=expected_objectclass or None,
-        )
+        entries = copy.deepcopy(oid_fixture_cache[fixture_type])
 
         assert len(entries) > 0, f"No entries loaded from {fixture_filename}"
+
+        for entry in entries:
+            assert getattr(entry, "dn", None) is not None, "Entry must have DN"
+            attributes = getattr(entry, "attributes", None)
+            assert attributes is not None, "Entry must have attributes"
+            attribute_map = getattr(attributes, "attributes", {})
+            assert len(attribute_map) > 0, "Entry must have at least one attribute"
+
+            attr_names = {name.lower() for name in attribute_map}
+            has_objectclass = "objectclass" in attr_names
+            assert has_objectclass == expected_objectclass, (
+                f"Expected has_objectclass={expected_objectclass}, got {has_objectclass}"
+            )
 
         # Note: Oracle-specific attributes and password hashes validation
         # is fixture-dependent and performed by load_fixture_and_validate_structure
@@ -140,18 +162,27 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
         scenario: str,
         fixture_type: OidFixtureType,
         ldif_api: FlextLdif,
-        tmp_path: Path,
+        oid_fixture_cache: dict[OidFixtureType, list[object]],
     ) -> None:
         """Parametrized test for roundtrip parsing/writing of OID fixtures."""
         fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
 
-        # Run roundtrip using helper
-        original_entries, roundtrip_entries, _ = FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api,
-            "oid",
-            fixture_filename,
-            tmp_path,
+        original_entries = copy.deepcopy(oid_fixture_cache[fixture_type])
+
+        write_result = ldif_api.write(
+            original_entries,
+            server_type="oid",
         )
+        assert write_result.is_success, f"Failed to write entries: {write_result.error}"
+
+        roundtrip_result = ldif_api.parse(
+            write_result.value,
+            server_type="oid",
+        )
+        assert roundtrip_result.is_success, (
+            f"Failed to parse roundtrip LDIF: {roundtrip_result.error}"
+        )
+        roundtrip_entries = roundtrip_result.value
 
         # Validate roundtrip results
         assert len(original_entries) > 0, f"No entries in {fixture_filename}"
