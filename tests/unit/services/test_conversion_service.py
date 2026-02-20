@@ -35,10 +35,10 @@ def conversion_service() -> FlextLdifConversion:
     return FlextLdifConversion()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def server() -> FlextLdifServer:
     """Create FlextLdifServer instance for getting quirks."""
-    return FlextLdifServer()
+    return FlextLdifServer.get_global_instance()
 
 
 @pytest.fixture
