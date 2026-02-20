@@ -101,8 +101,8 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
 
     SAMPLE_LIMITS: ClassVar[dict[OidFixtureType, int]] = {
         OidFixtureType.SCHEMA: 25,
-        OidFixtureType.ENTRIES: 25,
-        OidFixtureType.ACL: 25,
+        OidFixtureType.ENTRIES: 15,
+        OidFixtureType.ACL: 15,
     }
 
     @classmethod

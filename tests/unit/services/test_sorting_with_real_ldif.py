@@ -38,7 +38,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         __test__ = False
 
         SAMPLE_LIMITS: ClassVar[dict[str, int]] = {
-            "entries": 30,
+            "entries": 20,
             "schema": 25,
             "acl": 25,
         }

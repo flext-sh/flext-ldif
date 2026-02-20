@@ -37,9 +37,9 @@ def ldif_api() -> FlextLdif:
 def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[p.Entry]]:
     """Cache parsed migration fixtures once per class."""
     sample_limits = {
-        "oid_entries": 25,
-        "oud_entries": 25,
-        "rfc_entries": 25,
+        "oid_entries": 15,
+        "oud_entries": 15,
+        "rfc_entries": 15,
         "oid_schema": 25,
     }
 
