@@ -28,6 +28,7 @@ from tests import GenericFieldsDict
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+@pytest.fixture
 def flext_api() -> FlextLdif:
     """FlextLdif API instance."""
     return FlextLdif.get_instance()
@@ -36,9 +37,6 @@ def flext_api() -> FlextLdif:
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 class TestRealLdapRoundtrip:
     """Test LDAP → LDIF → LDAP data roundtrip."""
 
@@ -87,7 +85,7 @@ class TestRealLdapRoundtrip:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
 
-        entry_result = flext_api.models.Entry.create(
+        entry_result = flext_api.models.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
             metadata=None,
