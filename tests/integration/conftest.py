@@ -59,7 +59,7 @@ def _lock_file(worker_id: str) -> Generator[None]:
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
-def _wait_for_ldap_ready(server_url: str, max_wait: float = 60.0) -> bool:
+def _wait_for_ldap_ready(server_url: str, max_wait: float = 10.0) -> bool:
     waited = 0.0
     interval = 1.0
     while waited < max_wait:
@@ -649,7 +649,7 @@ def ldap_container(worker_id: str) -> dict[str, object]:
                     f"Could not start shared OpenLDAP container: {compose_result.error}"
                 )
 
-        port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 60)
+        port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 15)
         if port_result.is_failure or not port_result.value:
             pytest.skip(f"LDAP container port {LDAP_PORT} is not ready")
 
