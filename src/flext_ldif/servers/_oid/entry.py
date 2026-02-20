@@ -686,9 +686,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if original_entry.metadata and isinstance(
             original_entry.metadata.original_strings, dict
         ):
-            for key, value in original_entry.metadata.original_strings.items():
-                if isinstance(key, str) and isinstance(value, str):
-                    original_strings_data[key] = value
+            original_strings_data.update({
+                key: value
+                for key, value in original_entry.metadata.original_strings.items()
+                if isinstance(key, str) and isinstance(value, str)
+            })
 
         for attr_name, conv_data in boolean_conversions.items():
             original_vals = conv_data.get(mk.CONVERSION_ORIGINAL_VALUE, [])
@@ -727,8 +729,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else:
                 fallback_parts: list[str] = [f"dn: {original_dn}"]
                 for attr_name, attr_values in original_attrs.items():
-                    for attr_value in attr_values:
-                        fallback_parts.append(f"{attr_name}: {attr_value}")
+                    fallback_parts.extend(
+                        f"{attr_name}: {attr_value}" for attr_value in attr_values
+                    )
                 original_strings_data["entry_original_ldif"] = "\n".join(fallback_parts)
 
         if "dn_original" not in original_strings_data:

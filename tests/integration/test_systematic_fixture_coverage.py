@@ -59,7 +59,7 @@ class TestSystematicFixtureCoverage:
             current_chunk = []
 
         for line in lines:
-            if line.startswith("attributeTypes:") or line.startswith("objectClasses:"):
+            if line.startswith(("attributeTypes:", "objectClasses:")):
                 flush_chunk()
                 if definitions_count >= max_definitions:
                     break

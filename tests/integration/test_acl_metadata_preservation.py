@@ -217,7 +217,9 @@ cn: test
         targattrfilters = entry.metadata.extensions.get(
             c.Ldif.MetadataKeys.ACL_TARGETATTR_FILTERS,
         )
-        assert targattrfilters == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)", "targattrfilters not preserved"
+        assert targattrfilters == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)", (
+            "targattrfilters not preserved"
+        )
 
     def test_oud_targetcontrol_preservation(self, api: FlextLdif) -> None:
         """Test that OUD targetcontrol is preserved in metadata."""

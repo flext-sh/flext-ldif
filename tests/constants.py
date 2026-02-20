@@ -707,7 +707,9 @@ class Filters:
     # Test DNs
     DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
     DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
-    DN_USER_ADMIN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
+    DN_USER_ADMIN: Final[str] = (
+        "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
+    )
     DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
     DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
     DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"

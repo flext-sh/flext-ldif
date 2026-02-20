@@ -88,8 +88,14 @@ class TestsFlextLdifDnService(s):
         (f"Smith, {c.Values.TEST}", "Smith\\2c test"),
         ("#1 User", "\\231 User"),
         ('Test+User,"Admin"', "Test\\2bUser\\2c\\22Admin\\22"),  # Full escaped form
-        (" REDACTED_LDAP_BIND_PASSWORD", "\\20REDACTED_LDAP_BIND_PASSWORD"),  # Starts with hex space
-        ("REDACTED_LDAP_BIND_PASSWORD ", "REDACTED_LDAP_BIND_PASSWORD\\20"),  # Ends with hex space
+        (
+            " REDACTED_LDAP_BIND_PASSWORD",
+            "\\20REDACTED_LDAP_BIND_PASSWORD",
+        ),  # Starts with hex space
+        (
+            "REDACTED_LDAP_BIND_PASSWORD ",
+            "REDACTED_LDAP_BIND_PASSWORD\\20",
+        ),  # Ends with hex space
         ("", ""),
     )
 

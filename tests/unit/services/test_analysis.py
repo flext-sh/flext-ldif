@@ -87,7 +87,10 @@ class TestsTestFlextLdifAnalysis(s):
 
             group_result = entries_service.create_entry(
                 dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
-                attributes={"objectClass": ["groupOfNames"], "cn": "REDACTED_LDAP_BIND_PASSWORDs"},
+                attributes={
+                    "objectClass": ["groupOfNames"],
+                    "cn": "REDACTED_LDAP_BIND_PASSWORDs",
+                },
             )
             assert group_result.is_success
             entries.append(group_result.value)

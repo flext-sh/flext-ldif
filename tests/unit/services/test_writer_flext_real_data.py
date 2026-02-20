@@ -11,9 +11,9 @@ from enum import StrEnum
 from typing import ClassVar, Final
 
 import pytest
+from flext_ldif import FlextLdifWriter
 from flext_tests import tm
 
-from flext_ldif import FlextLdifWriter
 from tests import c, m, s
 
 # =============================================================================
@@ -115,10 +115,7 @@ class TestsFlextLdifsFlextLdifWriterFlextRealData(s):
 
         # Validate RFC 2849 compliance
         # write() returns a string directly, not a WriteResponse object
-        if isinstance(content, str) and content:
-            lines = content.split("\n")
-        else:
-            lines = []
+        lines = content.split("\n") if isinstance(content, str) and content else []
 
         violations: list[tuple[int, int, str]] = []
         for i, line in enumerate(lines, 1):

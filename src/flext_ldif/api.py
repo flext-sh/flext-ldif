@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, TypeVar
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
@@ -35,6 +36,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
     _instance: ClassVar[FlextLdif | None] = None
     _init_config_overrides: ClassVar[dict[str, t.FlexibleValue] | None] = None
     _service_cache: dict[str, t.GeneralValueType]
+    _TService = TypeVar("_TService", bound=t.GeneralValueType)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
@@ -95,46 +97,55 @@ class FlextLdif(FlextLdifServiceBase[object]):
         """Get service cache dict."""
         return self._service_cache
 
+    def _get_cached_service(
+        self,
+        key: str,
+        factory: Callable[[], _TService],
+        service_type: type[_TService],
+    ) -> _TService:
+        """Get or initialize a typed service from cache."""
+        cache = self._get_service_cache()
+        service = cache.get(key)
+        if not isinstance(service, service_type):
+            service = factory()
+            cache[key] = service
+        return service
+
     @property
     @computed_field
     def service_stats(self) -> dict[str, bool]:
         """Pydantic 2 computed field showing service initialization status."""
         cache = self._get_service_cache()
-        return {
-            "parser": "parser" in cache,
-            "writer": "writer" in cache,
-            "detector": "detector" in cache,
-            "validator": "validator" in cache,
-            "statistics": "statistics" in cache,
-            "processing": "processing" in cache,
-            "acl": "acl" in cache,
-            "entries": "entries" in cache,
-            "server": "server" in cache,
+        keys = {
+            "parser": "parser",
+            "writer": "writer",
+            "detector": "detector",
+            "validator": "validator",
+            "statistics": "statistics",
+            "processing": "processing_service",
+            "acl": "acl_service",
+            "entries": "entries_service",
+            "server": "server",
         }
+        return {name: cache_key in cache for name, cache_key in keys.items()}
 
     @property
     def processing_service(self) -> FlextLdifProcessing:
         """Get processing service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "processing_service" not in cache:
-            cache["processing_service"] = FlextLdifProcessing()
-        svc = cache["processing_service"]
-        if not isinstance(svc, FlextLdifProcessing):
-            svc = FlextLdifProcessing()
-            cache["processing_service"] = svc
-        return svc
+        return self._get_cached_service(
+            "processing_service",
+            FlextLdifProcessing,
+            FlextLdifProcessing,
+        )
 
     @property
     def acl_service(self) -> FlextLdifAcl:
         """Get ACL service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "acl_service" not in cache:
-            cache["acl_service"] = FlextLdifAcl(server=self.server)
-        svc = cache["acl_service"]
-        if not isinstance(svc, FlextLdifAcl):
-            svc = FlextLdifAcl(server=self.server)
-            cache["acl_service"] = svc
-        return svc
+        return self._get_cached_service(
+            "acl_service",
+            lambda: FlextLdifAcl(server=self.server),
+            FlextLdifAcl,
+        )
 
     @property
     def models(self) -> type[m]:
@@ -149,62 +160,43 @@ class FlextLdif(FlextLdifServiceBase[object]):
     @property
     def parser(self) -> FlextLdifParser:
         """Get parser service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "parser" not in cache:
-            cache["parser"] = FlextLdifParser(server=self.server)
-        parser = cache["parser"]
-        if not isinstance(parser, FlextLdifParser):
-            parser = FlextLdifParser(server=self.server)
-            cache["parser"] = parser
-        return parser
+        return self._get_cached_service(
+            "parser",
+            lambda: FlextLdifParser(server=self.server),
+            FlextLdifParser,
+        )
 
     @property
     def writer(self) -> FlextLdifWriter:
         """Get writer service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "writer" not in cache:
-            cache["writer"] = FlextLdifWriter()
-        writer = cache["writer"]
-        if not isinstance(writer, FlextLdifWriter):
-            writer = FlextLdifWriter()
-            cache["writer"] = writer
-        return writer
+        return self._get_cached_service("writer", FlextLdifWriter, FlextLdifWriter)
 
     @property
     def detector(self) -> FlextLdifDetector:
         """Get detector service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "detector" not in cache:
-            cache["detector"] = FlextLdifDetector()
-        detector = cache["detector"]
-        if not isinstance(detector, FlextLdifDetector):
-            detector = FlextLdifDetector()
-            cache["detector"] = detector
-        return detector
+        return self._get_cached_service(
+            "detector",
+            FlextLdifDetector,
+            FlextLdifDetector,
+        )
 
     @property
     def entries_service(self) -> FlextLdifEntries:
         """Get entries service instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "entries_service" not in cache:
-            cache["entries_service"] = FlextLdifEntries()
-        entries_svc = cache["entries_service"]
-        if not isinstance(entries_svc, FlextLdifEntries):
-            entries_svc = FlextLdifEntries()
-            cache["entries_service"] = entries_svc
-        return entries_svc
+        return self._get_cached_service(
+            "entries_service",
+            FlextLdifEntries,
+            FlextLdifEntries,
+        )
 
     @property
     def server(self) -> FlextLdifServer:
         """Get server registry instance (lazy initialization)."""
-        cache = self._get_service_cache()
-        if "server" not in cache:
-            cache["server"] = FlextLdifServer.get_global_instance()
-        server = cache["server"]
-        if not isinstance(server, FlextLdifServer):
-            server = FlextLdifServer.get_global_instance()
-            cache["server"] = server
-        return server
+        return self._get_cached_service(
+            "server",
+            FlextLdifServer.get_global_instance,
+            FlextLdifServer,
+        )
 
     def migrate(
         self,
