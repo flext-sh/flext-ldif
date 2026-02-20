@@ -53,7 +53,7 @@ def cleanup_state() -> None:
     # Post-test cleanup - ensures each test has clean state
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test function."""
     return FlextLdif()
