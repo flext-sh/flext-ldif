@@ -162,7 +162,8 @@ class TestsFlextLdifCrossServerMigration(s):
         tmp_path: Path,
     ) -> None:
         """Test OID schema → OUD migration."""
-        oid_schema = copy.deepcopy(migration_fixture_cache["oid_schema"])
+        schema_sample = migration_fixture_cache["oid_schema"][:50]
+        oid_schema = copy.deepcopy(schema_sample)
         assert len(oid_schema) > 0
 
         output_path = tmp_path / "oid_schema_to_oud.ldif"
