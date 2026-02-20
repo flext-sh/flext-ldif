@@ -597,6 +597,8 @@ class TestsFlextLdifTypes(tt_base):
     Extends FlextTestsTypes with flext-ldif specific type operations.
     """
 
+    __test__ = False
+
     @classmethod
     def entry_type(cls) -> type[p.Entry]:
         """Get Entry type for type checking."""
@@ -609,6 +611,8 @@ class TestsFlextLdifFixtures(tf_base):
     Extends FlextTestsFactories with flext-ldif specific factory methods.
     Provides parameterized entry creation with common patterns.
     """
+
+    __test__ = False
 
     @classmethod
     def create_entry(

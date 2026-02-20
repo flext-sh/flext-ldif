@@ -19,7 +19,7 @@ from typing import Final
 import pytest
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
-from flext_tests import tt
+from flext_ldif.services.statistics import FlextLdifStatistics
 
 from tests import c
 
@@ -79,7 +79,7 @@ objectClass: person
     }
 
 
-class TestFlextLdifAPIIntegration(tt):
+class TestFlextLdifAPIIntegration:
     """Comprehensive API integration tests for FlextLdif facade.
 
     Uses advanced Python 3.13 patterns:
@@ -167,7 +167,7 @@ class TestFlextLdifAPIIntegration(tt):
         """Dynamically test filtering by different DN patterns."""
         ldif = FlextLdif()
 
-        # Parse complex content with REDACTED_LDAP_BIND_PASSWORDs and people
+        # Parse complex content with admins and people
         parse_result = ldif.parse(self._COMPLEX_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
@@ -189,7 +189,7 @@ class TestFlextLdifAPIIntegration(tt):
                 attributes={
                     c.Names.CN: [c.General.ATTR_VALUE_TEST],
                     c.Names.SN: [c.General.ATTR_VALUE_USER],
-                    c.Names.OBJECTCLASS: [c.SharedDomain.EntryType.PERSON],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON],
                 },
             ),
         )
@@ -243,20 +243,17 @@ class TestFlextLdifAPIIntegration(tt):
         assert result.is_success
 
         filtered = result.value
-        assert len(filtered) == 2  # Both REDACTED_LDAP_BIND_PASSWORDs have mail
+        assert len(filtered) == 2  # Both admins have mail
 
     def test_api_facade_property_access(self) -> None:
         """Test accessing facade properties and models."""
         ldif = FlextLdif()
 
-        # Verify models accessibility
+        # Verify models accessibility (must use full namespace: models.Ldif.Entry)
         models = ldif.models
         assert models is not None
-        assert hasattr(models, "Entry")
-
-        # Verify config accessibility
-        config = ldif.config
-        assert config is not None
+        assert hasattr(models, "Ldif")
+        assert hasattr(models.Ldif, "Entry")
 
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
@@ -267,8 +264,8 @@ class TestFlextLdifAPIIntegration(tt):
         assert parse_result.is_success
         entries = parse_result.value
 
-        # Step 2: Analyze
-        analyze_result = ldif.analyze(entries)
+        # Step 2: Analyze (via statistics service)
+        analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
         assert analyze_result.is_success
         stats = analyze_result.value
         assert stats.total_entries == 1
@@ -278,8 +275,7 @@ class TestFlextLdifAPIIntegration(tt):
         assert validate_result.is_success
 
         # Step 4: Filter
-        person_oc = c.SharedDomain.EntryType.PERSON
-        filter_result = ldif.filter(entries, objectclass=person_oc)
+        filter_result = ldif.filter(entries, objectclass=c.Names.PERSON)
         assert filter_result.is_success
         filtered = filter_result.value
         assert len(filtered) == 1

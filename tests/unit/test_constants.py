@@ -84,7 +84,10 @@ class TestsTestFlextLdifConstants(s):
         "LdifValidation.MAX_ENCODING_LENGTH": 50,
     }
 
-    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {}
+    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
+        "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
+        "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
+    }
 
     LDAP_SERVERS: ClassVar[dict[str, str]] = {
         "ACTIVE_DIRECTORY": "ad",

@@ -1,8 +1,8 @@
-"""Test model definitions extending src models for centralized test objects.
+"""Test model definitions composing src models for centralized test objects.
 
-This module provides test-specific model extensions that inherit from
-src/flext_ldif/models.py classes. This centralizes test objects without
-duplicating parent class functionality.
+This module provides test-specific model composition (NOT inheritance) from
+src/flext_ldif/models.py and flext_tests/models.py. Uses composition to
+avoid triggering deprecation warnings from __init_subclass__ hooks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,13 +21,11 @@ from flext_ldif.models import FlextLdifModels
 from flext_tests.models import FlextTestsModels
 
 
-class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
-    """Test models - composição de FlextTestsModels + FlextLdifModels.
+class TestsFlextLdifModels:
+    """Test models - composition of FlextTestsModels + FlextLdifModels.
 
-    Hierarquia:
-    - FlextTestsModels: Utilitários de teste genéricos
-    - FlextLdifModels: Models de domínio do projeto
-    - TestsFlextLdifModels: Composição + namespace .Tests
+    Uses composition instead of inheritance to avoid deprecation warnings
+    from FlextTestsModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
 
     Access patterns:
     - tm.Tests.* - Test fixtures (ACL, Schema, etc.)
@@ -35,6 +33,9 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     - m.WriteFormatOptions - Root-level test aliases for common fixtures
     - m.StatisticsResult - Root-level test aliases for common fixtures
     """
+
+    # Production domain models namespace (composed from FlextLdifModels)
+    Ldif = FlextLdifModels.Ldif
 
     # Root-level aliases for frequently used test models
     WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions

@@ -107,27 +107,27 @@ class RealLdifLoader:
 # ════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_entries() -> list[p.Entry]:
-    """Load real OID LDIF entries."""
+    """Load real OID LDIF entries (module-scoped to avoid repeated parsing)."""
     return RealLdifLoader.load_oid_entries()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oud_entries() -> list[p.Entry]:
-    """Load real OUD LDIF entries."""
+    """Load real OUD LDIF entries (module-scoped to avoid repeated parsing)."""
     return RealLdifLoader.load_oud_entries()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def openldap2_entries() -> list[p.Entry]:
-    """Load real OpenLDAP2 LDIF entries."""
+    """Load real OpenLDAP2 LDIF entries (module-scoped to avoid repeated parsing)."""
     return RealLdifLoader.load_openldap2_entries()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def rfc_entries() -> list[p.Entry]:
-    """Load real RFC LDIF entries."""
+    """Load real RFC LDIF entries (module-scoped to avoid repeated parsing)."""
     return RealLdifLoader.load_rfc_entries()
 
 

@@ -37,7 +37,7 @@ class TestDnCaseRegistry(s):
         assert canonical == "CN=Admin,DC=Example,DC=Com"
 
         # Second registration with different case returns canonical
-        second = registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+        second = registry.register_dn("cn=admin,dc=example,dc=com")
         assert second == "CN=Admin,DC=Example,DC=Com"
 
     def test_register_dn_with_force_override(
@@ -82,9 +82,9 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test DN existence check is case-insensitive."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
 
-        assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        assert registry.has_dn("cn=admin,dc=com")
         assert registry.has_dn("CN=Admin,DC=Com")
         assert registry.has_dn("cn=ADMIN,dc=COM")
         assert not registry.has_dn("cn=other,dc=com")
@@ -94,13 +94,13 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test that all case variants are tracked."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
 
-        variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        variants = registry.get_case_variants("cn=admin,dc=com")
         assert len(variants) == 3
-        assert "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com" in variants
+        assert "cn=admin,dc=com" in variants
         assert "CN=Admin,DC=Com" in variants
         assert "cn=ADMIN,dc=COM" in variants
 
@@ -109,7 +109,7 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test validation passes with single case variant."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
 
         result = registry.validate_oud_consistency()
         assert result.is_success
@@ -120,7 +120,7 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test validation detects multiple case variants."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
 
         result = registry.validate_oud_consistency()
@@ -133,15 +133,18 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test normalizing single DN field."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
 
-        data: GenericFieldsDict = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
+        data: GenericFieldsDict = {
+            "dn": "CN=Admin,DC=Com",
+            "cn": ["admin"],
+        }
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
         normalized = result.value
-        assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
-        assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]  # Non-DN field unchanged
+        assert normalized["dn"] == "cn=admin,dc=com"
+        assert normalized["cn"] == ["admin"]  # Non-DN field unchanged
 
     def test_normalize_dn_references_list_of_dns(
         self,
@@ -178,17 +181,17 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test clearing registry removes all DNs."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
         registry.register_dn("cn=user,dc=com")
 
-        assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        assert registry.has_dn("cn=admin,dc=com")
         registry.clear()
-        assert not registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        assert not registry.has_dn("cn=admin,dc=com")
         assert not registry.has_dn("cn=user,dc=com")
 
     def test_get_stats(self, registry: m.Ldif.DnRegistry) -> None:
         """Test registry statistics."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")  # Same DN, different case
         registry.register_dn("cn=user,dc=com")
 
@@ -211,13 +214,13 @@ class TestDnCaseNormalizationScenarios:
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test tracking multiple case variants of same DN."""
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")  # First variant
+        registry.register_dn("cn=admin,dc=com")  # First variant
         registry.register_dn("CN=Admin,DC=Com")  # Second variant
         registry.register_dn("cn=ADMIN,dc=COM")  # Third variant
 
         # All should resolve to first registered (canonical)
         canonical = registry.get_canonical_dn("CN=ADMIN,DC=COM")
-        assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
+        assert canonical == "cn=admin,dc=com"
 
         # Validation should detect inconsistencies
         result = registry.validate_oud_consistency()
@@ -237,12 +240,12 @@ class TestDnCaseNormalizationScenarios:
         registry.register_dn("ou=users,dc=example,dc=com")
 
         # Register entry under child
-        registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
+        registry.register_dn("cn=admin,ou=users,dc=example,dc=com")
 
         # All should be retrievable
         assert registry.has_dn("dc=example,dc=com")
         assert registry.has_dn("ou=users,dc=example,dc=com")
-        assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
+        assert registry.has_dn("cn=admin,ou=users,dc=example,dc=com")
 
         # No inconsistencies (each DN used once)
         result = registry.validate_oud_consistency()

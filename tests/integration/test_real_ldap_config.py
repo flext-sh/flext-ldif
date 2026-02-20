@@ -1,15 +1,8 @@
-"""Configuration and railway-oriented composition tests with live LDAP server.
+"""Configuration and railway-oriented composition integration tests.
 
-Test suite verifying LDIF operations against an actual LDAP server:
-    - Parse and write LDIF from/to LDAP server
-    - Validate roundtrip data integrity (LDAP → LDIF → LDAP)
-    - Extract and process schema information
-    - Handle ACL entries
-    - Perform CRUD operations
-    - Process batches of entries
-
-Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestsDocker.ldap_container fixture.
+Test suite verifying:
+    - Configuration loading from environment variables
+    - Railway-oriented FlextResult composition (write → parse → validate)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,20 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from flext_core import FlextSettings
 from flext_ldif import FlextLdif
 from flext_ldif.settings import FlextLdifSettings
-from ldap3 import Connection
-
-# Note: flext-ldif cannot import flext-ldap (architecture layering)
-# LDAP-related configuration testing is handled in flext-ldap integration tests
-
-# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
-# They use unique_dn_suffix for isolation and indepotency in parallel execution
 
 
 @pytest.fixture
@@ -40,12 +25,7 @@ def flext_api() -> FlextLdif:
     return FlextLdif.get_instance()
 
 
-@pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 class TestRealLdapConfigurationFromEnv:
     """Test configuration loading from .env file."""
 
@@ -60,7 +40,7 @@ class TestRealLdapConfigurationFromEnv:
         ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
         # If ldif namespace doesn't exist, try accessing FlextLdifSettings directly
         if ldif_config is None:
-            ldif_config = FlextLdifSettings.get_instance()
+            ldif_config = FlextLdifSettings.get_global_instance()
 
         # Verify configuration values (from .env or defaults)
         assert ldif_config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
@@ -91,62 +71,31 @@ class TestRealLdapConfigurationFromEnv:
         assert root_config.max_workers > 0
 
 
-@pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
-@pytest.mark.skip(
-    reason="LDAP connection fixtures not implemented - requires real LDAP server"
-)
 class TestRealLdapRailwayComposition:
-    """Test railway-oriented FlextResult composition with real LDAP."""
+    """Test railway-oriented FlextResult composition (write -> parse -> validate)."""
 
     def test_railway_parse_validate_write_cycle(
         self,
-        ldap_connection: Connection,
-        clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
-        make_test_username: Callable[[str], str],
     ) -> None:
-        """Test FlextResult error handling composition."""
-        # Create LDAP data with isolated username
-        unique_username = make_test_username("RailwayTest")
-        person_dn = f"cn={unique_username},{clean_test_ou}"
-        ldap_connection.add(
-            person_dn,
-            ["person", "inetOrgPerson"],
-            {"cn": unique_username, "sn": "Test", "mail": "railway@example.com"},
-        )
-
-        # Search and convert to LDIF
-        ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
-        ldap_entry = ldap_connection.entries[0]
-
-        # Convert ldap3 entry attributes to dict format
-        attrs_dict = {}
-        for attr_name in ldap_entry.entry_attributes:
-            attr_obj = ldap_entry[attr_name]
-            # Extract values from ldap3 Attribute object
-            if hasattr(attr_obj, "values"):
-                # ldap3 Attribute object with .values property
-                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-            elif isinstance(attr_obj, list):
-                # Already a list
-                values = [str(v) for v in attr_obj]
-            else:
-                # Single value
-                values = [str(attr_obj)]
-            attrs_dict[attr_name] = values
-
-        entry_result = flext_api.models.Entry.create(
-            dn=ldap_entry.entry_dn,
-            attributes=attrs_dict,
+        """Test FlextResult railway composition: write -> parse -> validate."""
+        # Create entry programmatically (no LDAP dependency needed)
+        entry_result = flext_api.models.Ldif.Entry.create(
+            dn="cn=RailwayTest,ou=people,dc=example,dc=com",
+            attributes={
+                "objectClass": ["person", "inetOrgPerson"],
+                "cn": ["RailwayTest"],
+                "sn": ["Test"],
+                "mail": ["railway@example.com"],
+            },
             metadata=None,
         )
         assert entry_result.is_success
         flext_entry = entry_result.value
 
-        # Railway composition: write → parse → validate
+        # Railway composition: write -> parse -> validate
         output_file = tmp_path / "railway.ldif"
         result = (
             flext_api

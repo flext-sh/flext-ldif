@@ -871,9 +871,9 @@ class TestsTestFlextLdifAclParser(s):
 
     acl_service: ClassVar[FlextLdifAcl]  # pytest fixture
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def acl_service(self) -> FlextLdifAcl:
-        """Create ACL service instance."""
+        """Create ACL service instance (class-scoped to avoid repeated init)."""
         return AclParserTestFactory.create_service()
 
     @pytest.mark.parametrize("test_case", get_parser_tests())
@@ -1073,7 +1073,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_openldap(self) -> None:
         """Test creating unified ACL for OpenLDAP server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True, write=False)
 
         result = create_unified_acl_helper(
@@ -1097,7 +1099,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_openldap_2(self) -> None:
         """Test creating unified ACL for OpenLDAP 2.x server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1116,7 +1120,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1135,7 +1141,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1154,7 +1162,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1173,7 +1183,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1192,7 +1204,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1240,7 +1254,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
         """Test that created ACL is an m.Tests.Acl instance."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
@@ -1258,7 +1274,9 @@ class TestsFlextLdifComponentFactory(s):
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl."""
         target = m.Tests.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject = m.Tests.AclSubject(subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        subject = m.Tests.AclSubject(
+            subject_type="user", subject_value="REDACTED_LDAP_BIND_PASSWORD"
+        )
         permissions = m.Tests.AclPermissions(read=True)
 
         result = create_unified_acl_helper(

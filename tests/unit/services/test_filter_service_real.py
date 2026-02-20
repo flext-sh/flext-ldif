@@ -26,8 +26,6 @@ from typing import Final
 import pytest
 from flext_ldif import FlextLdif
 from flext_ldif._utilities.filters import Filter
-from flext_tests import tt
-
 from tests import Filters, c, p
 
 
@@ -137,21 +135,21 @@ def load_real_ldif_entries(fixture_path: str) -> list[p.Entry]:
     return result.value
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_entries() -> list[p.Entry]:
-    """Load real OID LDIF entries."""
+    """Load real OID LDIF entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_entries_fixtures.ldif")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_schema_entries() -> list[p.Entry]:
-    """Load real OID schema entries."""
+    """Load real OID schema entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_schema_fixtures.ldif")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_acl_entries() -> list[p.Entry]:
-    """Load real OID ACL entries."""
+    """Load real OID ACL entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_acl_fixtures.ldif")
 
 
@@ -185,7 +183,7 @@ def _get_objectclasses(entry: p.Entry) -> list[str]:
     return []
 
 
-class TestFlextLdifFilterService(tt):
+class TestFlextLdifFilterService:
     """Comprehensive filter service tests using REAL LDIF fixtures.
 
     Uses the Filter factory class from _utilities/filters.py with composable
