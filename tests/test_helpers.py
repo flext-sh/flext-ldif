@@ -253,15 +253,23 @@ class TestsFlextLdifMatchers(tm_base):
 
         # ===== OBJECTCLASS COUNT VALIDATION =====
         if oc_count is not None:
-            TestsFlextLdifMatchers.len(objectclasses, expected=oc_count, msg=msg)
+            TestsFlextLdifMatchers.that(objectclasses, length=oc_count, msg=msg)
         if oc_count_gt is not None:
-            TestsFlextLdifMatchers.len(objectclasses, gt=oc_count_gt, msg=msg)
+            TestsFlextLdifMatchers.that(objectclasses, length_gt=oc_count_gt, msg=msg)
         if oc_count_gte is not None:
-            TestsFlextLdifMatchers.len(objectclasses, gte=oc_count_gte, msg=msg)
+            TestsFlextLdifMatchers.that(
+                objectclasses,
+                length_gte=oc_count_gte,
+                msg=msg,
+            )
         if oc_count_lt is not None:
-            TestsFlextLdifMatchers.len(objectclasses, lt=oc_count_lt, msg=msg)
+            TestsFlextLdifMatchers.that(objectclasses, length_lt=oc_count_lt, msg=msg)
         if oc_count_lte is not None:
-            TestsFlextLdifMatchers.len(objectclasses, lte=oc_count_lte, msg=msg)
+            TestsFlextLdifMatchers.that(
+                objectclasses,
+                length_lte=oc_count_lte,
+                msg=msg,
+            )
 
         return entry
 
@@ -322,15 +330,15 @@ class TestsFlextLdifMatchers(tm_base):
 
         # ===== COUNT VALIDATION =====
         if count is not None:
-            TestsFlextLdifMatchers.len(entries, expected=count, msg=msg)
+            TestsFlextLdifMatchers.that(entries, length=count, msg=msg)
         if count_gt is not None:
-            TestsFlextLdifMatchers.len(entries, gt=count_gt, msg=msg)
+            TestsFlextLdifMatchers.that(entries, length_gt=count_gt, msg=msg)
         if count_gte is not None:
-            TestsFlextLdifMatchers.len(entries, gte=count_gte, msg=msg)
+            TestsFlextLdifMatchers.that(entries, length_gte=count_gte, msg=msg)
         if count_lt is not None:
-            TestsFlextLdifMatchers.len(entries, lt=count_lt, msg=msg)
+            TestsFlextLdifMatchers.that(entries, length_lt=count_lt, msg=msg)
         if count_lte is not None:
-            TestsFlextLdifMatchers.len(entries, lte=count_lte, msg=msg)
+            TestsFlextLdifMatchers.that(entries, length_lte=count_lte, msg=msg)
         if empty is not None:
             TestsFlextLdifMatchers.that(entries, msg=msg, empty=empty)
 

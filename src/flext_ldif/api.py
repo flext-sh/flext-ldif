@@ -199,10 +199,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
         """Get server registry instance (lazy initialization)."""
         cache = self._get_service_cache()
         if "server" not in cache:
-            cache["server"] = FlextLdifServer()
+            cache["server"] = FlextLdifServer.get_global_instance()
         server = cache["server"]
         if not isinstance(server, FlextLdifServer):
-            server = FlextLdifServer()
+            server = FlextLdifServer.get_global_instance()
             cache["server"] = server
         return server
 
