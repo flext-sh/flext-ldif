@@ -4,7 +4,7 @@ requires = [ "poetry-core>=2.0", "poetry-core>=2" ]
 
 [project]
 name = "flext-ldif"
-version = "0.10.0"
+version = "0.11.0"
 description = "FLEXT LDIF - Enterprise LDIF Processing Library"
 readme = "README.md"
 keywords = [
