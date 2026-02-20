@@ -179,12 +179,12 @@ class TestsTestFlextLdifOidSchemaWriting(s):
     # FIXTURES
     # ═════════════════════════════════════════════════════════════════════════════
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_server(self) -> FlextLdifServersOid:
         """Create OID server instance."""
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_schema(
         self,
         oid_server: FlextLdifServersOid,
@@ -194,7 +194,7 @@ class TestsTestFlextLdifOidSchemaWriting(s):
         assert isinstance(schema, FlextLdifServersOid.Schema)
         return schema
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_fixtures(self) -> FlextLdifFixtures.OID:
         """Create OID fixture loader."""
         return FlextLdifFixtures.OID()

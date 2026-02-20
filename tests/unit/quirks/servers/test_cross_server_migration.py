@@ -6,6 +6,7 @@ for transforming LDIF content between different LDAP server types.
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 import pytest
@@ -26,23 +27,51 @@ def cleanup_state() -> None:
     # Post-test cleanup - ensures each test has clean state
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test function."""
     return FlextLdif()
 
 
-class TestsFlextLdifCrossServerMigration(s):
-    """Test migrations between server types using RFC-as-hub strategy."""
-
-    def test_oid_to_oud_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
-        """Test OID → RFC → OUD migration."""
-        # Parse OID entries
-        oid_entries = FlextLdifTestUtils.load_fixture(
+@pytest.fixture(scope="class")
+def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[object]]:
+    """Cache parsed migration fixtures once per class."""
+    return {
+        "oid_entries": FlextLdifTestUtils.load_fixture(
             ldif_api,
             "oid",
             "oid_entries_fixtures.ldif",
-        )
+        ),
+        "oud_entries": FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
+        ),
+        "rfc_entries": FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
+        ),
+        "oid_schema": FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            "oid",
+            "oid_schema_fixtures.ldif",
+        ),
+    }
+
+
+class TestsFlextLdifCrossServerMigration(s):
+    """Test migrations between server types using RFC-as-hub strategy."""
+
+    def test_oid_to_oud_migration(
+        self,
+        ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
+        tmp_path: Path,
+    ) -> None:
+        """Test OID → RFC → OUD migration."""
+        # Parse OID entries
+        oid_entries = copy.deepcopy(migration_fixture_cache["oid_entries"])
         assert len(oid_entries) > 0
 
         # Write as OUD (this should convert via RFC)
@@ -63,14 +92,15 @@ class TestsFlextLdifCrossServerMigration(s):
         # Entry count should match
         assert len(oud_entries) == len(oid_entries)
 
-    def test_oud_to_oid_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_oud_to_oid_migration(
+        self,
+        ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
+        tmp_path: Path,
+    ) -> None:
         """Test OUD → RFC → OID migration."""
         # Parse OUD entries
-        oud_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-        )
+        oud_entries = copy.deepcopy(migration_fixture_cache["oud_entries"])
         assert len(oud_entries) > 0
 
         # Write as OID
@@ -89,13 +119,14 @@ class TestsFlextLdifCrossServerMigration(s):
         oid_entries = oid_result.value
         assert len(oid_entries) > 0
 
-    def test_rfc_to_oid_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_rfc_to_oid_migration(
+        self,
+        ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
+        tmp_path: Path,
+    ) -> None:
         """Test RFC → OID migration."""
-        rfc_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "rfc",
-            "rfc_entries_fixtures.ldif",
-        )
+        rfc_entries = copy.deepcopy(migration_fixture_cache["rfc_entries"])
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oid.ldif"
@@ -106,13 +137,14 @@ class TestsFlextLdifCrossServerMigration(s):
         )
         assert write_result.is_success, f"RFC→OID write failed: {write_result.error}"
 
-    def test_rfc_to_oud_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_rfc_to_oud_migration(
+        self,
+        ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
+        tmp_path: Path,
+    ) -> None:
         """Test RFC → OUD migration."""
-        rfc_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "rfc",
-            "rfc_entries_fixtures.ldif",
-        )
+        rfc_entries = copy.deepcopy(migration_fixture_cache["rfc_entries"])
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oud.ldif"
@@ -123,13 +155,14 @@ class TestsFlextLdifCrossServerMigration(s):
         )
         assert write_result.is_success, f"RFC→OUD write failed: {write_result.error}"
 
-    def test_oid_schema_to_oud(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_oid_schema_to_oud(
+        self,
+        ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
+        tmp_path: Path,
+    ) -> None:
         """Test OID schema → OUD migration."""
-        oid_schema = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "oid",
-            "oid_schema_fixtures.ldif",
-        )
+        oid_schema = copy.deepcopy(migration_fixture_cache["oid_schema"])
         assert len(oid_schema) > 0
 
         output_path = tmp_path / "oid_schema_to_oud.ldif"
@@ -145,15 +178,12 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_migration_preserves_dn_structure(
         self,
         ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
         tmp_path: Path,
     ) -> None:
         """Test that DN structure is preserved across migrations."""
         # Load OID entries
-        oid_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "oid",
-            "oid_entries_fixtures.ldif",
-        )
+        oid_entries = copy.deepcopy(migration_fixture_cache["oid_entries"])
 
         # Migrate OID → OUD
         output_path = tmp_path / "dn_preservation_test.ldif"
@@ -182,15 +212,12 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_migration_preserves_attribute_names(
         self,
         ldif_api: FlextLdif,
+        migration_fixture_cache: dict[str, list[object]],
         tmp_path: Path,
     ) -> None:
         """Test that attribute names are properly transformed during migration."""
         # Load a small OID fixture
-        oid_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api,
-            "oid",
-            "oid_entries_fixtures.ldif",
-        )
+        oid_entries = copy.deepcopy(migration_fixture_cache["oid_entries"])
 
         # Get all attribute names from OID
         oid_attr_names: set[str] = set()
