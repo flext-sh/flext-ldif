@@ -20,15 +20,15 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 class TestOidQuirksTransformations:
     """Test OID quirks with actual data transformations."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid(self) -> FlextLdifServersOid:
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return FlextLdif()
+        return FlextLdif.get_instance()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def fixtures_dir(self) -> Path:
         return Path(__file__).parent.parent / "fixtures"
 
@@ -96,15 +96,15 @@ class TestOidQuirksTransformations:
 class TestOudQuirksTransformations:
     """Test OUD quirks with actual data transformations."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return FlextLdif()
+        return FlextLdif.get_instance()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def fixtures_dir(self) -> Path:
         return Path(__file__).parent.parent / "fixtures"
 
@@ -198,11 +198,11 @@ class TestOudQuirksTransformations:
 class TestQuirksPropertyValidation:
     """Test quirks properties and identification."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid(self) -> FlextLdifServersOid:
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 

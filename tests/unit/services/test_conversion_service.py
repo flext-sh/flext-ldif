@@ -29,7 +29,7 @@ from tests.helpers.compat import TestAssertions
 # ════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def conversion_service() -> FlextLdifConversion:
     """Create FlextLdifConversion instance."""
     return FlextLdifConversion()
@@ -41,7 +41,7 @@ def server() -> FlextLdifServer:
     return FlextLdifServer.get_global_instance()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get RFC server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("rfc")
@@ -49,7 +49,7 @@ def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     return quirk_result.value
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("oid")
@@ -57,7 +57,7 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     return quirk_result.value
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("oud")
