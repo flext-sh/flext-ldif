@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 from flext_ldif import FlextLdif
-from tests import s
+from tests import p, s
 
 from .test_utils import FlextLdifTestUtils
 
@@ -34,7 +34,7 @@ def ldif_api() -> FlextLdif:
 
 
 @pytest.fixture(scope="class")
-def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[object]]:
+def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[p.Entry]]:
     """Cache parsed migration fixtures once per class."""
     return {
         "oid_entries": FlextLdifTestUtils.load_fixture(
@@ -66,7 +66,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_oid_to_oud_migration(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test OID → RFC → OUD migration."""
@@ -95,7 +95,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_oud_to_oid_migration(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test OUD → RFC → OID migration."""
@@ -122,7 +122,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_rfc_to_oid_migration(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test RFC → OID migration."""
@@ -140,7 +140,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_rfc_to_oud_migration(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test RFC → OUD migration."""
@@ -158,7 +158,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_oid_schema_to_oud(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test OID schema → OUD migration."""
@@ -178,7 +178,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_migration_preserves_dn_structure(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test that DN structure is preserved across migrations."""
@@ -212,7 +212,7 @@ class TestsFlextLdifCrossServerMigration(s):
     def test_migration_preserves_attribute_names(
         self,
         ldif_api: FlextLdif,
-        migration_fixture_cache: dict[str, list[object]],
+        migration_fixture_cache: dict[str, list[p.Entry]],
         tmp_path: Path,
     ) -> None:
         """Test that attribute names are properly transformed during migration."""
