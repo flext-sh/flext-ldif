@@ -689,12 +689,35 @@ class TestsTestFlextLdifOidSchemaWriting(s):
         if not schema_content:
             pytest.skip("No fixture content available")
 
-        parsed_count = 0
-        for line in schema_content.split("\n"):
-            line = line.strip()
-            if line and not line.startswith("#"):
-                result = oid_schema.parse(line)
-                if result.is_success:
-                    parsed_count += 1
+        extract_result = oid_schema.extract_schemas_from_ldif(
+            schema_content,
+            validate_dependencies=False,
+        )
+        assert extract_result.is_success, (
+            f"Failed to extract schemas from fixture: {extract_result.error}"
+        )
 
-        assert len(schema_content) > 0
+        schema_map = extract_result.value
+        attributes_raw = schema_map.get("attributes", [])
+        objectclasses_raw = schema_map.get("objectclasses", [])
+
+        attributes = [
+            item for item in attributes_raw if isinstance(item, m.Ldif.SchemaAttribute)
+        ]
+        objectclasses = [
+            item
+            for item in objectclasses_raw
+            if isinstance(item, m.Ldif.SchemaObjectClass)
+        ]
+
+        assert len(attributes) + len(objectclasses) > 0
+
+        if attributes:
+            write_attr_result = oid_schema.write_attribute(attributes[0])
+            assert write_attr_result.is_success
+            assert write_attr_result.value.startswith("(")
+
+        if objectclasses:
+            write_oc_result = oid_schema.write_objectclass(objectclasses[0])
+            assert write_oc_result.is_success
+            assert write_oc_result.value.startswith("(")
