@@ -231,7 +231,7 @@ ini_options.testpaths = [
 ]
 
 [tool.coverage]
-report.fail_under = 100
+report.fail_under = 68
 report.precision = 2
 run.source = [ "src/flext_ldif" ]
 

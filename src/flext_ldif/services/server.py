@@ -25,13 +25,16 @@ class FlextLdifServer(FlextRegistry):
     """Server quirk registry using FlextRegistry class-level plugin API."""
 
     SERVERS: ClassVar[str] = "ldif_servers"
+    _discovery_initialized: ClassVar[bool] = False
 
     def __init__(
         self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         super().__init__(dispatcher=dispatcher, **data)
-        self._auto_discover()
+        if not type(self)._discovery_initialized:
+            self._auto_discover()
+            type(self)._discovery_initialized = True
 
     def _auto_discover(self) -> None:
         """Discover and register concrete quirk classes from servers package."""
@@ -174,7 +177,11 @@ class FlextLdifServer(FlextRegistry):
         """Get or create global registry instance."""
         if cls._global_instance is None:
             cls._global_instance = cls()
-        return cls._global_instance
+        instance = cls._global_instance
+        if instance is None:
+            msg = "Global FlextLdifServer instance was not initialized"
+            raise RuntimeError(msg)
+        return instance
 
 
 __all__ = ["FlextLdifServer"]

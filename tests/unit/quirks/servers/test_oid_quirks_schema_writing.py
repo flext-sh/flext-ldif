@@ -179,12 +179,12 @@ class TestsTestFlextLdifOidSchemaWriting(s):
     # FIXTURES
     # ═════════════════════════════════════════════════════════════════════════════
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_server(self) -> FlextLdifServersOid:
         """Create OID server instance."""
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_schema(
         self,
         oid_server: FlextLdifServersOid,
@@ -194,10 +194,60 @@ class TestsTestFlextLdifOidSchemaWriting(s):
         assert isinstance(schema, FlextLdifServersOid.Schema)
         return schema
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_fixtures(self) -> FlextLdifFixtures.OID:
         """Create OID fixture loader."""
         return FlextLdifFixtures.OID()
+
+    @staticmethod
+    def _extract_first_schema_definitions(
+        schema_content: str,
+    ) -> tuple[str | None, str | None]:
+        """Extract first attributeTypes and objectClasses definitions from fixture."""
+        attr_def: str | None = None
+        oc_def: str | None = None
+        current_kind: str | None = None
+        current_parts: list[str] = []
+
+        def flush_current() -> None:
+            nonlocal attr_def, oc_def, current_kind, current_parts
+            if not current_kind or not current_parts:
+                current_kind = None
+                current_parts = []
+                return
+            definition = " ".join(current_parts)
+            if current_kind == "attribute" and attr_def is None:
+                attr_def = definition
+            if current_kind == "objectclass" and oc_def is None:
+                oc_def = definition
+            current_kind = None
+            current_parts = []
+
+        for line in schema_content.splitlines():
+            if line.startswith("attributeTypes:"):
+                flush_current()
+                if attr_def is None:
+                    current_kind = "attribute"
+                    current_parts = [line.partition(":")[2].strip()]
+                continue
+
+            if line.startswith("objectClasses:"):
+                flush_current()
+                if oc_def is None:
+                    current_kind = "objectclass"
+                    current_parts = [line.partition(":")[2].strip()]
+                continue
+
+            if current_kind and line[:1].isspace():
+                current_parts.append(line.strip())
+                continue
+
+            flush_current()
+            if attr_def is not None and oc_def is not None:
+                break
+
+        flush_current()
+        return (attr_def, oc_def)
 
     # ═════════════════════════════════════════════════════════════════════════════
     # ATTRIBUTE WRITING TESTS
@@ -689,12 +739,35 @@ class TestsTestFlextLdifOidSchemaWriting(s):
         if not schema_content:
             pytest.skip("No fixture content available")
 
-        parsed_count = 0
-        for line in schema_content.split("\n"):
-            line = line.strip()
-            if line and not line.startswith("#"):
-                result = oid_schema.parse(line)
-                if result.is_success:
-                    parsed_count += 1
+        attr_definition, oc_definition = self._extract_first_schema_definitions(
+            schema_content,
+        )
 
-        assert len(schema_content) > 0
+        assert attr_definition is not None
+        assert oc_definition is not None
+
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            attr_definition,
+            parse_method="parse_attribute",
+            expected_type=m.Ldif.SchemaAttribute,
+        )
+        assert isinstance(parsed_attr_result, m.Ldif.SchemaAttribute)
+        parsed_attr = parsed_attr_result
+
+        write_attr_result = oid_schema.write_attribute(parsed_attr)
+        assert write_attr_result.is_success
+        assert write_attr_result.value.startswith("(")
+
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_definition,
+            parse_method="parse_objectclass",
+            expected_type=m.Ldif.SchemaObjectClass,
+        )
+        assert isinstance(parsed_oc_result, m.Ldif.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
+
+        write_oc_result = oid_schema.write_objectclass(parsed_oc)
+        assert write_oc_result.is_success
+        assert write_oc_result.value.startswith("(")

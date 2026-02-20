@@ -30,7 +30,7 @@ class TestSystematicFixtureCoverage:
     providing complete baseline coverage of the fixture matrix.
     """
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
         """FlextLdif API instance."""
         return FlextLdif.get_instance()

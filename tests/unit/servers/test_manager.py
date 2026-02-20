@@ -113,10 +113,10 @@ def get_all_server_types() -> list[str]:
 
 
 # Module-level fixtures
-@pytest.fixture
+@pytest.fixture(scope="module")
 def registry() -> FlextLdifServer:
     """Create FlextLdifServer registry instance."""
-    return FlextLdifServer()
+    return FlextLdifServer.get_global_instance()
 
 
 # Test classes

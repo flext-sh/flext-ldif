@@ -17,20 +17,48 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 
 
+@pytest.fixture(scope="module")
+def fixtures_dir() -> Path:
+    return Path(__file__).parent.parent / "fixtures"
+
+
+@pytest.fixture(scope="module")
+def migration_inputs(
+    fixtures_dir: Path,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Path]:
+    base_dir = tmp_path_factory.mktemp("quirks-transform-inputs")
+
+    oid_input_dir = base_dir / "oid_input"
+    oid_input_dir.mkdir()
+    shutil.copy(
+        fixtures_dir / "oid" / "oid_integration_fixtures.ldif",
+        oid_input_dir / "data.ldif",
+    )
+
+    oud_input_dir = base_dir / "oud_input"
+    oud_input_dir.mkdir()
+    shutil.copy(
+        fixtures_dir / "oud" / "oud_integration_fixtures.ldif",
+        oud_input_dir / "data.ldif",
+    )
+
+    return {
+        "oid": oid_input_dir,
+        "oud": oud_input_dir,
+    }
+
+
 class TestOidQuirksTransformations:
     """Test OID quirks with actual data transformations."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid(self) -> FlextLdifServersOid:
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return FlextLdif()
-
-    @pytest.fixture
-    def fixtures_dir(self) -> Path:
-        return Path(__file__).parent.parent / "fixtures"
+        return FlextLdif.get_instance()
 
     def test_oid_parse_and_transform_schema(
         self,
@@ -69,23 +97,15 @@ class TestOidQuirksTransformations:
     def test_oid_to_openldap_migration(
         self,
         api: FlextLdif,
-        fixtures_dir: Path,
+        migration_inputs: dict[str, Path],
         tmp_path: Path,
     ) -> None:
         """Test OID to OpenLDAP migration."""
-        fixture_path = fixtures_dir / "oid" / "oid_integration_fixtures.ldif"
-        if not fixture_path.exists():
-            pytest.skip(f"Fixture not found: {fixture_path}")
-
-        input_dir = tmp_path / "oid_input"
         output_dir = tmp_path / "openldap_output"
-        input_dir.mkdir()
         output_dir.mkdir()
 
-        shutil.copy(fixture_path, input_dir / "data.ldif")
-
         result = api.migrate(
-            input_dir=input_dir,
+            input_dir=migration_inputs["oid"],
             output_dir=output_dir,
             source_server="oid",
             target_server="openldap",
@@ -96,17 +116,13 @@ class TestOidQuirksTransformations:
 class TestOudQuirksTransformations:
     """Test OUD quirks with actual data transformations."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return FlextLdif()
-
-    @pytest.fixture
-    def fixtures_dir(self) -> Path:
-        return Path(__file__).parent.parent / "fixtures"
+        return FlextLdif.get_instance()
 
     def test_oud_parse_and_transform_schema(
         self,
@@ -145,23 +161,15 @@ class TestOudQuirksTransformations:
     def test_oid_to_oud_migration(
         self,
         api: FlextLdif,
-        fixtures_dir: Path,
+        migration_inputs: dict[str, Path],
         tmp_path: Path,
     ) -> None:
         """Test OID to OUD migration."""
-        fixture_path = fixtures_dir / "oid" / "oid_integration_fixtures.ldif"
-        if not fixture_path.exists():
-            pytest.skip(f"Fixture not found: {fixture_path}")
-
-        input_dir = tmp_path / "oid_input"
         output_dir = tmp_path / "oud_output"
-        input_dir.mkdir()
         output_dir.mkdir()
 
-        shutil.copy(fixture_path, input_dir / "data.ldif")
-
         result = api.migrate(
-            input_dir=input_dir,
+            input_dir=migration_inputs["oid"],
             output_dir=output_dir,
             source_server="oid",
             target_server="oud",
@@ -171,23 +179,15 @@ class TestOudQuirksTransformations:
     def test_oud_to_openldap_migration(
         self,
         api: FlextLdif,
-        fixtures_dir: Path,
+        migration_inputs: dict[str, Path],
         tmp_path: Path,
     ) -> None:
         """Test OUD to OpenLDAP migration."""
-        fixture_path = fixtures_dir / "oud" / "oud_integration_fixtures.ldif"
-        if not fixture_path.exists():
-            pytest.skip(f"Fixture not found: {fixture_path}")
-
-        input_dir = tmp_path / "oud_input"
         output_dir = tmp_path / "openldap_oud_output"
-        input_dir.mkdir()
         output_dir.mkdir()
 
-        shutil.copy(fixture_path, input_dir / "data.ldif")
-
         result = api.migrate(
-            input_dir=input_dir,
+            input_dir=migration_inputs["oud"],
             output_dir=output_dir,
             source_server="oud",
             target_server="openldap",
@@ -198,11 +198,11 @@ class TestOudQuirksTransformations:
 class TestQuirksPropertyValidation:
     """Test quirks properties and identification."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid(self) -> FlextLdifServersOid:
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 

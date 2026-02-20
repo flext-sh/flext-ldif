@@ -1453,9 +1453,8 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                return self.model_copy(
-                    update={"validation_violations": violations},
-                )
+                object.__setattr__(self, "validation_violations", violations)
+                return self
 
             # Return existing instance when no violations are present
             return self
