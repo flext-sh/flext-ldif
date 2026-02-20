@@ -94,7 +94,7 @@ class TestRealLdapExport:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
 
-        entry_result = flext_api.models.Entry.create(
+        entry_result = flext_api.models.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
             metadata=None,
@@ -167,7 +167,7 @@ class TestRealLdapExport:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
 
-            result = flext_api.models.Entry.create(
+            result = flext_api.models.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,
                 metadata=None,
@@ -256,7 +256,7 @@ class TestRealLdapExport:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
 
-            result = flext_api.models.Entry.create(
+            result = flext_api.models.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,
                 metadata=None,
@@ -315,7 +315,7 @@ class TestRealLdapExport:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
 
-        entry_result = flext_api.models.Entry.create(
+        entry_result = flext_api.models.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
             metadata=None,

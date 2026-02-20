@@ -14,7 +14,6 @@ from pathlib import Path
 import pytest
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.protocols import p
-from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_tests import tm
 
@@ -67,7 +66,7 @@ class TestsTestFlextLdifStatistics(s):
             if isinstance(attrs_dict.get("rejectionReason"), str):
                 rejection_reason = attrs_dict["rejectionReason"]
 
-            result = FlextLdifEntries().create_entry(dn=dn, attributes=attributes)
+            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
             if result.is_failure:
                 msg = f"Failed to create entry: {result.error}"
                 raise ValueError(msg)

@@ -25,7 +25,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         object.__setattr__(
             self,
             "_server",
-            server if server is not None else FlextLdifServer(),
+            (server if server is not None else FlextLdifServer.get_global_instance()),
         )
 
     def parse_string(

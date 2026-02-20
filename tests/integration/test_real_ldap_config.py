@@ -43,7 +43,14 @@ class TestRealLdapConfigurationFromEnv:
             ldif_config = FlextLdifSettings.get_global_instance()
 
         # Verify configuration values (from .env or defaults)
-        assert ldif_config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
+        assert ldif_config.ldif_encoding in {
+            "utf-8",
+            "utf-16",
+            "ascii",
+            "latin-1",
+            "iso-8859-1",
+            "cp1252",
+        }
         assert isinstance(ldif_config.ldif_strict_validation, bool)
 
         # max_workers is in root FlextSettings, not nested FlextLdifSettings

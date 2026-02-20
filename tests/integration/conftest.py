@@ -42,8 +42,19 @@ LDAP_COMPOSE_FILE = WORKSPACE_ROOT / "docker" / "docker-compose.openldap.yml"
 LDAP_SERVICE_NAME = "openldap"
 LDAP_PORT = 3390
 LDAP_BASE_DN = "dc=flext,dc=local"
-LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
+LDAP_ADMIN_PASSWORD = "admin123"
+
+
+def _candidate_bind_credentials() -> tuple[tuple[str, str], ...]:
+    return (
+        ("cn=admin,dc=flext,dc=local", "admin123"),
+        ("cn=admin,dc=flext,dc=local", "REDACTED_LDAP_BIND_PASSWORD123"),
+        (
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+            "REDACTED_LDAP_BIND_PASSWORD123",
+        ),
+    )
 
 
 @contextlib.contextmanager
@@ -59,24 +70,29 @@ def _lock_file(worker_id: str) -> Generator[None]:
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
-def _wait_for_ldap_ready(server_url: str, max_wait: float = 10.0) -> bool:
+def _wait_for_ldap_ready(
+    server_url: str,
+    max_wait: float = 10.0,
+) -> tuple[str, str] | None:
     waited = 0.0
     interval = 1.0
     while waited < max_wait:
         with contextlib.suppress(Exception):
             server = Server(server_url, get_info=ALL)
-            conn = Connection(
-                server,
-                user=LDAP_ADMIN_DN,
-                password=LDAP_ADMIN_PASSWORD,
-                auto_bind=False,
-            )
-            if conn.bind():
+            for bind_dn, password in _candidate_bind_credentials():
+                conn = Connection(
+                    server,
+                    user=bind_dn,
+                    password=password,
+                    auto_bind=False,
+                )
+                if conn.bind():
+                    conn.unbind()
+                    return (bind_dn, password)
                 conn.unbind()
-                return True
         time.sleep(interval)
         waited += interval
-    return False
+    return None
 
 
 # ============================================================================
@@ -653,14 +669,17 @@ def ldap_container(worker_id: str) -> dict[str, object]:
         if port_result.is_failure or not port_result.value:
             pytest.skip(f"LDAP container port {LDAP_PORT} is not ready")
 
-        if not _wait_for_ldap_ready(server_url):
+        bind_credentials = _wait_for_ldap_ready(server_url)
+        if bind_credentials is None:
             pytest.skip("LDAP container is running but bind is not ready")
+
+    bind_dn, bind_password = bind_credentials
 
     return {
         "server_url": server_url,
         "host": "localhost",
-        "bind_dn": LDAP_ADMIN_DN,
-        "password": LDAP_ADMIN_PASSWORD,
+        "bind_dn": bind_dn,
+        "password": bind_password,
         "base_dn": LDAP_BASE_DN,
         "port": LDAP_PORT,
         "use_ssl": False,
@@ -707,18 +726,24 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 
 @pytest.fixture
-def ldap_connection(ldap_container_shared: str) -> Generator[Connection]:
+def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
-    server = Server(ldap_container_shared, get_info=ALL)
+    server_url = str(ldap_container.get("server_url", f"ldap://localhost:{LDAP_PORT}"))
+    bind_dn = str(ldap_container.get("bind_dn", LDAP_ADMIN_DN))
+    password = str(ldap_container.get("password", LDAP_ADMIN_PASSWORD))
+
+    server = Server(server_url, get_info=ALL)
     conn = Connection(
         server,
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
+        user=bind_dn,
+        password=password,
         auto_bind=False,
     )
     try:
         if not conn.bind():
-            pytest.skip(f"LDAP server not available at {ldap_container_shared}")
+            pytest.skip(
+                f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
+            )
     except Exception as exc:
         pytest.skip(f"LDAP server not available: {exc}")
 
