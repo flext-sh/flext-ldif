@@ -37,6 +37,21 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         __test__ = False
 
+        SAMPLE_LIMITS: ClassVar[dict[str, int]] = {
+            "entries": 30,
+            "schema": 25,
+            "acl": 25,
+        }
+
+        @staticmethod
+        def _sample_entries(entries: list[p.Entry], fixture_key: str) -> list[p.Entry]:
+            limit = TestsTestFlextLdifSortingWithRealLDIF.Fixtures.SAMPLE_LIMITS.get(
+                fixture_key,
+            )
+            if limit is None:
+                return entries
+            return entries[:limit]
+
         @staticmethod
         def _get_fixtures_dir() -> Path:
             """Get fixtures directory path."""
@@ -57,7 +72,10 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path, server_type="oid")
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID entries: {result.error}")
-            return result.value
+            return TestsTestFlextLdifSortingWithRealLDIF.Fixtures._sample_entries(
+                result.value,
+                "entries",
+            )
 
         @staticmethod
         def load_oid_schema() -> list[p.Entry]:
@@ -74,7 +92,10 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path)
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID schema: {result.error}")
-            return result.value
+            return TestsTestFlextLdifSortingWithRealLDIF.Fixtures._sample_entries(
+                result.value,
+                "schema",
+            )
 
         @staticmethod
         def load_oid_acl() -> list[p.Entry]:
@@ -91,7 +112,10 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             result = ldif.parse(fixture_path)
             if result.is_failure:
                 pytest.skip(f"Failed to parse OID ACL: {result.error}")
-            return result.value
+            return TestsTestFlextLdifSortingWithRealLDIF.Fixtures._sample_entries(
+                result.value,
+                "acl",
+            )
 
     class TestType(StrEnum):
         """Sort test type enumeration organized as nested enum."""

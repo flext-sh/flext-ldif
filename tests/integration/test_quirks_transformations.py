@@ -32,14 +32,14 @@ def migration_inputs(
     oid_input_dir = base_dir / "oid_input"
     oid_input_dir.mkdir()
     shutil.copy(
-        fixtures_dir / "oid" / "oid_integration_fixtures.ldif",
+        fixtures_dir / "oid" / "oid_entries_fixtures.ldif",
         oid_input_dir / "data.ldif",
     )
 
     oud_input_dir = base_dir / "oud_input"
     oud_input_dir.mkdir()
     shutil.copy(
-        fixtures_dir / "oud" / "oud_integration_fixtures.ldif",
+        fixtures_dir / "oud" / "oud_entries_fixtures.ldif",
         oud_input_dir / "data.ldif",
     )
 

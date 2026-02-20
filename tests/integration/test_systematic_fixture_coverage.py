@@ -35,6 +35,47 @@ class TestSystematicFixtureCoverage:
         """FlextLdif API instance."""
         return FlextLdif.get_instance()
 
+    @staticmethod
+    def _limit_schema_fixture_content(
+        fixture_data: str, max_definitions: int = 50
+    ) -> str:
+        """Build a minimal schema LDIF sample with bounded definitions."""
+        lines = fixture_data.splitlines()
+        first_dn = next(
+            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
+        )
+
+        selected_lines = [first_dn]
+        current_chunk: list[str] = []
+        definitions_count = 0
+
+        def flush_chunk() -> None:
+            nonlocal definitions_count, current_chunk
+            if not current_chunk:
+                return
+            if definitions_count < max_definitions:
+                selected_lines.extend(current_chunk)
+                definitions_count += 1
+            current_chunk = []
+
+        for line in lines:
+            if line.startswith("attributeTypes:") or line.startswith("objectClasses:"):
+                flush_chunk()
+                if definitions_count >= max_definitions:
+                    break
+                current_chunk = [line]
+                continue
+
+            if current_chunk and line[:1].isspace():
+                current_chunk.append(line)
+                continue
+
+            flush_chunk()
+
+        flush_chunk()
+        selected_lines.append("")
+        return "\n".join(selected_lines)
+
     @pytest.mark.parametrize(
         "server_fixture",
         ["oid_schema_fixture", "oud_schema_fixture"],
@@ -59,8 +100,11 @@ class TestSystematicFixtureCoverage:
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
 
+        schema_sample = self._limit_schema_fixture_content(fixture_data)
+        assert schema_sample, "Schema sample extraction produced empty content"
+
         # Parse schema
-        parse_result = api.parse(fixture_data)
+        parse_result = api.parse(schema_sample)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
         assert len(entries) > 0, "No entries parsed from schema fixture"

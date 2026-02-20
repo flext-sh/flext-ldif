@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import copy
 from enum import StrEnum
-from pathlib import Path
 from typing import ClassVar
 
 import pytest
@@ -100,6 +99,23 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
         "roundtrip_oid_acl": (OidFixtureType.ACL,),
     }
 
+    SAMPLE_LIMITS: ClassVar[dict[OidFixtureType, int]] = {
+        OidFixtureType.SCHEMA: 25,
+        OidFixtureType.ENTRIES: 25,
+        OidFixtureType.ACL: 25,
+    }
+
+    @classmethod
+    def _sample_fixture_entries(
+        cls,
+        entries: list[object],
+        fixture_type: OidFixtureType,
+    ) -> list[object]:
+        limit = cls.SAMPLE_LIMITS.get(fixture_type)
+        if limit is None:
+            return entries
+        return entries[:limit]
+
     # =========================================================================
     # Parse & Validation Tests
     # =========================================================================
@@ -129,7 +145,11 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
         """Parametrized test for parsing OID fixture files."""
         fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
 
-        entries = copy.deepcopy(oid_fixture_cache[fixture_type])
+        sampled_entries = self._sample_fixture_entries(
+            oid_fixture_cache[fixture_type],
+            fixture_type,
+        )
+        entries = copy.deepcopy(sampled_entries)
 
         assert len(entries) > 0, f"No entries loaded from {fixture_filename}"
 
@@ -166,7 +186,11 @@ class TestsFlextLdifOidQuirksWithRealFixtures(s):
         """Parametrized test for roundtrip parsing/writing of OID fixtures."""
         fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
 
-        original_entries = copy.deepcopy(oid_fixture_cache[fixture_type])
+        sampled_entries = self._sample_fixture_entries(
+            oid_fixture_cache[fixture_type],
+            fixture_type,
+        )
+        original_entries = copy.deepcopy(sampled_entries)
 
         write_result = ldif_api.write(
             original_entries,

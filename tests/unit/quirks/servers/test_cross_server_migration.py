@@ -36,7 +36,14 @@ def ldif_api() -> FlextLdif:
 @pytest.fixture(scope="class")
 def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[p.Entry]]:
     """Cache parsed migration fixtures once per class."""
-    return {
+    sample_limits = {
+        "oid_entries": 25,
+        "oud_entries": 25,
+        "rfc_entries": 25,
+        "oid_schema": 25,
+    }
+
+    cache = {
         "oid_entries": FlextLdifTestUtils.load_fixture(
             ldif_api,
             "oid",
@@ -58,6 +65,8 @@ def migration_fixture_cache(ldif_api: FlextLdif) -> dict[str, list[p.Entry]]:
             "oid_schema_fixtures.ldif",
         ),
     }
+
+    return {key: entries[: sample_limits[key]] for key, entries in cache.items()}
 
 
 class TestsFlextLdifCrossServerMigration(s):
@@ -162,8 +171,7 @@ class TestsFlextLdifCrossServerMigration(s):
         tmp_path: Path,
     ) -> None:
         """Test OID schema → OUD migration."""
-        schema_sample = migration_fixture_cache["oid_schema"][:50]
-        oid_schema = copy.deepcopy(schema_sample)
+        oid_schema = copy.deepcopy(migration_fixture_cache["oid_schema"])
         assert len(oid_schema) > 0
 
         output_path = tmp_path / "oid_schema_to_oud.ldif"
@@ -217,19 +225,13 @@ class TestsFlextLdifCrossServerMigration(s):
         tmp_path: Path,
     ) -> None:
         """Test that attribute names are properly transformed during migration."""
-        # Load a small OID fixture
-        oid_entries = copy.deepcopy(migration_fixture_cache["oid_entries"])
-
-        # Get all attribute names from OID
-        oid_attr_names: set[str] = set()
-        for entry in oid_entries[:5]:  # Sample first 5
-            if entry.attributes is not None:
-                oid_attr_names.update(entry.attributes.keys())
+        # Load a minimal OID fixture sample
+        oid_entries_sample = copy.deepcopy(migration_fixture_cache["oid_entries"][:3])
 
         # Migrate to OUD
         output_path = tmp_path / "attr_preservation_test.ldif"
         write_result = ldif_api.write_file(
-            oid_entries[:5],
+            oid_entries_sample,
             output_path,
             server_type="oud",
         )

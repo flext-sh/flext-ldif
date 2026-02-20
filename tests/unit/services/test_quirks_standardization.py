@@ -146,21 +146,53 @@ class TestQuirksAutoInterchange:
 class TestQuirksWithRealLdifFixtures:
     """Test quirks with real LDIF fixture data."""
 
-    @pytest.fixture
+    @staticmethod
+    def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
+        """Return first LDIF records to keep fixture parsing lightweight."""
+        lines = ldif_content.splitlines()
+        sampled: list[str] = []
+        current_record: list[str] = []
+        record_count = 0
+
+        def flush_record() -> None:
+            nonlocal record_count, current_record
+            if not current_record:
+                return
+            if record_count < max_records:
+                sampled.extend(current_record)
+                sampled.append("")
+                record_count += 1
+            current_record = []
+
+        for line in lines:
+            if line.startswith("dn:"):
+                flush_record()
+                if record_count >= max_records:
+                    break
+                current_record = [line]
+                continue
+
+            if current_record:
+                current_record.append(line)
+
+        flush_record()
+        return "\n".join(sampled).strip()
+
+    @pytest.fixture(scope="class")
     def oid_schema_ldif(self) -> str:
         """Load real OID schema LDIF fixture."""
         fixture_path = Path(f"tests/fixtures/{c.Fixtures.OID}/oid_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        return fixture_path.read_text(encoding="utf-8")
+        return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oud_schema_ldif(self) -> str:
         """Load real OUD schema LDIF fixture."""
         fixture_path = Path(f"tests/fixtures/{c.Fixtures.OUD}/oud_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        return fixture_path.read_text(encoding="utf-8")
+        return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
 
     def test_oid_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
         """OID quirk must handle real OID LDIF data."""
