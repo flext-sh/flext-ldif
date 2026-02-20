@@ -273,19 +273,19 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
         (TestType.EXECUTE_ACL, "acl"),
     ]
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_entries(self) -> list[p.Entry]:
-        """Load real OID entries from fixture."""
+        """Load real OID entries from fixture (class-scoped to avoid repeated parsing)."""
         return self.Fixtures.load_oid_entries()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_schema(self) -> list[p.Entry]:
-        """Load real OID schema from fixture."""
+        """Load real OID schema from fixture (class-scoped to avoid repeated parsing)."""
         return self.Fixtures.load_oid_schema()
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oid_acl(self) -> list[p.Entry]:
-        """Load real OID ACL from fixture."""
+        """Load real OID ACL from fixture (class-scoped to avoid repeated parsing)."""
         return self.Fixtures.load_oid_acl()
 
     @pytest.mark.parametrize(

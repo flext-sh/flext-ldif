@@ -1,0 +1,36 @@
+version: 1
+
+dn: cn=José Silva,ou=people,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: José Silva
+sn: Silva
+givenName: José
+mail: jose.silva@example.com
+
+dn: cn=München Office,ou=locations,dc=example,dc=com
+objectClass: organizationalUnit
+ou: München Office
+description: Büro in München
+
+dn: cn=東京太郎,ou=people,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: 東京太郎
+sn: 太郎
+givenName: 東京
+mail: taro@example.com
+
+dn: cn=Ñoño García,ou=people,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Ñoño García
+sn: García
+givenName: Ñoño
+
+dn: cn=Ελληνικά Test,ou=people,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Ελληνικά Test
+sn: Test
+description: Greek characters: αβγδεζηθ

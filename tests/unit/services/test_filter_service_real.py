@@ -135,21 +135,21 @@ def load_real_ldif_entries(fixture_path: str) -> list[p.Entry]:
     return result.value
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_entries() -> list[p.Entry]:
-    """Load real OID LDIF entries."""
+    """Load real OID LDIF entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_entries_fixtures.ldif")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_schema_entries() -> list[p.Entry]:
-    """Load real OID schema entries."""
+    """Load real OID schema entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_schema_fixtures.ldif")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def oid_acl_entries() -> list[p.Entry]:
-    """Load real OID ACL entries."""
+    """Load real OID ACL entries (module-scoped to avoid repeated parsing)."""
     return load_real_ldif_entries("oid/oid_acl_fixtures.ldif")
 
 
