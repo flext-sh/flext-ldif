@@ -26,8 +26,6 @@ from typing import Final
 import pytest
 from flext_ldif import FlextLdif
 from flext_ldif._utilities.filters import Filter
-from flext_tests import tt
-
 from tests import Filters, c, p
 
 
@@ -185,7 +183,7 @@ def _get_objectclasses(entry: p.Entry) -> list[str]:
     return []
 
 
-class TestFlextLdifFilterService(tt):
+class TestFlextLdifFilterService:
     """Comprehensive filter service tests using REAL LDIF fixtures.
 
     Uses the Filter factory class from _utilities/filters.py with composable

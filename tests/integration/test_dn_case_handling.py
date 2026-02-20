@@ -137,16 +137,14 @@ class TestDnCaseRegistry(s):
 
         data: GenericFieldsDict = {
             "dn": "CN=Admin,DC=Com",
-            "cn": ["REDACTED_LDAP_BIND_PASSWORD"],
+            "cn": ["admin"],
         }
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
         normalized = result.value
         assert normalized["dn"] == "cn=admin,dc=com"
-        assert normalized["cn"] == [
-            "REDACTED_LDAP_BIND_PASSWORD"
-        ]  # Non-DN field unchanged
+        assert normalized["cn"] == ["admin"]  # Non-DN field unchanged
 
     def test_normalize_dn_references_list_of_dns(
         self,
