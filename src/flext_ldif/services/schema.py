@@ -17,7 +17,9 @@ from flext_ldif.utilities import u
 class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
-    _registry: FlextLdifServer = PrivateAttr(default_factory=FlextLdifServer)
+    _registry: FlextLdifServer = PrivateAttr(
+        default_factory=FlextLdifServer.get_global_instance,
+    )
     _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(
         default="rfc",
     )
@@ -34,7 +36,11 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
         object.__setattr__(
             self,
             "_registry",
-            registry if registry is not None else FlextLdifServer(),
+            (
+                registry
+                if registry is not None
+                else FlextLdifServer.get_global_instance()
+            ),
         )
         object.__setattr__(self, "_server_type", server_type)
 

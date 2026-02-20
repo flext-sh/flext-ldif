@@ -8,7 +8,6 @@ of production LDIF files from actual LDAP directory migrations.
 from __future__ import annotations
 
 from enum import StrEnum
-from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
@@ -30,9 +29,6 @@ class WriterRfc2849TestType(StrEnum):
 
 # RFC 2849 compliance constants
 RFC2849_MAX_LINE_BYTES: Final[int] = 78
-FLEXT_INPUT_FILE: Final[Path] = Path(
-    "/home/marlonsc/flext/flext-oud-mig/data/input/2_ldap_configset.ldif",
-)
 
 # Test entry DN patterns
 CONFIG_DN: Final[str] = "cn=config,cn=ldapserver"
@@ -81,10 +77,6 @@ class TestsFlextLdifsFlextLdifWriterFlextRealData(s):
         ),
     }
 
-    @pytest.mark.xfail(
-        reason="Line folding not yet implemented in writer quirks",
-        strict=False,
-    )
     @pytest.mark.parametrize(
         ("scenario", "test_type"),
         [(name, data[0]) for name, data in RFC2849_COMPLIANCE_DATA.items()],
@@ -101,10 +93,6 @@ class TestsFlextLdifsFlextLdifWriterFlextRealData(s):
         Validates that the writer produces RFC-compliant output when processing
         real production LDIF files from flext-oud-mig project.
         """
-        # Skip test if file doesn't exist (for CI/CD environments)
-        if not FLEXT_INPUT_FILE.exists():
-            pytest.skip("flext-oud-mig data not available in this environment")
-
         # Create test entry
         entry = m.Ldif.Entry(
             dn=CONFIG_DN,

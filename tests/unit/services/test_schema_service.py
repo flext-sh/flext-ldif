@@ -7,11 +7,10 @@ server-specific schema quirk handling for different LDAP implementations.
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 from flext_ldif.models import m
 from flext_ldif.services.schema import FlextLdifSchema
+from flext_ldif.services.server import FlextLdifServer
 
 from tests import c, s
 
@@ -703,12 +702,17 @@ class TestSchemaServiceIntegration:
         self,
     ) -> None:
         """Test service works with different server types."""
-        for server_type in ["rfc", "oud", "oid", "openldap"]:
+        server_registry = FlextLdifServer.get_global_instance()
+        server_types: tuple[c.Ldif.LiteralTypes.ServerTypeLiteral, ...] = (
+            "rfc",
+            "oud",
+            "oid",
+            "openldap",
+        )
+        for server_type in server_types:
             service = FlextLdifSchema(
-                server_type=cast(
-                    "c.Ldif.LiteralTypes.ServerTypeLiteral",
-                    server_type,
-                ),
+                server_type=server_type,
+                registry=server_registry,
             )
             result = service.execute()
             assert result.is_success

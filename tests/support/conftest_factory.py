@@ -187,8 +187,18 @@ class FlextLdifTestConftest:
     LDAP_SERVICE_NAME = "openldap"
     LDAP_PORT = 3390
     LDAP_BASE_DN = "dc=flext,dc=local"
-    LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-    LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+    LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
+    LDAP_ADMIN_PASSWORD = "admin123"
+
+    def _ldap_bind_candidates(self) -> tuple[tuple[str, str], ...]:
+        return (
+            ("cn=admin,dc=flext,dc=local", "admin123"),
+            ("cn=admin,dc=flext,dc=local", "REDACTED_LDAP_BIND_PASSWORD123"),
+            (
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                "REDACTED_LDAP_BIND_PASSWORD123",
+            ),
+        )
 
     def ldap_container(
         self,
@@ -240,20 +250,31 @@ class FlextLdifTestConftest:
         wait_interval = 0.5
         waited = 0.0
 
+        active_bind_dn = self.LDAP_ADMIN_DN
+        active_password = self.LDAP_ADMIN_PASSWORD
+
         while waited < max_wait:
             try:
                 server = Server(f"ldap://localhost:{self.LDAP_PORT}", get_info=ALL)
-                conn = Connection(
-                    server,
-                    user=self.LDAP_ADMIN_DN,
-                    password=self.LDAP_ADMIN_PASSWORD,
-                    auto_bind=False,
-                )
-                if conn.bind():
+                for bind_dn, password in self._ldap_bind_candidates():
+                    conn = Connection(
+                        server,
+                        user=bind_dn,
+                        password=password,
+                        auto_bind=False,
+                    )
+                    if conn.bind():
+                        conn.unbind()
+                        active_bind_dn = bind_dn
+                        active_password = password
+                        logger.debug("Container ready after %.1fs", waited)
+                        break
                     conn.unbind()
-                    logger.debug("Container ready after %.1fs", waited)
-                    break
-                conn.unbind()
+                else:
+                    time.sleep(wait_interval)
+                    waited += wait_interval
+                    continue
+                break
             except Exception:
                 pass
 
@@ -266,8 +287,8 @@ class FlextLdifTestConftest:
         return {
             "server_url": f"ldap://localhost:{self.LDAP_PORT}",
             "host": "localhost",
-            "bind_dn": self.LDAP_ADMIN_DN,
-            "password": self.LDAP_ADMIN_PASSWORD,
+            "bind_dn": active_bind_dn,
+            "password": active_password,
             "base_dn": self.LDAP_BASE_DN,
             "port": self.LDAP_PORT,
             "use_ssl": False,
@@ -285,7 +306,8 @@ class FlextLdifTestConftest:
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
-        port = int(ldap_container.get("port", self.LDAP_PORT))
+        raw_port = ldap_container.get("port", self.LDAP_PORT)
+        port = raw_port if isinstance(raw_port, int) else self.LDAP_PORT
         bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
         password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
 
