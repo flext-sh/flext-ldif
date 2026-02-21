@@ -50,6 +50,7 @@ from flext_ldif._utilities.pipeline import (
 from flext_ldif._utilities.result import FlextLdifResult
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif._utilities.transformers import EntryTransformer
 from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
@@ -685,20 +686,24 @@ class FlextLdifUtilities(u_core):
             ) = items_or_entries
             if processor_normalized is None:
                 if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
-                    return FlextLdifUtilities.Ldif.Entry.transform_batch(
-                        items_or_entries,
-                        normalize_dns=normalize_dns,
-                        normalize_attrs=normalize_attrs,
+                    return FlextLdifResult.from_result(
+                        FlextLdifUtilities.Ldif.Entry.transform_batch(
+                            items_or_entries,
+                            normalize_dns=normalize_dns,
+                            normalize_attrs=normalize_attrs,
+                        )
                     )
                 msg = "processor is required for base class process"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
 
             if isinstance(processor_normalized, ProcessConfig):
                 if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
-                    return FlextLdifUtilities.Ldif.Entry.transform_batch(
-                        items_or_entries,
-                        normalize_dns=normalize_dns,
-                        normalize_attrs=normalize_attrs,
+                    return FlextLdifResult.from_result(
+                        FlextLdifUtilities.Ldif.Entry.transform_batch(
+                            items_or_entries,
+                            normalize_dns=normalize_dns,
+                            normalize_attrs=normalize_attrs,
+                        )
                     )
                 msg = "ProcessConfig requires LDIF entry sequence"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
@@ -716,7 +721,7 @@ class FlextLdifUtilities(u_core):
                     filter_keys,
                     exclude_keys,
                 )
-                return r[str].ok(results)
+                return r[list[R]].ok(results)
             if isinstance(items, (list, tuple)):
                 list_items = items
                 return FlextLdifUtilities.Ldif.process_list_items(
@@ -854,7 +859,7 @@ class FlextLdifUtilities(u_core):
         @staticmethod
         def transform_entries(
             entries: Sequence[m.Ldif.Entry],
-            *transformers: object,
+            *transformers: EntryTransformer[m.Ldif.Entry],
             fail_fast: bool = True,
         ) -> FlextLdifResult[list[m.Ldif.Entry]]:
             """Apply entry transformers to LDIF entries using pipeline semantics."""

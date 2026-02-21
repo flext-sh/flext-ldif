@@ -1416,7 +1416,7 @@ class FlextLdifModelsDomains:
 
             IMPORTANT: Pydantic 2 requires model validators with mode="after" to return
             `self` (not a copy) when validating via __init__. We modify self in-place
-            using object.__setattr__() to respect immutability patterns.
+            using attribute assignment helpers.
 
             See: https://docs.pydantic.dev/latest/concepts/validators/#model-validators
             """
@@ -1453,7 +1453,7 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                object.__setattr__(self, "validation_violations", violations)
+                setattr(self, "validation_violations", violations)
                 return self
 
             # Return existing instance when no violations are present

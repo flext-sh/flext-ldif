@@ -289,7 +289,10 @@ class FlextLdifServersBaseEntry(
                 return True
             for char in value:
                 char_ord = ord(char)
-                if char_ord < 32 or char_ord > ascii_printable_limit:
+                if (
+                    char_ord < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                    or char_ord > ascii_printable_limit
+                ):
                     return True
             return False
 

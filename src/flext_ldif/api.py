@@ -39,6 +39,19 @@ class FlextLdif(FlextLdifServiceBase[object]):
     _TService = TypeVar("_TService", bound=t.GeneralValueType)
 
     @classmethod
+    def _set_init_config_overrides(
+        cls,
+        config: FlextLdifSettings,
+    ) -> None:
+        """Set temporary init config overrides for runtime bootstrap."""
+        cls._init_config_overrides = config.model_dump(exclude_none=True)
+
+    @classmethod
+    def _clear_init_config_overrides(cls) -> None:
+        """Clear temporary init config overrides after initialization."""
+        cls._init_config_overrides = None
+
+    @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Allow per-instance config overrides on initialization."""
         base_options = super()._runtime_bootstrap_options()
@@ -83,12 +96,10 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
         try:
             if config is not None:
-                type(self)._init_config_overrides = config.model_dump(
-                    exclude_none=True,
-                )
+                self._set_init_config_overrides(config)
             super().__init__()
         finally:
-            type(self)._init_config_overrides = None
+            self._clear_init_config_overrides()
 
         self._service_cache = {}
         FlextLogger(__name__).info("FlextLdif facade initialized")
@@ -408,7 +419,6 @@ class FlextLdif(FlextLdifServiceBase[object]):
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
-            | dict[str, t.GeneralValueType]
             | None
         ) = None,
     ) -> r[str]:
@@ -442,7 +452,6 @@ class FlextLdif(FlextLdifServiceBase[object]):
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
-            | dict[str, t.GeneralValueType]
             | None
         ) = None,
     ) -> r[bool]:
@@ -502,7 +511,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         objectclass: str | None = None,
         dn_pattern: str | None = None,
         attributes: dict[str, object] | None = None,
-    ) -> r[list[t.GeneralValueType]]:
+    ) -> r[list[m.Ldif.Entry]]:
         """Filter entries by objectClass, DN pattern and attribute criteria."""
         entries_typed: list[m.Ldif.Entry] = []
         for entry in entries:
@@ -514,7 +523,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
 
         if not objectclass and not dn_pattern and not attributes:
-            return r[list[t.GeneralValueType]].ok(list(entries_typed))
+            return r[list[m.Ldif.Entry]].ok(list(entries_typed))
 
         required_attrs: list[str] = list(attributes.keys()) if attributes else []
         filtered: list[m.Ldif.Entry] = []
@@ -552,7 +561,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
 
             filtered.append(entry)
 
-        return r[list[t.GeneralValueType]].ok(filtered)
+        return r[list[m.Ldif.Entry]].ok(filtered)
 
     def get_entry_statistics(
         self,

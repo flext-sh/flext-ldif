@@ -237,7 +237,7 @@ run.source = [ "src/flext_ldif" ]
 
 [tool.pyrefly]
 project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
-search-path = [ "../typings", "../typings/generated", "src", "tests", "examples", "scripts", "." ]
+search-path = ["../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
 
 [tool.bandit]
 skips = [ "B404", "B603", "B607", "B105", "B608" ]

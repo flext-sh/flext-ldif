@@ -61,7 +61,15 @@ class FlextLdifTypes(FlextTypes):
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
 
             WriteMethodArg: TypeAlias = str | int | float | bool | list[str] | None
-            WriteMethodReturn: TypeAlias = str | int | float | bool | list[str] | None
+            WriteMethodReturn: TypeAlias = (
+                str
+                | int
+                | float
+                | bool
+                | list[str]
+                | None
+                | r[str | int | float | bool | list[str] | None]
+            )
             WriteMethod: TypeAlias = Callable[
                 [object, WriteMethodArg],
                 WriteMethodReturn,
