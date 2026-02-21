@@ -993,10 +993,10 @@ __all__ = [
     "TestAPIConversionAndMigration",
     "TestAPICoreProperties",
     "TestAPIEntryManipulation",
-    "TestsFlextLdifAPIParsingOperations",
     "TestAPIProcessing",
     "TestAPIValidationAndFiltering",
     "TestAPIWritingOperations",
+    "TestsFlextLdifAPIParsingOperations",
     "ValidationScenario",
     "WritingScenario",
 ]
