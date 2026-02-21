@@ -9,9 +9,8 @@ import pytest
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
+    t,
 )
-
-from flext_ldif import t
 
 from tests import c, m
 from tests.test_factory import FlextLdifTestFactory

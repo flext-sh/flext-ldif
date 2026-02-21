@@ -11,8 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif import t
-from flext_ldif import FlextLdifConstants
+from flext_ldif import FlextLdifConstants, t
 from flext_ldif.constants import c as lib_c
 from flext_ldif.utilities import u as lib_u
 

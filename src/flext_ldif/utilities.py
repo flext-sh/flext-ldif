@@ -830,9 +830,7 @@ class FlextLdifUtilities(u):
                     return dict_filter_result
                 return {}
             items_single_list: list[object] = [items_or_entries]
-            single_filter_result = u.Collection.filter(
-                items_single_list, predicate
-            )
+            single_filter_result = u.Collection.filter(items_single_list, predicate)
             if isinstance(single_filter_result, list):
                 return single_filter_result
             return list(single_filter_result) if single_filter_result else []
@@ -979,13 +977,9 @@ class FlextLdifUtilities(u):
             }
             result = cls.build(extracted, ops=ops)
             if isinstance(result, list):
-                return [
-                    u.Mapper.narrow_to_general_value_type(item) for item in result
-                ]
+                return [u.Mapper.narrow_to_general_value_type(item) for item in result]
             if isinstance(result, tuple):
-                return [
-                    u.Mapper.narrow_to_general_value_type(item) for item in result
-                ]
+                return [u.Mapper.narrow_to_general_value_type(item) for item in result]
             result_typed = u.Mapper.narrow_to_general_value_type(result)
             return [result_typed]
 
