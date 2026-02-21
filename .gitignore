@@ -324,3 +324,7 @@ staging/
 __pycache__/
 *.egg-info
 .github/*.rej
+
+# --- workspace-sync: required ignores (auto-managed) ---
+.reports/
+.venv/

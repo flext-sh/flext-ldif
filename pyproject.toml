@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2.0", "poetry-core>=2" ]
+requires = [ "poetry-core>=2" ]
 
 [project]
 name = "flext-ldif"
@@ -15,18 +15,18 @@ keywords = [
   "typed",
 ]
 license = "MIT"
-maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+maintainers = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+authors = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
 requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
-  "Development Status :: 5 - Production/Stable",
 ]
 dependencies = [
   "beartype>=0.22.6,<0.23",
@@ -101,7 +101,7 @@ group.dev.dependencies.types-redis = ">=4.6.0"
 group.dev.dependencies.types-requests = ">=2.32.4"
 group.dev.dependencies.types-setuptools = ">=80.9.0"
 group.dev.dependencies.types-toml = ">=0.10.8.20240310"
-packages = [ {from = "src", include = "flext_ldif"} ]
+packages = [ { from = "src", include = "flext_ldif" } ]
 
 [tool.ruff]
 extend = "../ruff-shared.toml"
@@ -231,13 +231,13 @@ ini_options.testpaths = [
 ]
 
 [tool.coverage]
+run.source = [ "src/flext_ldif" ]
 report.fail_under = 68
 report.precision = 2
-run.source = [ "src/flext_ldif" ]
 
 [tool.pyrefly]
 project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
-search-path = ["../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
+search-path = [ "../typings", "../typings/generated", "src", "tests", "examples", "scripts" ]
 
 [tool.bandit]
 skips = [ "B404", "B603", "B607", "B105", "B608" ]
