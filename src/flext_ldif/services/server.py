@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextTypes as t, r
+from flext_core import FlextLogger, r, t
 from flext_core.registry import FlextRegistry
 
 import flext_ldif.servers as servers_package

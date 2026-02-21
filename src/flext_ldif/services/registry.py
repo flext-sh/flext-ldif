@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import FlextTypes as t
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
+
+from flext_ldif.typings import t
 
 type FilterFactoryType = Callable[[], t.GeneralValueType]
 type CategorizationFactoryType = Callable[[str], t.GeneralValueType]

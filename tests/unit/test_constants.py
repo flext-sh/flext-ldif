@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from flext_ldif import t
 from flext_ldif import FlextLdifConstants
 from flext_ldif.constants import c as lib_c
 from flext_ldif.utilities import u as lib_u
@@ -130,10 +131,10 @@ class TestsTestFlextLdifConstants(s):
     ]
 
     @staticmethod
-    def _get_constant_value(path: str) -> object:
+    def _get_constant_value(path: str) -> t.GeneralValueType:
         """Get constant value by path starting from lib_c.Ldif."""
         parts = path.split(".")
-        value: object = lib_c.Ldif
+        value: t.GeneralValueType = lib_c.Ldif  # type: ignore[assignment]
         for part in parts:
             value = getattr(value, part)
         return value

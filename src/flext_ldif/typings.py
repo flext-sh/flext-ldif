@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import Literal, TypeAlias, TypeVar
 
-from flext_core import FlextResult as r, FlextTypes
+from flext_core import FlextTypes, r
 
 
 class FlextLdifTypes(FlextTypes):

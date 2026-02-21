@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
-from flext_core import FlextTypes as t, T, U
-from flext_core.utilities import FlextUtilities as u
+from flext_core import T, U, t
+from flext_core.utilities import u
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 _TThunk_co = TypeVar("_TThunk_co", covariant=True)

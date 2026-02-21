@@ -11,6 +11,8 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 
+from flext_ldif import t
+
 from tests import c, m
 from tests.test_factory import FlextLdifTestFactory
 
@@ -57,7 +59,7 @@ def _create_real_writer_service() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def real_entry() -> object:
+def real_entry() -> m.Ldif.Entry:
     """Provide a real Entry model for testing."""
     return FlextLdifTestFactory.create_real_entry()
 
@@ -69,7 +71,7 @@ def real_ldif_content() -> str:
 
 
 @pytest.fixture(params=FlextLdifTestFactory.parametrize_real_data())
-def parametrized_real_data(request: pytest.FixtureRequest) -> object:
+def parametrized_real_data(request: pytest.FixtureRequest) -> t.GeneralValueType:
     """Provide parametrized real test data."""
     return request.param
 

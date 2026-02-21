@@ -10,6 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from flext_ldif import t
 from flext_ldif import FlextLdifConstants
 from flext_ldif.constants import c
 from tests import s
@@ -134,10 +135,10 @@ class TestsTestFlextLdifConstants(s):
     # ════════════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def _get_constant_value(path: str) -> object:
+    def _get_constant_value(path: str) -> t.GeneralValueType:
         """Get constant value by path."""
         parts = path.split(".")
-        value: object = FlextLdifConstants
+        value: t.GeneralValueType = FlextLdifConstants  # type: ignore[assignment]
         for part in parts:
             value = getattr(value, part)
         return value
