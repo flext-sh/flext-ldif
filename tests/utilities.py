@@ -14,39 +14,33 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     OID = FlextLdifUtilities.Ldif.OID
+    TestDeduplicationHelpers = TestDeduplicationHelpers
 
+    class RfcTestHelpers(_RfcTestHelpers):
+        """Compatibility extension for RFC helper API."""
 
-class RfcTestHelpers(_RfcTestHelpers):
-    """Compatibility extension for RFC helper API."""
+        @staticmethod
+        def test_parse_ldif_file(
+            parser_service: object,
+            file_path: Path,
+            expected_count: int,
+            server_type: str = "rfc",
+        ) -> list[object]:
+            file_content = file_path.read_text(encoding="utf-8")
+            return _RfcTestHelpers.test_parse_ldif_content(
+                parser_service=parser_service,
+                content=file_content,
+                expected_count=expected_count,
+                server_type=server_type,
+            )
 
-    @staticmethod
-    def test_parse_ldif_file(
-        parser_service: object,
-        file_path: Path,
-        expected_count: int,
-        server_type: str = "rfc",
-    ) -> list[object]:
-        file_content = file_path.read_text(encoding="utf-8")
-        return _RfcTestHelpers.test_parse_ldif_content(
-            parser_service=parser_service,
-            content=file_content,
-            expected_count=expected_count,
-            server_type=server_type,
-        )
-
-
-class TestCategorization:
-    """Test categorization utilities."""
+    class TestCategorization:
+        """Test categorization utilities."""
 
 
 u = TestsFlextLdifUtilities
-Testsu = TestsFlextLdifUtilities
 
 __all__ = [
-    "RfcTestHelpers",
-    "TestCategorization",
-    "TestDeduplicationHelpers",
     "TestsFlextLdifUtilities",
-    "Testsu",
     "u",
 ]

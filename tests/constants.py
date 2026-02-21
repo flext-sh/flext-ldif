@@ -38,11 +38,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     2. FlextLdifConstants - for domain constants (.Ldif.*)
 
     Access patterns:
-    - tc.Tests.Docker.* (container testing)
-    - tc.Tests.Matcher.* (assertion messages)
-    - tc.Tests.Factory.* (test data generation)
-    - tc.Ldif.* (domain constants from production)
-    - tc.TestLdif.* (project-specific test data)
+    - c.Tests.Docker.* (container testing)
+    - c.Tests.Matcher.* (assertion messages)
+    - c.Tests.Factory.* (test data generation)
+    - c.Ldif.* (domain constants from production)
+    - c.TestLdif.* (project-specific test data)
 
     Rules:
     - NEVER duplicate constants from FlextTestsConstants or FlextLdifConstants
@@ -2486,15 +2486,11 @@ class TestDeduplicationHelpers:
         return converted_items
 
 
-# Short aliases per FLEXT convention
-tc = TestsFlextLdifConstants  # Primary test constants alias
-c = TestsFlextLdifConstants  # Alternative alias for compatibility
+c = TestsFlextLdifConstants
 
 __all__ = [
-    "Filters",
-    "OIDs",
-    "Syntax",
+    "RfcTestHelpers",
+    "TestDeduplicationHelpers",
     "TestsFlextLdifConstants",
     "c",
-    "tc",
 ]

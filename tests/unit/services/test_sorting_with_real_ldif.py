@@ -17,7 +17,7 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from flext_ldif.services.sorting import FlextLdifSorting
 
-from tests import RfcTestHelpers, p, s
+from tests import p, s, u
 
 
 class TestsTestFlextLdifSortingWithRealLDIF(s):
@@ -337,7 +337,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         result = self.Helpers.execute_sort_operation(test_type, entries)
 
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )
@@ -365,7 +365,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             sort_target=self.Constants.SORT_TARGET_ATTRIBUTES,
         ).execute()
 
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -381,7 +381,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             pytest.skip("No OID entries loaded")
 
         result1 = FlextLdifSorting.by_hierarchy(oid_entries)
-        entries_by_hierarchy = RfcTestHelpers.test_result_success_and_unwrap(
+        entries_by_hierarchy = u.RfcTestHelpers.test_result_success_and_unwrap(
             result1,
             expected_type=list,
         )
@@ -390,7 +390,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             entries=entries_by_hierarchy,
             sort_target=self.Constants.SORT_TARGET_ATTRIBUTES,
         ).execute()
-        final_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        final_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result2,
             expected_type=list,
         )
@@ -434,7 +434,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             pytest.skip("No OID entries loaded")
 
         result = FlextLdifSorting.by_custom(oid_entries, predicate_func)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )
@@ -482,7 +482,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             pytest.skip("No OID entries loaded")
 
         result = FlextLdifSorting.by_hierarchy(oid_entries)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )
@@ -503,7 +503,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
 
         for strategy in strategies:
             result = strategy(oid_entries)
-            sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+            sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
                 result,
                 expected_type=list,
             )
@@ -518,7 +518,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             pytest.skip("No OID entries loaded")
 
         result = FlextLdifSorting.by_hierarchy(oid_entries)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )
@@ -564,7 +564,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
                 sort_target=target,
                 sort_by=self.Constants.SORT_BY_HIERARCHY,
             ).execute()
-            sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+            sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
                 result,
                 expected_type=list,
             )
@@ -587,7 +587,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             .execute()
         )
 
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )
@@ -607,7 +607,7 @@ class TestsTestFlextLdifSortingWithRealLDIF(s):
             sort_attributes=True,
         )
 
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )

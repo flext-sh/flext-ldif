@@ -17,7 +17,7 @@ from flext_core import FlextResult
 from flext_ldif.services.sorting import FlextLdifSorting
 from pydantic import ValidationError
 
-from tests import RfcTestHelpers, c, p, s
+from tests import c, p, s, u
 
 
 class TestsTestFlextLdifSorting(s):
@@ -357,7 +357,7 @@ class TestsTestFlextLdifSorting(s):
 
         result = self.Helpers.execute_sort_operation(test_case, entries)
 
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=test_case.expected_count,
@@ -371,7 +371,7 @@ class TestsTestFlextLdifSorting(s):
             entries=[],
             sort_by=self.Constants.SORT_BY_HIERARCHY,
         ).execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=0,
@@ -396,7 +396,7 @@ class TestsTestFlextLdifSorting(s):
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entry)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -416,7 +416,7 @@ class TestsTestFlextLdifSorting(s):
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entries)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=2,
@@ -436,7 +436,7 @@ class TestsTestFlextLdifSorting(s):
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entries)
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=2,
@@ -502,7 +502,7 @@ class TestsTestFlextLdifSorting(s):
             .with_attribute_sorting(order=["cn", "zzz"])
             .execute()
         )
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -525,7 +525,7 @@ class TestsTestFlextLdifSorting(s):
             [entry],
             order=["cn", "zzz"],
         )
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -545,7 +545,7 @@ class TestsTestFlextLdifSorting(s):
             {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
         )
         result = FlextLdifSorting.sort_acl_in_entries([entry], acl_attrs=["acl"])
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -570,7 +570,7 @@ class TestsTestFlextLdifSorting(s):
             entries=entries,
             sort_by=self.Constants.SORT_BY_DN,
         ).execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=2,
@@ -586,7 +586,7 @@ class TestsTestFlextLdifSorting(s):
             sort_by=self.Constants.SORT_BY_HIERARCHY,
             traversal="level-order",
         ).execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )

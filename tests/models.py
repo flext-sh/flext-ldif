@@ -85,11 +85,9 @@ class TestsFlextLdifModels:
 
 
 # Short aliases for tests
-tm = TestsFlextLdifModels
 m = TestsFlextLdifModels
 
 __all__ = [
     "TestsFlextLdifModels",
     "m",
-    "tm",
 ]

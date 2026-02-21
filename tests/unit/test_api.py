@@ -20,7 +20,7 @@ from flext_ldif import (
 from flext_ldif.constants import FlextLdifConstants, c as lib_c
 from flext_ldif.models import FlextLdifModels
 
-from tests import TestDeduplicationHelpers, c, p, s
+from tests import c, p, s, u
 
 m = FlextLdifModels
 
@@ -489,7 +489,7 @@ class TestAPIWritingOperations:
                 },
             },
         ]
-        return TestDeduplicationHelpers.create_entries_batch(
+        return u.TestDeduplicationHelpers.create_entries_batch(
             entries_data,
             validate_all=True,
         )
@@ -515,7 +515,7 @@ class TestAPIWritingOperations:
     ) -> None:
         """Test write() with various scenarios."""
         if scenario == WritingScenario.TO_STRING:
-            ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            ldif_string = u.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                 api,
                 sample_write_entries,
                 must_contain=["Alice", "Bob"],
@@ -523,14 +523,14 @@ class TestAPIWritingOperations:
             assert isinstance(ldif_string, str)
         elif scenario == WritingScenario.TO_FILE:
             output_file = tmp_path / "output.ldif"
-            TestDeduplicationHelpers.api_parse_write_file_and_assert(
+            u.TestDeduplicationHelpers.api_parse_write_file_and_assert(
                 api,
                 sample_write_entries,
                 output_file,
                 must_contain=["Alice", "Bob"],
             )
         elif scenario == WritingScenario.SINGLE_ENTRY:
-            TestDeduplicationHelpers.api_parse_write_string_and_assert(
+            u.TestDeduplicationHelpers.api_parse_write_string_and_assert(
                 api,
                 sample_write_entries[:1],
                 must_contain=["Alice"],
@@ -993,7 +993,7 @@ __all__ = [
     "TestAPIConversionAndMigration",
     "TestAPICoreProperties",
     "TestAPIEntryManipulation",
-    "TestAPIParsingOperations",
+    "TestsFlextLdifAPIParsingOperations",
     "TestAPIProcessing",
     "TestAPIValidationAndFiltering",
     "TestAPIWritingOperations",

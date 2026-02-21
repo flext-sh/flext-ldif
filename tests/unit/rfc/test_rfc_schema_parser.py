@@ -14,7 +14,7 @@ from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from tests import RfcTestHelpers, c, s
+from tests import c, s, u
 
 
 class TestsFlextLdifRfcSchemaParserInitialization(s):
@@ -54,7 +54,7 @@ class TestAutomaticSchemaDetection:
         real_parser_service: FlextLdifParser,
     ) -> None:
         """Test automatic detection and parsing of schema entry."""
-        entries = RfcTestHelpers.test_parse_ldif_content(
+        entries = u.RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
             c.Rfc.SAMPLE_SCHEMA_CONTENT,
             expected_count=1,
@@ -128,7 +128,7 @@ attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
             ),
         ]
         for schema_content, expected_count, expected_attrs in test_cases:
-            entries = RfcTestHelpers.test_parse_ldif_content(
+            entries = u.RfcTestHelpers.test_parse_ldif_content(
                 real_parser_service,
                 schema_content,
                 expected_count=expected_count,
@@ -151,7 +151,7 @@ attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
 objectClass: subschema
 attributeTypes: {c.Rfc.ATTR_DEF_CN_COMPLETE}
 """
-        entries = RfcTestHelpers.test_parse_ldif_content(
+        entries = u.RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
             schema_content,
             expected_count=1,
@@ -195,7 +195,7 @@ attributeTypes: {c.Rfc.ATTR_DEF_SN}
         real_parser_service: FlextLdifParser,
     ) -> None:
         """Test parsing empty schema and schema with line folding."""
-        entries = RfcTestHelpers.test_parse_ldif_content(
+        entries = u.RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
             "",
             expected_count=0,
@@ -211,7 +211,7 @@ DESC 'Common Name - this is a very long description
   that spans multiple lines' \
 SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
-        entries = RfcTestHelpers.test_parse_ldif_content(
+        entries = u.RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
             schema_content,
             expected_count=1,

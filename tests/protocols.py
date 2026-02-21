@@ -41,10 +41,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
 
 # Runtime aliases
 p = TestsFlextLdifProtocols
-tp = TestsFlextLdifProtocols
 
 __all__ = [
     "TestsFlextLdifProtocols",
     "p",
-    "tp",
 ]

@@ -16,7 +16,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.acl import FlextLdifAcl
 
-from tests import GenericFieldsDict, c, m, s
+from tests import c, m, s, t
 
 # =============================================================================
 # TEST ENUMS AND DATA STRUCTURES
@@ -847,7 +847,7 @@ class AclParserTestFactory:
         read: bool = False,
         write: bool = False,
         delete: bool = False,
-    ) -> GenericFieldsDict:
+    ) -> t.Tests.Fixtures.GenericFieldsDict:
         """Create test context."""
         permissions: dict[str, bool] = {}
         if read:
@@ -857,7 +857,7 @@ class AclParserTestFactory:
         if delete:
             permissions["delete"] = True
         # Return dict compatible with GenericFieldsDict (TypedDict with total=False)
-        result: GenericFieldsDict = {"permissions": permissions}
+        result: t.Tests.Fixtures.GenericFieldsDict = {"permissions": permissions}
         return result
 
 
