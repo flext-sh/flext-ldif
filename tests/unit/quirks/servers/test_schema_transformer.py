@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core import FlextResult
+from tests import s, t
+
 from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
-from tests import s, t
 
 
 class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):

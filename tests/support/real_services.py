@@ -16,7 +16,6 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 from flext_ldif.services.server import FlextLdifServer
-
 from tests import GenericFieldsDict
 
 

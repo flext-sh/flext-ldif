@@ -11,8 +11,8 @@ from enum import StrEnum
 from typing import ClassVar, TypedDict
 
 import pytest
-from flext_ldif.protocols import p
 
+from flext_ldif.protocols import p
 from tests import OIDs, c, m, s
 from tests.helpers.compat import TestAssertions
 

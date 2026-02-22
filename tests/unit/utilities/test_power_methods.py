@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from tests import m, s
+
 from flext_ldif._utilities import (
     AndFilter,
     # Fluent APIs
@@ -41,7 +43,6 @@ from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services import ProcessingPipeline
 from flext_ldif.utilities import FlextLdifUtilities
-from tests import m, s
 
 # =========================================================================
 # FIXTURES

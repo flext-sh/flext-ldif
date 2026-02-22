@@ -14,7 +14,6 @@ from flext_ldif._models.validation import (
     EncodingRules,
     ServerValidationRules,
 )
-
 from tests import m, s
 
 

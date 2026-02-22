@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdif
 from tests.constants import c
 from tests.protocols import p
+
+from flext_ldif import FlextLdif
 
 
 class FlextLdifTestUtils:

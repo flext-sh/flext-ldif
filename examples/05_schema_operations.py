@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import FlextResult
+
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.utilities import u
 

@@ -11,12 +11,12 @@ import re
 from pathlib import Path
 from typing import Final
 
+from flext_tests import tm
+
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.constants import c as lib_c
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_tests import tm
-
 from tests import c, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

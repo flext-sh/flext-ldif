@@ -23,8 +23,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdif
 from ldap3 import Connection
+
+from flext_ldif import FlextLdif
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution

@@ -11,8 +11,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from tests import s
+
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 
 
 class AttributeTestCase(StrEnum):

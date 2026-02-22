@@ -10,10 +10,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from flext_ldif import FlextLdifWriter
-from flext_ldif.protocols import p
 from flext_tests import tm
 
+from flext_ldif import FlextLdifWriter
+from flext_ldif.protocols import p
 from tests import c, m, s
 
 

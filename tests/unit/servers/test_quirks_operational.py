@@ -13,12 +13,12 @@ from typing import TypeVar
 
 import pytest
 from flext_core import FlextResult
+
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-
 from tests import c, s, tf
 
 # TypeVar for generic validation methods

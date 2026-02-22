@@ -22,11 +22,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core.result import r
+
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.services.parser import FlextLdifParser
-
 from tests import s, tm
 from tests.base import FlextLdifTestsServiceBase
 

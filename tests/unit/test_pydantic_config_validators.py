@@ -11,10 +11,10 @@ from enum import StrEnum
 from typing import ClassVar, Literal
 
 import pytest
-from flext_ldif import FlextLdifSettings
-from flext_ldif.utilities import FlextLdifUtilities
 from pydantic import ValidationError
 
+from flext_ldif import FlextLdifSettings
+from flext_ldif.utilities import FlextLdifUtilities
 from tests import s
 
 

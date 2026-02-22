@@ -16,11 +16,11 @@ from pathlib import Path
 from typing import Final, cast
 
 import pytest
+
 from flext_ldif import FlextLdif, FlextLdifProtocols, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
-
 from tests import c, m, p, s, tf, tm
 
 # Module-level constants

@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_tests.models import FlextTestsModels
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.validation import (
     AclFormatRules,
@@ -18,7 +20,6 @@ from flext_ldif._models.validation import (
     ServerValidationRules,
 )
 from flext_ldif.models import FlextLdifModels
-from flext_tests.models import FlextTestsModels
 
 
 class TestsFlextLdifModels:

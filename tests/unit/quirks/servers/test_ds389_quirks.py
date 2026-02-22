@@ -11,9 +11,10 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import RfcTestHelpers, c, s
+
 from flext_ldif.models import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from tests import RfcTestHelpers, c, s
 
 
 class AttributeScenario(StrEnum):

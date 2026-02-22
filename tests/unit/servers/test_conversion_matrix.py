@@ -11,13 +11,13 @@ from typing import ClassVar, Final, cast
 
 import pytest
 from flext_core import FlextResult
+from pydantic import Field
+
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from pydantic import Field
-
 from tests import GenericFieldsDict, TestDeduplicationHelpers, m, p, s, t
 
 

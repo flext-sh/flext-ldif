@@ -25,8 +25,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdifMigrationPipeline
 
+from flext_ldif import FlextLdifMigrationPipeline
 from tests import c, s
 
 

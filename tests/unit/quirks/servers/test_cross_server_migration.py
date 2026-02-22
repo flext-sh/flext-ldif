@@ -10,8 +10,9 @@ import copy
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdif
 from tests import p, s
+
+from flext_ldif import FlextLdif
 
 from .test_utils import FlextLdifTestUtils
 

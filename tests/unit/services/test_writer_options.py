@@ -14,13 +14,13 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextSettings
+from flext_tests import tm
+
 from flext_ldif import FlextLdifWriter
 from flext_ldif.constants import c as lib_c
 from flext_ldif.protocols import p
 from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import FlextLdifUtilities
-from flext_tests import tm
-
 from tests import c, m, s
 
 

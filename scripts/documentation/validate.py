@@ -17,11 +17,12 @@ from scripts.documentation.shared import (
     write_json,
     write_markdown,
 )
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_FAIL, STATUS_OK
 
 
 def has_adr_reference(skill_path: Path) -> bool:
     """Check whether a skill file contains an ADR reference."""
-    text = skill_path.read_text(encoding="utf-8", errors="ignore").lower()
+    text = skill_path.read_text(encoding=DEFAULT_ENCODING, errors="ignore").lower()
     return "adr" in text
 
 
@@ -31,7 +32,9 @@ def run_adr_skill_check(root: Path) -> tuple[int, list[str]]:
     required: list[str] = []
     config = root / "docs/architecture/architecture_config.json"
     if config.exists():
-        payload = json.loads(config.read_text(encoding="utf-8", errors="ignore"))
+        payload = json.loads(
+            config.read_text(encoding=DEFAULT_ENCODING, errors="ignore")
+        )
         docs_validation = payload.get("docs_validation", {})
         configured = docs_validation.get("required_skills", [])
         if isinstance(configured, list):
@@ -53,13 +56,13 @@ def maybe_write_todo(scope: Scope, *, apply_mode: bool) -> bool:
         return False
     path = scope.path / "TODOS.md"
     content = "# TODOS\n\n- [ ] Resolve documentation validation findings from `.reports/docs/validate-report.md`.\n"
-    _ = path.write_text(content, encoding="utf-8")
+    _ = path.write_text(content, encoding=DEFAULT_ENCODING)
     return True
 
 
 def run_scope(scope: Scope, *, apply_mode: bool, check: str) -> int:
     """Run validation for a single project scope and write reports."""
-    status = "OK"
+    status = STATUS_OK
     message = "validation passed"
     details: dict[str, object] = {}
     config_exists = (scope.path / "docs/architecture/architecture_config.json").exists()
@@ -67,7 +70,7 @@ def run_scope(scope: Scope, *, apply_mode: bool, check: str) -> int:
         code, missing = run_adr_skill_check(scope.path)
         details["missing_adr_skills"] = missing
         if code != 0:
-            status = "FAIL"
+            status = STATUS_FAIL
             message = f"missing adr references in skills: {', '.join(missing)}"
     wrote_todo = maybe_write_todo(scope, apply_mode=apply_mode)
     details["todo_written"] = wrote_todo
@@ -95,7 +98,7 @@ def run_scope(scope: Scope, *, apply_mode: bool, check: str) -> int:
         ],
     )
     print(f"PROJECT={scope.name} PHASE=validate RESULT={status} REASON={message}")
-    return 1 if status == "FAIL" else 0
+    return 1 if status == STATUS_FAIL else 0
 
 
 def main() -> int:

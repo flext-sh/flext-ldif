@@ -14,9 +14,9 @@ from typing import Final
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif.services.sorting import FlextLdifSorting
 from pydantic import ValidationError
 
+from flext_ldif.services.sorting import FlextLdifSorting
 from tests import c, p, s, u
 
 
@@ -604,7 +604,7 @@ class TestsTestFlextLdifSorting(s):
             target=self.Constants.SORT_TARGET_ACL,
             acl_attributes=["acl"],
         )
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -620,7 +620,7 @@ class TestsTestFlextLdifSorting(s):
             {},
         )
         result = FlextLdifSorting.sort_acl_in_entries([entry], acl_attrs=["acl"])
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -639,7 +639,7 @@ class TestsTestFlextLdifSorting(s):
             attribute_order=None,
         )
         result = sorting.execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -661,7 +661,7 @@ class TestsTestFlextLdifSorting(s):
             attribute_order=["cn"],
         )
         result = sorting.execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=1,
@@ -674,7 +674,7 @@ class TestsTestFlextLdifSorting(s):
             entries=[],
             sort_by=self.Constants.SORT_BY_HIERARCHY,
         ).execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
             expected_count=0,
@@ -693,7 +693,7 @@ class TestsTestFlextLdifSorting(s):
             entries=[entry_no_dn],
             sort_by=self.Constants.SORT_BY_HIERARCHY,
         ).execute()
-        sorted_entries = RfcTestHelpers.test_result_success_and_unwrap(
+        sorted_entries = u.RfcTestHelpers.test_result_success_and_unwrap(
             result,
             expected_type=list,
         )

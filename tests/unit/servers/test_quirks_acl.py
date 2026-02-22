@@ -10,11 +10,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+
 from flext_ldif.constants import c as lib_c
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-
 from tests import m, s
 
 

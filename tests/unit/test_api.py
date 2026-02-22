@@ -13,13 +13,13 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
+
 from flext_ldif import (
     FlextLdif,
     FlextLdifSettings,
 )
 from flext_ldif.constants import FlextLdifConstants, c as lib_c
 from flext_ldif.models import FlextLdifModels
-
 from tests import c, p, s, u
 
 m = FlextLdifModels

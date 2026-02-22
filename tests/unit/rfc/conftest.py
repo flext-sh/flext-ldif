@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
 )
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
 from tests import c, m, p
 from tests.conftest_shared import (
     _create_real_parser_service,

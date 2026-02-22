@@ -11,8 +11,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_ldif.services.entries import FlextLdifEntries
 
+from flext_ldif.services.entries import FlextLdifEntries
 from tests import s
 
 

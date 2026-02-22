@@ -62,7 +62,7 @@ from flext_ldif.protocols import p
 logger = FlextLogger(__name__)
 
 
-class FlextLdifUtilities(u):
+class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     # === EXPOSE BASE UTILITIES ===
@@ -84,6 +84,7 @@ class FlextLdifUtilities(u):
                 value: t.GeneralValueType,
             ) -> None:
                 """Initialize conversion builder with a value."""
+                super().__init__()
                 self._value = value
                 self._default: t.GeneralValueType = None
                 self._target_type: str | None = None
@@ -153,7 +154,7 @@ class FlextLdifUtilities(u):
                     if isinstance(self._value, str):
                         return self._value.lower() in {"true", "1", "yes", "on"}
                     return bool(self._value)
-                return self._value if self._value is not None else self._default
+                return self._value
 
         # === Static utility methods ===
 
@@ -397,7 +398,7 @@ class FlextLdifUtilities(u):
             processor_normalized: object,
             processor: object | None,
             config: ProcessConfig | None,
-            source_server: c.Ldif.ServerTypes,
+            _source_server: c.Ldif.ServerTypes,
             target_server: c.Ldif.ServerTypes | None,
         ) -> bool:
             """Check if this is an LDIF-specific process call."""
@@ -415,7 +416,6 @@ class FlextLdifUtilities(u):
                 (processor_normalized is None and processor is None)
                 or isinstance(processor_normalized, ProcessConfig)
                 or config is not None
-                or source_server != "auto"
                 or target_server is not None
             )
             return bool(is_sequence_entry and has_ldif_config)
@@ -442,27 +442,21 @@ class FlextLdifUtilities(u):
                 return True
             if FlextLdifUtilities.Ldif.is_two_arg_processor(predicate):
                 try:
-                    result = FlextLdifUtilities.Ldif.call_processor(
+                    return FlextLdifUtilities.Ldif.call_processor(
                         predicate,
                         key,
                         value,
                     )
-                    if isinstance(result, bool):
-                        return result
                 except (TypeError, ValueError):
                     try:
                         if FlextLdifUtilities.Ldif.is_object_arg_callable(predicate):
-                            fallback_result: object = predicate(value)
-                            if isinstance(fallback_result, bool):
-                                return fallback_result
+                            return predicate(value)
                     except (TypeError, ValueError):
                         pass
             else:
                 try:
                     if FlextLdifUtilities.Ldif.is_object_arg_callable(predicate):
-                        one_arg_result: object = predicate(value)
-                        if isinstance(one_arg_result, bool):
-                            return one_arg_result
+                        return predicate(value)
                 except (TypeError, ValueError):
                     pass
             return True
@@ -820,8 +814,6 @@ class FlextLdifUtilities(u):
                 list_filter_result = FlextUtilities.Collection.filter(
                     items_list, predicate
                 )
-                if isinstance(list_filter_result, list):
-                    return list_filter_result
                 return list(list_filter_result) if list_filter_result else []
             if isinstance(items_or_entries, dict):
                 items_dict: dict[str, t.GeneralValueType] = {}
@@ -832,15 +824,11 @@ class FlextLdifUtilities(u):
                 dict_filter_result = FlextUtilities.Collection.filter(
                     items_dict, predicate
                 )
-                if isinstance(dict_filter_result, dict):
-                    return dict_filter_result
-                return {}
+                return dict_filter_result or {}
             items_single_list: list[object] = [items_or_entries]
             single_filter_result = FlextUtilities.Collection.filter(
                 items_single_list, predicate
             )
-            if isinstance(single_filter_result, list):
-                return single_filter_result
             return list(single_filter_result) if single_filter_result else []
 
         @staticmethod
@@ -871,7 +859,7 @@ class FlextLdifUtilities(u):
             """Apply entry transformers to LDIF entries using pipeline semantics."""
             pipeline = Pipeline(fail_fast=fail_fast)
             for transformer in transformers:
-                pipeline.add(transformer)
+                _ = pipeline.add(transformer)
             return FlextLdifResult.from_result(pipeline.execute(entries))
 
         @staticmethod
@@ -1021,8 +1009,9 @@ class FlextLdifUtilities(u):
             for op in ops:
                 if callable(op) and not isinstance(op, dict):
                     result = op(result)
-                elif isinstance(op, dict) and isinstance(result, dict):
-                    result = {**result, **op}
+                elif isinstance(op, dict):
+                    current: t.GeneralValueType = result
+                    result = {**current, **op} if isinstance(current, dict) else op
             return result
 
         @staticmethod
@@ -1064,7 +1053,7 @@ class FlextLdifUtilities(u):
             key: Callable[[t.GeneralValueType], t.GeneralValueType],
         ) -> dict[t.GeneralValueType, list[t.GeneralValueType]]:
             """Group by key function (generalized, mnemonic: gb)."""
-            items_list = list(items) if isinstance(items, Sequence) else [items]
+            items_list = list(items)
             result: dict[t.GeneralValueType, list[t.GeneralValueType]] = {}
             for item in items_list:
                 k = key(item)
@@ -1198,7 +1187,7 @@ class FlextLdifUtilities(u):
             if isinstance(value, (list, tuple)):
                 return [normalize_single(str(v)) for v in value]
 
-            if isinstance(value, (set, frozenset)):
+            if isinstance(value, set | frozenset):
                 return {normalize_single(str(v)) for v in value}
 
             return value
@@ -1259,19 +1248,12 @@ class FlextLdifUtilities(u):
             filter_empty: bool = False,
         ) -> r[dict[str, t.GeneralValueType]]:
             """Merge multiple dicts with filtering options (mnemonic: mg)."""
-            _mappings_list: list[Mapping[str, t.GeneralValueType]] = [
-                dict_item
-                for dict_item in dicts
-                if isinstance(dict_item, (dict, Mapping))
-            ]
             dicts_typed: tuple[Mapping[str, t.GeneralValueType], ...] = dicts
             if not dicts_typed:
                 return r[dict[str, t.GeneralValueType]].ok({})
             merged: dict[str, t.GeneralValueType] = {}
             for dict_item in dicts_typed:
-                dict_item_dict: dict[str, t.GeneralValueType] = (
-                    dict(dict_item) if isinstance(dict_item, Mapping) else dict_item
-                )
+                dict_item_dict: dict[str, t.GeneralValueType] = dict(dict_item)
                 merge_result = FlextUtilities.merge(
                     merged,
                     dict_item_dict,
@@ -1333,9 +1315,7 @@ class FlextLdifUtilities(u):
                 conv_result = conv_builder.str_list(default=list_default).build()
                 if predicate and isinstance(conv_result, list):
                     filtered = [item for item in conv_result if predicate(item)]
-                    return filtered or (
-                        conv_result if conv_result is not None else default
-                    )
+                    return filtered or conv_result
             else:
                 ops: dict[str, t.GeneralValueType] = {
                     "ensure": target_type,
@@ -1367,12 +1347,10 @@ class FlextLdifUtilities(u):
                 "tuple": tuple,
             }
             for t_val in types_tuple:
-                resolved_type = (
-                    type_map.get(t_val)
-                    if isinstance(t_val, str)
-                    else (t_val if isinstance(t_val, type) else None)
+                resolved_type: type[object] | None = (
+                    type_map.get(t_val) if isinstance(t_val, str) else t_val
                 )
-                if resolved_type and isinstance(value, resolved_type):
+                if resolved_type is not None and isinstance(value, resolved_type):
                     return True
             return False
 
@@ -1393,11 +1371,7 @@ class FlextLdifUtilities(u):
                 "bool": bool,
                 "tuple": tuple,
             }
-            target_type = (
-                type_map.get(target)
-                if isinstance(target, str)
-                else (target if isinstance(target, type) else None)
-            )
+            target_type = type_map.get(target) if isinstance(target, str) else target
             if target_type is None:
                 return default
 
@@ -1510,19 +1484,7 @@ class FlextLdifUtilities(u):
                         converted_args.append(arg)
                     elif arg is None:
                         converted_args.append(None)
-                    elif (
-                        isinstance(arg, (list, tuple))
-                        and not isinstance(
-                            arg,
-                            (str, bytes),
-                        )
-                    ) or (
-                        isinstance(arg, (dict, Mapping))
-                        and not isinstance(
-                            arg,
-                            (str, bytes),
-                        )
-                    ):
+                    elif isinstance(arg, (list, tuple, dict, Mapping)):
                         converted_args.append(arg)
                     else:
                         converted_args.append(str(arg))
@@ -1718,7 +1680,7 @@ class FlextLdifUtilities(u):
                 merge_result = FlextUtilities.merge(
                     merged, dict(mapping), strategy="deep"
                 )
-                if merge_result.is_success and isinstance(merge_result.value, dict):
+                if merge_result.is_success:
                     merged = merge_result.value
             return merged
 
@@ -1732,7 +1694,7 @@ class FlextLdifUtilities(u):
         ) -> dict[str, t.GeneralValueType]:
             """Update in-place using FlextUtilities.flow() pattern (mnemonic: ui)."""
             for update in updates:
-                if update is not None and isinstance(update, Mapping):
+                if update is not None:
                     obj.update(update)
             return obj
 
@@ -1816,7 +1778,6 @@ class FlextLdifUtilities(u):
                 sliced_dict: dict[str, t.GeneralValueType] = {
                     key: FlextUtilities.Mapper.narrow_to_general_value_type(value)
                     for key, value in sliced
-                    if isinstance(key, str)
                 }
                 return sliced_dict  # Overloads ensure type safety at call sites
             if isinstance(data_or_items, (list, tuple)):
@@ -1928,7 +1889,7 @@ class FlextLdifUtilities(u):
             merge_result = FlextUtilities.merge(
                 dict(data), {key: value}, strategy="override"
             )
-            if merge_result.is_success and isinstance(merge_result.value, dict):
+            if merge_result.is_success:
                 return merge_result.value
             return {**dict(data), key: value}  # Fallback
 
@@ -1955,7 +1916,7 @@ class FlextLdifUtilities(u):
             merge_result = FlextUtilities.merge(
                 dict(data), dict(updates), strategy="override"
             )
-            if merge_result.is_success and isinstance(merge_result.value, dict):
+            if merge_result.is_success:
                 return merge_result.value
             return {**dict(data), **dict(updates)}  # Fallback
 
@@ -1972,10 +1933,8 @@ class FlextLdifUtilities(u):
             result: dict[str, t.GeneralValueType] = dict(obj)
             for transform in transforms:
                 if callable(transform) and not isinstance(transform, Mapping):
-                    transformed = transform(result)
-                    if isinstance(transformed, dict):
-                        result = transformed
-                elif isinstance(transform, Mapping):
+                    result = transform(result)
+                else:
                     result.update(transform)
             return result
 
@@ -1990,12 +1949,10 @@ class FlextLdifUtilities(u):
         ) -> list[str]:
             """Get keys from dict (mnemonic: ky)."""
             if isinstance(items, r):
-                if items.is_success and isinstance(items.value, dict):
+                if items.is_success:
                     return list(items.value.keys())
                 return default or []
-            if isinstance(items, dict):
-                return list(items.keys())
-            return default or []
+            return list(items.keys())
 
         ky = keys
 
@@ -2008,12 +1965,10 @@ class FlextLdifUtilities(u):
         ) -> list[T]:
             """Get values from dict (mnemonic: vl)."""
             if isinstance(items, r):
-                if items.is_success and isinstance(items.value, dict):
+                if items.is_success:
                     return list(items.value.values())
                 return default or []
-            if isinstance(items, dict):
-                return list(items.values())
-            return default or []
+            return list(items.values())
 
         vl = dict_vals
 
@@ -2023,11 +1978,9 @@ class FlextLdifUtilities(u):
             obj: dict[str, t.GeneralValueType],
         ) -> dict[str, str]:
             """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
-            if isinstance(obj, dict):
-                str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
-                inverted = FlextUtilities.mapper().invert_dict(str_dict)
-                return dict(inverted)
-            return {}
+            str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
+            inverted = FlextUtilities.mapper().invert_dict(str_dict)
+            return dict(inverted)
 
         iv = invert
 
@@ -2039,8 +1992,6 @@ class FlextLdifUtilities(u):
             predicate: Callable[[str, object], bool] | None = None,
         ) -> dict[str, t.GeneralValueType]:
             """Where using FlextUtilities.filter() (mnemonic: wh)."""
-            if not isinstance(obj, dict):
-                return {}
             if predicate is None:
                 return dict(obj)
             return {k: v for k, v in obj.items() if predicate(k, v)}

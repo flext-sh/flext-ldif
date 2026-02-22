@@ -6,10 +6,10 @@ LDIF entries with custom processors and validation rules.
 
 from __future__ import annotations
 
-from flext_ldif.services.entries import FlextLdifEntries
-from flext_ldif.services.processing import FlextLdifProcessing
 from flext_tests import tm
 
+from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif.services.processing import FlextLdifProcessing
 from tests import m, s
 
 

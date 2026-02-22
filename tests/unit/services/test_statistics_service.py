@@ -12,11 +12,11 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
+
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.protocols import p
 from flext_ldif.services.statistics import FlextLdifStatistics
-from flext_tests import tm
-
 from tests import c, m, s
 
 

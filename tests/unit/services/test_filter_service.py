@@ -11,9 +11,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif.services.filters import FlextLdifFilters
 from flext_tests import tm
 
+from flext_ldif.services.filters import FlextLdifFilters
 from tests import Filters, OIDs, TestDeduplicationHelpers, c, p, s
 
 # Use factory directly to eliminate duplication

@@ -14,9 +14,9 @@ from typing import ClassVar, Final
 
 import pytest
 from flext_core import FlextResult
+
 from flext_ldif import FlextLdif
 from flext_ldif.services.sorting import FlextLdifSorting
-
 from tests import p, s, u
 
 

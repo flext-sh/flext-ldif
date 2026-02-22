@@ -7,9 +7,9 @@ and enhancements to LDIF entries during parsing and writing operations.
 from __future__ import annotations
 
 from flext_core import FlextResult
+
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entries import FlextLdifEntries
-
 from tests import m, p, s
 
 

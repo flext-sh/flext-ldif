@@ -220,8 +220,12 @@ class FlextLdif(FlextLdifServiceBase[object]):
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         if options and hasattr(options, "write_options") and options.write_options:
-            kwargs.setdefault("fold_long_lines", options.write_options.fold_long_lines)
-            kwargs.setdefault("sort_attributes", options.write_options.sort_attributes)
+            _ = kwargs.setdefault(
+                "fold_long_lines", options.write_options.fold_long_lines
+            )
+            _ = kwargs.setdefault(
+                "sort_attributes", options.write_options.sort_attributes
+            )
 
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
@@ -434,9 +438,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
                 entries_typed.append(m.Ldif.Entry.model_validate(entry))
 
         effective_type = server_type or self._get_effective_server_type_value()
-        server_type_typed: str | None = (
-            str(effective_type) if effective_type is not None else None
-        )
+        server_type_typed: str = str(effective_type)
         return self.writer.write_to_string(
             entries_typed,
             server_type=server_type_typed,
@@ -467,7 +469,7 @@ class FlextLdif(FlextLdifServiceBase[object]):
         content = write_result.value
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            _ = path.write_text(content, encoding="utf-8")
             return r[bool].ok(value=True)
         except OSError as e:
             return r[bool].fail(f"Failed to write file: {e}")

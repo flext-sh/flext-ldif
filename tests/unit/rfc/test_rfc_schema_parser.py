@@ -10,10 +10,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
+
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
 from tests import c, s, u
 
 
@@ -178,7 +178,7 @@ attributeTypes: {c.Rfc.ATTR_DEF_SN}
             schema_file = Path(f.name)
 
         try:
-            entries = RfcTestHelpers.test_parse_ldif_file(
+            entries = u.RfcTestHelpers.test_parse_ldif_file(
                 real_parser_service,
                 schema_file,
                 expected_count=1,
@@ -231,7 +231,7 @@ class TestRfcSchemaQuirkDirectUsage:
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.parse with attribute definition."""
-        _ = RfcTestHelpers.test_schema_parse_attribute(
+        _ = u.RfcTestHelpers.test_schema_parse_attribute(
             rfc_schema_quirk,
             c.Rfc.ATTR_DEF_CN_COMPLETE,
             c.Rfc.ATTR_OID_CN,
@@ -244,7 +244,7 @@ class TestRfcSchemaQuirkDirectUsage:
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.parse with objectClass definition."""
-        oc = RfcTestHelpers.test_schema_parse_objectclass(
+        oc = u.RfcTestHelpers.test_schema_parse_objectclass(
             rfc_schema_quirk,
             c.Rfc.OC_DEF_PERSON_BASIC,
             c.Rfc.OC_OID_PERSON,

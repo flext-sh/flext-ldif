@@ -10,9 +10,9 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
+
 from flext_ldif.constants import c as lib_c
 from flext_ldif.services.server import FlextLdifServer
-
 from tests import s
 
 

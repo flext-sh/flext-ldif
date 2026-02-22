@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from typing import ClassVar, Self, TypeGuard, TypeVar, cast, override
+from typing import ClassVar, Self, TypeGuard, TypeVar, override
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r
 from pydantic import Field
@@ -1763,7 +1763,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _parse_schema_item_with_schema(
-        parse_fn: Callable[..., r[_TSchemaItem]],
+        parse_fn: Callable[[str], r[_TSchemaItem]],
         value: str,
         *,
         expected_type: type[_TSchemaItem],
@@ -1790,7 +1790,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaAttribute]:
         return FlextLdifConversion._parse_schema_item_with_schema(
-            cast("Callable[..., r[m.Ldif.SchemaAttribute]]", schema.parse_attribute),
+            schema.parse_attribute,
             value,
             expected_type=m.Ldif.SchemaAttribute,
             expected_label="SchemaAttribute",
@@ -1805,9 +1805,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
         return FlextLdifConversion._parse_schema_item_with_schema(
-            cast(
-                "Callable[..., r[m.Ldif.SchemaObjectClass]]", schema.parse_objectclass
-            ),
+            schema.parse_objectclass,
             value,
             expected_type=m.Ldif.SchemaObjectClass,
             expected_label="SchemaObjectClass",

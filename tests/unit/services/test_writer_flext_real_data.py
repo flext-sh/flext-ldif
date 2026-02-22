@@ -11,9 +11,9 @@ from enum import StrEnum
 from typing import ClassVar, Final
 
 import pytest
-from flext_ldif import FlextLdifWriter
 from flext_tests import tm
 
+from flext_ldif import FlextLdifWriter
 from tests import c, m, s
 
 # =============================================================================

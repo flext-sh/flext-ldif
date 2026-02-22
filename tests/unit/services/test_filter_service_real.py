@@ -24,9 +24,9 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+
 from flext_ldif import FlextLdif
 from flext_ldif._utilities.filters import Filter
-
 from tests import Filters, c, p
 
 

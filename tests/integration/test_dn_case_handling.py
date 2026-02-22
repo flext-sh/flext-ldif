@@ -13,8 +13,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from flext_ldif.models import m
 
+from flext_ldif.models import m
 from tests import GenericFieldsDict, s
 
 

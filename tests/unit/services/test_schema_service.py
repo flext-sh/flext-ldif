@@ -8,10 +8,10 @@ server-specific schema quirk handling for different LDAP implementations.
 from __future__ import annotations
 
 import pytest
+
 from flext_ldif.models import m
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
-
 from tests import c, s
 
 # ════════════════════════════════════════════════════════════════════════════

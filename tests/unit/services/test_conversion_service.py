@@ -12,6 +12,8 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
+from flext_tests import tm
+
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
@@ -19,8 +21,6 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
-from flext_tests import tm
-
 from tests import m, p, s
 from tests.helpers.compat import TestAssertions
 
