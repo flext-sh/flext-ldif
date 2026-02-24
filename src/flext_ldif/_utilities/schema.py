@@ -697,7 +697,9 @@ class FlextLdifUtilitiesSchema:
                 elif v_raw.__class__ is datetime:
                     converted_nested[k_str] = v_raw.isoformat()
                 elif u.is_list_like(v_raw):
-                    converted_nested[k_str] = FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
+                    converted_nested[k_str] = (
+                        FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
+                    )
                 elif u.is_dict_like(v_raw):
                     converted_nested[k_str] = str(dict(v_raw.root.items()))
                 else:
