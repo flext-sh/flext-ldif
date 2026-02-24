@@ -76,7 +76,9 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             result_raw = m.Ldif.LdifResults.WriteFormatOptions()
         elif issubclass(format_options.__class__, type):
             result_raw = format_options()
-        elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteFormatOptions):
+        elif issubclass(
+            format_options.__class__, m.Ldif.LdifResults.WriteFormatOptions
+        ):
             result_raw = format_options
         elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteOptions):
             extracted = _extract_write_options(format_options)
@@ -225,7 +227,11 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         entries_raw = u.take(params, "entries", as_type=list, default=[])
 
         entries: list[m.Ldif.Entry] = (
-            [entry for entry in entries_raw if issubclass(entry.__class__, m.Ldif.Entry)]
+            [
+                entry
+                for entry in entries_raw
+                if issubclass(entry.__class__, m.Ldif.Entry)
+            ]
             if issubclass(entries_raw.__class__, list)
             else []
         )
@@ -257,10 +263,13 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             | None
         ) = (
             format_options_raw
-            if issubclass(format_options_raw.__class__, (
+            if issubclass(
+                format_options_raw.__class__,
+                (
                     m.Ldif.LdifResults.WriteFormatOptions,
                     m.Ldif.LdifResults.WriteOptions,
-                ))
+                ),
+            )
             else None
         )
 

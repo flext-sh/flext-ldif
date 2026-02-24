@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, override
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import s
@@ -77,7 +77,9 @@ class FlextLdifCategorization(
     def __init__(
         self,
         categorization_rules: (
-            m.Ldif.LdifResults.CategoryRules | Mapping[str, str | list[str] | None] | None
+            m.Ldif.LdifResults.CategoryRules
+            | Mapping[str, str | list[str] | None]
+            | None
         ) = None,
         schema_whitelist_rules: (
             m.Ldif.LdifResults.WhitelistRules

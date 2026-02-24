@@ -76,7 +76,9 @@ class FlextLdifStatistics(
         rejection_count = u.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
-        total_entries_int = total_entries if issubclass(total_entries.__class__, int) else 0
+        total_entries_int = (
+            total_entries if issubclass(total_entries.__class__, int) else 0
+        )
         rejection_rate = (
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
@@ -88,7 +90,9 @@ class FlextLdifStatistics(
         output_files_model = m.Ldif.Results.CategoryPaths()
         for category in written_counts:
             filename = u.take(output_files, category, default=f"{category}.ldif")
-            filename_str = filename if issubclass(filename.__class__, str) else f"{category}.ldif"
+            filename_str = (
+                filename if issubclass(filename.__class__, str) else f"{category}.ldif"
+            )
             setattr(output_files_model, category, str(output_dir / filename_str))
 
         return r[m.Ldif.LdifResults.StatisticsResult].ok(

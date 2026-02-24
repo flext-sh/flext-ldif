@@ -482,7 +482,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if all(core_u.is_type(item, str) for item in v):
                     original_extensions[k] = [str(item) for item in v]
                 elif all(
-                    core_u.is_type(item, (str, int, float, bool, type(None))) for item in v
+                    core_u.is_type(item, (str, int, float, bool, type(None)))
+                    for item in v
                 ):
                     original_extensions[k] = [
                         str(item) for item in v if item is not None

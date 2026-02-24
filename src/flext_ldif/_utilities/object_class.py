@@ -15,24 +15,24 @@ from flext_ldif.typings import t
 
 
 class _SchemaConstants:
-    """Schema constants container for type safety."""
+    """Schema constants container for type safety (single class, no loose helpers)."""
+
+    _instance: _SchemaConstants | None = None
 
     AUXILIARY: str
     STRUCTURAL: str
 
     def __init__(self) -> None:
         """Initialize schema constants from SchemaKind enum."""
-        # Use SchemaKind enum values directly (DRY pattern)
         self.AUXILIARY = c.Ldif.SchemaKind.AUXILIARY.value
         self.STRUCTURAL = c.Ldif.SchemaKind.STRUCTURAL.value
 
-
-# Cache schema constants to avoid repeated getattr calls
-# Access at runtime to avoid circular import issues
-def _get_schema_constants() -> _SchemaConstants:
-    """Get schema constants, accessing at runtime to avoid circular imports."""
-    # Use _SchemaConstants class for type safety
-    return _SchemaConstants()
+    @classmethod
+    def get_instance(cls) -> _SchemaConstants:
+        """Return cached schema constants instance (avoids repeated getattr)."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
 
 logger = FlextLogger(__name__)
@@ -60,7 +60,7 @@ class FlextLdifUtilitiesObjectClass:
         schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
-        schema_constants = _get_schema_constants()
+        schema_constants = _SchemaConstants.get_instance()
         # Only fix AUXILIARY classes - STRUCTURAL classes are left unchanged
         if schema_oc.kind == schema_constants.AUXILIARY and not schema_oc.sup:
             schema_oc.sup = "top"
@@ -88,7 +88,7 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.sup.lower() if u.Guards.is_type(schema_oc.sup, str) else ""
         )
 
-        schema_constants = _get_schema_constants()
+        schema_constants = _SchemaConstants.get_instance()
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
         if (
             sup_lower in structural_superiors
@@ -109,7 +109,7 @@ class FlextLdifUtilitiesObjectClass:
         default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute."""
-        schema_constants = _get_schema_constants()
+        schema_constants = _SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.AUXILIARY and not schema_oc.sup:
             schema_oc.sup = default_sup
 

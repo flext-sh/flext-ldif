@@ -227,7 +227,9 @@ class FlextLdifServersBaseEntry(
                 )
             elif core_u.is_type(write_opts, Mapping):
                 nested_opts = write_opts.get("write_options")
-                if core_u.is_type(nested_opts, FlextLdifModelsSettings.WriteFormatOptions):
+                if core_u.is_type(
+                    nested_opts, FlextLdifModelsSettings.WriteFormatOptions
+                ):
                     fold_long_lines = bool(nested_opts.fold_long_lines)
                     line_width = int(nested_opts.line_width or line_width)
                     include_dn_comments = bool(nested_opts.include_dn_comments)

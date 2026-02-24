@@ -10,11 +10,10 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, r, s, u
+from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.servers._base import (
@@ -23,14 +22,6 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.utilities import u
-
-
-def _get_server_type_from_utilities(
-    quirk_class: type[FlextLdifServersBase | object],
-) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-    """Get server type from utilities using type-safe access pattern."""
-    return u.Ldif.Server.get_parent_server_type(quirk_class)
-
 
 logger = FlextLogger(__name__)
 

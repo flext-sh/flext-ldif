@@ -164,7 +164,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk" and core_u.is_type(v, (str, float, bool, type(None)))
+            if k != "_parent_quirk"
+            and core_u.is_type(v, (str, float, bool, type(None)))
         }
         # Business Rule: Entry.__init__ accepts entry_service and _parent_quirk
         # Implication: Call parent __init__ directly, parent handles FlextService call
@@ -464,7 +465,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         else:
             write_opts_dict = {}
         original_entry_obj = write_opts_dict.get("original_entry")
-        if not (original_entry_obj and core_u.is_type(original_entry_obj, m.Ldif.Entry)):
+        if not (
+            original_entry_obj and core_u.is_type(original_entry_obj, m.Ldif.Entry)
+        ):
             return []
 
         ldif_parts: list[str] = []
@@ -1878,7 +1881,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if core_u.is_type(acl_extensions, FlextLdifModelsMetadata.DynamicMetadata):
+                if core_u.is_type(
+                    acl_extensions, FlextLdifModelsMetadata.DynamicMetadata
+                ):
                     self._extract_acl_metadata_from_dynamic(
                         acl_extensions,
                         acl_metadata_extensions,

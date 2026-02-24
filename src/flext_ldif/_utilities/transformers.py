@@ -90,7 +90,11 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
-        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
+        dn_str = (
+            item.dn.value
+            if getattr(item.dn, "value", None) is not None
+            else str(item.dn)
+        )
 
         if self._validate:
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
@@ -139,7 +143,9 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
 
         if self._case_fold_names:
@@ -227,7 +233,11 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
-        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
+        dn_str = (
+            item.dn.value
+            if getattr(item.dn, "value", None) is not None
+            else str(item.dn)
+        )
 
         new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
             dn_str,
@@ -309,7 +319,9 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
 
         if self._include is not None:

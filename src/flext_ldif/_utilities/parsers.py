@@ -110,7 +110,9 @@ class FlextLdifUtilitiesParsers:
                 # Create entry
                 # Entry field validators will coerce str -> DN and dict -> m.Ldif.
                 # Convert types explicitly for mypy
-                dn_obj = dn if issubclass(dn.__class__, m.Ldif.DN) else m.Ldif.DN(value=dn)
+                dn_obj = (
+                    dn if issubclass(dn.__class__, m.Ldif.DN) else m.Ldif.DN(value=dn)
+                )
                 attrs_obj = (
                     attributes
                     if issubclass(attributes.__class__, m.Ldif.Attributes)

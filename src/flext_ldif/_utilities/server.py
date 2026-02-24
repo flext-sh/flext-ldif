@@ -10,7 +10,7 @@ from typing import Literal, TypeGuard
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._shared import normalize_server_type as normalize_server_type_shared
+from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
 
 # Import FlextLdifModelsDomains for type annotations
@@ -77,7 +77,10 @@ class FlextLdifUtilitiesServer:
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         # First try the nested class pattern with __qualname__
-        if getattr(target_cls, "__qualname__", None) is not None and "." in target_cls.__qualname__:
+        if (
+            getattr(target_cls, "__qualname__", None) is not None
+            and "." in target_cls.__qualname__
+        ):
             parent_class_name = target_cls.__qualname__.split(".")[0]
             # Check if module is loaded (safe lookup without dynamic import)
             parent_module = sys.modules.get(target_cls.__module__)
@@ -275,7 +278,7 @@ class FlextLdifUtilitiesServer:
         "generic",
     ]:
         """Normalize server type string to canonical ServerTypes enum value."""
-        normalized = normalize_server_type_shared(server_type).value
+        normalized = FlextLdifShared.normalize_server_type(server_type).value
         if _is_valid_server_type_literal(normalized):
             return normalized
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]

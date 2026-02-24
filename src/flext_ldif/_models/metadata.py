@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
 from typing import ClassVar, overload
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from pydantic import ConfigDict, Field
 
 from flext_ldif.typings import t
@@ -14,7 +14,7 @@ from flext_ldif.typings import t
 class FlextLdifModelsMetadata:
     """LDIF metadata models container."""
 
-    class DynamicMetadata(FlextModelsBase.ArbitraryTypesModel):
+    class DynamicMetadata(FlextModelFoundation.ArbitraryTypesModel):
         """Model with extra="allow" for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -22,7 +22,7 @@ class FlextLdifModelsMetadata:
         transformations: list[object] | None = Field(default=None)
 
         @staticmethod
-        def _coerce_metadata_value(value: object) -> t.MetadataAttributeValue:
+        def coerce_metadata_value(value: object) -> t.MetadataAttributeValue:
             """Coerce dynamic values to MetadataAttributeValue-compatible output."""
             if value is None:
                 return None
@@ -64,22 +64,22 @@ class FlextLdifModelsMetadata:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                return self._coerce_metadata_value(field_value)
+                return self.coerce_metadata_value(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                return self._coerce_metadata_value(value)
+                return self.coerce_metadata_value(value)
             return default
 
         def __getitem__(self, key: str) -> t.MetadataAttributeValue:
             """Get value by key, raising KeyError if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                return self._coerce_metadata_value(field_value)
+                return self.coerce_metadata_value(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                return self._coerce_metadata_value(value)
+                return self.coerce_metadata_value(value)
             raise KeyError(key)
 
         def __setitem__(self, key: str, value: object) -> None:
@@ -103,7 +103,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None:
                 for key, value in extra.items():
-                    yield (key, self._coerce_metadata_value(value))
+                    yield (key, self.coerce_metadata_value(value))
 
         def keys(self) -> KeysView[str]:
             """Return keys from extra fields."""
@@ -129,7 +129,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra.pop(key)
-                return self._coerce_metadata_value(value)
+                return self.coerce_metadata_value(value)
             return default
 
         def clear(self) -> None:
@@ -159,7 +159,7 @@ class FlextLdifModelsMetadata:
             """Convert to dict for serialization."""
             return dict(self.items())
 
-    class EntryMetadata(FlextModelsBase.ArbitraryTypesModel):
+    class EntryMetadata(FlextModelFoundation.ArbitraryTypesModel):
         """Entry metadata for tracking processing details."""
 
         model_config = ConfigDict(
@@ -174,7 +174,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                return FlextLdifModelsMetadata.DynamicMetadata._coerce_metadata_value(
+                return FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
                     value,
                 )
             raise KeyError(key)
@@ -193,12 +193,12 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                return FlextLdifModelsMetadata.DynamicMetadata._coerce_metadata_value(
+                return FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
                     value,
                 )
             return default
 
-    class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):
+    class TransformationInfo(FlextModelFoundation.ArbitraryTypesModel):
         """Transformation step information stored in metadata."""
 
         model_config = ConfigDict(

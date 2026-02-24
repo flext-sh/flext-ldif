@@ -138,7 +138,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._processing_service = FlextLdifProcessing()
         service = self._processing_service
         if service is None:
-            raise RuntimeError("Processing service initialization failed")
+            msg = "Processing service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -148,7 +149,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._acl_service = FlextLdifAcl(server=self.server)
         service = self._acl_service
         if service is None:
-            raise RuntimeError("ACL service initialization failed")
+            msg = "ACL service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -168,7 +170,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._parser_service = FlextLdifParser(server=self.server)
         service = self._parser_service
         if service is None:
-            raise RuntimeError("Parser service initialization failed")
+            msg = "Parser service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -178,7 +181,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._writer_service = FlextLdifWriter()
         service = self._writer_service
         if service is None:
-            raise RuntimeError("Writer service initialization failed")
+            msg = "Writer service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -188,7 +192,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._detector_service = FlextLdifDetector()
         service = self._detector_service
         if service is None:
-            raise RuntimeError("Detector service initialization failed")
+            msg = "Detector service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -198,7 +203,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._entries_service = FlextLdifEntries()
         service = self._entries_service
         if service is None:
-            raise RuntimeError("Entries service initialization failed")
+            msg = "Entries service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     @property
@@ -208,7 +214,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             self._server_service = FlextLdifServer.get_global_instance()
         service = self._server_service
         if service is None:
-            raise RuntimeError("Server service initialization failed")
+            msg = "Server service initialization failed"
+            raise RuntimeError(msg)
         return service
 
     def migrate(
@@ -221,7 +228,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         **kwargs: str | float | bool | None,
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
-        if options and getattr(options, "write_options", None) is not None and options.write_options:
+        if (
+            options
+            and getattr(options, "write_options", None) is not None
+            and options.write_options
+        ):
             _ = kwargs.setdefault(
                 "fold_long_lines", options.write_options.fold_long_lines
             )

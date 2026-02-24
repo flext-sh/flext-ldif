@@ -22,11 +22,9 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, FlextResult, r
-from flext_core.typings import t
+from flext_core import FlextLogger, r
 from flext_core.utilities import FlextUtilities
 
-from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.configs import ProcessConfig
@@ -58,6 +56,7 @@ from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -152,18 +151,8 @@ class FlextLdifUtilities(FlextUtilities):
         # === Static utility methods ===
 
         @staticmethod
-        def get_from_mapping[T](
-            mapping: Mapping[str, T],
-            key: str,
-            *,
-            default: T | None = None,
-        ) -> T | None:
-            """Get value from mapping with default."""
-            return mapping.get(key, default)
-
-        @staticmethod
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
-            """Unwrap FlextResult with default value."""
+            """Unwrap r with default value."""
             if result.is_success:
                 return result.value
             return default
@@ -173,7 +162,7 @@ class FlextLdifUtilities(FlextUtilities):
             items: Sequence[T],
             func: Callable[[T], r[U]],
         ) -> r[list[U]]:
-            """Execute batch of operations with FlextResult (simplified)."""
+            """Execute batch of operations with r (simplified)."""
             results: list[U] = []
             for item in items:
                 result = func(item)
@@ -253,102 +242,8 @@ class FlextLdifUtilities(FlextUtilities):
         class DN(FlextLdifUtilitiesDN):
             """DN utilities for LDIF operations."""
 
-        class Entry:
-            """Entry utilities for LDIF operations using composition to avoid circular imports."""
-
-            @staticmethod
-            def is_schema_entry(entry: m.Ldif.Entry, *, strict: bool = True) -> bool:
-                """Check if entry is a REAL schema entry with schema definitions."""
-                return FlextLdifUtilitiesEntry.is_schema_entry(entry, strict=strict)
-
-            @staticmethod
-            def has_objectclass(
-                entry: m.Ldif.Entry,
-                objectclasses: str | tuple[str, ...],
-            ) -> bool:
-                """Check if entry has specified objectClass."""
-                return FlextLdifUtilitiesEntry.has_objectclass(entry, objectclasses)
-
-            @staticmethod
-            def has_all_attributes(
-                entry: m.Ldif.Entry,
-                attributes: list[str],
-            ) -> bool:
-                """Check if entry has all specified attributes."""
-                return FlextLdifUtilitiesEntry.has_all_attributes(entry, attributes)
-
-            @staticmethod
-            def has_any_attributes(
-                entry: m.Ldif.Entry,
-                attributes: list[str],
-            ) -> bool:
-                """Check if entry has any of the specified attributes."""
-                return FlextLdifUtilitiesEntry.has_any_attributes(entry, attributes)
-
-            @staticmethod
-            def remove_attributes(
-                entry: m.Ldif.Entry,
-                attributes: list[str],
-            ) -> m.Ldif.Entry:
-                """Remove specified attributes from entry."""
-                return FlextLdifUtilitiesEntry.remove_attributes(entry, attributes)
-
-            @staticmethod
-            def transform_batch(
-                entries: Sequence[m.Ldif.Entry],
-                config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
-                **kwargs: object,
-            ) -> r[list[m.Ldif.Entry]]:
-                """Transform multiple entries with common operations."""
-                return FlextLdifUtilitiesEntry.transform_batch(
-                    entries,
-                    config,
-                    **kwargs,
-                )
-
-            @staticmethod
-            def filter_batch(
-                entries: Sequence[m.Ldif.Entry],
-                config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
-                **kwargs: object,
-            ) -> r[list[m.Ldif.Entry]]:
-                """Filter entries based on criteria."""
-                return FlextLdifUtilitiesEntry.filter_batch(entries, config, **kwargs)
-
-            @staticmethod
-            def matches_server_patterns(
-                entry_dn: str,
-                attributes: Mapping[str, t.Ldif.JsonValue],
-                config: FlextLdifModelsSettings.ServerPatternsConfig,
-            ) -> bool:
-                """Check if entry matches server-specific patterns."""
-                return FlextLdifUtilitiesEntry.matches_server_patterns(
-                    entry_dn,
-                    attributes,
-                    config,
-                )
-
-            @staticmethod
-            def analyze_differences(
-                entry_attrs: Mapping[str, t.Ldif.JsonValue],
-                converted_attrs: Mapping[str, list[str | bytes]],
-                original_dn: str,
-                cleaned_dn: str,
-                normalize_attr_fn: Callable[[str], str] | None = None,
-            ) -> tuple[
-                Mapping[str, t.MetadataAttributeValue],
-                Mapping[str, Mapping[str, t.MetadataAttributeValue]],
-                Mapping[str, t.MetadataAttributeValue],
-                Mapping[str, str],
-            ]:
-                """Analyze DN and attribute differences for round-trip support."""
-                return FlextLdifUtilitiesEntry.analyze_differences(
-                    entry_attrs,
-                    converted_attrs,
-                    original_dn,
-                    cleaned_dn,
-                    normalize_attr_fn,
-                )
+        class Entry(FlextLdifUtilitiesEntry):
+            """Entry utilities for LDIF operations."""
 
         class Events(FlextLdifUtilitiesEvents):
             """Event utilities for LDIF operations."""
@@ -975,7 +870,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Normalize to list using FlextUtilities.build() DSL (mnemonic: nl)."""
             extracted_value: t.Ldif.JsonValue | None
             match value:
-                case FlextResult() as result_value:
+                case r() as result_value:
                     extracted_value = (
                         result_value.value if not result_value.is_failure else None
                     )
@@ -1154,11 +1049,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Safe get with optional mapping (DSL pattern)."""
             match data:
                 case Mapping() as data_mapping:
-                    return FlextLdifUtilities.Ldif.get_from_mapping(
-                        data_mapping,
-                        key,
-                        default=default,
-                    )
+                    return data_mapping.get(key, default)
                 case _:
                     pass
             return default
@@ -1351,7 +1242,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> t.Ldif.JsonValue:
             """Smart convert using FlextUtilities.build() DSL (mnemonic: sc)."""
             match value:
-                case FlextResult() as result_value:
+                case r() as result_value:
                     extracted: t.Ldif.JsonValue = (
                         result_value.value if not result_value.is_failure else default
                     )
@@ -2488,7 +2379,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def result_val_opt[T](result: r[T], default: T | None = None) -> T | None:
-            """Extract value from FlextResult with optional default (DSL helper)."""
+            """Extract value from r with optional default (DSL helper)."""
             if result.is_success:
                 return result.value
             return default

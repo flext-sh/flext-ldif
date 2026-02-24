@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
-from flext_core import T, U, t
+from flext_core import T, U, t, x
 from flext_core.utilities import u
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
@@ -454,39 +454,63 @@ class FlextFunctional:
         target_type: type,
         default: t.GeneralValueType | None,
     ) -> t.GeneralValueType | None:
+        """Execute type conversion using centralized Pydantic v2 models.
+
+        Dispatches to the appropriate ConversionRequest model based on target_type
+        using a discriminated union for type safety and centralized validation.
+
+        Args:
+            value: Value to convert
+            target_type: Target type (str, int, float, bool, list, tuple, dict)
+            default: Default value if conversion fails
+
+        Returns:
+            Converted value or default if conversion fails
+
+        """
+        from flext_ldif._models.conversion import (  # noqa: PLC0415
+            ConvertToBool,
+            ConvertToDict,
+            ConvertToFloat,
+            ConvertToInt,
+            ConvertToList,
+            ConvertToStr,
+            ConvertToTuple,
+        )
+
+        conversion_model: (
+            ConvertToStr
+            | ConvertToInt
+            | ConvertToFloat
+            | ConvertToBool
+            | ConvertToList
+            | ConvertToTuple
+            | ConvertToDict
+            | None
+        ) = None
+
         if target_type is str:
-            return str(value)
-        if target_type is int:
-            if u.Guards.is_type(value, (str, bytes, bytearray, int, float)):
-                return int(value)
-            try:
-                return int(str(value))
-            except (TypeError, ValueError):
-                return default
-        if target_type is float:
-            if u.Guards.is_type(value, (str, bytes, bytearray, int, float)):
-                return float(value)
-            try:
-                return float(str(value))
-            except (TypeError, ValueError):
-                return default
-        if target_type is bool:
-            if u.Guards.is_type(value, str):
-                return value.lower() in {"true", "1", "yes", "on"}
-            return bool(value)
-        if target_type is list:
-            if u.Guards.is_type(value, (list, tuple, set)):
-                return list(value)
-            return [value]
-        if target_type is tuple:
-            if u.Guards.is_type(value, (list, tuple)):
-                return tuple(value)
-            return (value,)
-        if target_type is dict:
-            if u.is_dict_like(value):
-                return value
+            conversion_model = ConvertToStr(value=value, default=default)
+        elif target_type is int:
+            conversion_model = ConvertToInt(value=value, default=default)
+        elif target_type is float:
+            conversion_model = ConvertToFloat(value=value, default=default)
+        elif target_type is bool:
+            conversion_model = ConvertToBool(value=value, default=default)
+        elif target_type is list:
+            conversion_model = ConvertToList(value=value, default=default)
+        elif target_type is tuple:
+            conversion_model = ConvertToTuple(value=value, default=default)
+        elif target_type is dict:
+            conversion_model = ConvertToDict(value=value, default=default)
+
+        if conversion_model is None:
             return default
-        return default
+
+        try:
+            return conversion_model.convert()
+        except (TypeError, ValueError):
+            return default
 
     @overload
     @classmethod

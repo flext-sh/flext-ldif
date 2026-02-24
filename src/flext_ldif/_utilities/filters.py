@@ -115,7 +115,11 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
         if item.dn is None:
             return False
 
-        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
+        dn_str = (
+            item.dn.value
+            if getattr(item.dn, "value", None) is not None
+            else str(item.dn)
+        )
         return bool(self._pattern.search(dn_str))
 
 
@@ -139,7 +143,11 @@ class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
         if item.dn is None:
             return False
 
-        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
+        dn_str = (
+            item.dn.value
+            if getattr(item.dn, "value", None) is not None
+            else str(item.dn)
+        )
         if self._case_insensitive:
             dn_str = dn_str.lower()
 
@@ -174,7 +182,9 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
 
         # Get entry's objectClasses
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
 
         # Find objectClass attribute (case-insensitive lookup)
@@ -219,7 +229,9 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
             return False
 
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
         entry_attrs = (
             {k.lower() for k in attrs} if self._case_insensitive else set(attrs.keys())
@@ -258,7 +270,9 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
             return False
 
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
 
         # Find attribute (case-insensitive lookup if needed)
@@ -290,7 +304,9 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
             return True
 
         attrs = (
-            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
+            item.attributes.attributes
+            if getattr(item.attributes, "attributes", None) is not None
+            else {}
         )
         entry_attrs = (
             {k.lower() for k in attrs} if self._case_insensitive else set(attrs.keys())

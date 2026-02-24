@@ -635,7 +635,7 @@ class FlextLdifModelsResults:
             default: str | float | bool | None = None,
         ) -> str | int | float | bool | None:
             try:
-                return self.__getitem__(key)
+                return self[key]
             except KeyError:
                 return default
 

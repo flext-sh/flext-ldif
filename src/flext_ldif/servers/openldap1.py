@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import r, u
+from flext_core import r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c

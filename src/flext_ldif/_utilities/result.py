@@ -37,7 +37,9 @@ class FlextLdifResult[T]:
         elif inner.is_success:
             inner_result = r[T].ok(inner.value)
         else:
-            error_msg = inner.error if getattr(inner, "error", None) is not None else str(inner)
+            error_msg = (
+                inner.error if getattr(inner, "error", None) is not None else str(inner)
+            )
             inner_result = r[T].fail(error_msg)
         self._inner = inner_result
 
@@ -197,7 +199,9 @@ class FlextLdifResult[T]:
         # Note: attach_metadata method needs implementation in FlextLdifUtilitiesMetadata
         # For now, return error indicating method needs implementation
         # Handle sequence of entries
-        if issubclass(value.__class__, Sequence) and not issubclass(value.__class__, str):
+        if issubclass(value.__class__, Sequence) and not issubclass(
+            value.__class__, str
+        ):
             # Note: Metadata attachment for sequence of entries needs implementation
             return FlextLdifResult.fail(
                 "attach_metadata not yet implemented for sequences",

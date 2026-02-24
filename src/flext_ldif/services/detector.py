@@ -147,7 +147,9 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             )
             if detection_result.is_success:
                 result = detection_result.value
-                if issubclass(result.__class__, m.Ldif.LdifResults.ServerDetectionResult):
+                if issubclass(
+                    result.__class__, m.Ldif.LdifResults.ServerDetectionResult
+                ):
                     return r[str].ok(result.detected_server_type)
 
         return r[str].ok("rfc")
@@ -173,7 +175,9 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             server_type_lower = server_type.lower() if server_type else ""
-            item_lower = item.lower() if issubclass(item.__class__, str) else str(item).lower()
+            item_lower = (
+                item.lower() if issubclass(item.__class__, str) else str(item).lower()
+            )
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
 
@@ -264,7 +268,10 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             u.Ldif.Server.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
-        if openldap_constants and getattr(openldap_constants, "DETECTION_PATTERN", None) is not None:
+        if (
+            openldap_constants
+            and getattr(openldap_constants, "DETECTION_PATTERN", None) is not None
+        ):
             openldap_pattern = getattr(openldap_constants, "DETECTION_PATTERN", None)
             if openldap_pattern and issubclass(openldap_pattern.__class__, str):
                 self._update_server_scores(
@@ -286,7 +293,10 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             u.Ldif.Server.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
-        if ad_constants and getattr(ad_constants, "DETECTION_PATTERN", None) is not None:
+        if (
+            ad_constants
+            and getattr(ad_constants, "DETECTION_PATTERN", None) is not None
+        ):
             ad_pattern = getattr(ad_constants, "DETECTION_PATTERN", None)
             if ad_pattern and issubclass(ad_pattern.__class__, str):
                 self._update_server_scores(
@@ -561,7 +571,9 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
-            if issubclass(tivoli_pattern.__class__, re.Pattern) and tivoli_pattern.search(
+            if issubclass(
+                tivoli_pattern.__class__, re.Pattern
+            ) and tivoli_pattern.search(
                 content_lower,
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")

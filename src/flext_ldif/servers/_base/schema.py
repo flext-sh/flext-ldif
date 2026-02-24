@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar, Self
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes, u
 from pydantic import Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -331,7 +331,7 @@ class FlextLdifServersBaseSchema(
         return {
             k: v
             for k, v in extensions_items
-            if k.__class__ is str and (v.__class__ in (str, bool, list) or v is None)
+            if k.__class__ is str and (v.__class__ in {str, bool, list} or v is None)
         }
 
     @staticmethod

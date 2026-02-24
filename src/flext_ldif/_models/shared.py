@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from flext_core._models.base import FlextModelsBase
+from flext_core import m
 
 
-class SchemaObjectClass(FlextModelsBase):
+class SchemaObjectClass(m):
     """Represents an LDAP schema objectClass definition."""
 
 
-class Acl(FlextModelsBase):
+class Acl(m):
     """Represents an LDAP ACL."""

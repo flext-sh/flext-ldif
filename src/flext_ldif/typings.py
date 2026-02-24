@@ -15,6 +15,11 @@ from flext_core import FlextTypes, r
 class FlextLdifTypes(FlextTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
+    # Conversion target type (alias to flext_core general value union)
+    GeneralValueType: TypeAlias = (
+        FlextTypes.GeneralScalarValue | FlextTypes.GeneralListValue
+    )
+
     class Ldif:
         """LDIF domain type namespace."""
 

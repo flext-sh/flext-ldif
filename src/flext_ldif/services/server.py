@@ -55,7 +55,10 @@ class FlextLdifServer(FlextRegistry):
                     continue
 
                 quirk_class = type(instance)
-                if not all(getattr(quirk_class, c, None) is not None for c in ("Schema", "Acl", "Entry")):
+                if not all(
+                    getattr(quirk_class, c, None) is not None
+                    for c in ("Schema", "Acl", "Entry")
+                ):
                     continue
 
                 self.register_class_plugin(self.SERVERS, server_type, instance)
@@ -163,7 +166,9 @@ class FlextLdifServer(FlextRegistry):
                 "acl": type(base.acl_quirk).__name__ if base.acl_quirk else None,
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
-            priorities[st] = base.priority if issubclass(base.priority.__class__, int) else 0
+            priorities[st] = (
+                base.priority if issubclass(base.priority.__class__, int) else 0
+            )
 
         return {
             "total_servers": len(servers),

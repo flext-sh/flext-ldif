@@ -316,7 +316,11 @@ class FlextLdifUtilitiesEntry:
         if not entry_dn or not attributes:
             return False
 
-        attrs = dict(attributes) if not issubclass(attributes.__class__, dict) else attributes
+        attrs = (
+            dict(attributes)
+            if not issubclass(attributes.__class__, dict)
+            else attributes
+        )
         attr_names_lower = {k.lower() for k in attrs}
 
         if config.dn_patterns and any(

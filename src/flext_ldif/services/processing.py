@@ -129,7 +129,11 @@ class FlextLdifProcessing(
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
-            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
+            dn_str = (
+                entry.dn.value
+                if getattr(entry.dn, "value", None) is not None
+                else str(entry.dn)
+            )
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
@@ -155,7 +159,11 @@ class FlextLdifProcessing(
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
-            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
+            dn_str = (
+                entry.dn.value
+                if getattr(entry.dn, "value", None) is not None
+                else str(entry.dn)
+            )
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)

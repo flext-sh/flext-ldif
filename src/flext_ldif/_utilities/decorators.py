@@ -9,7 +9,7 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._shared import normalize_server_type
+from flext_ldif._shared import FlextLdifShared
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
@@ -40,7 +40,10 @@ class FlextLdifUtilitiesDecorators:
             return None
 
         for cls in obj.__class__.__mro__:
-            if getattr(cls, "Constants", None) is not None and getattr(cls.Constants, "SERVER_TYPE", None) is not None:
+            if (
+                getattr(cls, "Constants", None) is not None
+                and getattr(cls.Constants, "SERVER_TYPE", None) is not None
+            ):
                 return str(cls.Constants.SERVER_TYPE)
 
         return None
@@ -75,7 +78,7 @@ class FlextLdifUtilitiesDecorators:
         # Normalize quirk_type if provided, otherwise None
         # normalize_server_type validates and returns a valid ServerTypeLiteral string
         normalized_quirk_type: str | None = (
-            normalize_server_type(quirk_type) if quirk_type else None
+            FlextLdifShared.normalize_server_type(quirk_type) if quirk_type else None
         )
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
@@ -88,13 +91,17 @@ class FlextLdifUtilitiesDecorators:
         # Use runtime type check instead of protocol isinstance to avoid mypy issues
         if (
             getattr(result_value, "metadata", None) is not None
-            and getattr(type(result_value), "model_fields", None) is not None  # Check class, not instance
-            and issubclass(result_value.__class__, (
+            and getattr(type(result_value), "model_fields", None)
+            is not None  # Check class, not instance
+            and issubclass(
+                result_value.__class__,
+                (
                     m.Ldif.Entry,
                     m.Ldif.SchemaAttribute,
                     m.Ldif.SchemaObjectClass,
                     m.Ldif.Acl,
-                ))
+                ),
+            )
         ):
             # This is a Pydantic model with metadata field
             # Use model_copy to create updated instance (respects validate_assignment)
@@ -129,12 +136,15 @@ class FlextLdifUtilitiesDecorators:
                     unwrapped = result.value
                     # Type narrowing: self is a protocol, but we need concrete types
                     # Check if unwrapped is one of the supported types
-                    if issubclass(unwrapped.__class__, (
+                    if issubclass(
+                        unwrapped.__class__,
+                        (
                             m.Ldif.Entry,
                             m.Ldif.SchemaAttribute,
                             m.Ldif.SchemaObjectClass,
                             m.Ldif.Acl,
-                        )):
+                        ),
+                    ):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
                                 unwrapped,

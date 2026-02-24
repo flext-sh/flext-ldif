@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
+from flext_core import u
+
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 
@@ -182,9 +184,7 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             _entry_dn: str,
-            attributes: (
-                Mapping[str, Sequence[str] | str] | m.Ldif.Entry
-            ),
+            attributes: (Mapping[str, Sequence[str] | str] | m.Ldif.Entry),
         ) -> bool:
             """Check if entry objectClasses match detection list."""
             if not attributes:
@@ -232,9 +232,7 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             entry_dn: str,
-            _attributes: (
-                Mapping[str, Sequence[str] | str] | m.Ldif.Entry | None
-            ),
+            _attributes: (Mapping[str, Sequence[str] | str] | m.Ldif.Entry | None),
         ) -> bool:
             """Check if entry DN matches detection markers."""
             # Get DN markers from Constants class

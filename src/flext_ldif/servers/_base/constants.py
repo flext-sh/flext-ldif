@@ -48,36 +48,39 @@ class FlextLdifServersBaseConstants(ABC):
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
 
 
-def _get_server_type_from_utilities(
-    quirk_class: type[object],
-) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-    """Get server type from utilities using type-safe access pattern."""
-    return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
+class FlextLdifServersBaseQuirkHelpers:
+    """Quirk helpers for server base (single class per module, no loose functions)."""
 
+    @staticmethod
+    def get_server_type_from_utilities(
+        quirk_class: type[object],
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+        """Get server type from utilities using type-safe access pattern."""
+        return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
-def _get_priority_from_parent(parent: object | None) -> int:
-    """Get priority from parent server class Constants."""
-    if parent is None:
+    @staticmethod
+    def get_priority_from_parent(parent: object | None) -> int:
+        """Get priority from parent server class Constants."""
+        if parent is None:
+            return 100
+        constants_attr = getattr(parent, "Constants", None)
+        if constants_attr is None:
+            return 100
+        priority_value = getattr(constants_attr, "PRIORITY", None)
+        if issubclass(priority_value.__class__, int):
+            return priority_value
         return 100
 
-    constants_attr = getattr(parent, "Constants", None)
-    if constants_attr is None:
-        return 100
-    priority_value = getattr(constants_attr, "PRIORITY", None)
-    if issubclass(priority_value.__class__, int):
-        return priority_value
-    return 100
-
-
-def _get_parent_quirk_safe_impl(
-    instance: object,
-) -> object | None:
-    """Get _parent_quirk attribute safely with type narrowing."""
-    parent_raw: object | None = getattr(instance, "_parent_quirk", None)
-
-    if parent_raw is not None and getattr(parent_raw, "_parent_quirk", None) is not None:
-        return parent_raw
-    return None
+    @staticmethod
+    def get_parent_quirk_safe(instance: object) -> object | None:
+        """Get _parent_quirk attribute safely with type narrowing."""
+        parent_raw: object | None = getattr(instance, "_parent_quirk", None)
+        if (
+            parent_raw is not None
+            and getattr(parent_raw, "_parent_quirk", None) is not None
+        ):
+            return parent_raw
+        return None
 
 
 class QuirkMethodsMixin:
@@ -85,25 +88,23 @@ class QuirkMethodsMixin:
 
     def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
-        return _get_server_type_from_utilities(type(self))
+        return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
+            type(self)
+        )
 
     def _get_priority(self) -> int:
         """Get priority from parent server class Constants."""
         parent = self._get_parent_quirk_safe()
-        return _get_priority_from_parent(parent)
+        return FlextLdifServersBaseQuirkHelpers.get_priority_from_parent(parent)
 
-    def _get_parent_quirk_safe(
-        self,
-    ) -> object | None:
+    def _get_parent_quirk_safe(self) -> object | None:
         """Get _parent_quirk attribute safely with type narrowing."""
-        return _get_parent_quirk_safe_impl(self)
+        return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
 
 
 __all__ = [
     "FlextLdifServersBaseConstants",
+    "FlextLdifServersBaseQuirkHelpers",
     "QuirkMethodsMixin",
-    "_get_parent_quirk_safe_impl",
-    "_get_priority_from_parent",
-    "_get_server_type_from_utilities",
     "logger",
 ]

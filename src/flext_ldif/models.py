@@ -6,8 +6,7 @@ import warnings
 from collections.abc import Mapping
 from typing import Literal, TypeAlias
 
-from flext_core import FlextModels, FlextTypes
-from flext_core._models.base import FlextModelsBase
+from flext_core import FlextModels, t
 from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -307,7 +306,7 @@ class FlextLdifModels(FlextModels):
         class Types:
             """Type models namespace - moved from typings.py TypedDict to Pydantic models."""
 
-            class SchemaDict(FlextModelsBase.ArbitraryTypesModel):
+            class SchemaDict(FlextModels.ArbitraryTypesModel):
                 """Schema extraction result dictionary model."""
 
                 ATTRIBUTES: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
@@ -317,7 +316,7 @@ class FlextLdifModels(FlextModels):
                     default_factory=list,
                 )
 
-            class PermissionsDict(FlextModelsBase.ArbitraryTypesModel):
+            class PermissionsDict(FlextModels.ArbitraryTypesModel):
                 """ACL permissions dictionary model."""
 
                 read: bool | None = Field(default=None)
@@ -332,7 +331,7 @@ class FlextLdifModels(FlextModels):
                 auth: bool | None = Field(default=None)
                 all: bool | None = Field(default=None)
 
-            class EvaluationContextDict(FlextModelsBase.ArbitraryTypesModel):
+            class EvaluationContextDict(FlextModels.ArbitraryTypesModel):
                 """ACL evaluation context dictionary model."""
 
                 subject_dn: str | None = Field(default=None)
@@ -340,14 +339,14 @@ class FlextLdifModels(FlextModels):
                 operation: str | None = Field(default=None)
                 attributes: list[str] | None = Field(default=None)
 
-            class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):
+            class TransformationInfo(FlextModels.ArbitraryTypesModel):
                 """Transformation step information model."""
 
                 step: str | None = Field(default=None)
                 server: str | None = Field(default=None)
                 changes: list[str] | None = Field(default=None)
 
-            class QuirksByServerDict(FlextModelsBase.ArbitraryTypesModel):
+            class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
                 """Quirks by server dictionary model."""
 
                 schema_type: str | None = Field(
@@ -366,7 +365,7 @@ class FlextLdifModels(FlextModels):
                     description="Entry quirk type",
                 )
 
-            class RegistryStatsDict(FlextModelsBase.ArbitraryTypesModel):
+            class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
                 """Registry statistics dictionary model."""
 
                 total_servers: int = Field(default=0)
@@ -376,7 +375,7 @@ class FlextLdifModels(FlextModels):
                 ] = Field(default_factory=dict)
                 server_priorities: dict[str, int] = Field(default_factory=dict)
 
-            class EntryParsingContext(FlextModelsBase.ArbitraryTypesModel):
+            class EntryParsingContext(FlextModels.ArbitraryTypesModel):
                 """Entry parsing context model."""
 
                 original_entry_dn: str | None = Field(default=None)
@@ -386,27 +385,27 @@ class FlextLdifModels(FlextModels):
                 dn_was_base64: bool | None = Field(default=None)
                 original_attribute_case: dict[str, str] | None = Field(default=None)
                 dn_differences: (
-                    dict[str, FlextTypes.MetadataAttributeValue]
-                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                    dict[str, t.MetadataAttributeValue]
+                    | dict[str, dict[str, t.MetadataAttributeValue]]
                     | None
                 ) = Field(default=None)
                 attribute_differences: (
-                    dict[str, FlextTypes.MetadataAttributeValue]
-                    | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                    dict[str, t.MetadataAttributeValue]
+                    | dict[str, dict[str, t.MetadataAttributeValue]]
                     | None
                 ) = Field(default=None)
                 original_attributes_complete: (
-                    dict[str, FlextTypes.MetadataAttributeValue] | None
+                    dict[str, t.MetadataAttributeValue] | None
                 ) = Field(default=None)
 
-            class AttributeWriteContext(FlextModelsBase.ArbitraryTypesModel):
+            class AttributeWriteContext(FlextModels.ArbitraryTypesModel):
                 """Attribute write context model."""
 
                 attr_name: str | None = Field(default=None)
-                attr_values: FlextTypes.GeneralValueType | None = Field(default=None)
+                attr_values: t.GuardInputValue | None = Field(default=None)
                 minimal_differences_attrs: dict[
                     str,
-                    FlextTypes.MetadataAttributeValue,
+                    t.MetadataAttributeValue,
                 ] = Field(default_factory=dict)
                 hidden_attrs: set[str] = Field(default_factory=set)
 
@@ -418,8 +417,8 @@ class FlextLdifModels(FlextModels):
             """Schema element type with protocol references."""
 
             type SchemaElement = (
-                m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
+                FlextLdifModels.Ldif.SchemaAttribute
+                | FlextLdifModels.Ldif.SchemaObjectClass
                 | str
                 | int
                 | float

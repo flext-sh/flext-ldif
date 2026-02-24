@@ -6,7 +6,7 @@ import operator
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, override
 
-from flext_core import r, t, u
+from flext_core import r, t
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.base import FlextLdifServiceBase

@@ -142,7 +142,9 @@ class FlextLdifDn(
 
     def get_last_event(self) -> m.Ldif.LdifResults.DnEvent | None:
         """Retrieve last emitted DnEvent."""
-        return self._last_event if getattr(self, "_last_event", None) is not None else None
+        return (
+            self._last_event if getattr(self, "_last_event", None) is not None else None
+        )
 
     @property
     def _parser(self) -> FlextLdifDn.Parser:

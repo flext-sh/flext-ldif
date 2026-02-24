@@ -36,7 +36,7 @@ class FlextLdifServersOidSchema(
             k: v
             for k, v in kwargs.items()
             if k not in ("_parent_quirk", "_schema_service")
-            and (v is None or v.__class__ in (str, float, bool))
+            and (v is None or v.__class__ in {str, float, bool})
         }
 
         schema_service_typed: object | None = (

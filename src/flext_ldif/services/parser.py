@@ -141,7 +141,10 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             processed_value = batch_result.value
             processed_list: list[list[str]] = []
             raw_results: object | None = None
-            if issubclass(processed_value.__class__, dict) and "results" in processed_value:
+            if (
+                issubclass(processed_value.__class__, dict)
+                and "results" in processed_value
+            ):
                 raw_results = processed_value["results"]
             elif issubclass(processed_value.__class__, list):
                 raw_results = processed_value

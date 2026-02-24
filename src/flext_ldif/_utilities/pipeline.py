@@ -262,7 +262,11 @@ class ValidationPipeline:
         else:
             # Validate DN format - basic RFC 2253 compliance check
             # Each RDN component must have at least one '=' separator
-            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
+            dn_str = (
+                entry.dn.value
+                if getattr(entry.dn, "value", None) is not None
+                else str(entry.dn)
+            )
 
             # Split by comma to get RDN components
             components = dn_str.split(",")

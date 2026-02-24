@@ -17,10 +17,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.models import m  # Import m
+from flext_core import FlextLogger, FlextResult, FlextUtilities, m
 from pydantic import (
     ConfigDict,
     Field,
@@ -36,9 +33,10 @@ from flext_ldif._models.base import (
 )
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.validation import ServerValidationRules
-from flext_ldif._shared import normalize_server_type
+from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 # Type aliases for clarity
 # Access types directly via composition - no aliases needed
@@ -59,7 +57,7 @@ class FlextLdifModelsDomains:
     # DOMAIN MODELS - Core LDIF entities
     # =========================================================================
 
-    class DN(FlextModelsEntity.Value):
+    class DN(m.Value):
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -214,7 +212,7 @@ class FlextLdifModelsDomains:
             """Return DN value as string for str() conversion."""
             return self.value
 
-    class ExclusionInfo(FlextModelsBase.ArbitraryTypesModel):
+    class ExclusionInfo(m.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
 
         Stored in QuirkMetadata.extensions['exclusion_info'] to track why
@@ -611,7 +609,7 @@ class FlextLdifModelsDomains:
                 "total": must_count + may_count,
             }
 
-    class Attributes(FlextModelsBase.ArbitraryTypesModel):
+    class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
         model_config = ConfigDict(
@@ -929,7 +927,7 @@ class FlextLdifModelsDomains:
                 if meta.get("status") == "deleted"
             }
 
-    class ErrorDetail(FlextModelsBase.FrozenStrictModel):
+    class ErrorDetail(m.FrozenStrictModel):
         """Error detail information for failed operations."""
 
         model_config = ConfigDict(
@@ -1246,7 +1244,7 @@ class FlextLdifModelsDomains:
     # ACL MODELS - Must be defined before Entry since Entry references Acl
     # =========================================================================
 
-    class AclPermissions(FlextModelsBase.ArbitraryTypesModel):
+    class AclPermissions(m.ArbitraryTypesModel):
         """ACL permissions for LDAP operations.
 
         Supports:
@@ -1350,7 +1348,7 @@ class FlextLdifModelsDomains:
                 if key in rfc_compliant_keys
             }
 
-    class AclTarget(FlextModelsBase.ArbitraryTypesModel):
+    class AclTarget(m.ArbitraryTypesModel):
         """ACL target specification."""
 
         target_dn: str = Field(..., description="Target DN pattern")
@@ -1359,7 +1357,7 @@ class FlextLdifModelsDomains:
             description="Target attributes",
         )
 
-    class AclSubject(FlextModelsBase.ArbitraryTypesModel):
+    class AclSubject(m.ArbitraryTypesModel):
         """ACL subject specification."""
 
         subject_type: c.Ldif.LiteralTypes.AclSubjectTypeLiteral = Field(
@@ -2152,11 +2150,13 @@ class FlextLdifModelsDomains:
                     return ServerValidationRules.model_validate(parsed_rules)
                 except Exception:
                     return None
-            if u.is_dict_like(validation_rules):
-                try:
-                    return ServerValidationRules.model_validate(validation_rules.root)
-                except Exception:
-                    return None
+            try:
+                root_value = validation_rules.root
+                return ServerValidationRules.model_validate(root_value)
+            except AttributeError:
+                pass
+            except Exception:
+                return None
             if validation_rules.__class__ is dict:
                 try:
                     return ServerValidationRules.model_validate(validation_rules)
@@ -2957,7 +2957,7 @@ class FlextLdifModelsDomains:
         All DN transformation operations should populate this model to
         maintain a complete audit trail.
 
-        Inherits from FlextModels.BaseModel (flext-core):
+        Inherits from m.BaseModel (flext-core):
         - model_config (frozen=True, validate_default=True, validate_assignment=True)
         - aggregate() classmethod (automatic statistics aggregation)
         """
@@ -3111,7 +3111,7 @@ class FlextLdifModelsDomains:
         Designed for aggregation across large LDIF files to provide
         comprehensive migration diagnostics.
 
-        Inherits from FlextModels.BaseModel (flext-core):
+        Inherits from m.BaseModel (flext-core):
         - model_config (frozen=True, validate_default=True, validate_assignment=True)
         - aggregate() classmethod (automatic statistics aggregation)
         """
@@ -3810,7 +3810,7 @@ class FlextLdifModelsDomains:
             # Use Constants default for quirk_type if not provided
             # normalize_server_type returns ServerTypes enum (which is StrEnum)
             default_quirk_type: c.Ldif.ServerTypes = (
-                normalize_server_type(quirk_type)
+                FlextLdifShared.normalize_server_type(quirk_type)
                 if quirk_type is not None
                 else c.Ldif.ServerTypes.RFC
             )
@@ -4134,11 +4134,11 @@ class SchemaLookup(FlextLdifModelsBase):
 
 # Circular dependencies resolved through proper module structure and forward references
 
-# Rebuild Entry model to resolve forward references from parent class (FlextModelsEntity.Entry)
-# The parent class has domain_events: list[FlextModelsEntity.DomainEvent] which needs resolution
-# NOTE: We pass _types_namespace to provide FlextModelsEntity for resolution
+# Rebuild Entry model to resolve forward references from parent class (m.Entry)
+# The parent class has domain_events: list[m.DomainEvent] which needs resolution
+# NOTE: We pass _types_namespace to provide m for resolution
 FlextLdifModelsDomains.Entry.model_rebuild(
-    _types_namespace={"FlextModelsEntity": FlextModelsEntity},
+    _types_namespace={"m": m},
 )
 
 

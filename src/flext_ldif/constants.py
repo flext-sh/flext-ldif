@@ -2026,7 +2026,9 @@ class FlextLdifConstants(FlextConstants):
                 "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
             })
 
-            NAME_TO_OID: Final[Mapping[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
+            NAME_TO_OID: Final[Mapping[str, str]] = {
+                v: k for k, v in OID_TO_NAME.items()
+            }
 
             NAME_TO_TYPE_CATEGORY: Final[Mapping[str, str]] = {
                 "integer": "integer",

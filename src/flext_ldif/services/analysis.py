@@ -110,7 +110,11 @@ class FlextLdifAnalysis(
             errors.append("Entry has None DN")
             return (False, "", errors)
 
-        dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
+        dn_str = (
+            entry.dn.value
+            if getattr(entry.dn, "value", None) is not None
+            else str(entry.dn)
+        )
         if not dn_str:
             errors.append(f"Entry has invalid DN: {entry.dn}")
             return (False, dn_str, errors)

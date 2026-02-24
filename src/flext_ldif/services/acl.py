@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -152,7 +152,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         if batch_result.is_success:
             results_raw = batch_result.value.results
 
-            acls.extend(item for item in results_raw if issubclass(item.__class__, m.Ldif.Acl))
+            acls.extend(
+                item for item in results_raw if issubclass(item.__class__, m.Ldif.Acl)
+            )
 
         return r[m.Ldif.LdifResults.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),

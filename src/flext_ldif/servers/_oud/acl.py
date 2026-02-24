@@ -236,7 +236,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _scalar_or_list_value(value: object) -> bool:
         """Check if value is scalar metadata value or list."""
-        return value is None or value.__class__ in (str, int, float, bool, list)
+        return value is None or value.__class__ in {str, int, float, bool, list}
 
     def _build_aci_target(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI target clause from ACL model."""
@@ -308,7 +308,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 if u.is_dict_like(val):
                     continue
 
-                if val is None or val.__class__ in (str, bool, int, float):
+                if val is None or val.__class__ in {str, bool, int, float}:
                     perms_data[k] = val
                 elif u.is_list_like(val):
                     str_list = [str(item) for item in val if u.is_type(item, "str")]

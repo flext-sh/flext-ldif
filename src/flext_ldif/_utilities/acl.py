@@ -28,7 +28,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_metadata_scalar_or_container(value: object) -> bool:
         """Check supported metadata extension value shape."""
-        return value is None or value.__class__ in (str, int, float, bool, list, dict)
+        return value is None or value.__class__ in {str, int, float, bool, list, dict}
 
     @staticmethod
     def get_acl_attributes(server_type: str | None) -> list[str]:
@@ -197,7 +197,7 @@ class FlextLdifUtilitiesACL:
         patterns = bind_patterns or default_patterns
 
         all_bind_rules: list[dict[str, str]] = []
-        for bind_type, pattern in u.mapper().to_dict(patterns).items():
+        for bind_type, pattern in dict(patterns).items():
             matches = re.findall(pattern, content, re.IGNORECASE)
             all_bind_rules.extend([
                 {"type": bind_type, "value": match} for match in matches
@@ -212,7 +212,7 @@ class FlextLdifUtilitiesACL:
         """Normalize permission name using map if available."""
         if not permission_map:
             return perm
-        return u.mapper().get(permission_map, perm, default=perm)
+        return u.get(permission_map, perm, default=perm)
 
     @staticmethod
     def _process_permission_list(
@@ -293,9 +293,7 @@ class FlextLdifUtilitiesACL:
         config: FlextLdifModelsSettings.AclMetadataConfig,
     ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL."""
-        result: dict[str, t.MetadataAttributeValue] = {}
-
-        extension_items: list[tuple[str, object]] = [
+        extension_items: list[tuple[str, t.MetadataAttributeValue]] = [
             ("line_breaks", config.line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", config.targetscope),
@@ -303,12 +301,12 @@ class FlextLdifUtilitiesACL:
             ("action_type", config.action_type),
         ]
 
-        result.update({
+        result: dict[str, t.MetadataAttributeValue] = {
             key: value
             for key, value in extension_items
             if value is not None
             and FlextLdifUtilitiesACL._is_metadata_scalar_or_container(value)
-        })
+        }
 
         return result
 
@@ -392,7 +390,7 @@ class FlextLdifUtilitiesACL:
         special_values: Mapping[str, tuple[str, str]],
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
-        for key, value_tuple in u.mapper().to_dict(special_values).items():
+        for key, value_tuple in dict(special_values).items():
             if (
                 rule_value.lower() == key.lower()
                 and u.is_type(value_tuple, "tuple")
@@ -414,9 +412,9 @@ class FlextLdifUtilitiesACL:
             return "self", "ldap:///self"
 
         for rule in bind_rules_data:
-            rule_type_raw = u.mapper().get(rule, "type", default="")
+            rule_type_raw = u.get(rule, "type", default="")
             rule_type = rule_type_raw.lower() if u.is_type(rule_type_raw, "str") else ""
-            rule_value = u.mapper().get(rule, "value", default="")
+            rule_value = u.get(rule, "value", default="")
             rule_value = rule_value if u.is_type(rule_value, "str") else ""
 
             special_match = FlextLdifUtilitiesACL._check_special_value(
@@ -426,7 +424,7 @@ class FlextLdifUtilitiesACL:
             if special_match:
                 return special_match
 
-            mapped_type_raw = u.mapper().get(subject_type_map, rule_type)
+            mapped_type_raw = u.get(subject_type_map, rule_type)
             mapped_type: str | None = None
             if u.is_type(mapped_type_raw, FlextRuntime.RuntimeResult):
                 if mapped_type_raw.is_success:
@@ -440,7 +438,7 @@ class FlextLdifUtilitiesACL:
                 return mapped_type, rule_value
 
         if bind_rules_data:
-            default_value = u.mapper().get(bind_rules_data[0], "value", default="")
+            default_value = u.get(bind_rules_data[0], "value", default="")
             default_value = default_value if u.is_type(default_value, "str") else ""
         else:
             default_value = ""
@@ -506,14 +504,14 @@ class FlextLdifUtilitiesACL:
         operators = bind_operators or default_operators
 
         if subject_type == "self":
-            op = u.mapper().get(operators, "self", default="userdn")
+            op = u.get(operators, "self", default="userdn")
             op = op if u.is_type(op, "str") else "userdn"
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
-            op = u.mapper().get(operators, "anonymous", default="userdn")
+            op = u.get(operators, "anonymous", default="userdn")
             op = op if u.is_type(op, "str") else "userdn"
             return f'{op}="{anonymous_value}"'
-        op = u.mapper().get(operators, subject_type, default="userdn")
+        op = u.get(operators, subject_type, default="userdn")
         op = op if u.is_type(op, "str") else "userdn"
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
@@ -618,7 +616,7 @@ class FlextLdifUtilitiesACL:
             config.permission_map,
         )
         permissions_dict: dict[str, bool] = {
-            k: bool(v) for k, v in u.mapper().to_dict(permissions_dict_raw).items()
+            k: bool(v) for k, v in dict(permissions_dict_raw).items()
         }
         return subject_type, subject_value, permissions_dict
 
@@ -847,7 +845,7 @@ class FlextLdifUtilitiesACL:
         normalized: list[str]
         if u.is_type(comments_value, "str"):
             normalized = [comments_value]
-        elif comments_value.__class__ in (list, tuple):
+        elif comments_value.__class__ in {list, tuple}:
             normalized = [str(item) for item in comments_value]
         else:
             normalized = [str(comments_value)]
@@ -1002,7 +1000,7 @@ class FlextLdifUtilitiesACL:
             default_value: t.Ldif.JsonValue | None = (
                 raw_default
                 if raw_default is None
-                or raw_default.__class__ in (str, int, float, bool)
+                or raw_default.__class__ in {str, int, float, bool}
                 else str(raw_default)
             )
             final_value: t.Ldif.JsonValue = (

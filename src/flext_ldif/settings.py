@@ -19,7 +19,7 @@ from flext_core import FlextSettings
 from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_ldif._shared import normalize_server_type
+from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
 
 
@@ -545,7 +545,7 @@ class FlextLdifSettings(FlextSettings):
             ValueError: If server_type is not recognized
 
         """
-        normalized = normalize_server_type(v)
+        normalized = FlextLdifShared.normalize_server_type(v)
 
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
@@ -690,7 +690,7 @@ class FlextLdifSettings(FlextSettings):
         if v is None:
             return v
 
-        normalized = normalize_server_type(v)
+        normalized = FlextLdifShared.normalize_server_type(v)
 
         # Use same validation logic as server_type field
         valid_servers = [

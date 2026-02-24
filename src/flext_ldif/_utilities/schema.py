@@ -8,7 +8,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, r
+from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -27,13 +27,13 @@ SchemaModelT = TypeVar(
 )
 
 
-def _convert_sequence_to_str_list(seq: Sequence[object]) -> list[str]:
-    """Helper to convert Sequence to list[str] - avoids type narrowing issues in type checkers."""
-    return [str(item) for item in seq]
-
-
 class FlextLdifUtilitiesSchema:
     """Generic attribute definition normalization utilities."""
+
+    @staticmethod
+    def _convert_sequence_to_str_list(seq: Sequence[object]) -> list[str]:
+        """Convert Sequence to list[str] (internal helper, no loose functions)."""
+        return [str(item) for item in seq]
 
     @staticmethod
     def normalize_name(
@@ -165,13 +165,18 @@ class FlextLdifUtilitiesSchema:
         try:
             FlextLdifModelsDomains.SchemaAttribute.model_validate(definition)
             return "attribute"
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "SchemaAttribute model validation did not match", error=str(exc)
+            )
         try:
             FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
             return "objectclass"
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "SchemaObjectClass model validation did not match",
+                error=str(exc),
+            )
         definition_str = str(definition)
         definition_lower = definition_str.lower()
 
@@ -264,8 +269,11 @@ class FlextLdifUtilitiesSchema:
             return FlextResult.ok(
                 FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "SchemaAttribute validation failed while returning result",
+                error=str(exc),
+            )
         try:
             return FlextResult.ok(
                 FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
@@ -306,8 +314,11 @@ class FlextLdifUtilitiesSchema:
                 unwrapped,
             )
             return FlextResult.ok(validated_attr)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "SchemaAttribute validation failed after transformation",
+                error=str(exc),
+            )
         try:
             FlextLdifModelsDomains.SchemaObjectClass.model_validate(schema_obj)
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
@@ -352,7 +363,7 @@ class FlextLdifUtilitiesSchema:
             if transform_fn is None:
                 continue
             transform_class = transform_fn.__class__
-            if transform_class in (str, list):
+            if transform_class in {str, list}:
                 continue
             transform_callable: Callable[
                 [FlextTypes.GeneralValueType],
@@ -383,8 +394,11 @@ class FlextLdifUtilitiesSchema:
                     unwrapped_validated,
                 )
                 continue
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "SchemaAttribute cast failed after transformation",
+                    error=str(exc),
+                )
             try:
                 current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                     unwrapped_validated,
@@ -466,7 +480,11 @@ class FlextLdifUtilitiesSchema:
                 if result.is_success:
                     try:
                         items.append(model_type.model_validate(result.value))
-                    except Exception:
+                    except Exception as exc:
+                        logger.debug(
+                            "Schema line item validation failed",
+                            error=str(exc),
+                        )
                         continue
 
         return items
@@ -480,13 +498,12 @@ class FlextLdifUtilitiesSchema:
         ],
     ) -> list[FlextLdifModelsDomains.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
-        items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "attributetypes:",
             FlextLdifModelsDomains.SchemaAttribute,
         )
-        return items
 
     @staticmethod
     def extract_objectclasses_from_lines(
@@ -497,13 +514,12 @@ class FlextLdifUtilitiesSchema:
         ],
     ) -> list[FlextLdifModelsDomains.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
-        items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "objectclasses:",
             FlextLdifModelsDomains.SchemaObjectClass,
         )
-        return items
 
     @staticmethod
     def build_available_attributes_set(
@@ -665,23 +681,23 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.MetadataAttributeValue,
     ) -> t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]:
-        if value is None or value.__class__ in (str, int, float, bool):
+        if value is None or value.__class__ in {str, int, float, bool}:
             return value
         if value.__class__ is datetime:
             return value.isoformat()
         if u.is_list_like(value):
-            return _convert_sequence_to_str_list(value)
+            return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
         if u.is_dict_like(value):
             converted_nested: dict[str, t.ScalarValue | list[str]] = {}
             mapping_value: Mapping[str, t.MetadataAttributeValue] = value.root
             for k, v_raw in mapping_value.items():
                 k_str = str(k)
-                if v_raw is None or v_raw.__class__ in (str, int, float, bool):
+                if v_raw is None or v_raw.__class__ in {str, int, float, bool}:
                     converted_nested[k_str] = v_raw
                 elif v_raw.__class__ is datetime:
                     converted_nested[k_str] = v_raw.isoformat()
                 elif u.is_list_like(v_raw):
-                    converted_nested[k_str] = _convert_sequence_to_str_list(v_raw)
+                    converted_nested[k_str] = FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
                 elif u.is_dict_like(v_raw):
                     converted_nested[k_str] = str(dict(v_raw.root.items()))
                 else:
@@ -857,7 +873,9 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _convert_metadata_extensions(
         extensions_raw: Mapping[str, t.MetadataAttributeValue],
-    ) -> Mapping[str, t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]]:
+    ) -> Mapping[
+        str, t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]
+    ]:
         return {
             key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)
             for key, raw_value in extensions_raw.items()
@@ -947,9 +965,7 @@ class FlextLdifUtilitiesSchema:
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
         name_values: list[str] = (
-            [str(v) for v in name_values_]
-            if u.is_list_like(name_values_)
-            else []
+            [str(v) for v in name_values_] if u.is_list_like(name_values_) else []
         )
 
         if name_format == "multiple" and name_values:

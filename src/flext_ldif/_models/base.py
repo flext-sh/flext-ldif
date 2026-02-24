@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from flext_core._models.base import FlextModelsBase
+from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif._shared import normalize_server_type
+from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
 
 
-class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):
+class FlextLdifModelsBase(FlextModels.ArbitraryTypesModel):
     """Base class for all FLEXT-LDIF models (events, configs, processing results)."""
 
     model_config = ConfigDict(
@@ -39,7 +39,7 @@ class SchemaElement(FlextLdifModelsBase):
             quirk_type = getattr(metadata, "quirk_type", None)
             if quirk_type is not None:
                 try:
-                    return normalize_server_type(str(quirk_type))
+                    return FlextLdifShared.normalize_server_type(str(quirk_type))
                 except ValueError:
                     pass
         return "rfc"
@@ -60,7 +60,7 @@ class FrozenLdifModel(FlextLdifModelsBase):
     model_config = ConfigDict(frozen=True)
 
 
-class FrozenIgnoreLdifModel(FlextModelsBase.ArbitraryTypesModel):
+class FrozenIgnoreLdifModel(FlextModels.ArbitraryTypesModel):
     """Immutable LDIF model that silently ignores extra fields."""
 
     model_config = ConfigDict(frozen=True, extra="ignore")
@@ -72,7 +72,7 @@ class MutableIgnoreLdifModel(FlextLdifModelsBase):
     model_config = ConfigDict(frozen=False, extra="ignore")
 
 
-class AclElement(FlextModelsBase.ArbitraryTypesModel):
+class AclElement(FlextModels.ArbitraryTypesModel):
     """Base class for all ACL-related models."""
 
     model_config = ConfigDict(

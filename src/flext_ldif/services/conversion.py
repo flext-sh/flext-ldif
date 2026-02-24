@@ -2065,7 +2065,9 @@ class FlextLdifConversion(
         """Clear DN registry for new conversion session."""
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> Mapping[str, bool]:
+    def get_supported_conversions(
+        self, quirk: FlextLdifServersBase
+    ) -> Mapping[str, bool]:
         """Check which data types a quirk supports for conversion."""
         support: t.Ldif.CommonDict.DistributionDict = {
             "attribute": 0,
