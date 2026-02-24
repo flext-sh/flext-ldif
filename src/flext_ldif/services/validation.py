@@ -1,6 +1,7 @@
 """LDIF Validation Service - RFC 2849/4512 Compliant Entry Validation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from typing import Self, override
 
@@ -136,7 +137,7 @@ class FlextLdifValidation(
     def validate_attribute_names(
         self,
         names: list[str],
-    ) -> r[dict[str, bool]]:
+    ) -> r[Mapping[str, bool]]:
         """Batch validate multiple attribute names."""
         try:
             validated_names: dict[str, bool] = {}

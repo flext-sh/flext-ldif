@@ -1,6 +1,7 @@
 """Pure functional utilities for FLEXT-LDIF."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
@@ -71,10 +72,10 @@ class FlextFunctional:
 
     @staticmethod
     def pick[T](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *keys: str,
         as_dict: bool = True,
-    ) -> dict[str, T] | list[T]:
+    ) -> Mapping[str, T] | list[T]:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if as_dict:
             return {k: data[k] for k in keys if k in data}
@@ -84,9 +85,9 @@ class FlextFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: dict[str, T],
+        data: Mapping[str, T],
         mapper: Callable[[str, T], tuple[str, U]],
-    ) -> dict[str, U]:
+    ) -> Mapping[str, U]:
         """Map dict with transformations (mnemonic: md)."""
         result: dict[str, U] = {}
         for key, value in data.items():
@@ -99,31 +100,31 @@ class FlextFunctional:
     @overload
     @staticmethod
     def reduce_dict[T](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, T]: ...
+    ) -> Mapping[str, T]: ...
 
     @overload
     @staticmethod
     def reduce_dict[T, U](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: Callable[[str, T], U],
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, U]: ...
+    ) -> Mapping[str, U]: ...
 
     @staticmethod
     def reduce_dict[T, U](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: Callable[[str, T], U] | None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, T] | dict[str, U]:
+    ) -> Mapping[str, T] | Mapping[str, U]:
         """Reduce dicts with processor/predicate (mnemonic: rd)."""
         if processor is not None:
             result: dict[str, U] = {}
@@ -173,7 +174,7 @@ class FlextFunctional:
 
     @staticmethod
     def pairs[T](
-        d: dict[str, T] | Mapping[str, T],
+        d: Mapping[str, T] | Mapping[str, T],
     ) -> list[tuple[str, T]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
@@ -239,7 +240,7 @@ class FlextFunctional:
     @staticmethod
     def build[T](
         value: T,
-        ops: dict[str, Callable[[T], T]],
+        ops: Mapping[str, Callable[[T], T]],
     ) -> T:
         """Build value using operations dict."""
         result = value
@@ -291,8 +292,8 @@ class FlextFunctional:
 
     @staticmethod
     def merge[T](
-        *dicts: dict[str, T],
-    ) -> dict[str, T]:
+        *dicts: Mapping[str, T],
+    ) -> Mapping[str, T]:
         """Merge multiple dicts (mnemonic: mg)."""
         result: dict[str, T] = {}
         for d in dicts:
@@ -303,9 +304,9 @@ class FlextFunctional:
 
     @staticmethod
     def evolve[T](
-        data: dict[str, T],
-        updates: dict[str, T],
-    ) -> dict[str, T]:
+        data: Mapping[str, T],
+        updates: Mapping[str, T],
+    ) -> Mapping[str, T]:
         """Update dict with changes (mnemonic: ev)."""
         return {**data, **updates}
 
@@ -388,7 +389,7 @@ class FlextFunctional:
     def switch[T, U](
         cls,
         value: T,
-        cases: dict[T, U | _UnaryCase[T, U]],
+        cases: Mapping[T, U | _UnaryCase[T, U]],
         default: U | None = None,
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
@@ -438,7 +439,7 @@ class FlextFunctional:
         | dict[str, t.GeneralValueType]
     )
 
-    _TYPE_MAP: ClassVar[dict[str, type]] = {
+    _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
         "dict": dict,
         "str": str,
@@ -483,7 +484,7 @@ class FlextFunctional:
                 return tuple(value)
             return (value,)
         if target_type is dict:
-            if FlextRuntime.is_dict_like(value):
+            if u.is_dict_like(value):
                 return value
             return default
         return default
@@ -554,9 +555,9 @@ class FlextFunctional:
         cls,
         value: t.GeneralValueType,
         *,
-        target: type[dict[str, t.GeneralValueType]] | Literal["dict"],
-        default: dict[str, t.GeneralValueType] | None = None,
-    ) -> dict[str, t.GeneralValueType] | None: ...
+        target: type[Mapping[str, t.GeneralValueType]] | Literal["dict"],
+        default: Mapping[str, t.GeneralValueType] | None = None,
+    ) -> Mapping[str, t.GeneralValueType] | None: ...
 
     @classmethod
     def as_type(
@@ -593,10 +594,10 @@ class FlextFunctional:
 
         def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
             """Get value from object by key."""
-            if FlextRuntime.is_dict_like(obj):
+            if u.is_dict_like(obj):
                 value: t.GeneralValueType = obj.get(key)
                 return value
-            if FlextRuntime.is_base_model(obj):
+            if x.is_base_model(obj):
                 dumped = obj.model_dump()
                 return dumped.get(key)
             return None
@@ -609,17 +610,17 @@ class FlextFunctional:
     def props(
         cls,
         *keys: str,
-    ) -> Callable[[t.GeneralValueType], dict[str, t.GeneralValueType]]:
+    ) -> Callable[[t.GeneralValueType], Mapping[str, t.GeneralValueType]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
+        def accessor(obj: t.GeneralValueType) -> Mapping[str, t.GeneralValueType]:
             """Get multiple values from object by keys."""
             result_dict: dict[str, t.GeneralValueType] = {}
             for k in keys:
-                if FlextRuntime.is_dict_like(obj):
+                if u.is_dict_like(obj):
                     value: t.GeneralValueType | None = u.mapper().get(obj, k)
                     result_dict[k] = value
-                elif FlextRuntime.is_base_model(obj):
+                elif x.is_base_model(obj):
                     dumped = obj.model_dump()
                     result_dict[k] = dumped.get(k)
                 else:
@@ -646,12 +647,12 @@ class FlextFunctional:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                if FlextRuntime.is_dict_like(obj):
+                if u.is_dict_like(obj):
                     map_result = u.mapper().get(obj, key)
                     if map_result == key:
                         return None
                     return map_result
-                if FlextRuntime.is_base_model(obj):
+                if x.is_base_model(obj):
                     dumped = obj.model_dump()
                     return dumped.get(key)
                 return None

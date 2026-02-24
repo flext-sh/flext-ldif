@@ -1,6 +1,7 @@
 """Event Utilities - Domain Event Creation and Management Helpers."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from flext_core import FlextLogger
 
@@ -112,7 +113,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _process_extras(
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> dict[str, t.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Extract and filter extras into a dict of loggable context."""
         filtered_extras: dict[str, t.ScalarValue] = {}
         if not extras:
@@ -170,7 +171,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: FlextLogger,
-        log_context: dict[str, t.ScalarValue],
+        log_context: Mapping[str, t.ScalarValue],
         log_message: str,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -194,7 +195,7 @@ class FlextLdifUtilitiesEvents:
     def _build_operation_event_logging(
         event: FlextLdifModelsEvents.MigrationEvent,
         config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> tuple[dict[str, t.ScalarValue], str]:
+    ) -> tuple[Mapping[str, t.ScalarValue], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
@@ -215,7 +216,7 @@ class FlextLdifUtilitiesEvents:
     def _build_conversion_event_logging(
         event: FlextLdifModelsEvents.ConversionEvent,
         config: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> tuple[dict[str, t.ScalarValue], str]:
+    ) -> tuple[Mapping[str, t.ScalarValue], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,

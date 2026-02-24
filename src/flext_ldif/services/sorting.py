@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import operator
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, override
 
-from flext_core import r, t
+from flext_core import r, t, u
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -555,7 +555,7 @@ class FlextLdifSorting(
     @staticmethod
     def _build_dn_tree(
         entries: list[m.Ldif.Entry],
-    ) -> tuple[dict[str, list[str]], dict[str, list[m.Ldif.Entry]], list[str]]:
+    ) -> tuple[Mapping[str, list[str]], Mapping[str, list[m.Ldif.Entry]], list[str]]:
         """Build DN tree structure for depth-first traversal."""
         parent_to_children: dict[str, list[str]] = {}
         dn_to_entries: dict[str, list[m.Ldif.Entry]] = {}
@@ -590,8 +590,8 @@ class FlextLdifSorting(
     @staticmethod
     def _dfs_traverse(
         dn: str,
-        parent_to_children: dict[str, list[str]],
-        dn_to_entries: dict[str, list[m.Ldif.Entry]],
+        parent_to_children: Mapping[str, list[str]],
+        dn_to_entries: Mapping[str, list[m.Ldif.Entry]],
         visited: set[str],
     ) -> list[m.Ldif.Entry]:
         """Depth-first traversal of DN tree."""
@@ -628,7 +628,7 @@ class FlextLdifSorting(
 
     @staticmethod
     def _identify_root_dns(
-        dn_to_entries: dict[str, list[m.Ldif.Entry]],
+        dn_to_entries: Mapping[str, list[m.Ldif.Entry]],
     ) -> list[str]:
         """Identify root DNs (entries whose parents are not in the list)."""
         root_dns: list[str] = []

@@ -618,7 +618,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _apply_dn_transformations(
         original_dn: str,
-    ) -> tuple[str, list[str], dict[str, bool | str | list[str]]]:
+    ) -> tuple[str, list[str], Mapping[str, bool | str | list[str]]]:
         """Apply DN transformations and collect flags."""
         transformations: list[str] = []
         flags: dict[str, bool | str | list[str]] = {
@@ -1137,11 +1137,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _transform_attrs_with_dn(
-        attrs: dict[str, list[str]],
+        attrs: Mapping[str, list[str]],
         dn_attributes: set[str],
         source_dn: str,
         target_dn: str,
-    ) -> dict[str, list[str]]:
+    ) -> Mapping[str, list[str]]:
         """Transform DN-valued attributes using u.map()."""
         return {
             k: [
@@ -1159,8 +1159,8 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _get_changed_attr_names(
-        original: dict[str, list[str]],
-        transformed: dict[str, list[str]],
+        original: Mapping[str, list[str]],
+        transformed: Mapping[str, list[str]],
         dn_attributes: set[str],
     ) -> list[str]:
         """Get list of attribute names that changed using dict comprehension."""
@@ -1293,7 +1293,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: str | Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> r[dict[str, int]]:
+    ) -> r[Mapping[str, int]]:
         """Compatibility helper to transform BaseDN in all LDIF files in a directory."""
         if not source_basedn or not target_basedn:
             return r[dict[str, int]].fail(

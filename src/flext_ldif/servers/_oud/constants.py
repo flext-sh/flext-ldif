@@ -223,7 +223,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ],
     )
 
-    ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {
+    ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = {
         "uniquemember": "uniqueMember",
         "displayname": "displayName",
         "distinguishedname": "distinguishedName",
@@ -276,7 +276,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
     }
 
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {
         "users": frozenset(
             [
                 "person",

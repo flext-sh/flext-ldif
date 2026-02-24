@@ -59,7 +59,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> dict[str, list[str]]:
+    ) -> Mapping[str, list[str]]:
         """Convert boolean attribute values between formats."""
         if not attributes or not boolean_attr_names:
             if not attributes:
@@ -117,8 +117,8 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def normalize_attribute_names(
         attributes: Mapping[str, list[t.Ldif.AttributeValue]],
-        case_map: dict[str, str],
-    ) -> dict[str, list[t.Ldif.AttributeValue]]:
+        case_map: Mapping[str, str],
+    ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
         """Normalize attribute names using case mapping."""
         if not attributes or not case_map:
             return dict(attributes)
@@ -230,15 +230,15 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def analyze_differences(
         entry_attrs: Mapping[str, FlextTypes.GeneralValueType],
-        converted_attrs: dict[str, list[t.Ldif.AttributeValue]],
+        converted_attrs: Mapping[str, list[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        dict[str, t.MetadataAttributeValue],
-        dict[str, dict[str, t.MetadataAttributeValue]],
-        dict[str, t.MetadataAttributeValue],
-        dict[str, str],
+        Mapping[str, t.MetadataAttributeValue],
+        Mapping[str, Mapping[str, t.MetadataAttributeValue]],
+        Mapping[str, t.MetadataAttributeValue],
+        Mapping[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
         normalize = normalize_attr_fn or (lambda x: x.lower())
@@ -344,11 +344,11 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: dict[str, list[t.Ldif.AttributeValue]],
+        attributes: Mapping[str, list[t.Ldif.AttributeValue]],
         *,
         config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
         **kwargs: object,
-    ) -> dict[str, list[t.Ldif.AttributeValue]]:
+    ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(

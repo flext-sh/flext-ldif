@@ -247,11 +247,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             target_dict = extensions.get("acl_target_target") if extensions else None
 
             target_data: dict[str, t.MetadataAttributeValue] = {}
-            if FlextRuntime.is_dict_like(target_dict):
+            if u.is_dict_like(target_dict):
                 target_data = {
                     k: v
                     for k, v in target_dict.items()
-                    if not FlextRuntime.is_dict_like(v)
+                    if not u.is_dict_like(v)
                     and FlextLdifServersOudAcl._scalar_or_list_value(v)
                 }
 
@@ -261,7 +261,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
                 attrs: list[str] = (
                     [item for item in attrs_raw if u.is_type(item, "str")]
-                    if FlextRuntime.is_list_like(attrs_raw)
+                    if u.is_list_like(attrs_raw)
                     else []
                 )
                 dn: str = str(dn_raw) if u.is_type(dn_raw, "str") else "*"
@@ -295,7 +295,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 )
             target_perms_dict = target_perms_dict_raw
 
-        if target_perms_dict and FlextRuntime.is_dict_like(target_perms_dict):
+        if target_perms_dict and u.is_dict_like(target_perms_dict):
             target_perms_dict_typed: Mapping[str, t.MetadataAttributeValue] = (
                 target_perms_dict
             )
@@ -306,12 +306,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     continue
                 k = str(key)
 
-                if FlextRuntime.is_dict_like(val):
+                if u.is_dict_like(val):
                     continue
 
                 if val is None or val.__class__ in (str, bool, int, float):
                     perms_data[k] = val
-                elif FlextRuntime.is_list_like(val):
+                elif u.is_list_like(val):
                     str_list = [str(item) for item in val if u.is_type(item, "str")]
                     perms_data[k] = str_list
 

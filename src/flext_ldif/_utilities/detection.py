@@ -28,7 +28,7 @@ class FlextLdifUtilitiesDetection:
                 if (
                     cls.__name__.startswith("FlextLdifServers")
                     and getattr(cls, "Constants", None) is not None
-                    and not FlextRuntime.is_dict_like(getattr(cls, "Constants", None))
+                    and not u.is_dict_like(getattr(cls, "Constants", None))
                 ):
                     constants_class: type = cls.Constants
                     # Verify protocol compliance at runtime using runtime_checkable
@@ -186,7 +186,7 @@ class FlextLdifUtilitiesDetection:
             _entry_dn: str,
             attributes: (
                 Mapping[str, Sequence[str] | str]
-                | dict[str, Sequence[str] | str]
+                | Mapping[str, Sequence[str] | str]
                 | m.Ldif.Entry
             ),
         ) -> bool:
@@ -238,7 +238,7 @@ class FlextLdifUtilitiesDetection:
             entry_dn: str,
             _attributes: (
                 Mapping[str, Sequence[str] | str]
-                | dict[str, Sequence[str] | str]
+                | Mapping[str, Sequence[str] | str]
                 | m.Ldif.Entry
                 | None
             ),

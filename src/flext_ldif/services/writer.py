@@ -1,6 +1,7 @@
 """Writer Service - Direct LDIF Writing with flext-core APIs."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from pathlib import Path
 
@@ -30,7 +31,7 @@ def _extract_write_options(
     return m.Ldif.LdifResults.WriteFormatOptions.model_validate(normalized)
 
 
-def _normalize_write_format(d: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
+def _normalize_write_format(d: t.GeneralValueType) -> Mapping[str, t.GeneralValueType]:
     """Normalize write format from dict."""
     if not issubclass(d.__class__, dict):
         return {}
@@ -66,7 +67,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
             | type
-            | dict[str, t.GeneralValueType]
+            | Mapping[str, t.GeneralValueType]
             | None
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
@@ -188,7 +189,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             | m.Ldif.LdifResults.WriteOptions
             | None
         ) = None,
-        _template_data: dict[str, t.Ldif.TemplateValue] | None = None,
+        _template_data: Mapping[str, t.Ldif.TemplateValue] | None = None,
     ) -> r[str | m.Ldif.LdifResults.WriteResponse]:
         """Write entries to LDIF format (string or file)."""
         if output_path is not None:
@@ -217,7 +218,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
 
     def execute(
         self,
-        params: dict[str, t.GeneralValueType] | None = None,
+        params: Mapping[str, t.GeneralValueType] | None = None,
     ) -> r[m.Ldif.LdifResults.WriteResponse]:
         """Execute write operation with parameters."""
         params = params or {}

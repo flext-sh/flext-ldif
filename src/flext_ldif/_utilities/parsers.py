@@ -1,6 +1,7 @@
 """Master class for all LDIF parsing utilities."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from dataclasses import dataclass
 from typing import Protocol
@@ -28,7 +29,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 lines: list[str],
-            ) -> dict[str, list[str]]: ...
+            ) -> Mapping[str, list[str]]: ...
 
         class ParseAttributesHook(Protocol):
             """Protocol for parsing attributes."""
@@ -36,7 +37,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 lines: list[str],
-            ) -> dict[str, list[str]]: ...
+            ) -> Mapping[str, list[str]]: ...
 
         class ParseValueHook(Protocol):
             """Protocol for parsing attribute values."""
@@ -143,7 +144,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> dict[str, str | bool | None]: ...
+            ) -> Mapping[str, str | bool | None]: ...
 
         class TransformHook(Protocol):
             """Protocol for attribute transformation."""
@@ -226,7 +227,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> dict[str, str | list[str] | None]: ...
+            ) -> Mapping[str, str | list[str] | None]: ...
 
         class TransformHook(Protocol):
             """Protocol for objectClass transformation."""
@@ -299,7 +300,7 @@ class FlextLdifUtilitiesParsers:
         class ParseHeaderHook(Protocol):
             """Protocol for parsing LDIF header."""
 
-            def __call__(self, header: str) -> dict[str, str]: ...
+            def __call__(self, header: str) -> Mapping[str, str]: ...
 
         # ===== NESTED STATISTICS DATACLASS =====
 

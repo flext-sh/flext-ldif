@@ -1,6 +1,7 @@
 """389 Directory Server Quirks - Stub Implementation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from typing import ClassVar
@@ -532,7 +533,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:

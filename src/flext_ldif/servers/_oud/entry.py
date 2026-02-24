@@ -194,7 +194,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def can_handle(
         self,
         entry_dn: str,
-        attributes: dict[str, list[str]],
+        attributes: Mapping[str, list[str]],
     ) -> bool:
         """Check if OUD should handle this entry using pattern matching.
 
@@ -285,7 +285,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: (dict[str, list[str]] | m.Ldif.Entry),
+        entry_attrs: (Mapping[str, list[str]] | m.Ldif.Entry),
     ) -> FlextResult[m.Ldif.Entry]:
         """Parse entry with OUD-specific metadata population.
 
@@ -566,9 +566,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def extract_and_remove_acl_attributes(
-        attributes_dict: dict[str, list[str]],
+        attributes_dict: Mapping[str, list[str]],
         acl_attribute_names: list[str],
-    ) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
+    ) -> tuple[Mapping[str, list[str]], Mapping[str, list[str]], set[str]]:
         """Extract ACL attributes and remove from active dict.
 
         Args:
@@ -598,7 +598,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | dict[str, t.GeneralValueType] | None,
+        write_opts: m.Ldif.WriteOptions | Mapping[str, t.GeneralValueType] | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -663,9 +663,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def update_metadata_with_commented_acls(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
         acl_attribute_names: list[str],
-        commented_acl_values: dict[str, list[str]],
+        commented_acl_values: Mapping[str, list[str]],
         hidden_attrs: set[str],
-        entry_attributes_dict: dict[str, list[str]],
+        entry_attributes_dict: Mapping[str, list[str]],
     ) -> FlextLdifModelsDomains.QuirkMetadata:
         """Update metadata with commented ACL information.
 
@@ -1306,7 +1306,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _collect_acl_from_transformations(
         self,
         entry: m.Ldif.Entry,
-        acl_comments_dict: dict[str, list[str]],
+        acl_comments_dict: Mapping[str, list[str]],
         acl_attr_names_to_skip: set[str],
     ) -> None:
         """Collect ACL comments from attribute_transformations with SKIP_TO_04."""
@@ -1355,7 +1355,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def _parse_commented_values(
         commented_raw: object,
-    ) -> dict[str, t.GeneralValueType] | None:
+    ) -> Mapping[str, t.GeneralValueType] | None:
         """Parse commented ACL values from raw storage format.
 
         Args:
@@ -1378,7 +1378,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _collect_acl_from_extensions(
         self,
         entry: m.Ldif.Entry,
-        acl_comments_dict: dict[str, list[str]],
+        acl_comments_dict: Mapping[str, list[str]],
         acl_attr_names_to_skip: set[str],
     ) -> None:
         """Collect ACL comments from extensions.commented_attribute_values."""
@@ -1591,8 +1591,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_parsed_acl_extensions(
         self,
-        acl_extensions: dict[str, t.MetadataAttributeValue],
-        current_extensions: dict[str, t.MetadataAttributeValue],
+        acl_extensions: Mapping[str, t.MetadataAttributeValue],
+        current_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1667,7 +1667,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         aci_values: list[str] | str,
         acl_quirk: FlextLdifServersOudAcl,
-        current_extensions: dict[str, t.MetadataAttributeValue],
+        current_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> None:
         """Process list of ACI values and extract metadata."""
         aci_list = (
@@ -1703,7 +1703,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _merge_acl_metadata_to_entry(
         self,
         entry: m.Ldif.Entry,
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
@@ -1751,7 +1751,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _extract_acl_metadata_from_dynamic(
         self,
         acl_extensions: FlextLdifModelsMetadata.DynamicMetadata,
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1802,8 +1802,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata_from_dict(
         self,
-        acl_extensions: dict[str, t.MetadataAttributeValue],
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_extensions: Mapping[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1855,7 +1855,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _process_single_aci_value(
         self,
         aci_value: str,
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: Mapping[str, t.MetadataAttributeValue],
     ) -> FlextResult[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
@@ -2132,11 +2132,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def apply_syntax_corrections(
         entry: m.Ldif.Entry,
-        corrected_data: dict[
+        corrected_data: Mapping[
             str,
-            str | int | float | bool | list[str] | dict[str, str | list[str]] | None,
+            str | int | float | bool | list[str] | Mapping[str, str | list[str]] | None,
         ],
-        syntax_corrections: list[str] | dict[str, str] | None,
+        syntax_corrections: list[str] | Mapping[str, str] | None,
     ) -> FlextResult[m.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
@@ -2314,7 +2314,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: dict[str, t.GeneralValueType],
+        entry_dict: Mapping[str, t.GeneralValueType],
         entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.

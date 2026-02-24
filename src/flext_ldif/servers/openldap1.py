@@ -1,11 +1,12 @@
 """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from typing import ClassVar
 
-from flext_core import r
+from flext_core import r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
@@ -454,7 +455,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry."""
             if not entry_dn:

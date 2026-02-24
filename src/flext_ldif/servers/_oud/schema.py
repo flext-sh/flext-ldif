@@ -1,6 +1,7 @@
 """Oracle Unified Directory (OUD) Quirks."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -353,7 +354,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         *,
         validate_dependencies: bool = True,
     ) -> FlextResult[
-        dict[
+        Mapping[
             str,
             list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]

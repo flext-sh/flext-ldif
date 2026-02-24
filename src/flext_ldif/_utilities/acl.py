@@ -169,8 +169,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_bind_rules(
         content: str,
-        bind_patterns: dict[str, str] | None = None,
-    ) -> list[dict[str, str]]:
+        bind_patterns: Mapping[str, str] | None = None,
+    ) -> list[Mapping[str, str]]:
         r"""Extract bind rules from ACL content.
 
         Finds userdn, groupdn, or other bind rule specifications.
@@ -207,7 +207,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _normalize_permission(
         perm: str,
-        permission_map: dict[str, str] | None,
+        permission_map: Mapping[str, str] | None,
     ) -> str:
         """Normalize permission name using map if available."""
         if not permission_map:
@@ -217,10 +217,10 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _process_permission_list(
         perm_list: list[str],
-        permission_map: dict[str, str] | None,
+        permission_map: Mapping[str, str] | None,
         *,
         is_allow: bool,
-    ) -> dict[str, bool]:
+    ) -> Mapping[str, bool]:
         """Process permission list into dictionary."""
         result: dict[str, bool] = {}
         for perm in perm_list:
@@ -235,9 +235,9 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_permissions_dict(
         allow_permissions: list[str],
-        permission_map: dict[str, str] | None = None,
+        permission_map: Mapping[str, str] | None = None,
         deny_permissions: list[str] | None = None,
-    ) -> dict[str, bool]:
+    ) -> Mapping[str, bool]:
         """Build permissions dictionary from allow/deny lists."""
         allow_dict: dict[str, bool] = (
             f.when(
@@ -291,7 +291,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> dict[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL."""
         result: dict[str, t.MetadataAttributeValue] = {}
 
@@ -389,7 +389,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _check_special_value(
         rule_value: str,
-        special_values: dict[str, tuple[str, str]],
+        special_values: Mapping[str, tuple[str, str]],
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
         for key, value_tuple in u.mapper().to_dict(special_values).items():
@@ -405,9 +405,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: list[dict[str, str]],
-        subject_type_map: dict[str, str],
-        special_values: dict[str, tuple[str, str]],
+        bind_rules_data: list[Mapping[str, str]],
+        subject_type_map: Mapping[str, str],
+        special_values: Mapping[str, tuple[str, str]],
     ) -> tuple[str, str]:
         """Build ACL subject from bind rules using configurable maps."""
         if not bind_rules_data:
@@ -491,7 +491,7 @@ class FlextLdifUtilitiesACL:
     def build_aci_bind_rule(
         subject_type: str,
         subject_value: str,
-        bind_operators: dict[str, str] | None = None,
+        bind_operators: Mapping[str, str] | None = None,
         self_value: str = "ldap:///self",
         anonymous_value: str = "ldap:///anyone",
     ) -> str:
@@ -594,7 +594,7 @@ class FlextLdifUtilitiesACL:
     def _build_subject_and_permissions(
         aci_content: str,
         config: FlextLdifModelsSettings.AciParserConfig,
-    ) -> tuple[str, str, dict[str, bool]]:
+    ) -> tuple[str, str, Mapping[str, bool]]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
             aci_content,
@@ -627,8 +627,8 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         version: str,
         acl_line: str,
-        extra_patterns: dict[str, str],
-    ) -> dict[str, t.MetadataAttributeValue]:
+        extra_patterns: Mapping[str, str],
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build metadata extensions dict."""
         extensions: dict[str, t.MetadataAttributeValue] = {
             "version": version,
@@ -724,7 +724,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: dict[str, t.MetadataAttributeValue] | None,
+        extensions: Mapping[str, t.MetadataAttributeValue] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -787,7 +787,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, t.MetadataAttributeValue]
+        | Mapping[str, t.MetadataAttributeValue]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -826,7 +826,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, t.MetadataAttributeValue]
+        | Mapping[str, t.MetadataAttributeValue]
         | None,
         converted_from_key: str,
         comments_key: str,
@@ -854,7 +854,7 @@ class FlextLdifUtilitiesACL:
         return normalized + [""]  # Empty line after comments
 
     @staticmethod
-    def parser(acl_string: str) -> dict[str, str] | None:
+    def parser(acl_string: str) -> Mapping[str, str] | None:
         """Detect ACL format and return format information."""
         if not acl_string or not acl_string.strip():
             return None
@@ -869,8 +869,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oid_to_oud_permissions(
-        oid_permissions: dict[str, bool],
-    ) -> dict[str, bool]:
+        oid_permissions: Mapping[str, bool],
+    ) -> Mapping[str, bool]:
         """Map OID-specific permissions to OUD-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -882,7 +882,7 @@ class FlextLdifUtilitiesACL:
             "all",
         }
 
-        def map_perm(perm_name: str, *, perm_value: bool) -> dict[str, bool]:
+        def map_perm(perm_name: str, *, perm_value: bool) -> Mapping[str, bool]:
             """Map single permission."""
             if perm_name == "browse":
                 return {"read": perm_value, "search": perm_value}
@@ -907,8 +907,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oud_to_oid_permissions(
-        oud_permissions: dict[str, bool],
-    ) -> dict[str, bool]:
+        oud_permissions: Mapping[str, bool],
+    ) -> Mapping[str, bool]:
         """Map OUD-specific permissions to OID-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -941,7 +941,7 @@ class FlextLdifUtilitiesACL:
         patterns: Mapping[str, str | tuple[str, int]],
         *,
         defaults: Mapping[str, object] | None = None,
-    ) -> dict[str, t.Ldif.JsonValue]:
+    ) -> Mapping[str, t.Ldif.JsonValue]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.

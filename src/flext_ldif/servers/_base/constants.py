@@ -39,7 +39,7 @@ class FlextLdifServersBaseConstants(ABC):
     OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {}
 
     CATEGORIZATION_PRIORITY: ClassVar[list[str]] = []
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {}
+    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {}
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
 
     DETECTION_OID_PATTERN: ClassVar[str] = ""

@@ -58,7 +58,7 @@ class FlextLdifServersBaseEntry(
     def _hook_validate_entry_raw(
         self,
         dn: str,
-        attrs: dict[str, list[str | bytes]],
+        attrs: Mapping[str, list[str | bytes]],
     ) -> FlextResult[bool]:
         """Hook to validate raw entry before parsing."""
         _ = attrs
@@ -99,7 +99,7 @@ class FlextLdifServersBaseEntry(
     def can_handle(
         self,
         entry_dn: str,
-        attributes: dict[str, list[str]],
+        attributes: Mapping[str, list[str]],
     ) -> bool:
         """Check if this quirk can handle the entry."""
         _ = entry_dn
@@ -118,8 +118,8 @@ class FlextLdifServersBaseEntry(
 
     def _convert_raw_attributes(
         self,
-        entry_attrs: dict[str, list[str | bytes]],
-    ) -> dict[str, list[str]]:
+        entry_attrs: Mapping[str, list[str | bytes]],
+    ) -> Mapping[str, list[str]]:
         """Convert raw LDIF attributes to dict[str, list[str]] format."""
         converted_attrs: dict[str, list[str]] = {}
 
@@ -414,7 +414,7 @@ class FlextLdifServersBaseEntry(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
-        | dict[str, t.GeneralValueType],
+        | Mapping[str, t.GeneralValueType],
     ) -> (
         FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
     ):
@@ -530,7 +530,7 @@ class FlextLdifServersBaseEntry(
 
     def execute(
         self,
-        **kwargs: dict[str, t.GeneralValueType],
+        **kwargs: Mapping[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
@@ -555,7 +555,7 @@ class FlextLdifServersBaseEntry(
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: dict[str, list[str]],
+        entry_attrs: Mapping[str, list[str]],
     ) -> FlextResult[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         if core_u.is_type(entry_attrs, Mapping):

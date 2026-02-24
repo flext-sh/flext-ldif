@@ -601,7 +601,7 @@ class FlextLdifModelsDomains:
             return must_count + may_count
 
         @computed_field
-        def attribute_summary(self) -> dict[str, int]:
+        def attribute_summary(self) -> Mapping[str, int]:
             """Get summary of required and optional attributes."""
             must_count = len(self.must) if self.must else 0
             may_count = len(self.may) if self.may else 0
@@ -779,7 +779,7 @@ class FlextLdifModelsDomains:
         def to_ldap3(
             self,
             exclude: list[str] | None = None,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Convert to ldap3-compatible attributes dict.
 
             Args:
@@ -876,7 +876,7 @@ class FlextLdifModelsDomains:
                 ],
             }
 
-        def get_active_attributes(self) -> dict[str, list[str]]:
+        def get_active_attributes(self) -> Mapping[str, list[str]]:
             """Get only active attributes (exclude deleted/hidden).
 
             MEDIUM COMPLEXITY: Filters attributes based on metadata status,
@@ -910,7 +910,7 @@ class FlextLdifModelsDomains:
 
         def get_deleted_attributes(
             self,
-        ) -> dict[str, dict[str, str | list[str]]]:
+        ) -> Mapping[str, Mapping[str, str | list[str]]]:
             """Get soft-deleted attributes with their metadata.
 
             MEDIUM COMPLEXITY: Returns deleted attributes with full audit trail
@@ -1111,9 +1111,9 @@ class FlextLdifModelsDomains:
 
         def normalize_dn_references(
             self,
-            data: dict[str, str | list[str] | dict[str, str]],
+            data: Mapping[str, str | list[str] | Mapping[str, str]],
             dn_fields: list[str] | None = None,
-        ) -> FlextResult[dict[str, str | list[str] | dict[str, str]]]:
+        ) -> FlextResult[Mapping[str, str | list[str] | Mapping[str, str]]]:
             """Normalize DN references in data object to canonical case.
 
             Args:
@@ -1194,7 +1194,7 @@ class FlextLdifModelsDomains:
             self._registry.clear()
             self._case_variants.clear()
 
-        def get_stats(self) -> dict[str, int]:
+        def get_stats(self) -> Mapping[str, int]:
             """Get registry statistics.
 
             Returns:
@@ -1305,8 +1305,8 @@ class FlextLdifModelsDomains:
 
         @staticmethod
         def get_rfc_compliant_permissions(
-            perms_dict: dict[str, bool],
-        ) -> dict[str, bool]:
+            perms_dict: Mapping[str, bool],
+        ) -> Mapping[str, bool]:
             """Filter permissions dict to RFC-compliant fields only.
 
             Architecture: Server-specific permissions (like OID's "none") are excluded
@@ -1640,7 +1640,7 @@ class FlextLdifModelsDomains:
         def coerce_attributes_from_dict(
             cls,
             value: FlextLdifModelsDomains.Attributes
-            | dict[str, t.Ldif.JsonValue]
+            | Mapping[str, t.Ldif.JsonValue]
             | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
@@ -1674,8 +1674,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, t.Ldif.JsonValue],
-        ) -> dict[str, t.Ldif.JsonValue]:
+            data: Mapping[str, t.Ldif.JsonValue],
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -1743,7 +1743,7 @@ class FlextLdifModelsDomains:
             return self.dn.value
 
         @computed_field
-        def attributes_dict(self) -> dict[str, list[str]]:
+        def attributes_dict(self) -> Mapping[str, list[str]]:
             """Protocol compliance: p.Ldif.Entry.EntryProtocol requires attributes: dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
@@ -2152,7 +2152,7 @@ class FlextLdifModelsDomains:
                     return ServerValidationRules.model_validate(parsed_rules)
                 except Exception:
                     return None
-            if FlextRuntime.is_dict_like(validation_rules):
+            if u.is_dict_like(validation_rules):
                 try:
                     return ServerValidationRules.model_validate(validation_rules.root)
                 except Exception:
@@ -2230,7 +2230,7 @@ class FlextLdifModelsDomains:
         @computed_field
         def unconverted_attributes(
             self,
-        ) -> dict[str, str | list[str] | bytes]:
+        ) -> Mapping[str, str | list[str] | bytes]:
             """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
             if self.metadata is None:
                 return {}
@@ -2287,7 +2287,7 @@ class FlextLdifModelsDomains:
 
             def attributes(
                 self,
-                attributes: dict[str, str | list[str]]
+                attributes: Mapping[str, str | list[str]]
                 | FlextLdifModelsDomains.Attributes,
             ) -> Self:
                 self._attributes = attributes
@@ -2380,7 +2380,7 @@ class FlextLdifModelsDomains:
             cls,
             dn: str | FlextLdifModelsDomains.DN,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
             metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
             acls: list[FlextLdifModelsDomains.Acl] | None = None,
@@ -2418,7 +2418,7 @@ class FlextLdifModelsDomains:
         def _normalize_attributes(
             cls,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
         ) -> FlextLdifModelsDomains.Attributes:
             """Normalize attributes to Attributes object.
@@ -2455,7 +2455,7 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> dict[str, t.MetadataAttributeValue]:
+        ) -> Mapping[str, t.MetadataAttributeValue]:
             """Build extension kwargs for DynamicMetadata."""
             ext_kwargs: dict[str, t.MetadataAttributeValue] = {}
             if server_type:
@@ -2529,7 +2529,7 @@ class FlextLdifModelsDomains:
             cls,
             dn: str | FlextLdifModelsDomains.DN,
             attributes: (
-                dict[str, str | list[str]] | FlextLdifModelsDomains.Attributes
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
             ),
             metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
             acls: list[FlextLdifModelsDomains.Acl] | None = None,
@@ -2649,7 +2649,7 @@ class FlextLdifModelsDomains:
                 # Extract attributes - ldap3 provides dict with various types
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
                 entry_attrs_raw: Mapping[str, t.Ldif.JsonValue]
-                if FlextRuntime.is_dict_like(entry_attrs_payload):
+                if u.is_dict_like(entry_attrs_payload):
                     entry_attrs_raw = entry_attrs_payload.root
                 elif entry_attrs_payload.__class__ is dict:
                     entry_attrs_raw = entry_attrs_payload
@@ -2746,7 +2746,7 @@ class FlextLdifModelsDomains:
                 return []
             return list(self.attributes.keys())
 
-        def get_all_attributes(self) -> dict[str, list[str]]:
+        def get_all_attributes(self) -> Mapping[str, list[str]]:
             """Get all attributes as dictionary.
 
             Returns:
@@ -3793,7 +3793,7 @@ class FlextLdifModelsDomains:
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, t.MetadataAttributeValue]
+                | Mapping[str, t.MetadataAttributeValue]
                 | None
             ) = None,
         ) -> Self:

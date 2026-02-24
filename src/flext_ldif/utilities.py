@@ -208,7 +208,7 @@ class FlextLdifUtilities(FlextUtilities):
         class Constants(c):
             """Constants for LDIF operations."""
 
-            _CATEGORY_MAP: ClassVar[dict[str, type[Enum]]] = {
+            _CATEGORY_MAP: ClassVar[Mapping[str, type[Enum]]] = {
                 "server_type": c.Ldif.ServerTypes,
                 "encoding": c.Ldif.Encoding,
             }
@@ -332,15 +332,15 @@ class FlextLdifUtilities(FlextUtilities):
             @staticmethod
             def analyze_differences(
                 entry_attrs: Mapping[str, t.Ldif.JsonValue],
-                converted_attrs: dict[str, list[str | bytes]],
+                converted_attrs: Mapping[str, list[str | bytes]],
                 original_dn: str,
                 cleaned_dn: str,
                 normalize_attr_fn: Callable[[str], str] | None = None,
             ) -> tuple[
-                dict[str, t.MetadataAttributeValue],
-                dict[str, dict[str, t.MetadataAttributeValue]],
-                dict[str, t.MetadataAttributeValue],
-                dict[str, str],
+                Mapping[str, t.MetadataAttributeValue],
+                Mapping[str, Mapping[str, t.MetadataAttributeValue]],
+                Mapping[str, t.MetadataAttributeValue],
+                Mapping[str, str],
             ]:
                 """Analyze DN and attribute differences for round-trip support."""
                 return FlextLdifUtilitiesEntry.analyze_differences(
@@ -514,7 +514,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def process_dict_items[R](
-            items: dict[str, t.Ldif.JsonValue],
+            items: Mapping[str, t.Ldif.JsonValue],
             processor_func: Callable[..., R],
             predicate: Callable[..., bool] | None,
             filter_keys: set[str] | None,
@@ -606,7 +606,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: T
             | list[T]
             | tuple[T, ...]
-            | dict[str, T]
+            | Mapping[str, T]
             | Mapping[str, T],
             processor_or_config: Callable[[T], R] | Callable[[str, T], R] | None = None,
             *,
@@ -646,7 +646,7 @@ class FlextLdifUtilities(FlextUtilities):
                 T
                 | list[T]
                 | tuple[T, ...]
-                | dict[str, T]
+                | Mapping[str, T]
                 | Mapping[str, T]
                 | Sequence[m.Ldif.Entry]
             ),
@@ -741,7 +741,7 @@ class FlextLdifUtilities(FlextUtilities):
                 T
                 | list[T]
                 | tuple[T, ...]
-                | dict[str, T]
+                | Mapping[str, T]
                 | Mapping[str, T]
                 | Sequence[m.Ldif.Entry]
             ),
@@ -755,10 +755,10 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> (
             list[T]
             | list[R]
-            | dict[str, T]
-            | dict[str, R]
+            | Mapping[str, T]
+            | Mapping[str, R]
             | list[object]
-            | dict[str, t.Ldif.JsonValue]
+            | Mapping[str, t.Ldif.JsonValue]
             | FlextLdifResult[list[m.Ldif.Entry]]
         ):
             """Filter entries using composable filter predicates."""
@@ -831,7 +831,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: Sequence[object] | Mapping[str, object] | object,
             predicate: Callable[[object], bool],
             _mapper: Callable[[object], object] | None = None,
-        ) -> list[object] | dict[str, t.Ldif.JsonValue]:
+        ) -> list[object] | Mapping[str, t.Ldif.JsonValue]:
             """Filter using base class Collection.filter (internal helper)."""
             match items_or_entries:
                 case list() | tuple() as seq_items:
@@ -1039,7 +1039,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pipe_ldif(
             value: t.Ldif.JsonValue,
-            *ops: dict[str, t.Ldif.JsonValue]
+            *ops: Mapping[str, t.Ldif.JsonValue]
             | Callable[[t.Ldif.JsonValue], t.Ldif.JsonValue],
         ) -> t.Ldif.JsonValue:
             """LDIF-specific pipe - supports dict operations via flow()."""
@@ -1062,7 +1062,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pp(
             value: t.Ldif.JsonValue,
-            *ops: dict[str, t.Ldif.JsonValue]
+            *ops: Mapping[str, t.Ldif.JsonValue]
             | Callable[[t.Ldif.JsonValue], t.Ldif.JsonValue],
         ) -> t.Ldif.JsonValue:
             """Alias for pipe_ldif (mnemonic: pp)."""
@@ -1096,7 +1096,7 @@ class FlextLdifUtilities(FlextUtilities):
             items: Sequence[t.Ldif.JsonValue],
             *,
             key: Callable[[t.Ldif.JsonValue], t.Ldif.JsonValue],
-        ) -> dict[t.Ldif.JsonValue, list[t.Ldif.JsonValue]]:
+        ) -> Mapping[t.Ldif.JsonValue, list[t.Ldif.JsonValue]]:
             """Group by key function (generalized, mnemonic: gb)."""
             items_list = list(items)
             result: dict[t.Ldif.JsonValue, list[t.Ldif.JsonValue]] = {}
@@ -1271,7 +1271,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def pairs(
             cls,
-            d: dict[str, t.Ldif.JsonValue] | Mapping[str, t.Ldif.JsonValue],
+            d: Mapping[str, t.Ldif.JsonValue] | Mapping[str, t.Ldif.JsonValue],
         ) -> list[tuple[str, t.Ldif.JsonValue]]:
             """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
             return list(d.items())
@@ -1294,9 +1294,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def omit(
             cls,
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *keys: str,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Omit keys using FlextUtilities.map_dict() DSL (mnemonic: om)."""
             if not obj or not keys:
                 return dict(obj) if obj else {}
@@ -1324,7 +1324,7 @@ class FlextLdifUtilities(FlextUtilities):
             strategy: str = "deep",
             filter_none: bool = False,
             filter_empty: bool = False,
-        ) -> r[dict[str, t.Ldif.JsonValue]]:
+        ) -> r[Mapping[str, t.Ldif.JsonValue]]:
             """Merge multiple dicts with filtering options (mnemonic: mg)."""
             dicts_typed: tuple[Mapping[str, t.Ldif.JsonValue], ...] = dicts
             if not dicts_typed:
@@ -1390,10 +1390,10 @@ class FlextLdifUtilities(FlextUtilities):
                 conv_result = conv_builder.to_bool(default=bool_default).build()
             elif target_type == "list":  # String comparison for target_type
                 list_default: list[str] = []
-                if FlextRuntime.is_list_like(default):
+                if u.is_list_like(default):
                     list_default = [str(item) for item in default]
                 conv_result = conv_builder.str_list(default=list_default).build()
-                if predicate and FlextRuntime.is_list_like(conv_result):
+                if predicate and u.is_list_like(conv_result):
                     filtered = [item for item in conv_result if predicate(item)]
                     return filtered or conv_result
             else:
@@ -1491,7 +1491,7 @@ class FlextLdifUtilities(FlextUtilities):
                 )
             if target_type is list:
                 list_default: list[str] = []
-                if FlextRuntime.is_list_like(default):
+                if u.is_list_like(default):
                     list_default = [str(item) for item in default]
                 return (
                     FlextLdifUtilities.Ldif
@@ -1713,7 +1713,7 @@ class FlextLdifUtilities(FlextUtilities):
         def switch(
             cls,
             value: object,
-            cases: dict[object, object],
+            cases: Mapping[object, object],
             default: object | None = None,
         ) -> object:
             """Switch using dict lookup (mnemonic: sw)."""
@@ -1725,8 +1725,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def defaults(
             cls,
-            *dicts: dict[str, t.Ldif.JsonValue] | None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+            *dicts: Mapping[str, t.Ldif.JsonValue] | None,
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Defaults merge - first wins using FlextUtilities.flow() DSL (mnemonic: df)."""
             if not dicts:
                 return {}
@@ -1767,7 +1767,7 @@ class FlextLdifUtilities(FlextUtilities):
         def deep_merge(
             cls,
             *dicts: Mapping[str, t.Ldif.JsonValue] | None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Deep merge using FlextUtilities.merge() with deep strategy (mnemonic: dm)."""
             if not dicts:
                 return {}
@@ -1792,9 +1792,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def update_inplace(
             cls,
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *updates: Mapping[str, t.Ldif.JsonValue] | None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Update in-place using FlextUtilities.flow() pattern (mnemonic: ui)."""
             for update in updates:
                 if update is not None:
@@ -1830,8 +1830,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def defaults_deep(
             cls,
-            *dicts: dict[str, t.Ldif.JsonValue] | None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+            *dicts: Mapping[str, t.Ldif.JsonValue] | None,
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Deep defaults using FlextUtilities.merge() deep strategy + first wins (mnemonic: dd)."""
             if not dicts:
                 return {}
@@ -1859,7 +1859,7 @@ class FlextLdifUtilities(FlextUtilities):
             as_type: type[object] | None = None,
             default: object | None = None,
             from_start: bool = True,
-        ) -> dict[str, t.Ldif.JsonValue] | list[object] | object | None:
+        ) -> Mapping[str, t.Ldif.JsonValue] | list[object] | object | None:
             """Take value from data with type guard (mnemonic: tk)."""
             if FlextUtilities.Guards._is_str(key_or_n):
                 value: object = None
@@ -1991,7 +1991,7 @@ class FlextLdifUtilities(FlextUtilities):
             data: Mapping[str, t.Ldif.JsonValue],
             key: str,
             value: t.Ldif.JsonValue,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Associate key-value using FlextUtilities.merge() DSL (mnemonic: ac)."""
             merge_result = FlextUtilities.merge(
                 dict(data), {key: value}, strategy="override"
@@ -2007,7 +2007,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             data: Mapping[str, t.Ldif.JsonValue],
             *keys: str,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Dissociate keys using omit DSL (mnemonic: ds)."""
             return {k: v for k, v in data.items() if k not in keys}
 
@@ -2018,7 +2018,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             data: Mapping[str, t.Ldif.JsonValue],
             updates: Mapping[str, t.Ldif.JsonValue],
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Update dict using FlextUtilities.merge() (mnemonic: ud)."""
             merge_result = FlextUtilities.merge(
                 dict(data), dict(updates), strategy="override"
@@ -2034,8 +2034,10 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             obj: Mapping[str, t.Ldif.JsonValue],
             *transforms: Mapping[str, t.Ldif.JsonValue]
-            | Callable[[dict[str, t.Ldif.JsonValue]], dict[str, t.Ldif.JsonValue]],
-        ) -> dict[str, t.Ldif.JsonValue]:
+            | Callable[
+                [Mapping[str, t.Ldif.JsonValue]], Mapping[str, t.Ldif.JsonValue]
+            ],
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Evolve using FlextUtilities.flow() pattern (mnemonic: ev)."""
             result: dict[str, t.Ldif.JsonValue] = dict(obj)
             for transform in transforms:
@@ -2053,7 +2055,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def keys[T](
             cls,
-            items: dict[str, T] | r[dict[str, T]],
+            items: Mapping[str, T] | r[Mapping[str, T]],
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -2071,7 +2073,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def dict_vals[T](
             cls,
-            items: dict[str, T] | r[dict[str, T]],
+            items: Mapping[str, T] | r[Mapping[str, T]],
             *,
             default: list[T] | None = None,
         ) -> list[T]:
@@ -2089,8 +2091,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def invert(
             cls,
-            obj: dict[str, t.Ldif.JsonValue],
-        ) -> dict[str, str]:
+            obj: Mapping[str, t.Ldif.JsonValue],
+        ) -> Mapping[str, str]:
             """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
             str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
             inverted = FlextUtilities.mapper().invert_dict(str_dict)
@@ -2101,10 +2103,10 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def where(
             cls,
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *,
             predicate: Callable[[str, object], bool] | None = None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Where using FlextUtilities.filter() (mnemonic: wh)."""
             if predicate is None:
                 return dict(obj)
@@ -2138,10 +2140,10 @@ class FlextLdifUtilities(FlextUtilities):
         def props(
             cls,
             *keys: str,
-        ) -> Callable[[object], dict[str, t.Ldif.JsonValue]]:
+        ) -> Callable[[object], Mapping[str, t.Ldif.JsonValue]]:
             """Props accessor using FlextUtilities.pick() directly (mnemonic: ps)."""
 
-            def accessor(obj: object) -> dict[str, t.Ldif.JsonValue]:
+            def accessor(obj: object) -> Mapping[str, t.Ldif.JsonValue]:
                 match obj:
                     case dict() | Mapping():
                         picked = cls.pick(obj, *keys, as_dict=True)
@@ -2200,7 +2202,7 @@ class FlextLdifUtilities(FlextUtilities):
         # === COLLECTION METHODS ===
         @staticmethod
         def sum(
-            items: Sequence[int | float | object] | dict[str, int | float | object],
+            items: Sequence[int | float | object] | Mapping[str, int | float | object],
         ) -> int | float:
             """Sum of numeric items."""
             if FlextUtilities.Guards.is_type(items, dict):
@@ -2297,10 +2299,10 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def pick(
-            data: dict[str, t.Ldif.JsonValue] | object,
+            data: Mapping[str, t.Ldif.JsonValue] | object,
             *keys: str,
             as_dict: bool = True,
-        ) -> dict[str, t.Ldif.JsonValue] | list[object]:
+        ) -> Mapping[str, t.Ldif.JsonValue] | list[object]:
             """Pick keys from dict (DSL helper, mnemonic: pc)."""
             if not FlextUtilities.Guards.is_type(data, dict):
                 return {} if as_dict else []
@@ -2312,12 +2314,12 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def map_dict(
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *,
             mapper: (Callable[[str, t.Ldif.JsonValue], t.Ldif.JsonValue] | None) = None,
             key_mapper: Callable[[str], str] | None = None,
             predicate: Callable[[str, t.Ldif.JsonValue], bool] | None = None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Map dict with optional transformations (mnemonic: md)."""
             result: dict[str, t.Ldif.JsonValue] = {}
             for k, v in obj.items():
@@ -2333,8 +2335,8 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def reduce_dict(
             items: (
-                Sequence[dict[str, t.Ldif.JsonValue]]
-                | dict[str, t.Ldif.JsonValue]
+                Sequence[Mapping[str, t.Ldif.JsonValue]]
+                | Mapping[str, t.Ldif.JsonValue]
                 | t.Ldif.JsonValue
             ),
             *,
@@ -2342,8 +2344,8 @@ class FlextLdifUtilities(FlextUtilities):
                 Callable[[str, t.Ldif.JsonValue], tuple[str, t.Ldif.JsonValue]] | None
             ) = None,
             predicate: Callable[[str, t.Ldif.JsonValue], bool] | None = None,
-            default: dict[str, t.Ldif.JsonValue] | None = None,
-        ) -> dict[str, t.Ldif.JsonValue]:
+            default: Mapping[str, t.Ldif.JsonValue] | None = None,
+        ) -> Mapping[str, t.Ldif.JsonValue]:
             """Reduce dicts (mnemonic: rd)."""
             if not items:
                 return default or {}
@@ -2452,7 +2454,7 @@ class FlextLdifUtilities(FlextUtilities):
         def build(
             value: t.Ldif.JsonValue,
             *,
-            ops: dict[str, t.Ldif.JsonValue] | None = None,
+            ops: Mapping[str, t.Ldif.JsonValue] | None = None,
         ) -> t.Ldif.JsonValue:
             """Build value using operations dict (DSL helper)."""
             if ops is None:
@@ -2461,7 +2463,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def find_key(
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *,
             predicate: Callable[[str, object], bool] | None = None,
         ) -> str | None:
@@ -2477,7 +2479,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def find_val(
-            obj: dict[str, t.Ldif.JsonValue],
+            obj: Mapping[str, t.Ldif.JsonValue],
             *,
             predicate: Callable[[str, t.Ldif.JsonValue], bool] | None = None,
         ) -> t.Ldif.JsonValue:

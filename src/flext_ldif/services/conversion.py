@@ -1,9 +1,10 @@
 """Quirks conversion matrix for LDAP server translation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import ClassVar, Self, TypeGuard, TypeVar, override
 
@@ -93,7 +94,7 @@ class FlextLdifConversion(
     """Facade for universal, model-driven quirk-to-quirk conversion."""
 
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
-    _PERMISSION_KEY_MAPPING: ClassVar[dict[str, t.GeneralValueType]] = {
+    _PERMISSION_KEY_MAPPING: ClassVar[Mapping[str, t.GeneralValueType]] = {
         "read": "read",
         "write": "write",
         "add": "add",
@@ -306,7 +307,7 @@ class FlextLdifConversion(
     def _analyze_boolean_conversions(
         boolean_conversions: object,
         target_server_type: str,
-    ) -> dict[str, dict[str, str]]:
+    ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions or not u.Guards.is_type(boolean_conversions, dict):
             return {}
@@ -317,7 +318,7 @@ class FlextLdifConversion(
 
         def process_conversion(
             item: tuple[str, FlextTypes.GeneralValueType],
-        ) -> tuple[str, dict[str, str]]:
+        ) -> tuple[str, Mapping[str, str]]:
             """Process single conversion info."""
             attr_name, conv_info = item
 
@@ -398,7 +399,7 @@ class FlextLdifConversion(
     def _analyze_attribute_case(
         original_attribute_case: object,
         target_server_type: str,
-    ) -> dict[str, dict[str, t.MetadataAttributeValue]]:
+    ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -416,7 +417,7 @@ class FlextLdifConversion(
     def _analyze_dn_format(
         original_format_details: object,
         target_server_type: str,
-    ) -> dict[str, dict[str, t.MetadataAttributeValue]]:
+    ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
         """Analyze DN spacing for target compatibility."""
         pipe_result = u.Reliability.pipe(
             original_format_details,
@@ -444,7 +445,7 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: (m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None),
         target_server_type: str,
-    ) -> dict[str, str | dict[str, str | t.MetadataAttributeValue]]:
+    ) -> Mapping[str, str | Mapping[str, str | t.MetadataAttributeValue]]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: dict[
             str,
@@ -1053,7 +1054,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _perms_dict_to_model(
-        perms_dict: dict[str, bool | None],
+        perms_dict: Mapping[str, bool | None],
     ) -> m.Ldif.AclPermissions:
         """Convert permissions dict to AclPermissions model."""
         clean_dict: dict[str, bool] = {
@@ -1070,8 +1071,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _build_permissions_dict(
-        mapped_perms: dict[str, bool],
-    ) -> dict[str, bool | None]:
+        mapped_perms: Mapping[str, bool],
+    ) -> Mapping[str, bool | None]:
         """Build permissions dict with standard keys."""
         map_result = u.Ldif.map_dict(
             FlextLdifConversion._PERMISSION_KEY_MAPPING,
@@ -1091,9 +1092,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _apply_oid_to_oud_mapping(
-        orig_perms_dict: dict[str, bool],
+        orig_perms_dict: Mapping[str, bool],
         converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[dict[str, bool | None]], object],
+        perms_to_model: Callable[[Mapping[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
         orig_perms_dict_typed: dict[str, t.GeneralValueType] = dict(orig_perms_dict)
@@ -1123,9 +1124,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _apply_oud_to_oid_mapping(
-        orig_perms_dict: dict[str, bool],
+        orig_perms_dict: Mapping[str, bool],
         converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[dict[str, bool | None]], object],
+        perms_to_model: Callable[[Mapping[str, bool | None]], object],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
         mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
@@ -1145,7 +1146,7 @@ class FlextLdifConversion(
         *,
         original_acl: m.Ldif.Acl | None = None,
         converted_acl: m.Ldif.Acl | None = None,
-        orig_perms_dict: dict[str, bool] | None = None,
+        orig_perms_dict: Mapping[str, bool] | None = None,
         source_server_type: str | None = None,
         target_server_type: str | None = None,
         converted_has_permissions: bool = False,
@@ -1301,7 +1302,7 @@ class FlextLdifConversion(
     def _get_extensions_dict(
         self,
         acl: m.Ldif.Acl,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Extract extensions dict from ACL metadata."""
         get_metadata = u.mapper().prop("metadata")
         get_extensions = u.mapper().prop("extensions")
@@ -2065,7 +2066,7 @@ class FlextLdifConversion(
         """Clear DN registry for new conversion session."""
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> dict[str, bool]:
+    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> Mapping[str, bool]:
         """Check which data types a quirk supports for conversion."""
         support: t.Ldif.CommonDict.DistributionDict = {
             "attribute": 0,

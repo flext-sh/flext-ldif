@@ -1,12 +1,13 @@
 """Novell eDirectory Quirks - Stub Implementation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import base64
 import re
 from typing import ClassVar
 
-from flext_core import r
+from flext_core import r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
@@ -383,8 +384,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _build_novell_permissions_from_rights(
             self,
             rights: list[str],
-            permission_name_map: dict[str, str],
-        ) -> dict[str, bool]:
+            permission_name_map: Mapping[str, str],
+        ) -> Mapping[str, bool]:
             """Build AclPermissions dict from parsed rights list."""
             reverse_map: dict[str, str] = {v: k for k, v in permission_name_map.items()}
 
@@ -466,7 +467,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:

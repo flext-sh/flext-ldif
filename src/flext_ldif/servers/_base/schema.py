@@ -1,6 +1,7 @@
 """Base Quirk Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from typing import ClassVar, Self
 
@@ -272,7 +273,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def validate_and_track_oid(
-        metadata_extensions: dict[str, list[str] | str | bool | None],
+        metadata_extensions: Mapping[str, list[str] | str | bool | None],
         oid_value: str | None,
         oid_name: str,
     ) -> None:
@@ -314,7 +315,7 @@ class FlextLdifServersBaseSchema(
     @staticmethod
     def _extract_metadata_extensions(
         attr_definition: str,
-    ) -> dict[str, list[str] | str | bool | None]:
+    ) -> Mapping[str, list[str] | str | bool | None]:
         """Extract metadata extensions from attribute definition."""
         parser_util = FlextLdifUtilitiesParser
         if parser_util is not None:
@@ -421,7 +422,7 @@ class FlextLdifServersBaseSchema(
 
         extensions_typed: dict[str, t.MetadataAttributeValue] = {}
         for key, val in metadata_extensions.items():
-            if FlextRuntime.is_list_like(val):
+            if u.is_list_like(val):
                 list_typed: t.MetadataAttributeValue = list(val)
                 extensions_typed[key] = list_typed
             else:
@@ -607,7 +608,7 @@ class FlextLdifServersBaseSchema(
         *,
         data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None) = None,
         operation: str | None = None,
-        **kwargs: dict[str, t.GeneralValueType],
+        **kwargs: Mapping[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         if data is None:

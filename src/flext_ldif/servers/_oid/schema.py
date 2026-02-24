@@ -1,6 +1,7 @@
 """Oracle Internet Directory (OID) Quirks."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from flext_core import FlextLogger, r
 
@@ -212,7 +213,7 @@ class FlextLdifServersOidSchema(
     def _capture_attribute_values(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> dict[str, str | None]:
+    ) -> Mapping[str, str | None]:
         """Capture attribute values for metadata tracking."""
         return {
             "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
@@ -225,7 +226,7 @@ class FlextLdifServersOidSchema(
     def _add_target_metadata(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-        target_values: dict[str, str | None],
+        target_values: Mapping[str, str | None],
     ) -> None:
         """Add target metadata to attribute."""
         if not attr_data.metadata:
@@ -581,7 +582,7 @@ class FlextLdifServersOidSchema(
         *,
         validate_dependencies: bool = False,
     ) -> r[
-        dict[
+        Mapping[
             str,
             list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]

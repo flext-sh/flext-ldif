@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import override
 
@@ -47,9 +47,9 @@ class FlextLdifStatistics(
     def generate_statistics(
         self,
         categorized: m.Ldif.LdifResults.FlexibleCategories,
-        written_counts: dict[str, int],
+        written_counts: Mapping[str, int],
         output_dir: Path,
-        output_files: dict[str, str],
+        output_files: Mapping[str, str],
     ) -> r[m.Ldif.LdifResults.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
         categorized_values_list: list[object] = [

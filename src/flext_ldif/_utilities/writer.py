@@ -1,6 +1,7 @@
 """Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import base64
 from pathlib import Path
@@ -70,7 +71,7 @@ class FlextLdifUtilitiesWriter:
         content: str,
         file_path: Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[dict[str, str | int]]:
+    ) -> FlextResult[Mapping[str, str | int]]:
         """Write content to file (pure I/O operation)."""
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -270,7 +271,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: dict[str, t.GeneralValueType],
+        entry_data: Mapping[str, t.GeneralValueType],
     ) -> list[tuple[str, t.GeneralValueType]] | None:
         """Determine attribute processing order from entry metadata."""
         if "_metadata" not in entry_data:
@@ -567,7 +568,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: dict[str, t.GeneralValueType],
+        changetype_config: Mapping[str, t.GeneralValueType],
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(

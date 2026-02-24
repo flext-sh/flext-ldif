@@ -138,7 +138,7 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def update(self, other: dict[str, t.MetadataAttributeValue]) -> None:
+        def update(self, other: Mapping[str, t.MetadataAttributeValue]) -> None:
             """Update with values from another dict."""
             for key, value in other.items():
                 setattr(self, key, value)
@@ -155,7 +155,7 @@ class FlextLdifModelsMetadata:
                 return dict(self.items()) == other
             return NotImplemented
 
-        def to_dict(self) -> dict[str, t.MetadataAttributeValue]:
+        def to_dict(self) -> Mapping[str, t.MetadataAttributeValue]:
             """Convert to dict for serialization."""
             return dict(self.items())
 

@@ -1,6 +1,7 @@
 """Base Quirk Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from typing import ClassVar
@@ -132,14 +133,14 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _extract_acl_parameters(
         self,
-        kwargs: dict[
+        kwargs: Mapping[
             str,
             str
             | int
             | float
             | bool
             | list[str]
-            | dict[str, str | int | float | bool | list[str] | None]
+            | Mapping[str, str | int | float | bool | list[str] | None]
             | None,
         ],
     ) -> tuple[
@@ -182,7 +183,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: dict[str, t.Ldif.JsonValue],
+        kwargs: Mapping[str, t.Ldif.JsonValue],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -193,7 +194,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: dict[str, t.Ldif.JsonValue],
+        kwargs: Mapping[str, t.Ldif.JsonValue],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
@@ -273,7 +274,7 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: dict[str, t.MetadataAttributeValue] | None = None,
+        extensions: Mapping[str, t.MetadataAttributeValue] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
         all_extensions: dict[str, t.MetadataAttributeValue] = {
@@ -350,9 +351,9 @@ class FlextLdifServersBaseSchemaAcl(
 
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: dict[str, list[str]],
+        rfc_acl_attrs: Mapping[str, list[str]],
         target_server: str,
-    ) -> FlextResult[dict[str, list[str]]]:
+    ) -> FlextResult[Mapping[str, list[str]]]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
         return FlextResult[dict[str, list[str]]].ok(rfc_acl_attrs)

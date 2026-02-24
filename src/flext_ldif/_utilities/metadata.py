@@ -66,7 +66,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> Mapping[str, t.GeneralValueType]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -78,7 +78,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: dict[str, t.GeneralValueType],
+        metadata: Mapping[str, t.GeneralValueType],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
@@ -89,7 +89,7 @@ class FlextLdifUtilitiesMetadata:
             if u.Guards.is_type(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
-        if FlextRuntime.is_list_like(value_for_check):
+        if u.is_list_like(value_for_check):
             value_for_check.append(item_data)
             metadata[metadata_key] = value_for_check
         else:
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: dict[str, t.GeneralValueType],
+        metadata: Mapping[str, t.GeneralValueType],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
@@ -108,8 +108,8 @@ class FlextLdifUtilitiesMetadata:
             if u.Guards.is_type(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
-        if FlextRuntime.is_dict_like(value_for_dict_check):
-            if FlextRuntime.is_dict_like(item_data):
+        if u.is_dict_like(value_for_dict_check):
+            if u.is_dict_like(item_data):
                 value_for_dict_check.update(item_data)
                 metadata[metadata_key] = value_for_dict_check
             else:
@@ -119,7 +119,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: dict[str, t.GeneralValueType],
+        metadata: Mapping[str, t.GeneralValueType],
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -206,11 +206,11 @@ class FlextLdifUtilitiesMetadata:
         for k, v in metadata.items():
             if u.Guards.is_type(v, (str, bool, int, float)) or v is None:
                 metadata_typed[k] = v
-            elif FlextRuntime.is_list_like(v):
+            elif u.is_list_like(v):
                 metadata_typed[k] = FlextLdifUtilitiesMetadata._normalize_mapping_list(
                     v
                 )
-            elif FlextRuntime.is_dict_like(v):
+            elif u.is_dict_like(v):
                 safe_dict_vals: dict[
                     str,
                     str
@@ -224,7 +224,7 @@ class FlextLdifUtilitiesMetadata:
                 for k_inner, v_inner in v.items():
                     if not u.Guards.is_type(k_inner, str):
                         continue
-                    if FlextRuntime.is_list_like(v_inner):
+                    if u.is_list_like(v_inner):
                         safe_dict_vals[k_inner] = (
                             FlextLdifUtilitiesMetadata._normalize_dict_list(v_inner)
                         )
@@ -247,7 +247,7 @@ class FlextLdifUtilitiesMetadata:
                 for mk, mv in v.items():
                     if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(mv):
                         nested_dict[str(mk)] = mv
-                    elif FlextRuntime.is_list_like(mv):
+                    elif u.is_list_like(mv):
                         nested_dict[str(mk)] = (
                             FlextLdifUtilitiesMetadata._normalize_mapping_list(mv)
                         )
@@ -296,7 +296,7 @@ class FlextLdifUtilitiesMetadata:
         )
 
     @staticmethod
-    def _extract_prefix_details(definition: str) -> dict[str, str]:
+    def _extract_prefix_details(definition: str) -> Mapping[str, str]:
         """Extract attribute/ObjectClass prefix details."""
         details: dict[str, str] = {}
         if "attributetypes:" in definition.lower():
@@ -330,7 +330,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_oid_details(definition: str) -> dict[str, str]:
+    def _extract_oid_details(definition: str) -> Mapping[str, str]:
         """Extract OID and spacing details."""
         details: dict[str, str] = {}
         oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
@@ -342,7 +342,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_syntax_details(
         definition: str,
-    ) -> dict[str, bool | str | None]:
+    ) -> Mapping[str, bool | str | None]:
         """Extract SYNTAX formatting details."""
         details: dict[str, bool | str | None] = {}
         syntax_match = re.search(
@@ -373,7 +373,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_name_details(definition: str) -> dict[str, str | list[str]]:
+    def _extract_name_details(definition: str) -> Mapping[str, str | list[str]]:
         """Extract NAME format details."""
         details: dict[str, str | list[str]] = {}
         name_match = re.search(
@@ -417,7 +417,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_desc_details(definition: str) -> dict[str, str | bool]:
+    def _extract_desc_details(definition: str) -> Mapping[str, str | bool]:
         """Extract DESC details."""
         details: dict[str, str | bool] = {}
         desc_match = re.search(
@@ -441,7 +441,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_x_origin_details(definition: str) -> dict[str, str | bool | None]:
+    def _extract_x_origin_details(definition: str) -> Mapping[str, str | bool | None]:
         """Extract X-ORIGIN details."""
         details: dict[str, str | bool | None] = {}
         x_origin_match = re.search(
@@ -471,7 +471,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_obsolete_details(
         definition: str,
-    ) -> dict[str, bool | int | str | None]:
+    ) -> Mapping[str, bool | int | str | None]:
         """Extract OBSOLETE details."""
         details: dict[str, bool | int | str | None] = {}
         obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
@@ -489,7 +489,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_field_order(definition: str) -> tuple[list[str], dict[str, int]]:
+    def _extract_field_order(definition: str) -> tuple[list[str], Mapping[str, int]]:
         """Extract field order and positions."""
         field_patterns = {
             "OID": r"\(\s*([0-9.]+)",
@@ -517,9 +517,9 @@ class FlextLdifUtilitiesMetadata:
     def _extract_spacing_between_fields(
         definition: str,
         field_order: list[str],
-        field_positions: dict[str, int],
-        field_patterns: dict[str, str],
-    ) -> dict[str, str]:
+        field_positions: Mapping[str, int],
+        field_patterns: Mapping[str, str],
+    ) -> Mapping[str, str]:
         """Extract spacing between fields."""
         spacing_between: dict[str, str] = {}
         for i in range(len(field_order) - 1):
@@ -540,7 +540,7 @@ class FlextLdifUtilitiesMetadata:
         return spacing_between
 
     @staticmethod
-    def _extract_leading_trailing_spaces(definition: str) -> dict[str, str]:
+    def _extract_leading_trailing_spaces(definition: str) -> Mapping[str, str]:
         """Extract leading and trailing spaces."""
         details: dict[str, str] = {}
         trailing_match = re.search(r"\)\s*$", definition)
@@ -552,7 +552,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_matching_rule_details(definition: str) -> dict[str, bool | str]:
+    def _extract_matching_rule_details(definition: str) -> Mapping[str, bool | str]:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
         details: dict[str, bool | str] = {}
 
@@ -595,7 +595,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_sup_details(definition: str) -> dict[str, bool | str]:
+    def _extract_sup_details(definition: str) -> Mapping[str, bool | str]:
         """Extract SUP details."""
         details: dict[str, bool | str] = {}
         sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
@@ -614,7 +614,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_single_value_details(definition: str) -> dict[str, bool | str]:
+    def _extract_single_value_details(definition: str) -> Mapping[str, bool | str]:
         """Extract SINGLE-VALUE details."""
         details: dict[str, bool | str] = {}
         single_value_match = re.search(r"SINGLE-VALUE", definition, re.IGNORECASE)
@@ -632,7 +632,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_all_schema_details(
         definition: str,
-    ) -> dict[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Extract all schema formatting details into combined dict."""
         combined: dict[str, t.MetadataAttributeValue] = {}
         extractors = [
@@ -650,17 +650,17 @@ class FlextLdifUtilitiesMetadata:
         ]
         for extractor in extractors:
             extracted_raw = extractor(definition)
-            if FlextRuntime.is_dict_like(extracted_raw):
+            if u.is_dict_like(extracted_raw):
                 for key, value in extracted_raw.items():
                     if not u.Guards.is_type(key, str):
                         continue
                     if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
                         combined[key] = value
-                    elif FlextRuntime.is_list_like(value):
+                    elif u.is_list_like(value):
                         combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
                             value
                         )
-                    elif FlextRuntime.is_dict_like(value):
+                    elif u.is_dict_like(value):
                         combined[key] = str(value)
                     else:
                         combined[key] = str(value)
@@ -696,7 +696,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _build_schema_format_model(
         definition: str,
-        combined: dict[str, t.MetadataAttributeValue],
+        combined: Mapping[str, t.MetadataAttributeValue],
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -791,7 +791,7 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> dict[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif.MetadataKeys
         differences: dict[str, t.MetadataAttributeValue] = {
@@ -922,7 +922,7 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
         _original_acl_format: str | None = None,
         **extra: t.ScalarValue,
-    ) -> dict[str, str | int | bool]:
+    ) -> Mapping[str, str | int | bool]:
         """Build metadata for ACL parsing as a dictionary."""
         result: dict[str, str | int | bool] = {
             "quirk_type": quirk_type,
@@ -936,7 +936,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> dict[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build metadata extensions for entry as a dictionary."""
         return {
             "quirk_type": quirk_type,
@@ -961,7 +961,7 @@ class FlextLdifUtilitiesMetadata:
     def build_rfc_compliance_metadata(
         quirk_type: str,
         **extra: t.GeneralValueType,
-    ) -> dict[str, str | bool | list[str] | dict[str, str | list[str]]]:
+    ) -> Mapping[str, str | bool | list[str] | Mapping[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary."""
         result: dict[str, str | bool | list[str] | dict[str, str | list[str]]] = {
             "quirk_type": quirk_type,
@@ -969,11 +969,11 @@ class FlextLdifUtilitiesMetadata:
         }
         if "rfc_violations" in extra:
             violations = extra["rfc_violations"]
-            if FlextRuntime.is_list_like(violations):
+            if u.is_list_like(violations):
                 result["rfc_violations"] = [str(v) for v in violations]
         if "attribute_conflicts" in extra:
             conflicts = extra["attribute_conflicts"]
-            if FlextRuntime.is_list_like(conflicts):
+            if u.is_list_like(conflicts):
                 result["has_attribute_conflicts"] = len(conflicts) > 0
         return result
 

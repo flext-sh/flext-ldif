@@ -1,11 +1,12 @@
 """Relaxed Quirks for Lenient LDIF Processing."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from typing import ClassVar
 
-from flext_core import r
+from flext_core import r, u
 from flext_core.loggings import FlextLogger
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -617,7 +618,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Accept any entry in relaxed mode."""
             _ = entry_dn
@@ -627,7 +628,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: dict[str, list[str | bytes]],
+            entry_attrs: Mapping[str, list[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse entry with best-effort approach."""
             try:

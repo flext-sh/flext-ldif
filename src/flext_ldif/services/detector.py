@@ -1,6 +1,7 @@
 """Detector Service - LDAP Server Type Auto-Detection from LDIF Content."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from pathlib import Path
@@ -159,7 +160,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         attributes: list[str] | frozenset[str],
         content: str,
         content_lower: str,
-        scores: dict[str, int],
+        scores: Mapping[str, int],
         *,
         case_sensitive: bool = False,
         objectclasses: list[str] | frozenset[str] | None = None,
@@ -182,7 +183,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         constants: type[ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
-        scores: dict[str, int],
+        scores: Mapping[str, int],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -210,7 +211,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         server_type: str,
         constants: type[ServerDetectionConstants] | None,
         content_lower: str,
-        scores: dict[str, int],
+        scores: Mapping[str, int],
         *,
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
@@ -226,7 +227,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
             scores[server_type] += weight
 
-    def _calculate_scores(self, content: str) -> dict[str, int]:
+    def _calculate_scores(self, content: str) -> Mapping[str, int]:
         """Calculate detection scores for each server type."""
         scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.Server.get_server_type_value("GENERIC")] = 1
@@ -326,7 +327,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
     def _determine_server_type(
         self,
-        scores: dict[str, int],
+        scores: Mapping[str, int],
     ) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         if not scores:

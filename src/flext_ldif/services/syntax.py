@@ -1,6 +1,7 @@
 """LDIF Syntax Service - RFC 4517 Attribute Syntax Validation and Resolution."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import logging
 import re
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service."""
 
-    _VALIDATOR_MAP: ClassVar[dict[str, Callable[[str], r[bool]]]] = {
+    _VALIDATOR_MAP: ClassVar[Mapping[str, Callable[[str], r[bool]]]] = {
         "boolean": lambda v: r[bool].ok(v.upper() in {"TRUE", "FALSE"}),
         "integer": lambda v: r[bool].ok(
             v != "not_a_number"

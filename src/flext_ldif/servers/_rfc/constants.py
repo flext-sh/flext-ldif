@@ -99,7 +99,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "acl",
     ]
 
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {
         "users": frozenset(
             [
                 "person",
@@ -159,13 +159,13 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ASCII_MAX_CHAR: ClassVar[int] = 0x7F
     ALLOWED_CONTROL_CHARS: ClassVar[str] = "\t\n\r"
 
-    MATCHING_RULE_TO_RFC: ClassVar[dict[str, str]] = {}
-    SYNTAX_OID_TO_RFC: ClassVar[dict[str, str]] = {}
-    BOOLEAN_CONVERSION: ClassVar[dict[str, str]] = {}
-    BOOLEAN_DENORMALIZATION: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_NAME_TO_RFC: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_NAME_FROM_RFC: ClassVar[dict[str, str]] = {}
+    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = {}
+    SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = {}
+    BOOLEAN_CONVERSION: ClassVar[Mapping[str, str]] = {}
+    BOOLEAN_DENORMALIZATION: ClassVar[Mapping[str, str]] = {}
+    ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = {}
+    ATTRIBUTE_NAME_TO_RFC: ClassVar[Mapping[str, str]] = {}
+    ATTRIBUTE_NAME_FROM_RFC: ClassVar[Mapping[str, str]] = {}
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
 
     ACL_PREFIX_DN: ClassVar[str] = "dn:"

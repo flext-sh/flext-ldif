@@ -488,7 +488,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE)."""
             if not entry_dn:

@@ -1615,7 +1615,7 @@ class FlextLdifConstants(FlextConstants):
         class ServerTypesMappings:
             """Server type mappings and aliases (separate from enum to avoid conflicts)."""
 
-            _LONG_NAMES_DICT: ClassVar[dict[str, str]] = {
+            _LONG_NAMES_DICT: ClassVar[Mapping[str, str]] = {
                 "oid": "oid",
                 "oud": "oud",
                 "openldap": "openldap",
@@ -1632,12 +1632,12 @@ class FlextLdifConstants(FlextConstants):
             }
             LONG_NAMES: Final[Mapping[str, str]] = MappingProxyType(_LONG_NAMES_DICT)
 
-            _FROM_LONG_DICT: ClassVar[dict[str, str]] = {
+            _FROM_LONG_DICT: ClassVar[Mapping[str, str]] = {
                 v: k for k, v in _LONG_NAMES_DICT.items()
             }
             FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
 
-            _ALIASES_DICT: ClassVar[dict[str, str]] = {
+            _ALIASES_DICT: ClassVar[Mapping[str, str]] = {
                 "ad": "ad",
                 "389": "ds389",
                 "389ds": "ds389",
@@ -2026,9 +2026,9 @@ class FlextLdifConstants(FlextConstants):
                 "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
             })
 
-            NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
+            NAME_TO_OID: Final[Mapping[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
 
-            NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
+            NAME_TO_TYPE_CATEGORY: Final[Mapping[str, str]] = {
                 "integer": "integer",
                 "boolean": "boolean",
                 "distinguished_name": "dn",
@@ -2198,12 +2198,12 @@ class FlextLdifConstants(FlextConstants):
         class AclSubjectTransformations:
             """Subject transformation mappings for ACL conversions."""
 
-            DS389_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            DS389_TO_RFC_SUBJECTS: Final[Mapping[str, tuple[str, str]]] = {
                 "groupdn": ("group_dn", "{value}"),
                 "userdn": ("user_dn", "{value}"),
             }
 
-            UNIVERSAL_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            UNIVERSAL_SUBJECTS: Final[Mapping[str, tuple[str, str]]] = {
                 "anonymous": ("anonymous", "*"),
                 "self": ("self", "self"),
                 "all": ("all", "*"),
@@ -2215,7 +2215,7 @@ class FlextLdifConstants(FlextConstants):
         class SchemaConversionMappings:
             """Schema attribute and objectClass conversion mappings."""
 
-            MATCHING_RULE_NORMALIZATIONS: Final[dict[str, str]] = {
+            MATCHING_RULE_NORMALIZATIONS: Final[Mapping[str, str]] = {
                 "caseIgnoreIA5SubstringsMatch": "caseIgnoreIA5Match",
                 "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
             }
@@ -2231,7 +2231,7 @@ class FlextLdifConstants(FlextConstants):
                 "aclEntry",
             ]
 
-            SERVER_QUIRKS: Final[dict[str, list[str]]] = {
+            SERVER_QUIRKS: Final[Mapping[str, list[str]]] = {
                 "oid": [
                     "orclaci",
                     "orclentrylevelaci",

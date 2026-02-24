@@ -1,6 +1,7 @@
 """Oracle Internet Directory (OID) Quirks."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import json
 import re
@@ -55,7 +56,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         rfc_subject_type: str
         oid_subject_value: str
         target_dn: str
-        perms_dict: dict[str, bool]
+        perms_dict: Mapping[str, bool]
         target_attrs: list[str] | None = None
         acl_filter: str | None = None
         acl_constraint: str | None = None
@@ -184,7 +185,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return None
 
     @staticmethod
-    def _parse_oid_permissions(content: str) -> dict[str, bool]:
+    def _parse_oid_permissions(content: str) -> Mapping[str, bool]:
         """Parse OID ACL permissions clause."""
         permissions: dict[str, bool] = {}
         const = _OidConstants
@@ -305,14 +306,14 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         self,
         metadata: (
             m.Ldif.QuirkMetadata
-            | dict[
+            | Mapping[
                 str,
                 str
                 | int
                 | float
                 | bool
                 | list[str]
-                | dict[str, str | list[str]]
+                | Mapping[str, str | list[str]]
                 | None,
             ]
             | None
@@ -332,18 +333,18 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         self,
         metadata: (
             m.Ldif.QuirkMetadata
-            | dict[
+            | Mapping[
                 str,
                 str
                 | int
                 | float
                 | bool
                 | list[str]
-                | dict[str, str | list[str]]
+                | Mapping[str, str | list[str]]
                 | None,
             ]
         ),
-    ) -> dict[str, str | int | float | bool | list[str] | None]:
+    ) -> Mapping[str, str | int | float | bool | list[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
@@ -354,7 +355,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _format_extensions(
         self,
-        meta_extensions: dict[str, str | int | float | bool | list[str] | None],
+        meta_extensions: Mapping[str, str | int | float | bool | list[str] | None],
     ) -> list[str]:
         """Format extension values based on metadata key type."""
         extensions: list[str] = []
@@ -409,11 +410,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         value: (
             m.Ldif.AclSubject
             | m.Ldif.QuirkMetadata
-            | dict[str, str | int | bool]
+            | Mapping[str, str | int | bool]
             | str
             | None
         ),
-    ) -> dict[str, str | int | bool]:
+    ) -> Mapping[str, str | int | bool]:
         """Normalize value to dict for model validation."""
         if u.is_type(value, "dict"):
             return value
@@ -428,8 +429,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
-    ) -> dict[str, bool]:
+        permissions: (m.Ldif.AclPermissions | Mapping[str, bool] | None),
+    ) -> Mapping[str, bool]:
         """Normalize permissions to dict for formatting."""
         if not permissions:
             return {}
@@ -472,18 +473,18 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _prepare_subject_and_permissions_for_write(
         self,
-        acl_subject: (m.Ldif.AclSubject | dict[str, str | int | bool]),
-        acl_permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
+        acl_subject: (m.Ldif.AclSubject | Mapping[str, str | int | bool]),
+        acl_permissions: (m.Ldif.AclPermissions | Mapping[str, bool] | None),
         metadata: (
             m.Ldif.QuirkMetadata
-            | dict[
+            | Mapping[
                 str,
                 str
                 | int
                 | float
                 | bool
                 | list[str]
-                | dict[str, str | list[str]]
+                | Mapping[str, str | list[str]]
                 | None,
             ]
             | None
@@ -545,7 +546,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _build_oid_acl_metadata(
         self,
         config: FlextLdifServersOidAcl.OidAclMetadataConfig,
-    ) -> dict[str, str | int | bool]:
+    ) -> Mapping[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str | None = (
             json.dumps(config.target_attrs) if config.target_attrs else None
@@ -723,9 +724,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: dict[str, list[str]],
+        rfc_acl_attrs: Mapping[str, list[str]],
         target_server: str = "oid",
-    ) -> FlextResult[dict[str, list[str]]]:
+    ) -> FlextResult[Mapping[str, list[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
         return FlextResult.ok(rfc_acl_attrs)

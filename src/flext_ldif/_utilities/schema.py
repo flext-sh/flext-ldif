@@ -39,7 +39,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_name(
         name_value: str | None,
         suffixes_to_remove: list[str] | None = None,
-        char_replacements: dict[str, str] | None = None,
+        char_replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""
         if not name_value or name_value.__class__ is not str:
@@ -66,9 +66,9 @@ class FlextLdifUtilitiesSchema:
         equality: str | None,
         substr: str | None = None,
         *,
-        replacements: dict[str, str] | None = None,
-        substr_rules_in_equality: dict[str, str] | None = None,
-        normalized_substr_values: dict[str, str] | None = None,
+        replacements: Mapping[str, str] | None = None,
+        substr_rules_in_equality: Mapping[str, str] | None = None,
+        normalized_substr_values: Mapping[str, str] | None = None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
         result_equality = equality
@@ -100,7 +100,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_syntax_oid(
         syntax: str | None,
         *,
-        replacements: dict[str, str] | None = None,
+        replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:
@@ -323,7 +323,7 @@ class FlextLdifUtilitiesSchema:
     def _apply_field_transforms(
         transformed: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
-        field_transforms: dict[
+        field_transforms: Mapping[
             str,
             Callable[
                 [FlextTypes.GeneralValueType],
@@ -406,7 +406,7 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         field_transforms: (
-            dict[
+            Mapping[
                 str,
                 Callable[
                     [FlextTypes.GeneralValueType],
@@ -524,8 +524,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: dict[str, t.MetadataAttributeValue] | None = None,
-    ) -> dict[str, t.MetadataAttributeValue]:
+        additional_extensions: Mapping[str, t.MetadataAttributeValue] | None = None,
+    ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
         extensions: dict[str, t.MetadataAttributeValue] = {}
@@ -584,7 +584,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> dict[str, t.MetadataAttributeValue] | None:
+    ) -> Mapping[str, t.MetadataAttributeValue] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -605,7 +605,7 @@ class FlextLdifUtilitiesSchema:
         )
         result_dict: dict[str, t.MetadataAttributeValue] = {}
         for key, val in syntax_extensions.items():
-            if FlextRuntime.is_list_like(val):
+            if u.is_list_like(val):
                 list_typed: t.MetadataAttributeValue = list(val)
                 result_dict[key] = list_typed
             else:
@@ -664,14 +664,14 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _convert_metadata_value(
         value: t.MetadataAttributeValue,
-    ) -> t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]]:
+    ) -> t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]:
         if value is None or value.__class__ in (str, int, float, bool):
             return value
         if value.__class__ is datetime:
             return value.isoformat()
-        if FlextRuntime.is_list_like(value):
+        if u.is_list_like(value):
             return _convert_sequence_to_str_list(value)
-        if FlextRuntime.is_dict_like(value):
+        if u.is_dict_like(value):
             converted_nested: dict[str, t.ScalarValue | list[str]] = {}
             mapping_value: Mapping[str, t.MetadataAttributeValue] = value.root
             for k, v_raw in mapping_value.items():
@@ -680,9 +680,9 @@ class FlextLdifUtilitiesSchema:
                     converted_nested[k_str] = v_raw
                 elif v_raw.__class__ is datetime:
                     converted_nested[k_str] = v_raw.isoformat()
-                elif FlextRuntime.is_list_like(v_raw):
+                elif u.is_list_like(v_raw):
                     converted_nested[k_str] = _convert_sequence_to_str_list(v_raw)
-                elif FlextRuntime.is_dict_like(v_raw):
+                elif u.is_dict_like(v_raw):
                     converted_nested[k_str] = str(dict(v_raw.root.items()))
                 else:
                     converted_nested[k_str] = str(v_raw)
@@ -694,7 +694,7 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> r[Mapping[str, FlextTypes.GeneralValueType]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
@@ -857,7 +857,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _convert_metadata_extensions(
         extensions_raw: Mapping[str, t.MetadataAttributeValue],
-    ) -> dict[str, t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]]]:
+    ) -> Mapping[str, t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]]:
         return {
             key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)
             for key, raw_value in extensions_raw.items()
@@ -866,7 +866,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Parse RFC 4512 objectClass definition into structured data."""
         oid, name, desc = FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(
             oc_definition,
@@ -948,7 +948,7 @@ class FlextLdifUtilitiesSchema:
         name_values_ = getattr(schema_details, "name_values", [])
         name_values: list[str] = (
             [str(v) for v in name_values_]
-            if FlextRuntime.is_list_like(name_values_)
+            if u.is_list_like(name_values_)
             else []
         )
 
@@ -1032,7 +1032,7 @@ class FlextLdifUtilitiesSchema:
             "field_order",
             None,
         )
-        if field_order_ and FlextRuntime.is_list_like(field_order_):
+        if field_order_ and u.is_list_like(field_order_):
             return [str(item) for item in field_order_]
         return None
 
@@ -1153,7 +1153,7 @@ class FlextLdifUtilitiesSchema:
         if not attr_list:
             return None
 
-        if FlextRuntime.is_list_like(attr_list):
+        if u.is_list_like(attr_list):
             attr_strs = [str(item) for item in attr_list]
             if len(attr_strs) == 1:
                 return f"{prefix} {attr_strs[0]}"
@@ -1169,7 +1169,7 @@ class FlextLdifUtilitiesSchema:
         if not sup_value:
             return None
 
-        if FlextRuntime.is_list_like(sup_value):
+        if u.is_list_like(sup_value):
             sup_strs = [str(item) for item in sup_value]
             return f"SUP ( {' $ '.join(sup_strs)} )"
 
@@ -1234,7 +1234,7 @@ class FlextLdifUtilitiesSchema:
                 "field_order",
                 None,
             )
-            if field_order_ and FlextRuntime.is_list_like(field_order_):
+            if field_order_ and u.is_list_like(field_order_):
                 field_order = [str(item) for item in field_order_]
 
         FlextLdifUtilitiesSchema._build_obsolete_part(
@@ -1316,7 +1316,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            if FlextRuntime.is_list_like(oc_data.sup):
+            if u.is_list_like(oc_data.sup):
                 sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 if len(sup_list_str) == 1:
                     parts.append(f"SUP {sup_list_str[0]}")
@@ -1333,7 +1333,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            if FlextRuntime.is_list_like(oc_data.must):
+            if u.is_list_like(oc_data.must):
                 must_list_str: list[str] = [str(item) for item in oc_data.must]
                 if len(must_list_str) == 1:
                     parts.append(f"MUST {must_list_str[0]}")
@@ -1344,7 +1344,7 @@ class FlextLdifUtilitiesSchema:
                 parts.append(f"MUST {oc_data.must}")
 
         if oc_data.may:
-            if FlextRuntime.is_list_like(oc_data.may):
+            if u.is_list_like(oc_data.may):
                 may_list_str: list[str] = [str(item) for item in oc_data.may]
                 if len(may_list_str) == 1:
                     parts.append(f"MAY {may_list_str[0]}")
@@ -1459,7 +1459,7 @@ class FlextLdifUtilitiesSchema:
 
         if attr_list.__class__ is str:
             attrs = [attr_list]
-        elif FlextRuntime.is_list_like(attr_list):
+        elif u.is_list_like(attr_list):
             attrs = [str(a) for a in attr_list]
         else:
             return []

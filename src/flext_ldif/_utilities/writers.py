@@ -287,7 +287,7 @@ class FlextLdifUtilitiesWriters:
                 if transform_sup_hook and objectclass.sup:
                     # Convert sup to list[str] if it's a string
                     sup_value = objectclass.sup
-                    if FlextRuntime.is_list_like(sup_value):
+                    if u.is_list_like(sup_value):
                         sup_list = [str(item) for item in sup_value]
                     elif issubclass(sup_value.__class__, str):
                         sup_list = [sup_value]

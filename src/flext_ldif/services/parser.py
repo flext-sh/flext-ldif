@@ -1,6 +1,7 @@
 """Parser service for LDIF content."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from pathlib import Path
 from typing import override
@@ -115,13 +116,13 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
 
     def parse_ldap3_results(
         self,
-        results: list[tuple[str, dict[str, list[str]]]],
+        results: list[tuple[str, Mapping[str, list[str]]]],
         server_type: str | None = None,
     ) -> r[m.Ldif.LdifResults.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first."""
         ldif_lines: list[str] = []
 
-        def convert_entry(dn_attrs: tuple[str, dict[str, list[str]]]) -> list[str]:
+        def convert_entry(dn_attrs: tuple[str, Mapping[str, list[str]]]) -> list[str]:
             """Convert single entry to LDIF lines."""
             dn, attrs = dn_attrs
             entry_lines: list[str] = [f"dn: {dn}"]

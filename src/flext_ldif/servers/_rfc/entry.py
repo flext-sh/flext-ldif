@@ -1,6 +1,7 @@
 """RFC 2849 Compliant LDIF Entry Parser and Writer for flext-ldif."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from flext_core import FlextLogger, FlextResult, r, u as core_u
 
@@ -22,7 +23,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def can_handle(
         self,
         entry_dn: str,
-        attributes: dict[str, list[str]],
+        attributes: Mapping[str, list[str]],
     ) -> bool:
         """Check if this RFC quirk can handle the entry."""
         if not entry_dn or not entry_dn.strip():
@@ -119,7 +120,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def _create_entry(
         self,
         dn: str,
-        attributes: dict[str, list[str]],
+        attributes: Mapping[str, list[str]],
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
         if not dn or not core_u.is_type(dn, str):

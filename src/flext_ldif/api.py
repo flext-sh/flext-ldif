@@ -34,7 +34,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
-    _init_config_overrides: ClassVar[dict[str, t.Ldif.JsonValue] | None] = None
+    _init_config_overrides: ClassVar[Mapping[str, t.Ldif.JsonValue] | None] = None
     _processing_service: FlextLdifProcessing | None
     _acl_service: FlextLdifAcl | None
     _parser_service: FlextLdifParser | None
@@ -117,7 +117,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     @property
     @computed_field
-    def service_stats(self) -> dict[str, bool]:
+    def service_stats(self) -> Mapping[str, bool]:
         """Pydantic 2 computed field showing service initialization status."""
         return {
             "parser": self._parser_service is not None,
@@ -285,7 +285,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_dn(
         self,
-        entry: m.Ldif.Entry | dict[str, str | list[str]],
+        entry: m.Ldif.Entry | Mapping[str, str | list[str]],
     ) -> r[str]:
         """Get entry DN string."""
         return FlextLdifEntries.get_entry_dn(entry)
@@ -293,7 +293,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def get_entry_attributes(
         self,
         entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.JsonValue],
-    ) -> r[dict[str, list[str]]]:
+    ) -> r[Mapping[str, list[str]]]:
         """Get entry attributes dictionary."""
         match entry:
             case m.Ldif.Entry() as ldif_entry:
@@ -374,7 +374,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def create_entry(
         self,
         dn: str,
-        attributes: dict[str, str | list[str]],
+        attributes: Mapping[str, str | list[str]],
         objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a new Entry model."""

@@ -1,6 +1,7 @@
 """RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from typing import Self, overload
 
@@ -32,7 +33,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _normalize_permission(
         self,
         permission: str,
-        _metadata: dict[str, t.MetadataAttributeValue],
+        _metadata: Mapping[str, t.MetadataAttributeValue],
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return permission, None
@@ -41,7 +42,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: dict[str, t.MetadataAttributeValue],
+        _metadata: Mapping[str, t.MetadataAttributeValue],
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -54,7 +55,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         feature_id: str,
         original_value: str,
-        metadata: dict[str, t.MetadataAttributeValue],
+        metadata: Mapping[str, t.MetadataAttributeValue],
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         meta_key = "unsupported_features"

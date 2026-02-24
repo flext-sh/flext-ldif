@@ -1,6 +1,7 @@
 """Entries Service - direct typed entry operations."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 from typing import Self
 
@@ -92,7 +93,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[list[m.Ldif.Entry]].ok(results)
 
     @staticmethod
-    def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> r[str]:
+    def _extract_dn_from_dict(entry: Mapping[str, str | list[str]]) -> r[str]:
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
@@ -104,7 +105,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
-    def get_entry_dn(entry: m.Ldif.Entry | dict[str, str | list[str]]) -> r[str]:
+    def get_entry_dn(entry: m.Ldif.Entry | Mapping[str, str | list[str]]) -> r[str]:
         match entry:
             case dict() as entry_dict:
                 return FlextLdifEntries._extract_dn_from_dict(entry_dict)
@@ -114,7 +115,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[str].ok(entry.dn.value)
 
     @staticmethod
-    def get_entry_attributes(entry: m.Ldif.Entry) -> r[dict[str, list[str]]]:
+    def get_entry_attributes(entry: m.Ldif.Entry) -> r[Mapping[str, list[str]]]:
         if entry.attributes is None:
             return r[dict[str, list[str]]].fail("Entry has no attributes")
         return r[dict[str, list[str]]].ok(dict(entry.attributes.attributes))
@@ -135,7 +136,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: dict[str, str | list[str]],
+        attributes: Mapping[str, str | list[str]],
         objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         if not FlextLdifUtilitiesDN.validate(dn):

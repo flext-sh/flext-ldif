@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -197,7 +197,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
     @staticmethod
     def evaluate_acl_context(
         acls: list[m.Ldif.Acl],
-        required_permissions: m.Ldif.LdifResults.AclPermissions | dict[str, bool],
+        required_permissions: m.Ldif.LdifResults.AclPermissions | Mapping[str, bool],
     ) -> r[m.Ldif.LdifResults.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         required = (

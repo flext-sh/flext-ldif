@@ -1,6 +1,7 @@
 """Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import base64
 import contextlib
@@ -24,11 +25,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def ext(
         metadata: m.Ldif.DynamicMetadata,
-    ) -> dict[str, list[str]]:
+    ) -> Mapping[str, list[str]]:
         """Extract extension information from parsed metadata."""
 
         def _as_str_list(value: t.MetadataAttributeValue) -> list[str] | None:
-            if FlextRuntime.is_list_like(value) and all(
+            if u.is_list_like(value) and all(
                 u.Guards.is_type(item, str) for item in value
             ):
                 return [item for item in value if u.Guards.is_type(item, str)]
@@ -37,7 +38,7 @@ class FlextLdifUtilitiesParser:
         if metadata is None:
             return {}
         result = metadata.get("extensions")
-        if result is None or not FlextRuntime.is_dict_like(result):
+        if result is None or not u.is_dict_like(result):
             extensions: dict[str, list[str]] = {}
             for key, value in metadata.items():
                 str_list = _as_str_list(value)
@@ -96,7 +97,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_extensions(
         definition: str,
-    ) -> dict[str, list[str]]:
+    ) -> Mapping[str, list[str]]:
         """Extract extension information from schema definition string."""
         if not definition:
             return {}
@@ -282,7 +283,7 @@ class FlextLdifUtilitiesParser:
         if u.Guards.is_type(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
-        if not FlextRuntime.is_list_like(existing):
+        if not u.is_list_like(existing):
             if u.Guards.is_type(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:

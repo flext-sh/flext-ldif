@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import s
@@ -36,7 +36,7 @@ def _cat(
 
 
 def _merge_one_category(
-    category_map: dict[str, frozenset[str]],
+    category_map: Mapping[str, frozenset[str]],
     key_str: str,
     value: frozenset[str] | str,
     *,
@@ -54,8 +54,8 @@ def _merge_one_category(
 
 
 def _merge_category_from_constants(
-    category_map: dict[str, frozenset[str]],
-    server_map: dict[str, frozenset[str] | str],
+    category_map: Mapping[str, frozenset[str]],
+    server_map: Mapping[str, frozenset[str] | str],
     *,
     override_existing: bool,
 ) -> None:
@@ -77,11 +77,11 @@ class FlextLdifCategorization(
     def __init__(
         self,
         categorization_rules: (
-            m.Ldif.LdifResults.CategoryRules | dict[str, str | list[str] | None] | None
+            m.Ldif.LdifResults.CategoryRules | Mapping[str, str | list[str] | None] | None
         ) = None,
         schema_whitelist_rules: (
             m.Ldif.LdifResults.WhitelistRules
-            | dict[str, str | list[str] | bool | None]
+            | Mapping[str, str | list[str] | bool | None]
             | None
         ) = None,
         forbidden_attributes: list[str] | None = None,
@@ -177,7 +177,7 @@ class FlextLdifCategorization(
         return r[m.Ldif.LdifResults.FlexibleCategories].ok(categories)
 
     @property
-    def rejection_tracker(self) -> dict[str, list[m.Ldif.Entry]]:
+    def rejection_tracker(self) -> Mapping[str, list[m.Ldif.Entry]]:
         """Get rejection tracker (read-only access to rejected entries by reason)."""
         return self._rejection_tracker
 
@@ -382,7 +382,7 @@ class FlextLdifCategorization(
     def _build_category_map_from_rules(
         self,
         rules: m.Ldif.LdifResults.CategoryRules,
-    ) -> dict[str, frozenset[str]]:
+    ) -> Mapping[str, frozenset[str]]:
         """Build category map from rules."""
         category_map: dict[
             str,
@@ -426,14 +426,14 @@ class FlextLdifCategorization(
 
     def _merge_server_constants_to_map(
         self,
-        category_map: dict[
+        category_map: Mapping[
             str,
             frozenset[str],
         ],
         constants: type,
         *,
         override_existing: bool = False,
-    ) -> dict[str, frozenset[str]]:
+    ) -> Mapping[str, frozenset[str]]:
         """Merge server constants into category map."""
         if _has_attr(constants, "CATEGORY_OBJECTCLASSES"):
             _merge_category_from_constants(
@@ -510,7 +510,7 @@ class FlextLdifCategorization(
         self,
         entry: m.Ldif.Entry,
         priority_order: list[str],
-        category_map: dict[
+        category_map: Mapping[
             str,
             frozenset[str],
         ],

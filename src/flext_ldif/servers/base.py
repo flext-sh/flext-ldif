@@ -10,7 +10,7 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, r, s
+from flext_core import FlextLogger, r, s, u
 from pydantic import ConfigDict
 
 from flext_ldif._models.domain import FlextLdifModelsDomains

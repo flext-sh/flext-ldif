@@ -1,6 +1,7 @@
 """Apache Directory Server quirks implementation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import re
 from typing import ClassVar
@@ -252,7 +253,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Check if this quirk can handle the entry."""
             _ = entry_dn
@@ -262,7 +263,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: dict[str, list[str | bytes]],
+            entry_attrs: Mapping[str, list[str | bytes]],
         ) -> FlextResult[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: dict[str, list[str]] = {
