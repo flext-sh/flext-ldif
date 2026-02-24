@@ -35,7 +35,25 @@ class FlextLdifModelsMetadata:
             if isinstance(value, bool):
                 return value
             if isinstance(value, list):
-                return str(value)
+                coerced_items: list[str | int | float | bool | None] = []
+                for item in value:
+                    if isinstance(item, str):
+                        coerced_items.append(item)
+                        continue
+                    if isinstance(item, int):
+                        coerced_items.append(item)
+                        continue
+                    if isinstance(item, float):
+                        coerced_items.append(item)
+                        continue
+                    if isinstance(item, bool):
+                        coerced_items.append(item)
+                        continue
+                    if item is None:
+                        coerced_items.append(None)
+                        continue
+                    coerced_items.append(str(item))
+                return coerced_items
             return str(value)
 
         @classmethod

@@ -152,7 +152,7 @@ class TestsTestFlextLdifUtilitiesAttribute(s):
 
         # Test None - intentionally testing incorrect type
         with pytest.raises((ValueError, AttributeError)):
-            FlextLdifUtilitiesAttribute.split_attribute_description(None)  # type: ignore[arg-type]
+            FlextLdifUtilitiesAttribute.split_attribute_description(None)
 
     def test_split_attribute_description_none(self) -> None:
         """Test split_attribute_description raises ValueError for None."""
@@ -161,7 +161,7 @@ class TestsTestFlextLdifUtilitiesAttribute(s):
         with pytest.raises(
             (ValueError, AttributeError), match="cannot be empty or None"
         ):
-            FlextLdifUtilitiesAttribute.split_attribute_description(None)  # type: ignore[arg-type]
+            FlextLdifUtilitiesAttribute.split_attribute_description(None)
 
     @pytest.mark.parametrize("attribute_name", VALID_NAMES)
     def test_validate_attribute_name_valid(
@@ -189,7 +189,7 @@ class TestsTestFlextLdifUtilitiesAttribute(s):
     def test_validate_attribute_name_none(self) -> None:
         """Test validate_attribute_name with None."""
         # Intentionally testing incorrect type to validate error handling
-        result = FlextLdifUtilitiesAttribute.validate_attribute_name(None)  # type: ignore[arg-type]
+        result = FlextLdifUtilitiesAttribute.validate_attribute_name(None)
         assert result is False
 
     def test_validate_attribute_name_too_long(self) -> None:
@@ -225,7 +225,7 @@ class TestsTestFlextLdifUtilitiesAttribute(s):
         """Test validate_attribute_option with None."""
         # Intentionally testing incorrect type to validate error handling
         result = FlextLdifUtilitiesAttribute.validate_attribute_option(
-            None,  # type: ignore[arg-type]
+            None,
         )
         assert result is False
 

@@ -115,14 +115,31 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
+    def _extract_dn_from_object(entry: object) -> r[str]:
+        dn_value = getattr(entry, "dn", None)
+        if dn_value is None:
+            return r[str].fail("Entry missing DN (dn is None)")
+
+        if hasattr(dn_value, "value"):
+            value_attr = getattr(dn_value, "value", None)
+            if isinstance(value_attr, str):
+                return r[str].ok(value_attr)
+
+        if isinstance(dn_value, str):
+            return r[str].ok(dn_value)
+
+        if isinstance(dn_value, list):
+            return r[str].ok(dn_value[0] if dn_value else "")
+
+        return r[str].fail("Invalid DN value type")
+
+    @staticmethod
     def get_entry_dn(entry: m.Ldif.Entry | Mapping[str, str | list[str]]) -> r[str]:
         """Read DN from model or dictionary entry."""
-        if not isinstance(entry, m.Ldif.Entry):
+        if isinstance(entry, Mapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
-        typed_entry: m.Ldif.Entry = entry
-        if typed_entry.dn is None:
-            return r[str].fail("Entry missing DN (dn is None)")
-        return r[str].ok(typed_entry.dn.value)
+
+        return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
     def get_entry_attributes(entry: m.Ldif.Entry) -> r[Mapping[str, list[str]]]:

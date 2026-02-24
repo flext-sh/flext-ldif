@@ -1636,7 +1636,10 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: FlextLdifModelsDomains.DN | str | None,
+            value: FlextLdifModelsDomains.DN
+            | Mapping[str, t.Ldif.JsonValue]
+            | str
+            | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1649,6 +1652,10 @@ class FlextLdifModelsDomains:
 
             if isinstance(value, FlextLdifModelsDomains.DN):
                 return value
+
+            if isinstance(value, Mapping):
+                return FlextLdifModelsDomains.DN.model_validate(value)
+
             return FlextLdifModelsDomains.DN.model_validate({"value": str(value)})
 
         @field_validator("attributes", mode="before")
@@ -1670,7 +1677,12 @@ class FlextLdifModelsDomains:
 
             if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
-            return FlextLdifModelsDomains.Attributes.model_validate(value)
+
+            wrapped_value: Mapping[str, t.Ldif.JsonValue] = value
+            if "attributes" not in value:
+                wrapped_value = {"attributes": value}
+
+            return FlextLdifModelsDomains.Attributes.model_validate(wrapped_value)
 
         # ===================================================================
         # REMAINING FIELDS

@@ -805,8 +805,7 @@ class FlextLdifUtilitiesMetadata:
                     c.Ldif.ServerTypes.RFC.value,
                 ),
             )
-        stats_dict = updated_stats.model_dump()
-        update_dict: dict[str, t.GeneralValueType] = {"processing_stats": stats_dict}
+        update_dict: dict[str, t.ConfigMapValue] = {"processing_stats": updated_stats}
         updated_metadata = entry.metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 

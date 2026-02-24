@@ -1293,8 +1293,7 @@ class FlextLdifUtilitiesSchema:
         data: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
         expected_type: (
-            type[FlextLdifModelsDomains.SchemaAttribute]
-            | type[FlextLdifModelsDomains.SchemaObjectClass]
+            type[FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass]
         ),
         type_name: str,
         parts_builder: Callable[..., list[str]],

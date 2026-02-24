@@ -66,6 +66,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         ),
     ) -> m.Ldif.LdifResults.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
+        result_raw: m.Ldif.LdifResults.WriteFormatOptions | None
         if format_options is None:
             result_raw = m.Ldif.LdifResults.WriteFormatOptions()
         elif issubclass(

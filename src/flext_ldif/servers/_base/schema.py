@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import ClassVar, Self
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes, u
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata

@@ -7,7 +7,6 @@ from collections.abc import Callable, Sequence
 
 from flext_core import r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.constants import c

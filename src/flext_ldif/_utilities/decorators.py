@@ -44,11 +44,7 @@ class FlextLdifUtilitiesDecorators:
         server_type: str | None,
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
-        # Only attach metadata to models with metadata attribute
-        if not (
-            getattr(result_value, "metadata", None) is not None
-            or getattr(result_value, "metadata", None) is not None
-        ):
+        if result_value is None or not hasattr(result_value, "metadata"):
             return
 
         # Create metadata with extensions
@@ -68,30 +64,10 @@ class FlextLdifUtilitiesDecorators:
             ),
         )
 
-        # Attach metadata by checking if object is a model instance with metadata
-        # Use runtime type check instead of protocol isinstance to avoid mypy issues
-        if (
-            getattr(result_value, "metadata", None) is not None
-            and getattr(type(result_value), "model_fields", None)
-            is not None  # Check class, not instance
-            and issubclass(
-                result_value.__class__,
-                (
-                    m.Ldif.Entry,
-                    m.Ldif.SchemaAttribute,
-                    m.Ldif.SchemaObjectClass,
-                    m.Ldif.Acl,
-                ),
-            )
-        ):
-            # This is a Pydantic model with metadata field
-            # Use model_copy to create updated instance (respects validate_assignment)
-            try:
-                setattr(result_value, "metadata", metadata)
-            except Exception as e:
-                # If model_copy fails, skip metadata attachment
-                # This is safe - metadata attachment is optional for frozen models
-                logger.debug("Failed to attach metadata", error=str(e))
+        try:
+            setattr(result_value, "metadata", metadata)
+        except Exception as e:
+            logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
     def attach_parse_metadata(

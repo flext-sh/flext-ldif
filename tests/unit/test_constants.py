@@ -133,7 +133,7 @@ class TestsTestFlextLdifConstants(s):
     def _get_constant_value(path: str) -> t.GeneralValueType:
         """Get constant value by path starting from lib_c.Ldif."""
         parts = path.split(".")
-        value: t.GeneralValueType = lib_c.Ldif  # type: ignore[assignment]
+        value: t.GeneralValueType = lib_c.Ldif
         for part in parts:
             value = getattr(value, part)
         return value

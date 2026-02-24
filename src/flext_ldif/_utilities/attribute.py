@@ -34,7 +34,7 @@ class FlextLdifUtilitiesAttribute:
     ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
-        from flext_ldif._utilities.schema import (  # noqa: PLC0415
+        from flext_ldif._utilities.schema import (
             FlextLdifUtilitiesSchema,
         )
 

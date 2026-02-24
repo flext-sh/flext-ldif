@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
 from flext_core import T, U, t, x
-from flext_core.utilities import u
 from pydantic import BaseModel
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
@@ -493,7 +492,7 @@ class FlextFunctional:
             Converted value or default if conversion fails
 
         """
-        from flext_ldif._models.conversion import (  # noqa: PLC0415
+        from flext_ldif._models.conversion import (
             ConvertToBool,
             ConvertToDict,
             ConvertToFloat,

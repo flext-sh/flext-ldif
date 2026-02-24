@@ -13,7 +13,6 @@ from typing import (
 from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import m
 from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.servers._base import (

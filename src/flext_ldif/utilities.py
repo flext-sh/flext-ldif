@@ -127,7 +127,7 @@ class FlextLdifUtilities(FlextUtilities):
                         with contextlib.suppress(TypeError, ValueError):
                             str_default = str(self._default)
                     value_str = str(self._value)
-                    return value_str if value_str else str_default
+                    return value_str or str_default
                 if self._target_type == "to_str_list":
                     list_default: list[str] | None = None
                     if self._default is not None:
@@ -138,7 +138,7 @@ class FlextLdifUtilities(FlextUtilities):
                             normalized = [
                                 str(item) for item in seq_values if item is not None
                             ]
-                            return normalized if normalized else (list_default or [])
+                            return normalized or (list_default or [])
                         case _:
                             single = str(self._value)
                             if single:

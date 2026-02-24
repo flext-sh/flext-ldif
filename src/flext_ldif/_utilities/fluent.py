@@ -15,7 +15,6 @@ from flext_ldif._utilities.transformers import Normalize, Transform
 # Import CaseFoldOption directly to avoid circular import issues
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import t
 
 # REMOVED: Runtime aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly

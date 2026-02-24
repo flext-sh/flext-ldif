@@ -373,11 +373,18 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         server_type: str | None = None,
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF file (internal helper)."""
-        if not path.exists():
+        resolved_path = path
+        if not resolved_path.exists() and not resolved_path.is_absolute():
+            project_root = Path(__file__).resolve().parents[2]
+            candidate_path = project_root / resolved_path
+            if candidate_path.exists():
+                resolved_path = candidate_path
+
+        if not resolved_path.exists():
             return r[list[m.Ldif.Entry]].fail(f"File not found: {path}")
 
         try:
-            content = path.read_text(encoding="utf-8")
+            content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
             return r[list[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
 

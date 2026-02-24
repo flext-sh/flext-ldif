@@ -17,7 +17,6 @@ from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
-_TUPLE_PAIR_LENGTH: Final[int] = 2
 
 logger: Final = FlextLogger(__name__)
 _MISSING_ATTR = object()
@@ -206,7 +205,7 @@ class FlextLdifCategorization(
 
         def validate_entry(
             entry: m.Ldif.Entry,
-        ) -> m.Ldif.Entry | r[m.Ldif.Entry]:
+        ) -> r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = entry.dn.value if entry.dn else ""
 
@@ -241,23 +240,17 @@ class FlextLdifCategorization(
                 )
 
             dn_obj = m.Ldif.DN(value=normalized_dn)
-            return entry.model_copy(
-                update={"dn": dn_obj},
+            return r[m.Ldif.Entry].ok(
+                entry.model_copy(
+                    update={"dn": dn_obj},
+                )
             )
 
-        batch_result = u.Collection.batch(
-            entries,
-            validate_entry,
-            on_error="skip",
-        )
-        batch_data = batch_result.map_or(None)
-
         validated: list[m.Ldif.Entry] = []
-        if batch_data is not None and isinstance(batch_data.results, list):
-            for item in batch_data.results:
-                entry_model = FlextLdifCategorization._ensure_entry_model(item)
-                if entry_model is not None:
-                    validated.append(entry_model)
+        for entry in entries:
+            validation_result = validate_entry(entry)
+            if validation_result.is_success:
+                validated.append(validation_result.value)
 
         logger.info(
             "Validated entries",
@@ -671,69 +664,19 @@ class FlextLdifCategorization(
             )
             return category, entry_to_append
 
-        batch_result = u.Collection.batch(
-            entries,
-            categorize_single_entry,
-            on_error="skip",
-        )
-        batch_data = batch_result.map_or(None)
-        if batch_data is not None:
-            typed_results: list[tuple[str, m.Ldif.Entry]] = []
-            if isinstance(batch_data.results, list):
-                for item in batch_data.results:
-                    if isinstance(item, tuple) and len(item) == _TUPLE_PAIR_LENGTH:
-                        category_raw, entry_raw = item
-                        if isinstance(category_raw, str) and isinstance(
-                            entry_raw, m.Ldif.Entry
-                        ):
-                            typed_results.append((category_raw, entry_raw))
+        for entry in entries:
+            category, reason = categorize_single_entry(entry)
 
-            for category, entry_to_append in typed_results:
-                if category == FlextLdifCategorization._cat("rejected"):
-                    self._rejection_tracker["categorization_rejected"].append(
-                        entry_to_append,
-                    )
-                    logger.debug(
-                        "Entry rejected during categorization",
-                        entry_dn=str(entry_to_append.dn)
-                        if entry_to_append.dn
-                        else None,
-                        rejection_reason=None,
-                    )
-                categories[category].append(entry_to_append)
-        else:
-            for entry in entries:
-                category, reason = self.categorize_entry(entry)
-
-                rejection_reason = reason if reason is not None else "No category match"
-
-                is_rejected = category == FlextLdifCategorization._cat("rejected")
-                entry_to_append = u.Ldif.Metadata.update_entry_statistics(
-                    entry,
-                    category="rejected" if is_rejected else None,
-                    mark_rejected=(
-                        (
-                            c.Ldif.RejectionCategory.NO_CATEGORY_MATCH.value,
-                            rejection_reason,
-                        )
-                        if is_rejected
-                        else None
-                    ),
+            if category == FlextLdifCategorization._cat("rejected"):
+                self._rejection_tracker["categorization_rejected"].append(reason)
+                logger.debug(
+                    "Entry rejected during categorization",
+                    entry_dn=str(reason.dn) if reason.dn else None,
+                    rejection_reason=None,
                 )
 
-                if is_rejected:
-                    self._rejection_tracker["categorization_rejected"].append(
-                        entry_to_append,
-                    )
-                    logger.debug(
-                        "Entry rejected during categorization",
-                        entry_dn=str(entry_to_append.dn)
-                        if entry_to_append.dn
-                        else None,
-                        rejection_reason=reason,
-                    )
-
-                categories[category].append(entry_to_append)
+            updated_entries = [*categories[category], reason]
+            categories[category] = updated_entries
 
         for cat, cat_entries in categories.items():
             if cat_entries:
@@ -797,11 +740,7 @@ class FlextLdifCategorization(
                     rejection_reason=f"DN not under base DN: {self._base_dn}",
                 )
 
-                filtered[category] = [
-                    entry
-                    for entry in included_updated
-                    if isinstance(entry, m.Ldif.Entry)
-                ]
+                filtered[category] = included_updated
 
                 all_excluded_entries.extend(excluded_updated)
 
@@ -830,11 +769,11 @@ class FlextLdifCategorization(
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]:
-                entry_model = FlextLdifCategorization._ensure_entry_model(
+                rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
                     rejected_raw_item
                 )
-                if entry_model is not None:
-                    merged_rejected.append(entry_model)
+                if rejected_entry_model is not None:
+                    merged_rejected.append(rejected_entry_model)
             filtered[FlextLdifCategorization._cat("rejected")] = merged_rejected
 
         return filtered
@@ -917,9 +856,7 @@ class FlextLdifCategorization(
                     base_dn,
                 )
 
-                filtered[category] = [
-                    entry for entry in included if isinstance(entry, m.Ldif.Entry)
-                ]
+                filtered[category] = included
 
                 excluded_updated = [
                     FlextLdifCategorization._mark_entry_rejected(
@@ -946,11 +883,11 @@ class FlextLdifCategorization(
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]:
-                entry_model = FlextLdifCategorization._ensure_entry_model(
+                rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
                     rejected_raw_item
                 )
-                if entry_model is not None:
-                    merged_rejected.append(entry_model)
+                if rejected_entry_model is not None:
+                    merged_rejected.append(rejected_entry_model)
             filtered[FlextLdifCategorization._cat("rejected")] = merged_rejected
 
         return filtered

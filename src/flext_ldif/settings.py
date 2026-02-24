@@ -793,7 +793,15 @@ class FlextLdifSettings(FlextSettings):
             raise ValueError(msg)
 
         # Validate quirks configuration
-        if self.quirks_detection_mode == "manual" and not self.quirks_server_type:
+        has_manual_mode = self.quirks_detection_mode == "manual"
+        quirks_server_type_was_set = (
+            "quirks_server_type" in self.__pydantic_fields_set__
+        )
+        if (
+            has_manual_mode
+            and quirks_server_type_was_set
+            and not self.quirks_server_type
+        ):
             msg = (
                 "quirks_server_type must be specified when "
                 "quirks_detection_mode is 'manual'"

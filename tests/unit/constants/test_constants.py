@@ -137,7 +137,7 @@ class TestsTestFlextLdifConstants(s):
     def _get_constant_value(path: str) -> t.GeneralValueType:
         """Get constant value by path."""
         parts = path.split(".")
-        value: t.GeneralValueType = FlextLdifConstants  # type: ignore[assignment]
+        value: t.GeneralValueType = FlextLdifConstants
         for part in parts:
             value = getattr(value, part)
         return value

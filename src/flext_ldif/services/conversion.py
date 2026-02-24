@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import ClassVar, Self, TypeGuard, TypeVar, override
+from typing import ClassVar, Self, TypeGuard, override
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r
 from pydantic import Field
@@ -505,7 +505,7 @@ class FlextLdifConversion(
     ]:
         """Convert Entry model directly without serialization."""
         try:
-            entry_dn = str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            entry_dn = entry.dn.value if entry.dn else ""
             if not u.Ldif.DN.validate(entry_dn):
                 return r[
                     m.Ldif.Entry
@@ -631,7 +631,7 @@ class FlextLdifConversion(
                         new_key = mapping[lower_k]
                         updated_attrs[new_key] = v
                     else:
-                        updated_attrs[k] = v
+                        updated_attrs[lower_k] = v
 
                 new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
                 converted_entry = converted_entry.model_copy(
@@ -665,7 +665,7 @@ class FlextLdifConversion(
                             new_key = mapping[lower_k]
                             updated_attrs[new_key] = v
                         else:
-                            updated_attrs[k] = v
+                            updated_attrs[lower_k] = v
 
                     new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
                     converted_entry = converted_entry.model_copy(
