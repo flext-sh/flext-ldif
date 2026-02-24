@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextService, u
 from pydantic import Field
@@ -33,7 +33,7 @@ class FlextLdifServersBaseSchemaAcl(
     priority: int = 0
     """Quirk priority (lower number = higher priority)."""
 
-    parent_quirk: object | None = Field(
+    parent_quirk: Self | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -44,10 +44,10 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         acl_service: object | None = None,
         _parent_quirk: object | None = None,
-        **kwargs: t.Ldif.JsonValue,
+        **_kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
-        super().__init__(**kwargs)
+        super().__init__()
         self._acl_service = acl_service
 
         if _parent_quirk is not None:
@@ -216,7 +216,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Coerce generic value to ACL payload union."""
         if value is None:
             return None
-        if u.is_type(value, "str"):
+        if isinstance(value, str):
             return value
         try:
             return m.Ldif.Acl.model_validate(value)
@@ -225,7 +225,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_operation(self, value: object) -> str | None:
         """Coerce operation token to supported ACL operation."""
-        if not u.is_type(value, "str"):
+        if not isinstance(value, str):
             return None
         if value in {"parse", "write"}:
             return value
@@ -239,14 +239,14 @@ class FlextLdifServersBaseSchemaAcl(
     ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
-            if not u.is_type(data, "str"):
+            if not isinstance(data, str):
                 return FlextResult[m.Ldif.Acl | str].fail(
                     f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
 
         parsed_acl = self._coerce_acl_data(data)
-        if parsed_acl is None or u.is_type(parsed_acl, "str"):
+        if parsed_acl is None or isinstance(parsed_acl, str):
             return FlextResult[m.Ldif.Acl | str].fail(
                 f"write requires Acl, got {type(data).__name__}",
             )

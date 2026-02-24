@@ -144,7 +144,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
                     "ObjectClass definition is empty",
                 )
 
-            parsed_dict = u.Ldif.Schema.parse_objectclass(oc_definition)
+            parsed_dict = dict(u.Ldif.Schema.parse_objectclass(oc_definition))
 
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
 

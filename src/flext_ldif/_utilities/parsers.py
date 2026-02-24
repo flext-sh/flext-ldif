@@ -100,7 +100,7 @@ class FlextLdifUtilitiesParsers:
                     return r[m.Ldif.Entry].fail("No DN found in LDIF content")
 
                 # Parse attributes
-                attributes = parse_attributes_hook(lines)
+                attributes = dict(parse_attributes_hook(lines))
 
                 # Parse comments if hook provided
                 if parse_comments_hook:
@@ -110,14 +110,8 @@ class FlextLdifUtilitiesParsers:
                 # Create entry
                 # Entry field validators will coerce str -> DN and dict -> m.Ldif.
                 # Convert types explicitly for mypy
-                dn_obj = (
-                    dn if issubclass(dn.__class__, m.Ldif.DN) else m.Ldif.DN(value=dn)
-                )
-                attrs_obj = (
-                    attributes
-                    if issubclass(attributes.__class__, m.Ldif.Attributes)
-                    else m.Ldif.Attributes(attributes=attributes)
-                )
+                dn_obj = m.Ldif.DN(value=dn)
+                attrs_obj = m.Ldif.Attributes(attributes=attributes)
                 entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
 
                 # Transform if hook provided
@@ -255,13 +249,23 @@ class FlextLdifUtilitiesParsers:
                 parts = parse_parts_hook(definition)
 
                 # Extract lists
-                must = parts.get("must")
-                if must is not None and not issubclass(must.__class__, list):
-                    must = [str(must)]
+                must_raw = parts.get("must")
+                must: list[str] | None
+                if isinstance(must_raw, list):
+                    must = [str(item) for item in must_raw]
+                elif must_raw is None:
+                    must = None
+                else:
+                    must = [str(must_raw)]
 
-                may = parts.get("may")
-                if may is not None and not issubclass(may.__class__, list):
-                    may = [str(may)]
+                may_raw = parts.get("may")
+                may: list[str] | None
+                if isinstance(may_raw, list):
+                    may = [str(item) for item in may_raw]
+                elif may_raw is None:
+                    may = None
+                else:
+                    may = [str(may_raw)]
 
                 # Create objectClass
                 objectclass = m.Ldif.SchemaObjectClass(

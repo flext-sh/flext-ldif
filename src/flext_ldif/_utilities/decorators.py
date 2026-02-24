@@ -21,39 +21,25 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _get_server_type_from_class(
-        obj: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-            | str
-            | float
-        ),
+        obj: object,
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
             return None
 
         for cls in obj.__class__.__mro__:
+            constants_obj = getattr(cls, "Constants", None)
             if (
-                getattr(cls, "Constants", None) is not None
-                and getattr(cls.Constants, "SERVER_TYPE", None) is not None
+                constants_obj is not None
+                and getattr(constants_obj, "SERVER_TYPE", None) is not None
             ):
-                return str(cls.Constants.SERVER_TYPE)
+                return str(getattr(constants_obj, "SERVER_TYPE"))
 
         return None
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-            | str
-            | float
-            | None
-        ),
+        result_value: object | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:

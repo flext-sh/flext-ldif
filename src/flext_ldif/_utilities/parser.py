@@ -29,16 +29,19 @@ class FlextLdifUtilitiesParser:
         """Extract extension information from parsed metadata."""
 
         def _as_str_list(value: t.MetadataAttributeValue) -> list[str] | None:
-            if u.is_list_like(value) and all(
-                u.Guards.is_type(item, str) for item in value
-            ):
-                return [item for item in value if u.Guards.is_type(item, str)]
+            if isinstance(value, list):
+                normalized: list[str] = []
+                for item in value:
+                    if not isinstance(item, str):
+                        return None
+                    normalized.append(item)
+                return normalized
             return None
 
         if metadata is None:
             return {}
         result = metadata.get("extensions")
-        if result is None or not u.is_dict_like(result):
+        if result is None or not isinstance(result, Mapping):
             extensions: dict[str, list[str]] = {}
             for key, value in metadata.items():
                 str_list = _as_str_list(value)
@@ -97,7 +100,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_extensions(
         definition: str,
-    ) -> Mapping[str, list[str]]:
+    ) -> dict[str, list[str]]:
         """Extract extension information from schema definition string."""
         if not definition:
             return {}
@@ -280,23 +283,26 @@ class FlextLdifUtilitiesParser:
             return False
 
         existing = entry_dict[attr_name]
-        if u.Guards.is_type(existing, set):
+        if isinstance(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
         if not u.is_list_like(existing):
-            if u.Guards.is_type(existing, str):
+            if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
-            existing_list = (
-                existing if u.Guards.is_type(existing, list) else list(existing)
-            )
+            existing_list: list[str]
+            if isinstance(existing, list):
+                existing_list = [
+                    item if isinstance(item, str) else str(item) for item in existing
+                ]
+            else:
+                existing_list = [
+                    item if isinstance(item, str) else str(item) for item in existing
+                ]
             existing_list.append(attr_value)
-            entry_dict[attr_name] = [
-                item if u.Guards.is_type(item, str) else str(item)
-                for item in existing_list
-            ]
+            entry_dict[attr_name] = existing_list
 
         return True
 
@@ -309,7 +315,7 @@ class FlextLdifUtilitiesParser:
         if "_base64_attrs" not in entry_dict:
             entry_dict["_base64_attrs"] = set()
 
-        if u.Guards.is_type(entry_dict["_base64_attrs"], set):
+        if isinstance(entry_dict["_base64_attrs"], set):
             entry_dict["_base64_attrs"].add(attr_name)
 
     @staticmethod

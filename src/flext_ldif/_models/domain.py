@@ -834,9 +834,9 @@ class FlextLdifModelsDomains:
                 # Normalize values to list[str]
                 normalized_dict: dict[str, list[str]] = {}
                 for key, val in attrs_data.items():
-                    if val.__class__ is list:
+                    if isinstance(val, list):
                         normalized_dict[key] = [str(v) for v in val]
-                    elif val.__class__ is str:
+                    elif isinstance(val, str):
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
@@ -1647,7 +1647,7 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if value.__class__ is FlextLdifModelsDomains.DN:
+            if isinstance(value, FlextLdifModelsDomains.DN):
                 return value
             return FlextLdifModelsDomains.DN.model_validate({"value": str(value)})
 
@@ -1668,7 +1668,7 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if value.__class__ is FlextLdifModelsDomains.Attributes:
+            if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
             return FlextLdifModelsDomains.Attributes.model_validate(value)
 
@@ -1691,7 +1691,10 @@ class FlextLdifModelsDomains:
         def ensure_metadata_initialized(
             cls,
             data: Mapping[str, t.Ldif.JsonValue],
-        ) -> Mapping[str, t.Ldif.JsonValue]:
+        ) -> Mapping[
+            str,
+            t.Ldif.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
+        ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -1709,15 +1712,18 @@ class FlextLdifModelsDomains:
                 Modified data with metadata field initialized and datetimes coerced
 
             """
-            data_dict: dict[str, t.Ldif.JsonValue] = data
+            data_dict: dict[
+                str,
+                t.Ldif.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
+            ] = dict(data)
 
             # Coerce ISO datetime strings to datetime objects for strict=True compatibility
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
             for dt_field in ("created_at", "updated_at"):
                 field_value = data_dict.get(dt_field)
-                if field_value is not None and field_value.__class__ is str:
+                if isinstance(field_value, str):
                     with suppress(ValueError):
-                        data_dict[dt_field] = datetime.fromisoformat(str(field_value))
+                        data_dict[dt_field] = datetime.fromisoformat(field_value)
                     # Let Pydantic handle invalid datetime strings
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
@@ -1730,7 +1736,7 @@ class FlextLdifModelsDomains:
                 # If no quirk_type provided, use 'rfc' as safe default
                 quirk_type_value = data_dict.get("quirk_type")
                 final_quirk_type_val: c.Ldif.ServerTypes
-                if quirk_type_value is not None and quirk_type_value.__class__ is str:
+                if isinstance(quirk_type_value, str):
                     # Try to match to a ServerTypes enum member
                     try:
                         final_quirk_type_val = c.Ldif.ServerTypes(quirk_type_value)
@@ -2155,29 +2161,22 @@ class FlextLdifModelsDomains:
             validation_rules: t.MetadataAttributeValue,
         ) -> ServerValidationRules | None:
             """Normalize dynamic validation_rules payload to ServerValidationRules."""
-            if validation_rules.__class__ is ServerValidationRules:
+            if isinstance(validation_rules, ServerValidationRules):
                 return validation_rules
-            if validation_rules.__class__ is str:
+            if isinstance(validation_rules, str):
                 try:
                     parsed_rules = ast.literal_eval(validation_rules)
                 except (ValueError, SyntaxError):
                     return None
-                if parsed_rules.__class__ is not dict:
+                if not isinstance(parsed_rules, dict):
                     return None
                 try:
                     return ServerValidationRules.model_validate(parsed_rules)
                 except Exception:
                     return None
-            try:
-                root_value = validation_rules.root
-                return ServerValidationRules.model_validate(root_value)
-            except AttributeError:
-                pass
-            except Exception:
-                return None
-            if validation_rules.__class__ is dict:
+            if isinstance(validation_rules, Mapping):
                 try:
-                    return ServerValidationRules.model_validate(validation_rules)
+                    return ServerValidationRules.model_validate(dict(validation_rules))
                 except Exception:
                     return None
             return None
@@ -2272,7 +2271,7 @@ class FlextLdifModelsDomains:
                 self._outer_cls = outer_cls
                 self._dn: str | FlextLdifModelsDomains.DN | None = None
                 self._attributes: (
-                    dict[str, str | list[str]]
+                    Mapping[str, str | list[str]]
                     | FlextLdifModelsDomains.Attributes
                     | None
                 ) = None
@@ -2452,7 +2451,7 @@ class FlextLdifModelsDomains:
                 in validation_metadata as RFC violation.
 
             """
-            if attributes.__class__ is FlextLdifModelsDomains.Attributes:
+            if isinstance(attributes, FlextLdifModelsDomains.Attributes):
                 return attributes
 
             # Lenient processing: Accept empty dict (violation captured in validation_metadata)
@@ -2666,24 +2665,18 @@ class FlextLdifModelsDomains:
 
                 # Extract attributes - ldap3 provides dict with various types
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
-                entry_attrs_raw: Mapping[str, t.Ldif.JsonValue]
-                if u.is_dict_like(entry_attrs_payload):
-                    entry_attrs_raw = entry_attrs_payload.root
-                elif entry_attrs_payload.__class__ is dict:
-                    entry_attrs_raw = entry_attrs_payload
-                else:
-                    entry_attrs_raw = {}
-
                 # Normalize to dict[str, str | list[str]] (ensure all values are lists of strings)
                 attrs_dict: dict[str, str | list[str]] = {}
-                # entry_attrs_raw is always dict from ldap3_entry.entry_attributes_as_dict
-                if entry_attrs_raw:
-                    for attr_name, attr_value_list in entry_attrs_raw.items():
-                        if attr_value_list.__class__ is list:
+                if isinstance(entry_attrs_payload, Mapping):
+                    for attr_name, attr_value_list in entry_attrs_payload.items():
+                        if isinstance(attr_value_list, Sequence) and not isinstance(
+                            attr_value_list,
+                            str | bytes,
+                        ):
                             attrs_dict[str(attr_name)] = [
                                 str(v) for v in attr_value_list
                             ]
-                        elif attr_value_list.__class__ is str:
+                        elif isinstance(attr_value_list, str):
                             attrs_dict[str(attr_name)] = [attr_value_list]
                         else:
                             attrs_dict[str(attr_name)] = [str(attr_value_list)]
@@ -3836,12 +3829,12 @@ class FlextLdifModelsDomains:
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
-            elif extensions.__class__ is dict:
+            elif isinstance(extensions, FlextLdifModelsMetadata.DynamicMetadata):
+                extensions_model = extensions
+            else:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     extensions
                 )
-            else:
-                extensions_model = extensions
             return cls(
                 quirk_type=default_quirk_type,
                 extensions=extensions_model,

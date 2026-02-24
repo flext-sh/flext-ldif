@@ -66,7 +66,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
-    ) -> Mapping[str, t.GeneralValueType]:
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -77,49 +77,59 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
+    def _normalize_metadata_list_item(
+        item: t.MetadataAttributeValue,
+    ) -> str | int | float | bool | datetime | None:
+        if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
+            return item
+        return str(item)
+
+    @staticmethod
     def _add_to_list_metadata(
-        metadata: Mapping[str, t.GeneralValueType],
+        metadata: dict[str, t.MetadataAttributeValue],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
         """Add item to list metadata."""
-        value = metadata[metadata_key]
-        value_for_check: t.GeneralValueType = (
-            value
-            if u.Guards.is_type(value, (str, int, float, bool, type(None), list, dict))
-            else str(value)
+        value = metadata.get(metadata_key)
+        normalized_item = FlextLdifUtilitiesMetadata._normalize_metadata_list_item(
+            item_data,
         )
-        if u.is_list_like(value_for_check):
-            value_for_check.append(item_data)
-            metadata[metadata_key] = value_for_check
-        else:
-            metadata[metadata_key] = [item_data]
+        if isinstance(value, list):
+            value.append(normalized_item)
+            metadata[metadata_key] = value
+            return
+        metadata[metadata_key] = [normalized_item]
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: Mapping[str, t.GeneralValueType],
+        metadata: dict[str, t.MetadataAttributeValue],
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
     ) -> None:
         """Add item to dict metadata."""
-        value = metadata[metadata_key]
-        value_for_dict_check: t.GeneralValueType = (
-            value
-            if u.Guards.is_type(value, (str, int, float, bool, type(None), list, dict))
-            else str(value)
-        )
-        if u.is_dict_like(value_for_dict_check):
-            if u.is_dict_like(item_data):
-                value_for_dict_check.update(item_data)
-                metadata[metadata_key] = value_for_dict_check
-            else:
-                metadata[metadata_key] = item_data
-        else:
-            metadata[metadata_key] = item_data
+        value = metadata.get(metadata_key)
+        if isinstance(value, Mapping) and isinstance(item_data, Mapping):
+            merged_value = dict(value)
+            for key, inner_value in item_data.items():
+                if isinstance(key, str):
+                    if isinstance(inner_value, list):
+                        merged_value[key] = (
+                            FlextLdifUtilitiesMetadata._normalize_dict_list(inner_value)
+                        )
+                    elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(
+                        inner_value
+                    ):
+                        merged_value[key] = inner_value
+                    else:
+                        merged_value[key] = str(inner_value)
+            metadata[metadata_key] = merged_value
+            return
+        metadata[metadata_key] = item_data
 
     @staticmethod
     def _update_conversion_path(
-        metadata: Mapping[str, t.GeneralValueType],
+        metadata: dict[str, t.MetadataAttributeValue],
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -127,9 +137,8 @@ class FlextLdifUtilitiesMetadata:
             metadata["conversion_path"] = update_conversion_path
         else:
             current_path_obj = metadata["conversion_path"]
-            if (
-                u.Guards.is_type(current_path_obj, str)
-                and update_conversion_path not in current_path_obj
+            if isinstance(current_path_obj, str) and (
+                update_conversion_path not in current_path_obj
             ):
                 metadata["conversion_path"] = (
                     f"{current_path_obj}->{update_conversion_path}"
@@ -202,62 +211,10 @@ class FlextLdifUtilitiesMetadata:
                 update_conversion_path,
             )
 
-        metadata_typed: dict[str, t.MetadataAttributeValue] = {}
-        for k, v in metadata.items():
-            if u.Guards.is_type(v, (str, bool, int, float)) or v is None:
-                metadata_typed[k] = v
-            elif u.is_list_like(v):
-                metadata_typed[k] = FlextLdifUtilitiesMetadata._normalize_mapping_list(
-                    v
-                )
-            elif u.is_dict_like(v):
-                safe_dict_vals: dict[
-                    str,
-                    str
-                    | int
-                    | float
-                    | bool
-                    | datetime
-                    | list[str | int | float | bool | datetime | None]
-                    | None,
-                ] = {}
-                for k_inner, v_inner in v.items():
-                    if not u.Guards.is_type(k_inner, str):
-                        continue
-                    if u.is_list_like(v_inner):
-                        safe_dict_vals[k_inner] = (
-                            FlextLdifUtilitiesMetadata._normalize_dict_list(v_inner)
-                        )
-                    elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(v_inner):
-                        safe_dict_vals[k_inner] = v_inner
-                    else:
-                        safe_dict_vals[k_inner] = str(v_inner)
-                metadata_typed[k] = safe_dict_vals
-            elif u.Guards.is_type(v, Mapping):
-                nested_dict: dict[
-                    str,
-                    str
-                    | int
-                    | float
-                    | bool
-                    | datetime
-                    | list[str | int | float | bool | datetime | None]
-                    | None,
-                ] = {}
-                for mk, mv in v.items():
-                    if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(mv):
-                        nested_dict[str(mk)] = mv
-                    elif u.is_list_like(mv):
-                        nested_dict[str(mk)] = (
-                            FlextLdifUtilitiesMetadata._normalize_mapping_list(mv)
-                        )
-                metadata_typed[k] = nested_dict
-            elif u.Guards.is_type(v, Sequence) and not u.Guards.is_type(
-                v, (str, bytes)
-            ):
-                metadata_typed[k] = FlextLdifUtilitiesMetadata._normalize_mapping_list(
-                    v
-                )
+        metadata_typed = {
+            key: u.Guards.normalize_to_metadata_value(value)
+            for key, value in metadata.items()
+        }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed
         )
@@ -650,20 +607,19 @@ class FlextLdifUtilitiesMetadata:
         ]
         for extractor in extractors:
             extracted_raw = extractor(definition)
-            if u.is_dict_like(extracted_raw):
-                for key, value in extracted_raw.items():
-                    if not u.Guards.is_type(key, str):
-                        continue
-                    if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
-                        combined[key] = value
-                    elif u.is_list_like(value):
-                        combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                            value
-                        )
-                    elif u.is_dict_like(value):
-                        combined[key] = str(value)
-                    else:
-                        combined[key] = str(value)
+            for key, value in extracted_raw.items():
+                if not isinstance(key, str):
+                    continue
+                if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
+                    combined[key] = value
+                elif isinstance(value, list):
+                    combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
+                        value
+                    )
+                elif isinstance(value, Mapping):
+                    combined[key] = str(value)
+                else:
+                    combined[key] = str(value)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
@@ -850,8 +806,7 @@ class FlextLdifUtilitiesMetadata:
                 ),
             )
         stats_dict = updated_stats.model_dump()
-        stats_facade = m.Ldif.EntryStatistics.model_validate(stats_dict)
-        update_dict: dict[str, t.GeneralValueType] = {"processing_stats": stats_facade}
+        update_dict: dict[str, t.GeneralValueType] = {"processing_stats": stats_dict}
         updated_metadata = entry.metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -928,9 +883,9 @@ class FlextLdifUtilitiesMetadata:
             "quirk_type": quirk_type,
             "source_server": quirk_type,
         }
-        result.update({
-            k: v for k, v in extra.items() if u.Guards.is_type(v, (str, int, bool))
-        })
+        for key, value in extra.items():
+            if isinstance(value, (str, int, bool)):
+                result[key] = value
         return result
 
     @staticmethod
@@ -969,11 +924,17 @@ class FlextLdifUtilitiesMetadata:
         }
         if "rfc_violations" in extra:
             violations = extra["rfc_violations"]
-            if u.is_list_like(violations):
+            if isinstance(violations, Sequence) and not isinstance(
+                violations,
+                (str, bytes),
+            ):
                 result["rfc_violations"] = [str(v) for v in violations]
         if "attribute_conflicts" in extra:
             conflicts = extra["attribute_conflicts"]
-            if u.is_list_like(conflicts):
+            if isinstance(conflicts, Sequence) and not isinstance(
+                conflicts,
+                (str, bytes),
+            ):
                 result["has_attribute_conflicts"] = len(conflicts) > 0
         return result
 

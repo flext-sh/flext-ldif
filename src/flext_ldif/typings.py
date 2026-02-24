@@ -25,7 +25,7 @@ class FlextLdifTypes(FlextTypes):
 
         type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
         type ScalarValue = FlextTypes.ScalarValue
-        type JsonValue = FlextTypes.JsonValue
+        type JsonValue = FlextTypes.ConfigMapValue
 
         ValueType: TypeAlias = str | bytes | int | float | bool | list[str] | None
         ValueList: TypeAlias = list[ValueType]

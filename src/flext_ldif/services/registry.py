@@ -21,10 +21,13 @@ class FlextLdifServiceRegistry(FlextRegistry):
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
+        self,
+        dispatcher: p.CommandBus | None = None,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
-        super().__init__(dispatcher=dispatcher, **data)
+        _ = data
+        super().__init__(dispatcher=dispatcher)
 
     def reset(self) -> None:
         """Reset registry (for testing only)."""

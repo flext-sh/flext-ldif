@@ -141,21 +141,19 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             processed_value = batch_result.value
             processed_list: list[list[str]] = []
             raw_results: object | None = None
-            if (
-                issubclass(processed_value.__class__, dict)
-                and "results" in processed_value
-            ):
-                raw_results = processed_value["results"]
-            elif issubclass(processed_value.__class__, list):
+            if isinstance(processed_value, dict):
+                raw_results = processed_value.get("results")
+            elif isinstance(processed_value, list):
                 raw_results = processed_value
 
             if raw_results is None:
                 raw_results = getattr(processed_value, "results", None)
 
-            if issubclass(raw_results.__class__, list):
-                processed_list = [
-                    entry for entry in raw_results if issubclass(entry.__class__, list)
-                ]
+            if isinstance(raw_results, list):
+                processed_list = []
+                for entry in raw_results:
+                    if isinstance(entry, list):
+                        processed_list.append(entry)
 
             for entry_lines in processed_list:
                 ldif_lines.extend([str(line) for line in entry_lines])
@@ -170,7 +168,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         server_type: str | None = None,
     ) -> r[m.Ldif.LdifResults.ParseResponse]:
         """Parse LDIF from either raw text or a filesystem path."""
-        if issubclass(source.__class__, Path):
+        if isinstance(source, Path):
             return self.parse_ldif_file(source, server_type)
 
         return self.parse_string(source, server_type)

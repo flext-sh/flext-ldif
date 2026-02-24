@@ -189,7 +189,7 @@ class FlextLdifServersOidSchema(
                 original_format_raw = attr_data.metadata.extensions.get(
                     c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT,
                 )
-                if original_format_raw is None or original_format_raw.__class__ is str:
+                if original_format_raw is None or isinstance(original_format_raw, str):
                     original_format = original_format_raw
                 else:
                     msg = f"Expected str | None, got {type(original_format_raw)}"
@@ -324,10 +324,17 @@ class FlextLdifServersOidSchema(
                 c.Ldif.MetadataKeys.SCHEMA_SOURCE_SYNTAX_OID,
             )
 
-        if source_rules and source_rules.__class__ is dict:
-            oid_equality = source_rules.get("equality", attr_copy.equality)
-            oid_substr = source_rules.get("substr", attr_copy.substr)
-            oid_ordering = source_rules.get("ordering", attr_copy.ordering)
+        if isinstance(source_rules, Mapping):
+            equality_raw = source_rules.get("equality", attr_copy.equality)
+            substr_raw = source_rules.get("substr", attr_copy.substr)
+            ordering_raw = source_rules.get("ordering", attr_copy.ordering)
+            oid_equality = (
+                equality_raw if isinstance(equality_raw, str) else attr_copy.equality
+            )
+            oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
+            oid_ordering = (
+                ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
+            )
         else:
             oid_equality, oid_substr = u.Ldif.Schema.normalize_matching_rules(
                 attr_copy.equality,
@@ -358,21 +365,23 @@ class FlextLdifServersOidSchema(
                 if k not in keys_to_remove
             }
 
-            update_dict: dict[str, t.GeneralValueType] = {
-                "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    new_extensions
-                ),
-            }
-            oid_metadata = attr_copy.metadata.model_copy(update=update_dict)
+            oid_metadata = attr_copy.metadata.model_copy(
+                update={
+                    "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                        new_extensions,
+                    ),
+                },
+            )
 
-        matchers_dict: dict[str, t.GeneralValueType] = {
-            "equality": oid_equality,
-            "substr": oid_substr,
-            "ordering": oid_ordering,
-            "syntax": oid_syntax,
-            "metadata": oid_metadata,
-        }
-        attr_copy = attr_copy.model_copy(update=matchers_dict)
+        attr_copy = attr_copy.model_copy(
+            update={
+                "equality": oid_equality,
+                "substr": oid_substr,
+                "ordering": oid_ordering,
+                "syntax": oid_syntax,
+                "metadata": oid_metadata,
+            },
+        )
 
         return super()._write_attribute(attr_copy)
 
@@ -541,7 +550,7 @@ class FlextLdifServersOidSchema(
         x_origin_value: str | None = None
         if attr_data.metadata and attr_data.metadata.extensions:
             match attr_data.metadata.extensions.get("x_origin"):
-                case origin if origin.__class__ is str:
+                case origin if isinstance(origin, str):
                     x_origin_value = origin
                 case None:
                     pass

@@ -2018,11 +2018,11 @@ class FlextLdifModelsSettings:
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[m.Entry], m.Entry] | None = Field(
+        post_parse_hook: Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry] | None = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[m.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -2074,15 +2074,15 @@ class FlextLdifModelsSettings:
         )
         post_parse_hook: (
             Callable[
-                [m.Entry],
-                m.Entry,
+                [FlextLdifModelsDomains.Entry],
+                FlextLdifModelsDomains.Entry,
             ]
             | None
         ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[m.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -2204,11 +2204,11 @@ class FlextLdifModelsSettings:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[m.Entry, list[str]], None] = Field(
+        write_attributes_hook: Callable[[FlextLdifModelsDomains.Entry, list[str]], None] = Field(
             ...,
             description="Core attributes writing",
         )
-        write_comments_hook: Callable[[m.Entry, list[str]], None] | None = Field(
+        write_comments_hook: Callable[[FlextLdifModelsDomains.Entry, list[str]], None] | None = Field(
             default=None,
             description="Optional comments writing",
         )
@@ -2244,7 +2244,7 @@ class FlextLdifModelsSettings:
             validate_assignment=True,
         )
 
-        entries: list[m.Entry] = Field(
+        entries: list[FlextLdifModelsDomains.Entry] = Field(
             ...,
             description="List of entries to write",
         )
@@ -2252,7 +2252,7 @@ class FlextLdifModelsSettings:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[m.Entry], r[str]] = Field(
+        write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -2410,6 +2410,6 @@ class FlextLdifModelsSettings:
 
 
 # Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
-# Nested objects use full namespace ("m.Entry", not aliases)
+# Nested objects use full namespace (FlextLdifModelsDomains.Entry, not aliases)
 # No string-quoted forward references - models work without rebuilding
 # No model_rebuild() calls needed - architectural requirement

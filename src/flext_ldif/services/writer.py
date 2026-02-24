@@ -30,29 +30,21 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
     @staticmethod
     def _extract_write_options(
         write_options: m.Ldif.LdifResults.WriteOptions,
-    ) -> m.Ldif.LdifResults.WriteFormatOptions | None:
+    ) -> m.Ldif.LdifResults.WriteFormatOptions:
         dumped = write_options.model_dump(exclude_none=True)
         normalized = FlextLdifWriter._normalize_write_format(dumped)
         return m.Ldif.LdifResults.WriteFormatOptions.model_validate(normalized)
 
     @staticmethod
     def _normalize_write_format(
-        d: t.GeneralValueType,
+        d: Mapping[str, t.GeneralValueType],
     ) -> Mapping[str, t.GeneralValueType]:
-        if not issubclass(d.__class__, dict):
-            return {}
-        return (
-            {
-                "base64_encode_binary": (
-                    d.get("base64_encode_binary")
-                    if issubclass(d.__class__, dict)
-                    else None
-                ),
-            }
-            if issubclass(d.__class__, dict)
-            and d.get("base64_encode_binary") is not None
-            else {}
-        )
+        mapped: dict[str, t.GeneralValueType] = {
+            "base64_encode_binary": d.get("base64_encode_binary"),
+            "sort_attributes": d.get("sort_entries"),
+            "include_dn_comments": d.get("include_comments"),
+        }
+        return {key: value for key, value in mapped.items() if value is not None}
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize writer with optional server instance."""
@@ -69,7 +61,6 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
-            | type
             | Mapping[str, t.GeneralValueType]
             | None
         ),
@@ -77,33 +68,29 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         """Normalize format options to WriteFormatOptions."""
         if format_options is None:
             result_raw = m.Ldif.LdifResults.WriteFormatOptions()
-        elif issubclass(format_options.__class__, type):
-            result_raw = format_options()
         elif issubclass(
             format_options.__class__, m.Ldif.LdifResults.WriteFormatOptions
         ):
             result_raw = format_options
         elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteOptions):
-            extracted = FlextLdifWriter._extract_write_options(format_options)
-            if extracted is None:
-                msg = f"Failed to extract write options from {type(format_options)}"
-                raise TypeError(msg)
-            result_raw = extracted
-        elif issubclass(format_options.__class__, dict):
-            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
+            write_options = m.Ldif.LdifResults.WriteOptions.model_validate(
                 format_options
+            )
+            result_raw = FlextLdifWriter._extract_write_options(write_options)
+        elif issubclass(format_options.__class__, Mapping):
+            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
+                dict(format_options)
             )
         else:
             result_raw = None
         if result_raw is None:
-            msg = f"Expected WriteFormatOptions | WriteOptions | dict | None, got {type(format_options)}"
+            msg = (
+                "Expected WriteFormatOptions | WriteOptions | Mapping | None, got "
+                f"{format_options.__class__.__name__}"
+            )
             raise TypeError(msg)
 
-        if issubclass(result_raw.__class__, m.Ldif.LdifResults.WriteFormatOptions):
-            return result_raw
-
-        msg = f"Unexpected type in match result: {type(result_raw)}"
-        raise TypeError(msg)
+        return m.Ldif.LdifResults.WriteFormatOptions.model_validate(result_raw)
 
     def write_to_string(
         self,
@@ -181,7 +168,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             ),
         )
 
-        return r[str].ok(response)
+        return r[m.Ldif.LdifResults.WriteResponse].ok(response)
 
     def write(
         self,
@@ -228,16 +215,17 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         """Execute write operation with parameters."""
         params = params or {}
         entries_raw = u.take(params, "entries", as_type=list, default=[])
-
-        entries: list[m.Ldif.Entry] = (
-            [
-                entry
-                for entry in entries_raw
-                if issubclass(entry.__class__, m.Ldif.Entry)
-            ]
-            if issubclass(entries_raw.__class__, list)
-            else []
-        )
+        entries: list[m.Ldif.Entry] = []
+        entry_candidates: tuple[object, ...] = ()
+        try:
+            entry_candidates = tuple(t.ObjectList.model_validate(entries_raw).root)
+        except Exception:
+            pass
+        for entry_candidate in entry_candidates:
+            try:
+                entries.append(m.Ldif.Entry.model_validate(entry_candidate))
+            except Exception:
+                continue
         target_server_type_raw = u.take(
             params,
             "target_server_type",
@@ -246,35 +234,39 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         )
 
         target_server_type: str | None = None
-        if issubclass(target_server_type_raw.__class__, str):
-            try:
-                target_server_type = u.Ldif.Server.normalize_server_type(
-                    target_server_type_raw,
-                )
-            except ValueError:
-                target_server_type = None
+        try:
+            target_server_type = u.Ldif.Server.normalize_server_type(
+                str(target_server_type_raw),
+            )
+        except ValueError:
+            target_server_type = None
         output_path_raw = u.take(params, "output_path", as_type=Path)
 
-        output_path: Path | None = (
-            output_path_raw if issubclass(output_path_raw.__class__, Path) else None
-        )
-        format_options_raw: t.GeneralValueType = u.take(params, "format_options")
+        output_path: Path | None = None
+        if output_path_raw is not None:
+            try:
+                output_path = Path(str(output_path_raw))
+            except (TypeError, ValueError):
+                output_path = None
+        format_options_raw = u.take(params, "format_options")
 
         format_options: (
             m.Ldif.LdifResults.WriteFormatOptions
             | m.Ldif.LdifResults.WriteOptions
             | None
-        ) = (
-            format_options_raw
-            if issubclass(
-                format_options_raw.__class__,
-                (
-                    m.Ldif.LdifResults.WriteFormatOptions,
-                    m.Ldif.LdifResults.WriteOptions,
-                ),
-            )
-            else None
-        )
+        ) = None
+        if format_options_raw is not None:
+            try:
+                format_options = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
+                    format_options_raw,
+                )
+            except Exception:
+                try:
+                    format_options = m.Ldif.LdifResults.WriteOptions.model_validate(
+                        format_options_raw,
+                    )
+                except Exception:
+                    format_options = None
 
         write_result = self.write(
             entries=entries,
@@ -287,8 +279,13 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             return r[m.Ldif.LdifResults.WriteResponse].fail(write_result.error)
 
         result_value = write_result.value
-        if issubclass(result_value.__class__, m.Ldif.LdifResults.WriteResponse):
-            return r[m.Ldif.LdifResults.WriteResponse].ok(result_value)
+        try:
+            result_response = m.Ldif.LdifResults.WriteResponse.model_validate(
+                result_value
+            )
+            return r[m.Ldif.LdifResults.WriteResponse].ok(result_response)
+        except Exception:
+            pass
 
         return r[m.Ldif.LdifResults.WriteResponse].ok(
             m.Ldif.LdifResults.WriteResponse(

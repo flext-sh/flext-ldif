@@ -180,17 +180,18 @@ class FlextLdifUtilitiesEvents:
         """Generic helper for logging events with context and extras."""
         # Add extras using shared processing helper
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
-        log_context.update(filtered_extras)
+        merged_context = dict(log_context)
+        merged_context.update(filtered_extras)
 
         # Log with appropriate level (common logic for all event types)
         if log_level == "debug":
-            logger.debug(log_message, return_result=False, **log_context)
+            logger.debug(log_message, return_result=False, **merged_context)
         elif log_level == "warning":
-            logger.warning(log_message, return_result=False, **log_context)
+            logger.warning(log_message, return_result=False, **merged_context)
         elif log_level == "error":
-            logger.error(log_message, return_result=False, **log_context)
+            logger.error(log_message, return_result=False, **merged_context)
         else:
-            logger.info(log_message, return_result=False, **log_context)
+            logger.info(log_message, return_result=False, **merged_context)
 
     @staticmethod
     def _build_operation_event_logging(

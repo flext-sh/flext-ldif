@@ -8,7 +8,6 @@ from typing import Final, override
 from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
-from flext_ldif._utilities.configs import ProcessConfig, TransformConfig
 from flext_ldif.base import s
 from flext_ldif.constants import c
 from flext_ldif.models import m
@@ -116,7 +115,7 @@ class FlextLdifMigrationPipeline(
                 target=target_type,
             )
 
-            config_base = ProcessConfig()
+            config_base = m.Ldif.ProcessConfig()
             process_config = config_base.model_copy(
                 update={
                     "source_server": source_type,
@@ -124,7 +123,7 @@ class FlextLdifMigrationPipeline(
                 },
             )
 
-            config = TransformConfig(process_config=process_config)
+            config = m.Ldif.TransformConfig(process_config=process_config)
             pipeline = ProcessingPipeline(config)
             object.__setattr__(self, "_processing_pipeline", pipeline)
         return pipeline

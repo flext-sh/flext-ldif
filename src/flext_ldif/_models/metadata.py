@@ -26,8 +26,16 @@ class FlextLdifModelsMetadata:
             """Coerce dynamic values to MetadataAttributeValue-compatible output."""
             if value is None:
                 return None
-            if value.__class__ in {str, int, float, bool, list}:
+            if isinstance(value, str):
                 return value
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                return value
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, list):
+                return str(value)
             return str(value)
 
         @classmethod

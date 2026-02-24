@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
 from flext_core import T, U, t, x
 from flext_core.utilities import u
+from pydantic import BaseModel
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 _TThunk_co = TypeVar("_TThunk_co", covariant=True)
@@ -26,6 +29,29 @@ class _UnaryCase(Protocol[_TUnaryIn_contra, _TUnaryOut_co]):
 
 class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
+
+    @staticmethod
+    def _to_general(value: object) -> t.GeneralValueType:
+        """Normalize arbitrary values into GeneralValueType-compatible shape."""
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, BaseModel):
+            return FlextFunctional._to_general(value.model_dump())
+        if isinstance(value, Mapping):
+            normalized_mapping: dict[str, t.GeneralValueType] = {}
+            for key, item in value.items():
+                if isinstance(key, str):
+                    normalized_mapping[key] = FlextFunctional._to_general(item)
+            return normalized_mapping
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            return [FlextFunctional._to_general(item) for item in value]
+        return str(value)
 
     @staticmethod
     def or_[T](
@@ -223,7 +249,7 @@ class FlextFunctional:
         for item in items:
             try:
                 processed = processor(item)
-                if u.Guards.is_type(processed, (list, tuple)):
+                if isinstance(processed, list | tuple):
                     result.extend([
                         sub_item for sub_item in processed if predicate(sub_item)
                     ])
@@ -262,9 +288,7 @@ class FlextFunctional:
                 return list(default)
             return []
 
-        items: list[T] = (
-            list(value) if u.Guards.is_type(value, (list, tuple)) else [value]
-        )
+        items: list[T] = list(value) if isinstance(value, list | tuple) else [value]
 
         if mapper is not None:
             items_mapped: list[T] = [mapper(item) for item in items]
@@ -370,9 +394,10 @@ class FlextFunctional:
     ) -> U | None:
         """Pattern match (mnemonic: mt)."""
         for pattern, result in cases:
-            if u.Guards.is_type(pattern, type) and u.Guards.is_type(value, pattern):
-                return result
-            if callable(pattern) and not u.Guards.is_type(pattern, type):
+            if isinstance(pattern, type):
+                if isinstance(value, pattern):
+                    return result
+            elif callable(pattern):
                 try:
                     if pattern(value):
                         return result
@@ -419,9 +444,9 @@ class FlextFunctional:
         for t_val in types:
             # Resolve type: if string, look up in map; if type, use directly
             resolved_type: type | None = (
-                type_map.get(t_val) if u.Guards.is_type(t_val, str) else t_val
+                type_map.get(t_val) if isinstance(t_val, str) else t_val
             )
-            if resolved_type is not None and u.Guards.is_type(value, resolved_type):
+            if resolved_type is not None and isinstance(value, resolved_type):
                 return True
         return False
 
@@ -508,7 +533,8 @@ class FlextFunctional:
             return default
 
         try:
-            return conversion_model.convert()
+            converted = conversion_model.convert()
+            return FlextFunctional._to_general(converted)
         except (TypeError, ValueError):
             return default
 
@@ -592,14 +618,14 @@ class FlextFunctional:
     ) -> t.GeneralValueType | None:
         """Safe cast (mnemonic: at)."""
         target_type: type | None = (
-            cls._TYPE_MAP.get(target) if u.Guards.is_type(target, str) else target
+            cls._TYPE_MAP.get(target) if isinstance(target, str) else target
         )
 
         if target_type is None:
             return default
 
-        if u.Guards.is_type(target_type, type) and u.Guards.is_type(value, target_type):
-            return u.Mapper.narrow_to_general_value_type(value)
+        if isinstance(target_type, type) and isinstance(value, target_type):
+            return FlextFunctional._to_general(value)
 
         try:
             return cls._convert_with_target(value, target_type, default)
@@ -617,9 +643,8 @@ class FlextFunctional:
 
         def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
             """Get value from object by key."""
-            if u.is_dict_like(obj):
-                value: t.GeneralValueType = obj.get(key)
-                return value
+            if isinstance(obj, Mapping):
+                return FlextFunctional._to_general(obj.get(key))
             if x.is_base_model(obj):
                 dumped = obj.model_dump()
                 return dumped.get(key)
@@ -640,9 +665,8 @@ class FlextFunctional:
             """Get multiple values from object by keys."""
             result_dict: dict[str, t.GeneralValueType] = {}
             for k in keys:
-                if u.is_dict_like(obj):
-                    value: t.GeneralValueType | None = u.mapper().get(obj, k)
-                    result_dict[k] = value
+                if isinstance(obj, Mapping):
+                    result_dict[k] = FlextFunctional._to_general(obj.get(k))
                 elif x.is_base_model(obj):
                     dumped = obj.model_dump()
                     result_dict[k] = dumped.get(k)
@@ -670,11 +694,8 @@ class FlextFunctional:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                if u.is_dict_like(obj):
-                    map_result = u.mapper().get(obj, key)
-                    if map_result == key:
-                        return None
-                    return map_result
+                if isinstance(obj, Mapping):
+                    return FlextFunctional._to_general(obj.get(key))
                 if x.is_base_model(obj):
                     dumped = obj.model_dump()
                     return dumped.get(key)

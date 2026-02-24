@@ -66,9 +66,9 @@ class FlextLdifServersBaseQuirkHelpers:
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_value = getattr(constants_attr, "PRIORITY", None)
-        if issubclass(priority_value.__class__, int):
-            return priority_value
+        priority_raw: object = getattr(constants_attr, "PRIORITY", 100)
+        if isinstance(priority_raw, int):
+            return priority_raw
         return 100
 
     @staticmethod

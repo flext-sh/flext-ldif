@@ -142,15 +142,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
-            if not u.Guards.is_type(attr_definition, str):
-                if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
-                    return u.Ldif.Server.matches_server_patterns(
-                        value=attr_definition,
-                        oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                        detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                        use_prefix_match=True,
-                    )
-                return False
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
+                return u.Ldif.Server.matches_server_patterns(
+                    value=attr_definition,
+                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    use_prefix_match=True,
+                )
 
             attr_lower = attr_definition.lower()
             if re.search(
@@ -182,14 +180,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
-            if not u.Guards.is_type(oc_definition, str):
-                if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
-                    return u.Ldif.Server.matches_server_patterns(
-                        value=oc_definition,
-                        oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                        detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
-                    )
-                return False
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+                return u.Ldif.Server.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
+                )
 
             if re.search(
                 FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
@@ -252,7 +248,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():
                     return False
                 normalized = acl_line.strip()
@@ -262,9 +258,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
                 )
 
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 normalized = raw_acl.strip()
                 if not normalized:
@@ -488,16 +484,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_raw = u.mapper().get(
-                attributes,
-                c.Ldif.DictKeys.OBJECTCLASS,
-                default=[],
-            )
-
-            if u.Guards.is_type(object_classes_raw, (list, tuple)):
-                object_classes: list[str] = [str(item) for item in object_classes_raw]
-            else:
-                object_classes = []
+            object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             return bool(
                 any(
                     str(oc).lower()
@@ -516,16 +503,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
             attributes = entry.attributes.attributes.copy()
             try:
-                object_classes_raw = u.mapper().get(
-                    attributes,
-                    c.Ldif.DictKeys.OBJECTCLASS,
-                    default=[],
-                )
-
-                if u.Guards.is_type(object_classes_raw, list):
-                    object_classes: list[str] = [str(oc) for oc in object_classes_raw]
-                else:
-                    object_classes = []
+                object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
 
                 processed_attributes: dict[str, list[str]] = {}
                 for attr_name, attr_values in attributes.items():
@@ -534,7 +512,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     value: bytes | str
                     for value in attr_values:
                         str_value: str
-                        if u.Guards.is_type(value, bytes):
+                        if isinstance(value, bytes):
                             str_value = base64.b64encode(value).decode("ascii")
                         else:
                             str_value = str(value)

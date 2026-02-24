@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import Protocol, override
 
@@ -157,7 +157,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         attributes: list[str] | frozenset[str],
         content: str,
         content_lower: str,
-        scores: Mapping[str, int],
+        scores: MutableMapping[str, int],
         *,
         case_sensitive: bool = False,
         objectclasses: list[str] | frozenset[str] | None = None,
@@ -165,7 +165,8 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower
         if re.search(pattern, search_content):
-            scores[server_type] += weight
+            if isinstance(server_type, str):
+                scores[server_type] += weight
 
         score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
@@ -182,7 +183,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         constants: type[ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
-        scores: Mapping[str, int],
+        scores: MutableMapping[str, int],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -210,7 +211,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         server_type: str,
         constants: type[ServerDetectionConstants] | None,
         content_lower: str,
-        scores: Mapping[str, int],
+        scores: MutableMapping[str, int],
         *,
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
@@ -226,7 +227,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
             scores[server_type] += weight
 
-    def _calculate_scores(self, content: str) -> Mapping[str, int]:
+    def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type."""
         scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.Server.get_server_type_value("GENERIC")] = 1
@@ -426,12 +427,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             getattr(constants, "ORCLENTRYLEVELACI", None),
         ]
 
-        if any(
-            (attr in content)
-            if issubclass(attr.__class__, str) and issubclass(content.__class__, str)
-            else False
-            for attr in acl_attrs
-        ):
+        if any(isinstance(attr, str) and attr in content for attr in acl_attrs):
             self._add_pattern_if_match(
                 condition="Oracle OID ACLs" not in patterns,
                 description="Oracle OID ACLs",
@@ -566,9 +562,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
-            if issubclass(
-                tivoli_pattern.__class__, re.Pattern
-            ) and tivoli_pattern.search(
+            if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
                 content_lower,
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")

@@ -230,19 +230,12 @@ class FlextLdifUtilitiesSchema:
             old_value = getattr(transformed, field_name, None)
             new_value = transform_fn(old_value)
 
-            try:
-                result_value = FlextResult[FlextTypes.GeneralValueType].model_validate(
-                    new_value,
-                )
-            except Exception:
-                result_value = None
-
-            if result_value is not None:
-                if result_value.is_failure:
+            if isinstance(new_value, FlextResult):
+                if new_value.is_failure:
                     return FlextResult.fail(
-                        f"Transformation of '{field_name}' failed: {result_value.error}",
+                        f"Transformation of '{field_name}' failed: {new_value.error}",
                     )
-                setattr(transformed, field_name, result_value.value)
+                setattr(transformed, field_name, new_value.value)
             else:
                 setattr(transformed, field_name, new_value)
 
@@ -362,17 +355,14 @@ class FlextLdifUtilitiesSchema:
 
             if transform_fn is None:
                 continue
-            transform_class = transform_fn.__class__
-            if transform_class in {str, list}:
+            if isinstance(transform_fn, (str, list)):
                 continue
-            transform_callable: Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
-            ] = transform_fn
+            if not callable(transform_fn):
+                continue
             result = FlextLdifUtilitiesSchema._apply_field_transformation(
                 current,
                 field_name,
-                transform_callable,
+                transform_fn,
             )
             if result.is_failure:
                 return FlextResult.fail(
@@ -600,7 +590,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> Mapping[str, t.MetadataAttributeValue] | None:
+    ) -> dict[str, t.MetadataAttributeValue] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -621,7 +611,7 @@ class FlextLdifUtilitiesSchema:
         )
         result_dict: dict[str, t.MetadataAttributeValue] = {}
         for key, val in syntax_extensions.items():
-            if u.is_list_like(val):
+            if isinstance(val, list):
                 list_typed: t.MetadataAttributeValue = list(val)
                 result_dict[key] = list_typed
             else:
@@ -681,27 +671,29 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.MetadataAttributeValue,
     ) -> t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]:
-        if value is None or value.__class__ in {str, int, float, bool}:
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
             return value
-        if value.__class__ is datetime:
+        if isinstance(value, datetime):
             return value.isoformat()
-        if u.is_list_like(value):
+        if isinstance(value, list):
             return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
-        if u.is_dict_like(value):
+        if isinstance(value, Mapping):
             converted_nested: dict[str, t.ScalarValue | list[str]] = {}
-            mapping_value: Mapping[str, t.MetadataAttributeValue] = value.root
+            mapping_value: Mapping[str, t.MetadataAttributeValue] = value
             for k, v_raw in mapping_value.items():
                 k_str = str(k)
-                if v_raw is None or v_raw.__class__ in {str, int, float, bool}:
+                if v_raw is None or isinstance(v_raw, (str, int, float, bool)):
                     converted_nested[k_str] = v_raw
-                elif v_raw.__class__ is datetime:
+                elif isinstance(v_raw, datetime):
                     converted_nested[k_str] = v_raw.isoformat()
-                elif u.is_list_like(v_raw):
+                elif isinstance(v_raw, list):
                     converted_nested[k_str] = (
                         FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
                     )
-                elif u.is_dict_like(v_raw):
-                    converted_nested[k_str] = str(dict(v_raw.root.items()))
+                elif isinstance(v_raw, Mapping):
+                    converted_nested[k_str] = str(dict(v_raw.items()))
                 else:
                     converted_nested[k_str] = str(v_raw)
             return converted_nested
@@ -728,7 +720,7 @@ class FlextLdifUtilitiesSchema:
             attr_definition,
         )
 
-        syntax_validation_result: dict[str, t.MetadataAttributeValue] | None = None
+        syntax_validation_result: Mapping[str, t.MetadataAttributeValue] | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -746,9 +738,9 @@ class FlextLdifUtilitiesSchema:
             attr_definition,
         )
 
-        additional_extensions_converted: dict[str, t.MetadataAttributeValue] | None = (
-            syntax_validation_result
-        )
+        additional_extensions_converted: (
+            Mapping[str, t.MetadataAttributeValue] | None
+        ) = syntax_validation_result
 
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
             attr_definition,
@@ -760,7 +752,10 @@ class FlextLdifUtilitiesSchema:
         )
 
         syntax_validation_converted: (
-            dict[str, t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]]]
+            Mapping[
+                str,
+                t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]],
+            ]
             | None
         ) = None
         if syntax_validation_result is not None:
@@ -1297,7 +1292,10 @@ class FlextLdifUtilitiesSchema:
     def _write_schema_element(
         data: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
-        expected_type: type,
+        expected_type: (
+            type[FlextLdifModelsDomains.SchemaAttribute]
+            | type[FlextLdifModelsDomains.SchemaObjectClass]
+        ),
         type_name: str,
         parts_builder: Callable[..., list[str]],
     ) -> str:
@@ -1475,9 +1473,9 @@ class FlextLdifUtilitiesSchema:
         if not attr_list:
             return []
 
-        if attr_list.__class__ is str:
+        if isinstance(attr_list, str):
             attrs = [attr_list]
-        elif u.is_list_like(attr_list):
+        elif isinstance(attr_list, list):
             attrs = [str(a) for a in attr_list]
         else:
             return []

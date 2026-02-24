@@ -30,7 +30,10 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and not u.is_dict_like(getattr(cls, "Constants", None))
                 ):
-                    constants_class: type = cls.Constants
+                    constants_obj: object = getattr(cls, "Constants")
+                    if not isinstance(constants_obj, type):
+                        continue
+                    constants_class = constants_obj
                     # Verify protocol compliance at runtime using runtime_checkable
                     # Protocol compliance is structural - verified via hasattr checks
                     if required_attr is None:
@@ -221,7 +224,7 @@ class FlextLdifUtilitiesDetection:
                 return bool(oc_set & detection_set)
 
             # Handle single objectClass string
-            if issubclass(objectclasses.__class__, str):
+            if isinstance(objectclasses, str):
                 return self.can_handle_in_set(objectclasses, detection_classes)
 
             return False

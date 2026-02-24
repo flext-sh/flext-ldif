@@ -67,9 +67,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Accept any attribute definition in relaxed mode."""
-            if u.Guards.is_type(attr_definition, str):
-                return bool(attr_definition.strip())
-            return True
+            if not isinstance(attr_definition, str):
+                return True
+            return bool(attr_definition.strip())
 
         def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
             """Extract OID from attribute definition using multiple strategies."""
@@ -199,9 +199,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Accept any objectClass definition in relaxed mode."""
-            if u.Guards.is_type(oc_definition, str):
-                return bool(oc_definition.strip())
-            return True
+            if not isinstance(oc_definition, str):
+                return True
+            return bool(oc_definition.strip())
 
         def _enhance_objectclass_metadata(
             self,
@@ -439,10 +439,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "original_format",
                     "",
                 )
-                if not u.Guards.is_type(original_format_raw, str):
+                if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
-                return r[str].ok(original_format_raw)
+                original_format = str(original_format_raw)
+                return r[str].ok(original_format)
 
             if not attr_data.oid:
                 return r[str].fail("Attribute OID is required for writing")
@@ -475,10 +476,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "original_format",
                     "",
                 )
-                if not u.Guards.is_type(original_format_raw, str):
+                if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
-                return r[str].ok(original_format_raw)
+                original_format = str(original_format_raw)
+                return r[str].ok(original_format)
 
             if not oc_data.oid:
                 return r[str].fail("ObjectClass OID is required for writing")
@@ -639,27 +641,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
                 effective_dn = m.Ldif.DN(value=entry_dn.strip())
 
-                if u.Guards.is_type(entry_attrs, m.Ldif.Attributes):
-                    ldif_attrs = entry_attrs
-                else:
-                    attr_dict: dict[str, list[str]] = {}
+                attr_dict: dict[str, list[str]] = {}
 
-                    attr_key: str
-                    attr_value: list[str | bytes]
-                    for attr_key, attr_value in entry_attrs.items():
-                        converted_list: list[str] = []
-                        for v in attr_value:
-                            if u.Guards.is_type(v, bytes):
-                                converted_list.append(
-                                    v.decode(
-                                        FlextLdifServersRelaxed.Constants.ENCODING_UTF8,
-                                        errors=FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING,
-                                    ),
-                                )
-                            else:
-                                converted_list.append(str(v))
-                        attr_dict[str(attr_key)] = converted_list
-                    ldif_attrs = m.Ldif.Attributes(attributes=attr_dict)
+                attr_key: str
+                attr_value: list[str | bytes]
+                for attr_key, attr_value in entry_attrs.items():
+                    converted_list: list[str] = []
+                    for v in attr_value:
+                        if isinstance(v, str):
+                            converted_list.append(v)
+                        else:
+                            converted_list.append(
+                                v.decode(
+                                    FlextLdifServersRelaxed.Constants.ENCODING_UTF8,
+                                    errors=FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING,
+                                ),
+                            )
+                    attr_dict[str(attr_key)] = converted_list
+                ldif_attrs = m.Ldif.Attributes(attributes=attr_dict)
 
                 original_attribute_case: dict[str, str] = {}
                 for attr_name in entry_attrs:

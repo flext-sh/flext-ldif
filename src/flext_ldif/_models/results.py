@@ -33,7 +33,7 @@ class DynamicCounts(FlextLdifModelsBase):
         return 0
 
     def __getitem__(self, key: str) -> int:
-        extra = self.__pydantic_extra__
+        extra: dict[str, object] | None = self.__pydantic_extra__
         if extra is not None and key in extra:
             v = extra[key]
             return self._to_count(v)
@@ -120,12 +120,12 @@ class _BooleanFlags(FlextLdifModelsBase):
 
     def __eq__(self, other: object) -> bool:
         if other.__class__ is dict:
-            extra = self.__pydantic_extra__
+            extra = self.model_extra
             if extra is None:
                 return other == {}
             return dict(extra) == other
-        if other.__class__ is _BooleanFlags:
-            return self.__pydantic_extra__ == other.__pydantic_extra__
+        if isinstance(other, _BooleanFlags):
+            return self.model_extra == other.model_extra
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -146,17 +146,31 @@ class _FlexibleCategories(
         raise TypeError(msg)
 
     def __eq__(self, other: object) -> bool:
-        if other.__class__ is _FlexibleCategories:
+        if isinstance(other, _FlexibleCategories):
             return self.categories == other.categories
-        if other.__class__ is dict:
+        if isinstance(other, dict):
             return self.categories == other
         return False
 
     def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
-        return iter(self.categories.items())
+        pairs: list[tuple[str, list[FlextLdifModelsDomains.Entry]]] = []
+        for category, values in self.categories.items():
+            pairs.append((
+                category,
+                [
+                    FlextLdifModelsDomains.Entry.model_validate(value)
+                    for value in values
+                ],
+            ))
+        return iter(pairs)
 
     def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-        return iter(self.categories.values())
+        entry_values: list[list[FlextLdifModelsDomains.Entry]] = []
+        for values in self.categories.values():
+            entry_values.append([
+                FlextLdifModelsDomains.Entry.model_validate(value) for value in values
+            ])
+        return iter(entry_values)
 
     def keys(self) -> Iterator[str]:
         return iter(self.categories.keys())
@@ -165,7 +179,8 @@ class _FlexibleCategories(
         return category in self.categories
 
     def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
-        return self.categories[category]
+        values = self.categories[category]
+        return [FlextLdifModelsDomains.Entry.model_validate(value) for value in values]
 
     def __setitem__(
         self,
@@ -247,12 +262,12 @@ class FlextLdifModelsResults:
             cls,
             value: _FlexibleCategories | _DynCategoriesInput,
         ) -> _FlexibleCategories:
-            if value.__class__ is _FlexibleCategories:
-                return value
-            result = _FlexibleCategories()
-            for cat, entries in dict(value).items():
-                result.add_entries(str(cat), list(entries))
-            return result
+            if isinstance(value, dict):
+                result = _FlexibleCategories()
+                for cat, entries in value.items():
+                    result.add_entries(str(cat), list(entries))
+                return result
+            return value
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             all_entries: list[FlextLdifModelsDomains.Entry] = []

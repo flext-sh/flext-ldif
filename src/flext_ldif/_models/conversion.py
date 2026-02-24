@@ -60,7 +60,7 @@ class ConvertToInt(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         """Execute integer conversion with type guards."""
-        if u.Guards.is_type(self.value, (str, bytes, bytearray, int, float)):
+        if isinstance(self.value, (str, bytes, bytearray, int, float)):
             try:
                 return int(self.value)
             except (TypeError, ValueError):
@@ -92,7 +92,7 @@ class ConvertToFloat(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         """Execute float conversion with type guards."""
-        if u.Guards.is_type(self.value, (str, bytes, bytearray, int, float)):
+        if isinstance(self.value, (str, bytes, bytearray, int, float)):
             try:
                 return float(self.value)
             except (TypeError, ValueError):
@@ -124,7 +124,7 @@ class ConvertToBool(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         """Execute boolean conversion with string special handling."""
-        if u.Guards.is_type(self.value, str):
+        if isinstance(self.value, str):
             return self.value.lower() in {"true", "1", "yes", "on"}
         try:
             return bool(self.value)
@@ -152,7 +152,7 @@ class ConvertToList(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         """Execute list conversion."""
-        if u.Guards.is_type(self.value, (list, tuple, set)):
+        if isinstance(self.value, (list, tuple, set)):
             return list(self.value)
         try:
             return [self.value]
@@ -180,7 +180,7 @@ class ConvertToTuple(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         """Execute tuple conversion."""
-        if u.Guards.is_type(self.value, (list, tuple)):
+        if isinstance(self.value, (list, tuple)):
             return tuple(self.value)
         try:
             return (self.value,)

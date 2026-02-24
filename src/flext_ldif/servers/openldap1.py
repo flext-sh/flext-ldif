@@ -113,23 +113,20 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute."""
-            if u.Guards.is_type(attr_definition, str):
-                attr_definition_str = str(attr_definition)
+            if isinstance(attr_definition, str):
                 if not re.match(
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN,
-                    attr_definition_str,
+                    attr_definition,
                     re.IGNORECASE,
                 ):
                     return False
 
-                has_olc = "olc" in attr_definition_str.lower()
+                has_olc = "olc" in attr_definition.lower()
                 return not has_olc
 
-            oid_raw = getattr(attr_definition, "oid", None)
-            has_olc = u.Guards.is_type(oid_raw, str) and "olc" in oid_raw.lower()
-            name_raw = getattr(attr_definition, "name", None)
-            if not has_olc and u.Guards.is_type(name_raw, str):
-                has_olc = "olc" in name_raw.lower()
+            has_olc = "olc" in attr_definition.oid.lower()
+            if not has_olc:
+                has_olc = "olc" in attr_definition.name.lower()
             return not has_olc
 
         def can_handle_objectclass(
@@ -137,23 +134,20 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass."""
-            if u.Guards.is_type(oc_definition, str):
-                oc_definition_str = str(oc_definition)
+            if isinstance(oc_definition, str):
                 if not re.match(
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN,
-                    oc_definition_str,
+                    oc_definition,
                     re.IGNORECASE,
                 ):
                     return False
 
-                has_olc = "olc" in oc_definition_str.lower()
+                has_olc = "olc" in oc_definition.lower()
                 return not has_olc
 
-            oid_raw = getattr(oc_definition, "oid", None)
-            has_olc = u.Guards.is_type(oid_raw, str) and "olc" in oid_raw.lower()
-            name_raw = getattr(oc_definition, "name", None)
-            if not has_olc and u.Guards.is_type(name_raw, str):
-                has_olc = "olc" in name_raw.lower()
+            has_olc = "olc" in oc_definition.oid.lower()
+            if not has_olc:
+                has_olc = "olc" in oc_definition.name.lower()
             return not has_olc
 
         def _parse_attribute(
@@ -281,20 +275,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL (public method)."""
-            if u.Guards.is_type(acl_line, str):
-                return self.can_handle_acl(acl_line)
-
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
-                return self.can_handle_acl(acl_line)
-
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if u.Guards.is_type(raw_acl, str):
-                return self.can_handle_acl(raw_acl)
-            return False
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 return bool(
                     re.match(
                         FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_PATTERN,
@@ -303,7 +288,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     ),
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
-            if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+            if not isinstance(raw_acl, str) or not raw_acl:
                 return False
 
             return bool(

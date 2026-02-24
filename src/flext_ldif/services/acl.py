@@ -152,9 +152,9 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         if batch_result.is_success:
             results_raw = batch_result.value.results
 
-            acls.extend(
-                item for item in results_raw if issubclass(item.__class__, m.Ldif.Acl)
-            )
+            for item in results_raw:
+                if isinstance(item, m.Ldif.Acl):
+                    acls.append(item)
 
         return r[m.Ldif.LdifResults.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),
@@ -202,11 +202,17 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         required_permissions: m.Ldif.LdifResults.AclPermissions | Mapping[str, bool],
     ) -> r[m.Ldif.LdifResults.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
-        required = (
-            m.Ldif.LdifResults.AclPermissions(**required_permissions)
-            if issubclass(required_permissions.__class__, dict)
-            else required_permissions
-        )
+        if isinstance(required_permissions, Mapping):
+            required = m.Ldif.LdifResults.AclPermissions(
+                read=bool(required_permissions.get("read", False)),
+                write=bool(required_permissions.get("write", False)),
+                delete=bool(required_permissions.get("delete", False)),
+                add=bool(required_permissions.get("add", False)),
+                search=bool(required_permissions.get("search", False)),
+                compare=bool(required_permissions.get("compare", False)),
+            )
+        else:
+            required = required_permissions
 
         if not acls:
             return r[m.Ldif.LdifResults.AclEvaluationResult].ok(

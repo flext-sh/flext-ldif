@@ -21,12 +21,16 @@ from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 TUPLE_LENGTH_PAIR = 2
-_TSchemaItem = TypeVar("_TSchemaItem", m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
 type _TConvertedModel = (
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 )
 type _TSchemaConversionValue = (
     m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+)
+type _MetadataMappingValue = (
+    t.MetadataAttributeValue
+    | Mapping[str, t.MetadataAttributeValue]
+    | Sequence[t.MetadataAttributeValue]
 )
 
 logger = FlextLogger(__name__)
@@ -48,7 +52,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: FlextTypes.GeneralValueType,
+        obj: object,
     ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -89,7 +93,7 @@ class FlextLdifConversion(
         msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
         raise TypeError(msg)
 
-    _PERMISSION_KEY_MAPPING: ClassVar[Mapping[str, t.GeneralValueType]] = {
+    _PERMISSION_KEY_MAPPING: ClassVar[Mapping[str, str]] = {
         "read": "read",
         "write": "write",
         "add": "add",
@@ -116,7 +120,7 @@ class FlextLdifConversion(
         """Create service instance with matching signature for type checker."""
         instance = super().__new__(cls)
 
-        if not u.Guards.is_type(instance, cls):
+        if not isinstance(instance, cls):
             msg = f"Expected {cls.__name__}, got {type(instance).__name__}"
             raise TypeError(msg)
         return instance
@@ -130,7 +134,7 @@ class FlextLdifConversion(
         quirk_or_type: str | FlextLdifServersBase,
     ) -> FlextLdifServersBase:
         """Resolve server quirk instance from string type or return instance."""
-        if u.Guards.is_type(quirk_or_type, str):
+        if isinstance(quirk_or_type, str):
             server = FlextLdifServer.get_global_instance()
 
             server_type_str: str = quirk_or_type
@@ -189,11 +193,11 @@ class FlextLdifConversion(
         """Convert a model from a source server format to a target server format."""
         start_time = time.perf_counter()
 
-        if u.Guards.is_type(source, str):
+        if isinstance(source, str):
             source_format = source
         else:
             source_format = str(getattr(source, "server_type", "unknown"))
-        if u.Guards.is_type(target, str):
+        if isinstance(target, str):
             target_format = target
         else:
             target_format = str(getattr(target, "server_type", "unknown"))
@@ -259,21 +263,21 @@ class FlextLdifConversion(
             source_quirk = self._resolve_quirk(source)
             target_quirk = self._resolve_quirk(target)
 
-            if u.Guards.is_type(model_instance, m.Ldif.Entry):
+            if isinstance(model_instance, m.Ldif.Entry):
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
-            if u.Guards.is_type(model_instance, m.Ldif.SchemaAttribute):
+            if isinstance(model_instance, m.Ldif.SchemaAttribute):
                 return FlextLdifConversion._convert_schema_attribute(
                     source_quirk,
                     target_quirk,
                     model_instance,
                 )
-            if u.Guards.is_type(model_instance, m.Ldif.SchemaObjectClass):
+            if isinstance(model_instance, m.Ldif.SchemaObjectClass):
                 return FlextLdifConversion._convert_schema_objectclass(
                     source_quirk,
                     target_quirk,
                     model_instance,
                 )
-            if u.Guards.is_type(model_instance, m.Ldif.Acl):
+            if isinstance(model_instance, m.Ldif.Acl):
                 return self._convert_acl(source_quirk, target_quirk, model_instance)
 
             return r[
@@ -291,9 +295,9 @@ class FlextLdifConversion(
     @staticmethod
     def _normalize_metadata_value(value: object) -> t.MetadataAttributeValue:
         """Normalize metadata value to proper type."""
-        if u.Guards.is_type(value, (str, int, float, bool, type(None))):
+        if isinstance(value, (str, int, float, bool, type(None))):
             return value if value is not None else ""
-        if u.Guards.is_type(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             return list(value)
         # Removed dict support - strict typing
         return str(value) if value is not None else ""
@@ -304,90 +308,20 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
-        if not boolean_conversions or not u.Guards.is_type(boolean_conversions, dict):
+        if not boolean_conversions or not isinstance(boolean_conversions, dict):
             return {}
-
-        boolean_conv_typed: dict[str, FlextTypes.GeneralValueType] = dict(
-            boolean_conversions
-        )
-
-        def process_conversion(
-            item: tuple[str, FlextTypes.GeneralValueType],
-        ) -> tuple[str, Mapping[str, str]]:
-            """Process single conversion info."""
-            attr_name, conv_info = item
-
-            if not u.Guards.is_type(conv_info, dict):
-                conv_info_typed: dict[str, FlextTypes.GeneralValueType] = {}
-            else:
-                conv_info_typed = dict(conv_info)
-
-            if not conv_info_typed:
-                return (
-                    f"boolean_{attr_name}",
-                    {
-                        "source_format": "",
-                        "target_server": str(target_server_type),
-                        "action": "convert_to_target_format",
-                    },
-                )
-            original_format = (
-                u.take(conv_info_typed, "format", default="")
-                if u.Guards.is_type(conv_info_typed, dict)
-                else ""
-            )
-            return (
-                f"boolean_{attr_name}",
-                {
-                    "source_format": str(original_format),
-                    "target_server": str(target_server_type),
-                    "action": "convert_to_target_format",
-                },
-            )
-
-        if u.Guards.is_type(boolean_conv_typed, dict):
-            pairs_list: list[tuple[str, FlextTypes.GeneralValueType]] = u.Ldif.pairs(
-                boolean_conv_typed
-            )
-        else:
-            pairs_list = []
-
-        batch_result = u.Collection.batch(
-            pairs_list,
-            process_conversion,
-            on_error="skip",
-        )
-
-        if not batch_result.is_success:
-            return {}
-
-        batch_data = batch_result.map_or(None)
-
-        results_list_raw: list[t.GeneralValueType] = []
-        if batch_data is not None:
-            results_raw = batch_data.results
-            if u.Guards.is_type(results_raw, list):
-                results_list_raw = results_raw
-
-        results_list: list[tuple[str, dict[str, str]]] = []
-        for item in results_list_raw:
-            if not u.Guards.is_type(item, tuple) or len(item) != TUPLE_LENGTH_PAIR:
-                continue
-            key_raw, value_raw = item
-            if not u.Guards.is_type(key_raw, str) or not u.Guards.is_type(
-                value_raw, dict
-            ):
-                continue
-            value_typed = {str(k): str(v) for k, v in value_raw.items()}
-            results_list.append((key_raw, value_typed))
-
-        reduced_raw = u.Ldif.reduce_dict(results_list)
-
         result: dict[str, dict[str, str]] = {}
-        if u.Guards.is_type(reduced_raw, dict):
-            for k, v in reduced_raw.items():
-                if u.Guards.is_type(k, str) and u.Guards.is_type(v, dict):
-                    result[k] = {str(kk): str(vv) for kk, vv in v.items()}
+        for attr_name, conv_info in boolean_conversions.items():
+            if not isinstance(attr_name, str):
+                continue
+            source_format = ""
+            if isinstance(conv_info, dict):
+                source_format = str(u.take(conv_info, "format", default=""))
+            result[f"boolean_{attr_name}"] = {
+                "source_format": source_format,
+                "target_server": target_server_type,
+                "action": "convert_to_target_format",
+            }
         return result
 
     @staticmethod
@@ -414,11 +348,10 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
         """Analyze DN spacing for target compatibility."""
-        pipe_result = u.Reliability.pipe(
-            original_format_details,
-            lambda d: u.take(d, "dn_spacing") if u.Guards.is_type(d, dict) else None,
-            lambda spacing: (
-                {
+        if isinstance(original_format_details, dict):
+            spacing = u.take(original_format_details, "dn_spacing")
+            if spacing:
+                return {
                     "dn_format": {
                         "source_dn": FlextLdifConversion._normalize_metadata_value(
                             spacing,
@@ -427,13 +360,6 @@ class FlextLdifConversion(
                         "action": "normalize_for_target",
                     },
                 }
-                if spacing
-                else {}
-            ),
-        )
-
-        if u.Guards.is_type(pipe_result, dict):
-            return pipe_result
         return {}
 
     @staticmethod
@@ -452,80 +378,59 @@ class FlextLdifConversion(
         ):
             return conversion_analysis
 
-        target_server_str = str(target_server_type)
+        target_server_str = target_server_type
         get_boolean = u.mapper().prop("boolean_conversions")
         get_attr_case = u.mapper().prop("original_attribute_case")
         get_format_details = u.mapper().prop("original_format_details")
 
-        boolean_conversions = u.Ldif.maybe(
-            get_boolean(source_metadata),
-            default={},
+        boolean_raw = get_boolean(source_metadata)
+        boolean_conversions: object = (
+            boolean_raw if isinstance(boolean_raw, dict) else {}
         )
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
             boolean_conversions,
             target_server_str,
         )
 
-        acc_typed: dict[str, t.GeneralValueType] = dict(conversion_analysis)
-
-        boolean_analysis_typed: dict[str, t.GeneralValueType] = (
-            dict(boolean_analysis) if u.Guards.is_type(boolean_analysis, dict) else {}
-        )
-
-        acc_typed = u.Ldif.evolve(
-            acc_typed,
-            u.Ldif.map_dict(
-                boolean_analysis_typed,
-                mapper=lambda k, v: (
-                    k,
-                    v if u.Guards.is_type(v, (str, dict)) else str(v),
-                ),
-            ),
-        )
+        acc_typed: dict[str, str | dict[str, str | t.MetadataAttributeValue]] = {}
+        for key, value in boolean_analysis.items():
+            if isinstance(value, str):
+                acc_typed[key] = value
+            elif isinstance(value, dict):
+                acc_typed[key] = {
+                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    for k, v in value.items()
+                }
 
         attr_case_analysis = FlextLdifConversion._analyze_attribute_case(
-            u.Ldif.maybe(get_attr_case(source_metadata), default={}),
+            get_attr_case(source_metadata)
+            if get_attr_case(source_metadata) is not None
+            else {},
             target_server_str,
         )
 
-        attr_case_typed: dict[str, t.GeneralValueType] = (
-            dict(attr_case_analysis)
-            if u.Guards.is_type(attr_case_analysis, dict)
-            else {}
-        )
-        acc_typed = u.Ldif.evolve(acc_typed, attr_case_typed)
+        for key, attr_case_value in attr_case_analysis.items():
+            if isinstance(attr_case_value, dict):
+                acc_typed[key] = {
+                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    for k, v in attr_case_value.items()
+                }
 
         dn_format_analysis = FlextLdifConversion._analyze_dn_format(
-            u.Ldif.maybe(get_format_details(source_metadata), default={}),
+            get_format_details(source_metadata)
+            if get_format_details(source_metadata) is not None
+            else {},
             target_server_str,
         )
 
-        dn_format_typed: dict[str, t.GeneralValueType] = (
-            dict(dn_format_analysis)
-            if u.Guards.is_type(dn_format_analysis, dict)
-            else {}
-        )
-        acc_typed = u.Ldif.evolve(acc_typed, dn_format_typed)
+        for key, dn_format_value in dn_format_analysis.items():
+            if isinstance(dn_format_value, dict):
+                acc_typed[key] = {
+                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    for k, v in dn_format_value.items()
+                }
 
-        if u.Guards.is_type(acc_typed, dict):
-            normalized: dict[str, str | dict[str, str | t.MetadataAttributeValue]] = {}
-            for key, value in acc_typed.items():
-                if not u.Guards.is_type(key, str):
-                    continue
-                if u.Guards.is_type(value, str):
-                    normalized[key] = value
-                    continue
-                if u.Guards.is_type(value, dict):
-                    nested: dict[str, str | t.MetadataAttributeValue] = {}
-                    for nested_key, nested_value in value.items():
-                        nested[str(nested_key)] = (
-                            FlextLdifConversion._normalize_metadata_value(
-                                nested_value,
-                            )
-                        )
-                    normalized[key] = nested
-            return normalized
-        return {}
+        return acc_typed
 
     def _update_entry_metadata(
         self,
@@ -616,18 +521,17 @@ class FlextLdifConversion(
             converted_entry = entry.model_copy(deep=True)
 
             get_server_type = u.mapper().prop("server_type")
-            target_server_type_raw = u.Ldif.maybe(
-                get_server_type(target_quirk),
-                default="unknown",
+            target_server_type_obj = get_server_type(target_quirk)
+            target_server_type_raw = (
+                target_server_type_obj
+                if isinstance(target_server_type_obj, str)
+                else "unknown"
             )
 
-            if (
-                u.Guards.is_type(target_server_type_raw, str)
-                and target_server_type_raw != "unknown"
-            ):
-                normalized = u.Ldif.Server.normalize_server_type(target_server_type_raw)
-
-                target_server_type_str: str = normalized
+            if target_server_type_raw != "unknown":
+                target_server_type_str = u.Ldif.Server.normalize_server_type(
+                    target_server_type_raw,
+                )
             else:
                 target_server_type_str = "rfc"
 
@@ -639,7 +543,7 @@ class FlextLdifConversion(
                 m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None
             ) = (
                 entry.metadata
-                if u.Guards.is_type(
+                if isinstance(
                     entry.metadata,
                     (
                         m.Ldif.QuirkMetadata,
@@ -653,9 +557,11 @@ class FlextLdifConversion(
                 validated_quirk_type,
             )
 
-            source_quirk_name = u.Ldif.maybe(
-                get_server_type(source_quirk),
-                default="unknown",
+            source_server_type_obj = get_server_type(source_quirk)
+            source_quirk_name = (
+                source_server_type_obj
+                if isinstance(source_server_type_obj, str)
+                else "unknown"
             )
 
             # Normalize server types for comparison
@@ -679,7 +585,7 @@ class FlextLdifConversion(
                 str(source_quirk_name),
             )
 
-            if not u.Guards.is_type(converted_entry, m.Ldif.Entry):
+            if not isinstance(converted_entry, m.Ldif.Entry):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1069,50 +975,36 @@ class FlextLdifConversion(
     def _normalize_permission_key(key: str) -> str:
         """Normalize permission key for mapping."""
         normalized = {"self_write": "selfwrite"}.get(key, key)
-        return normalized if u.Guards.is_type(normalized, str) else key
+        return normalized if isinstance(normalized, str) else key
 
     @staticmethod
     def _build_permissions_dict(
         mapped_perms: Mapping[str, bool],
     ) -> Mapping[str, bool | None]:
         """Build permissions dict with standard keys."""
-        map_result = u.Ldif.map_dict(
-            FlextLdifConversion._PERMISSION_KEY_MAPPING,
-            mapper=lambda _key, mapped_key: u.take(
-                mapped_perms,
-                str(mapped_key) if mapped_key is not None else "",
-            ),
-        )
-
-        if u.Guards.is_type(map_result, dict):
-            return {
-                k: v
-                for k, v in map_result.items()
-                if u.Guards.is_type(v, bool) or v is None
-            }
-        return {}
+        result: dict[str, bool | None] = {}
+        for (
+            source_key,
+            mapped_key,
+        ) in FlextLdifConversion._PERMISSION_KEY_MAPPING.items():
+            if not isinstance(mapped_key, str):
+                continue
+            value = mapped_perms.get(mapped_key)
+            result[source_key] = value if isinstance(value, bool) else None
+        return result
 
     @staticmethod
     def _apply_oid_to_oud_mapping(
         orig_perms_dict: Mapping[str, bool],
         converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[Mapping[str, bool | None]], object],
+        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
-        orig_perms_dict_typed: dict[str, t.GeneralValueType] = dict(orig_perms_dict)
-
-        normalized_orig_perms_raw = u.Ldif.map_dict(
-            orig_perms_dict_typed,
-            key_mapper=FlextLdifConversion._normalize_permission_key,
-        )
-
-        if u.Guards.is_type(normalized_orig_perms_raw, dict):
-            normalized_orig_perms: dict[str, bool] = {
-                k: bool(v) if u.Guards.is_type(v, bool) else False
-                for k, v in normalized_orig_perms_raw.items()
-            }
-        else:
-            normalized_orig_perms = {}
+        normalized_orig_perms: dict[str, bool] = {
+            FlextLdifConversion._normalize_permission_key(k): v
+            for k, v in orig_perms_dict.items()
+            if isinstance(v, bool)
+        }
         mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(
             normalized_orig_perms,
         )
@@ -1128,7 +1020,7 @@ class FlextLdifConversion(
     def _apply_oud_to_oid_mapping(
         orig_perms_dict: Mapping[str, bool],
         converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[Mapping[str, bool | None]], object],
+        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
         mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
@@ -1165,26 +1057,21 @@ class FlextLdifConversion(
             config = m.Ldif.PermissionMappingConfig(
                 original_acl=original_acl,
                 converted_acl=converted_acl,
-                orig_perms_dict=orig_perms_dict or {},
+                orig_perms_dict=dict(orig_perms_dict or {}),
                 source_server_type=source_server_type,
                 target_server_type=target_server_type,
                 converted_has_permissions=converted_has_permissions,
             )
 
-        def normalize_server_type_wrapper(
-            value: t.GeneralValueType,
-        ) -> t.GeneralValueType:
-            if u.Guards.is_type(value, str):
-                return u.Ldif.Server.normalize_server_type(value)
-            return value
-
-        normalized_source = u.Ldif.maybe(
-            config.source_server_type,
-            mapper=normalize_server_type_wrapper,
+        normalized_source = (
+            u.Ldif.Server.normalize_server_type(config.source_server_type)
+            if isinstance(config.source_server_type, str)
+            else config.source_server_type
         )
-        normalized_target = u.Ldif.maybe(
-            config.target_server_type,
-            mapper=normalize_server_type_wrapper,
+        normalized_target = (
+            u.Ldif.Server.normalize_server_type(config.target_server_type)
+            if isinstance(config.target_server_type, str)
+            else config.target_server_type
         )
 
         mapping_type = "none"
@@ -1206,7 +1093,7 @@ class FlextLdifConversion(
             normalized_target=str(normalized_target),
         )
 
-        if not u.Guards.is_type(config.converted_acl, m.Ldif.Acl):
+        if not isinstance(config.converted_acl, m.Ldif.Acl):
             return m.Ldif.Acl()
         converted_acl_typed: m.Ldif.Acl = config.converted_acl
         if mapping_type == "oid_to_oud":
@@ -1222,7 +1109,7 @@ class FlextLdifConversion(
                 self._perms_dict_to_model,
             )
         if mapping_type == "preserve_original":
-            if not u.Guards.is_type(config.original_acl, m.Ldif.Acl):
+            if not isinstance(config.original_acl, m.Ldif.Acl):
                 return converted_acl_typed
             original_acl_typed: m.Ldif.Acl = config.original_acl
             return converted_acl_typed.model_copy(
@@ -1313,9 +1200,9 @@ class FlextLdifConversion(
             return {}
 
         extensions_raw = get_extensions(acl.metadata)
-        if u.Guards.is_type(extensions_raw, m.Ldif.DynamicMetadata):
+        if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
             dumped = extensions_raw.model_dump()
-            if u.Guards.is_type(dumped, dict):
+            if isinstance(dumped, dict):
                 return dict(dumped)
             return {}
 
@@ -1323,23 +1210,20 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: FlextTypes.GeneralValueType,
+        value: _MetadataMappingValue,
     ) -> t.MetadataAttributeValue:
         """Convert value to MetadataAttributeValue type."""
-        if u.Guards.is_type(value, (str, int, float, bool)) or value is None:
+        if isinstance(value, (str, int, float, bool)) or value is None:
             return value
-        if u.Guards.is_type(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             converted_list: list[str | int | float | bool | datetime | None] = []
             for item in value:
-                if (
-                    u.Guards.is_type(item, (str, int, float, bool, datetime))
-                    or item is None
-                ):
+                if isinstance(item, (str, int, float, bool, datetime)) or item is None:
                     converted_list.append(item)
                 else:
                     converted_list.append(str(item))
             return converted_list
-        if u.Guards.is_type(value, dict):
+        if isinstance(value, dict):
             # Dict not supported in strict MetadataAttributeValue, convert to string
             return str(value)
         return str(value)
@@ -1397,8 +1281,34 @@ class FlextLdifConversion(
 
         dynamic_metadata_dict: dict[str, t.MetadataAttributeValue] = {}
         for key, value in merged_ext_raw.items():
+            if isinstance(value, (str, int, float, bool, datetime)) or value is None:
+                dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
+                    value
+                )
+                continue
+
+            if isinstance(value, Mapping):
+                normalized_mapping: dict[str, t.MetadataAttributeValue] = {
+                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    for k, v in value.items()
+                }
+                dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
+                    normalized_mapping,
+                )
+                continue
+
+            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+                normalized_sequence: list[t.MetadataAttributeValue] = [
+                    FlextLdifConversion._normalize_metadata_value(item)
+                    for item in value
+                ]
+                dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
+                    normalized_sequence,
+                )
+                continue
+
             dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
-                value,
+                str(value),
             )
 
         if acl_step1.metadata:
@@ -1435,12 +1345,15 @@ class FlextLdifConversion(
             entry_attributes = m.Ldif.Attributes(attributes={})
 
             get_server_type = u.mapper().prop("server_type")
-            server_type_attr = u.Ldif.maybe(get_server_type(source_quirk))
+            server_type_raw = get_server_type(source_quirk)
+            server_type_attr = (
+                server_type_raw if isinstance(server_type_raw, str) else None
+            )
 
             source_server_type: str | None = u.try_(
                 lambda: (
                     u.Ldif.Server.normalize_server_type(str(server_type_attr))
-                    if u.Guards.is_type(server_type_attr, str)
+                    if isinstance(server_type_attr, str)
                     else None
                 ),
                 default=None,
@@ -1462,7 +1375,7 @@ class FlextLdifConversion(
             converted_entry = entry_result.map_or(None)
             if converted_entry is None:
                 return entry_result
-            if not u.Guards.is_type(converted_entry, m.Ldif.Entry):
+            if not isinstance(converted_entry, m.Ldif.Entry):
                 return FlextResult.fail(
                     f"Entry conversion returned unexpected type: {type(converted_entry).__name__}",
                 )
@@ -1471,9 +1384,8 @@ class FlextLdifConversion(
             get_acls = u.mapper().prop("acls")
             converted_metadata_raw = get_metadata(converted_entry)
 
-            if not u.Guards.is_type(
-                converted_metadata_raw,
-                (m.Ldif.QuirkMetadata, type(None)),
+            if not isinstance(
+                converted_metadata_raw, (m.Ldif.QuirkMetadata, type(None))
             ):
                 return FlextResult.fail(
                     f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
@@ -1483,8 +1395,8 @@ class FlextLdifConversion(
 
             acls_raw = get_acls(converted_metadata) if converted_metadata else None
             acls: list[m.Ldif.Acl] | None = None
-            if acls_raw is not None and u.Guards.is_type(acls_raw, list):
-                acls = [item for item in acls_raw if u.Guards.is_type(item, m.Ldif.Acl)]
+            if acls_raw is not None and isinstance(acls_raw, list):
+                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
 
             if not acls:
                 return FlextResult.fail(
@@ -1495,7 +1407,7 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
 
-            if u.Guards.is_type(domain_acl, m.Ldif.Acl):
+            if isinstance(domain_acl, m.Ldif.Acl):
                 converted_acl: m.Ldif.Acl = domain_acl
             else:
                 validation_result: r[m.Ldif.Acl] = r[m.Ldif.Acl].ok(
@@ -1506,15 +1418,15 @@ class FlextLdifConversion(
                 converted_acl = validation_result.value
 
             get_server_type = u.mapper().prop("server_type")
-            target_server_type_raw = u.Ldif.maybe(
-                get_server_type(target_quirk),
-                default="unknown",
+            target_server_raw = get_server_type(target_quirk)
+            target_server_type_raw = (
+                target_server_raw if isinstance(target_server_raw, str) else "unknown"
             )
 
             target_server_type: str | None = u.try_(
                 lambda: (
                     u.Ldif.Server.normalize_server_type(target_server_type_raw)
-                    if u.Guards.is_type(target_server_type_raw, str)
+                    if isinstance(target_server_type_raw, str)
                     and target_server_type_raw != "unknown"
                     else None
                 ),
@@ -1560,9 +1472,9 @@ class FlextLdifConversion(
         | t.MetadataAttributeValue
     ]:
         """Write attribute to RFC string representation."""
-        if u.Guards.is_type(source_attr, str):
+        if isinstance(source_attr, str):
             return r[str].ok(source_attr)
-        if not u.Guards.is_type(source_attr, m.Ldif.SchemaAttribute):
+        if not isinstance(source_attr, m.Ldif.SchemaAttribute):
             return r[str].ok(source_attr)
 
         source_quirk = self._resolve_quirk(source)
@@ -1588,9 +1500,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _schema_passthrough_ok(value: object) -> r[_TSchemaConversionValue] | None:
-        if u.Guards.is_type(value, str):
+        if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
-        if u.Guards.is_type(value, dict):
+        if isinstance(value, dict):
             # Dict not supported in strict _TSchemaConversionValue, convert to string
             return FlextLdifConversion._schema_conversion_ok(str(value))
         return None
@@ -1603,7 +1515,7 @@ class FlextLdifConversion(
     ) -> r[_TSchemaConversionValue]:
         """Convert attribute from source to target quirk via write->parse pipeline."""
         try:
-            if not u.Guards.is_type(data, str):
+            if not isinstance(data, str):
                 return FlextResult.fail("Attribute conversion requires string data")
 
             source_schema_result = self._resolve_schema_quirk(source, role="Source")
@@ -1630,7 +1542,7 @@ class FlextLdifConversion(
             if rfc_value is None:
                 return rfc_result
 
-            if not u.Guards.is_type(rfc_value, str):
+            if not isinstance(rfc_value, str):
                 return FlextLdifConversion._schema_conversion_ok(rfc_value)
 
             target_schema_result = self._resolve_schema_quirk(target, role="Target")
@@ -1670,7 +1582,7 @@ class FlextLdifConversion(
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_attr)
         if passthrough is not None:
             return passthrough
-        if u.Guards.is_type(parsed_attr, m.Ldif.SchemaAttribute):
+        if isinstance(parsed_attr, m.Ldif.SchemaAttribute):
             return FlextLdifConversion._schema_conversion_ok(parsed_attr)
 
         msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
@@ -1686,7 +1598,7 @@ class FlextLdifConversion(
         if passthrough is not None:
             return passthrough
 
-        if not u.Guards.is_type(source_oc, m.Ldif.SchemaObjectClass):
+        if not isinstance(source_oc, m.Ldif.SchemaObjectClass):
             msg = f"Expected SchemaObjectClass | str | dict, got {type(source_oc)}"
             raise TypeError(msg)
 
@@ -1700,7 +1612,7 @@ class FlextLdifConversion(
             schema_quirk.write_objectclass(source_oc).map_or(source_oc)
         )
         write_value = write_result.map_or(None)
-        if write_value is not None and u.Guards.is_type(write_value, str):
+        if write_value is not None and isinstance(write_value, str):
             return FlextLdifConversion._schema_conversion_ok(write_value)
 
         return write_result
@@ -1713,7 +1625,7 @@ class FlextLdifConversion(
     ) -> r[_TSchemaConversionValue]:
         """Convert objectClass from source to target quirk via write->parse pipeline."""
         try:
-            if not u.Guards.is_type(data, str):
+            if not isinstance(data, str):
                 return FlextResult.fail("ObjectClass conversion requires string data")
 
             source_schema_result = self._resolve_schema_quirk(source, role="Source")
@@ -1739,7 +1651,7 @@ class FlextLdifConversion(
             rfc_value = write_result.map_or(None)
             if rfc_value is None:
                 return write_result
-            if not u.Guards.is_type(rfc_value, str):
+            if not isinstance(rfc_value, str):
                 return FlextLdifConversion._schema_conversion_ok(rfc_value)
 
             target_schema_result = self._resolve_schema_quirk(target, role="Target")
@@ -1784,40 +1696,23 @@ class FlextLdifConversion(
             return r[p.Ldif.SchemaQuirkProtocol].fail(f"{role} quirk error: {e}")
 
     @staticmethod
-    def _parse_schema_item_with_schema(
-        parse_fn: Callable[[str], r[_TSchemaItem]],
-        value: str,
-        *,
-        expected_type: type[_TSchemaItem],
-        expected_label: str,
-        parse_error_message: str,
-    ) -> r[_TSchemaItem]:
-        parse_result = parse_fn(value)
-        if parse_result.is_failure:
-            return r[_TSchemaItem].fail(parse_result.error or parse_error_message)
-
-        parsed_value = parse_result.value
-        if not u.Guards.is_type(parsed_value, expected_type):
-            return r[_TSchemaItem].fail(
-                f"Expected {expected_label}, got {type(parsed_value).__name__}",
-            )
-
-        return r[_TSchemaItem].ok(parsed_value)
-
-    @staticmethod
     def _parse_attribute_with_schema(
         schema: p.Ldif.SchemaQuirkProtocol,
         value: str,
         *,
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaAttribute]:
-        return FlextLdifConversion._parse_schema_item_with_schema(
-            schema.parse_attribute,
-            value,
-            expected_type=m.Ldif.SchemaAttribute,
-            expected_label="SchemaAttribute",
-            parse_error_message=parse_error_message,
-        )
+        parse_result = schema.parse_attribute(value)
+        if parse_result.is_failure:
+            return r[m.Ldif.SchemaAttribute].fail(
+                parse_result.error or parse_error_message
+            )
+        parsed_value = parse_result.value
+        if not isinstance(parsed_value, m.Ldif.SchemaAttribute):
+            return r[m.Ldif.SchemaAttribute].fail(
+                f"Expected SchemaAttribute, got {type(parsed_value).__name__}",
+            )
+        return r[m.Ldif.SchemaAttribute].ok(parsed_value)
 
     @staticmethod
     def _parse_objectclass_with_schema(
@@ -1826,13 +1721,17 @@ class FlextLdifConversion(
         *,
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
-        return FlextLdifConversion._parse_schema_item_with_schema(
-            schema.parse_objectclass,
-            value,
-            expected_type=m.Ldif.SchemaObjectClass,
-            expected_label="SchemaObjectClass",
-            parse_error_message=parse_error_message,
-        )
+        parse_result = schema.parse_objectclass(value)
+        if parse_result.is_failure:
+            return r[m.Ldif.SchemaObjectClass].fail(
+                parse_result.error or parse_error_message,
+            )
+        parsed_value = parse_result.value
+        if not isinstance(parsed_value, m.Ldif.SchemaObjectClass):
+            return r[m.Ldif.SchemaObjectClass].fail(
+                f"Expected SchemaObjectClass, got {type(parsed_value).__name__}",
+            )
+        return r[m.Ldif.SchemaObjectClass].ok(parsed_value)
 
     def _write_target_objectclass(
         self,
@@ -1843,7 +1742,7 @@ class FlextLdifConversion(
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_oc)
         if passthrough is not None:
             return passthrough
-        if not u.Guards.is_type(parsed_oc, m.Ldif.SchemaObjectClass):
+        if not isinstance(parsed_oc, m.Ldif.SchemaObjectClass):
             msg = f"Expected SchemaObjectClass | str | dict, got {type(parsed_oc)}"
             raise TypeError(msg)
 
@@ -1887,24 +1786,20 @@ class FlextLdifConversion(
         """Convert multiple models from source to target quirk via RFC."""
         start_time = time.perf_counter()
 
-        if u.Guards.is_type(source, str):
+        if isinstance(source, str):
             source_format: str = source
         else:
             source_name_result = u.mapper().prop("server_name")(source)
             source_format = (
-                source_name_result
-                if u.Guards.is_type(source_name_result, str)
-                else "unknown"
+                source_name_result if isinstance(source_name_result, str) else "unknown"
             )
 
-        if u.Guards.is_type(target, str):
+        if isinstance(target, str):
             target_format: str = target
         else:
             target_name_result = u.mapper().prop("server_name")(target)
             target_format = (
-                target_name_result
-                if u.Guards.is_type(target_name_result, str)
-                else "unknown"
+                target_name_result if isinstance(target_name_result, str) else "unknown"
             )
 
         if not model_list:
@@ -1931,7 +1826,7 @@ class FlextLdifConversion(
             error_details: list[m.Ldif.ErrorDetail] = []
 
             for idx, model_item in enumerate(model_list):
-                if not u.Guards.is_type(
+                if not isinstance(
                     model_item,
                     (
                         m.Ldif.Entry,
@@ -1968,7 +1863,7 @@ class FlextLdifConversion(
             model_list_typed: list[object] = list(model_list)
             converted_typed: list[object] = list(converted)
 
-            errors_typed: list[str] = errors if u.Guards.is_type(errors, list) else []
+            errors_typed: list[str] = errors if isinstance(errors, list) else []
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
             items_failed = u.count(errors_typed)
@@ -2154,7 +2049,9 @@ class FlextLdifConversion(
 
         attr_result = parse_attr(test_attr_def)
 
-        if u.Guards.is_type(attr_result, FlextResult) and attr_result.is_success:
+        if FlextLdifConversion._has_attr(attr_result, "is_success") and bool(
+            getattr(attr_result, "is_success", False)
+        ):
             support["attribute"] = 1
 
         return support
@@ -2182,11 +2079,11 @@ class FlextLdifConversion(
             return support
 
         oc_result = parse_oc(test_oc_def)
-        if (
-            u.Guards.is_type(oc_result, FlextResult)
-            and oc_result.map_or(None) is not None
+        if FlextLdifConversion._has_attr(oc_result, "map_or") and callable(
+            getattr(oc_result, "map_or", None)
         ):
-            support["objectclass"] = 1
+            if getattr(oc_result, "map_or")(None) is not None:
+                support["objectclass"] = 1
 
         return support
 

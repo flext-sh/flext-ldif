@@ -184,8 +184,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE)."""
-            if u.Guards.is_type(attr_definition, str):
-                attr_definition_str = str(attr_definition)
+            if isinstance(attr_definition, str):
+                attr_definition_str = attr_definition
                 if not attr_definition or not attr_definition.strip():
                     return False
 
@@ -197,9 +197,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
 
                 return super().can_handle_attribute(attr_definition_str)
-            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 oid_raw = getattr(attr_definition, "oid", None)
-                if u.Guards.is_type(oid_raw, str) and re.search(
+                if isinstance(oid_raw, str) and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
                     oid_raw,
                     re.IGNORECASE,
@@ -214,8 +214,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE)."""
-            if u.Guards.is_type(oc_definition, str):
-                oc_definition_str = str(oc_definition)
+            if isinstance(oc_definition, str):
+                oc_definition_str = oc_definition
                 if re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
                     oc_definition_str,
@@ -224,9 +224,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
 
                 return super().can_handle_objectclass(oc_definition_str)
-            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 oid_raw = getattr(oc_definition, "oid", None)
-                if u.Guards.is_type(oid_raw, str) and re.search(
+                if isinstance(oid_raw, str) and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
                     oid_raw,
                     re.IGNORECASE,
@@ -265,12 +265,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal)."""
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 acl_line = raw_acl
-            if not u.Guards.is_type(acl_line, str) or not acl_line:
+            if not isinstance(acl_line, str) or not acl_line:
                 return False
 
             acl_content = acl_line
@@ -507,17 +507,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
             object_classes_list: list[str] = []
-            if u.Guards.is_type(object_classes_raw, (list, tuple)):
-                for item in (
-                    object_classes_raw
-                    if u.Guards.is_type(object_classes_raw, list)
-                    else list(object_classes_raw)
-                ):
-                    if u.Guards.is_type(item, str):
+            if isinstance(object_classes_raw, list | tuple):
+                for item in object_classes_raw:
+                    if isinstance(item, str):
                         object_classes_list.append(item)
                     elif item is not None:
                         object_classes_list.append(str(item))
-            elif u.Guards.is_type(object_classes_raw, str):
+            elif isinstance(object_classes_raw, str):
                 object_classes_list = [object_classes_raw]
             elif object_classes_raw is not None:
                 object_classes_list = [str(object_classes_raw)]

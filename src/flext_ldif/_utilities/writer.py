@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, t, u
@@ -274,32 +274,24 @@ class FlextLdifUtilitiesWriter:
         entry_data: Mapping[str, t.GeneralValueType],
     ) -> list[tuple[str, t.GeneralValueType]] | None:
         """Determine attribute processing order from entry metadata."""
-        if "_metadata" not in entry_data:
+        metadata = entry_data.get("_metadata")
+        if metadata is None:
             return None
 
-        metadata = entry_data["_metadata"]
-        attr_order = None
+        extensions_data: Mapping[str, object] | None = None
+        metadata_extensions = getattr(metadata, "extensions", None)
+        if isinstance(metadata_extensions, Mapping):
+            extensions_data = metadata_extensions
+        elif isinstance(metadata, Mapping):
+            raw_extensions = metadata.get("extensions")
+            if isinstance(raw_extensions, Mapping):
+                extensions_data = raw_extensions
 
-        extensions = getattr(metadata, "extensions", None)
-        if extensions is not None:
-            attr_order = (
-                u.mapper().get(extensions, "attribute_order")
-                if getattr(extensions, "get", None) is not None
-                else None
-            )
-        elif issubclass(metadata.__class__, dict):
-            extensions_raw: dict[str, t.GeneralValueType] | object = u.mapper().get(
-                metadata, "extensions", default={}
-            )
-            if not issubclass(extensions_raw.__class__, dict):
-                attr_order = None
-            else:
-                attr_order = u.mapper().get(extensions_raw, "attribute_order")
-
-        if attr_order is None:
+        if extensions_data is None:
             return None
 
-        if not issubclass(attr_order.__class__, list):
+        attr_order = extensions_data.get("attribute_order")
+        if not isinstance(attr_order, Sequence) or isinstance(attr_order, str):
             return None
 
         skip_keys = {
@@ -311,7 +303,7 @@ class FlextLdifUtilitiesWriter:
 
         result: list[tuple[str, t.GeneralValueType]] = []
         for key in attr_order:
-            if not issubclass(key.__class__, str):
+            if not isinstance(key, str):
                 continue  # Skip non-string keys
             if key in entry_data and key not in skip_keys:
                 result.append((key, entry_data[key]))
@@ -425,22 +417,14 @@ class FlextLdifUtilitiesWriter:
             hidden_value: hidden_handler,
         }
 
-        handler_config = u.mapper().get(status_handlers, status)
-        if (
-            handler_config
-            and issubclass(handler_config.__class__, tuple)
-            and len(handler_config) == _TUPLE_LENGTH_TWO
-        ):
-            show_flag, name_format = handler_config
-            if not show_flag:
-                return None
-            if name_format is None:
-                return None
-            if not issubclass(name_format.__class__, str):
-                return None
-            return (name_format, attr_values)
+        handler_config = status_handlers.get(status)
+        if handler_config is None:
+            return (attr_name, attr_values)
 
-        return (attr_name, attr_values)
+        show_flag, name_format = handler_config
+        if not show_flag or name_format is None:
+            return None
+        return (name_format, attr_values)
 
     @staticmethod
     def encode_attribute_value(
@@ -448,11 +432,11 @@ class FlextLdifUtilitiesWriter:
         value: bytes | str,
     ) -> str:
         """Encode a single attribute value for LDIF output (RFC 2849)."""
-        if issubclass(value.__class__, bytes):
+        if isinstance(value, bytes):
             encoded_value = base64.b64encode(value).decode("ascii")
             return f"{attr_name}:: {encoded_value}"
 
-        str_value = str(value) if not issubclass(value.__class__, str) else value
+        str_value: str = value
 
         try:
             str_value.encode("utf-8")

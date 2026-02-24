@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Literal, Self, overload
 
-from flext_core import FlextLogger, FlextResult, u
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -29,14 +29,27 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: object | None = None,
         parent_quirk: object | None = None,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.GeneralValueType
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: dict[str, t.GeneralValueType] = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in {"_parent_quirk", "parent_quirk", "_schema_service"}
+        filtered_kwargs: dict[str, str | int | float | bool | None] = {}
+        excluded_keys = {
+            "_parent_quirk",
+            "parent_quirk",
+            "_schema_service",
+            "attr_definition",
+            "oc_definition",
+            "attr_model",
+            "oc_model",
+            "operation",
         }
+        for key, value in kwargs.items():
+            if key in excluded_keys:
+                continue
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                filtered_kwargs[key] = value
 
         schema_service_typed: object = schema_service
 
@@ -138,6 +151,73 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             case _:
                 return None
 
+    @staticmethod
+    def _coerce_dynamic_metadata(
+        value: FlextTypes.GeneralValueType | None,
+    ) -> m.Ldif.DynamicMetadata:
+        if isinstance(value, m.Ldif.DynamicMetadata):
+            return value
+        if isinstance(value, Mapping):
+            return m.Ldif.DynamicMetadata.model_validate(value)
+        return m.Ldif.DynamicMetadata()
+
+    @staticmethod
+    def _convert_extensions_for_quirk(
+        metadata: m.Ldif.DynamicMetadata,
+    ) -> dict[str, list[str] | str | bool | None]:
+        extensions: dict[str, list[str] | str | bool | None] = {}
+        for key, value in metadata.items():
+            if not isinstance(key, str):
+                continue
+
+            if isinstance(value, bool):
+                extensions[key] = value
+                continue
+            if isinstance(value, str) or value is None:
+                extensions[key] = value
+                continue
+            if isinstance(value, list):
+                extensions[key] = [str(item) for item in value]
+                continue
+            if isinstance(value, datetime):
+                extensions[key] = value.isoformat()
+                continue
+            if isinstance(value, (int, float)):
+                extensions[key] = str(value)
+                continue
+
+            extensions[key] = str(value)
+
+        return extensions
+
+    @classmethod
+    def _extract_syntax_validation_error(
+        cls,
+        value: FlextTypes.GeneralValueType | None,
+    ) -> str | None:
+        syntax_validation = cls._coerce_dynamic_metadata(value)
+        syntax_error = syntax_validation.get("syntax_validation_error")
+        if isinstance(syntax_error, str):
+            return syntax_error
+        return None
+
+    @staticmethod
+    def _to_string_list(value: FlextTypes.GeneralValueType | None) -> list[str] | None:
+        if isinstance(value, Sequence) and not isinstance(
+            value, str | bytes | bytearray
+        ):
+            return [str(item) for item in value]
+        return None
+
+    @classmethod
+    def _to_optional_str_or_list(
+        cls,
+        value: FlextTypes.GeneralValueType | None,
+    ) -> str | list[str] | None:
+        if isinstance(value, str):
+            return value
+        return cls._to_string_list(value)
+
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -147,7 +227,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> FlextResult[Mapping[str, t.GeneralValueType]]:
+        ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
         parse_result_raw = FlextLdifUtilitiesAttribute.parse(
@@ -163,49 +243,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         parsed = parse_result_raw.value
 
-        metadata_extensions: dict[str, list[str] | str | bool | None] = {}
-        extensions_raw = parsed.get("metadata_extensions")
-        try:
-            extensions_items = extensions_raw.items()
-        except Exception:
-            extensions_items = []
-        for key, value in extensions_items:
-            match key:
-                case str() as key_str:
-                    pass
-                case _:
-                    continue
-
-            match value:
-                case str() | bool() | None:
-                    metadata_extensions[key_str] = value
-                    continue
-                case list() as value_list:
-                    str_items: list[str] = []
-                    all_items_are_str = True
-                    for item in value_list:
-                        match item:
-                            case str() as str_item:
-                                str_items.append(str_item)
-                            case _:
-                                all_items_are_str = False
-                                break
-                    if all_items_are_str:
-                        metadata_extensions[key_str] = str_items
+        metadata_extensions = self._convert_extensions_for_quirk(
+            self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
+        )
 
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
 
-        syntax_validation_error = None
-        syntax_validation = parsed.get("syntax_validation")
-        if u.is_dict_like(syntax_validation):
-            syntax_validation_dict = syntax_validation.root
-            err = syntax_validation_dict.get("syntax_validation_error")
-            match err:
-                case str() as err_str:
-                    syntax_validation_error = err_str
-                case _:
-                    pass
+        syntax_validation_error = self._extract_syntax_validation_error(
+            parsed.get("syntax_validation"),
+        )
 
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
 
@@ -251,10 +298,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         oids: list[str] | None,
         oid_type: str,
-        metadata_extensions: Mapping[str, list[str] | str | bool | None],
+        metadata_extensions: dict[str, list[str] | str | bool | None],
     ) -> None:
         """Validate OID list and track in metadata."""
-        if not oids or not u.is_list_like(oids):
+        if not oids:
             return
         for idx, oid in enumerate(oids):
             match oid:
@@ -270,7 +317,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _build_objectclass_metadata(
         self,
         oc_definition: str,
-        metadata_extensions: Mapping[str, list[str] | str | bool | None],
+        metadata_extensions: dict[str, list[str] | str | bool | None],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
         server_type: Literal["rfc"] = "rfc"
@@ -306,41 +353,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         try:
             parsed = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
 
-            metadata_extensions_raw = parsed["metadata_extensions"]
-
-            metadata_extensions_raw_dict: dict[
-                str,
-                str | int | float | bool | datetime | list[str] | None,
-            ] = {}
-            if u.is_dict_like(metadata_extensions_raw):
-                for k, v in metadata_extensions_raw.root.items():
-                    match k:
-                        case str() as key_str:
-                            pass
-                        case _:
-                            continue
-                    match v:
-                        case list() as value_list:
-                            metadata_extensions_raw_dict[key_str] = [
-                                str(vi) for vi in value_list
-                            ]
-                            continue
-                        case None | str() | int() | float() | bool() | datetime():
-                            metadata_extensions_raw_dict[key_str] = v
-                        case _:
-                            pass
-
-            metadata_extensions: dict[str, list[str] | str | bool | None] = {}
-            for key, value in metadata_extensions_raw_dict.items():
-                match value:
-                    case str() | bool() | list() | None:
-                        metadata_extensions[key] = value
-                    case int() | float():
-                        metadata_extensions[key] = str(value)
-                    case datetime() as datetime_value:
-                        metadata_extensions[key] = datetime_value.isoformat()
-                    case _:
-                        metadata_extensions[key] = str(value)
+            metadata_extensions = self._convert_extensions_for_quirk(
+                self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
+            )
             metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
                 oc_definition.strip()
             )
@@ -382,16 +397,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 case _:
                     pass
 
-            must_val = parsed.get("must")
-            must_list: list[str] | None = (
-                [str(item) for item in must_val] if u.is_list_like(must_val) else None
-            )
+            must_list = self._to_string_list(parsed.get("must"))
             self._validate_oid_list(must_list, "MUST", metadata_extensions)
 
-            may_val = parsed.get("may")
-            may_list: list[str] | None = (
-                [str(item) for item in may_val] if u.is_list_like(may_val) else None
-            )
+            may_list = self._to_string_list(parsed.get("may"))
             self._validate_oid_list(may_list, "MAY", metadata_extensions)
 
             metadata = self._build_objectclass_metadata(
@@ -399,33 +408,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 metadata_extensions,
             )
 
-            oc_oid: str = self._to_required_str(parsed["oid"])
-            oc_name: str = self._to_required_str(parsed["name"])
-            oc_desc: str | None = self._to_optional_str(parsed["desc"])
-
-            oc_sup_value = parsed["sup"]
-            if oc_sup_value.__class__ is str:
-                oc_sup: str | list[str] | None = oc_sup_value
-            elif u.is_list_like(oc_sup_value):
-                oc_sup = [str(item) for item in oc_sup_value]
-            else:
-                oc_sup = None
-
-            oc_kind: str = self._to_required_str(parsed["kind"], default="STRUCTURAL")
-
-            oc_must_value = parsed["must"]
-            oc_must: list[str] | None = (
-                [str(item) for item in oc_must_value]
-                if u.is_list_like(oc_must_value)
-                else None
+            oc_oid: str = self._to_required_str(parsed.get("oid"))
+            oc_name: str = self._to_required_str(parsed.get("name"))
+            oc_desc: str | None = self._to_optional_str(parsed.get("desc"))
+            oc_sup = self._to_optional_str_or_list(parsed.get("sup"))
+            oc_kind: str = self._to_required_str(
+                parsed.get("kind"),
+                default="STRUCTURAL",
             )
-
-            oc_may_value = parsed["may"]
-            oc_may: list[str] | None = (
-                [str(item) for item in oc_may_value]
-                if u.is_list_like(oc_may_value)
-                else None
-            )
+            oc_must = self._to_string_list(parsed.get("must"))
+            oc_may = self._to_string_list(parsed.get("may"))
 
             objectclass = m.Ldif.SchemaObjectClass(
                 oid=oc_oid,
@@ -512,7 +504,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> FlextResult[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
-            if data.__class__ is m.Ldif.SchemaAttribute:
+            if isinstance(data, m.Ldif.SchemaAttribute):
                 attr_transformed = self._transform_attribute_for_write(data)
                 if not attr_transformed.oid:
                     return FlextResult[str].fail(
@@ -564,7 +556,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         except (ValueError, TypeError, AttributeError) as e:
             item_type = (
                 "attribute"
-                if data.__class__ is m.Ldif.SchemaAttribute
+                if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
             logger.exception(f"RFC {item_type} writing exception")
@@ -664,7 +656,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         cls,
         schema_service: object | None = None,
         parent_quirk: object | None = None,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.GeneralValueType
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
@@ -701,23 +695,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if cls.auto_execute:
             attr_def_raw = kwargs.get("attr_definition")
             attr_def: str | None = (
-                attr_def_raw if attr_def_raw.__class__ is str else None
+                attr_def_raw if isinstance(attr_def_raw, str) else None
             )
             oc_def_raw = kwargs.get("oc_definition")
-            oc_def: str | None = oc_def_raw if oc_def_raw.__class__ is str else None
+            oc_def: str | None = oc_def_raw if isinstance(oc_def_raw, str) else None
             attr_mod_raw = kwargs.get("attr_model")
             attr_mod: m.Ldif.SchemaAttribute | None = (
                 attr_mod_raw
-                if attr_mod_raw.__class__ is m.Ldif.SchemaAttribute
+                if isinstance(attr_mod_raw, m.Ldif.SchemaAttribute)
                 else None
             )
             oc_mod_raw = kwargs.get("oc_model")
             oc_mod: m.Ldif.SchemaObjectClass | None = (
-                oc_mod_raw if oc_mod_raw.__class__ is m.Ldif.SchemaObjectClass else None
+                oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
             )
             op_raw = kwargs.get("operation")
             op: str | None = (
-                "parse" if op_raw.__class__ is str and op_raw == "parse" else None
+                "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
 
             data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
@@ -733,7 +727,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             result = schema_instance.execute(data=data, operation=op)
 
             unwrapped = result.value
-            if unwrapped.__class__ is cls:
+            if isinstance(unwrapped, cls):
                 return unwrapped
             return instance
 

@@ -243,6 +243,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
         output_filename_raw = kwargs.get("output_filename")
+        output_filename: str | None
         match output_filename_raw:
             case str() as filename:
                 output_filename = filename

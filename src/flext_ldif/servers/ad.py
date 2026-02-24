@@ -256,8 +256,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
-            if u.Guards.is_type(acl_line, str):
-                normalized = acl_line.strip() if acl_line else ""
+            if isinstance(acl_line, str):
+                normalized = acl_line.strip()
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
@@ -437,14 +437,20 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             object_classes = (
                 raw_object_classes
-                if u.Guards.is_type(raw_object_classes, (list, tuple))
+                if isinstance(raw_object_classes, list | tuple)
                 else [raw_object_classes]
             )
+            normalized_object_classes: list[str] = []
+            for oc in object_classes:
+                if isinstance(oc, list):
+                    normalized_object_classes.extend(str(item) for item in oc)
+                else:
+                    normalized_object_classes.append(str(oc))
             return bool(
                 any(
-                    str(oc).lower()
+                    oc.lower()
                     in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for oc in object_classes
+                    for oc in normalized_object_classes
                 ),
             )
 

@@ -139,7 +139,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
-            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return u.Ldif.Server.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
@@ -162,7 +162,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
-            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return u.Ldif.Server.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
@@ -227,7 +227,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
@@ -244,9 +244,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     attr_name_lower
                     in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
                 )
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 normalized = raw_acl.strip()
                 if not normalized:
@@ -394,20 +394,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
-            object_classes_result = u.mapper().get(
-                attributes,
-                c.Ldif.DictKeys.OBJECTCLASS,
-                default=[],
-            )
-
-            if u.Guards.is_type(object_classes_result, list):
-                object_classes: list[str] = [str(oc) for oc in object_classes_result]
-            elif u.Guards.is_type(object_classes_result, tuple):
-                object_classes = [str(oc) for oc in object_classes_result]
-            elif object_classes_result is not None:
-                object_classes = [str(object_classes_result)]
-            else:
-                object_classes = []
+            object_classes = [
+                str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
+            ]
             return bool(
                 any(
                     str(oc).lower()
@@ -435,25 +424,17 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 attributes = entry.attributes.attributes.copy()
                 dn_lower = entry_dn.lower()
 
-                object_classes_raw = u.mapper().get(
-                    attributes,
-                    c.Ldif.DictKeys.OBJECTCLASS,
-                    default=[],
-                )
-
-                if u.Guards.is_type(object_classes_raw, list):
-                    object_classes: list[str] = [str(oc) for oc in object_classes_raw]
-                else:
-                    object_classes = []
+                object_classes = [
+                    str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
+                ]
 
                 processed_attributes = attributes.copy()
 
                 for attr_name, attr_values in processed_attributes.items():
                     processed_values: list[str] = []
-                    value: bytes | str
                     for value in attr_values:
                         str_value: str
-                        if u.Guards.is_type(value, bytes):
+                        if isinstance(value, bytes):
                             str_value = base64.b64encode(value).decode("utf-8")
                         else:
                             str_value = str(value)

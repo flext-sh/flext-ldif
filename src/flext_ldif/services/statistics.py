@@ -57,7 +57,7 @@ class FlextLdifStatistics(
         ]
 
         total_entries = sum(
-            u.count(entries) if issubclass(entries.__class__, list) else 0
+            len(entries) if isinstance(entries, list) else 0
             for entries in categorized_values_list
         )
 
@@ -68,17 +68,14 @@ class FlextLdifStatistics(
             categorized_counts_dict,
         )
 
-        rejected_entries = [
-            entry
+        rejected_entries: list[m.Ldif.Entry] = [
+            m.Ldif.Entry.model_validate(entry)
             for entry in categorized.get("rejected", [])
-            if issubclass(entry.__class__, m.Ldif.Entry)
         ]
         rejection_count = u.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
-        total_entries_int = (
-            total_entries if issubclass(total_entries.__class__, int) else 0
-        )
+        total_entries_int = total_entries if isinstance(total_entries, int) else 0
         rejection_rate = (
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
@@ -90,10 +87,12 @@ class FlextLdifStatistics(
         output_files_model = m.Ldif.Results.CategoryPaths()
         for category in written_counts:
             filename = u.take(output_files, category, default=f"{category}.ldif")
-            filename_str = (
-                filename if issubclass(filename.__class__, str) else f"{category}.ldif"
+            output_filename = (
+                filename if isinstance(filename, str) else f"{category}.ldif"
             )
-            setattr(output_files_model, category, str(output_dir / filename_str))
+            setattr(
+                output_files_model, category, str(output_dir.joinpath(output_filename))
+            )
 
         return r[m.Ldif.LdifResults.StatisticsResult].ok(
             m.Ldif.LdifResults.StatisticsResult(
@@ -118,14 +117,11 @@ class FlextLdifStatistics(
         for entry in entries:
             object_class_distribution.update(entry.get_objectclass_names())
 
-            if entry.metadata is not None and entry.metadata.extensions is not None:
-                st_value = u.take(
-                    entry.metadata.extensions,
-                    "server_type",
-                    as_type=str,
-                )
-                if st_value is not None and issubclass(st_value.__class__, str):
-                    server_type_distribution[st_value] += 1
+            metadata = entry.metadata
+            if metadata is not None and metadata.extensions is not None:
+                server_type_value = metadata.extensions.get("server_type")
+                if isinstance(server_type_value, str):
+                    server_type_distribution[server_type_value] += 1
 
         obj_class_model = m.Ldif.LdifResults.DynamicCounts()
         for class_name, count in object_class_distribution.items():

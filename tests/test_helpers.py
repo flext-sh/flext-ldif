@@ -36,6 +36,8 @@ class TestsFlextLdifMatchers(tm_base):
     Reduces test code while increasing validation coverage.
     """
 
+    __test__ = False
+
     @staticmethod
     def entry(
         entry: p.Entry | r[p.Entry],
@@ -556,6 +558,8 @@ class TestsFlextLdifValidators(tv_base):
 
     Extends FlextTestsValidator with flext-ldif specific validation methods.
     """
+
+    __test__ = False
 
     @classmethod
     def validate_entry_structure(

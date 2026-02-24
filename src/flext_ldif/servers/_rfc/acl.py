@@ -55,15 +55,11 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         feature_id: str,
         original_value: str,
-        metadata: Mapping[str, t.MetadataAttributeValue],
+        metadata: m.Ldif.DynamicMetadata,
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
-        meta_key = "unsupported_features"
-        if meta_key not in metadata:
-            metadata[meta_key] = {}
-        unsupported = metadata[meta_key]
-        if u.is_type(unsupported, "dict"):
-            unsupported[feature_id] = original_value
+        base_key = "unsupported_feature"
+        metadata[f"{base_key}_{feature_id}"] = original_value
 
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
@@ -153,7 +149,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def __new__(
         cls,
         _acl_service: object | None = None,
-        parent_quirk: object | None = None,
+        parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
@@ -166,8 +162,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
 
-        parent_quirk_value: object | None = (
-            parent_quirk_raw if parent_quirk_raw is not None else None
+        parent_quirk_value: Self | None = (
+            parent_quirk_raw if isinstance(parent_quirk_raw, cls) else None
         )
 
         acl_instance: Self = instance
@@ -187,7 +183,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
             result = acl_instance.execute(data=data, operation=op)
             unwrapped: m.Ldif.Acl | str = result.value
-            if u.is_type(unwrapped, cls):
+            if isinstance(unwrapped, cls):
                 return unwrapped
             return instance
 
@@ -196,7 +192,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def __init__(
         self,
         acl_service: object | None = None,
-        parent_quirk: object | None = None,
+        parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize RFC ACL quirk service."""

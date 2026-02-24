@@ -82,7 +82,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
-        if not issubclass(item.__class__, m.Ldif.Entry):
+        if not isinstance(item, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(
                 f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
             )
@@ -113,8 +113,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
-        new_dn = FlextLdifModelsDomains.DN(value=normalized_dn)
-        update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
+        update_dict: dict[str, t.Ldif.JsonValue] = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r[m.Ldif.Entry].ok(updated_entry)
@@ -174,11 +173,12 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         )
 
         if needs_update:
-            new_attributes = FlextLdifModelsDomains.Attributes(attributes=new_attrs)
-            update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
+            update_dict: dict[str, object] = {
+                "attributes": m.Ldif.Attributes(attributes=new_attrs)
+            }
             item = item.model_copy(update=update_dict)
 
-        return r[str].ok(item)
+        return r[m.Ldif.Entry].ok(item)
 
 
 class Normalize:
@@ -245,11 +245,10 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
             self._new_base,
         )
 
-        new_dn = FlextLdifModelsDomains.DN(value=new_dn_str)
-        update_dict: dict[str, t.GeneralValueType] = {"dn": new_dn}
+        update_dict: dict[str, object] = {"dn": m.Ldif.DN(value=new_dn_str)}
         updated_entry = item.model_copy(update=update_dict)
 
-        return r[str].ok(updated_entry)
+        return r[m.Ldif.Entry].ok(updated_entry)
 
 
 class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -291,11 +290,12 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
             target_format=self._format,
         )
 
-        new_attributes = FlextLdifModelsDomains.Attributes(attributes=converted_attrs)
-        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {
+            "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs)),
+        }
         updated_entry = item.model_copy(update=update_dict)
 
-        return r[str].ok(updated_entry)
+        return r[m.Ldif.Entry].ok(updated_entry)
 
 
 class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -342,11 +342,12 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
 
-        new_attributes = FlextLdifModelsDomains.Attributes(attributes=attrs)
-        update_dict: dict[str, t.GeneralValueType] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {
+            "attributes": m.Ldif.Attributes(attributes=dict(attrs)),
+        }
         updated_entry = item.model_copy(update=update_dict)
 
-        return r[str].ok(updated_entry)
+        return r[m.Ldif.Entry].ok(updated_entry)
 
 
 class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -365,7 +366,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             list(self._attributes),
         )
 
-        return r[str].ok(updated_entry)
+        return r[m.Ldif.Entry].ok(updated_entry)
 
 
 class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -386,9 +387,9 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply custom transformation to an entry."""
         result = self._func(item)
-        if issubclass(result.__class__, r):
+        if isinstance(result, r):
             return result
-        return r[str].ok(result)
+        return r[m.Ldif.Entry].ok(result)
 
 
 class Transform:

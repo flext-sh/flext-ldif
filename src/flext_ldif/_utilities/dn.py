@@ -167,14 +167,12 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def get_dn_value(
-        dn: m.Ldif.DN | str | object,
+        dn: m.Ldif.DN | FlextLdifModelsDomains.DN | str,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method)."""
-        if u.Guards.is_type(dn, m.Ldif.DN):
-            return dn.value
-        if u.Guards.is_type(dn, str):
+        if isinstance(dn, str):
             return dn
-        return str(dn)
+        return dn.value
 
     @overload
     @staticmethod
@@ -410,22 +408,12 @@ class FlextLdifUtilitiesDN:
                 attr, _, value = comp.partition("=")
                 return (attr.strip(), value.strip())
 
-            process_result = u.Collection.process(
-                components,
-                processor=parse_component,
-                predicate=lambda comp: "=" in comp,
-                on_error="skip",
-            )
-            if process_result.is_failure:
-                return r[list[tuple[str, str]]].fail(
-                    f"Failed to parse DN components from '{dn_str}'"
-                )
-            parsed_list = process_result.value
-            tuple_length = 2
             result = [
-                item
-                for item in parsed_list
-                if u.Guards.is_type(item, tuple) and len(item) == tuple_length
+                parsed
+                for comp in components
+                if "=" in comp
+                for parsed in [parse_component(comp)]
+                if parsed is not None
             ]
             return (
                 r.ok(result)
@@ -577,20 +565,18 @@ class FlextLdifUtilitiesDN:
 
         validation_status_raw = flags.get("validation_status", "")
         validation_status: str = (
-            validation_status_raw
-            if u.Guards.is_type(validation_status_raw, str)
-            else ""
+            validation_status_raw if isinstance(validation_status_raw, str) else ""
         )
         validation_warnings_raw = flags.get("validation_warnings", [])
         validation_warnings: list[str] = (
-            validation_warnings_raw
-            if u.Guards.is_type(validation_warnings_raw, list)
+            [str(item) for item in validation_warnings_raw]
+            if isinstance(validation_warnings_raw, list)
             else []
         )
         validation_errors_raw = flags.get("validation_errors", [])
         validation_errors: list[str] = (
-            validation_errors_raw
-            if u.Guards.is_type(validation_errors_raw, list)
+            [str(item) for item in validation_errors_raw]
+            if isinstance(validation_errors_raw, list)
             else []
         )
 
@@ -917,12 +903,11 @@ class FlextLdifUtilitiesDN:
             rdn_len: int = len(rdn)
             position: int = 0
 
-            rdn_config = FlextLdifModelsSettings.RdnProcessingConfig(
-                current_attr=current_attr,
-                current_val=current_val,
-                in_value=in_value,
-                pairs=pairs,
-            )
+            rdn_config = FlextLdifModelsSettings.RdnProcessingConfig()
+            rdn_config.current_attr = current_attr
+            rdn_config.current_val = current_val
+            rdn_config.in_value = in_value
+            rdn_config.pairs = pairs
 
             while position < rdn_len:
                 idx: int = position
@@ -1109,9 +1094,7 @@ class FlextLdifUtilitiesDN:
                 target_dn,
             )
             transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-                dict(entry.attributes.items())
-                if u.Guards.is_type(entry.attributes, Mapping)
-                else {},
+                entry.attributes.attributes,
                 dn_attributes,
                 source_dn,
                 target_dn,
@@ -1123,25 +1106,20 @@ class FlextLdifUtilitiesDN:
                 },
             )
 
-        batch_result = u.Collection.batch(
-            list(entries),
-            transform_entry,
-            on_error="skip",
-        )
-        if batch_result.is_failure:
-            return entries
-        batch_data = batch_result.value
-        return [
-            item for item in batch_data.results if u.Guards.is_type(item, m.Ldif.Entry)
-        ]
+        transformed: list[m.Ldif.Entry] = []
+        for entry in entries:
+            result = transform_entry(entry)
+            if isinstance(result, m.Ldif.Entry):
+                transformed.append(result)
+        return transformed
 
     @staticmethod
     def _transform_attrs_with_dn(
-        attrs: Mapping[str, list[str]],
+        attrs: dict[str, list[str]],
         dn_attributes: set[str],
         source_dn: str,
         target_dn: str,
-    ) -> Mapping[str, list[str]]:
+    ) -> dict[str, list[str]]:
         """Transform DN-valued attributes using u.map()."""
         return {
             k: [
@@ -1430,23 +1408,7 @@ class FlextLdifUtilitiesDN:
             return r[list[tuple[str, bool, list[str]]]].fail(
                 batch_result.error or "Validation failed"
             )
-        batch_data = batch_result.value
-        tuple_length = 3
-        results_raw = [
-            item
-            for item in batch_data.results
-            if u.Guards.is_type(item, tuple) and len(item) == tuple_length
-        ]
-        results: list[tuple[str, bool, list[str]]] = []
-        for item in results_raw:
-            dn_str = str(item[0])
-            is_valid = bool(item[1])
-            errors_list: list[str] = (
-                [str(e) for e in item[2]]
-                if u.Guards.is_type(item[2], (list, tuple))
-                else []
-            )
-            results.append((dn_str, is_valid, errors_list))
+        results: list[tuple[str, bool, list[str]]] = [validate_dn(dn) for dn in dns]
         if not collect_errors:
             invalid_results = [item for item in results if not item[1]]
             if invalid_results:
@@ -1477,16 +1439,13 @@ class FlextLdifUtilitiesDN:
                     raise
                 return dn
 
-        on_error_mode = "fail" if fail_fast else "skip"
-        batch_result = u.Collection.batch(
-            list(dns),
-            replace_dn,
-            on_error=on_error_mode,
-        )
-        if batch_result.is_failure:
-            return r[list[str]].fail(batch_result.error or "Base replacement failed")
-        batch_data = batch_result.value
-        results = [item for item in batch_data.results if u.Guards.is_type(item, str)]
+        results: list[str] = []
+        for dn in dns:
+            try:
+                results.append(replace_dn(dn))
+            except Exception as exc:
+                if fail_fast:
+                    return r[list[str]].fail(f"Base replacement failed: {exc}")
         return r[list[str]].ok(results)
 
     @staticmethod

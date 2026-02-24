@@ -153,9 +153,9 @@ class FlextLdifUtilitiesWriters:
                 # Type narrowing: config.entry is Entry, extract DN for error message
                 entry_for_error_raw = config.entry
                 # Use isinstance check for type-safe access to dn attribute
-                entry_for_error: m.Ldif.Entry | None = (
+                entry_for_error: FlextLdifModelsDomains.Entry | None = (
                     entry_for_error_raw
-                    if issubclass(entry_for_error_raw.__class__, m.Ldif.Entry)
+                    if isinstance(entry_for_error_raw, FlextLdifModelsDomains.Entry)
                     else None
                 )
                 # Extract DN string
@@ -287,9 +287,10 @@ class FlextLdifUtilitiesWriters:
                 if transform_sup_hook and objectclass.sup:
                     # Convert sup to list[str] if it's a string
                     sup_value = objectclass.sup
-                    if sup_value.__class__ in {list, tuple}:
+                    sup_list: list[str]
+                    if isinstance(sup_value, list | tuple):
                         sup_list = [str(item) for item in sup_value]
-                    elif sup_value.__class__ is str:
+                    elif isinstance(sup_value, str):
                         sup_list = [sup_value]
                     else:
                         sup_list = [str(sup_value)]
@@ -316,7 +317,7 @@ class FlextLdifUtilitiesWriters:
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""
 
-            def __call__(self, entry: m.Ldif.Entry) -> r[str]: ...
+            def __call__(self, entry: FlextLdifModelsDomains.Entry) -> r[str]: ...
 
         class WriteHeaderHook(Protocol):
             """Protocol for writing LDIF header."""
@@ -336,7 +337,7 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
+        def get_entry_dn_for_error(entry: FlextLdifModelsDomains.Entry) -> str | None:
             """Get DN string for error logging."""
             dn_attr = entry.dn
             if dn_attr is None:
@@ -349,8 +350,8 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_single_entry_with_stats(
-            entry: m.Ldif.Entry,
-            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
+            entry: FlextLdifModelsDomains.Entry,
+            write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
             stats: Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""
@@ -394,10 +395,10 @@ class FlextLdifUtilitiesWriters:
                 )
 
                 # Filter entries to m.Ldif.Entry for type compatibility
-                entries_typed: list[m.Ldif.Entry] = [
+                entries_typed: list[FlextLdifModelsDomains.Entry] = [
                     entry_raw
                     for entry_raw in config.entries
-                    if issubclass(entry_raw.__class__, m.Ldif.Entry)
+                    if isinstance(entry_raw, FlextLdifModelsDomains.Entry)
                 ]
 
                 # Write each entry using manual loop for clear type inference

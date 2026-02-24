@@ -149,32 +149,23 @@ class FlextLdifAnalysis(
         """Validate entry objectClass values."""
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: t.GeneralValueType = u.mapper().get(
+        oc_values_raw: t.ConfigMapValue = u.Mapper.get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],
         )
 
-        if issubclass(oc_values_raw.__class__, str):
-            oc_values: list[str] | str = oc_values_raw
-        elif issubclass(oc_values_raw.__class__, list):
+        if isinstance(oc_values_raw, str):
+            oc_values: list[str] = [oc_values_raw]
+        elif isinstance(oc_values_raw, list):
             oc_values = [str(oc) for oc in oc_values_raw]
         else:
             oc_values = []
 
-        if issubclass(oc_values.__class__, list):
-            for oc_item in oc_values:
-                if not issubclass(oc_item.__class__, str):
-                    msg = f"Expected str, got {type(oc_item)}"
-                    raise TypeError(msg)
-                oc_result = validation_service.validate_objectclass_name(oc_item)
-                if oc_result.is_failure or not oc_result.value:
-                    errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
-                    is_valid = False
-        elif issubclass(oc_values.__class__, str):
-            oc_result = validation_service.validate_objectclass_name(oc_values)
+        for oc_item in oc_values:
+            oc_result = validation_service.validate_objectclass_name(oc_item)
             if oc_result.is_failure or not oc_result.value:
-                errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_values}'")
+                errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
                 is_valid = False
         return (is_valid, errors)
 

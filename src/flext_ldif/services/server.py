@@ -21,6 +21,12 @@ from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
 
+type QuirkComponent = (
+    FlextLdifServersBaseSchema
+    | FlextLdifServersBaseSchemaAcl
+    | FlextLdifServersBaseEntry
+)
+
 
 class FlextLdifServer(FlextRegistry):
     """Server quirk registry using FlextRegistry class-level plugin API."""
@@ -32,7 +38,12 @@ class FlextLdifServer(FlextRegistry):
         self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
-        super().__init__(dispatcher=dispatcher, **data)
+        filtered_data = {
+            k: v
+            for k, v in data.items()
+            if isinstance(v, (str, int, float, bool, type(None)))
+        }
+        super().__init__(dispatcher=dispatcher, **filtered_data)
         if not type(self)._discovery_initialized:
             self._auto_discover()
             type(self)._discovery_initialized = True
@@ -61,7 +72,8 @@ class FlextLdifServer(FlextRegistry):
                 ):
                     continue
 
-                self.register_class_plugin(self.SERVERS, server_type, instance)
+                if server_type and isinstance(server_type, str):
+                    self.register_class_plugin(self.SERVERS, server_type, instance)
 
             except (TypeError, AttributeError):
                 continue
@@ -76,7 +88,7 @@ class FlextLdifServer(FlextRegistry):
         if result.is_failure:
             return r[FlextLdifServersBase].fail(str(result.error))
 
-        if issubclass(result.value.__class__, FlextLdifServersBase):
+        if isinstance(result.value, FlextLdifServersBase):
             return r[FlextLdifServersBase].ok(result.value)
         return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
 
@@ -124,7 +136,7 @@ class FlextLdifServer(FlextRegistry):
     def get_all_quirks(
         self,
         server_type: str,
-    ) -> r[Mapping[str, t.GeneralValueType]]:
+    ) -> r[Mapping[str, QuirkComponent]]:
         """Get all quirk types for a server."""
         return self.quirk(server_type).map(
             lambda base: {

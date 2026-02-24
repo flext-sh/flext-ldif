@@ -72,9 +72,12 @@ class FlextLdifUtilitiesObjectClass:
         # Known AUXILIARY superior classes that cause conflicts
         auxiliary_superiors = {"javanamingref", "javanamingReference"}
 
-        sup_lower = (
-            schema_oc.sup.lower() if u.Guards.is_type(schema_oc.sup, str) else ""
-        )
+        if isinstance(schema_oc.sup, list):
+            sup_lower = schema_oc.sup[0].lower() if schema_oc.sup else ""
+        elif isinstance(schema_oc.sup, str):
+            sup_lower = schema_oc.sup.lower()
+        else:
+            sup_lower = ""
 
         schema_constants = _SchemaConstants.get_instance()
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL

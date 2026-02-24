@@ -158,7 +158,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
-            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -191,7 +191,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
-            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -260,7 +260,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
@@ -271,9 +271,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 ):
                     return True
                 return normalized.lower().startswith("(version")
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 normalized = raw_acl.strip()
                 if not normalized:
@@ -452,7 +452,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def _extract_acl_permissions(
             self,
-            permissions_data: m.Ldif.AclPermissions | None,
+            permissions_data: (
+                m.Ldif.AclPermissions | FlextLdifModelsDomains.AclPermissions | None
+            ),
         ) -> list[str]:
             """Extract permission names from Permissions model flags."""
             permissions: list[str] = []
@@ -475,7 +477,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return permissions
 
         @staticmethod
-        def _resolve_acl_targetattr(target: m.Ldif.AclTarget | None) -> str:
+        def _resolve_acl_targetattr(
+            target: m.Ldif.AclTarget | FlextLdifModelsDomains.AclTarget | None,
+        ) -> str:
             """Resolve target attributes to formatted string."""
             if target and target.attributes:
                 separator = (
@@ -485,7 +489,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return FlextLdifServersDs389.Constants.ACL_WILDCARD_ATTRIBUTE
 
         @staticmethod
-        def _resolve_acl_userdn(subject: m.Ldif.AclSubject | None) -> str:
+        def _resolve_acl_userdn(
+            subject: m.Ldif.AclSubject | FlextLdifModelsDomains.AclSubject | None,
+        ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
                 return subject.subject_value

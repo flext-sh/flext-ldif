@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes, u
@@ -118,7 +119,36 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-        super().__init__(**filtered_kwargs)
+        service_kwargs: dict[
+            str,
+            FlextTypes.ScalarValue | m.ConfigMap | Sequence[FlextTypes.ScalarValue],
+        ] = {}
+        for key, value in filtered_kwargs.items():
+            if isinstance(value, (str, int, float, bool, datetime)) or value is None:
+                service_kwargs[key] = value
+                continue
+
+            if isinstance(value, m.ConfigMap):
+                service_kwargs[key] = value
+                continue
+
+            if isinstance(value, Sequence) and not isinstance(
+                value, (str, bytes, bytearray)
+            ):
+                scalar_values: list[FlextTypes.ScalarValue] = []
+                for item in value:
+                    if (
+                        isinstance(item, (str, int, float, bool, datetime))
+                        or item is None
+                    ):
+                        scalar_values.append(item)
+                    else:
+                        scalar_values = []
+                        break
+                else:
+                    service_kwargs[key] = scalar_values
+
+        super().__init__(**service_kwargs)
         self._schema_service = _schema_service
 
         if _parent_quirk is not None:
@@ -273,7 +303,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def validate_and_track_oid(
-        metadata_extensions: Mapping[str, list[str] | str | bool | None],
+        metadata_extensions: dict[str, list[str] | str | bool | None],
         oid_value: str | None,
         oid_name: str,
     ) -> None:
@@ -287,12 +317,16 @@ class FlextLdifServersBaseSchema(
             validate_method = getattr(oid_util, "validate_format", None)
             if validate_method is not None and callable(validate_method):
                 validate_result_raw = validate_method(oid_value)
-
-                try:
-                    oid_validate_result = FlextResult[bool].model_validate(
-                        validate_result_raw,
-                    )
-                except Exception:
+                if isinstance(validate_result_raw, FlextResult):
+                    if validate_result_raw.is_failure:
+                        oid_validate_result = FlextResult.fail(
+                            validate_result_raw.error,
+                        )
+                    else:
+                        oid_validate_result = FlextResult.ok(
+                            bool(validate_result_raw.value),
+                        )
+                else:
                     oid_validate_result = FlextResult.ok(bool(validate_result_raw))
             else:
                 oid_validate_result = FlextResult.ok(True)
@@ -315,10 +349,10 @@ class FlextLdifServersBaseSchema(
     @staticmethod
     def _extract_metadata_extensions(
         attr_definition: str,
-    ) -> Mapping[str, list[str] | str | bool | None]:
+    ) -> dict[str, list[str] | str | bool | None]:
         """Extract metadata extensions from attribute definition."""
         parser_util = FlextLdifUtilitiesParser
-        if parser_util is not None:
+        if parser_util is None:
             return {}
         extract_method = getattr(parser_util, "extract_extensions", None)
         if extract_method is None or not callable(extract_method):
@@ -422,7 +456,7 @@ class FlextLdifServersBaseSchema(
 
         extensions_typed: dict[str, t.MetadataAttributeValue] = {}
         for key, val in metadata_extensions.items():
-            if u.is_list_like(val):
+            if isinstance(val, list):
                 list_typed: t.MetadataAttributeValue = list(val)
                 extensions_typed[key] = list_typed
             else:
@@ -543,7 +577,7 @@ class FlextLdifServersBaseSchema(
         if operation is not None:
             return operation
 
-        if data.__class__ is str:
+        if isinstance(data, str):
             return "parse"
 
         return "write"
@@ -555,7 +589,7 @@ class FlextLdifServersBaseSchema(
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Route data to appropriate parse or write handler."""
         if operation == "parse":
-            if data.__class__ is not str:
+            if not isinstance(data, str):
                 return FlextResult[
                     (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
                 ].fail(f"parse operation requires str, got {type(data).__name__}")
@@ -659,7 +693,7 @@ class FlextLdifServersBaseSchema(
         model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write schema model to string format."""
-        if model.__class__ is m.Ldif.SchemaAttribute:
+        if isinstance(model, m.Ldif.SchemaAttribute):
             return self.write_attribute(model)
 
         return self.write_objectclass(model)

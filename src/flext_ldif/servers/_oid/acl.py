@@ -175,9 +175,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         const = _OidConstants
 
-        for pattern_key, (_, subject_type, _) in (
-            u.mapper().to_dict(const.ACL_SUBJECT_PATTERNS).items()
-        ):
+        for pattern_key, (_, subject_type, _) in const.ACL_SUBJECT_PATTERNS.items():
             if pattern_key.lower() in content.lower():
                 return subject_type
 
@@ -293,7 +291,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         allowed_perms: list[str] = []
         for perm, allowed in permissions.items():
             if allowed:
-                oid_perm_name = u.mapper().get(permission_names, perm, default=perm)
+                oid_perm_name = permission_names.get(perm, perm)
                 allowed_perms.append(oid_perm_name)
 
         if allowed_perms:
@@ -359,47 +357,38 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Format extension values based on metadata key type."""
         extensions: list[str] = []
 
-        acl_filter = u.mapper().get(meta_extensions, c.Ldif.MetadataKeys.ACL_FILTER)
-        if acl_filter:
+        acl_filter = meta_extensions.get(c.Ldif.MetadataKeys.ACL_FILTER)
+        if isinstance(acl_filter, str) and acl_filter:
             extensions.append(f"filter={acl_filter}")
 
-        acl_constraint = u.mapper().get(
-            meta_extensions,
-            c.Ldif.MetadataKeys.ACL_CONSTRAINT,
-        )
-        if acl_constraint:
+        acl_constraint = meta_extensions.get(c.Ldif.MetadataKeys.ACL_CONSTRAINT)
+        if isinstance(acl_constraint, str) and acl_constraint:
             extensions.append(f"added_object_constraint=({acl_constraint})")
 
-        bindmode = u.mapper().get(meta_extensions, c.Ldif.MetadataKeys.ACL_BINDMODE)
-        if bindmode:
+        bindmode = meta_extensions.get(c.Ldif.MetadataKeys.ACL_BINDMODE)
+        if isinstance(bindmode, str) and bindmode:
             extensions.append(f"bindmode=({bindmode})")
 
-        bind_ip_filter = u.mapper().get(
-            meta_extensions,
-            c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER,
-        )
-        if bind_ip_filter:
+        bind_ip_filter = meta_extensions.get(c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER)
+        if isinstance(bind_ip_filter, str) and bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")
 
-        constrain_to_added = u.mapper().get(
-            meta_extensions,
+        constrain_to_added = meta_extensions.get(
             c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
-        if constrain_to_added:
+        if isinstance(constrain_to_added, str) and constrain_to_added:
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
 
-        deny_group_override = u.mapper().get(
-            meta_extensions,
+        deny_group_override = meta_extensions.get(
             c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
         )
-        if deny_group_override:
+        if deny_group_override is True or (
+            isinstance(deny_group_override, str) and deny_group_override
+        ):
             extensions.append("DenyGroupOverride")
 
-        append_to_all = u.mapper().get(
-            meta_extensions,
-            c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL,
-        )
-        if append_to_all:
+        append_to_all = meta_extensions.get(c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL)
+        if append_to_all is True or (isinstance(append_to_all, str) and append_to_all):
             extensions.append("AppendToAll")
 
         return extensions
@@ -409,22 +398,43 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         value: (
             m.Ldif.AclSubject
             | m.Ldif.QuirkMetadata
-            | Mapping[str, str | int | bool]
+            | Mapping[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | list[str]
+                | Mapping[str, str | list[str]]
+                | None,
+            ]
             | str
             | None
         ),
     ) -> Mapping[str, str | int | bool]:
         """Normalize value to dict for model validation."""
-        if u.is_type(value, "dict"):
-            return value
-        if value is not None and not u.is_type(value, (str, int, float, bool)):
-            try:
-                dumped = value.model_dump()
-            except Exception:
-                dumped = None
-            if u.is_type(dumped, "dict"):
-                return dumped
-        return {"subject_type": str(value)} if value else {}
+        if isinstance(value, Mapping):
+            normalized: dict[str, str | int | bool] = {}
+            for key, raw_value in value.items():
+                if isinstance(key, str) and isinstance(raw_value, (str, int, bool)):
+                    normalized[key] = raw_value
+            return normalized
+
+        if value is None:
+            return {}
+
+        if isinstance(value, str):
+            return {"subject_type": value}
+
+        if isinstance(value, (m.Ldif.AclSubject, m.Ldif.QuirkMetadata)):
+            dumped = value.model_dump()
+            normalized_dumped: dict[str, str | int | bool] = {}
+            for key, raw_value in dumped.items():
+                if isinstance(key, str) and isinstance(raw_value, (str, int, bool)):
+                    normalized_dumped[key] = raw_value
+            return normalized_dumped
+
+        return {}
 
     @staticmethod
     def _normalize_permissions_to_dict(
@@ -554,24 +564,26 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             json.dumps(config.perms_dict) if config.perms_dict else None
         )
 
-        metadata_dict = FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
-            "oid",
-            acl_line=config.acl_line,
-            server_type="oid",
-            subject_type=config.oid_subject_type,
-            subject_value=config.oid_subject_value,
-            target_dn=config.target_dn,
-            target_attrs=target_attrs_str,
-            permissions=permissions_str,
-            target_subject_type=config.rfc_subject_type,
-            acl_filter=config.acl_filter,
-            acl_constraint=config.acl_constraint,
-            bindmode=config.bindmode,
-            deny_group_override=config.deny_group_override is True,
-            append_to_all=config.append_to_all is True,
-            bind_ip_filter=config.bind_ip_filter,
-            constrain_to_added_object=config.constrain_to_added_object,
-            target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
+        metadata_dict: dict[str, str | int | bool] = dict(
+            FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
+                "oid",
+                acl_line=config.acl_line,
+                server_type="oid",
+                subject_type=config.oid_subject_type,
+                subject_value=config.oid_subject_value,
+                target_dn=config.target_dn,
+                target_attrs=target_attrs_str,
+                permissions=permissions_str,
+                target_subject_type=config.rfc_subject_type,
+                acl_filter=config.acl_filter,
+                acl_constraint=config.acl_constraint,
+                bindmode=config.bindmode,
+                deny_group_override=config.deny_group_override is True,
+                append_to_all=config.append_to_all is True,
+                bind_ip_filter=config.bind_ip_filter,
+                constrain_to_added_object=config.constrain_to_added_object,
+                target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
+            ),
         )
 
         if config.oid_subject_type:
@@ -806,7 +818,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         source_subject_type_raw = metadata.extensions.get(
             c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE,
         )
-        if source_subject_type_raw is None or u.is_type(source_subject_type_raw, "str"):
+        if source_subject_type_raw is None or isinstance(source_subject_type_raw, str):
             return source_subject_type_raw
         msg = f"Expected str | None, got {type(source_subject_type_raw)}"
         raise TypeError(msg)

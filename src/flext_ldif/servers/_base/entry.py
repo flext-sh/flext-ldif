@@ -123,37 +123,14 @@ class FlextLdifServersBaseEntry(
         """Convert raw LDIF attributes to dict[str, list[str]] format."""
         converted_attrs: dict[str, list[str]] = {}
 
-        for attr_name, attr_values_raw in entry_attrs.items():
+        for attr_name, attr_values in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
-
-            if not core_u.is_type(attr_values_raw, list):
-                continue
-            attr_values: list[str | bytes] = attr_values_raw
-            string_values: list[str] = []
-            if core_u.is_type(attr_values, list):
-                string_values = [
-                    (
-                        value.decode("utf-8", errors="replace")
-                        if core_u.is_type(value, bytes)
-                        else str(value)
-                    )
-                    for value in attr_values
-                ]
-            elif core_u.is_type(attr_values, bytes):
-                string_values = [
-                    attr_values.decode("utf-8", errors="replace"),
-                ]
-            elif core_u.is_type(attr_values, (list, tuple)):
-                string_values = [
-                    (
-                        value.decode("utf-8", errors="replace")
-                        if core_u.is_type(value, bytes)
-                        else str(value)
-                    )
-                    for value in attr_values
-                ]
-            else:
-                string_values = [str(attr_values)]
+            string_values = [
+                value.decode("utf-8", errors="replace")
+                if isinstance(value, bytes)
+                else value
+                for value in attr_values
+            ]
 
             if canonical_attr_name in converted_attrs:
                 converted_attrs[canonical_attr_name].extend(string_values)
@@ -189,7 +166,7 @@ class FlextLdifServersBaseEntry(
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
 
-        extensions_data: dict[str, t.GeneralValueType] = {}
+        extensions_data: Mapping[str, object] = {}
         if entry_data.metadata and entry_data.metadata.extensions is not None:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
@@ -200,52 +177,29 @@ class FlextLdifServersBaseEntry(
                     extensions_data = dumped
 
         hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
-        if core_u.is_type(hidden_raw, list):
+        if isinstance(hidden_raw, list):
             hidden_attributes = {
-                str(attr).lower() for attr in hidden_raw if core_u.is_type(attr, str)
+                attr.lower() for attr in hidden_raw if isinstance(attr, str)
             }
 
         acl_original_raw = extensions_data.get(c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT)
-        if core_u.is_type(acl_original_raw, str):
+        if isinstance(acl_original_raw, str):
             acl_original_format = acl_original_raw
 
-        if entry_data.metadata and entry_data.metadata.write_options:
-            write_opts = entry_data.metadata.write_options
-
-            if core_u.is_type(write_opts, FlextLdifModelsSettings.WriteFormatOptions):
-                fold_long_lines = bool(write_opts.fold_long_lines)
-                line_width = int(write_opts.line_width or line_width)
-                include_dn_comments = bool(write_opts.include_dn_comments)
-                normalize_attribute_names = bool(write_opts.normalize_attribute_names)
-                write_empty_values = bool(write_opts.write_empty_values)
-                write_hidden_attributes_as_comments = bool(
-                    write_opts.write_hidden_attributes_as_comments,
-                )
-                write_metadata_as_comments = bool(write_opts.write_metadata_as_comments)
-                use_original_acl_format_as_name = bool(
-                    write_opts.use_original_acl_format_as_name,
-                )
-            elif core_u.is_type(write_opts, Mapping):
-                nested_opts = write_opts.get("write_options")
-                if core_u.is_type(
-                    nested_opts, FlextLdifModelsSettings.WriteFormatOptions
-                ):
-                    fold_long_lines = bool(nested_opts.fold_long_lines)
-                    line_width = int(nested_opts.line_width or line_width)
-                    include_dn_comments = bool(nested_opts.include_dn_comments)
-                    normalize_attribute_names = bool(
-                        nested_opts.normalize_attribute_names,
-                    )
-                    write_empty_values = bool(nested_opts.write_empty_values)
-                    write_hidden_attributes_as_comments = bool(
-                        nested_opts.write_hidden_attributes_as_comments,
-                    )
-                    write_metadata_as_comments = bool(
-                        nested_opts.write_metadata_as_comments,
-                    )
-                    use_original_acl_format_as_name = bool(
-                        nested_opts.use_original_acl_format_as_name,
-                    )
+        format_options = self._extract_write_format_options(entry_data.metadata)
+        if format_options is not None:
+            fold_long_lines = bool(format_options.fold_long_lines)
+            line_width = int(format_options.line_width)
+            include_dn_comments = bool(format_options.include_dn_comments)
+            normalize_attribute_names = bool(format_options.normalize_attribute_names)
+            write_empty_values = bool(format_options.write_empty_values)
+            write_hidden_attributes_as_comments = bool(
+                format_options.write_hidden_attributes_as_comments,
+            )
+            write_metadata_as_comments = bool(format_options.write_metadata_as_comments)
+            use_original_acl_format_as_name = bool(
+                format_options.use_original_acl_format_as_name,
+            )
 
         def fold_line(line: str) -> list[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""
@@ -406,32 +360,76 @@ class FlextLdifServersBaseEntry(
         """Resolve write options for header generation."""
         if write_options is None:
             return FlextLdifModelsSettings.WriteFormatOptions()
-        if core_u.is_type(write_options, FlextLdifModelsSettings.WriteFormatOptions):
-            return write_options
-        if core_u.is_type(write_options, FlextLdifModelsDomains.WriteOptions):
-            return FlextLdifModelsSettings.WriteFormatOptions()
-        return None
+        return write_options
+
+    @staticmethod
+    def _extract_write_format_options(
+        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+    ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
+        if metadata is None:
+            return None
+
+        if metadata.extensions is not None:
+            extensions_extra = getattr(metadata.extensions, "__pydantic_extra__", None)
+            format_options_raw = None
+            if isinstance(extensions_extra, Mapping):
+                format_options_raw = extensions_extra.get("write_format_options")
+            if format_options_raw is None:
+                format_options_raw = metadata.extensions.get("write_format_options")
+            if isinstance(format_options_raw, Mapping):
+                try:
+                    return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
+                        dict(format_options_raw),
+                    )
+                except Exception:
+                    pass
+
+        if metadata.write_options is None:
+            return None
+
+        try:
+            return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
+                metadata.write_options.model_dump(exclude_none=True),
+            )
+        except Exception:
+            return None
 
     def _convert_write_options(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
         | Mapping[str, t.GeneralValueType],
-    ) -> (
-        FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
-    ):
-        """Convert write options to appropriate typed model."""
-        if core_u.is_type(write_options, FlextLdifModelsSettings.WriteFormatOptions):
+    ) -> FlextLdifModelsDomains.WriteOptions:
+        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
-        if core_u.is_type(write_options, FlextLdifModelsDomains.WriteOptions):
-            return write_options
-        if core_u.is_type(write_options, dict):
-            try:
-                return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
-                    write_options,
-                )
-            except Exception:
-                return FlextLdifModelsDomains.WriteOptions.model_validate(write_options)
+        if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
+            write_options_payload = write_options.model_dump(exclude_none=True)
+            return FlextLdifModelsDomains.WriteOptions.model_validate(
+                {
+                    "sort_entries": write_options_payload.get("sort_attributes", False),
+                    "include_comments": write_options_payload.get(
+                        "include_dn_comments",
+                        False,
+                    ),
+                    "base64_encode_binary": write_options_payload.get(
+                        "base64_encode_binary",
+                        False,
+                    ),
+                },
+            )
+        if isinstance(write_options, Mapping):
+            write_options_payload = dict(write_options)
+            return FlextLdifModelsDomains.WriteOptions.model_validate({
+                "sort_entries": write_options_payload.get("sort_attributes", False),
+                "include_comments": write_options_payload.get(
+                    "include_dn_comments",
+                    False,
+                ),
+                "base64_encode_binary": write_options_payload.get(
+                    "base64_encode_binary",
+                    False,
+                ),
+            })
         msg = f"Expected WriteFormatOptions | WriteOptions | dict, got {type(write_options)}"
         raise TypeError(msg)
 
@@ -442,34 +440,27 @@ class FlextLdifServersBaseEntry(
     ) -> m.Ldif.Entry:
         """Inject write options into entry metadata."""
         write_options_typed = self._convert_write_options(write_options)
-        new_write_opts: dict[str, t.GeneralValueType] = (
-            dict(entry.metadata.write_options)
-            if entry.metadata and entry.metadata.write_options
-            else {}
-        )
+        format_options_payload = write_options.model_dump(exclude_none=True)
 
-        new_write_opts["write_options"] = write_options_typed
+        existing_extensions = (
+            entry.metadata.extensions.model_copy(deep=True)
+            if entry.metadata and entry.metadata.extensions is not None
+            else m.Ldif.DynamicMetadata()
+        )
+        existing_extensions["write_format_options"] = format_options_payload
 
         if entry.metadata:
             updated_metadata = entry.metadata.model_copy(
-                update={"write_options": new_write_opts},
+                update={
+                    "write_options": write_options_typed,
+                    "extensions": existing_extensions,
+                },
             )
         else:
-            write_opts_for_meta: FlextLdifModelsDomains.WriteOptions | None = None
-            if core_u.is_type(write_options_typed, FlextLdifModelsDomains.WriteOptions):
-                write_opts_for_meta = write_options_typed
-            elif core_u.is_type(
-                write_options_typed,
-                FlextLdifModelsSettings.WriteFormatOptions,
-            ):
-                write_opts_for_meta = (
-                    FlextLdifModelsDomains.WriteOptions.model_validate(
-                        write_options_typed.model_dump(),
-                    )
-                )
             updated_metadata = m.Ldif.QuirkMetadata(
                 quirk_type="rfc",
-                write_options=write_opts_for_meta,
+                write_options=write_options_typed,
+                extensions=existing_extensions,
             )
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -479,7 +470,7 @@ class FlextLdifServersBaseEntry(
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
     ) -> FlextResult[str]:
         """Write Entry model(s) to LDIF string format."""
-        if core_u.is_type(entry_data, list):
+        if isinstance(entry_data, list):
             return self._write_entry_list(entry_data, write_options)
         return self._write_single_entry(entry_data, write_options)
 
@@ -535,10 +526,11 @@ class FlextLdifServersBaseEntry(
         **kwargs: Mapping[str, t.GeneralValueType],
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        ldif_content = kwargs.get("ldif_content")
-        entry_model = kwargs.get("entry_model")
+        kwargs_map: Mapping[str, object] = kwargs
+        ldif_content = kwargs_map.get("ldif_content")
+        entry_model = kwargs_map.get("entry_model")
 
-        if core_u.is_type(ldif_content, str):
+        if isinstance(ldif_content, str):
             entries_result = self._parse_content(ldif_content)
             if entries_result.is_success:
                 entries = entries_result.value
@@ -546,7 +538,7 @@ class FlextLdifServersBaseEntry(
                     entries[0] if entries else "",
                 )
             return FlextResult[m.Ldif.Entry | str].ok("")
-        if core_u.is_type(entry_model, m.Ldif.Entry):
+        if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
             return FlextResult[m.Ldif.Entry | str].ok(
                 str_result.map_or(""),
@@ -560,35 +552,11 @@ class FlextLdifServersBaseEntry(
         entry_attrs: Mapping[str, list[str]],
     ) -> FlextResult[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
-        if core_u.is_type(entry_attrs, Mapping):
-            attrs_dict: dict[
-                str,
-                str | list[str] | bytes | list[bytes] | int | float | bool | None,
-            ] = dict(entry_attrs)
-        elif core_u.is_type(entry_attrs, dict):
-            attrs_dict = entry_attrs
-        else:
-            msg = f"Expected Mapping | dict, got {type(entry_attrs)}"
-            raise TypeError(msg)
+        attrs_dict = dict(entry_attrs)
 
         ldif_lines = [f"dn: {entry_dn}"]
         for attr_name, attr_values in attrs_dict.items():
-            if core_u.is_type(attr_values, (list, tuple)):
-                if not core_u.is_type(attr_values, list):
-                    msg = f"Expected list, got {type(attr_values)}"
-                    raise TypeError(msg)
-
-                ldif_lines.extend(
-                    f"{attr_name}: {value.decode('utf-8') if core_u.is_type(value, bytes) else value}"
-                    for value in attr_values
-                )
-            else:
-                value_str = (
-                    attr_values.decode("utf-8")
-                    if core_u.is_type(attr_values, bytes)
-                    else attr_values
-                )
-                ldif_lines.append(f"{attr_name}: {value_str}")
+            ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
         ldif_content = "\n".join(ldif_lines) + "\n"
 
         return self._parse_content(ldif_content).flat_map(

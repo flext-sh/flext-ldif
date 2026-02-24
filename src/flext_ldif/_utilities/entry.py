@@ -267,7 +267,7 @@ class FlextLdifUtilitiesEntry:
 
         attribute_differences: dict[
             str,
-            dict[str, t.MetadataAttributeValue],
+            Mapping[str, t.MetadataAttributeValue],
         ] = {}
         original_attributes_complete: dict[str, t.MetadataAttributeValue] = {}
 
@@ -504,10 +504,9 @@ class FlextLdifUtilitiesEntry:
                 )
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
-                    dn_update: dict[str, t.GeneralValueType] = {
-                        "dn": m.Ldif.DN(value=norm_result.value),
-                    }
-                    current = current.model_copy(update=dn_update)
+                    current = current.model_copy(
+                        update={"dn": m.Ldif.DN(value=norm_result.value)}
+                    )
             if config.normalize_attrs and current.attributes:
                 attrs = current.attributes.attributes
                 new_attrs = (
@@ -517,10 +516,9 @@ class FlextLdifUtilitiesEntry:
                     if config.attr_case == "upper"
                     else attrs
                 )
-                attrs_update: dict[str, t.GeneralValueType] = {
-                    "attributes": m.Ldif.Attributes(attributes=new_attrs),
-                }
-                current = current.model_copy(update=attrs_update)
+                current = current.model_copy(
+                    update={"attributes": m.Ldif.Attributes(attributes=dict(new_attrs))}
+                )
             if config.convert_booleans and current.attributes:
                 source_format, target_format = config.convert_booleans
                 boolean_attrs = {
@@ -537,10 +535,9 @@ class FlextLdifUtilitiesEntry:
                     source_format=source_format,
                     target_format=target_format,
                 )
-                converted_attrs_update: dict[str, t.GeneralValueType] = {
-                    "attributes": m.Ldif.Attributes(attributes=converted),
-                }
-                current = current.model_copy(update=converted_attrs_update)
+                current = current.model_copy(
+                    update={"attributes": m.Ldif.Attributes(attributes=dict(converted))}
+                )
             if config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(
                     current,

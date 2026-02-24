@@ -90,7 +90,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
             return r[str].fail("OID cannot be empty")
 
         try:
-            name_raw = u.mapper().get(self._oid_to_name, oid, default="")
+            name_raw = u.Mapper.get(self._oid_to_name, oid, default="")
 
             if name_raw:
                 return r[str].ok(name_raw)
@@ -104,7 +104,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
             return r[str].fail("Syntax name cannot be empty")
 
         try:
-            oid_raw = u.mapper().get(self._name_to_oid, name, default="")
+            oid_raw = u.Mapper.get(self._name_to_oid, name, default="")
 
             if oid_raw:
                 return r[str].ok(oid_raw)

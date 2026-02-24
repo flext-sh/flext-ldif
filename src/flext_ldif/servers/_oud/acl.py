@@ -73,7 +73,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
-        if not u.is_type(acl_line, "str"):
+        if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
             except Exception:
@@ -231,7 +231,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not extensions:
             return None
         value = extensions.get(key)
-        return value if u.is_type(value, "str") else None
+        return value if isinstance(value, str) else None
 
     @staticmethod
     def _scalar_or_list_value(value: object) -> bool:
@@ -246,24 +246,25 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             target_dict = extensions.get("acl_target_target") if extensions else None
 
             target_data: dict[str, t.MetadataAttributeValue] = {}
-            if u.is_dict_like(target_dict):
-                target_data = {
-                    k: v
-                    for k, v in target_dict.items()
-                    if not u.is_dict_like(v)
-                    and FlextLdifServersOudAcl._scalar_or_list_value(v)
-                }
+            if isinstance(target_dict, Mapping):
+                for raw_key, raw_value in target_dict.items():
+                    if not isinstance(raw_key, str):
+                        continue
+                    if isinstance(raw_value, Mapping):
+                        continue
+                    if FlextLdifServersOudAcl._scalar_or_list_value(raw_value):
+                        target_data[raw_key] = raw_value
 
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")
 
                 attrs: list[str] = (
-                    [item for item in attrs_raw if u.is_type(item, "str")]
-                    if u.is_list_like(attrs_raw)
+                    [item for item in attrs_raw if isinstance(item, str)]
+                    if isinstance(attrs_raw, list)
                     else []
                 )
-                dn: str = str(dn_raw) if u.is_type(dn_raw, "str") else "*"
+                dn: str = dn_raw if isinstance(dn_raw, str) else "*"
                 target = m.Ldif.AclTarget(
                     target_dn=dn,
                     attributes=attrs,
@@ -281,7 +282,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> FlextResult[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict = None
+        target_perms_dict: Mapping[str, t.MetadataAttributeValue] | None = None
 
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
@@ -292,26 +293,22 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 target_perms_dict_raw = (
                     extensions.get("target_permissions") if extensions else None
                 )
-            target_perms_dict = target_perms_dict_raw
+            if isinstance(target_perms_dict_raw, Mapping):
+                target_perms_dict = target_perms_dict_raw
 
-        if target_perms_dict and u.is_dict_like(target_perms_dict):
-            target_perms_dict_typed: Mapping[str, t.MetadataAttributeValue] = (
-                target_perms_dict
-            )
+        if target_perms_dict:
             perms_data: dict[str, object] = {}
 
-            for key, val in target_perms_dict_typed.items():
-                if not u.is_type(key, "str"):
-                    continue
+            for key, val in target_perms_dict.items():
                 k = str(key)
 
-                if u.is_dict_like(val):
+                if isinstance(val, Mapping):
                     continue
 
                 if val is None or val.__class__ in {str, bool, int, float}:
                     perms_data[k] = val
-                elif u.is_list_like(val):
-                    str_list = [str(item) for item in val if u.is_type(item, "str")]
+                elif isinstance(val, list):
+                    str_list = [str(item) for item in val if isinstance(item, str)]
                     perms_data[k] = str_list
 
             if perms_data:
@@ -383,24 +380,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass."""
         ext = acl_data.metadata.extensions if acl_data.metadata else None
-        if ext:
+        base_dn: str | None = None
+        source_subject_type: str | None = None
+
+        if ext is not None:
             base_dn_raw = ext.get("base_dn")
-            base_dn = base_dn_raw if u.is_type(base_dn_raw, "str") else None
-        else:
-            base_dn = None
-        source_subject_type = (
-            (
-                sst
-                if u.is_type(
-                    sst := ext.get(
-                        "acl_source_subject_type",
-                    ),
-                )
-                else None
-            )
-            if ext
-            else None
-        )
+            if isinstance(base_dn_raw, str):
+                base_dn = base_dn_raw
+
+            source_subject_type_raw = ext.get("acl_source_subject_type")
+            if isinstance(source_subject_type_raw, str):
+                source_subject_type = source_subject_type_raw
 
         if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
             subject_type = source_subject_type
@@ -424,18 +414,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             ):
                 subject_type = "group"
 
-        subject_value = (
+        subject_value: str | None = (
             acl_data.subject.subject_value if acl_data.subject else None
-        ) or (
-            sv
-            if ext
-            and u.is_type(
-                sv := ext.get(
-                    "acl_original_subject_value",
-                ),
-            )
-            else None
         )
+        if not subject_value and ext is not None:
+            subject_value_raw = ext.get("acl_original_subject_value")
+            if isinstance(subject_value_raw, str):
+                subject_value = subject_value_raw
 
         if not subject_value and subject_type == "self":
             subject_value = FlextLdifServersOudConstants.ACL_SELF_SUBJECT

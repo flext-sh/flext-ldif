@@ -6,7 +6,6 @@ from collections.abc import Sequence
 
 from flext_core import r
 
-from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.pipeline import Pipeline
 from flext_ldif._utilities.transformers import Normalize
 from flext_ldif.constants import c
@@ -19,9 +18,12 @@ class ProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: TransformConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: m.Ldif.TransformConfig | None = None,
+    ) -> None:
         """Initialize processing pipeline."""
-        self._config = config or TransformConfig()
+        self._config = config or m.Ldif.TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
@@ -70,10 +72,16 @@ class ProcessingPipeline:
             and self._config.process_config.source_server
             and self._config.process_config.target_server
         ):
+            source_server = c.Ldif.ServerTypes[
+                self._config.process_config.source_server.upper()
+            ]
+            target_server = c.Ldif.ServerTypes[
+                self._config.process_config.target_server.upper()
+            ]
             pipeline.add(
                 ServerTransformer(
-                    source_server=self._config.process_config.source_server,
-                    target_server=self._config.process_config.target_server,
+                    source_server=source_server,
+                    target_server=target_server,
                 ),
                 name="server_transform",
             )
@@ -88,6 +96,6 @@ class ProcessingPipeline:
         return self._pipeline.execute(entries)
 
     @property
-    def config(self) -> TransformConfig:
+    def config(self) -> m.Ldif.TransformConfig:
         """Get the processing configuration."""
         return self._config

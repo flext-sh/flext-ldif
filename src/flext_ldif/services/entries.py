@@ -117,13 +117,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     @staticmethod
     def get_entry_dn(entry: m.Ldif.Entry | Mapping[str, str | list[str]]) -> r[str]:
         """Read DN from model or dictionary entry."""
-        match entry:
-            case dict() as entry_dict:
-                return FlextLdifEntries._extract_dn_from_dict(entry_dict)
-            case _:
-                if entry.dn is None:
-                    return r[str].fail("Entry missing DN (dn is None)")
-                return r[str].ok(entry.dn.value)
+        if not isinstance(entry, m.Ldif.Entry):
+            return FlextLdifEntries._extract_dn_from_dict(entry)
+        typed_entry: m.Ldif.Entry = entry
+        if typed_entry.dn is None:
+            return r[str].fail("Entry missing DN (dn is None)")
+        return r[str].ok(typed_entry.dn.value)
 
     @staticmethod
     def get_entry_attributes(entry: m.Ldif.Entry) -> r[Mapping[str, list[str]]]:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from collections.abc import Mapping, Sequence
 
 from flext_core import FlextLogger, r, u
@@ -170,7 +171,7 @@ class FlextLdifUtilitiesACL:
     def extract_bind_rules(
         content: str,
         bind_patterns: Mapping[str, str] | None = None,
-    ) -> list[Mapping[str, str]]:
+    ) -> list[dict[str, str]]:
         r"""Extract bind rules from ACL content.
 
         Finds userdn, groupdn, or other bind rule specifications.
@@ -220,7 +221,7 @@ class FlextLdifUtilitiesACL:
         permission_map: Mapping[str, str] | None,
         *,
         is_allow: bool,
-    ) -> Mapping[str, bool]:
+    ) -> dict[str, bool]:
         """Process permission list into dictionary."""
         result: dict[str, bool] = {}
         for perm in perm_list:
@@ -239,30 +240,22 @@ class FlextLdifUtilitiesACL:
         deny_permissions: list[str] | None = None,
     ) -> Mapping[str, bool]:
         """Build permissions dictionary from allow/deny lists."""
-        allow_dict: dict[str, bool] = (
-            f.when(
-                condition=bool(allow_permissions),
-                then=lambda: FlextLdifUtilitiesACL._process_permission_list(
-                    allow_permissions,
-                    permission_map,
-                    is_allow=True,
-                ),
-                else_={},
+        allow_dict: dict[str, bool] = {}
+        if allow_permissions:
+            allow_dict = FlextLdifUtilitiesACL._process_permission_list(
+                allow_permissions,
+                permission_map,
+                is_allow=True,
             )
-            or {}
-        )
-        deny_dict: dict[str, bool] = (
-            f.when(
-                condition=bool(deny_permissions),
-                then=lambda: FlextLdifUtilitiesACL._process_permission_list(
-                    deny_permissions or [],
-                    permission_map,
-                    is_allow=False,
-                ),
-                else_={},
+
+        deny_dict: dict[str, bool] = {}
+        if deny_permissions:
+            deny_dict = FlextLdifUtilitiesACL._process_permission_list(
+                deny_permissions,
+                permission_map,
+                is_allow=False,
             )
-            or {}
-        )
+
         return f.merge(allow_dict, deny_dict)
 
     @staticmethod
@@ -293,10 +286,22 @@ class FlextLdifUtilitiesACL:
         config: FlextLdifModelsSettings.AclMetadataConfig,
     ) -> Mapping[str, t.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL."""
+        normalized_line_breaks: (
+            list[str | int | float | bool | datetime | None] | None
+        ) = None
+        if config.line_breaks is not None:
+            normalized_line_breaks = [int(value) for value in config.line_breaks]
+
+        normalized_targetscope: (
+            list[str | int | float | bool | datetime | None] | None
+        ) = None
+        if config.targetscope is not None:
+            normalized_targetscope = [int(value) for value in config.targetscope]
+
         extension_items: list[tuple[str, t.MetadataAttributeValue]] = [
-            ("line_breaks", config.line_breaks),
+            ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
-            ("targetscope", config.targetscope),
+            ("targetscope", normalized_targetscope),
             ("version", config.version),
             ("action_type", config.action_type),
         ]
@@ -403,7 +408,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: list[Mapping[str, str]],
+        bind_rules_data: Sequence[Mapping[str, str]],
         subject_type_map: Mapping[str, str],
         special_values: Mapping[str, tuple[str, str]],
     ) -> tuple[str, str]:
@@ -426,14 +431,8 @@ class FlextLdifUtilitiesACL:
 
             mapped_type_raw = u.get(subject_type_map, rule_type)
             mapped_type: str | None = None
-            if u.is_type(mapped_type_raw, FlextRuntime.RuntimeResult):
-                if mapped_type_raw.is_success:
-                    value = mapped_type_raw.value
-                    mapped_type = value if u.is_type(value, "str") else None
-            else:
-                mapped_type = (
-                    mapped_type_raw if u.is_type(mapped_type_raw, "str") else None
-                )
+            if isinstance(mapped_type_raw, str):
+                mapped_type = mapped_type_raw
             if mapped_type:
                 return mapped_type, rule_value
 
@@ -650,7 +649,7 @@ class FlextLdifUtilitiesACL:
 
         if extra_dict:
             filtered_extensions: dict[str, str] = {
-                k: v for k, v in extra_dict.items() if u.is_type(v, "str")
+                k: v for k, v in extra_dict.items() if isinstance(v, str)
             }
             if filtered_extensions:
                 extensions = dict(extensions, **filtered_extensions)
@@ -734,20 +733,15 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule config item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: t.MetadataAttributeValue | None = (
-                extensions.get(ext_key) if extensions else None
-            )
-            if not value_raw:
+            value_raw: object = extensions.get(ext_key) if extensions else None
+            if value_raw is None:
                 return None
 
             operator_placeholder = "{" + "operator" + "}"
             expected_tuple_length = tuple_length
 
-            if (
-                u.is_type(value_raw, "tuple")
-                and len(value_raw) == expected_tuple_length
-            ):
-                tuple_items = list(value_raw) if value_raw else []
+            if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
+                tuple_items = list(value_raw)
                 if len(tuple_items) >= TUPLE_LENGTH_PAIR:
                     operator_val = str(tuple_items[0])
                     value_val = str(tuple_items[1])
@@ -796,12 +790,10 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target config item."""
             ext_key, format_template = target_item
-            value: t.MetadataAttributeValue | None = (
-                extensions.get(ext_key) if extensions else None
-            )
-            if value is None:
+            value_raw: object = extensions.get(ext_key) if extensions else None
+            if value_raw is None:
                 return None
-            return format_template.format(value=value)
+            return format_template.format(value=str(value_raw))
 
         def predicate_func(item: str | tuple[str, str]) -> bool:
             """Predicate function for Collection.process."""
@@ -839,13 +831,13 @@ class FlextLdifUtilitiesACL:
         if not converted_from_value:
             return []
 
-        comments_value = extensions.get(comments_key) if extensions else None
+        comments_value: object = extensions.get(comments_key) if extensions else None
         if comments_value is None:
             return []
         normalized: list[str]
-        if u.is_type(comments_value, "str"):
+        if isinstance(comments_value, str):
             normalized = [comments_value]
-        elif comments_value.__class__ in {list, tuple}:
+        elif isinstance(comments_value, list):
             normalized = [str(item) for item in comments_value]
         else:
             normalized = [str(comments_value)]
@@ -880,7 +872,7 @@ class FlextLdifUtilitiesACL:
             "all",
         }
 
-        def map_perm(perm_name: str, *, perm_value: bool) -> Mapping[str, bool]:
+        def map_perm(perm_name: str, *, perm_value: bool) -> dict[str, bool]:
             """Map single permission."""
             if perm_name == "browse":
                 return {"read": perm_value, "search": perm_value}
@@ -990,19 +982,65 @@ class FlextLdifUtilitiesACL:
             pattern_spec: str | tuple[str, int],
         ) -> tuple[str, t.Ldif.JsonValue]:
             """Extract component from pattern spec."""
-            if u.is_type(pattern_spec, "tuple"):
+            if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
             else:
                 pattern = pattern_spec
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: t.Ldif.JsonValue | None = (
-                raw_default
-                if raw_default is None
-                or raw_default.__class__ in {str, int, float, bool}
-                else str(raw_default)
-            )
+            default_value: t.Ldif.JsonValue | None
+            if raw_default is None:
+                default_value = None
+            elif isinstance(raw_default, (str, int, float, bool)):
+                default_value = raw_default
+            elif isinstance(raw_default, list):
+                normalized_list: list[str | int | float | bool | datetime | None] = []
+                for item in raw_default:
+                    if item is None or isinstance(
+                        item, (str, int, float, bool, datetime)
+                    ):
+                        normalized_list.append(item)
+                    else:
+                        normalized_list.append(str(item))
+                default_value = normalized_list
+            elif isinstance(raw_default, Mapping):
+                normalized_mapping: dict[
+                    str,
+                    str
+                    | int
+                    | float
+                    | bool
+                    | datetime
+                    | list[str | int | float | bool | datetime | None]
+                    | None,
+                ] = {}
+                for key, item in raw_default.items():
+                    if not isinstance(key, str):
+                        continue
+                    if item is None or isinstance(
+                        item, (str, int, float, bool, datetime)
+                    ):
+                        normalized_mapping[key] = item
+                        continue
+                    if isinstance(item, list):
+                        nested_list: list[
+                            str | int | float | bool | datetime | None
+                        ] = []
+                        for nested_item in item:
+                            if nested_item is None or isinstance(
+                                nested_item,
+                                (str, int, float, bool, datetime),
+                            ):
+                                nested_list.append(nested_item)
+                            else:
+                                nested_list.append(str(nested_item))
+                        normalized_mapping[key] = nested_list
+                        continue
+                    normalized_mapping[key] = str(item)
+                default_value = normalized_mapping
+            else:
+                default_value = str(raw_default)
             final_value: t.Ldif.JsonValue = (
                 value if value is not None else default_value
             )
