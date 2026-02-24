@@ -1,8 +1,8 @@
 """LDIF Validation Service - RFC 2849/4512 Compliant Entry Validation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
+from collections.abc import Mapping
 from typing import Self, override
 
 from flext_core import d, r, t

@@ -20,9 +20,9 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
     protocol definitions.
 
     Provides access to:
-    - tp.Tests.Docker.* (from FlextTestsProtocols)
-    - tp.Tests.Factory.* (from FlextTestsProtocols)
-    - tp.Ldif.* (from FlextLdifProtocols)
+    - p.Tests.Docker.* (from FlextTestsProtocols)
+    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Ldif.* (from FlextLdifProtocols)
 
     Rules:
     - NEVER redeclare protocols from parent classes

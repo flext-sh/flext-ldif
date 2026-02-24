@@ -8,7 +8,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes, r
+from flext_core import FlextLogger, FlextResult, FlextTypes, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID

@@ -1,7 +1,6 @@
 """Quirks conversion matrix for LDAP server translation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import time
 from collections.abc import Callable, Mapping, Sequence

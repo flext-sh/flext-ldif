@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import FlextLogger, r, u
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema

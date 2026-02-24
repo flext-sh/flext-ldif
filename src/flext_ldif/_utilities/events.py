@@ -1,6 +1,7 @@
 """Event Utilities - Domain Event Creation and Management Helpers."""
 
 from __future__ import annotations
+
 from collections.abc import Mapping
 
 from flext_core import FlextLogger

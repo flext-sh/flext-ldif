@@ -1,8 +1,8 @@
 """RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
+from collections.abc import Mapping
 from typing import Self, overload
 
 from flext_core import FlextLogger, FlextResult, FlextTypes

@@ -1,9 +1,9 @@
 """Base Quirk Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import re
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextService, u

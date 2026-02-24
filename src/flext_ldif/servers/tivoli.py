@@ -1,10 +1,10 @@
 """IBM Tivoli Directory Server quirks implementation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import base64
 import re
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import r, u

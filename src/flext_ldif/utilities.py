@@ -23,7 +23,6 @@ from typing import (
 )
 
 from flext_core import FlextLogger, FlextResult, r
-from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import FlextUtilities
 
@@ -603,11 +602,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @overload
         def process[T, R](
-            items_or_entries: T
-            | list[T]
-            | tuple[T, ...]
-            | Mapping[str, T]
-            | Mapping[str, T],
+            items_or_entries: T | list[T] | tuple[T, ...] | Mapping[str, T],
             processor_or_config: Callable[[T], R] | Callable[[str, T], R] | None = None,
             *,
             processor: Callable[[T], R] | Callable[[str, T], R] | None = None,
@@ -643,12 +638,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def process[T, R](
             items_or_entries: (
-                T
-                | list[T]
-                | tuple[T, ...]
-                | Mapping[str, T]
-                | Mapping[str, T]
-                | Sequence[m.Ldif.Entry]
+                T | list[T] | tuple[T, ...] | Mapping[str, T] | Sequence[m.Ldif.Entry]
             ),
             processor_or_config: (
                 Callable[[T], R] | Callable[[str, T], R] | ProcessConfig | None
@@ -738,12 +728,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def filter[T, R](
             items_or_entries: (
-                T
-                | list[T]
-                | tuple[T, ...]
-                | Mapping[str, T]
-                | Mapping[str, T]
-                | Sequence[m.Ldif.Entry]
+                T | list[T] | tuple[T, ...] | Mapping[str, T] | Sequence[m.Ldif.Entry]
             ),
             predicate_or_filter1: (
                 FlextLdifUtilities.Ldif.VariadicCallable[bool]
@@ -1271,7 +1256,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def pairs(
             cls,
-            d: Mapping[str, t.Ldif.JsonValue] | Mapping[str, t.Ldif.JsonValue],
+            d: Mapping[str, t.Ldif.JsonValue],
         ) -> list[tuple[str, t.Ldif.JsonValue]]:
             """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
             return list(d.items())

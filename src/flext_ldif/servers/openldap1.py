@@ -1,9 +1,9 @@
 """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import re
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import r, u

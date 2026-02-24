@@ -1,9 +1,9 @@
 """Extracted nested class from FlextLdifUtilities."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import base64
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, t, u

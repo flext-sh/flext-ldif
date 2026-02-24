@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TypeGuard
 
-from flext_core import FlextLogger, FlextRuntime, t, u
+from flext_core import FlextLogger, t, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata

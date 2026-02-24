@@ -1,9 +1,9 @@
 """Detector Service - LDAP Server Type Auto-Detection from LDIF Content."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import re
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, override
 

@@ -1,13 +1,13 @@
 """RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import re
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Literal, Self, overload
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -110,27 +110,33 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _to_optional_str(value: object) -> str | None:
-        if isinstance(value, str):
-            return value
-        if value and value is not True:
-            return str(value)
-        return None
+        match value:
+            case str() as str_value:
+                return str_value
+            case _ if value and value is not True:
+                return str(value)
+            case _:
+                return None
 
     @staticmethod
     def _to_required_str(value: object, default: str = "") -> str:
-        if isinstance(value, str):
-            return value
-        if value:
-            return str(value)
-        return default
+        match value:
+            case str() as str_value:
+                return str_value
+            case _ if value:
+                return str(value)
+            case _:
+                return default
 
     @staticmethod
     def _to_optional_int(value: object) -> int | None:
-        if isinstance(value, int):
-            return value
-        if isinstance(value, str) and value:
-            return int(value)
-        return None
+        match value:
+            case int() as int_value:
+                return int_value
+            case str() as str_value if str_value:
+                return int(str_value)
+            case _:
+                return None
 
     def _parse_attribute(
         self,
@@ -164,15 +170,28 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         except Exception:
             extensions_items = []
         for key, value in extensions_items:
-            if not isinstance(key, str):
-                continue
-            if isinstance(value, (str, bool)) or value is None:
-                metadata_extensions[key] = value
-                continue
-            if isinstance(value, list) and all(isinstance(item, str) for item in value):
-                metadata_extensions[key] = [
-                    item for item in value if isinstance(item, str)
-                ]
+            match key:
+                case str() as key_str:
+                    pass
+                case _:
+                    continue
+
+            match value:
+                case str() | bool() | None:
+                    metadata_extensions[key_str] = value
+                    continue
+                case list() as value_list:
+                    str_items: list[str] = []
+                    all_items_are_str = True
+                    for item in value_list:
+                        match item:
+                            case str() as str_item:
+                                str_items.append(str_item)
+                            case _:
+                                all_items_are_str = False
+                                break
+                    if all_items_are_str:
+                        metadata_extensions[key_str] = str_items
 
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
@@ -182,8 +201,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if u.is_dict_like(syntax_validation):
             syntax_validation_dict = syntax_validation.root
             err = syntax_validation_dict.get("syntax_validation_error")
-            if isinstance(err, str):
-                syntax_validation_error = err
+            match err:
+                case str() as err_str:
+                    syntax_validation_error = err_str
+                case _:
+                    pass
 
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
 
@@ -235,12 +257,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if not oids or not u.is_list_like(oids):
             return
         for idx, oid in enumerate(oids):
-            if oid and isinstance(oid, str):
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    oid,
-                    f"objectClass {oid_type}[{idx}]",
-                )
+            match oid:
+                case str() as oid_str if oid_str:
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        oid_str,
+                        f"objectClass {oid_type}[{idx}]",
+                    )
+                case _:
+                    pass
 
     def _build_objectclass_metadata(
         self,
@@ -289,24 +314,33 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             ] = {}
             if u.is_dict_like(metadata_extensions_raw):
                 for k, v in metadata_extensions_raw.root.items():
-                    if not isinstance(k, str):
-                        continue
-                    if isinstance(v, list):
-                        metadata_extensions_raw_dict[k] = [str(vi) for vi in v]
-                        continue
-                    if v is None or isinstance(v, (str, int, float, bool, datetime)):
-                        metadata_extensions_raw_dict[k] = v
+                    match k:
+                        case str() as key_str:
+                            pass
+                        case _:
+                            continue
+                    match v:
+                        case list() as value_list:
+                            metadata_extensions_raw_dict[key_str] = [
+                                str(vi) for vi in value_list
+                            ]
+                            continue
+                        case None | str() | int() | float() | bool() | datetime():
+                            metadata_extensions_raw_dict[key_str] = v
+                        case _:
+                            pass
 
             metadata_extensions: dict[str, list[str] | str | bool | None] = {}
             for key, value in metadata_extensions_raw_dict.items():
-                if isinstance(value, (str, bool, list)) or value is None:
-                    metadata_extensions[key] = value
-                elif isinstance(value, (int, float)):
-                    metadata_extensions[key] = str(value)
-                elif isinstance(value, datetime):
-                    metadata_extensions[key] = value.isoformat()
-                else:
-                    metadata_extensions[key] = str(value)
+                match value:
+                    case str() | bool() | list() | None:
+                        metadata_extensions[key] = value
+                    case int() | float():
+                        metadata_extensions[key] = str(value)
+                    case datetime() as datetime_value:
+                        metadata_extensions[key] = datetime_value.isoformat()
+                    case _:
+                        metadata_extensions[key] = str(value)
             metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
                 oc_definition.strip()
             )
@@ -315,34 +349,48 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             )
 
             objectclass_oid = parsed.get("oid")
-            if objectclass_oid is None or isinstance(objectclass_oid, str):
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    objectclass_oid,
-                    "objectClass",
-                )
+            match objectclass_oid:
+                case None:
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_oid,
+                        "objectClass",
+                    )
+                case str() as objectclass_oid_str:
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_oid_str,
+                        "objectClass",
+                    )
+                case _:
+                    pass
 
             objectclass_sup_oid = parsed.get("sup")
-            if objectclass_sup_oid is None or isinstance(objectclass_sup_oid, str):
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    objectclass_sup_oid,
-                    "objectClass SUP",
-                )
+            match objectclass_sup_oid:
+                case None:
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_sup_oid,
+                        "objectClass SUP",
+                    )
+                case str() as objectclass_sup_oid_str:
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_sup_oid_str,
+                        "objectClass SUP",
+                    )
+                case _:
+                    pass
 
             must_val = parsed.get("must")
             must_list: list[str] | None = (
-                [str(item) for item in must_val]
-                if u.is_list_like(must_val)
-                else None
+                [str(item) for item in must_val] if u.is_list_like(must_val) else None
             )
             self._validate_oid_list(must_list, "MUST", metadata_extensions)
 
             may_val = parsed.get("may")
             may_list: list[str] | None = (
-                [str(item) for item in may_val]
-                if u.is_list_like(may_val)
-                else None
+                [str(item) for item in may_val] if u.is_list_like(may_val) else None
             )
             self._validate_oid_list(may_list, "MAY", metadata_extensions)
 

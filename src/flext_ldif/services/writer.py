@@ -1,8 +1,8 @@
 """Writer Service - Direct LDIF Writing with flext-core APIs."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r

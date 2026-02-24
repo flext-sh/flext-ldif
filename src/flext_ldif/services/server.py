@@ -1,9 +1,9 @@
 """Server quirk registry using FlextRegistry class-level plugin API."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import inspect
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import FlextLogger, r, t

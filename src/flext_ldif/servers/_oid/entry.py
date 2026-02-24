@@ -1,9 +1,9 @@
 """Oracle Internet Directory (OID) Quirks."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import json
+from collections.abc import Mapping
 from functools import reduce
 
 from flext_core import FlextLogger, FlextResult, u as core_u

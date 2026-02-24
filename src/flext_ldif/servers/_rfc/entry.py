@@ -1,6 +1,7 @@
 """RFC 2849 Compliant LDIF Entry Parser and Writer for flext-ldif."""
 
 from __future__ import annotations
+
 from collections.abc import Mapping
 
 from flext_core import FlextLogger, FlextResult, r, u as core_u

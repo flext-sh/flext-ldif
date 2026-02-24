@@ -1,8 +1,8 @@
 """Entries Service - direct typed entry operations."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
+from collections.abc import Mapping
 from typing import Self
 
 from flext_core import r

@@ -1,10 +1,10 @@
 """Oracle Internet Directory (OID) Quirks."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import ClassVar, Literal
 
@@ -18,7 +18,6 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)

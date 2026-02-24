@@ -1,11 +1,10 @@
 """LDIF Syntax Service - RFC 4517 Attribute Syntax Validation and Resolution."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import logging
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
 from flext_core import d, r

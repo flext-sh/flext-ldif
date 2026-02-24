@@ -1,12 +1,11 @@
 """Pure functional utilities for FLEXT-LDIF."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
 
-from flext_core import FlextRuntime, T, U, t
+from flext_core import T, U, t
 from flext_core.utilities import u
 
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
@@ -174,7 +173,7 @@ class FlextFunctional:
 
     @staticmethod
     def pairs[T](
-        d: Mapping[str, T] | Mapping[str, T],
+        d: Mapping[str, T],
     ) -> list[tuple[str, T]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
