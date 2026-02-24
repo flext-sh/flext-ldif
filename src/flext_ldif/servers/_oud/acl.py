@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, u
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -127,10 +127,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _parse_aci_format(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific config."""
-        config_raw = FlextLdifServersOudUtilities.get_parser_config()
-
-        config_dict = config_raw.model_dump()
-        config = m.Ldif.AciParserConfig.model_validate(config_dict)
+        config = FlextLdifServersOudUtilities.get_parser_config()
         result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
 
         if not result.is_success:
@@ -217,7 +214,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not acl_data.raw_acl:
             return False
 
-        raw_acl_str = acl_data.raw_acl if u.is_type(acl_data.raw_acl, "str") else ""
+        raw_acl_str = acl_data.raw_acl if isinstance(acl_data.raw_acl, str) else ""
         return raw_acl_str.startswith(
             FlextLdifServersOudConstants.ACL_ACI_PREFIX,
         )

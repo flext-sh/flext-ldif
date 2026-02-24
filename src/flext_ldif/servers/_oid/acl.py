@@ -18,7 +18,6 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -67,7 +66,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""
-        if not u.is_type(acl_line, "str"):
+        if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
             except Exception:

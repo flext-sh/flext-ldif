@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
+from datetime import datetime
 from typing import ClassVar, overload
 
 from flext_core._models.base import FlextModelFoundation
@@ -35,7 +36,7 @@ class FlextLdifModelsMetadata:
             if isinstance(value, bool):
                 return value
             if isinstance(value, list):
-                coerced_items: list[str | int | float | bool | None] = []
+                coerced_items: list[str | int | float | bool | datetime | None] = []
                 for item in value:
                     if isinstance(item, str):
                         coerced_items.append(item)
@@ -47,6 +48,9 @@ class FlextLdifModelsMetadata:
                         coerced_items.append(item)
                         continue
                     if isinstance(item, bool):
+                        coerced_items.append(item)
+                        continue
+                    if isinstance(item, datetime):
                         coerced_items.append(item)
                         continue
                     if item is None:

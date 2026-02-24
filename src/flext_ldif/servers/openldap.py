@@ -13,7 +13,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -255,7 +254,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
 
             raw_acl_value = getattr(acl_line, "raw_acl", None)

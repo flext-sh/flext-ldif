@@ -176,9 +176,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             data = instance._coerce_acl_data(data_raw)
             op_raw = kwargs.get("operation")
             op: str | None = None
-            if u.is_type(op_raw, "str") and op_raw == "parse":
+            if isinstance(op_raw, str) and op_raw == "parse":
                 op = "parse"
-            elif u.is_type(op_raw, "str") and op_raw == "write":
+            elif isinstance(op_raw, str) and op_raw == "write":
                 op = "write"
 
             result = acl_instance.execute(data=data, operation=op)

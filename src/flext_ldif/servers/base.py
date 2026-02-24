@@ -116,7 +116,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         if entries:
             first_entry = entries[0]
-            if u.Guards.is_type(first_entry, m.Ldif.Entry):
+            if isinstance(first_entry, m.Ldif.Entry):
                 return r[m.Ldif.Entry].ok(first_entry)
             return r[m.Ldif.Entry].fail(
                 f"Invalid entry type: {type(first_entry).__name__}",
@@ -137,7 +137,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return r[m.Ldif.Entry].fail("No entries parsed")
 
         first_entry = entries[0]
-        if u.Guards.is_type(first_entry, m.Ldif.Entry):
+        if isinstance(first_entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].ok(first_entry)
 
         return r[m.Ldif.Entry].fail("Invalid entry type")
@@ -311,9 +311,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         )
 
         domain_entries: Sequence[m.Ldif.Entry] = [
-            entry
-            if u.Guards.is_type(entry, m.Ldif.Entry)
-            else entry.model_copy(deep=True)
+            entry if isinstance(entry, m.Ldif.Entry) else entry.model_copy(deep=True)
             for entry in entries
         ]
         parse_response = FlextLdifModelsResults.ParseResponse(
@@ -377,7 +375,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if u.Guards.is_list_non_empty(entries):
                 domain_entry = entries[0]
 
-                if u.Guards.is_type(domain_entry, m.Ldif.Entry):
+                if isinstance(domain_entry, m.Ldif.Entry):
                     return r[m.Ldif.Entry | str].ok(domain_entry)
 
                 public_entry = m.Ldif.Entry.model_validate(
@@ -415,7 +413,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 return False
             constants = getattr(mro_cls, "Constants", None)
             server_type = getattr(constants, "SERVER_TYPE", None)
-            return u.Guards.is_type(server_type, str)
+            return isinstance(server_type, str)
 
         def extract_server_type(mro_cls: type[object]) -> str | None:
             """Extract server type if it's a valid string."""
@@ -423,7 +421,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if constants is None:
                 return None
             server_type = getattr(constants, "SERVER_TYPE", None)
-            if u.Guards.is_type(server_type, str):
+            if isinstance(server_type, str):
                 return server_type
             return None
 
@@ -460,7 +458,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 return False
             constants = getattr(mro_cls, "Constants", None)
             priority = getattr(constants, "PRIORITY", None)
-            return u.Guards.is_type(priority, int)
+            return isinstance(priority, int)
 
         def extract_priority(mro_cls: type[object]) -> int | None:
             """Extract priority if it's a valid integer."""
@@ -468,7 +466,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if constants is None:
                 return None
             priority = getattr(constants, "PRIORITY", None)
-            if u.Guards.is_type(priority, int):
+            if isinstance(priority, int):
                 return priority
             return None
 
@@ -540,7 +538,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if register_func is not None:
                 required_methods = ("parse", "write")
                 if all(
-                    u.Guards.is_type(getattr(instance, method, None), "callable")
+                    callable(getattr(instance, method, None))
                     for method in required_methods
                 ):
                     schema_quirk = instance

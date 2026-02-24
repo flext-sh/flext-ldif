@@ -497,7 +497,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a relaxed ACL (public method)."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
             return self.can_handle_acl(acl_line)
 
@@ -581,7 +581,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
 
-            if acl_data.raw_acl and u.Guards.is_type(acl_data.raw_acl, str):
+            if acl_data.raw_acl and isinstance(acl_data.raw_acl, str):
                 return r[str].ok(acl_data.raw_acl)
 
             acl_name = (

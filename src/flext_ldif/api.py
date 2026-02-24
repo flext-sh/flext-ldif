@@ -287,7 +287,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate_json(model.model_dump_json())
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return self.acl_service.extract_acls_from_entry(
@@ -311,7 +311,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate_json(model.model_dump_json())
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_attributes(entry_typed)
@@ -325,7 +325,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate_json(model.model_dump_json())
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_objectclasses(entry_typed)
@@ -361,7 +361,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
         response = parse_result.value
         entries_list: list[m.Ldif.Entry] = [
-            m.Ldif.Entry.model_validate_json(entry.model_dump_json())
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
             for entry in response.entries
         ]
         return r[list[m.Ldif.Entry]].ok(entries_list)

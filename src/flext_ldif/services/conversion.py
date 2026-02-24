@@ -1407,15 +1407,7 @@ class FlextLdifConversion(
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
 
-            if isinstance(domain_acl, m.Ldif.Acl):
-                converted_acl: m.Ldif.Acl = domain_acl
-            else:
-                validation_result: r[m.Ldif.Acl] = r[m.Ldif.Acl].ok(
-                    m.Ldif.Acl.model_validate(domain_acl.model_dump())
-                )
-                if not validation_result.is_success:
-                    return FlextResult.fail("Failed to convert ACL model")
-                converted_acl = validation_result.value
+            converted_acl: m.Ldif.Acl = domain_acl
 
             get_server_type = u.mapper().prop("server_type")
             target_server_raw = get_server_type(target_quirk)

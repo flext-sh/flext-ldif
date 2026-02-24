@@ -12,7 +12,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
@@ -253,11 +252,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 if sup:
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
-                if must and u.Guards.is_type(must, list):
+                if must and isinstance(must, list):
                     must_list_str: list[str] = [str(item) for item in must]
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
-                if may and u.Guards.is_type(may, list):
+                if may and isinstance(may, list):
                     may_list_str: list[str] = [str(item) for item in may]
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"

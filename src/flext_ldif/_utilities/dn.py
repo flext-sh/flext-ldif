@@ -250,9 +250,7 @@ class FlextLdifUtilitiesDN:
             components,
             mapper=FlextLdifUtilitiesDN.norm_component,
         )
-        return ",".join(
-            normalized if u.Guards.is_type(normalized, list) else components
-        )
+        return ",".join(normalized if isinstance(normalized, list) else components)
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -266,7 +264,7 @@ class FlextLdifUtilitiesDN:
             return bool(attr.strip() and value.strip())
 
         filtered = u.Collection.filter(components, is_valid_component)
-        return u.Guards.is_type(filtered, list) and len(filtered) == len(components)
+        return isinstance(filtered, list) and len(filtered) == len(components)
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -470,13 +468,11 @@ class FlextLdifUtilitiesDN:
             normalized_list = process_result.value
             filtered_str = u.Collection.filter(
                 normalized_list,
-                predicate=lambda x: u.Guards.is_type(x, str),
+                predicate=lambda x: isinstance(x, str),
             )
             normalized: list[str] = [
                 str(item)
-                for item in (
-                    filtered_str if u.Guards.is_type(filtered_str, list) else []
-                )
+                for item in (filtered_str if isinstance(filtered_str, list) else [])
                 if item is not None
             ]
             return (
@@ -726,7 +722,7 @@ class FlextLdifUtilitiesDN:
         mapped_result = u.Collection.map(enumerated, mapper=escape_char)
         mapped = (
             mapped_result
-            if u.Guards.is_type(mapped_result, list)
+            if isinstance(mapped_result, list)
             else [escape_char(item) for item in enumerated]
         )
         return "".join(mapped)
@@ -890,7 +886,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
-        if not rdn or not u.Guards.is_type(rdn, str):
+        if not rdn or not isinstance(rdn, str):
             return r[list[tuple[str, str]]].fail(
                 "RDN must be a non-empty string",
             )
@@ -1219,13 +1215,11 @@ class FlextLdifUtilitiesDN:
             source_dn,
             target_dn,
         )
-        if u.Guards.is_type(entry.attributes, m.Ldif.Attributes):
+        if isinstance(entry.attributes, m.Ldif.Attributes):
             attrs_dict = entry.attributes.attributes
         else:
             attrs_dict = (
-                dict(entry.attributes)
-                if u.Guards.is_type(entry.attributes, Mapping)
-                else {}
+                dict(entry.attributes) if isinstance(entry.attributes, Mapping) else {}
             )
         transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
             attrs_dict,
@@ -1239,9 +1233,9 @@ class FlextLdifUtilitiesDN:
             dn_attributes,
         )
 
+        metadata: m.Ldif.QuirkMetadata
         if entry.metadata:
-            metadata_dict = entry.metadata.model_dump()
-            metadata = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
+            metadata = m.Ldif.QuirkMetadata.model_validate(entry.metadata)
         else:
             metadata = m.Ldif.QuirkMetadata.create_for()
 

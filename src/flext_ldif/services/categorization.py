@@ -105,9 +105,9 @@ class FlextLdifCategorization(
                 FlextLdifServer.get_global_instance(),
             )
 
-        if u.Guards.is_type(categorization_rules, m.Ldif.LdifResults.CategoryRules):
+        if isinstance(categorization_rules, m.Ldif.LdifResults.CategoryRules):
             object.__setattr__(self, "_categorization_rules", categorization_rules)
-        elif u.Guards.is_type(categorization_rules, dict):
+        elif isinstance(categorization_rules, dict):
             object.__setattr__(
                 self,
                 "_categorization_rules",
@@ -120,9 +120,9 @@ class FlextLdifCategorization(
                 m.Ldif.LdifResults.CategoryRules(),
             )
 
-        if u.Guards.is_type(schema_whitelist_rules, m.Ldif.LdifResults.WhitelistRules):
+        if isinstance(schema_whitelist_rules, m.Ldif.LdifResults.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
-        elif u.Guards.is_type(schema_whitelist_rules, dict):
+        elif isinstance(schema_whitelist_rules, dict):
             object.__setattr__(
                 self,
                 "_schema_whitelist_rules",
@@ -348,11 +348,11 @@ class FlextLdifCategorization(
 
             priority_list = getattr(constants, "CATEGORIZATION_PRIORITY", [])
 
-            if u.Guards.is_type(priority_list, (list, tuple)):
+            if isinstance(priority_list, (list, tuple)):
                 filtered = [
                     item
                     for item in priority_list
-                    if u.Guards.is_type(item, str) and is_valid_category(item)
+                    if isinstance(item, str) and is_valid_category(item)
                 ]
             else:
                 filtered = []
@@ -360,7 +360,7 @@ class FlextLdifCategorization(
             result: list[str] = [
                 item
                 for item in filtered
-                if u.Guards.is_type(item, str)
+                if isinstance(item, str)
                 and item
                 in {"schema", "hierarchy", "users", "groups", "acl", "rejected"}
             ]
@@ -383,7 +383,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[FlextLdifCategorization._cat("hierarchy")] = frozenset(
-                mapped if u.Guards.is_type(mapped, list) else [],
+                mapped if isinstance(mapped, list) else [],
             )
         if rules.user_objectclasses:
             mapped = u.Collection.map(
@@ -391,7 +391,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[FlextLdifCategorization._cat("users")] = frozenset(
-                mapped if u.Guards.is_type(mapped, list) else [],
+                mapped if isinstance(mapped, list) else [],
             )
         if rules.group_objectclasses:
             mapped = u.Collection.map(
@@ -399,7 +399,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[FlextLdifCategorization._cat("groups")] = frozenset(
-                mapped if u.Guards.is_type(mapped, list) else [],
+                mapped if isinstance(mapped, list) else [],
             )
         if rules.acl_attributes:
             mapped = u.Collection.map(
@@ -407,7 +407,7 @@ class FlextLdifCategorization(
                 mapper=lambda attr: f"attr:{attr.lower()}",
             )
             category_map[FlextLdifCategorization._cat("acl")] = frozenset(
-                mapped if u.Guards.is_type(mapped, list) else [],
+                mapped if isinstance(mapped, list) else [],
             )
 
         return category_map
@@ -446,9 +446,9 @@ class FlextLdifCategorization(
                     mapper=lambda attr: f"attr:{attr.lower()}",
                 )
 
-                if u.Guards.is_type(mapped, frozenset):
+                if isinstance(mapped, frozenset):
                     category_map[acl_category] = mapped
-                elif u.Guards.is_type(mapped, list):
+                elif isinstance(mapped, list):
                     category_map[acl_category] = frozenset(mapped)
                 else:
                     category_map[acl_category] = frozenset()
@@ -460,9 +460,9 @@ class FlextLdifCategorization(
                     mapper=lambda attr: f"attr:{attr.lower()}",
                 )
 
-                if u.Guards.is_type(mapped, frozenset):
+                if isinstance(mapped, frozenset):
                     new_acl_attrs = mapped
-                elif u.Guards.is_type(mapped, list):
+                elif isinstance(mapped, list):
                     new_acl_attrs = frozenset(mapped)
                 else:
                     new_acl_attrs = frozenset()
@@ -595,7 +595,7 @@ class FlextLdifCategorization(
         constants_result = self._get_server_constants(effective_server_type)
         if constants_result.is_success:
             constants_raw = constants_result.map_or(None)
-            if constants_raw is not None and u.Guards.is_type(constants_raw, type):
+            if constants_raw is not None and isinstance(constants_raw, type):
                 constants = constants_raw
         elif not merged_category_map:
             return (
@@ -681,7 +681,7 @@ class FlextLdifCategorization(
         for cat, cat_entries in categories.items():
             if cat_entries:
                 entries_count: int = (
-                    u.count(cat_entries) if u.Guards.is_type(cat_entries, list) else 0
+                    u.count(cat_entries) if isinstance(cat_entries, list) else 0
                 )
                 logger.info(
                     "Category entries",

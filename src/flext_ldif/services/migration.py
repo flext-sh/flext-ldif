@@ -174,7 +174,7 @@ class FlextLdifMigrationPipeline(
             response = parse_result.value
 
             entries_list: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
+                e if isinstance(e, m.Ldif.Entry) else m.Ldif.Entry.model_validate(e)
                 for e in response.entries
             ]
 
@@ -210,9 +210,7 @@ class FlextLdifMigrationPipeline(
             output_file.write_text(write_result.value, encoding="utf-8")
             logger.debug(f"Wrote migrated file to: {output_file}")
 
-            converted_entries: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(e.model_dump(mode="json")) for e in migrated
-            ]
+            converted_entries: list[m.Ldif.Entry] = list(migrated)
 
             result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_entries,
@@ -270,7 +268,9 @@ class FlextLdifMigrationPipeline(
                     total_migrated += res.stats.processed_entries
 
                     converted_res_entries: list[m.Ldif.Entry] = [
-                        m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
+                        e
+                        if isinstance(e, m.Ldif.Entry)
+                        else m.Ldif.Entry.model_validate(e)
                         for e in res.entries
                     ]
                     all_entries.extend(converted_res_entries)
@@ -282,10 +282,7 @@ class FlextLdifMigrationPipeline(
                         error=str(result.error),
                     )
 
-            converted_all_entries: list[m.Ldif.Entry] = [
-                m.Ldif.Entry.model_validate(e.model_dump(mode="json"))
-                for e in all_entries
-            ]
+            converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
 
             pipeline_result = m.Ldif.LdifResults.MigrationPipelineResult(
                 entries=converted_all_entries,

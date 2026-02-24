@@ -77,7 +77,7 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return default
 
-        if u.Guards.is_type(pattern, str):
+        if isinstance(pattern, str):
             pattern = re.compile(pattern)
 
         match = re.search(pattern, definition)
@@ -92,7 +92,7 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return False
 
-        if u.Guards.is_type(pattern, str):
+        if isinstance(pattern, str):
             pattern = re.compile(pattern)
 
         return re.search(pattern, definition) is not None

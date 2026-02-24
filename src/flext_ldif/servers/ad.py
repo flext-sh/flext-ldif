@@ -16,7 +16,6 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
@@ -245,11 +244,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an Active Directory ACL (public method)."""
-            if u.Guards.is_type(acl_line, str):
+            if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 return self.can_handle_acl(raw_acl)
             return False
@@ -273,9 +272,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         re.IGNORECASE,
                     ),
                 )
-            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
-                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 normalized = raw_acl.strip()
                 if not normalized:

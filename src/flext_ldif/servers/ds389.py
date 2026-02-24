@@ -15,7 +15,6 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
@@ -418,25 +417,19 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
                 permissions_raw = acl_data.permissions
-                if not u.Guards.is_type(
-                    permissions_raw,
-                    (m.Ldif.AclPermissions, type(None)),
-                ):
+                if not isinstance(permissions_raw, (m.Ldif.AclPermissions, type(None))):
                     msg = f"Expected AclPermissions | None, got {type(permissions_raw)}"
                     raise TypeError(msg)
                 permissions = self._extract_acl_permissions(permissions_raw)
 
                 target_raw = acl_data.target
-                if not u.Guards.is_type(target_raw, (m.Ldif.AclTarget, type(None))):
+                if not isinstance(target_raw, (m.Ldif.AclTarget, type(None))):
                     msg = f"Expected AclTarget | None, got {type(target_raw)}"
                     raise TypeError(msg)
                 targetattr = self._resolve_acl_targetattr(target_raw)
 
                 subject_raw = acl_data.subject
-                if not u.Guards.is_type(
-                    subject_raw,
-                    (m.Ldif.AclSubject, type(None)),
-                ):
+                if not isinstance(subject_raw, (m.Ldif.AclSubject, type(None))):
                     msg = f"Expected AclSubject | None, got {type(subject_raw)}"
                     raise TypeError(msg)
                 userdn = self._resolve_acl_userdn(subject_raw)
@@ -569,9 +562,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 objectclass_key,
                 [],
             )
-            if u.Guards.is_type(object_classes_raw, list):
+            if isinstance(object_classes_raw, list):
                 object_classes: list[str] = object_classes_raw
-            elif u.Guards.is_type(object_classes_raw, tuple):
+            elif isinstance(object_classes_raw, tuple):
                 object_classes = list(object_classes_raw)
             else:
                 object_classes = [str(object_classes_raw)]

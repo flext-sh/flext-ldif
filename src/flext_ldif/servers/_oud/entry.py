@@ -395,8 +395,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
-        # Convert domain model to facade model for utility compatibility
-        facade_entry = m.Ldif.Entry.model_validate(entry.model_dump())
+        facade_entry = entry
         return u.Ldif.Entry.is_schema_entry(facade_entry, strict=False)
 
     def _add_original_entry_comments(

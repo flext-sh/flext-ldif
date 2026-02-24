@@ -55,8 +55,7 @@ class FlextLdifUtilitiesMetadata:
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
-            metadata_dict = metadata.model_dump()
-            metadata_obj = m.Metadata(attributes=metadata_dict)
+            metadata_obj = m.Metadata(attributes=dict(metadata.to_dict()))
             model.validation_metadata = metadata_obj.model_dump()
         except (AttributeError, TypeError, ValueError):
             pass
@@ -72,7 +71,7 @@ class FlextLdifUtilitiesMetadata:
         if metadata_obj is None:
             metadata_obj = m.Metadata(attributes={})
 
-        if u.Guards.is_type(metadata_obj, m.Metadata):
+        if isinstance(metadata_obj, m.Metadata):
             return dict(metadata_obj.attributes)
         return {}
 
@@ -146,7 +145,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: object) -> bool:
-        return u.Guards.is_type(value, (str, int, float, bool, datetime, type(None)))
+        return isinstance(value, (str, int, float, bool, datetime, type(None)))
 
     @staticmethod
     def _is_metadata_scalar_typed(
@@ -230,7 +229,7 @@ class FlextLdifUtilitiesMetadata:
         if source_metadata_obj is None:
             return None
 
-        if not u.Guards.is_type(source_metadata_obj, m.Metadata):
+        if not isinstance(source_metadata_obj, m.Metadata):
             return None
 
         return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
@@ -243,7 +242,7 @@ class FlextLdifUtilitiesMetadata:
     ) -> FlextLdifModelsMetadata.DynamicMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
-        if target_metadata_obj is None or not u.Guards.is_type(
+        if target_metadata_obj is None or not isinstance(
             target_metadata_obj, m.Metadata
         ):
             target_metadata_obj = m.Metadata(attributes={})
@@ -663,20 +662,24 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        model_kwargs: dict[str, t.MetadataAttributeValue] = {
+        known_field_values: dict[str, t.MetadataAttributeValue] = {
             "original_string_complete": definition,
         }
         extension_kwargs: dict[str, t.MetadataAttributeValue] = {}
         for key, value in combined.items():
             if key in known_fields:
-                model_kwargs[key] = value
+                known_field_values[key] = value
             else:
                 extension_kwargs[key] = value
         extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
             extension_kwargs,
         )
-        model_kwargs["extensions"] = extensions.model_dump()
-        return m.Ldif.SchemaFormatDetails.model_validate(model_kwargs)
+        return m.Ldif.SchemaFormatDetails.model_validate(
+            {
+                **known_field_values,
+                "extensions": extensions,
+            },
+        )
 
     @staticmethod
     def analyze_schema_formatting(
@@ -825,8 +828,7 @@ class FlextLdifUtilitiesMetadata:
         if not processing_stats:
             return entry
 
-        stats_dict = processing_stats.model_dump()
-        updated_stats = m.Ldif.EntryStatistics.model_validate(stats_dict)
+        updated_stats = processing_stats.model_copy()
 
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
@@ -867,7 +869,7 @@ class FlextLdifUtilitiesMetadata:
         if key not in extras:
             return None
         opt = extras.get(key)
-        if u.Guards.is_type(opt, FlextLdifModelsSettings.WriteFormatOptions):
+        if isinstance(opt, FlextLdifModelsSettings.WriteFormatOptions):
             return opt
         return None
 

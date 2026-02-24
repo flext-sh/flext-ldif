@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, Self
 
-from flext_core import FlextLogger, FlextResult, FlextService, u
+from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -210,7 +210,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Detect operation type from explicit param or data type."""
         if operation is not None and operation in {"parse", "write"}:
             return "parse" if operation == "parse" else "write"
-        return "parse" if u.is_type(data, "str") else "write"
+        return "parse" if isinstance(data, str) else "write"
 
     def _coerce_acl_data(self, value: object) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
@@ -315,7 +315,7 @@ class FlextLdifServersBaseSchemaAcl(
         _was_sanitized: bool
         tuple_length_pair = 2
         if (
-            u.is_type(sanitize_result, "tuple")
+            isinstance(sanitize_result, tuple)
             and len(sanitize_result) == tuple_length_pair
         ):
             sanitized_name, _was_sanitized = sanitize_result

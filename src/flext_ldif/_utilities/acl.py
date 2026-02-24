@@ -397,10 +397,10 @@ class FlextLdifUtilitiesACL:
         for key, value_tuple in dict(special_values).items():
             if (
                 rule_value.lower() == key.lower()
-                and u.is_type(value_tuple, "tuple")
+                and isinstance(value_tuple, tuple)
                 and len(value_tuple) == TUPLE_LENGTH_PAIR
-                and u.is_type(value_tuple[0], "str")
-                and u.is_type(value_tuple[1], "str")
+                and isinstance(value_tuple[0], str)
+                and isinstance(value_tuple[1], str)
             ):
                 return value_tuple
         return None
@@ -417,9 +417,9 @@ class FlextLdifUtilitiesACL:
 
         for rule in bind_rules_data:
             rule_type_raw = u.get(rule, "type", default="")
-            rule_type = rule_type_raw.lower() if u.is_type(rule_type_raw, "str") else ""
+            rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
             rule_value = u.get(rule, "value", default="")
-            rule_value = rule_value if u.is_type(rule_value, "str") else ""
+            rule_value = rule_value if isinstance(rule_value, str) else ""
 
             special_match = FlextLdifUtilitiesACL._check_special_value(
                 rule_value,
@@ -437,7 +437,7 @@ class FlextLdifUtilitiesACL:
 
         if bind_rules_data:
             default_value = u.get(bind_rules_data[0], "value", default="")
-            default_value = default_value if u.is_type(default_value, "str") else ""
+            default_value = default_value if isinstance(default_value, str) else ""
         else:
             default_value = ""
         return "user", default_value
@@ -503,14 +503,14 @@ class FlextLdifUtilitiesACL:
 
         if subject_type == "self":
             op = u.get(operators, "self", default="userdn")
-            op = op if u.is_type(op, "str") else "userdn"
+            op = op if isinstance(op, str) else "userdn"
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
             op = u.get(operators, "anonymous", default="userdn")
-            op = op if u.is_type(op, "str") else "userdn"
+            op = op if isinstance(op, str) else "userdn"
             return f'{op}="{anonymous_value}"'
         op = u.get(operators, subject_type, default="userdn")
-        op = op if u.is_type(op, "str") else "userdn"
+        op = op if isinstance(op, str) else "userdn"
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
             value = f"ldap:///{value}"
@@ -796,7 +796,7 @@ class FlextLdifUtilitiesACL:
 
         def predicate_func(item: str | tuple[str, str]) -> bool:
             """Predicate function for Collection.process."""
-            if u.is_type(item, "tuple") and len(item) >= 1:
+            if isinstance(item, tuple) and len(item) >= 1:
                 return bool(extensions.get(item[0]) if extensions else None)
             return False
 
@@ -1056,7 +1056,7 @@ class FlextLdifUtilitiesACL:
 
         final_result: dict[str, t.Ldif.JsonValue] = {}
         for key, value_item in result_dict.items():
-            if u.is_type(value_item, "tuple") and len(value_item) == TUPLE_LENGTH_PAIR:
+            if isinstance(value_item, tuple) and len(value_item) == TUPLE_LENGTH_PAIR:
                 final_result[key] = value_item[1]
 
         return final_result

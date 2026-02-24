@@ -93,7 +93,7 @@ class FlextLdifSorting(
             c.Ldif.SortTarget.SCHEMA.value,
             c.Ldif.SortTarget.COMBINED.value,
         }
-        if u.Guards.is_type(v, str) and v in valid_values:
+        if isinstance(v, str) and v in valid_values:
             return v
         msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -112,7 +112,7 @@ class FlextLdifSorting(
             c.Ldif.SortStrategy.SCHEMA.value,
             c.Ldif.SortStrategy.CUSTOM.value,
         }
-        if u.Guards.is_type(v, str) and v in valid_values:
+        if isinstance(v, str) and v in valid_values:
             return v
         msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -180,7 +180,7 @@ class FlextLdifSorting(
         default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
 
         if config is not None:
-            strategy = config.by if u.Guards.is_type(config.by, str) else str(config.by)
+            strategy = config.by if isinstance(config.by, str) else str(config.by)
 
             entries_final = [e for e in config.entries if isinstance(e, m.Ldif.Entry)]
             acl_attrs_final = config.acl_attributes or []
@@ -467,7 +467,7 @@ class FlextLdifSorting(
             attrs_dict: dict[str, list[str]] = {
                 str(k): (
                     [str(v) for v in vals]
-                    if u.Guards.is_type(vals, (list, tuple))
+                    if isinstance(vals, (list, tuple))
                     else [str(vals)]
                 )
                 for k, vals in entry.attributes.attributes.items()
@@ -479,7 +479,7 @@ class FlextLdifSorting(
                     acl_values_raw = attrs_dict[acl_attr]
                     acl_values_raw_normalized = (
                         acl_values_raw
-                        if u.Guards.is_type(acl_values_raw, (list, tuple))
+                        if isinstance(acl_values_raw, (list, tuple))
                         else [str(acl_values_raw)]
                     )
 
@@ -721,7 +721,7 @@ class FlextLdifSorting(
 
             first_val = str(
                 oid_values[0]
-                if u.Guards.is_type(oid_values, (list, tuple))
+                if isinstance(oid_values, (list, tuple))
                 else oid_values,
             )
             oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
