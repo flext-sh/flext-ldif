@@ -10,12 +10,11 @@ import inspect
 
 import pytest
 from flext_core import FlextResult
-from tests import RfcTestHelpers, c, s, tm
-
 from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests import RfcTestHelpers, c, s, tm
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed

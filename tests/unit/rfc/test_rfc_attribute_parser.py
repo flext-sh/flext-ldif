@@ -11,9 +11,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
+
 from tests import RfcTestHelpers, c, m, s
 
 

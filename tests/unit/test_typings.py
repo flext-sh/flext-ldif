@@ -7,10 +7,10 @@ import inspect
 from pathlib import Path
 from typing import Any, ClassVar
 
-import pytest
-
 import flext_ldif
+import pytest
 from flext_ldif.typings import t as t_ldif
+
 from tests import OIDs, c, s
 
 

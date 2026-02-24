@@ -11,9 +11,9 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
+from flext_ldif.services.dn import FlextLdifDn
 from flext_tests import tm
 
-from flext_ldif.services.dn import FlextLdifDn
 from tests import c, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

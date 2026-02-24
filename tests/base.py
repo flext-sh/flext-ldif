@@ -18,10 +18,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from itertools import starmap
 
-from flext_tests import s as flext_tests_s
-
 from flext_ldif.protocols import p
 from flext_ldif.services.entries import FlextLdifEntries
+from flext_tests import s as flext_tests_s
+
 from tests.constants import TestsFlextLdifConstants
 
 

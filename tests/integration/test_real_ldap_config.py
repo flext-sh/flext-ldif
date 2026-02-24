@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextSettings
-
 from flext_ldif import FlextLdif
 from flext_ldif.settings import FlextLdifSettings
 

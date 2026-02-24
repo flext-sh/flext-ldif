@@ -11,9 +11,8 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
-from tests import c, m, s
-
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from tests import c, m, s
 
 meta_keys = c.Ldif.MetadataKeys
 

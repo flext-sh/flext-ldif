@@ -269,13 +269,11 @@ class FlextLdifSorting(
         predicate: Callable[[m.Ldif.Entry], str | int | float],
     ) -> r[list[m.Ldif.Entry]]:
         """Sort entries using custom predicate function."""
-        sorting_base = cls(
+        sorting_instance = cls(
             entries=list(entries),
             sort_target=c.Ldif.SortTarget.ENTRIES.value,
             sort_by=c.Ldif.SortStrategy.CUSTOM.value,
-        )
-        sorting_instance = sorting_base.model_copy(
-            update={"custom_predicate": predicate},
+            custom_predicate=predicate,
         )
         return sorting_instance.execute()
 

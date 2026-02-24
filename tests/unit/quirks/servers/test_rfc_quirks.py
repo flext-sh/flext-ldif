@@ -11,12 +11,11 @@ from pathlib import Path
 from typing import ClassVar, TypedDict
 
 import pytest
-from tests import c, p, s
-
 from flext_ldif import FlextLdif
 from flext_ldif.constants import c as lib_c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests import c, p, s
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 

@@ -9,9 +9,9 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
+from flext_ldif.services.validation import FlextLdifValidation
 from flext_tests import tm
 
-from flext_ldif.services.validation import FlextLdifValidation
 from tests import c, m, s
 
 

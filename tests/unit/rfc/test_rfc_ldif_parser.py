@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 import pytest
-
 from flext_ldif import FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
 from tests import (
     RfcTestHelpers,
     TestDeduplicationHelpers,

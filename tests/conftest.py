@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 
 # =============================================================================

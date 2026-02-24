@@ -9,9 +9,8 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar
 
-from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
-
 from flext_ldif.servers import FlextLdifServersAd
+from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
 
 
 class SchemaScenario(StrEnum):

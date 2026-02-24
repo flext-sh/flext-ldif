@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-
 from flext_ldif import FlextLdifWriter
 from flext_ldif.services.dn import FlextLdifDn
+
 from tests import m, s
 
 

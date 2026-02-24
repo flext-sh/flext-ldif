@@ -11,11 +11,11 @@ from collections.abc import Generator
 from enum import StrEnum
 
 import pytest
-from pydantic import ValidationError
-
 from flext_ldif import FlextLdifSettings
 from flext_ldif.constants import c as lib_c
 from flext_ldif.utilities import FlextLdifUtilities
+from pydantic import ValidationError
+
 from tests import s
 
 

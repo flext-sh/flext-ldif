@@ -12,9 +12,8 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from flext_tests.typings import FlextTestsTypes
-
 from flext_ldif.typings import FlextLdifTypes
+from flext_tests.typings import FlextTestsTypes
 
 
 class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
@@ -63,7 +62,10 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 # Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
 
+GenericFieldsDict = TestsFlextLdifTypes.Tests.Fixtures.GenericFieldsDict
+
 __all__ = [
+    "GenericFieldsDict",
     "TestsFlextLdifTypes",
     "t",
 ]

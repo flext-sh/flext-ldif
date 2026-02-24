@@ -10,10 +10,9 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
-from tests import RfcTestHelpers, TestDeduplicationHelpers, s
-
 from flext_ldif.models import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 
 class AttributeScenario(StrEnum):

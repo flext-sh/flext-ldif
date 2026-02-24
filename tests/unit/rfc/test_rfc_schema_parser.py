@@ -10,10 +10,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
-
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
 from tests import c, s, u
 
 

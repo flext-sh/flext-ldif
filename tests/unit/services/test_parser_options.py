@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import ClassVar, Literal
 
 import pytest
-from flext_tests import tm
-
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
+from flext_tests import tm
+
 from tests import OIDs, Syntax, c, s
 from tests.helpers.compat import OptimizedLdifTestHelpers
 

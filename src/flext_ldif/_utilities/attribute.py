@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Final
+from typing import Final
+
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldif.constants import c
-
-if TYPE_CHECKING:
-    from flext_core import FlextResult, FlextTypes
 
 
 class FlextLdifUtilitiesAttribute:

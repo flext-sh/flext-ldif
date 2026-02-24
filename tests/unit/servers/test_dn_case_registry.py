@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import ClassVar, TypedDict, cast
 
 import pytest
-
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+
 from tests import m, s
 
 

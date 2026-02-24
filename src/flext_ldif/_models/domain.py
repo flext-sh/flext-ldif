@@ -1453,7 +1453,7 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                setattr(self, "validation_violations", violations)
+                self.__dict__["validation_violations"] = violations
                 return self
 
             # Return existing instance when no violations are present
@@ -1827,11 +1827,14 @@ class FlextLdifModelsDomains:
         def model_post_init(self, _context: object, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
-            Runs AFTER all model_validators. This guarantees metadata is
-            properly initialized before any code tries to access it.
+            Properly initialized before any code tries to access it.
+            Uses self.__dict__ assignment to bypass validate_assignment=True
+            and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.metadata = FlextLdifModelsDomains.QuirkMetadata.create_for()
+                self.__dict__["metadata"] = (
+                    FlextLdifModelsDomains.QuirkMetadata.create_for()
+                )
 
         @model_validator(mode="after")
         def validate_entry_consistency(self) -> Self:
