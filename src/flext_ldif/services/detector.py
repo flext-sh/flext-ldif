@@ -63,7 +63,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
                     return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
                         f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
                     )
-            case (_, content) if isinstance(content, str):
+            case (_, content) if issubclass(content.__class__, str):
                 pass
 
         if ldif_content is None:
@@ -146,7 +146,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             )
             if detection_result.is_success:
                 result = detection_result.value
-                if isinstance(result, m.Ldif.LdifResults.ServerDetectionResult):
+                if issubclass(result.__class__, m.Ldif.LdifResults.ServerDetectionResult):
                     return r[str].ok(result.detected_server_type)
 
         return r[str].ok("rfc")
@@ -172,7 +172,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             server_type_lower = server_type.lower() if server_type else ""
-            item_lower = item.lower() if isinstance(item, str) else str(item).lower()
+            item_lower = item.lower() if issubclass(item.__class__, str) else str(item).lower()
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
 
@@ -190,7 +190,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         pattern = (
             getattr(constants, "DETECTION_OID_PATTERN", None) if constants else None
         )
-        if not pattern or not isinstance(pattern, str):
+        if not pattern or not issubclass(pattern.__class__, str):
             return
 
         self._update_server_scores(
@@ -220,10 +220,10 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             return
 
         weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
-        if isinstance(pattern, re.Pattern):
+        if issubclass(pattern.__class__, re.Pattern):
             if pattern.search(content_lower):
                 scores[server_type] += weight
-        elif isinstance(pattern, str) and re.search(pattern, content_lower):
+        elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
             scores[server_type] += weight
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
@@ -263,9 +263,9 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             u.Ldif.Server.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
-        if openldap_constants and hasattr(openldap_constants, "DETECTION_PATTERN"):
+        if openldap_constants and getattr(openldap_constants, "DETECTION_PATTERN", None) is not None:
             openldap_pattern = getattr(openldap_constants, "DETECTION_PATTERN", None)
-            if openldap_pattern and isinstance(openldap_pattern, str):
+            if openldap_pattern and issubclass(openldap_pattern.__class__, str):
                 self._update_server_scores(
                     openldap_server_type,
                     openldap_pattern,
@@ -285,9 +285,9 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             u.Ldif.Server.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
-        if ad_constants and hasattr(ad_constants, "DETECTION_PATTERN"):
+        if ad_constants and getattr(ad_constants, "DETECTION_PATTERN", None) is not None:
             ad_pattern = getattr(ad_constants, "DETECTION_PATTERN", None)
-            if ad_pattern and isinstance(ad_pattern, str):
+            if ad_pattern and issubclass(ad_pattern.__class__, str):
                 self._update_server_scores(
                     ad_server_type,
                     ad_pattern,
@@ -395,7 +395,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         case_sensitive: bool = False,
     ) -> None:
         """Extract patterns using OID pattern."""
-        if not pattern or not isinstance(pattern, str):
+        if not pattern or not issubclass(pattern.__class__, str):
             return
 
         search_content = content if case_sensitive else content_lower
@@ -422,7 +422,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
         if any(
             (attr in content)
-            if isinstance(attr, str) and isinstance(content, str)
+            if issubclass(attr.__class__, str) and issubclass(content.__class__, str)
             else False
             for attr in acl_attrs
         ):
@@ -443,7 +443,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         """Extract pattern using pattern attribute from constants."""
         constants = self._get_server_constants(server_type)
         pattern = getattr(constants, pattern_attr, None) if constants else None
-        if pattern and isinstance(pattern, str):
+        if pattern and issubclass(pattern.__class__, str):
             self._add_pattern_if_match(
                 condition=bool(re.search(pattern, content_lower)),
                 description=description,
@@ -560,7 +560,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
-            if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
+            if issubclass(tivoli_pattern.__class__, re.Pattern) and tivoli_pattern.search(
                 content_lower,
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
@@ -579,7 +579,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
         server_quirk = server_quirk_result.value
         quirk_class = type(server_quirk)
-        if not hasattr(quirk_class, "Constants"):
+        if not getattr(quirk_class, "Constants", None) is not None:
             return None
 
         constants = getattr(quirk_class, "Constants", None)
@@ -587,12 +587,12 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             return None
 
         if (
-            isinstance(constants, type)
-            and hasattr(constants, "DETECTION_WEIGHT")
-            and hasattr(constants, "DETECTION_ATTRIBUTES")
+            issubclass(constants.__class__, type)
+            and getattr(constants, "DETECTION_WEIGHT", None) is not None
+            and getattr(constants, "DETECTION_ATTRIBUTES", None) is not None
             and (
-                hasattr(constants, "DETECTION_PATTERN")
-                or hasattr(constants, "DETECTION_OID_PATTERN")
+                getattr(constants, "DETECTION_PATTERN", None) is not None
+                or getattr(constants, "DETECTION_OID_PATTERN", None) is not None
             )
         ):
             return constants

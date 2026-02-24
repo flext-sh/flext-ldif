@@ -88,24 +88,19 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         """Initialize subclass with server_type and priority from Constants."""
         super().__init_subclass__()
 
-        if not hasattr(cls, "Constants"):
-            msg = f"{cls.__name__} must define a Constants nested class"
-            raise AttributeError(msg)
-
         constants_class = getattr(cls, "Constants", None)
         if constants_class is None:
             msg = f"{cls.__name__} must define a Constants nested class"
             raise AttributeError(msg)
 
-        if not hasattr(constants_class, "SERVER_TYPE"):
+        server_type_value = getattr(constants_class, "SERVER_TYPE", None)
+        if not u.Guards.is_type(server_type_value, str):
             msg = f"{cls.__name__}.Constants must define SERVER_TYPE"
             raise AttributeError(msg)
-        if not hasattr(constants_class, "PRIORITY"):
+        priority_value = getattr(constants_class, "PRIORITY", None)
+        if not u.Guards.is_type(priority_value, int):
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
-
-        server_type_value = constants_class.SERVER_TYPE
-        priority_value = constants_class.PRIORITY
 
         type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_value))
         type.__setattr__(cls, "priority", _PriorityDescriptor(priority_value))
@@ -126,12 +121,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         _operation: str | None = None,
     ) -> r[m.Ldif.Entry]:
         """Execute quirk operation with auto-detection."""
-        if ldif_text is not None and isinstance(ldif_text, str):
+        if ldif_text is not None:
             return self._execute_parse(ldif_text)
 
-        if entries is not None and isinstance(entries, Sequence) and entries:
+        if entries:
             first_entry = entries[0]
-            if isinstance(first_entry, m.Ldif.Entry):
+            if u.Guards.is_type(first_entry, m.Ldif.Entry):
                 return r[m.Ldif.Entry].ok(first_entry)
             return r[m.Ldif.Entry].fail(
                 f"Invalid entry type: {type(first_entry).__name__}",
@@ -152,7 +147,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return r[m.Ldif.Entry].fail("No entries parsed")
 
         first_entry = entries[0]
-        if isinstance(first_entry, m.Ldif.Entry):
+        if u.Guards.is_type(first_entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].ok(first_entry)
 
         return r[m.Ldif.Entry].fail("Invalid entry type")
@@ -202,20 +197,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         **kwargs: object,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
-        instance_raw = object.__new__(cls)
-        if not isinstance(instance_raw, cls):
-            msg = f"Expected {cls.__name__}, got {type(instance_raw)}"
-            raise TypeError(msg)
-        instance: Self = instance_raw
+        instance: Self = object.__new__(cls)
 
         filtered_kwargs: dict[str, str | float | bool | None] = {}
         execute_kwargs: dict[str, str | int | bool | list[str] | None] = {}
         for k, v in kwargs.items():
             value = v
-            if isinstance(value, (str, float, bool, type(None))):
+            if u.Guards.is_type(value, (str, float, bool, type(None))):
                 filtered_kwargs[k] = value
 
-            if isinstance(value, (str, int, bool, list, type(None))):
+            if u.Guards.is_type(value, (str, int, bool, list, type(None))):
                 execute_kwargs[k] = value
         type(instance).__init__(instance, **filtered_kwargs)
 
@@ -227,9 +218,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 _operation=operation,
             )
             unwrapped: m.Ldif.Entry | str = result.value
-            if not isinstance(unwrapped, cls):
-                msg = f"Expected {cls.__name__}, got {type(unwrapped)}"
-                raise TypeError(msg)
             return unwrapped
 
         return instance
@@ -239,10 +227,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         kwargs: object,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
-        if not isinstance(kwargs, dict) or "ldif_text" not in kwargs:
+        if not u.Guards.is_type(kwargs, dict) or "ldif_text" not in kwargs:
             return None
         raw = kwargs["ldif_text"]
-        if raw is None or isinstance(raw, str):
+        if raw is None or u.Guards.is_type(raw, str):
             return raw
         msg = f"Expected str | None for ldif_text, got {type(raw)}"
         raise TypeError(msg)
@@ -252,12 +240,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         kwargs: object,
     ) -> list[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
-        if not isinstance(kwargs, dict) or "entries" not in kwargs:
+        if not u.Guards.is_type(kwargs, dict) or "entries" not in kwargs:
             return None
         raw = kwargs["entries"]
         if raw is None:
             return None
-        if not isinstance(raw, list):
+        if not u.Guards.is_type(raw, list):
             msg = f"Expected list[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg)
         if not raw:
@@ -266,7 +254,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         entries: list[m.Ldif.Entry] = []
         for idx in range(len(raw)):
             item: m.Ldif.Entry | str = raw[idx]
-            if isinstance(item, m.Ldif.Entry):
+            if u.Guards.is_type(item, m.Ldif.Entry):
                 entries.append(item)
             else:
                 msg = f"Expected list[Entry] for entries, got item of type {type(item)}"
@@ -278,7 +266,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         kwargs: object,
     ) -> str | None:
         """Extract and validate operation parameter."""
-        if not isinstance(kwargs, dict):
+        if not u.Guards.is_type(kwargs, dict):
             return None
         if "operation" not in kwargs:
             return None
@@ -335,7 +323,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         )
 
         domain_entries: Sequence[m.Ldif.Entry] = [
-            entry if isinstance(entry, m.Ldif.Entry) else entry.model_copy(deep=True)
+            entry
+            if u.Guards.is_type(entry, m.Ldif.Entry)
+            else entry.model_copy(deep=True)
             for entry in entries
         ]
         parse_response = FlextLdifModelsResults.ParseResponse(
@@ -375,13 +365,13 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         | m.Ldif.Acl,
     ) -> r[str]:
         """Route a single model to appropriate write method."""
-        if isinstance(model, m.Ldif.Entry):
+        if u.Guards.is_type(model, m.Ldif.Entry):
             return self.entry.write(model)
-        if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
+        if u.Guards.is_type(model, FlextLdifModelsDomains.SchemaAttribute):
             return self._schema_quirk.write_attribute(model)
-        if isinstance(model, FlextLdifModelsDomains.SchemaObjectClass):
+        if u.Guards.is_type(model, FlextLdifModelsDomains.SchemaObjectClass):
             return self._schema_quirk.write_objectclass(model)
-        if isinstance(model, FlextLdifModelsDomains.Acl):
+        if u.Guards.is_type(model, FlextLdifModelsDomains.Acl):
             return self.acl.write(model)
 
         return r[str].fail(f"Unknown model type: {type(model).__name__}")
@@ -399,7 +389,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if u.Guards.is_list_non_empty(entries):
                 domain_entry = entries[0]
 
-                if isinstance(domain_entry, m.Ldif.Entry):
+                if u.Guards.is_type(domain_entry, m.Ldif.Entry):
                     return r[m.Ldif.Entry | str].ok(domain_entry)
 
                 public_entry = m.Ldif.Entry.model_validate(
@@ -436,7 +426,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 return False
             constants = getattr(mro_cls, "Constants", None)
-            return constants is not None and hasattr(constants, "SERVER_TYPE")
+            server_type = getattr(constants, "SERVER_TYPE", None)
+            return u.Guards.is_type(server_type, str)
 
         def extract_server_type(mro_cls: type[object]) -> str | None:
             """Extract server type if it's a valid string."""
@@ -444,7 +435,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if constants is None:
                 return None
             server_type = getattr(constants, "SERVER_TYPE", None)
-            return server_type if isinstance(server_type, str) else None
+            if u.Guards.is_type(server_type, str):
+                return server_type
+            return None
 
         try:
             server_type = next(
@@ -456,7 +449,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 ),
                 None,
             )
-            if server_type and isinstance(server_type, str):
+            if server_type:
                 return u.Ldif.Server.normalize_server_type(server_type)
         except StopIteration:
             pass
@@ -478,7 +471,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 return False
             constants = getattr(mro_cls, "Constants", None)
-            return constants is not None and hasattr(constants, "PRIORITY")
+            priority = getattr(constants, "PRIORITY", None)
+            return u.Guards.is_type(priority, int)
 
         def extract_priority(mro_cls: type[object]) -> int | None:
             """Extract priority if it's a valid integer."""
@@ -486,7 +480,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if constants is None:
                 return None
             priority = getattr(constants, "PRIORITY", None)
-            return priority if isinstance(priority, int) else None
+            if u.Guards.is_type(priority, int):
+                return priority
+            return None
 
         try:
             priority = next(
@@ -556,7 +552,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if register_func is not None:
                 required_methods = ("parse", "write")
                 if all(
-                    hasattr(instance, method) and callable(getattr(instance, method))
+                    u.Guards.is_type(getattr(instance, method, None), "callable")
                     for method in required_methods
                 ):
                     schema_quirk = instance

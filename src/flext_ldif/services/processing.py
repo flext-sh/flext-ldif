@@ -106,11 +106,11 @@ class FlextLdifProcessing(
             )
 
         batch_value = batch_result.value
-        if isinstance(batch_value, list):
+        if issubclass(batch_value.__class__, list):
             results: list[m.Ldif.ProcessingResult] = [
                 item
                 for item in batch_value
-                if isinstance(item, m.Ldif.ProcessingResult)
+                if issubclass(item.__class__, m.Ldif.ProcessingResult)
             ]
             return r[list[m.Ldif.ProcessingResult]].ok(results)
 
@@ -129,7 +129,7 @@ class FlextLdifProcessing(
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
-            dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
@@ -155,7 +155,7 @@ class FlextLdifProcessing(
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
-            dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)

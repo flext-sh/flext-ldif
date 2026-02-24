@@ -82,7 +82,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
-        if not isinstance(item, m.Ldif.Entry):
+        if not issubclass(item.__class__, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(
                 f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
             )
@@ -90,7 +90,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
-        dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
+        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
 
         if self._validate:
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
@@ -139,7 +139,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         attrs = (
-            item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
+            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
         )
 
         if self._case_fold_names:
@@ -227,7 +227,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
-        dn_str = item.dn.value if hasattr(item.dn, "value") else str(item.dn)
+        dn_str = item.dn.value if getattr(item.dn, "value", None) is not None else str(item.dn)
 
         new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
             dn_str,
@@ -309,7 +309,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
         attrs = (
-            item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
+            item.attributes.attributes if getattr(item.attributes, "attributes", None) is not None else {}
         )
 
         if self._include is not None:
@@ -374,7 +374,7 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply custom transformation to an entry."""
         result = self._func(item)
-        if isinstance(result, r):
+        if issubclass(result.__class__, r):
             return result
         return r[str].ok(result)
 

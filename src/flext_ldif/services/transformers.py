@@ -37,7 +37,7 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(result.error)
 
         converted = result.value
-        if isinstance(converted, m.Ldif.Entry):
+        if issubclass(converted.__class__, m.Ldif.Entry):
             return r[m.Ldif.Entry].ok(converted)
 
         return r[m.Ldif.Entry].fail(

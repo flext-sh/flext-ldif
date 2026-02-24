@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from typing import Literal, Self, overload
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -109,7 +109,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _to_optional_str(value: object) -> str | None:
-        if isinstance(value, str):
+        if value.__class__ is str:
             return value
         if value and value is not True:
             return str(value)
@@ -117,7 +117,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _to_required_str(value: object, default: str = "") -> str:
-        if isinstance(value, str):
+        if value.__class__ is str:
             return value
         if value:
             return str(value)
@@ -125,9 +125,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _to_optional_int(value: object) -> int | None:
-        if isinstance(value, int):
+        if value.__class__ is int:
             return value
-        if isinstance(value, str) and value:
+        if value.__class__ is str and value:
             return int(value)
         return None
 
@@ -158,28 +158,30 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         metadata_extensions: dict[str, list[str] | str | bool | None] = {}
         extensions_raw = parsed.get("metadata_extensions")
-        if isinstance(extensions_raw, dict):
-            for key, value in extensions_raw.items():
-                if not isinstance(key, str):
-                    continue
-                if isinstance(value, (str, bool)) or value is None:
-                    metadata_extensions[key] = value
-                    continue
-                if isinstance(value, list) and all(
-                    isinstance(item, str) for item in value
-                ):
-                    metadata_extensions[key] = [
-                        item for item in value if isinstance(item, str)
-                    ]
+        try:
+            extensions_items = extensions_raw.items()
+        except Exception:
+            extensions_items = []
+        for key, value in extensions_items:
+            if key.__class__ is not str:
+                continue
+            if value.__class__ in (str, bool) or value is None:
+                metadata_extensions[key] = value
+                continue
+            if value.__class__ is list and all(item.__class__ is str for item in value):
+                metadata_extensions[key] = [
+                    item for item in value if item.__class__ is str
+                ]
 
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
 
         syntax_validation_error = None
         syntax_validation = parsed.get("syntax_validation")
-        if isinstance(syntax_validation, dict):
-            err = syntax_validation.get("syntax_validation_error")
-            if isinstance(err, str):
+        if FlextRuntime.is_dict_like(syntax_validation):
+            syntax_validation_dict = syntax_validation.root
+            err = syntax_validation_dict.get("syntax_validation_error")
+            if err.__class__ is str:
                 syntax_validation_error = err
 
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
@@ -229,10 +231,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         metadata_extensions: dict[str, list[str] | str | bool | None],
     ) -> None:
         """Validate OID list and track in metadata."""
-        if not oids or not isinstance(oids, (list, tuple)):
+        if not oids or not FlextRuntime.is_list_like(oids):
             return
         for idx, oid in enumerate(oids):
-            if oid and isinstance(oid, str):
+            if oid and oid.__class__ is str:
                 FlextLdifServersBase.Schema.validate_and_track_oid(
                     metadata_extensions,
                     oid,
@@ -280,30 +282,27 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             metadata_extensions_raw = parsed["metadata_extensions"]
 
-            if isinstance(metadata_extensions_raw, dict):
-                metadata_extensions_raw_dict: dict[
-                    str,
-                    str | int | float | bool | datetime | list[str] | None,
-                ] = {
-                    k: ([str(vi) for vi in v] if isinstance(v, list) else v)
-                    for k, v in metadata_extensions_raw.items()
-                    if isinstance(k, str)
-                    and (
-                        isinstance(v, (str, int, float, bool, list))
-                        or v is None
-                        or isinstance(v, datetime)
-                    )
-                }
-            else:
-                metadata_extensions_raw_dict = {}
+            metadata_extensions_raw_dict: dict[
+                str,
+                str | int | float | bool | datetime | list[str] | None,
+            ] = {}
+            if FlextRuntime.is_dict_like(metadata_extensions_raw):
+                for k, v in metadata_extensions_raw.root.items():
+                    if k.__class__ is not str:
+                        continue
+                    if v.__class__ is list:
+                        metadata_extensions_raw_dict[k] = [str(vi) for vi in v]
+                        continue
+                    if v is None or v.__class__ in (str, int, float, bool, datetime):
+                        metadata_extensions_raw_dict[k] = v
 
             metadata_extensions: dict[str, list[str] | str | bool | None] = {}
             for key, value in metadata_extensions_raw_dict.items():
-                if isinstance(value, (str, bool, list)) or value is None:
+                if value.__class__ in (str, bool, list) or value is None:
                     metadata_extensions[key] = value
-                elif isinstance(value, (int, float)):
+                elif value.__class__ in (int, float):
                     metadata_extensions[key] = str(value)
-                elif isinstance(value, datetime):
+                elif value.__class__ is datetime:
                     metadata_extensions[key] = value.isoformat()
                 else:
                     metadata_extensions[key] = str(value)
@@ -315,7 +314,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             )
 
             objectclass_oid = parsed.get("oid")
-            if objectclass_oid is None or isinstance(objectclass_oid, str):
+            if objectclass_oid is None or objectclass_oid.__class__ is str:
                 FlextLdifServersBase.Schema.validate_and_track_oid(
                     metadata_extensions,
                     objectclass_oid,
@@ -323,7 +322,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 )
 
             objectclass_sup_oid = parsed.get("sup")
-            if objectclass_sup_oid is None or isinstance(objectclass_sup_oid, str):
+            if objectclass_sup_oid is None or objectclass_sup_oid.__class__ is str:
                 FlextLdifServersBase.Schema.validate_and_track_oid(
                     metadata_extensions,
                     objectclass_sup_oid,
@@ -332,13 +331,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             must_val = parsed.get("must")
             must_list: list[str] | None = (
-                [str(item) for item in must_val] if isinstance(must_val, list) else None
+                [str(item) for item in must_val]
+                if FlextRuntime.is_list_like(must_val)
+                else None
             )
             self._validate_oid_list(must_list, "MUST", metadata_extensions)
 
             may_val = parsed.get("may")
             may_list: list[str] | None = (
-                [str(item) for item in may_val] if isinstance(may_val, list) else None
+                [str(item) for item in may_val]
+                if FlextRuntime.is_list_like(may_val)
+                else None
             )
             self._validate_oid_list(may_list, "MAY", metadata_extensions)
 
@@ -352,9 +355,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             oc_desc: str | None = self._to_optional_str(parsed["desc"])
 
             oc_sup_value = parsed["sup"]
-            if isinstance(oc_sup_value, str):
+            if oc_sup_value.__class__ is str:
                 oc_sup: str | list[str] | None = oc_sup_value
-            elif isinstance(oc_sup_value, list):
+            elif FlextRuntime.is_list_like(oc_sup_value):
                 oc_sup = [str(item) for item in oc_sup_value]
             else:
                 oc_sup = None
@@ -364,14 +367,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             oc_must_value = parsed["must"]
             oc_must: list[str] | None = (
                 [str(item) for item in oc_must_value]
-                if isinstance(oc_must_value, list)
+                if FlextRuntime.is_list_like(oc_must_value)
                 else None
             )
 
             oc_may_value = parsed["may"]
             oc_may: list[str] | None = (
                 [str(item) for item in oc_may_value]
-                if isinstance(oc_may_value, list)
+                if FlextRuntime.is_list_like(oc_may_value)
                 else None
             )
 
@@ -447,7 +450,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         x_origin_raw = metadata.extensions.get(
             c.Ldif.MetadataKeys.X_ORIGIN,
         )
-        if not isinstance(x_origin_raw, str):
+        if x_origin_raw.__class__ is not str:
             return output_str
         if ")" not in output_str or "X-ORIGIN" in output_str:
             return output_str
@@ -460,7 +463,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> FlextResult[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
-            if isinstance(data, m.Ldif.SchemaAttribute):
+            if data.__class__ is m.Ldif.SchemaAttribute:
                 attr_transformed = self._transform_attribute_for_write(data)
                 if not attr_transformed.oid:
                     return FlextResult[str].fail(
@@ -512,7 +515,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         except (ValueError, TypeError, AttributeError) as e:
             item_type = (
                 "attribute"
-                if isinstance(data, m.Ldif.SchemaAttribute)
+                if data.__class__ is m.Ldif.SchemaAttribute
                 else "objectclass"
             )
             logger.exception(f"RFC {item_type} writing exception")
@@ -523,11 +526,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_data: m.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute to RFC-compliant string format (internal)."""
-        if not isinstance(attr_data, m.Ldif.SchemaAttribute):
-            return FlextResult[str].fail(
-                f"Invalid attribute type: expected SchemaAttribute, "
-                f"got {type(attr_data).__name__}",
-            )
         return self._write_schema_item(attr_data)
 
     def _write_objectclass(
@@ -535,11 +533,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
-        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
-            return FlextResult[str].fail(
-                f"Invalid objectClass type: expected SchemaObjectClass, "
-                f"got {type(oc_data).__name__}",
-            )
         return self._write_schema_item(oc_data)
 
     @overload
@@ -616,13 +609,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             data = oc_model
 
         result = self.execute(data=data, operation=operation)
-
-        if isinstance(
-            result.value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
-        ):
-            return result.value
-        msg = f"Unexpected return type: {type(result.value)}"
-        raise TypeError(msg)
+        return result.value
 
     def __new__(
         cls,
@@ -652,9 +639,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             parent_quirk_raw if parent_quirk_raw is not None else None
         )
 
-        if not isinstance(instance, FlextLdifServersRfcSchema):
-            error_msg = f"Invalid instance type: {type(instance)}"
-            raise TypeError(error_msg)
         schema_instance: Self = instance
 
         super(FlextLdifServersBase.Schema, schema_instance).__init__()
@@ -668,23 +652,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if cls.auto_execute:
             attr_def_raw = kwargs.get("attr_definition")
             attr_def: str | None = (
-                attr_def_raw if isinstance(attr_def_raw, str) else None
+                attr_def_raw if attr_def_raw.__class__ is str else None
             )
             oc_def_raw = kwargs.get("oc_definition")
-            oc_def: str | None = oc_def_raw if isinstance(oc_def_raw, str) else None
+            oc_def: str | None = oc_def_raw if oc_def_raw.__class__ is str else None
             attr_mod_raw = kwargs.get("attr_model")
             attr_mod: m.Ldif.SchemaAttribute | None = (
                 attr_mod_raw
-                if isinstance(attr_mod_raw, m.Ldif.SchemaAttribute)
+                if attr_mod_raw.__class__ is m.Ldif.SchemaAttribute
                 else None
             )
             oc_mod_raw = kwargs.get("oc_model")
             oc_mod: m.Ldif.SchemaObjectClass | None = (
-                oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
+                oc_mod_raw if oc_mod_raw.__class__ is m.Ldif.SchemaObjectClass else None
             )
             op_raw = kwargs.get("operation")
             op: str | None = (
-                "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
+                "parse" if op_raw.__class__ is str and op_raw == "parse" else None
             )
 
             data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
@@ -700,7 +684,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             result = schema_instance.execute(data=data, operation=op)
 
             unwrapped = result.value
-            if isinstance(unwrapped, cls):
+            if unwrapped.__class__ is cls:
                 return unwrapped
             return instance
 

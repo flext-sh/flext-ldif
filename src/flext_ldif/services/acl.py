@@ -152,7 +152,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         if batch_result.is_success:
             results_raw = batch_result.value.results
 
-            acls.extend(item for item in results_raw if isinstance(item, m.Ldif.Acl))
+            acls.extend(item for item in results_raw if issubclass(item.__class__, m.Ldif.Acl))
 
         return r[m.Ldif.LdifResults.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),
@@ -202,7 +202,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         """Evaluate if ACLs grant required permissions."""
         required = (
             m.Ldif.LdifResults.AclPermissions(**required_permissions)
-            if isinstance(required_permissions, dict)
+            if issubclass(required_permissions.__class__, dict)
             else required_permissions
         )
 

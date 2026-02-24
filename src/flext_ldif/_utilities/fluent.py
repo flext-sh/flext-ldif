@@ -253,7 +253,7 @@ class EntryOps:
 
         attrs = (
             self._entry.attributes.attributes
-            if hasattr(self._entry.attributes, "attributes")
+            if getattr(self._entry.attributes, "attributes", None) is not None
             else {}
         )
         new_attrs = dict(attrs)
@@ -378,7 +378,7 @@ class EntryOps:
         # is_valid_dn_string validates individual RDN values, not full DN strings
         dn_str = (
             self._entry.dn.value
-            if hasattr(self._entry.dn, "value")
+            if getattr(self._entry.dn, "value", None) is not None
             else str(self._entry.dn)
         )
 

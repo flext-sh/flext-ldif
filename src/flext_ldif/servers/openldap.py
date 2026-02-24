@@ -13,6 +13,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -183,22 +184,24 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE)."""
-            if isinstance(attr_definition, str):
+            if u.Guards.is_type(attr_definition, str):
+                attr_definition_str = str(attr_definition)
                 if not attr_definition or not attr_definition.strip():
                     return False
 
                 if re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    attr_definition,
+                    attr_definition_str,
                     re.IGNORECASE,
                 ):
                     return True
 
-                return super().can_handle_attribute(attr_definition)
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                if attr_definition.oid and re.search(
+                return super().can_handle_attribute(attr_definition_str)
+            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
+                oid_raw = getattr(attr_definition, "oid", None)
+                if u.Guards.is_type(oid_raw, str) and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    attr_definition.oid,
+                    oid_raw,
                     re.IGNORECASE,
                 ):
                     return True
@@ -211,19 +214,21 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE)."""
-            if isinstance(oc_definition, str):
+            if u.Guards.is_type(oc_definition, str):
+                oc_definition_str = str(oc_definition)
                 if re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    oc_definition,
+                    oc_definition_str,
                     re.IGNORECASE,
                 ):
                     return True
 
-                return super().can_handle_objectclass(oc_definition)
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                if oc_definition.oid and re.search(
+                return super().can_handle_objectclass(oc_definition_str)
+            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
+                oid_raw = getattr(oc_definition, "oid", None)
+                if u.Guards.is_type(oid_raw, str) and re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    oc_definition.oid,
+                    oid_raw,
                     re.IGNORECASE,
                 ):
                     return True
@@ -250,23 +255,22 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 return self.can_handle_acl(acl_line)
 
-            if hasattr(acl_line, "raw_acl"):
-                raw_acl_value = getattr(acl_line, "raw_acl", None)
-                if not raw_acl_value:
-                    return False
+            raw_acl_value = getattr(acl_line, "raw_acl", None)
+            if raw_acl_value:
                 return self.can_handle_acl(str(raw_acl_value))
             return False
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal)."""
-            if isinstance(acl_line, m.Ldif.Acl):
-                if not acl_line.raw_acl:
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                     return False
-                acl_line = acl_line.raw_acl
-            if not isinstance(acl_line, str) or not acl_line:
+                acl_line = raw_acl
+            if not u.Guards.is_type(acl_line, str) or not acl_line:
                 return False
 
             acl_content = acl_line
@@ -503,17 +507,17 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
             object_classes_list: list[str] = []
-            if isinstance(object_classes_raw, (list, tuple)):
+            if u.Guards.is_type(object_classes_raw, (list, tuple)):
                 for item in (
                     object_classes_raw
-                    if isinstance(object_classes_raw, list)
-                    else [object_classes_raw]
+                    if u.Guards.is_type(object_classes_raw, list)
+                    else list(object_classes_raw)
                 ):
-                    if isinstance(item, str):
+                    if u.Guards.is_type(item, str):
                         object_classes_list.append(item)
                     elif item is not None:
                         object_classes_list.append(str(item))
-            elif isinstance(object_classes_raw, str):
+            elif u.Guards.is_type(object_classes_raw, str):
                 object_classes_list = [object_classes_raw]
             elif object_classes_raw is not None:
                 object_classes_list = [str(object_classes_raw)]

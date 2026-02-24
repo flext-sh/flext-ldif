@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from functools import reduce
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, u as core_u
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -158,7 +158,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             default=[],
         )
 
-        if isinstance(object_classes_raw, list):
+        if core_u.is_type(object_classes_raw, list):
             object_classes: list[str] = [str(oc) for oc in object_classes_raw]
         else:
             object_classes = []
@@ -259,10 +259,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_attrs: dict[str, list[str]] | None,
     ) -> tuple[str, list[str]]:
         """Restore attribute from metadata or apply denormalization."""
-        if original_attrs and isinstance(original_attrs, dict):
+        if original_attrs and core_u.is_type(original_attrs, dict):
             for orig_name, orig_values in u.mapper().to_dict(original_attrs).items():
                 if self._normalize_attribute_name(str(orig_name)) == attr_name:
-                    if isinstance(orig_values, (list, tuple)):
+                    if core_u.is_type(orig_values, (list, tuple)):
                         restored_values = [str(v) for v in orig_values]
                     else:
                         restored_values = [str(orig_values)]
@@ -290,11 +290,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
 
         original_attrs: dict[str, list[str]] | None = None
-        if original_attrs_raw is not None and isinstance(original_attrs_raw, dict):
+        if original_attrs_raw is not None and core_u.is_type(original_attrs_raw, dict):
             result_attrs: dict[str, list[str]] = {}
             for k, v in u.mapper().to_dict(original_attrs_raw).items():
-                if isinstance(k, str):
-                    if isinstance(v, list):
+                if core_u.is_type(k, str):
+                    if core_u.is_type(v, list):
                         result_attrs[k] = [str(item) for item in v]
                     else:
                         result_attrs[k] = [str(v)]
@@ -326,22 +326,22 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
 
-        if isinstance(converted_attrs_data, dict):
+        if core_u.is_type(converted_attrs_data, dict):
             boolean_conversions_obj = u.mapper().get(
                 converted_attrs_data,
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 default={},
             )
 
-            if isinstance(boolean_conversions_obj, dict):
+            if core_u.is_type(boolean_conversions_obj, dict):
                 for key, value in u.mapper().to_dict(boolean_conversions_obj).items():
-                    if isinstance(key, str) and isinstance(value, dict):
+                    if core_u.is_type(key, str) and core_u.is_type(value, dict):
                         typed_dict: dict[str, str | list[str]] = {}
                         for k, v in value.items():
-                            if isinstance(k, str):
-                                if isinstance(v, str):
+                            if core_u.is_type(k, str):
+                                if core_u.is_type(v, str):
                                     typed_dict[k] = v
-                                elif isinstance(v, list):
+                                elif core_u.is_type(v, list):
                                     typed_dict[k] = [str(item) for item in v]
                         boolean_conversions[key] = typed_dict
 
@@ -422,7 +422,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 continue
 
             conv_data = boolean_conversions.get(attr_name, {})
-            if isinstance(conv_data, dict) and conv_data:
+            if core_u.is_type(conv_data, dict) and conv_data:
                 self._restore_boolean_attribute_from_metadata(
                     attr_name,
                     conv_data,
@@ -472,16 +472,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if not (original_entry.metadata and original_entry.metadata.extensions):
             return original_extensions
         ext = original_entry.metadata.extensions
-        if not hasattr(ext, "items"):
+        if not core_u.has(ext, "items"):
             return original_extensions
         for k, v in ext.items():
-            if isinstance(v, (str, int, bool)):
+            if core_u.is_type(v, (str, int, bool)):
                 original_extensions[k] = v
-            elif isinstance(v, list):
-                if all(isinstance(item, str) for item in v):
+            elif core_u.is_type(v, list):
+                if all(core_u.is_type(item, str) for item in v):
                     original_extensions[k] = [str(item) for item in v]
                 elif all(
-                    isinstance(item, (str, int, float, bool, type(None))) for item in v
+                    core_u.is_type(item, (str, int, float, bool, type(None))) for item in v
                 ):
                     original_extensions[k] = [
                         str(item) for item in v if item is not None
@@ -590,7 +590,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         metadata_keys_dict = {
             k: v
             for k, v in c.Ldif.MetadataKeys.__dict__.items()
-            if not k.startswith("_") and isinstance(v, str)
+            if not k.startswith("_") and core_u.is_type(v, str)
         }
         metadata_keys_str: str | None = (
             json.dumps(metadata_keys_dict) if metadata_keys_dict else None
@@ -651,13 +651,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         }
 
         for key, val in rfc_compliance_metadata.items():
-            if isinstance(val, list):
+            if core_u.is_type(val, list):
                 widened_list: t.MetadataAttributeValue = list(val)
                 extensions_data[key] = widened_list
-            elif isinstance(val, dict):
+            elif core_u.is_type(val, dict):
                 nested_dict: dict[str, t.ScalarValue | list[t.ScalarValue]] = {}
                 for nk, nv in val.items():
-                    if isinstance(nv, list):
+                    if core_u.is_type(nv, list):
                         nested_dict[nk] = list(nv)
                     else:
                         nested_dict[nk] = nv
@@ -667,10 +667,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 extensions_data[key] = val
 
         for ext_key, ext_val in original_extensions.items():
-            if isinstance(ext_val, list):
+            if core_u.is_type(ext_val, list):
                 widened_ext: t.MetadataAttributeValue = list(ext_val)
                 extensions_data[ext_key] = widened_ext
-            elif isinstance(ext_val, (str, bool, int)):
+            elif core_u.is_type(ext_val, (str, bool, int)):
                 widened_scalar: t.MetadataAttributeValue = ext_val
                 extensions_data[ext_key] = widened_scalar
         extensions_data[c.Ldif.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
@@ -683,13 +683,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
 
         original_strings_data: dict[str, str] = {}
-        if original_entry.metadata and isinstance(
+        if original_entry.metadata and core_u.is_type(
             original_entry.metadata.original_strings, dict
         ):
             original_strings_data.update({
                 key: value
                 for key, value in original_entry.metadata.original_strings.items()
-                if isinstance(key, str) and isinstance(value, str)
+                if core_u.is_type(key, str) and core_u.is_type(value, str)
             })
 
         for attr_name, conv_data in boolean_conversions.items():
@@ -715,7 +715,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             raw_dn_line = getattr(format_details, "original_dn_line", None)
             orig_dn_line = str(raw_dn_line) if raw_dn_line is not None else None
             raw_lines = getattr(format_details, "original_attr_lines", [])
-            if isinstance(raw_lines, (list, tuple)):
+            if core_u.is_type(raw_lines, (list, tuple)):
                 orig_attr_lines = [str(line) for line in list(raw_lines)]
 
         if "entry_original_ldif" not in original_strings_data:
@@ -781,7 +781,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 metadata.extensions["schema_transformations"] = []
 
             schema_transformations = metadata.extensions.get("schema_transformations")
-            if isinstance(schema_transformations, list):
+            if core_u.is_type(schema_transformations, list):
                 schema_transformations.append("schema_dn_normalization")
             else:
                 metadata.extensions["schema_transformations"] = [
@@ -906,7 +906,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         current_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
-        if not hasattr(acl_quirk, "parse"):
+        if not core_u.has(acl_quirk, "parse"):
             return
         try:
             parse_method = getattr(acl_quirk, "parse", None)
@@ -914,7 +914,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 return
             acl_result_raw = parse_method(acl_value)
 
-            if not isinstance(acl_result_raw, FlextResult):
+            if not core_u.is_type(acl_result_raw, FlextResult):
                 return
             acl_result = acl_result_raw
             if not acl_result.is_success:
@@ -924,7 +924,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 return
             acl_extensions = (
                 acl_model.metadata.extensions.model_dump()
-                if hasattr(acl_model.metadata.extensions, "model_dump")
+                if core_u.has(acl_model.metadata.extensions, "model_dump")
                 else dict(acl_model.metadata.extensions)
             )
 
@@ -953,12 +953,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         acl_list = (
             list(orclaci_values)
-            if isinstance(orclaci_values, (list, tuple))
+            if core_u.is_type(orclaci_values, (list, tuple))
             else [str(orclaci_values)]
         )
 
         for acl_value in acl_list:
-            if not isinstance(acl_value, str):
+            if not core_u.is_type(acl_value, str):
                 continue
             self._extract_acl_metadata_from_string(acl_value, current_extensions)
             if acl_quirk is not None:
@@ -1003,9 +1003,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             orclaci_raw = normalized_attrs.get("orclaci") if normalized_attrs else None
 
         orclaci_values: list[str] | str | None = None
-        if isinstance(orclaci_raw, str):
+        if core_u.is_type(orclaci_raw, str):
             orclaci_values = orclaci_raw
-        elif isinstance(orclaci_raw, list):
+        elif core_u.is_type(orclaci_raw, list):
             orclaci_values = [str(v) for v in orclaci_raw]
 
         self._process_orclaci_values(orclaci_values, current_extensions)

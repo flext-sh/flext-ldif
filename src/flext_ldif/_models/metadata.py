@@ -21,6 +21,15 @@ class FlextLdifModelsMetadata:
 
         transformations: list[object] | None = Field(default=None)
 
+        @staticmethod
+        def _coerce_metadata_value(value: object) -> t.MetadataAttributeValue:
+            """Coerce dynamic values to MetadataAttributeValue-compatible output."""
+            if value is None:
+                return None
+            if value.__class__ in {str, int, float, bool, list}:
+                return value
+            return str(value)
+
         @classmethod
         def from_dict(
             cls,
@@ -55,33 +64,22 @@ class FlextLdifModelsMetadata:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                if isinstance(field_value, (str, int, float, bool, list)):
-                    return field_value
-                if field_value is not None:
-                    return str(field_value)
+                return self._coerce_metadata_value(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-
-                if isinstance(value, (str, int, float, bool, list)):
-                    return value
-                return str(value) if value is not None else None
+                return self._coerce_metadata_value(value)
             return default
 
         def __getitem__(self, key: str) -> t.MetadataAttributeValue:
             """Get value by key, raising KeyError if not found."""
             if key in type(self).model_fields:
                 field_value = getattr(self, key)
-                if isinstance(field_value, (str, int, float, bool, list)):
-                    return field_value
-                if field_value is not None:
-                    return str(field_value)
+                return self._coerce_metadata_value(field_value)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, (str, int, float, bool, list)):
-                    return value
-                return str(value) if value is not None else None
+                return self._coerce_metadata_value(value)
             raise KeyError(key)
 
         def __setitem__(self, key: str, value: object) -> None:
@@ -105,10 +103,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None:
                 for key, value in extra.items():
-                    if isinstance(value, str | float | bool | list):
-                        yield (key, value)
-                    else:
-                        yield (key, str(value) if value is not None else None)
+                    yield (key, self._coerce_metadata_value(value))
 
         def keys(self) -> KeysView[str]:
             """Return keys from extra fields."""
@@ -134,9 +129,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra.pop(key)
-                if isinstance(value, (str, int, float, bool, list)):
-                    return value
-                return str(value) if value is not None else None
+                return self._coerce_metadata_value(value)
             return default
 
         def clear(self) -> None:
@@ -158,10 +151,8 @@ class FlextLdifModelsMetadata:
 
         def __eq__(self, other: object) -> bool:
             """Compare with dict or another DynamicMetadata."""
-            if isinstance(other, dict):
+            if other.__class__ is dict:
                 return dict(self.items()) == other
-            if isinstance(other, FlextLdifModelsMetadata.DynamicMetadata):
-                return dict(self.items()) == dict(other.items())
             return NotImplemented
 
         def to_dict(self) -> dict[str, t.MetadataAttributeValue]:
@@ -183,9 +174,9 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, (str, int, float, bool, list)):
-                    return value
-                return str(value) if value is not None else None
+                return FlextLdifModelsMetadata.DynamicMetadata._coerce_metadata_value(
+                    value,
+                )
             raise KeyError(key)
 
         def __contains__(self, key: str) -> bool:
@@ -202,9 +193,9 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, (str, int, float, bool, list)):
-                    return value
-                return str(value) if value is not None else None
+                return FlextLdifModelsMetadata.DynamicMetadata._coerce_metadata_value(
+                    value,
+                )
             return default
 
     class TransformationInfo(FlextModelsBase.ArbitraryTypesModel):

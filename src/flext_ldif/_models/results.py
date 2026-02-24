@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping, Sequence
-from typing import cast, overload
+from collections.abc import Iterator, Sequence
+from typing import overload
 
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -26,11 +26,17 @@ class DynamicCounts(FlextLdifModelsBase):
     def set_count(self, key: str, value: int) -> None:
         setattr(self, key, value)
 
+    @staticmethod
+    def _to_count(value: object) -> int:
+        if value.__class__ in {int, float}:
+            return int(str(value))
+        return 0
+
     def __getitem__(self, key: str) -> int:
         extra = self.__pydantic_extra__
         if extra is not None and key in extra:
             v = extra[key]
-            return int(v) if isinstance(v, (int, float)) else 0
+            return self._to_count(v)
         msg = f"Key {key!r} not found"
         raise KeyError(msg)
 
@@ -38,7 +44,7 @@ class DynamicCounts(FlextLdifModelsBase):
         extra = self.__pydantic_extra__
         if extra is not None and key in extra:
             v = extra[key]
-            return int(v) if isinstance(v, (int, float)) else 0
+            return self._to_count(v)
         return default
 
     def __contains__(self, key: object) -> bool:
@@ -53,12 +59,10 @@ class DynamicCounts(FlextLdifModelsBase):
         extra = self.__pydantic_extra__
         if extra is None:
             return []
-        return [
-            (k, int(v) if isinstance(v, (int, float)) else 0) for k, v in extra.items()
-        ]
+        return [(k, self._to_count(v)) for k, v in extra.items()]
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
+        if other.__class__ is dict:
             self_dict = {
                 key: value
                 for key, value in self.__dict__.items()
@@ -77,12 +81,7 @@ class DynamicCounts(FlextLdifModelsBase):
         extra = self.__pydantic_extra__
         if extra is None or len(extra) == 0:
             return None
-        return max(
-            extra,
-            key=lambda k: (
-                int(extra.get(k, 0)) if isinstance(extra.get(k, 0), (int, float)) else 0
-            ),
-        )
+        return max(extra, key=lambda k: self._to_count(extra.get(k, 0)))
 
 
 class _SchemaContent(FlextLdifModelsBase):
@@ -120,12 +119,12 @@ class _BooleanFlags(FlextLdifModelsBase):
         return bool(extra[key])
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
+        if other.__class__ is dict:
             extra = self.__pydantic_extra__
             if extra is None:
                 return other == {}
             return dict(extra) == other
-        if isinstance(other, _BooleanFlags):
+        if other.__class__ is _BooleanFlags:
             return self.__pydantic_extra__ == other.__pydantic_extra__
         return NotImplemented
 
@@ -147,23 +146,17 @@ class _FlexibleCategories(
         raise TypeError(msg)
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, _FlexibleCategories):
+        if other.__class__ is _FlexibleCategories:
             return self.categories == other.categories
-        if isinstance(other, dict):
+        if other.__class__ is dict:
             return self.categories == other
         return False
 
     def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
-        return cast(
-            "Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]",
-            iter(self.categories.items()),
-        )
+        return iter(self.categories.items())
 
     def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-        return cast(
-            "Iterator[list[FlextLdifModelsDomains.Entry]]",
-            iter(self.categories.values()),
-        )
+        return iter(self.categories.values())
 
     def keys(self) -> Iterator[str]:
         return iter(self.categories.keys())
@@ -172,24 +165,14 @@ class _FlexibleCategories(
         return category in self.categories
 
     def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
-        return cast(
-            "list[FlextLdifModelsDomains.Entry]",
-            self.categories[category],
-        )
+        return self.categories[category]
 
     def __setitem__(
         self,
         category: str,
-        entries: Sequence[object],
+        entries: Sequence[FlextLdifModelsDomains.Entry],
     ) -> None:
-        categories = cast(
-            "dict[str, list[FlextLdifModelsDomains.Entry]]", self.categories
-        )
-        categories[category] = [
-            entry
-            for entry in entries
-            if isinstance(entry, FlextLdifModelsDomains.Entry)
-        ]
+        self.categories[category] = list(entries)
 
 
 type _DynCategoriesInput = dict[str, list[FlextLdifModelsDomains.Entry]]
@@ -264,14 +247,12 @@ class FlextLdifModelsResults:
             cls,
             value: _FlexibleCategories | _DynCategoriesInput,
         ) -> _FlexibleCategories:
-            if isinstance(value, _FlexibleCategories):
+            if value.__class__ is _FlexibleCategories:
                 return value
-            if isinstance(value, dict):
-                result = _FlexibleCategories()
-                for cat, entries in value.items():
-                    result.add_entries(str(cat), list(entries))
-                return result
-            return _FlexibleCategories()
+            result = _FlexibleCategories()
+            for cat, entries in dict(value).items():
+                result.add_entries(str(cat), list(entries))
+            return result
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             all_entries: list[FlextLdifModelsDomains.Entry] = []
@@ -299,7 +280,7 @@ class FlextLdifModelsResults:
             key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
             entries = self.get_all_entries()
-            if isinstance(key, int):
+            if key.__class__ is int:
                 return entries[key]
             return entries[key]
 
@@ -426,7 +407,6 @@ class FlextLdifModelsResults:
             fields = {
                 field_name: getattr(self, field_name)
                 for field_name in FlextLdifModelsResults.StatisticsSummary.model_fields
-                if hasattr(self, field_name)
             }
             return FlextLdifModelsResults.StatisticsSummary(**fields)
 
@@ -497,7 +477,7 @@ class FlextLdifModelsResults:
                 "entries_written",
                 "file_size_bytes",
             }
-            updates: dict[str, t.GeneralValueType] = {
+            updates = {
                 field_name: getattr(self, field_name) + getattr(other, field_name)
                 for field_name in sum_fields
             }
@@ -623,23 +603,41 @@ class FlextLdifModelsResults:
         server_type_distribution: DynamicCounts = Field(default_factory=DynamicCounts)
 
     class DictAccessibleValue(FlextModelsEntity.Value):
-        def __getitem__(self, key: str) -> str | int | float | bool | None:
-            if hasattr(self, key):
-                value = getattr(self, key)
-                if isinstance(value, (str, int, float, bool, type(None))):
-                    return value
-                return str(value) if value is not None else None
+        @staticmethod
+        def _as_scalar(value: object) -> str | int | float | bool | None:
+            if value is None:
+                return None
+            if value.__class__ is str:
+                return str(value)
+            return str(value)
+
+        def _resolve_key(self, key: str) -> object:
+            if key in self.model_fields:
+                return getattr(self, key)
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                return extra[key]
             raise KeyError(key)
 
+        def __getitem__(self, key: str) -> str | int | float | bool | None:
+            value = self._resolve_key(key)
+            return self._as_scalar(value)
+
         def __contains__(self, key: str) -> bool:
-            return hasattr(self, key)
+            if key in self.model_fields:
+                return True
+            extra = self.__pydantic_extra__
+            return extra is not None and key in extra
 
         def get(
             self,
             key: str,
             default: str | float | bool | None = None,
         ) -> str | int | float | bool | None:
-            return getattr(self, key, default)
+            try:
+                return self.__getitem__(key)
+            except KeyError:
+                return default
 
         def keys(self) -> list[str]:
             return list(self.model_fields_set)
@@ -688,37 +686,11 @@ class FlextLdifModelsResults:
         detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
 
         def get_entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
-            converted_entries: list[FlextLdifModelsDomains.Entry] = []
-            for entry in self.entries:
-                if entry.dn is None:
-                    continue
-                if entry.attributes is None:
-                    continue
-                dn_value = (
-                    entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
-                )
-                attrs_dict: dict[str, list[str]] = {}
-                if hasattr(entry.attributes, "attributes"):
-                    raw_attrs = entry.attributes.attributes
-                    if isinstance(raw_attrs, dict):
-                        for k, v in raw_attrs.items():
-                            if isinstance(k, str) and isinstance(v, list):
-                                attrs_dict[str(k)] = [
-                                    str(x) for x in v if x is not None
-                                ]
-                elif isinstance(entry.attributes, Mapping):
-                    for k, v in entry.attributes.items():
-                        if isinstance(k, str) and isinstance(v, list):
-                            attrs_dict[str(k)] = [str(x) for x in v if x is not None]
-                converted_entries.append(
-                    FlextLdifModelsDomains.Entry(
-                        dn=FlextLdifModelsDomains.DN(value=dn_value),
-                        attributes=FlextLdifModelsDomains.Attributes(
-                            attributes=attrs_dict,
-                        ),
-                    ),
-                )
-            return converted_entries
+            return [
+                entry
+                for entry in self.entries
+                if entry.dn is not None and entry.attributes is not None
+            ]
 
     class AclResponse(FlextModelsEntity.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)

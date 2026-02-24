@@ -141,8 +141,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
-            if not isinstance(attr_definition, str):
-                if hasattr(attr_definition, "oid") and hasattr(attr_definition, "name"):
+            if not u.Guards.is_type(attr_definition, str):
+                if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
                     return u.Ldif.Server.matches_server_patterns(
                         value=attr_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
@@ -181,8 +181,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
-            if not isinstance(oc_definition, str):
-                if hasattr(oc_definition, "oid") and hasattr(oc_definition, "name"):
+            if not u.Guards.is_type(oc_definition, str):
+                if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
                     return u.Ldif.Server.matches_server_patterns(
                         value=oc_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
@@ -251,7 +251,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 if not acl_line or not acl_line.strip():
                     return False
                 normalized = acl_line.strip()
@@ -261,8 +261,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
                 )
 
-            if hasattr(acl_line, "raw_acl") and acl_line.raw_acl:
-                normalized = acl_line.raw_acl.strip()
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
+                    return False
+                normalized = raw_acl.strip()
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
@@ -490,7 +493,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 default=[],
             )
 
-            if isinstance(object_classes_raw, (list, tuple)):
+            if u.Guards.is_type(object_classes_raw, (list, tuple)):
                 object_classes: list[str] = [str(item) for item in object_classes_raw]
             else:
                 object_classes = []
@@ -518,7 +521,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     default=[],
                 )
 
-                if isinstance(object_classes_raw, list):
+                if u.Guards.is_type(object_classes_raw, list):
                     object_classes: list[str] = [str(oc) for oc in object_classes_raw]
                 else:
                     object_classes = []
@@ -530,7 +533,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     value: bytes | str
                     for value in attr_values:
                         str_value: str
-                        if isinstance(value, bytes):
+                        if u.Guards.is_type(value, bytes):
                             str_value = base64.b64encode(value).decode("ascii")
                         else:
                             str_value = str(value)

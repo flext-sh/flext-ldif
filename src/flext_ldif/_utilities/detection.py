@@ -27,7 +27,7 @@ class FlextLdifUtilitiesDetection:
                 # Look for server classes (FlextLdifServers*) with Constants
                 if (
                     cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
+                    and getattr(cls, "Constants", None) is not None
                     and not FlextRuntime.is_dict_like(getattr(cls, "Constants", None))
                 ):
                     constants_class: type = cls.Constants
@@ -36,7 +36,7 @@ class FlextLdifUtilitiesDetection:
                     if required_attr is None:
                         # Check all protocol attributes exist (structural compliance)
                         if all(
-                            hasattr(constants_class, attr)
+                            getattr(constants_class, attr, None) is not None
                             for attr in (
                                 "DETECTION_OID_PATTERN",
                                 "DETECTION_ATTRIBUTE_PREFIXES",
@@ -46,7 +46,7 @@ class FlextLdifUtilitiesDetection:
                             )
                         ):
                             return constants_class
-                    elif hasattr(constants_class, required_attr):
+                    elif getattr(constants_class, required_attr, None) is not None:
                         # Required attribute exists - return Constants class
                         return constants_class
             return None
@@ -70,7 +70,7 @@ class FlextLdifUtilitiesDetection:
             """Check if data matches regex pattern."""
             try:
                 # String: direct match
-                if isinstance(data, str):
+                if issubclass(data.__class__, str):
                     return bool(re.search(pattern, data))
 
                 # Model with oid field (attributes, objectClasses)
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesDetection:
         ) -> bool:
             """Check if data is in set (case-insensitive)."""
             # String: direct match
-            if isinstance(data, str):
+            if issubclass(data.__class__, str):
                 items_lower = {item.lower() for item in items}
                 return data.lower() in items_lower
 
@@ -167,7 +167,7 @@ class FlextLdifUtilitiesDetection:
                 return True  # No prefixes = match all
             # Type narrowing: SchemaAttribute structurally implements SchemaAttributeProtocol
             # Extract name for prefix matching
-            if isinstance(attr_definition, str):
+            if issubclass(attr_definition.__class__, str):
                 attr_name = attr_definition
             else:
                 # SchemaAttribute has .name attribute matching protocol
@@ -205,10 +205,10 @@ class FlextLdifUtilitiesDetection:
             # Get objectClass from attributes
             objectclasses: Sequence[str] | str | None = None
             # Check for EntryProtocol first (has get_objectclass_names method)
-            if isinstance(attributes, m.Ldif.Entry):
+            if issubclass(attributes.__class__, m.Ldif.Entry):
                 # Entry protocol has get_objectclass_names method
                 objectclasses = list(attributes.get_objectclass_names())
-            elif isinstance(attributes, Mapping):
+            elif issubclass(attributes.__class__, Mapping):
                 obj_class = attributes.get("objectClass") or attributes.get(
                     "objectclass",
                 )
@@ -219,13 +219,13 @@ class FlextLdifUtilitiesDetection:
                 return False
 
             # Handle list/set/tuple of objectClasses
-            if isinstance(objectclasses, (list, tuple, set)):
+            if issubclass(objectclasses.__class__, (list, tuple, set)):
                 detection_set = {oc.lower() for oc in detection_classes}
                 oc_set = {str(oc).lower() for oc in objectclasses}
                 return bool(oc_set & detection_set)
 
             # Handle single objectClass string
-            if isinstance(objectclasses, str):
+            if issubclass(objectclasses.__class__, str):
                 return self.can_handle_in_set(objectclasses, detection_classes)
 
             return False
@@ -275,7 +275,7 @@ class FlextLdifUtilitiesDetection:
                 return True  # No attribute name = match all
 
             # String: check prefix
-            if isinstance(acl_line, str):
+            if issubclass(acl_line.__class__, str):
                 return acl_line.lower().startswith(acl_attr_name.lower() + ":")
 
             # Model with name field (AclProtocol has name attribute)

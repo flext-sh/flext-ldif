@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, u as core_u
 from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -126,28 +126,28 @@ class FlextLdifServersBaseEntry(
         for attr_name, attr_values_raw in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
 
-            if not isinstance(attr_values_raw, list):
+            if not core_u.is_type(attr_values_raw, list):
                 continue
             attr_values: list[str | bytes] = attr_values_raw
             string_values: list[str] = []
-            if isinstance(attr_values, list):
+            if core_u.is_type(attr_values, list):
                 string_values = [
                     (
                         value.decode("utf-8", errors="replace")
-                        if isinstance(value, bytes)
+                        if core_u.is_type(value, bytes)
                         else str(value)
                     )
                     for value in attr_values
                 ]
-            elif isinstance(attr_values, bytes):
+            elif core_u.is_type(attr_values, bytes):
                 string_values = [
                     attr_values.decode("utf-8", errors="replace"),
                 ]
-            elif isinstance(attr_values, (list, tuple)):
+            elif core_u.is_type(attr_values, (list, tuple)):
                 string_values = [
                     (
                         value.decode("utf-8", errors="replace")
-                        if isinstance(value, bytes)
+                        if core_u.is_type(value, bytes)
                         else str(value)
                     )
                     for value in attr_values
@@ -192,27 +192,27 @@ class FlextLdifServersBaseEntry(
         extensions_data: dict[str, t.GeneralValueType] = {}
         if entry_data.metadata and entry_data.metadata.extensions is not None:
             metadata_extensions = entry_data.metadata.extensions
-            if isinstance(metadata_extensions, Mapping):
+            if core_u.is_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
-            elif hasattr(metadata_extensions, "model_dump"):
+            elif core_u.has(metadata_extensions, "model_dump"):
                 dumped = metadata_extensions.model_dump()
-                if isinstance(dumped, dict):
+                if core_u.is_type(dumped, dict):
                     extensions_data = dumped
 
         hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
-        if isinstance(hidden_raw, list):
+        if core_u.is_type(hidden_raw, list):
             hidden_attributes = {
-                str(attr).lower() for attr in hidden_raw if isinstance(attr, str)
+                str(attr).lower() for attr in hidden_raw if core_u.is_type(attr, str)
             }
 
         acl_original_raw = extensions_data.get(c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT)
-        if isinstance(acl_original_raw, str):
+        if core_u.is_type(acl_original_raw, str):
             acl_original_format = acl_original_raw
 
         if entry_data.metadata and entry_data.metadata.write_options:
             write_opts = entry_data.metadata.write_options
 
-            if isinstance(write_opts, FlextLdifModelsSettings.WriteFormatOptions):
+            if core_u.is_type(write_opts, FlextLdifModelsSettings.WriteFormatOptions):
                 fold_long_lines = bool(write_opts.fold_long_lines)
                 line_width = int(write_opts.line_width or line_width)
                 include_dn_comments = bool(write_opts.include_dn_comments)
@@ -225,9 +225,9 @@ class FlextLdifServersBaseEntry(
                 use_original_acl_format_as_name = bool(
                     write_opts.use_original_acl_format_as_name,
                 )
-            elif isinstance(write_opts, Mapping):
+            elif core_u.is_type(write_opts, Mapping):
                 nested_opts = write_opts.get("write_options")
-                if isinstance(nested_opts, FlextLdifModelsSettings.WriteFormatOptions):
+                if core_u.is_type(nested_opts, FlextLdifModelsSettings.WriteFormatOptions):
                     fold_long_lines = bool(nested_opts.fold_long_lines)
                     line_width = int(nested_opts.line_width or line_width)
                     include_dn_comments = bool(nested_opts.include_dn_comments)
@@ -348,10 +348,10 @@ class FlextLdifServersBaseEntry(
         else:
             return FlextResult.fail("Entry DN is None")
 
-        if hasattr(entry_data, "attributes") and entry_data.attributes:
+        if core_u.has(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
-                if isinstance(values, list):
+                if core_u.is_type(values, list):
                     for value in values:
                         str_value = str(value)
                         if not str_value and not write_empty_values:
@@ -404,9 +404,9 @@ class FlextLdifServersBaseEntry(
         """Resolve write options for header generation."""
         if write_options is None:
             return FlextLdifModelsSettings.WriteFormatOptions()
-        if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
+        if core_u.is_type(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
+        if core_u.is_type(write_options, FlextLdifModelsDomains.WriteOptions):
             return FlextLdifModelsSettings.WriteFormatOptions()
         return None
 
@@ -419,11 +419,11 @@ class FlextLdifServersBaseEntry(
         FlextLdifModelsSettings.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
     ):
         """Convert write options to appropriate typed model."""
-        if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
+        if core_u.is_type(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
+        if core_u.is_type(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
-        if isinstance(write_options, dict):
+        if core_u.is_type(write_options, dict):
             try:
                 return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
                     write_options,
@@ -454,9 +454,9 @@ class FlextLdifServersBaseEntry(
             )
         else:
             write_opts_for_meta: FlextLdifModelsDomains.WriteOptions | None = None
-            if isinstance(write_options_typed, FlextLdifModelsDomains.WriteOptions):
+            if core_u.is_type(write_options_typed, FlextLdifModelsDomains.WriteOptions):
                 write_opts_for_meta = write_options_typed
-            elif isinstance(
+            elif core_u.is_type(
                 write_options_typed,
                 FlextLdifModelsSettings.WriteFormatOptions,
             ):
@@ -477,7 +477,7 @@ class FlextLdifServersBaseEntry(
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
     ) -> FlextResult[str]:
         """Write Entry model(s) to LDIF string format."""
-        if isinstance(entry_data, list):
+        if core_u.is_type(entry_data, list):
             return self._write_entry_list(entry_data, write_options)
         return self._write_single_entry(entry_data, write_options)
 
@@ -536,7 +536,7 @@ class FlextLdifServersBaseEntry(
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")
 
-        if isinstance(ldif_content, str):
+        if core_u.is_type(ldif_content, str):
             entries_result = self._parse_content(ldif_content)
             if entries_result.is_success:
                 entries = entries_result.value
@@ -544,7 +544,7 @@ class FlextLdifServersBaseEntry(
                     entries[0] if entries else "",
                 )
             return FlextResult[m.Ldif.Entry | str].ok("")
-        if isinstance(entry_model, m.Ldif.Entry):
+        if core_u.is_type(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
             return FlextResult[m.Ldif.Entry | str].ok(
                 str_result.map_or(""),
@@ -558,12 +558,12 @@ class FlextLdifServersBaseEntry(
         entry_attrs: dict[str, list[str]],
     ) -> FlextResult[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
-        if isinstance(entry_attrs, Mapping):
+        if core_u.is_type(entry_attrs, Mapping):
             attrs_dict: dict[
                 str,
                 str | list[str] | bytes | list[bytes] | int | float | bool | None,
             ] = dict(entry_attrs)
-        elif isinstance(entry_attrs, dict):
+        elif core_u.is_type(entry_attrs, dict):
             attrs_dict = entry_attrs
         else:
             msg = f"Expected Mapping | dict, got {type(entry_attrs)}"
@@ -571,19 +571,19 @@ class FlextLdifServersBaseEntry(
 
         ldif_lines = [f"dn: {entry_dn}"]
         for attr_name, attr_values in attrs_dict.items():
-            if isinstance(attr_values, (list, tuple)):
-                if not isinstance(attr_values, list):
+            if core_u.is_type(attr_values, (list, tuple)):
+                if not core_u.is_type(attr_values, list):
                     msg = f"Expected list, got {type(attr_values)}"
                     raise TypeError(msg)
 
                 ldif_lines.extend(
-                    f"{attr_name}: {value.decode('utf-8') if isinstance(value, bytes) else value}"
+                    f"{attr_name}: {value.decode('utf-8') if core_u.is_type(value, bytes) else value}"
                     for value in attr_values
                 )
             else:
                 value_str = (
                     attr_values.decode("utf-8")
-                    if isinstance(attr_values, bytes)
+                    if core_u.is_type(attr_values, bytes)
                     else attr_values
                 )
                 ldif_lines.append(f"{attr_name}: {value_str}")

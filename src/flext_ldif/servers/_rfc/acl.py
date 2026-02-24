@@ -61,7 +61,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         if meta_key not in metadata:
             metadata[meta_key] = {}
         unsupported = metadata[meta_key]
-        if isinstance(unsupported, dict):
+        if u.is_type(unsupported, "dict"):
             unsupported[feature_id] = original_value
 
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
@@ -166,10 +166,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         )
 
         parent_quirk_value: object | None = (
-            parent_quirk_raw
-            if parent_quirk_raw is not None
-            and hasattr(parent_quirk_raw, "_parent_quirk")
-            else None
+            parent_quirk_raw if parent_quirk_raw is not None else None
         )
 
         acl_instance: Self = instance
@@ -179,19 +176,17 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
         if cls.auto_execute:
             data_raw = kwargs.get("data")
-            data: str | m.Ldif.Acl | None = None
-            if isinstance(data_raw, (str, m.Ldif.Acl)):
-                data = data_raw
+            data = instance._coerce_acl_data(data_raw)
             op_raw = kwargs.get("operation")
             op: str | None = None
-            if isinstance(op_raw, str) and op_raw == "parse":
+            if u.is_type(op_raw, "str") and op_raw == "parse":
                 op = "parse"
-            elif isinstance(op_raw, str) and op_raw == "write":
+            elif u.is_type(op_raw, "str") and op_raw == "write":
                 op = "write"
 
             result = acl_instance.execute(data=data, operation=op)
             unwrapped: m.Ldif.Acl | str = result.value
-            if isinstance(unwrapped, cls):
+            if u.is_type(unwrapped, cls):
                 return unwrapped
             return instance
 

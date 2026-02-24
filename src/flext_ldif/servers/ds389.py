@@ -14,6 +14,7 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
@@ -156,7 +157,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
+            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -189,7 +190,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
@@ -258,7 +259,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
@@ -269,10 +270,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 ):
                     return True
                 return normalized.lower().startswith("(version")
-            if isinstance(acl_line, m.Ldif.Acl):
-                if not acl_line.raw_acl:
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                     return False
-                normalized = acl_line.raw_acl.strip()
+                normalized = raw_acl.strip()
                 if not normalized:
                     return False
 
@@ -415,7 +417,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
                 permissions_raw = acl_data.permissions
-                if not isinstance(
+                if not u.Guards.is_type(
                     permissions_raw,
                     (m.Ldif.AclPermissions, type(None)),
                 ):
@@ -424,13 +426,13 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 permissions = self._extract_acl_permissions(permissions_raw)
 
                 target_raw = acl_data.target
-                if not isinstance(target_raw, (m.Ldif.AclTarget, type(None))):
+                if not u.Guards.is_type(target_raw, (m.Ldif.AclTarget, type(None))):
                     msg = f"Expected AclTarget | None, got {type(target_raw)}"
                     raise TypeError(msg)
                 targetattr = self._resolve_acl_targetattr(target_raw)
 
                 subject_raw = acl_data.subject
-                if not isinstance(
+                if not u.Guards.is_type(
                     subject_raw,
                     (m.Ldif.AclSubject, type(None)),
                 ):
@@ -560,9 +562,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 objectclass_key,
                 [],
             )
-            if isinstance(object_classes_raw, list):
+            if u.Guards.is_type(object_classes_raw, list):
                 object_classes: list[str] = object_classes_raw
-            elif isinstance(object_classes_raw, tuple):
+            elif u.Guards.is_type(object_classes_raw, tuple):
                 object_classes = list(object_classes_raw)
             else:
                 object_classes = [str(object_classes_raw)]

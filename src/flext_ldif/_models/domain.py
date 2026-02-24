@@ -17,7 +17,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, t
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import m  # Import m
@@ -208,11 +208,7 @@ class FlextLdifModelsDomains:
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
-
-            if isinstance(dn, str):
-                return cls.model_validate({"value": dn})
-
-            return dn
+            return cls.model_validate({"value": str(dn)})
 
         def __str__(self) -> str:
             """Return DN value as string for str() conversion."""
@@ -748,21 +744,23 @@ class FlextLdifModelsDomains:
             """Get attribute values lists."""
             return self.attributes.values()
 
-        def add_attribute(self, key: str, values: str | list[str]) -> Self:
+        def add_attribute(self, key: str, values: list[str]) -> Self:
             """Add or update an attribute with values.
 
             Args:
                 key: Attribute name
-                values: Single value or list of values
+                values: List of values
 
             Returns:
                 Self for method chaining
 
             """
-            if isinstance(values, str):
-                values = [values]
-            # values is already list[str] or converted
             self.attributes[key] = values
+            return self
+
+        def add_attribute_value(self, key: str, value: str) -> Self:
+            """Add or update an attribute from a single value."""
+            self.attributes[key] = [value]
             return self
 
         def remove_attribute(self, key: str) -> Self:
@@ -820,10 +818,9 @@ class FlextLdifModelsDomains:
                 # Normalize values to list[str]
                 normalized_dict: dict[str, list[str]] = {}
                 for key, val in attrs_data.items():
-                    if isinstance(val, list):
-                        # Type guard: val is list-like, so it's iterable
+                    if val.__class__ is list:
                         normalized_dict[key] = [str(v) for v in val]
-                    elif isinstance(val, str):
+                    elif val.__class__ is str:
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
@@ -1036,9 +1033,7 @@ class FlextLdifModelsDomains:
                 self._registry[normalized] = dn
 
             value = self._registry[normalized]
-            if isinstance(value, str):
-                return value
-            return dn
+            return str(value) if value is not None else dn
 
         def get_canonical_dn(self, dn: str) -> str | None:
             """Get canonical case for a DN (case-insensitive lookup).
@@ -1052,9 +1047,9 @@ class FlextLdifModelsDomains:
             """
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
-            if isinstance(value, str):
-                return value
-            return None
+            if value is None:
+                return None
+            return str(value)
 
         def has_dn(self, dn: str) -> bool:
             """Check if DN is registered (case-insensitive).
@@ -1147,13 +1142,12 @@ class FlextLdifModelsDomains:
                     field_value = normalized_data[field_name]
 
                     # Delegate to helper based on type
-                    if isinstance(field_value, str):
+                    if field_value.__class__ is str:
                         normalized_data[field_name] = self._normalize_single_dn(
-                            field_value,
+                            str(field_value),
                         )
-                    elif isinstance(field_value, list):
-                        # Type guard: field_value is list-like, so it's a list
-                        field_value_list = field_value
+                    elif field_value.__class__ is list:
+                        field_value_list = [str(item) for item in field_value]
                         normalized_data[field_name] = self._normalize_dn_list(
                             field_value_list,
                         )
@@ -1626,10 +1620,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: str
-            | dict[str, t.GeneralValueType]
-            | FlextLdifModelsDomains.DN
-            | None,
+            value: FlextLdifModelsDomains.DN | str | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1640,25 +1631,16 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if isinstance(value, FlextLdifModelsDomains.DN):
+            if value.__class__ is FlextLdifModelsDomains.DN:
                 return value
-
-            if isinstance(value, dict):
-                # Handle dict from model_dump()
-                return FlextLdifModelsDomains.DN.model_validate(value)
-
-            if isinstance(value, str):
-                return FlextLdifModelsDomains.DN.model_validate({"value": value})
-
-            return FlextLdifModelsDomains.DN.model_validate({"value": ""})
+            return FlextLdifModelsDomains.DN.model_validate({"value": str(value)})
 
         @field_validator("attributes", mode="before")
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: dict[str, list[str]]
-            | dict[str, t.GeneralValueType]
-            | FlextLdifModelsDomains.Attributes
+            value: FlextLdifModelsDomains.Attributes
+            | dict[str, t.Ldif.JsonValue]
             | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
@@ -1670,59 +1652,9 @@ class FlextLdifModelsDomains:
                 # Allow None to pass through for RFC violation capture
                 return None
 
-            if isinstance(value, FlextLdifModelsDomains.Attributes):
+            if value.__class__ is FlextLdifModelsDomains.Attributes:
                 return value
-
-            if isinstance(value, dict) and "attributes" in value:
-                # Handle dict from model_dump() - extract typed fields
-                attrs_data = value.get("attributes", {})
-                meta_data = value.get("attribute_metadata", {})
-                entry_meta = value.get("metadata")
-                # Type conversion: ensure proper dict types
-                typed_attrs: dict[str, list[str]] = {}
-                if isinstance(attrs_data, dict):
-                    for k, v in attrs_data.items():
-                        if isinstance(k, str):
-                            if isinstance(v, list):
-                                typed_attrs[k] = [str(item) for item in v]
-                            else:
-                                typed_attrs[k] = [str(v)]
-
-                typed_meta: dict[str, dict[str, str | list[str]]] = {}
-                if isinstance(meta_data, dict):
-                    for k, v in meta_data.items():
-                        if isinstance(k, str) and isinstance(v, dict):
-                            nested_dict: dict[str, str | list[str]] = {}
-                            for mk, mv in v.items():
-                                if isinstance(mk, str):
-                                    if isinstance(mv, list):
-                                        nested_dict[mk] = [str(item) for item in mv]
-                                    elif isinstance(mv, str):
-                                        nested_dict[mk] = mv
-                                    else:
-                                        nested_dict[mk] = str(mv)
-                            typed_meta[k] = nested_dict
-
-                # Build with explicit field assignments for type safety
-                return FlextLdifModelsDomains.Attributes(
-                    attributes=typed_attrs,
-                    attribute_metadata=typed_meta,
-                    metadata=entry_meta
-                    if isinstance(entry_meta, FlextLdifModelsMetadata.EntryMetadata)
-                    else None,
-                )
-
-            # value is dict from Mapping input, Pydantic validates dict[str, list[str]] at runtime
-            # Explicitly construct attributes dict for type safety
-            attrs_dict: dict[str, list[str]] = {}
-            for k, v in value.items():
-                if isinstance(v, list):
-                    attrs_dict[k] = [str(x) for x in v]
-                else:
-                    attrs_dict[k] = [str(v)]
-            return FlextLdifModelsDomains.Attributes(
-                attributes=attrs_dict,
-            )
+            return FlextLdifModelsDomains.Attributes.model_validate(value)
 
         # ===================================================================
         # REMAINING FIELDS
@@ -1742,8 +1674,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, t.GeneralValueType] | list[t.GeneralValueType],
-        ) -> dict[str, t.GeneralValueType] | list[t.GeneralValueType]:
+            data: dict[str, t.Ldif.JsonValue],
+        ) -> dict[str, t.Ldif.JsonValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -1754,39 +1686,35 @@ class FlextLdifModelsDomains:
             at instantiation time, when the module is fully loaded and FlextLdifModelsDomains
             is in scope.
 
-            Note: When validating Sequence[Entry] fields, Pydantic may pass list data.
-            We return non-dict data unchanged for Pydantic's sequence validator to handle.
-
             Args:
-                data: Input data for model instantiation (dict for Entry, list for sequences)
+                data: Input data for model instantiation
 
             Returns:
                 Modified data with metadata field initialized and datetimes coerced
 
             """
-            # Guard: Return non-dict data for Pydantic sequence validation
-            if not isinstance(data, dict):
-                return data
+            data_dict: dict[str, t.Ldif.JsonValue] = data
 
             # Coerce ISO datetime strings to datetime objects for strict=True compatibility
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
             for dt_field in ("created_at", "updated_at"):
-                if dt_field in data and isinstance(data[dt_field], str):
+                field_value = data_dict.get(dt_field)
+                if field_value is not None and field_value.__class__ is str:
                     with suppress(ValueError):
-                        data[dt_field] = datetime.fromisoformat(str(data[dt_field]))
+                        data_dict[dt_field] = datetime.fromisoformat(str(field_value))
                     # Let Pydantic handle invalid datetime strings
 
             # If metadata not provided or is None, initialize with default QuirkMetadata
-            if data.get("metadata") is None:
+            if data_dict.get("metadata") is None:
                 # Use FlextLdifModelsDomains directly from this module scope
                 # This works correctly for subclasses in other modules (e.g., flext-oud-mig)
                 # because we reference the class from flext_ldif._models.domain, not cls.__module__
 
                 # Create default QuirkMetadata with quirk_type from data if available
                 # If no quirk_type provided, use 'rfc' as safe default
-                quirk_type_value = data.get("quirk_type")
+                quirk_type_value = data_dict.get("quirk_type")
                 final_quirk_type_val: c.Ldif.ServerTypes
-                if isinstance(quirk_type_value, str):
+                if quirk_type_value is not None and quirk_type_value.__class__ is str:
                     # Try to match to a ServerTypes enum member
                     try:
                         final_quirk_type_val = c.Ldif.ServerTypes(quirk_type_value)
@@ -1800,9 +1728,9 @@ class FlextLdifModelsDomains:
                     quirk_type=final_quirk_type_val,
                 )
                 # Assign to dict with object type - QuirkMetadata is object
-                data["metadata"] = metadata_obj
+                data_dict["metadata"] = metadata_obj
 
-            return data
+            return data_dict
 
         @computed_field
         def dn_str(self) -> str:
@@ -2206,6 +2134,36 @@ class FlextLdifModelsDomains:
                         break
             return violations
 
+        @staticmethod
+        def _parse_validation_rules(
+            validation_rules: t.MetadataAttributeValue,
+        ) -> ServerValidationRules | None:
+            """Normalize dynamic validation_rules payload to ServerValidationRules."""
+            if validation_rules.__class__ is ServerValidationRules:
+                return validation_rules
+            if validation_rules.__class__ is str:
+                try:
+                    parsed_rules = ast.literal_eval(validation_rules)
+                except (ValueError, SyntaxError):
+                    return None
+                if parsed_rules.__class__ is not dict:
+                    return None
+                try:
+                    return ServerValidationRules.model_validate(parsed_rules)
+                except Exception:
+                    return None
+            if FlextRuntime.is_dict_like(validation_rules):
+                try:
+                    return ServerValidationRules.model_validate(validation_rules.root)
+                except Exception:
+                    return None
+            if validation_rules.__class__ is dict:
+                try:
+                    return ServerValidationRules.model_validate(validation_rules)
+                except Exception:
+                    return None
+            return None
+
         @model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
             """Validate Entry using server-injected validation rules."""
@@ -2226,36 +2184,8 @@ class FlextLdifModelsDomains:
             # and stored in metadata.extensions. They may be serialized as dicts
             # when metadata is converted to/from JSON. We need to reconstruct the
             # Pydantic model with proper type validation.
-            if isinstance(validation_rules, dict):
-                try:
-                    # Use model_validate for proper type conversion and validation
-                    # This handles ScalarValue -> specific types conversion automatically
-                    rules = ServerValidationRules.model_validate(
-                        validation_rules,
-                    )
-                except Exception:
-                    # If validation fails, skip server-specific validation
-                    # This is safe - Entry will still be RFC-compliant
-                    return self
-            elif isinstance(validation_rules, str):
-                try:
-                    parsed_rules = ast.literal_eval(validation_rules)
-                except (ValueError, SyntaxError):
-                    return self
-
-                if not isinstance(parsed_rules, dict):
-                    return self
-
-                try:
-                    rules = ServerValidationRules.model_validate(parsed_rules)
-                except Exception:
-                    return self
-            elif isinstance(
-                validation_rules,
-                ServerValidationRules,
-            ):
-                rules = validation_rules
-            else:
+            rules = self._parse_validation_rules(validation_rules)
+            if rules is None:
                 return self
             dn_value = str(self.dn.value) if self.dn else ""
 
@@ -2309,7 +2239,7 @@ class FlextLdifModelsDomains:
             if extra is None:
                 return {}
             result = extra.get("unconverted_attributes")
-            if isinstance(result, dict):
+            if result is not None and result.__class__ is dict:
                 return result
             return {}
 
@@ -2504,27 +2434,20 @@ class FlextLdifModelsDomains:
                 in validation_metadata as RFC violation.
 
             """
-            if isinstance(attributes, dict):
-                # Lenient processing: Accept empty dict (violation captured in validation_metadata)
-                # Empty dict is valid Attributes (Pydantic allows it)
-                attrs_dict: dict[str, list[str]] = {}
-                for attr_name, attr_values in attributes.items():
-                    # Normalize to list if string
-                    if isinstance(attr_values, str):
-                        values_list: list[str] = [str(attr_values)]
-                    elif isinstance(attr_values, list):
-                        values_list = [str(v) for v in attr_values]
-                    else:
-                        # Handle other iterable types (tuple, etc.)
-                        values_list = [str(attr_values)]
-                    attrs_dict[attr_name] = values_list
-                return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
-            if isinstance(attributes, FlextLdifModelsDomains.Attributes):
+            if attributes.__class__ is FlextLdifModelsDomains.Attributes:
                 return attributes
 
-            # This should not be reached with proper type annotations
-            msg = f"Attributes must be dict or Attributes, got {type(attributes).__name__}"
-            raise ValueError(msg)
+            # Lenient processing: Accept empty dict (violation captured in validation_metadata)
+            attrs_dict: dict[str, list[str]] = {}
+            for attr_name, attr_values in attributes.items():
+                if attr_values.__class__ is str:
+                    values_list: list[str] = [str(attr_values)]
+                elif attr_values.__class__ is list:
+                    values_list = [str(v) for v in attr_values]
+                else:
+                    values_list = [str(attr_values)]
+                attrs_dict[attr_name] = values_list
+            return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
 
         @classmethod
         def _build_extension_kwargs(
@@ -2708,7 +2631,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_ldap3(
             cls,
-            ldap3_entry: dict[str, list[str] | str] | Mapping[str, Sequence[str]],
+            ldap3_entry: Mapping[str, t.Ldif.JsonValue],
         ) -> FlextResult[Self]:
             """Create Entry from ldap3 Entry object.
 
@@ -2721,29 +2644,28 @@ class FlextLdifModelsDomains:
             """
             try:
                 # Extract DN
-                dn_str = str(getattr(ldap3_entry, "entry_dn", ""))
+                dn_str = str(ldap3_entry.get("entry_dn", ""))
 
                 # Extract attributes - ldap3 provides dict with various types
-                entry_attrs_raw: dict[
-                    str,
-                    str | list[str] | bytes | list[bytes] | int | float | bool | None,
-                ] = (
-                    getattr(ldap3_entry, "entry_attributes_as_dict", {})
-                    if hasattr(ldap3_entry, "entry_attributes_as_dict")
-                    else {}
-                )
+                entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
+                entry_attrs_raw: Mapping[str, t.Ldif.JsonValue]
+                if FlextRuntime.is_dict_like(entry_attrs_payload):
+                    entry_attrs_raw = entry_attrs_payload.root
+                elif entry_attrs_payload.__class__ is dict:
+                    entry_attrs_raw = entry_attrs_payload
+                else:
+                    entry_attrs_raw = {}
 
                 # Normalize to dict[str, str | list[str]] (ensure all values are lists of strings)
                 attrs_dict: dict[str, str | list[str]] = {}
                 # entry_attrs_raw is always dict from ldap3_entry.entry_attributes_as_dict
                 if entry_attrs_raw:
                     for attr_name, attr_value_list in entry_attrs_raw.items():
-                        if isinstance(attr_value_list, list):
-                            # Type guard: attr_value_list is list-like, so it's iterable
+                        if attr_value_list.__class__ is list:
                             attrs_dict[str(attr_name)] = [
                                 str(v) for v in attr_value_list
                             ]
-                        elif isinstance(attr_value_list, str):
+                        elif attr_value_list.__class__ is str:
                             attrs_dict[str(attr_name)] = [attr_value_list]
                         else:
                             attrs_dict[str(attr_name)] = [str(attr_value_list)]
@@ -2775,26 +2697,14 @@ class FlextLdifModelsDomains:
             if self.attributes is None:
                 return []
 
-            # Access the actual attributes dict (Attributes.attributes property)
-            attrs_dict = (
-                self.attributes.attributes
-                if hasattr(self.attributes, "attributes")
-                else self.attributes
-            )
+            attrs_dict = self.attributes.attributes
             if not attrs_dict:
                 return []
 
             attr_name_lower = attribute_name.lower()
-            # Handle both dict and Attributes objects
-            if isinstance(attrs_dict, dict):
-                for stored_name, attr_values in attrs_dict.items():
-                    if stored_name.lower() == attr_name_lower:
-                        return attr_values
-            elif hasattr(attrs_dict, "items"):
-                # Attributes object with items() method
-                for stored_name, attr_values in attrs_dict.items():
-                    if stored_name.lower() == attr_name_lower:
-                        return attr_values
+            for stored_name, attr_values in attrs_dict.items():
+                if stored_name.lower() == attr_name_lower:
+                    return attr_values
             return []
 
         def has_attribute(self, attribute_name: str) -> bool:
@@ -3908,7 +3818,7 @@ class FlextLdifModelsDomains:
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
             if extensions is None:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
-            elif isinstance(extensions, dict):
+            elif extensions.__class__ is dict:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     extensions
                 )

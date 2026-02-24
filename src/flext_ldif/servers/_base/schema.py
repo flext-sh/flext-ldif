@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Self
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService, FlextTypes
 from pydantic import Field
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -44,8 +44,8 @@ class FlextLdifServersBaseSchema(
         p.Ldif.SchemaQuirkProtocol through structural typing.
         This means all public methods must match protocol signatures exactly.
 
-        **Validation**: Use hasattr(quirk, "parse") and hasattr(quirk, "write")
-        to check protocol compliance at runtime (structural typing).
+        **Validation**: Use protocol-compliant quirk interfaces for runtime
+        structural checks.
 
         Common schema extension patterns:
         - Vendor-specific prefixes (e.g., vendor prefix + attribute name)
@@ -287,9 +287,11 @@ class FlextLdifServersBaseSchema(
             if validate_method is not None and callable(validate_method):
                 validate_result_raw = validate_method(oid_value)
 
-                if isinstance(validate_result_raw, FlextResult):
-                    oid_validate_result = validate_result_raw
-                else:
+                try:
+                    oid_validate_result = FlextResult[bool].model_validate(
+                        validate_result_raw,
+                    )
+                except Exception:
                     oid_validate_result = FlextResult.ok(bool(validate_result_raw))
             else:
                 oid_validate_result = FlextResult.ok(True)
@@ -321,14 +323,15 @@ class FlextLdifServersBaseSchema(
         if extract_method is None or not callable(extract_method):
             return {}
         extensions_raw = extract_method(attr_definition)
-        if isinstance(extensions_raw, dict):
-            return {
-                k: v
-                for k, v in extensions_raw.items()
-                if isinstance(k, str)
-                and (isinstance(v, (str, bool, list)) or v is None)
-            }
-        return {}
+        try:
+            extensions_items = extensions_raw.items()
+        except Exception:
+            return {}
+        return {
+            k: v
+            for k, v in extensions_items
+            if k.__class__ is str and (v.__class__ in (str, bool, list) or v is None)
+        }
 
     @staticmethod
     def _resolve_quirk_type(
@@ -418,7 +421,7 @@ class FlextLdifServersBaseSchema(
 
         extensions_typed: dict[str, t.MetadataAttributeValue] = {}
         for key, val in metadata_extensions.items():
-            if isinstance(val, list):
+            if FlextRuntime.is_list_like(val):
                 list_typed: t.MetadataAttributeValue = list(val)
                 extensions_typed[key] = list_typed
             else:
@@ -534,12 +537,12 @@ class FlextLdifServersBaseSchema(
         self,
         data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
         operation: str | None,
-    ) -> str | FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> str:
         """Auto-detect operation from data type."""
         if operation is not None:
             return operation
 
-        if isinstance(data, str):
+        if data.__class__ is str:
             return "parse"
 
         return "write"
@@ -551,7 +554,7 @@ class FlextLdifServersBaseSchema(
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Route data to appropriate parse or write handler."""
         if operation == "parse":
-            if not isinstance(data, str):
+            if data.__class__ is not str:
                 return FlextResult[
                     (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
                 ].fail(f"parse operation requires str, got {type(data).__name__}")
@@ -576,10 +579,20 @@ class FlextLdifServersBaseSchema(
             )
 
         if operation == "write":
-            if isinstance(data, m.Ldif.SchemaAttribute):
-                return self._handle_write_operation(attr_model=data, oc_model=None)
-            if isinstance(data, m.Ldif.SchemaObjectClass):
-                return self._handle_write_operation(attr_model=None, oc_model=data)
+            try:
+                attr_model = m.Ldif.SchemaAttribute.model_validate(data)
+            except Exception:
+                attr_model = None
+            if attr_model is not None:
+                return self._handle_write_operation(
+                    attr_model=attr_model, oc_model=None
+                )
+            try:
+                oc_model = m.Ldif.SchemaObjectClass.model_validate(data)
+            except Exception:
+                oc_model = None
+            if oc_model is not None:
+                return self._handle_write_operation(attr_model=None, oc_model=oc_model)
             return FlextResult[
                 (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
             ].fail(
@@ -599,21 +612,27 @@ class FlextLdifServersBaseSchema(
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         if data is None:
             data_raw = kwargs.get("data")
-            if isinstance(
-                data_raw,
-                (
-                    str,
-                    m.Ldif.SchemaAttribute,
-                    m.Ldif.SchemaObjectClass,
-                ),
-            ):
-                data = data_raw
+            if data_raw is not None:
+                try:
+                    data = str(data_raw) if data_raw.__class__ is str else None
+                except Exception:
+                    data = None
+                if data is None:
+                    try:
+                        data = m.Ldif.SchemaAttribute.model_validate(data_raw)
+                    except Exception:
+                        data = None
+                if data is None:
+                    try:
+                        data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
+                    except Exception:
+                        data = None
 
         if operation is None:
             operation_raw = kwargs.get("operation")
 
             operation_typed: str | None = None
-            if isinstance(operation_raw, str):
+            if operation_raw.__class__ is str:
                 if operation_raw == "parse":
                     operation_typed = "parse"
                 elif operation_raw == "write":
@@ -629,12 +648,9 @@ class FlextLdifServersBaseSchema(
             )
 
         operation_final: str | None = None
-        if isinstance(operation, str) and operation in {"parse", "write"}:
+        if operation.__class__ is str and operation in {"parse", "write"}:
             operation_final = "parse" if operation == "parse" else "write"
         detected_op = self._auto_detect_operation(data, operation_final)
-        if isinstance(detected_op, FlextResult):
-            return detected_op
-
         return self._route_operation(data, detected_op)
 
     def write(
@@ -642,7 +658,7 @@ class FlextLdifServersBaseSchema(
         model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write schema model to string format."""
-        if isinstance(model, m.Ldif.SchemaAttribute):
+        if model.__class__ is m.Ldif.SchemaAttribute:
             return self.write_attribute(model)
 
         return self.write_objectclass(model)

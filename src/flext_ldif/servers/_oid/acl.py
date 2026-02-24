@@ -67,9 +67,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""
-        if isinstance(acl_line, m.Ldif.Acl):
-            if acl_line.metadata and acl_line.metadata.quirk_type:
-                return acl_line.metadata.quirk_type == self._get_server_type()
+        if not u.is_type(acl_line, "str"):
+            try:
+                acl_model = m.Ldif.Acl.model_validate(acl_line)
+            except Exception:
+                return False
+            if acl_model.metadata and acl_model.metadata.quirk_type:
+                return acl_model.metadata.quirk_type == self._get_server_type()
             return False
         if not acl_line:
             return False
@@ -103,7 +107,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
         )
 
-        update_dict: dict[str, t.GeneralValueType] = {
+        update_dict: dict[str, object] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }
@@ -341,14 +345,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ),
     ) -> dict[str, str | int | float | bool | list[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
-        if not isinstance(metadata, m.Ldif.QuirkMetadata):
-            if isinstance(metadata, dict):
-                metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
-            elif hasattr(metadata, "model_dump"):
-                metadata_dict = metadata.model_dump()
-                metadata = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
-            else:
-                return {}
+        try:
+            metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
+        except Exception:
+            return {}
 
         return getattr(metadata, "extensions", None) or {}
 
@@ -415,16 +415,15 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ),
     ) -> dict[str, str | int | bool]:
         """Normalize value to dict for model validation."""
-        if isinstance(value, dict):
+        if u.is_type(value, "dict"):
             return value
-
-        if (
-            value is not None
-            and not isinstance(value, (str, int, float, bool))
-            and hasattr(value, "model_dump")
-            and callable(getattr(value, "model_dump", None))
-        ):
-            return value.model_dump()
+        if value is not None and not u.is_type(value, (str, int, float, bool)):
+            try:
+                dumped = value.model_dump()
+            except Exception:
+                dumped = None
+            if u.is_type(dumped, "dict"):
+                return dumped
         return {"subject_type": str(value)} if value else {}
 
     @staticmethod
@@ -434,53 +433,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Normalize permissions to dict for formatting."""
         if not permissions:
             return {}
-        if isinstance(permissions, dict):
-            return {
-                "read": bool(u.mapper().get(permissions, "read", default=False)),
-                "write": bool(u.mapper().get(permissions, "write", default=False)),
-                "add": bool(u.mapper().get(permissions, "add", default=False)),
-                "delete": bool(u.mapper().get(permissions, "delete", default=False)),
-                "search": bool(permissions.get("search", False)),
-                "compare": bool(permissions.get("compare", False)),
-                "self_write": bool(permissions.get("self_write", False)),
-                "proxy": bool(permissions.get("proxy", False)),
-                "browse": bool(permissions.get("browse", False)),
-                "auth": bool(permissions.get("auth", False)),
-                "all": bool(permissions.get("all", False)),
-            }
-        if isinstance(permissions, dict):
-            raw_perms = permissions
-            return {
-                "read": bool(raw_perms.get("read")),
-                "write": bool(raw_perms.get("write")),
-                "add": bool(raw_perms.get("add")),
-                "delete": bool(raw_perms.get("delete")),
-                "search": bool(raw_perms.get("search")),
-                "compare": bool(raw_perms.get("compare")),
-                "self_write": bool(raw_perms.get("self_write")),
-                "proxy": bool(raw_perms.get("proxy")),
-                "browse": bool(raw_perms.get("browse")),
-                "auth": bool(raw_perms.get("auth")),
-                "all": bool(raw_perms.get("all")),
-            }
-        if hasattr(permissions, "model_dump") and callable(
-            getattr(permissions, "model_dump", None),
-        ):
-            raw_perms = permissions.model_dump()
-            return {
-                "read": bool(raw_perms.get("read", False)),
-                "write": bool(raw_perms.get("write", False)),
-                "add": bool(raw_perms.get("add", False)),
-                "delete": bool(raw_perms.get("delete", False)),
-                "search": bool(raw_perms.get("search", False)),
-                "compare": bool(raw_perms.get("compare", False)),
-                "self_write": bool(raw_perms.get("self_write", False)),
-                "proxy": bool(raw_perms.get("proxy", False)),
-                "browse": bool(raw_perms.get("browse", False)),
-                "auth": bool(raw_perms.get("auth", False)),
-                "all": bool(raw_perms.get("all", False)),
-            }
-        return {}
+        try:
+            permissions_model = m.Ldif.AclPermissions.model_validate(permissions)
+        except Exception:
+            return {}
+        raw_perms = permissions_model.model_dump()
+        return {
+            "read": bool(raw_perms.get("read", False)),
+            "write": bool(raw_perms.get("write", False)),
+            "add": bool(raw_perms.get("add", False)),
+            "delete": bool(raw_perms.get("delete", False)),
+            "search": bool(raw_perms.get("search", False)),
+            "compare": bool(raw_perms.get("compare", False)),
+            "self_write": bool(raw_perms.get("self_write", False)),
+            "proxy": bool(raw_perms.get("proxy", False)),
+            "browse": bool(raw_perms.get("browse", False)),
+            "auth": bool(raw_perms.get("auth", False)),
+            "all": bool(raw_perms.get("all", False)),
+        }
 
     def _prepare_subject_value_with_suffix(
         self,
@@ -525,15 +495,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         metadata_public: m.Ldif.QuirkMetadata | None = None
         if metadata:
-            if isinstance(metadata, m.Ldif.QuirkMetadata):
-                metadata_public = metadata
-            elif isinstance(metadata, dict):
+            try:
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)
-            else:
+            except Exception:
                 metadata_dict = self._normalize_to_dict(metadata)
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(
-                    metadata_dict,
-                )
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
 
         oid_subject_type = self._map_rfc_subject_to_oid(
             subject_public,
@@ -792,29 +758,17 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
 
         if acl_data.subject:
-            subject_public = (
-                m.Ldif.AclSubject.model_validate(acl_data.subject.model_dump())
-                if not isinstance(acl_data.subject, m.Ldif.AclSubject)
-                else acl_data.subject
-            )
+            subject_public = m.Ldif.AclSubject.model_validate(acl_data.subject)
 
             if acl_data.permissions:
-                if isinstance(acl_data.permissions, m.Ldif.AclPermissions):
-                    permissions_public = acl_data.permissions
-                else:
-                    permissions_dict = acl_data.permissions.model_dump()
-                    permissions_public = m.Ldif.AclPermissions.model_validate(
-                        permissions_dict,
-                    )
+                permissions_public = m.Ldif.AclPermissions.model_validate(
+                    acl_data.permissions,
+                )
             else:
                 permissions_public = None
 
             if acl_data.metadata:
-                if isinstance(acl_data.metadata, m.Ldif.QuirkMetadata):
-                    metadata_public = acl_data.metadata
-                else:
-                    metadata_dict = acl_data.metadata.model_dump()
-                    metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
             else:
                 metadata_public = None
             subject_clause, permissions_clause = (
@@ -833,11 +787,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
 
         if acl_data.metadata:
-            if isinstance(acl_data.metadata, m.Ldif.QuirkMetadata):
-                metadata_public = acl_data.metadata
-            else:
-                metadata_dict = acl_data.metadata.model_dump()
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
+            metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
         else:
             metadata_public = None
         acl_parts.extend(self._build_metadata_extensions(metadata_public))
@@ -856,10 +806,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         source_subject_type_raw = metadata.extensions.get(
             c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE,
         )
-        if source_subject_type_raw is None or isinstance(
-            source_subject_type_raw,
-            str,
-        ):
+        if source_subject_type_raw is None or u.is_type(source_subject_type_raw, "str"):
             return source_subject_type_raw
         msg = f"Expected str | None, got {type(source_subject_type_raw)}"
         raise TypeError(msg)

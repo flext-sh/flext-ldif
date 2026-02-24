@@ -36,11 +36,11 @@ class FlextLdifUtilitiesDecorators:
         ),
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
-        if not hasattr(obj, "__class__"):
+        if not getattr(obj, "__class__", None) is not None:
             return None
 
         for cls in obj.__class__.__mro__:
-            if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
+            if getattr(cls, "Constants", None) is not None and getattr(cls.Constants, "SERVER_TYPE", None) is not None:
                 return str(cls.Constants.SERVER_TYPE)
 
         return None
@@ -63,7 +63,7 @@ class FlextLdifUtilitiesDecorators:
         # Only attach metadata to models with metadata attribute
         if not (
             getattr(result_value, "metadata", None) is not None
-            or hasattr(result_value, "metadata")
+            or getattr(result_value, "metadata", None) is not None
         ):
             return
 
@@ -87,17 +87,14 @@ class FlextLdifUtilitiesDecorators:
         # Attach metadata by checking if object is a model instance with metadata
         # Use runtime type check instead of protocol isinstance to avoid mypy issues
         if (
-            hasattr(result_value, "metadata")
-            and hasattr(type(result_value), "model_fields")  # Check class, not instance
-            and isinstance(
-                result_value,
-                (
+            getattr(result_value, "metadata", None) is not None
+            and getattr(type(result_value), "model_fields", None) is not None  # Check class, not instance
+            and issubclass(result_value.__class__, (
                     m.Ldif.Entry,
                     m.Ldif.SchemaAttribute,
                     m.Ldif.SchemaObjectClass,
                     m.Ldif.Acl,
-                ),
-            )
+                ))
         ):
             # This is a Pydantic model with metadata field
             # Use model_copy to create updated instance (respects validate_assignment)
@@ -132,15 +129,12 @@ class FlextLdifUtilitiesDecorators:
                     unwrapped = result.value
                     # Type narrowing: self is a protocol, but we need concrete types
                     # Check if unwrapped is one of the supported types
-                    if isinstance(
-                        unwrapped,
-                        (
+                    if issubclass(unwrapped.__class__, (
                             m.Ldif.Entry,
                             m.Ldif.SchemaAttribute,
                             m.Ldif.SchemaObjectClass,
                             m.Ldif.Acl,
-                        ),
-                    ):
+                        )):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
                                 unwrapped,

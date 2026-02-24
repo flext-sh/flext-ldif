@@ -70,7 +70,7 @@ mail: jane.smith@example.com
                 return r.fail(error or "Detection failed")
 
         # Chain operations with Railway pattern
-        validate_result = api.parse(self.SAMPLE_LDIF, server_type=server_type).and_then(
+        validate_result = api.parse(self.SAMPLE_LDIF, server_type=server_type).flat_map(
             api.validate_entries,
         )
         if validate_result.is_failure:

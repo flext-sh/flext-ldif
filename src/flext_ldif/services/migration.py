@@ -71,7 +71,7 @@ class FlextLdifMigrationPipeline(
         """Get source server type."""
         val = getattr(self, "_source_server", c.Ldif.ServerTypes.RFC)
         # Ensure we return ServerTypes enum member
-        if isinstance(val, c.Ldif.ServerTypes):
+        if issubclass(val.__class__, c.Ldif.ServerTypes):
             return val
         # If it's a string, try to convert to enum
         try:
@@ -88,7 +88,7 @@ class FlextLdifMigrationPipeline(
     def target_server_type(self) -> c.Ldif.ServerTypes:
         """Get target server type."""
         val = getattr(self, "_target_server", c.Ldif.ServerTypes.RFC)
-        if isinstance(val, c.Ldif.ServerTypes):
+        if issubclass(val.__class__, c.Ldif.ServerTypes):
             return val
         try:
             return c.Ldif.ServerTypes(val)

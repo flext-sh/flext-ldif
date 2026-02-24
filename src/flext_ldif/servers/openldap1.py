@@ -11,6 +11,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
@@ -111,22 +112,23 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute."""
-            if isinstance(attr_definition, str):
+            if u.Guards.is_type(attr_definition, str):
+                attr_definition_str = str(attr_definition)
                 if not re.match(
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN,
-                    attr_definition,
+                    attr_definition_str,
                     re.IGNORECASE,
                 ):
                     return False
 
-                has_olc = "olc" in attr_definition.lower()
+                has_olc = "olc" in attr_definition_str.lower()
                 return not has_olc
 
-            has_olc = (
-                "olc" in attr_definition.oid.lower() if attr_definition.oid else False
-            )
-            if not has_olc and attr_definition.name:
-                has_olc = "olc" in attr_definition.name.lower()
+            oid_raw = getattr(attr_definition, "oid", None)
+            has_olc = u.Guards.is_type(oid_raw, str) and "olc" in oid_raw.lower()
+            name_raw = getattr(attr_definition, "name", None)
+            if not has_olc and u.Guards.is_type(name_raw, str):
+                has_olc = "olc" in name_raw.lower()
             return not has_olc
 
         def can_handle_objectclass(
@@ -134,20 +136,23 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass."""
-            if isinstance(oc_definition, str):
+            if u.Guards.is_type(oc_definition, str):
+                oc_definition_str = str(oc_definition)
                 if not re.match(
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN,
-                    oc_definition,
+                    oc_definition_str,
                     re.IGNORECASE,
                 ):
                     return False
 
-                has_olc = "olc" in oc_definition.lower()
+                has_olc = "olc" in oc_definition_str.lower()
                 return not has_olc
 
-            has_olc = "olc" in oc_definition.oid.lower() if oc_definition.oid else False
-            if not has_olc and oc_definition.name:
-                has_olc = "olc" in oc_definition.name.lower()
+            oid_raw = getattr(oc_definition, "oid", None)
+            has_olc = u.Guards.is_type(oid_raw, str) and "olc" in oid_raw.lower()
+            name_raw = getattr(oc_definition, "name", None)
+            if not has_olc and u.Guards.is_type(name_raw, str):
+                has_olc = "olc" in name_raw.lower()
             return not has_olc
 
         def _parse_attribute(
@@ -253,17 +258,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 if sup:
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
-                if must and isinstance(must, (list, tuple)):
-                    if not isinstance(must, list):
-                        msg = f"Expected list, got {type(must)}"
-                        raise TypeError(msg)
+                if must and u.Guards.is_type(must, list):
                     must_list_str: list[str] = [str(item) for item in must]
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
-                if may and isinstance(may, (list, tuple)):
-                    if not isinstance(may, list):
-                        msg = f"Expected list, got {type(may)}"
-                        raise TypeError(msg)
+                if may and u.Guards.is_type(may, list):
                     may_list_str: list[str] = [str(item) for item in may]
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"
@@ -281,21 +280,20 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL (public method)."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 return self.can_handle_acl(acl_line)
 
-            if isinstance(acl_line, m.Ldif.Acl):
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
                 return self.can_handle_acl(acl_line)
 
-            if isinstance(acl_line, object):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if isinstance(raw_acl, str):
-                    return self.can_handle_acl(raw_acl)
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if u.Guards.is_type(raw_acl, str):
+                return self.can_handle_acl(raw_acl)
             return False
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 return bool(
                     re.match(
                         FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_PATTERN,
@@ -303,13 +301,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         re.IGNORECASE,
                     ),
                 )
-            if not isinstance(acl_line, m.Ldif.Acl) or not acl_line.raw_acl:
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                 return False
 
             return bool(
                 re.match(
                     FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_PATTERN,
-                    acl_line.raw_acl,
+                    raw_acl,
                     re.IGNORECASE,
                 ),
             )

@@ -221,7 +221,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         **kwargs: str | float | bool | None,
     ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
-        if options and hasattr(options, "write_options") and options.write_options:
+        if options and getattr(options, "write_options", None) is not None and options.write_options:
             _ = kwargs.setdefault(
                 "fold_long_lines", options.write_options.fold_long_lines
             )

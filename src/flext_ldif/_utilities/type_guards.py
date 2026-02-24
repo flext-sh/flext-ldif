@@ -43,7 +43,7 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
             True if object is a Sequence of Entry-like objects
 
         """
-        if not isinstance(obj, ABCSequence) or isinstance(obj, (str, bytes, dict)):
+        if not issubclass(obj.__class__, ABCSequence) or issubclass(obj.__class__, (str, bytes, dict)):
             return False
         # Check if all items are Entry-like (have dn and attributes)
-        return all(hasattr(item, "dn") and hasattr(item, "attributes") for item in obj)
+        return all(getattr(item, "dn", None) is not None and getattr(item, "attributes", None) is not None for item in obj)

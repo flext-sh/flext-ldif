@@ -32,15 +32,15 @@ def _extract_write_options(
 
 def _normalize_write_format(d: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
     """Normalize write format from dict."""
-    if not isinstance(d, dict):
+    if not issubclass(d.__class__, dict):
         return {}
     return (
         {
             "base64_encode_binary": (
-                d.get("base64_encode_binary") if isinstance(d, dict) else None
+                d.get("base64_encode_binary") if issubclass(d.__class__, dict) else None
             ),
         }
-        if isinstance(d, dict) and d.get("base64_encode_binary") is not None
+        if issubclass(d.__class__, dict) and d.get("base64_encode_binary") is not None
         else {}
     )
 
@@ -73,17 +73,17 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         """Normalize format options to WriteFormatOptions."""
         if format_options is None:
             result_raw = m.Ldif.LdifResults.WriteFormatOptions()
-        elif isinstance(format_options, type):
+        elif issubclass(format_options.__class__, type):
             result_raw = format_options()
-        elif isinstance(format_options, m.Ldif.LdifResults.WriteFormatOptions):
+        elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteFormatOptions):
             result_raw = format_options
-        elif isinstance(format_options, m.Ldif.LdifResults.WriteOptions):
+        elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteOptions):
             extracted = _extract_write_options(format_options)
             if extracted is None:
                 msg = f"Failed to extract write options from {type(format_options)}"
                 raise TypeError(msg)
             result_raw = extracted
-        elif isinstance(format_options, dict):
+        elif issubclass(format_options.__class__, dict):
             result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
                 format_options
             )
@@ -93,7 +93,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             msg = f"Expected WriteFormatOptions | WriteOptions | dict | None, got {type(format_options)}"
             raise TypeError(msg)
 
-        if isinstance(result_raw, m.Ldif.LdifResults.WriteFormatOptions):
+        if issubclass(result_raw.__class__, m.Ldif.LdifResults.WriteFormatOptions):
             return result_raw
 
         msg = f"Unexpected type in match result: {type(result_raw)}"
@@ -224,8 +224,8 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         entries_raw = u.take(params, "entries", as_type=list, default=[])
 
         entries: list[m.Ldif.Entry] = (
-            [entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)]
-            if isinstance(entries_raw, list)
+            [entry for entry in entries_raw if issubclass(entry.__class__, m.Ldif.Entry)]
+            if issubclass(entries_raw.__class__, list)
             else []
         )
         target_server_type_raw = u.take(
@@ -236,7 +236,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         )
 
         target_server_type: str | None = None
-        if isinstance(target_server_type_raw, str):
+        if issubclass(target_server_type_raw.__class__, str):
             try:
                 target_server_type = u.Ldif.Server.normalize_server_type(
                     target_server_type_raw,
@@ -246,7 +246,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         output_path_raw = u.take(params, "output_path", as_type=Path)
 
         output_path: Path | None = (
-            output_path_raw if isinstance(output_path_raw, Path) else None
+            output_path_raw if issubclass(output_path_raw.__class__, Path) else None
         )
         format_options_raw: t.GeneralValueType = u.take(params, "format_options")
 
@@ -256,13 +256,10 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             | None
         ) = (
             format_options_raw
-            if isinstance(
-                format_options_raw,
-                (
+            if issubclass(format_options_raw.__class__, (
                     m.Ldif.LdifResults.WriteFormatOptions,
                     m.Ldif.LdifResults.WriteOptions,
-                ),
-            )
+                ))
             else None
         )
 
@@ -277,7 +274,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             return r[m.Ldif.LdifResults.WriteResponse].fail(write_result.error)
 
         result_value = write_result.value
-        if isinstance(result_value, m.Ldif.LdifResults.WriteResponse):
+        if issubclass(result_value.__class__, m.Ldif.LdifResults.WriteResponse):
             return r[m.Ldif.LdifResults.WriteResponse].ok(result_value)
 
         return r[m.Ldif.LdifResults.WriteResponse].ok(

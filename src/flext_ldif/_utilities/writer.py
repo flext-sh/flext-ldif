@@ -197,7 +197,7 @@ class FlextLdifUtilitiesWriter:
         if not attr_list:
             return
 
-        if isinstance(attr_list, list):
+        if issubclass(attr_list.__class__, list):
             attr_list_str: list[str] = [str(item) for item in attr_list]
             if len(attr_list_str) == 1:
                 parts.append(f"{keyword} {attr_list_str[0]}")
@@ -227,7 +227,7 @@ class FlextLdifUtilitiesWriter:
             parts.append("OBSOLETE")
 
         if oc_data.sup:
-            if isinstance(oc_data.sup, list):
+            if issubclass(oc_data.sup.__class__, list):
                 sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 sup_str = " $ ".join(sup_list_str)
                 parts.append(f"SUP ( {sup_str} )")
@@ -283,14 +283,14 @@ class FlextLdifUtilitiesWriter:
         if extensions is not None:
             attr_order = (
                 u.mapper().get(extensions, "attribute_order")
-                if hasattr(extensions, "get")
+                if getattr(extensions, "get", None) is not None
                 else None
             )
-        elif isinstance(metadata, dict):
+        elif issubclass(metadata.__class__, dict):
             extensions_raw: dict[str, t.GeneralValueType] | object = u.mapper().get(
                 metadata, "extensions", default={}
             )
-            if not isinstance(extensions_raw, dict):
+            if not issubclass(extensions_raw.__class__, dict):
                 attr_order = None
             else:
                 attr_order = u.mapper().get(extensions_raw, "attribute_order")
@@ -298,7 +298,7 @@ class FlextLdifUtilitiesWriter:
         if attr_order is None:
             return None
 
-        if not isinstance(attr_order, list):
+        if not issubclass(attr_order.__class__, list):
             return None
 
         skip_keys = {
@@ -310,7 +310,7 @@ class FlextLdifUtilitiesWriter:
 
         result: list[tuple[str, t.GeneralValueType]] = []
         for key in attr_order:
-            if not isinstance(key, str):
+            if not issubclass(key.__class__, str):
                 continue  # Skip non-string keys
             if key in entry_data and key not in skip_keys:
                 result.append((key, entry_data[key]))
@@ -427,7 +427,7 @@ class FlextLdifUtilitiesWriter:
         handler_config = u.mapper().get(status_handlers, status)
         if (
             handler_config
-            and isinstance(handler_config, tuple)
+            and issubclass(handler_config.__class__, tuple)
             and len(handler_config) == _TUPLE_LENGTH_TWO
         ):
             show_flag, name_format = handler_config
@@ -435,7 +435,7 @@ class FlextLdifUtilitiesWriter:
                 return None
             if name_format is None:
                 return None
-            if not isinstance(name_format, str):
+            if not issubclass(name_format.__class__, str):
                 return None
             return (name_format, attr_values)
 
@@ -447,11 +447,11 @@ class FlextLdifUtilitiesWriter:
         value: bytes | str,
     ) -> str:
         """Encode a single attribute value for LDIF output (RFC 2849)."""
-        if isinstance(value, bytes):
+        if issubclass(value.__class__, bytes):
             encoded_value = base64.b64encode(value).decode("ascii")
             return f"{attr_name}:: {encoded_value}"
 
-        str_value = str(value) if not isinstance(value, str) else value
+        str_value = str(value) if not issubclass(value.__class__, str) else value
 
         try:
             str_value.encode("utf-8")
@@ -578,7 +578,7 @@ class FlextLdifUtilitiesWriter:
             u.mapper().get(changetype_config, "fold_long_lines", default=True),
         )
         width_raw = u.mapper().get(changetype_config, "width", default=76)
-        width = int(width_raw) if isinstance(width_raw, int | str) else 76
+        width = int(width_raw) if issubclass(width_raw.__class__, int | str) else 76
 
         if format_type == "modify":
             changetype_line = "changetype: modify"

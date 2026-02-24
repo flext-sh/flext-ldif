@@ -34,7 +34,7 @@ class FlextLdifServersOidSchema(
             k: v
             for k, v in kwargs.items()
             if k not in ("_parent_quirk", "_schema_service")
-            and isinstance(v, (str, float, bool, type(None)))
+            and (v is None or v.__class__ in (str, float, bool))
         }
 
         schema_service_typed: object | None = (
@@ -187,10 +187,7 @@ class FlextLdifServersOidSchema(
                 original_format_raw = attr_data.metadata.extensions.get(
                     c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT,
                 )
-                if original_format_raw is None or isinstance(
-                    original_format_raw,
-                    str,
-                ):
+                if original_format_raw is None or original_format_raw.__class__ is str:
                     original_format = original_format_raw
                 else:
                     msg = f"Expected str | None, got {type(original_format_raw)}"
@@ -325,7 +322,7 @@ class FlextLdifServersOidSchema(
                 c.Ldif.MetadataKeys.SCHEMA_SOURCE_SYNTAX_OID,
             )
 
-        if source_rules and isinstance(source_rules, dict):
+        if source_rules and source_rules.__class__ is dict:
             oid_equality = source_rules.get("equality", attr_copy.equality)
             oid_substr = source_rules.get("substr", attr_copy.substr)
             oid_ordering = source_rules.get("ordering", attr_copy.ordering)
@@ -542,7 +539,7 @@ class FlextLdifServersOidSchema(
         x_origin_value: str | None = None
         if attr_data.metadata and attr_data.metadata.extensions:
             match attr_data.metadata.extensions.get("x_origin"):
-                case origin if isinstance(origin, str):
+                case origin if origin.__class__ is str:
                     x_origin_value = origin
                 case None:
                     pass

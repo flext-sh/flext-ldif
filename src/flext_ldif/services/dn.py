@@ -113,7 +113,7 @@ class FlextLdifDn(
 
         result = self._dispatch_operation()
 
-        if self.enable_events and hasattr(self, "logger"):
+        if self.enable_events and getattr(self, "logger", None) is not None:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
 
             parse_components = None
@@ -142,19 +142,19 @@ class FlextLdifDn(
 
     def get_last_event(self) -> m.Ldif.LdifResults.DnEvent | None:
         """Retrieve last emitted DnEvent."""
-        return self._last_event if hasattr(self, "_last_event") else None
+        return self._last_event if getattr(self, "_last_event", None) is not None else None
 
     @property
     def _parser(self) -> FlextLdifDn.Parser:
         """Get or create Parser instance."""
-        if not hasattr(self, "_parser_instance"):
+        if not getattr(self, "_parser_instance", None) is not None:
             self._parser_instance = FlextLdifDn.Parser()
         return self._parser_instance
 
     @property
     def _normalizer(self) -> FlextLdifDn.Normalizer:
         """Get or create Normalizer instance."""
-        if not hasattr(self, "_normalizer_instance"):
+        if not getattr(self, "_normalizer_instance", None) is not None:
             self._normalizer_instance = FlextLdifDn.Normalizer()
         return self._normalizer_instance
 

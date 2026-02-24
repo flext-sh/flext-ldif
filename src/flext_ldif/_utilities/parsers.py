@@ -109,10 +109,10 @@ class FlextLdifUtilitiesParsers:
                 # Create entry
                 # Entry field validators will coerce str -> DN and dict -> m.Ldif.
                 # Convert types explicitly for mypy
-                dn_obj = dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN(value=dn)
+                dn_obj = dn if issubclass(dn.__class__, m.Ldif.DN) else m.Ldif.DN(value=dn)
                 attrs_obj = (
                     attributes
-                    if isinstance(attributes, m.Ldif.Attributes)
+                    if issubclass(attributes.__class__, m.Ldif.Attributes)
                     else m.Ldif.Attributes(attributes=attributes)
                 )
                 entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
@@ -253,11 +253,11 @@ class FlextLdifUtilitiesParsers:
 
                 # Extract lists
                 must = parts.get("must")
-                if must is not None and not isinstance(must, list):
+                if must is not None and not issubclass(must.__class__, list):
                     must = [str(must)]
 
                 may = parts.get("may")
-                if may is not None and not isinstance(may, list):
+                if may is not None and not issubclass(may.__class__, list):
                     may = [str(may)]
 
                 # Create objectClass

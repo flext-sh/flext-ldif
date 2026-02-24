@@ -50,11 +50,11 @@ class FlextLdifServer(FlextRegistry):
             try:
                 instance = obj()
                 server_type = getattr(instance, "server_type", None)
-                if not isinstance(server_type, str):
+                if not issubclass(server_type.__class__, str):
                     continue
 
                 quirk_class = type(instance)
-                if not all(hasattr(quirk_class, c) for c in ("Schema", "Acl", "Entry")):
+                if not all(getattr(quirk_class, c, None) is not None for c in ("Schema", "Acl", "Entry")):
                     continue
 
                 self.register_class_plugin(self.SERVERS, server_type, instance)
@@ -72,7 +72,7 @@ class FlextLdifServer(FlextRegistry):
         if result.is_failure:
             return r[FlextLdifServersBase].fail(str(result.error))
 
-        if isinstance(result.value, FlextLdifServersBase):
+        if issubclass(result.value.__class__, FlextLdifServersBase):
             return r[FlextLdifServersBase].ok(result.value)
         return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
 
@@ -91,7 +91,7 @@ class FlextLdifServer(FlextRegistry):
             return None
         quirk = base.schema_quirk
 
-        if isinstance(quirk, FlextLdifServersBaseSchema):
+        if issubclass(quirk.__class__, FlextLdifServersBaseSchema):
             return quirk
         return None
 
@@ -102,7 +102,7 @@ class FlextLdifServer(FlextRegistry):
             return None
         quirk = base.acl_quirk
 
-        if isinstance(quirk, FlextLdifServersBaseSchemaAcl):
+        if issubclass(quirk.__class__, FlextLdifServersBaseSchemaAcl):
             return quirk
         return None
 
@@ -113,7 +113,7 @@ class FlextLdifServer(FlextRegistry):
             return None
         quirk = base.entry_quirk
 
-        if isinstance(quirk, FlextLdifServersBaseEntry):
+        if issubclass(quirk.__class__, FlextLdifServersBaseEntry):
             return quirk
         return None
 
@@ -137,7 +137,7 @@ class FlextLdifServer(FlextRegistry):
             constants = getattr(type(base), "Constants", None)
             if constants is None:
                 return r[type].fail(f"Server {server_type} missing Constants")
-            if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
+            if not getattr(constants, "CATEGORIZATION_PRIORITY", None) is not None:
                 return r[type].fail(
                     f"Server {server_type} missing CATEGORIZATION_PRIORITY",
                 )
@@ -162,7 +162,7 @@ class FlextLdifServer(FlextRegistry):
                 "acl": type(base.acl_quirk).__name__ if base.acl_quirk else None,
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
-            priorities[st] = base.priority if isinstance(base.priority, int) else 0
+            priorities[st] = base.priority if issubclass(base.priority.__class__, int) else 0
 
         return {
             "total_servers": len(servers),

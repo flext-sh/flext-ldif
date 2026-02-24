@@ -310,7 +310,7 @@ class WriteConfigBuilder:
         # Convert types to match WriteConfig expectations
         base64_attrs_value = (
             list(self._base64_attrs)
-            if isinstance(self._base64_attrs, (list, tuple))
+            if issubclass(self._base64_attrs.__class__, (list, tuple))
             else None
         )
         attr_order_value = (

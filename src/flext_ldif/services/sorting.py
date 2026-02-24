@@ -14,6 +14,13 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
+_MISSING_ATTR = object()
+
+
+def _has_attr(obj: object, attr_name: str) -> bool:
+    """Check attribute presence via sentinel lookup."""
+    return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
+
 
 class FlextLdifSorting(
     FlextLdifServiceBase[list[m.Ldif.Entry]],
@@ -93,7 +100,7 @@ class FlextLdifSorting(
             c.Ldif.SortTarget.SCHEMA.value,
             c.Ldif.SortTarget.COMBINED.value,
         }
-        if isinstance(v, str) and v in valid_values:
+        if u.Guards.is_type(v, str) and v in valid_values:
             return v
         msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -112,7 +119,7 @@ class FlextLdifSorting(
             c.Ldif.SortStrategy.SCHEMA.value,
             c.Ldif.SortStrategy.CUSTOM.value,
         }
-        if isinstance(v, str) and v in valid_values:
+        if u.Guards.is_type(v, str) and v in valid_values:
             return v
         msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -180,9 +187,11 @@ class FlextLdifSorting(
         default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
 
         if config is not None:
-            strategy = config.by if isinstance(config.by, str) else str(config.by)
+            strategy = config.by if u.Guards.is_type(config.by, str) else str(config.by)
 
-            entries_final = [e for e in config.entries if isinstance(e, m.Ldif.Entry)]
+            entries_final = [
+                e for e in config.entries if u.Guards.is_type(e, m.Ldif.Entry)
+            ]
             acl_attrs_final = config.acl_attributes or []
             sorting_instance = cls(
                 entries=entries_final,
@@ -343,7 +352,7 @@ class FlextLdifSorting(
         if sorted_entries_raw is None:
             error_msg = (
                 result.error
-                if hasattr(result, "error") and result.error
+                if _has_attr(result, "error") and result.error
                 else "Sort failed"
             )
             return r[list[m.Ldif.Entry]].fail(error_msg)
@@ -357,7 +366,7 @@ class FlextLdifSorting(
             if sorted_entries_attr_raw is None:
                 error_msg = (
                     result.error
-                    if hasattr(result, "error") and result.error
+                    if _has_attr(result, "error") and result.error
                     else "Attribute sort failed"
                 )
                 return r[list[m.Ldif.Entry]].fail(error_msg)
@@ -371,7 +380,7 @@ class FlextLdifSorting(
             if sorted_entries_raw is None:
                 error_msg = (
                     result.error
-                    if hasattr(result, "error") and result.error
+                    if _has_attr(result, "error") and result.error
                     else "ACL sort failed"
                 )
                 return r[list[m.Ldif.Entry]].fail(error_msg)
@@ -420,14 +429,16 @@ class FlextLdifSorting(
             try:
                 result = sort_entry(entry)
 
-                if isinstance(result, r):
-                    if result.is_success and isinstance(result.value, m.Ldif.Entry):
+                if u.Guards.is_type(result, r):
+                    if result.is_success and u.Guards.is_type(
+                        result.value, m.Ldif.Entry
+                    ):
                         processed.append(result.value)
                     else:
                         return r[list[m.Ldif.Entry]].fail(
                             result.error or "Attribute sort failed",
                         )
-                elif isinstance(result, m.Ldif.Entry):
+                elif u.Guards.is_type(result, m.Ldif.Entry):
                     processed.append(result)
             except Exception as exc:
                 return r[list[m.Ldif.Entry]].fail(f"Attribute sort failed: {exc}")
@@ -475,7 +486,7 @@ class FlextLdifSorting(
             attrs_dict: dict[str, list[str]] = {
                 str(k): (
                     [str(v) for v in vals]
-                    if isinstance(vals, (list, tuple))
+                    if u.Guards.is_type(vals, (list, tuple))
                     else [str(vals)]
                 )
                 for k, vals in entry.attributes.attributes.items()
@@ -487,7 +498,7 @@ class FlextLdifSorting(
                     acl_values_raw = attrs_dict[acl_attr]
                     acl_values_raw_normalized = (
                         acl_values_raw
-                        if isinstance(acl_values_raw, (list, tuple))
+                        if u.Guards.is_type(acl_values_raw, (list, tuple))
                         else [str(acl_values_raw)]
                     )
 
@@ -495,7 +506,9 @@ class FlextLdifSorting(
                         str(item)
                         for item in (
                             acl_values_raw_normalized
-                            if isinstance(acl_values_raw_normalized, (list, tuple))
+                            if u.Guards.is_type(
+                                acl_values_raw_normalized, (list, tuple)
+                            )
                             else [acl_values_raw_normalized]
                         )
                     ]
@@ -524,16 +537,18 @@ class FlextLdifSorting(
             )
 
         batch_data = batch_result.value
-        if isinstance(batch_data, dict):
+        if u.Guards.is_type(batch_data, dict):
             processed_raw_value = u.take(batch_data, "results", default=[])
             processed_raw = (
-                processed_raw_value if isinstance(processed_raw_value, list) else []
+                processed_raw_value
+                if u.Guards.is_type(processed_raw_value, list)
+                else []
             )
         else:
             processed_raw = batch_data.results
 
         processed: list[m.Ldif.Entry] = [
-            item for item in processed_raw if isinstance(item, m.Ldif.Entry)
+            item for item in processed_raw if u.Guards.is_type(item, m.Ldif.Entry)
         ]
         return r[list[m.Ldif.Entry]].ok(processed)
 
@@ -593,8 +608,12 @@ class FlextLdifSorting(
             default=[],
         )
         children: list[str] = []
-        if isinstance(children_raw, Sequence) and not isinstance(children_raw, str):
-            children.extend(item for item in children_raw if isinstance(item, str))
+        if u.Guards.is_type(children_raw, Sequence) and not u.Guards.is_type(
+            children_raw, str
+        ):
+            children.extend(
+                item for item in children_raw if u.Guards.is_type(item, str)
+            )
         for child_dn in children:
             result.extend(
                 FlextLdifSorting._dfs_traverse(
@@ -683,13 +702,13 @@ class FlextLdifSorting(
                         )
 
                         entries_for_dn: list[m.Ldif.Entry] = []
-                        if isinstance(entries_raw, Sequence) and not isinstance(
-                            entries_raw, str
-                        ):
+                        if u.Guards.is_type(
+                            entries_raw, Sequence
+                        ) and not u.Guards.is_type(entries_raw, str):
                             entries_for_dn.extend(
                                 item
                                 for item in entries_raw
-                                if isinstance(item, m.Ldif.Entry)
+                                if u.Guards.is_type(item, m.Ldif.Entry)
                             )
                         sorted_entries.extend(entries_for_dn)
                         visited.add(dn_key)
@@ -727,7 +746,7 @@ class FlextLdifSorting(
         normalized_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
         return (
             normalized_result
-            if isinstance(normalized_result, str)
+            if u.Guards.is_type(normalized_result, str)
             else str(normalized_result)
         )
 
@@ -756,7 +775,9 @@ class FlextLdifSorting(
                 return (3, u.Ldif.DN.get_dn_value(entry.dn).lower())
 
             first_val = str(
-                oid_values[0] if isinstance(oid_values, (list, tuple)) else oid_values,
+                oid_values[0]
+                if u.Guards.is_type(oid_values, (list, tuple))
+                else oid_values,
             )
             oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
 

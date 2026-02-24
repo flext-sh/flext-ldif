@@ -20,6 +20,12 @@ _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 _TUPLE_PAIR_LENGTH: Final[int] = 2
 
 logger: Final = FlextLogger(__name__)
+_MISSING_ATTR = object()
+
+
+def _has_attr(obj: object, attr_name: str) -> bool:
+    """Check attribute presence via sentinel lookup."""
+    return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
 
 def _cat(
@@ -43,7 +49,7 @@ def _merge_one_category(
 
     if override_existing or key_str not in category_map:
         category_map[key_str] = (
-            value if isinstance(value, frozenset) else frozenset([str(value)])
+            value if u.Guards.is_type(value, frozenset) else frozenset([str(value)])
         )
 
 
@@ -105,9 +111,9 @@ class FlextLdifCategorization(
                 FlextLdifServer.get_global_instance(),
             )
 
-        if isinstance(categorization_rules, m.Ldif.LdifResults.CategoryRules):
+        if u.Guards.is_type(categorization_rules, m.Ldif.LdifResults.CategoryRules):
             object.__setattr__(self, "_categorization_rules", categorization_rules)
-        elif isinstance(categorization_rules, dict):
+        elif u.Guards.is_type(categorization_rules, dict):
             object.__setattr__(
                 self,
                 "_categorization_rules",
@@ -120,9 +126,9 @@ class FlextLdifCategorization(
                 m.Ldif.LdifResults.CategoryRules(),
             )
 
-        if isinstance(schema_whitelist_rules, m.Ldif.LdifResults.WhitelistRules):
+        if u.Guards.is_type(schema_whitelist_rules, m.Ldif.LdifResults.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
-        elif isinstance(schema_whitelist_rules, dict):
+        elif u.Guards.is_type(schema_whitelist_rules, dict):
             object.__setattr__(
                 self,
                 "_schema_whitelist_rules",
@@ -252,7 +258,11 @@ class FlextLdifCategorization(
         batch_data = batch_result.map_or(None)
 
         validated: list[m.Ldif.Entry] = (
-            [entry for entry in batch_data.results if isinstance(entry, m.Ldif.Entry)]
+            [
+                entry
+                for entry in batch_data.results
+                if u.Guards.is_type(entry, m.Ldif.Entry)
+            ]
             if batch_data is not None
             else []
         )
@@ -293,7 +303,7 @@ class FlextLdifCategorization(
 
         attrs_dict = (
             entry.attributes.attributes
-            if hasattr(entry.attributes, "attributes")
+            if _has_attr(entry.attributes, "attributes")
             else {}
         )
         entry_attrs = {attr.lower() for attr in attrs_dict}
@@ -312,7 +322,7 @@ class FlextLdifCategorization(
         constants: type,
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
-        if not hasattr(constants, "HIERARCHY_PRIORITY_OBJECTCLASSES"):
+        if not _has_attr(constants, "HIERARCHY_PRIORITY_OBJECTCLASSES"):
             return False
 
         priority_classes = constants.HIERARCHY_PRIORITY_OBJECTCLASSES
@@ -335,7 +345,7 @@ class FlextLdifCategorization(
         constants: type | None,
     ) -> list[str]:
         """Get priority order from constants or use default."""
-        if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
+        if constants is not None and _has_attr(constants, "CATEGORIZATION_PRIORITY"):
 
             def is_valid_category(value: str) -> bool:
                 """Wrapper for TypeIs function to use as filter predicate."""
@@ -350,11 +360,11 @@ class FlextLdifCategorization(
 
             priority_list = getattr(constants, "CATEGORIZATION_PRIORITY", [])
 
-            if isinstance(priority_list, (list, tuple)):
+            if u.Guards.is_type(priority_list, (list, tuple)):
                 filtered = [
                     item
                     for item in priority_list
-                    if isinstance(item, str) and is_valid_category(item)
+                    if u.Guards.is_type(item, str) and is_valid_category(item)
                 ]
             else:
                 filtered = []
@@ -362,7 +372,7 @@ class FlextLdifCategorization(
             result: list[str] = [
                 item
                 for item in filtered
-                if isinstance(item, str)
+                if u.Guards.is_type(item, str)
                 and item
                 in {"schema", "hierarchy", "users", "groups", "acl", "rejected"}
             ]
@@ -385,7 +395,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[_cat("hierarchy")] = frozenset(
-                mapped if isinstance(mapped, list) else [],
+                mapped if u.Guards.is_type(mapped, list) else [],
             )
         if rules.user_objectclasses:
             mapped = u.Collection.map(
@@ -393,7 +403,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[_cat("users")] = frozenset(
-                mapped if isinstance(mapped, list) else [],
+                mapped if u.Guards.is_type(mapped, list) else [],
             )
         if rules.group_objectclasses:
             mapped = u.Collection.map(
@@ -401,7 +411,7 @@ class FlextLdifCategorization(
                 mapper=lambda oc: oc.lower(),
             )
             category_map[_cat("groups")] = frozenset(
-                mapped if isinstance(mapped, list) else [],
+                mapped if u.Guards.is_type(mapped, list) else [],
             )
         if rules.acl_attributes:
             mapped = u.Collection.map(
@@ -409,7 +419,7 @@ class FlextLdifCategorization(
                 mapper=lambda attr: f"attr:{attr.lower()}",
             )
             category_map[_cat("acl")] = frozenset(
-                mapped if isinstance(mapped, list) else [],
+                mapped if u.Guards.is_type(mapped, list) else [],
             )
 
         return category_map
@@ -425,14 +435,14 @@ class FlextLdifCategorization(
         override_existing: bool = False,
     ) -> dict[str, frozenset[str]]:
         """Merge server constants into category map."""
-        if hasattr(constants, "CATEGORY_OBJECTCLASSES"):
+        if _has_attr(constants, "CATEGORY_OBJECTCLASSES"):
             _merge_category_from_constants(
                 category_map,
                 constants.CATEGORY_OBJECTCLASSES,
                 override_existing=override_existing,
             )
 
-        if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
+        if _has_attr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
             acl_attrs = constants.CATEGORIZATION_ACL_ATTRIBUTES
             if acl_attrs:
                 acl_category = _cat("acl")
@@ -443,9 +453,9 @@ class FlextLdifCategorization(
                         mapper=lambda attr: f"attr:{attr.lower()}",
                     )
 
-                    if isinstance(mapped, frozenset):
+                    if u.Guards.is_type(mapped, frozenset):
                         category_map[acl_category] = mapped
-                    elif isinstance(mapped, list):
+                    elif u.Guards.is_type(mapped, list):
                         category_map[acl_category] = frozenset(mapped)
                     else:
                         category_map[acl_category] = frozenset()
@@ -457,9 +467,9 @@ class FlextLdifCategorization(
                         mapper=lambda attr: f"attr:{attr.lower()}",
                     )
 
-                    if isinstance(mapped, frozenset):
+                    if u.Guards.is_type(mapped, frozenset):
                         new_acl_attrs = mapped
-                    elif isinstance(mapped, list):
+                    elif u.Guards.is_type(mapped, list):
                         new_acl_attrs = frozenset(mapped)
                     else:
                         new_acl_attrs = frozenset()
@@ -477,12 +487,12 @@ class FlextLdifCategorization(
         ),
     ) -> r[m.Ldif.LdifResults.CategoryRules]:
         """Normalize rules to CategoryRules model."""
-        if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
+        if u.Guards.is_type(rules, m.Ldif.LdifResults.CategoryRules):
             return r[m.Ldif.LdifResults.CategoryRules].ok(rules)
         if rules is None:
             return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
 
-        if isinstance(rules, Mapping):
+        if u.Guards.is_type(rules, Mapping):
             try:
                 return r[m.Ldif.LdifResults.CategoryRules].ok(
                     m.Ldif.LdifResults.CategoryRules.model_validate(dict(rules))
@@ -589,7 +599,7 @@ class FlextLdifCategorization(
         constants_result = self._get_server_constants(effective_server_type)
         if constants_result.is_success:
             constants_raw = constants_result.map_or(None)
-            if constants_raw is not None and isinstance(constants_raw, type):
+            if constants_raw is not None and u.Guards.is_type(constants_raw, type):
                 constants = constants_raw
         elif not merged_category_map:
             return (
@@ -667,16 +677,16 @@ class FlextLdifCategorization(
         if batch_data is not None:
             results_list_raw = batch_data.results
             results_list = (
-                results_list_raw if isinstance(results_list_raw, list) else []
+                results_list_raw if u.Guards.is_type(results_list_raw, list) else []
             )
             for result_item in results_list:
                 if (
                     result_item is not None
-                    and isinstance(result_item, tuple)
+                    and u.Guards.is_type(result_item, tuple)
                     and len(result_item) == _TUPLE_PAIR_LENGTH
                 ):
                     category_raw, entry_raw = result_item
-                    if isinstance(category_raw, str) and isinstance(
+                    if u.Guards.is_type(category_raw, str) and u.Guards.is_type(
                         entry_raw, m.Ldif.Entry
                     ):
                         category = category_raw
@@ -730,7 +740,7 @@ class FlextLdifCategorization(
         for cat, cat_entries in categories.items():
             if cat_entries:
                 entries_count: int = (
-                    u.count(cat_entries) if isinstance(cat_entries, list) else 0
+                    u.count(cat_entries) if u.Guards.is_type(cat_entries, list) else 0
                 )
                 logger.info(
                     "Category entries",
@@ -770,7 +780,7 @@ class FlextLdifCategorization(
                 _cat("acl"),
             }:
                 entries_list: list[m.Ldif.Entry] = [
-                    e for e in entries if isinstance(e, m.Ldif.Entry)
+                    e for e in entries if u.Guards.is_type(e, m.Ldif.Entry)
                 ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
@@ -790,7 +800,7 @@ class FlextLdifCategorization(
                 filtered[category] = [
                     entry
                     for entry in included_updated
-                    if isinstance(entry, FlextLdifModelsDomains.Entry)
+                    if u.Guards.is_type(entry, FlextLdifModelsDomains.Entry)
                 ]
 
                 all_excluded_entries.extend(excluded_updated)
@@ -811,7 +821,9 @@ class FlextLdifCategorization(
         if all_excluded_entries:
             existing_rejected = filtered.get(_cat("rejected"), [])
             rejected_entries = [
-                entry for entry in existing_rejected if isinstance(entry, m.Ldif.Entry)
+                entry
+                for entry in existing_rejected
+                if u.Guards.is_type(entry, m.Ldif.Entry)
             ]
             filtered[_cat("rejected")] = rejected_entries + list(all_excluded_entries)
 
@@ -886,7 +898,7 @@ class FlextLdifCategorization(
 
             if category in filterable_categories:
                 entries_list: list[m.Ldif.Entry] = [
-                    e for e in entries if isinstance(e, m.Ldif.Entry)
+                    e for e in entries if u.Guards.is_type(e, m.Ldif.Entry)
                 ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
@@ -896,7 +908,7 @@ class FlextLdifCategorization(
                 filtered[category] = [
                     entry
                     for entry in included
-                    if isinstance(entry, FlextLdifModelsDomains.Entry)
+                    if u.Guards.is_type(entry, FlextLdifModelsDomains.Entry)
                 ]
 
                 excluded_updated = [
@@ -910,12 +922,16 @@ class FlextLdifCategorization(
 
                 excluded_entries.extend(excluded_updated)
             else:
-                filtered[category] = list(entries) if isinstance(entries, list) else []
+                filtered[category] = (
+                    list(entries) if u.Guards.is_type(entries, list) else []
+                )
 
         if excluded_entries:
             existing_rejected = filtered.get(_cat("rejected"), [])
             rejected_entries = [
-                entry for entry in existing_rejected if isinstance(entry, m.Ldif.Entry)
+                entry
+                for entry in existing_rejected
+                if u.Guards.is_type(entry, m.Ldif.Entry)
             ]
             filtered[_cat("rejected")] = rejected_entries + list(excluded_entries)
 

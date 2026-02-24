@@ -60,12 +60,12 @@ class FlextLdifUtilitiesServer:
         if cls_with_constants is None:
             return None
         constants_obj: object = getattr(cls_with_constants, "Constants", None)
-        if not isinstance(constants_obj, type):
+        if not issubclass(constants_obj.__class__, type):
             return None
         server_type_raw: object = getattr(constants_obj, "SERVER_TYPE", None)
         if (
             server_type_raw is not None
-            and isinstance(server_type_raw, str)
+            and issubclass(server_type_raw.__class__, str)
             and _is_valid_server_type_literal(server_type_raw)
         ):
             return server_type_raw
@@ -77,7 +77,7 @@ class FlextLdifUtilitiesServer:
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         # First try the nested class pattern with __qualname__
-        if hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__:
+        if getattr(target_cls, "__qualname__", None) is not None and "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
             # Check if module is loaded (safe lookup without dynamic import)
             parent_module = sys.modules.get(target_cls.__module__)
@@ -87,7 +87,7 @@ class FlextLdifUtilitiesServer:
                     parent_class_name,
                     None,
                 )
-                if isinstance(parent_server_cls_obj, type):
+                if issubclass(parent_server_cls_obj.__class__, type):
                     # Extract server type from parent class constants
                     srv = FlextLdifUtilitiesServer
                     result = srv._extract_server_type_from_constants(
@@ -140,7 +140,7 @@ class FlextLdifUtilitiesServer:
         """Get server_type from parent server class via __qualname__."""
         cls = (
             nested_class_instance_or_type
-            if isinstance(nested_class_instance_or_type, type)
+            if issubclass(nested_class_instance_or_type.__class__, type)
             else type(nested_class_instance_or_type)
         )
         # Try nested class pattern first
@@ -237,7 +237,7 @@ class FlextLdifUtilitiesServer:
                 use_prefix_match=use_prefix_match,
             )
 
-        if isinstance(value, str):
+        if issubclass(value.__class__, str):
             return check_oid_pattern(
                 value,
             ) or FlextLdifUtilitiesServer._check_name_patterns(
@@ -249,7 +249,7 @@ class FlextLdifUtilitiesServer:
 
         # Import here to avoid circular import - only needed at runtime for isinstance checks
 
-        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
+        if issubclass(value.__class__, FlextLdifModelsDomains.SchemaAttribute):
             return check_model_patterns(value)
 
         # value must be SchemaObjectClass since type is union of 3 types

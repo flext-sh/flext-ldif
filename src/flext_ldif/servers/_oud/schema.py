@@ -27,7 +27,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             k: v
             for k, v in kwargs.items()
             if k not in ("_parent_quirk", "_schema_service")
-            and isinstance(v, (str, float, bool, type(None)))
+            and issubclass(v.__class__, (str, float, bool, type(None)))
         }
 
         FlextService.__init__(self, **filtered_kwargs)

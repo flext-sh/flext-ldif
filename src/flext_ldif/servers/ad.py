@@ -15,6 +15,7 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
@@ -243,17 +244,18 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an Active Directory ACL (public method)."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 return self.can_handle_acl(acl_line)
-            if isinstance(acl_line, m.Ldif.Acl):
-                if not acl_line.raw_acl:
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                     return False
-                return self.can_handle_acl(acl_line.raw_acl)
+                return self.can_handle_acl(raw_acl)
             return False
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
@@ -270,10 +272,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         re.IGNORECASE,
                     ),
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                if not acl_line.raw_acl:
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                     return False
-                normalized = acl_line.raw_acl.strip()
+                normalized = raw_acl.strip()
                 if not normalized:
                     return False
 
@@ -433,7 +436,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             object_classes = (
                 raw_object_classes
-                if isinstance(raw_object_classes, (list, tuple))
+                if u.Guards.is_type(raw_object_classes, (list, tuple))
                 else [raw_object_classes]
             )
             return bool(

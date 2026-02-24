@@ -91,7 +91,7 @@ class FlextLdifUtilitiesWriters:
             dn = entry.dn
             if dn is None:
                 return ""
-            if hasattr(dn, "value"):
+            if getattr(dn, "value", None) is not None:
                 return dn.value or str(dn) if dn else ""
             return str(dn) if dn else ""
 
@@ -155,7 +155,7 @@ class FlextLdifUtilitiesWriters:
                 # Use isinstance check for type-safe access to dn attribute
                 entry_for_error: m.Ldif.Entry | None = (
                     entry_for_error_raw
-                    if isinstance(entry_for_error_raw, m.Ldif.Entry)
+                    if issubclass(entry_for_error_raw.__class__, m.Ldif.Entry)
                     else None
                 )
                 # Extract DN string
@@ -163,7 +163,7 @@ class FlextLdifUtilitiesWriters:
                 try:
                     entry_dn = entry_for_error.dn if entry_for_error else None
                     if entry_for_error and entry_dn:
-                        if hasattr(entry_dn, "value"):
+                        if getattr(entry_dn, "value", None) is not None:
                             dn_for_error = str(entry_dn.value)
                         else:
                             dn_for_error = str(entry_dn)
@@ -289,7 +289,7 @@ class FlextLdifUtilitiesWriters:
                     sup_value = objectclass.sup
                     if FlextRuntime.is_list_like(sup_value):
                         sup_list = [str(item) for item in sup_value]
-                    elif isinstance(sup_value, str):
+                    elif issubclass(sup_value.__class__, str):
                         sup_list = [sup_value]
                     else:
                         sup_list = [str(sup_value)]
@@ -341,7 +341,7 @@ class FlextLdifUtilitiesWriters:
             dn_attr = entry.dn
             if dn_attr is None:
                 return None
-            if hasattr(dn_attr, "value"):
+            if getattr(dn_attr, "value", None) is not None:
                 value = getattr(dn_attr, "value", None)
                 if value:
                     return str(value)[:50]
@@ -397,7 +397,7 @@ class FlextLdifUtilitiesWriters:
                 entries_typed: list[m.Ldif.Entry] = [
                     entry_raw
                     for entry_raw in config.entries
-                    if isinstance(entry_raw, m.Ldif.Entry)
+                    if issubclass(entry_raw.__class__, m.Ldif.Entry)
                 ]
 
                 # Write each entry using manual loop for clear type inference

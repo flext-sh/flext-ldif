@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 from typing import Literal, overload
 
@@ -170,9 +170,9 @@ class FlextLdifUtilitiesDN:
         dn: m.Ldif.DN | str | object,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method)."""
-        if isinstance(dn, m.Ldif.DN):
+        if u.Guards.is_type(dn, m.Ldif.DN):
             return dn.value
-        if isinstance(dn, str):
+        if u.Guards.is_type(dn, str):
             return dn
         return str(dn)
 
@@ -252,7 +252,9 @@ class FlextLdifUtilitiesDN:
             components,
             mapper=FlextLdifUtilitiesDN.norm_component,
         )
-        return ",".join(normalized if isinstance(normalized, list) else components)
+        return ",".join(
+            normalized if u.Guards.is_type(normalized, list) else components
+        )
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -266,7 +268,7 @@ class FlextLdifUtilitiesDN:
             return bool(attr.strip() and value.strip())
 
         filtered = u.Collection.filter(components, is_valid_component)
-        return isinstance(filtered, list) and len(filtered) == len(components)
+        return u.Guards.is_type(filtered, list) and len(filtered) == len(components)
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -423,7 +425,7 @@ class FlextLdifUtilitiesDN:
             result = [
                 item
                 for item in parsed_list
-                if isinstance(item, tuple) and len(item) == tuple_length
+                if u.Guards.is_type(item, tuple) and len(item) == tuple_length
             ]
             return (
                 r.ok(result)
@@ -480,11 +482,13 @@ class FlextLdifUtilitiesDN:
             normalized_list = process_result.value
             filtered_str = u.Collection.filter(
                 normalized_list,
-                predicate=lambda x: isinstance(x, str),
+                predicate=lambda x: u.Guards.is_type(x, str),
             )
             normalized: list[str] = [
                 str(item)
-                for item in (filtered_str if isinstance(filtered_str, list) else [])
+                for item in (
+                    filtered_str if u.Guards.is_type(filtered_str, list) else []
+                )
                 if item is not None
             ]
             return (
@@ -573,15 +577,21 @@ class FlextLdifUtilitiesDN:
 
         validation_status_raw = flags.get("validation_status", "")
         validation_status: str = (
-            validation_status_raw if isinstance(validation_status_raw, str) else ""
+            validation_status_raw
+            if u.Guards.is_type(validation_status_raw, str)
+            else ""
         )
         validation_warnings_raw = flags.get("validation_warnings", [])
         validation_warnings: list[str] = (
-            validation_warnings_raw if isinstance(validation_warnings_raw, list) else []
+            validation_warnings_raw
+            if u.Guards.is_type(validation_warnings_raw, list)
+            else []
         )
         validation_errors_raw = flags.get("validation_errors", [])
         validation_errors: list[str] = (
-            validation_errors_raw if isinstance(validation_errors_raw, list) else []
+            validation_errors_raw
+            if u.Guards.is_type(validation_errors_raw, list)
+            else []
         )
 
         stats_flags: FlextLdifModelsDomains.DNStatisticsFlags = {
@@ -730,7 +740,7 @@ class FlextLdifUtilitiesDN:
         mapped_result = u.Collection.map(enumerated, mapper=escape_char)
         mapped = (
             mapped_result
-            if isinstance(mapped_result, list)
+            if u.Guards.is_type(mapped_result, list)
             else [escape_char(item) for item in enumerated]
         )
         return "".join(mapped)
@@ -894,7 +904,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
-        if not rdn or not isinstance(rdn, str):
+        if not rdn or not u.Guards.is_type(rdn, str):
             return r[list[tuple[str, str]]].fail(
                 "RDN must be a non-empty string",
             )
@@ -1100,7 +1110,7 @@ class FlextLdifUtilitiesDN:
             )
             transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
                 dict(entry.attributes.items())
-                if hasattr(entry.attributes, "items")
+                if u.Guards.is_type(entry.attributes, Mapping)
                 else {},
                 dn_attributes,
                 source_dn,
@@ -1121,7 +1131,9 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return entries
         batch_data = batch_result.value
-        return [item for item in batch_data.results if isinstance(item, m.Ldif.Entry)]
+        return [
+            item for item in batch_data.results if u.Guards.is_type(item, m.Ldif.Entry)
+        ]
 
     @staticmethod
     def _transform_attrs_with_dn(
@@ -1229,11 +1241,13 @@ class FlextLdifUtilitiesDN:
             source_dn,
             target_dn,
         )
-        if hasattr(entry.attributes, "attributes"):
+        if u.Guards.is_type(entry.attributes, m.Ldif.Attributes):
             attrs_dict = entry.attributes.attributes
         else:
             attrs_dict = (
-                dict(entry.attributes) if hasattr(entry.attributes, "items") else {}
+                dict(entry.attributes)
+                if u.Guards.is_type(entry.attributes, Mapping)
+                else {}
             )
         transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
             attrs_dict,
@@ -1421,14 +1435,16 @@ class FlextLdifUtilitiesDN:
         results_raw = [
             item
             for item in batch_data.results
-            if isinstance(item, tuple) and len(item) == tuple_length
+            if u.Guards.is_type(item, tuple) and len(item) == tuple_length
         ]
         results: list[tuple[str, bool, list[str]]] = []
         for item in results_raw:
             dn_str = str(item[0])
             is_valid = bool(item[1])
             errors_list: list[str] = (
-                [str(e) for e in item[2]] if isinstance(item[2], (list, tuple)) else []
+                [str(e) for e in item[2]]
+                if u.Guards.is_type(item[2], (list, tuple))
+                else []
             )
             results.append((dn_str, is_valid, errors_list))
         if not collect_errors:
@@ -1470,7 +1486,7 @@ class FlextLdifUtilitiesDN:
         if batch_result.is_failure:
             return r[list[str]].fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value
-        results = [item for item in batch_data.results if isinstance(item, str)]
+        results = [item for item in batch_data.results if u.Guards.is_type(item, str)]
         return r[list[str]].ok(results)
 
     @staticmethod

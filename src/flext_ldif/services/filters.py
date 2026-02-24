@@ -60,7 +60,7 @@ class FlextLdifFilters:
         if attrs is None:
             return True
 
-        if hasattr(attrs, "attributes"):
+        if getattr(attrs, "attributes", None) is not None:
             attrs_dict: Mapping[str, list[str]] = attrs.attributes
         else:
             return True

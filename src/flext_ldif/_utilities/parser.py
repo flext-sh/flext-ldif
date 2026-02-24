@@ -6,7 +6,7 @@ import base64
 import contextlib
 import re
 
-from flext_core import FlextLogger, FlextRuntime
+from flext_core import FlextLogger, FlextRuntime, u
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -28,14 +28,16 @@ class FlextLdifUtilitiesParser:
         """Extract extension information from parsed metadata."""
 
         def _as_str_list(value: t.MetadataAttributeValue) -> list[str] | None:
-            if isinstance(value, list) and all(isinstance(item, str) for item in value):
-                return [item for item in value if isinstance(item, str)]
+            if FlextRuntime.is_list_like(value) and all(
+                u.Guards.is_type(item, str) for item in value
+            ):
+                return [item for item in value if u.Guards.is_type(item, str)]
             return None
 
         if metadata is None:
             return {}
         result = metadata.get("extensions")
-        if result is None or not isinstance(result, dict):
+        if result is None or not FlextRuntime.is_dict_like(result):
             extensions: dict[str, list[str]] = {}
             for key, value in metadata.items():
                 str_list = _as_str_list(value)
@@ -54,7 +56,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_oid(definition: str) -> str | None:
         """Extract OID from schema definition string."""
-        if not definition or not isinstance(definition, str):
+        if not definition:
             return None
 
         oid_pattern = re.compile(r"\(\s*([0-9.]+)")
@@ -71,7 +73,7 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return default
 
-        if isinstance(pattern, str):
+        if u.Guards.is_type(pattern, str):
             pattern = re.compile(pattern)
 
         match = re.search(pattern, definition)
@@ -86,7 +88,7 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return False
 
-        if isinstance(pattern, str):
+        if u.Guards.is_type(pattern, str):
             pattern = re.compile(pattern)
 
         return re.search(pattern, definition) is not None
@@ -96,7 +98,7 @@ class FlextLdifUtilitiesParser:
         definition: str,
     ) -> dict[str, list[str]]:
         """Extract extension information from schema definition string."""
-        if not definition or not isinstance(definition, str):
+        if not definition:
             return {}
 
         extensions: dict[str, list[str]] = {}
@@ -210,7 +212,7 @@ class FlextLdifUtilitiesParser:
         ldif_content: str,
     ) -> list[tuple[str, m.Ldif.EntryAttributesDict]]:
         """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant."""
-        if not ldif_content or not isinstance(ldif_content, str):
+        if not ldif_content:
             return []
 
         entries: list[tuple[str, m.Ldif.EntryAttributesDict]] = []
@@ -277,21 +279,21 @@ class FlextLdifUtilitiesParser:
             return False
 
         existing = entry_dict[attr_name]
-        if isinstance(existing, set):
+        if u.Guards.is_type(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
         if not FlextRuntime.is_list_like(existing):
-            if isinstance(existing, str):
+            if u.Guards.is_type(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
             existing_list = (
-                list(existing) if not isinstance(existing, list) else existing
+                existing if u.Guards.is_type(existing, list) else list(existing)
             )
             existing_list.append(attr_value)
             entry_dict[attr_name] = [
-                str(item) if not isinstance(item, str) else item
+                item if u.Guards.is_type(item, str) else str(item)
                 for item in existing_list
             ]
 
@@ -306,7 +308,7 @@ class FlextLdifUtilitiesParser:
         if "_base64_attrs" not in entry_dict:
             entry_dict["_base64_attrs"] = set()
 
-        if isinstance(entry_dict["_base64_attrs"], set):
+        if u.Guards.is_type(entry_dict["_base64_attrs"], set):
             entry_dict["_base64_attrs"].add(attr_name)
 
     @staticmethod

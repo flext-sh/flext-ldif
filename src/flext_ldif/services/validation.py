@@ -125,7 +125,7 @@ class FlextLdifValidation(
             if attr_result.is_failure or not attr_result.value:
                 return r[bool].ok(False)
 
-            if not isinstance(value, str):
+            if not issubclass(value.__class__, str):
                 return r[bool].ok(False)
 
             return r[bool].ok(value=True)

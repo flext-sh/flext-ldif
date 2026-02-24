@@ -26,6 +26,11 @@ class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
     @staticmethod
+    def _is_metadata_scalar_or_container(value: object) -> bool:
+        """Check supported metadata extension value shape."""
+        return value is None or value.__class__ in (str, int, float, bool, list, dict)
+
+    @staticmethod
     def get_acl_attributes(server_type: str | None) -> list[str]:
         """Get ACL attributes for a server type."""
         attrs = list(c.Ldif.AclAttributeRegistry.RFC_FOUNDATION)
@@ -302,7 +307,7 @@ class FlextLdifUtilitiesACL:
             key: value
             for key, value in extension_items
             if value is not None
-            and isinstance(value, (str, int, float, bool, list, dict, type(None)))
+            and FlextLdifUtilitiesACL._is_metadata_scalar_or_container(value)
         })
 
         return result
@@ -390,10 +395,10 @@ class FlextLdifUtilitiesACL:
         for key, value_tuple in u.mapper().to_dict(special_values).items():
             if (
                 rule_value.lower() == key.lower()
-                and isinstance(value_tuple, tuple)
+                and u.is_type(value_tuple, "tuple")
                 and len(value_tuple) == TUPLE_LENGTH_PAIR
-                and isinstance(value_tuple[0], str)
-                and isinstance(value_tuple[1], str)
+                and u.is_type(value_tuple[0], "str")
+                and u.is_type(value_tuple[1], "str")
             ):
                 return value_tuple
         return None
@@ -410,9 +415,9 @@ class FlextLdifUtilitiesACL:
 
         for rule in bind_rules_data:
             rule_type_raw = u.mapper().get(rule, "type", default="")
-            rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
+            rule_type = rule_type_raw.lower() if u.is_type(rule_type_raw, "str") else ""
             rule_value = u.mapper().get(rule, "value", default="")
-            rule_value = rule_value if isinstance(rule_value, str) else ""
+            rule_value = rule_value if u.is_type(rule_value, "str") else ""
 
             special_match = FlextLdifUtilitiesACL._check_special_value(
                 rule_value,
@@ -423,20 +428,20 @@ class FlextLdifUtilitiesACL:
 
             mapped_type_raw = u.mapper().get(subject_type_map, rule_type)
             mapped_type: str | None = None
-            if isinstance(mapped_type_raw, FlextRuntime.RuntimeResult):
+            if u.is_type(mapped_type_raw, FlextRuntime.RuntimeResult):
                 if mapped_type_raw.is_success:
                     value = mapped_type_raw.value
-                    mapped_type = value if isinstance(value, str) else None
+                    mapped_type = value if u.is_type(value, "str") else None
             else:
                 mapped_type = (
-                    mapped_type_raw if isinstance(mapped_type_raw, str) else None
+                    mapped_type_raw if u.is_type(mapped_type_raw, "str") else None
                 )
             if mapped_type:
                 return mapped_type, rule_value
 
         if bind_rules_data:
             default_value = u.mapper().get(bind_rules_data[0], "value", default="")
-            default_value = default_value if isinstance(default_value, str) else ""
+            default_value = default_value if u.is_type(default_value, "str") else ""
         else:
             default_value = ""
         return "user", default_value
@@ -502,14 +507,14 @@ class FlextLdifUtilitiesACL:
 
         if subject_type == "self":
             op = u.mapper().get(operators, "self", default="userdn")
-            op = op if isinstance(op, str) else "userdn"
+            op = op if u.is_type(op, "str") else "userdn"
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
             op = u.mapper().get(operators, "anonymous", default="userdn")
-            op = op if isinstance(op, str) else "userdn"
+            op = op if u.is_type(op, "str") else "userdn"
             return f'{op}="{anonymous_value}"'
         op = u.mapper().get(operators, subject_type, default="userdn")
-        op = op if isinstance(op, str) else "userdn"
+        op = op if u.is_type(op, "str") else "userdn"
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
             value = f"ldap:///{value}"
@@ -613,8 +618,7 @@ class FlextLdifUtilitiesACL:
             config.permission_map,
         )
         permissions_dict: dict[str, bool] = {
-            k: bool(v) if isinstance(v, (bool, int, str)) else False
-            for k, v in u.mapper().to_dict(permissions_dict_raw).items()
+            k: bool(v) for k, v in u.mapper().to_dict(permissions_dict_raw).items()
         }
         return subject_type, subject_value, permissions_dict
 
@@ -648,7 +652,7 @@ class FlextLdifUtilitiesACL:
 
         if extra_dict:
             filtered_extensions: dict[str, str] = {
-                k: v for k, v in extra_dict.items() if isinstance(v, str)
+                k: v for k, v in extra_dict.items() if u.is_type(v, "str")
             }
             if filtered_extensions:
                 extensions = dict(extensions, **filtered_extensions)
@@ -741,7 +745,10 @@ class FlextLdifUtilitiesACL:
             operator_placeholder = "{" + "operator" + "}"
             expected_tuple_length = tuple_length
 
-            if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
+            if (
+                u.is_type(value_raw, "tuple")
+                and len(value_raw) == expected_tuple_length
+            ):
                 tuple_items = list(value_raw) if value_raw else []
                 if len(tuple_items) >= TUPLE_LENGTH_PAIR:
                     operator_val = str(tuple_items[0])
@@ -800,7 +807,7 @@ class FlextLdifUtilitiesACL:
 
         def predicate_func(item: str | tuple[str, str]) -> bool:
             """Predicate function for Collection.process."""
-            if isinstance(item, tuple) and len(item) >= 1:
+            if u.is_type(item, "tuple") and len(item) >= 1:
                 return bool(extensions.get(item[0]) if extensions else None)
             return False
 
@@ -838,9 +845,9 @@ class FlextLdifUtilitiesACL:
         if comments_value is None:
             return []
         normalized: list[str]
-        if isinstance(comments_value, str):
+        if u.is_type(comments_value, "str"):
             normalized = [comments_value]
-        elif isinstance(comments_value, (list, tuple)):
+        elif comments_value.__class__ in (list, tuple):
             normalized = [str(item) for item in comments_value]
         else:
             normalized = [str(comments_value)]
@@ -890,9 +897,7 @@ class FlextLdifUtilitiesACL:
             for perm_name, perm_value in oid_permissions.items()
         ]
 
-        filtered_dicts: list[dict[str, bool]] = [
-            d for d in mapped_dicts if isinstance(d, dict) and d
-        ]
+        filtered_dicts: list[dict[str, bool]] = [d for d in mapped_dicts if d]
 
         result: dict[str, bool] = {}
         for d in filtered_dicts:
@@ -936,7 +941,7 @@ class FlextLdifUtilitiesACL:
         patterns: Mapping[str, str | tuple[str, int]],
         *,
         defaults: Mapping[str, object] | None = None,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> dict[str, t.Ldif.JsonValue]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -985,28 +990,27 @@ class FlextLdifUtilitiesACL:
         def extract_component_batch(
             name: str,
             pattern_spec: str | tuple[str, int],
-        ) -> tuple[str, t.GeneralValueType]:
+        ) -> tuple[str, t.Ldif.JsonValue]:
             """Extract component from pattern spec."""
-            if isinstance(pattern_spec, tuple):
+            if u.is_type(pattern_spec, "tuple"):
                 pattern, group_idx = pattern_spec
             else:
                 pattern = pattern_spec
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: t.GeneralValueType | None = (
+            default_value: t.Ldif.JsonValue | None = (
                 raw_default
-                if isinstance(raw_default, str | int | float | bool | type(None))
+                if raw_default is None
+                or raw_default.__class__ in (str, int, float, bool)
                 else str(raw_default)
-                if raw_default is not None
-                else None
             )
-            final_value: t.GeneralValueType = (
+            final_value: t.Ldif.JsonValue = (
                 value if value is not None else default_value
             )
             return name, final_value
 
-        result_dict: dict[str, tuple[str, t.GeneralValueType]] = {}
+        result_dict: dict[str, tuple[str, t.Ldif.JsonValue]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
@@ -1015,9 +1019,9 @@ class FlextLdifUtilitiesACL:
             except (ValueError, TypeError, AttributeError):
                 continue
 
-        final_result: dict[str, t.GeneralValueType] = {}
+        final_result: dict[str, t.Ldif.JsonValue] = {}
         for key, value_item in result_dict.items():
-            if isinstance(value_item, tuple) and len(value_item) == TUPLE_LENGTH_PAIR:
+            if u.is_type(value_item, "tuple") and len(value_item) == TUPLE_LENGTH_PAIR:
                 final_result[key] = value_item[1]
 
         return final_result

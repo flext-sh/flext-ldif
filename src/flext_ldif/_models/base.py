@@ -35,11 +35,11 @@ class SchemaElement(FlextLdifModelsBase):
     def server_type(self) -> str:
         """Get server type from metadata, default to RFC."""
         metadata = getattr(self, "metadata", None)
-        if metadata is not None and hasattr(metadata, "quirk_type"):
+        if metadata is not None:
             quirk_type = getattr(metadata, "quirk_type", None)
-            if isinstance(quirk_type, str):
+            if quirk_type is not None:
                 try:
-                    return normalize_server_type(quirk_type)
+                    return normalize_server_type(str(quirk_type))
                 except ValueError:
                     pass
         return "rfc"
@@ -50,10 +50,8 @@ class SchemaElement(FlextLdifModelsBase):
         metadata = getattr(self, "metadata", None)
         if metadata is None:
             return False
-        if hasattr(metadata, "extensions"):
-            extensions = metadata.extensions
-            return bool(extensions)
-        return False
+        extensions = getattr(metadata, "extensions", None)
+        return bool(extensions)
 
 
 class FrozenLdifModel(FlextLdifModelsBase):

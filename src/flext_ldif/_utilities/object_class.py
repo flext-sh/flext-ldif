@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-from flext_core import FlextLogger, r
+from pydantic import BaseModel, ConfigDict, Field
+
+from flext_core import FlextLogger, r, u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -35,6 +37,20 @@ def _get_schema_constants() -> _SchemaConstants:
 
 
 logger = FlextLogger(__name__)
+
+
+class _ParsedObjectClass(BaseModel):
+    """Typed payload for parsed objectClass definitions."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    oid: str
+    kind: str
+    name: str = Field(default="")
+    desc: str | None = Field(default=None)
+    sup: str | list[str] | None = Field(default=None)
+    must: list[str] | None = Field(default=None)
+    may: list[str] | None = Field(default=None)
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -69,7 +85,9 @@ class FlextLdifUtilitiesObjectClass:
         # Known AUXILIARY superior classes that cause conflicts
         auxiliary_superiors = {"javanamingref", "javanamingReference"}
 
-        sup_lower = str(schema_oc.sup).lower() if isinstance(schema_oc.sup, str) else ""
+        sup_lower = (
+            schema_oc.sup.lower() if u.Guards.is_type(schema_oc.sup, str) else ""
+        )
 
         schema_constants = _get_schema_constants()
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
@@ -134,52 +152,17 @@ class FlextLdifUtilitiesObjectClass:
                 # Hook receives the definition and returns parsed dict
                 parsed_dict = parse_parts_hook(definition)
 
-            # Extract and validate required fields with type narrowing
-            oid_value = parsed_dict.get("oid")
-            if not isinstance(oid_value, str):
-                return r[m.Ldif.SchemaObjectClass].fail(
-                    "Missing or invalid 'oid' field",
-                )
-
-            kind_value = parsed_dict.get("kind")
-            if not isinstance(kind_value, str):
-                return r[m.Ldif.SchemaObjectClass].fail(
-                    "Missing or invalid 'kind' field",
-                )
-
-            # Extract optional fields with type narrowing
-            name_value = parsed_dict.get("name")
-            name_str = name_value if isinstance(name_value, str) else ""
-
-            desc_value = parsed_dict.get("desc")
-            desc_str = desc_value if isinstance(desc_value, str) else None
-
-            sup_value = parsed_dict.get("sup")
-            sup_typed: str | list[str] | None = None
-            if isinstance(sup_value, str):
-                sup_typed = sup_value
-            elif isinstance(sup_value, list):
-                sup_typed = [s for s in sup_value if isinstance(s, str)]
-
-            must_value = parsed_dict.get("must")
-            must_typed: list[str] | None = None
-            if isinstance(must_value, list):
-                must_typed = [s for s in must_value if isinstance(s, str)]
-
-            may_value = parsed_dict.get("may")
-            may_typed: list[str] | None = None
-            if isinstance(may_value, list):
-                may_typed = [s for s in may_value if isinstance(s, str)]
+            parsed_model = _ParsedObjectClass.model_validate(parsed_dict)
 
             # Create the model with validated types
             schema_oc = m.Ldif.SchemaObjectClass(
-                oid=oid_value,
-                name=name_str,
-                desc=desc_str,
-                sup=sup_typed,
-                kind=kind_value,
-                must=must_typed,
-                may=may_typed,
+                oid=parsed_model.oid,
+                name=parsed_model.name,
+                desc=parsed_model.desc,
+                sup=parsed_model.sup,
+                kind=parsed_model.kind,
+                must=parsed_model.must,
+                may=parsed_model.may,
             )
 
             # Apply fixes based on server type

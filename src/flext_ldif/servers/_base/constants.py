@@ -64,7 +64,7 @@ def _get_priority_from_parent(parent: object | None) -> int:
     if constants_attr is None:
         return 100
     priority_value = getattr(constants_attr, "PRIORITY", None)
-    if isinstance(priority_value, int):
+    if issubclass(priority_value.__class__, int):
         return priority_value
     return 100
 
@@ -75,7 +75,7 @@ def _get_parent_quirk_safe_impl(
     """Get _parent_quirk attribute safely with type narrowing."""
     parent_raw: object | None = getattr(instance, "_parent_quirk", None)
 
-    if parent_raw is not None and hasattr(parent_raw, "_parent_quirk"):
+    if parent_raw is not None and getattr(parent_raw, "_parent_quirk", None) is not None:
         return parent_raw
     return None
 

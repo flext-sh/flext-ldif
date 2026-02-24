@@ -69,14 +69,14 @@ class FlextLdifUtilitiesEntry:
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
                     attr_name
                 ]
-                if isinstance(raw_values, (list, tuple)):
+                if issubclass(raw_values.__class__, (list, tuple)):
                     normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
-                        if isinstance(v, bytes)
+                        if issubclass(v.__class__, bytes)
                         else str(v)
                         for v in raw_values
                     ]
-                elif isinstance(raw_values, bytes):
+                elif issubclass(raw_values.__class__, bytes):
                     normalized_result[attr_name] = [
                         raw_values.decode("utf-8", errors="replace"),
                     ]
@@ -91,14 +91,14 @@ class FlextLdifUtilitiesEntry:
                 attr_name
             ]
             str_values: list[str]
-            if isinstance(attr_raw_values, (list, tuple)):
+            if issubclass(attr_raw_values.__class__, (list, tuple)):
                 str_values = [
                     v.decode("utf-8", errors="replace")
-                    if isinstance(v, bytes)
+                    if issubclass(v.__class__, bytes)
                     else str(v)
                     for v in attr_raw_values
                 ]
-            elif isinstance(attr_raw_values, bytes):
+            elif issubclass(attr_raw_values.__class__, bytes):
                 str_values = [attr_raw_values.decode("utf-8", errors="replace")]
             else:
                 str_values = [str(attr_raw_values)]
@@ -168,7 +168,7 @@ class FlextLdifUtilitiesEntry:
         if not entry.attributes:
             return False
 
-        if isinstance(objectclasses, str):
+        if issubclass(objectclasses.__class__, str):
             objectclasses = (objectclasses,)
 
         entry_ocs = entry.attributes.get("objectClass", [])
@@ -276,7 +276,7 @@ class FlextLdifUtilitiesEntry:
             canonical_name = normalize(original_attr_name)
 
             original_values_list: list[str] = []
-            if isinstance(attr_values, (list, tuple)):
+            if issubclass(attr_values.__class__, (list, tuple)):
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
@@ -316,7 +316,7 @@ class FlextLdifUtilitiesEntry:
         if not entry_dn or not attributes:
             return False
 
-        attrs = dict(attributes) if not isinstance(attributes, dict) else attributes
+        attrs = dict(attributes) if not issubclass(attributes.__class__, dict) else attributes
         attr_names_lower = {k.lower() for k in attrs}
 
         if config.dn_patterns and any(
@@ -381,7 +381,7 @@ class FlextLdifUtilitiesEntry:
 
             output_values: list[str | bytes] = []
             for value in values:
-                if isinstance(value, str):
+                if issubclass(value.__class__, str):
                     output_values.append(normalize_value(value))
                 else:
                     output_values.append(str(value))
@@ -418,7 +418,7 @@ class FlextLdifUtilitiesEntry:
         """Check DN pattern match."""
         dn_value = (
             entry.dn.value
-            if entry.dn and hasattr(entry.dn, "value")
+            if entry.dn and getattr(entry.dn, "value", None) is not None
             else str(entry.dn)
             if entry.dn
             else ""
@@ -495,7 +495,7 @@ class FlextLdifUtilitiesEntry:
             if config.normalize_dns and current.dn:
                 dn_value = (
                     current.dn.value
-                    if hasattr(current.dn, "value")
+                    if getattr(current.dn, "value", None) is not None
                     else str(current.dn)
                 )
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
@@ -549,7 +549,7 @@ class FlextLdifUtilitiesEntry:
         for i, entry in enumerate(entries):
             try:
                 result = transform_entry(entry)
-                if isinstance(result, m.Ldif.Entry):
+                if issubclass(result.__class__, m.Ldif.Entry):
                     transformed_list.append(result)
             except Exception as exc:
                 if config.fail_fast:

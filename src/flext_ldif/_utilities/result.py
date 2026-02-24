@@ -30,14 +30,14 @@ class FlextLdifResult[T]:
         """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult."""
         # FlextResult extends RuntimeResult, so check FlextResult first (more specific)
         inner_result: FlextResult[T]
-        if isinstance(inner, FlextResult):
+        if issubclass(inner.__class__, FlextResult):
             # Already a FlextResult, use directly
             inner_result = inner
         # RuntimeResult (not FlextResult) - convert by creating new FlextResult
         elif inner.is_success:
             inner_result = r[T].ok(inner.value)
         else:
-            error_msg = inner.error if hasattr(inner, "error") else str(inner)
+            error_msg = inner.error if getattr(inner, "error", None) is not None else str(inner)
             inner_result = r[T].fail(error_msg)
         self._inner = inner_result
 
@@ -51,7 +51,7 @@ class FlextLdifResult[T]:
     @classmethod
     def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
         """Create a failed result with the given error."""
-        error_msg = str(error) if isinstance(error, Exception) else error
+        error_msg = str(error) if issubclass(error.__class__, Exception) else error
         return cls(r.fail(error_msg))
 
     @classmethod
@@ -139,16 +139,16 @@ class FlextLdifResult[T]:
         # p.Ldif.TransformerProtocol.apply() returns FlextResult[T] or T
         # Callable transforms T -> T or T -> FlextResult[T]
         # Check if transformer implements TransformerProtocol (runtime_checkable)
-        if isinstance(transformer, p.Ldif.TransformerProtocol):
+        if issubclass(transformer.__class__, p.Ldif.TransformerProtocol):
             transform_result = transformer.apply(self.value)
-            if isinstance(transform_result, FlextResult):
+            if issubclass(transform_result.__class__, FlextResult):
                 return FlextLdifResult.from_result(transform_result)
             # After isinstance check, transform_result is T (not FlextResult)
             return FlextLdifResult.ok(transform_result)
 
         # It's a callable (function or lambda) - type system guarantees this
         result = transformer(self.value)
-        if isinstance(result, FlextResult):
+        if issubclass(result.__class__, FlextResult):
             return FlextLdifResult.from_result(result)
         return FlextLdifResult.ok(result)
 
@@ -160,10 +160,10 @@ class FlextLdifResult[T]:
         # Get the value and write it
 
         # Handle different output types
-        if isinstance(output, str):
+        if issubclass(output.__class__, str):
             output = Path(output)
 
-        if isinstance(output, Path):
+        if issubclass(output.__class__, Path):
             # Business Rule: Write entries to LDIF file format
             # Note: write_entries_to_file method needs implementation in FlextLdifUtilitiesWriter
             # For now, convert entries to LDIF string format and write using write_file
@@ -197,7 +197,7 @@ class FlextLdifResult[T]:
         # Note: attach_metadata method needs implementation in FlextLdifUtilitiesMetadata
         # For now, return error indicating method needs implementation
         # Handle sequence of entries
-        if isinstance(value, Sequence) and not isinstance(value, str):
+        if issubclass(value.__class__, Sequence) and not issubclass(value.__class__, str):
             # Note: Metadata attachment for sequence of entries needs implementation
             return FlextLdifResult.fail(
                 "attach_metadata not yet implemented for sequences",
@@ -232,7 +232,7 @@ class FlextLdifResult[T]:
 
         # Use Protocol isinstance check for FilterProtocol (runtime_checkable)
         matches_func: Callable[[T], bool]
-        if isinstance(predicate, p.Ldif.FilterProtocol):
+        if issubclass(predicate.__class__, p.Ldif.FilterProtocol):
             # FilterProtocol - wrap matches method with proper typing
             filter_protocol = predicate
 
@@ -278,7 +278,7 @@ class FlextLdifResult[T]:
 
     def __eq__(self, other: object) -> bool:
         """Check equality with another FlextLdifResult."""
-        if not isinstance(other, FlextLdifResult):
+        if not issubclass(other.__class__, FlextLdifResult):
             return NotImplemented
         if self.is_success != other.is_success:
             return False

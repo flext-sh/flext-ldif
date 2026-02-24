@@ -144,7 +144,7 @@ class Pipeline:
             if func_result is None:
                 # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
                 return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
-            if isinstance(func_result, r):
+            if issubclass(func_result.__class__, r):
                 # If result is Entry, wrap in Entry | FILTERED union
                 if func_result.is_success:
                     entry_value = func_result.value
@@ -167,7 +167,7 @@ class Pipeline:
         current: m.Ldif.Entry | _Filtered = entry
 
         for step_name, step_func in self._steps:
-            if isinstance(current, _Filtered):
+            if issubclass(current.__class__, _Filtered):
                 # Entry was filtered out in previous step
                 return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
 
@@ -202,7 +202,7 @@ class Pipeline:
                 return r[m.Ldif.Entry].fail(result.error or "Processing failed")
             processed = result.value
             # Type narrowing: processed is Entry | _Filtered
-            if isinstance(processed, _Filtered):
+            if issubclass(processed.__class__, _Filtered):
                 # Filtered entries return None (not an error, just skipped)
                 return None
             # Type narrowing: processed is Entry when not _Filtered
@@ -262,7 +262,7 @@ class ValidationPipeline:
         else:
             # Validate DN format - basic RFC 2253 compliance check
             # Each RDN component must have at least one '=' separator
-            dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+            dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
 
             # Split by comma to get RDN components
             components = dn_str.split(",")
@@ -282,7 +282,7 @@ class ValidationPipeline:
         else:
             attrs = (
                 entry.attributes.attributes
-                if hasattr(entry.attributes, "attributes")
+                if getattr(entry.attributes, "attributes", None) is not None
                 else {}
             )
 

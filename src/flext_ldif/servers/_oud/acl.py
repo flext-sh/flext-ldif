@@ -6,7 +6,8 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, u
+from flext_core.runtime import FlextRuntime
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -50,9 +51,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> None:
         """Initialize OUD ACL quirk."""
         filtered_kwargs: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_parent_quirk" and isinstance(v, (str, float, bool, type(None)))
+            k: v for k, v in kwargs.items() if k != "_parent_quirk"
         }
 
         acl_service_typed: object | None = (
@@ -71,33 +70,27 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL (public method)."""
-        if isinstance(acl_line, str):
-            return self.can_handle_acl(acl_line)
-        if isinstance(acl_line, m.Ldif.Acl):
-            return self.can_handle_acl(acl_line)
-
-        return False
+        return self.can_handle_acl(acl_line)
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
-        if not isinstance(acl_line, str):
-            if isinstance(acl_line, m.Ldif.Acl):
-                if (
-                    acl_line.metadata
-                    and hasattr(acl_line.metadata, "quirk_type")
-                    and acl_line.metadata.quirk_type
-                ):
-                    return str(acl_line.metadata.quirk_type) == self._get_server_type()
-
-                if hasattr(acl_line, "name") and acl_line.name:
-                    return FlextLdifUtilitiesSchema.normalize_attribute_name(
-                        acl_line.name,
-                    ) == FlextLdifUtilitiesSchema.normalize_attribute_name(
-                        FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
-                    )
+        if not u.is_type(acl_line, "str"):
+            try:
+                acl_model = m.Ldif.Acl.model_validate(acl_line)
+            except Exception:
+                return False
+            if acl_model.metadata and acl_model.metadata.quirk_type:
+                return str(acl_model.metadata.quirk_type) == self._get_server_type()
+            if acl_model.name:
+                return FlextLdifUtilitiesSchema.normalize_attribute_name(
+                    acl_model.name,
+                ) == FlextLdifUtilitiesSchema.normalize_attribute_name(
+                    FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
+                )
             return False
 
-        if not isinstance(acl_line, str) or not (normalized := acl_line.strip()):
+        normalized = acl_line.strip()
+        if not normalized:
             return False
 
         normalized_lower = normalized.lower()
@@ -120,10 +113,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model."""
-        if not isinstance(acl_line, str):
-            return FlextResult[m.Ldif.Acl].fail(
-                f"ACL line must be a string, got {type(acl_line).__name__}",
-            )
         normalized = acl_line.strip()
 
         if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
@@ -229,29 +218,41 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not acl_data.raw_acl:
             return False
 
-        raw_acl_str = acl_data.raw_acl if isinstance(acl_data.raw_acl, str) else ""
+        raw_acl_str = acl_data.raw_acl if u.is_type(acl_data.raw_acl, "str") else ""
         return raw_acl_str.startswith(
             FlextLdifServersOudConstants.ACL_ACI_PREFIX,
         )
+
+    @staticmethod
+    def _extension_get_str(
+        extensions: m.Ldif.DynamicMetadata | None,
+        key: str,
+    ) -> str | None:
+        """Read a metadata extension as string."""
+        if not extensions:
+            return None
+        value = extensions.get(key)
+        return value if u.is_type(value, "str") else None
+
+    @staticmethod
+    def _scalar_or_list_value(value: object) -> bool:
+        """Check if value is scalar metadata value or list."""
+        return value is None or value.__class__ in (str, int, float, bool, list)
 
     def _build_aci_target(self, acl_data: FlextLdifModelsDomains.Acl) -> str:
         """Build ACI target clause from ACL model."""
         target = acl_data.target
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
-            target_dict = (
-                extensions.get("acl_target_target")
-                if extensions and hasattr(extensions, "get")
-                else None
-            )
+            target_dict = extensions.get("acl_target_target") if extensions else None
 
             target_data: dict[str, t.MetadataAttributeValue] = {}
-            if isinstance(target_dict, dict):
+            if FlextRuntime.is_dict_like(target_dict):
                 target_data = {
                     k: v
                     for k, v in target_dict.items()
-                    if not isinstance(v, Mapping)
-                    and isinstance(v, (str, int, float, bool, type(None), list))
+                    if not FlextRuntime.is_dict_like(v)
+                    and FlextLdifServersOudAcl._scalar_or_list_value(v)
                 }
 
             if target_data:
@@ -259,11 +260,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 dn_raw = target_data.get("target_dn")
 
                 attrs: list[str] = (
-                    [item for item in attrs_raw if isinstance(item, str)]
-                    if isinstance(attrs_raw, list)
+                    [item for item in attrs_raw if u.is_type(item, "str")]
+                    if FlextRuntime.is_list_like(attrs_raw)
                     else []
                 )
-                dn: str = str(dn_raw) if isinstance(dn_raw, str) else "*"
+                dn: str = str(dn_raw) if u.is_type(dn_raw, "str") else "*"
                 target = m.Ldif.AclTarget(
                     target_dn=dn,
                     attributes=attrs,
@@ -286,36 +287,32 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
-                extensions.get("acl_target_permissions")
-                if extensions and hasattr(extensions, "get")
-                else None
+                extensions.get("acl_target_permissions") if extensions else None
             )
             if not target_perms_dict_raw:
                 target_perms_dict_raw = (
-                    extensions.get("target_permissions")
-                    if extensions and hasattr(extensions, "get")
-                    else None
+                    extensions.get("target_permissions") if extensions else None
                 )
             target_perms_dict = target_perms_dict_raw
 
-        if target_perms_dict and isinstance(target_perms_dict, dict):
+        if target_perms_dict and FlextRuntime.is_dict_like(target_perms_dict):
             target_perms_dict_typed: Mapping[str, t.MetadataAttributeValue] = (
                 target_perms_dict
             )
             perms_data: dict[str, object] = {}
 
             for key, val in target_perms_dict_typed.items():
-                if not isinstance(key, str):
+                if not u.is_type(key, "str"):
                     continue
                 k = str(key)
 
-                if isinstance(val, Mapping):
+                if FlextRuntime.is_dict_like(val):
                     continue
 
-                if isinstance(val, (str, bool, int, float)) or val is None:
+                if val is None or val.__class__ in (str, bool, int, float):
                     perms_data[k] = val
-                elif isinstance(val, list):
-                    str_list = [str(item) for item in val if isinstance(item, str)]
+                elif FlextRuntime.is_list_like(val):
+                    str_list = [str(item) for item in val if u.is_type(item, "str")]
                     perms_data[k] = str_list
 
             if perms_data:
@@ -365,7 +362,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         meta_extensions = acl_data.metadata.extensions if acl_data.metadata else None
         if (
             meta_extensions
-            and hasattr(meta_extensions, "get")
             and meta_extensions.get("self_write_to_write")
             and FlextLdifServersOudConstants.PERMISSION_SELF_WRITE in ops
             and "write" not in filtered_ops
@@ -390,17 +386,16 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         ext = acl_data.metadata.extensions if acl_data.metadata else None
         if ext:
             base_dn_raw = ext.get("base_dn")
-            base_dn = base_dn_raw if isinstance(base_dn_raw, str) else None
+            base_dn = base_dn_raw if u.is_type(base_dn_raw, "str") else None
         else:
             base_dn = None
         source_subject_type = (
             (
                 sst
-                if isinstance(
+                if u.is_type(
                     sst := ext.get(
                         "acl_source_subject_type",
                     ),
-                    str,
                 )
                 else None
             )
@@ -435,11 +430,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         ) or (
             sv
             if ext
-            and isinstance(
+            and u.is_type(
                 sv := ext.get(
                     "acl_original_subject_value",
                 ),
-                str,
             )
             else None
         )

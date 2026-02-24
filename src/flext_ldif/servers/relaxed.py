@@ -66,7 +66,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Accept any attribute definition in relaxed mode."""
-            if isinstance(attr_definition, str):
+            if u.Guards.is_type(attr_definition, str):
                 return bool(attr_definition.strip())
             return True
 
@@ -198,7 +198,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Accept any objectClass definition in relaxed mode."""
-            if isinstance(oc_definition, str):
+            if u.Guards.is_type(oc_definition, str):
                 return bool(oc_definition.strip())
             return True
 
@@ -438,7 +438,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "original_format",
                     "",
                 )
-                if not isinstance(original_format_raw, str):
+                if not u.Guards.is_type(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
                 return r[str].ok(original_format_raw)
@@ -474,7 +474,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "original_format",
                     "",
                 )
-                if not isinstance(original_format_raw, str):
+                if not u.Guards.is_type(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
                 return r[str].ok(original_format_raw)
@@ -494,7 +494,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a relaxed ACL (public method)."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 return self.can_handle_acl(acl_line)
             return self.can_handle_acl(acl_line)
 
@@ -578,7 +578,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
 
-            if acl_data.raw_acl and isinstance(acl_data.raw_acl, str):
+            if acl_data.raw_acl and u.Guards.is_type(acl_data.raw_acl, str):
                 return r[str].ok(acl_data.raw_acl)
 
             acl_name = (
@@ -638,7 +638,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
                 effective_dn = m.Ldif.DN(value=entry_dn.strip())
 
-                if isinstance(entry_attrs, m.Ldif.Attributes):
+                if u.Guards.is_type(entry_attrs, m.Ldif.Attributes):
                     ldif_attrs = entry_attrs
                 else:
                     attr_dict: dict[str, list[str]] = {}
@@ -648,7 +648,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     for attr_key, attr_value in entry_attrs.items():
                         converted_list: list[str] = []
                         for v in attr_value:
-                            if isinstance(v, bytes):
+                            if u.Guards.is_type(v, bytes):
                                 converted_list.append(
                                     v.decode(
                                         FlextLdifServersRelaxed.Constants.ENCODING_UTF8,

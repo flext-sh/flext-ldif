@@ -37,12 +37,12 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
 
         self._oid_to_name = (
             dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
-            if hasattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items")
+            if getattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items", None) is not None
             else {}
         )
         self._name_to_oid = (
             dict(c.Ldif.RfcSyntaxOids.NAME_TO_OID)
-            if hasattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items")
+            if getattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items", None) is not None
             else {}
         )
         self._common_syntaxes = c.Ldif.RfcSyntaxOids.COMMON_SYNTAXES

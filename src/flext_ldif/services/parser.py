@@ -53,7 +53,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
                 f"No entry quirk found for server type: {effective_server_type}",
             )
 
-        if not hasattr(entry_quirk_raw, "parse"):
+        if not getattr(entry_quirk_raw, "parse", None) is not None:
             return r[m.Ldif.LdifResults.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
@@ -76,7 +76,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
                 getattr(parse_result_raw, "error", None) or "LDIF parsing failed"
             )
             return r[m.Ldif.LdifResults.ParseResponse].fail(
-                error_msg if isinstance(error_msg, str) else str(error_msg),
+                error_msg if issubclass(error_msg.__class__, str) else str(error_msg),
             )
 
         entries_raw = getattr(parse_result_raw, "value", None)
@@ -84,7 +84,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             return r[m.Ldif.LdifResults.ParseResponse].fail(
                 "Parse result has no value",
             )
-        entries = entries_raw if isinstance(entries_raw, list) else []
+        entries = entries_raw if issubclass(entries_raw.__class__, list) else []
 
         response = m.Ldif.LdifResults.ParseResponse(
             entries=entries,
@@ -140,17 +140,17 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
             processed_value = batch_result.value
             processed_list: list[list[str]] = []
             raw_results: object | None = None
-            if isinstance(processed_value, dict) and "results" in processed_value:
+            if issubclass(processed_value.__class__, dict) and "results" in processed_value:
                 raw_results = processed_value["results"]
-            elif isinstance(processed_value, list):
+            elif issubclass(processed_value.__class__, list):
                 raw_results = processed_value
 
             if raw_results is None:
                 raw_results = getattr(processed_value, "results", None)
 
-            if isinstance(raw_results, list):
+            if issubclass(raw_results.__class__, list):
                 processed_list = [
-                    entry for entry in raw_results if isinstance(entry, list)
+                    entry for entry in raw_results if issubclass(entry.__class__, list)
                 ]
 
             for entry_lines in processed_list:
@@ -166,7 +166,7 @@ class FlextLdifParser(s[m.Ldif.LdifResults.ParseResponse]):
         server_type: str | None = None,
     ) -> r[m.Ldif.LdifResults.ParseResponse]:
         """Parse LDIF from either raw text or a filesystem path."""
-        if isinstance(source, Path):
+        if issubclass(source.__class__, Path):
             return self.parse_ldif_file(source, server_type)
 
         return self.parse_string(source, server_type)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, FlextResult, r, u as core_u
 
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -122,9 +122,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         attributes: dict[str, list[str]],
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
-        if not dn or not isinstance(dn, str):
+        if not dn or not core_u.is_type(dn, str):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
-        if not isinstance(attributes, dict):
+        if not core_u.is_type(attributes, dict):
             return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
 
         try:
@@ -138,12 +138,12 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance."""
-        if not entry or not isinstance(entry, m.Ldif.Entry):
+        if not entry or not core_u.is_type(entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
 
-        if not entry.dn or not hasattr(entry.dn, "value"):
+        if not entry.dn or not core_u.has(entry.dn, "value"):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
-        if not entry.attributes or not isinstance(entry.attributes, dict):
+        if not entry.attributes or not core_u.is_type(entry.attributes, dict):
             return r[m.Ldif.Entry].fail(
                 f"Invalid attributes in entry: {entry.attributes}"
             )

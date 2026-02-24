@@ -12,7 +12,7 @@ import json
 import re
 from collections.abc import Callable, Mapping
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, u as core_u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -164,7 +164,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk" and isinstance(v, (str, float, bool, type(None)))
+            if k != "_parent_quirk" and core_u.is_type(v, (str, float, bool, type(None)))
         }
         # Business Rule: Entry.__init__ accepts entry_service and _parent_quirk
         # Implication: Call parent __init__ directly, parent handles FlextService call
@@ -337,22 +337,22 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Implication: Convert entry_attrs to expected format
         # Type narrowing: convert Mapping to dict[str, list[str]]
         entry_attrs_dict: dict[str, list[str]] = {}
-        if isinstance(entry_attrs, dict):
+        if core_u.is_type(entry_attrs, dict):
             for key, values in entry_attrs.items():
-                if isinstance(values, list):
+                if core_u.is_type(values, list):
                     entry_attrs_dict[key] = [str(v) for v in values]
-                elif isinstance(values, (str, bytes)):
+                elif core_u.is_type(values, (str, bytes)):
                     entry_attrs_dict[key] = [str(values)]
                 else:
                     entry_attrs_dict[key] = [str(values)]
         elif (
-            isinstance(entry_attrs, m.Ldif.Entry)
+            core_u.is_type(entry_attrs, m.Ldif.Entry)
             and entry_attrs.attributes
             and entry_attrs.attributes.attributes
         ):
             # If Entry model passed, extract attributes
             entry_attrs_dict = {
-                k: [str(v) for v in (vs if isinstance(vs, list) else [vs])]
+                k: [str(v) for v in (vs if core_u.is_type(vs, list) else [vs])]
                 for k, vs in entry_attrs.attributes.attributes.items()
             }
         # Call RFC base parse_entry for Entry creation
@@ -364,9 +364,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # Build OUD-specific metadata
         original_attribute_case: dict[str, str] = {}
-        if isinstance(entry_attrs, Mapping):
+        if core_u.is_type(entry_attrs, Mapping):
             for attr_name in entry_attrs:
-                if isinstance(attr_name, str):
+                if core_u.is_type(attr_name, str):
                     # Track original case for round-trip support
                     original_attribute_case[attr_name.lower()] = attr_name
 
@@ -457,14 +457,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # WriteOptions can be a Pydantic model or dict
         write_opts = entry_data.metadata.write_options
-        if hasattr(write_opts, "model_dump"):
+        if core_u.has(write_opts, "model_dump"):
             write_opts_dict = write_opts.model_dump()
-        elif isinstance(write_opts, dict):
+        elif core_u.is_type(write_opts, dict):
             write_opts_dict = write_opts
         else:
             write_opts_dict = {}
         original_entry_obj = write_opts_dict.get("original_entry")
-        if not (original_entry_obj and isinstance(original_entry_obj, m.Ldif.Entry)):
+        if not (original_entry_obj and core_u.is_type(original_entry_obj, m.Ldif.Entry)):
             return []
 
         ldif_parts: list[str] = []
@@ -557,9 +557,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Convert to list if needed (acl_attrs can be frozenset, set, or list)
         acl_attrs_list = (
             list(acl_attrs)
-            if isinstance(acl_attrs, (frozenset, set))
+            if core_u.is_type(acl_attrs, (frozenset, set))
             else acl_attrs
-            if isinstance(acl_attrs, list)
+            if core_u.is_type(acl_attrs, list)
             else []
         )
         return self._comment_acl_attributes(entry_data, acl_attrs_list)
@@ -586,7 +586,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for acl_attr in acl_attribute_names:
             if acl_attr in new_attrs:
                 acl_values = new_attrs[acl_attr]
-                if isinstance(acl_values, list):
+                if core_u.is_type(acl_values, list):
                     commented_vals[acl_attr] = list(acl_values)
                 else:
                     commented_vals[acl_attr] = [str(acl_values)]
@@ -618,7 +618,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
         hidden_attrs_set = (
             set(hidden_attrs_raw)
-            if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set))
+            if core_u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set))
             else set()
         )
         hidden_attrs_set.update(hidden_attrs)
@@ -626,7 +626,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Handle Pydantic model with model_copy
         # Type narrowing: check if write_opts is a Pydantic model
         # Business Rule: Always use public m.Ldif.WriteOptions, not internal m.Ldif.WriteOptions
-        if isinstance(write_opts, m.Ldif.WriteOptions):
+        if core_u.is_type(write_opts, m.Ldif.WriteOptions):
             # Use dict[str, t.GeneralValueType] for model_copy update to satisfy strict type checker
             update_dict: dict[str, t.GeneralValueType] = {
                 "hidden_attrs": list(hidden_attrs_set)
@@ -634,7 +634,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return write_opts.model_copy(update=update_dict)
 
         # Handle dict
-        if isinstance(write_opts, dict):
+        if core_u.is_type(write_opts, dict):
             write_opts_dict: dict[str, t.GeneralValueType] = {
                 "hidden_attrs": list(hidden_attrs_set),
             }
@@ -645,7 +645,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # Handle Pydantic model with model_dump (WriteFormatOptions or internal WriteOptions)
         # Business Rule: Always convert to public FlextLdifModelsDomains.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
-        if hasattr(write_opts, "model_dump"):
+        if core_u.has(write_opts, "model_dump"):
             write_opts_dict_raw = write_opts.model_dump()
             filtered_dict: dict[str, t.GeneralValueType] = {
                 "hidden_attrs": list(hidden_attrs_set)
@@ -718,7 +718,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         commented_attrs_raw = current_extensions.get("acl_commented_attributes", [])
         commented_attrs: list[str] = (
             [str(x) for x in commented_attrs_raw]
-            if isinstance(commented_attrs_raw, list)
+            if core_u.is_type(commented_attrs_raw, list)
             else []
         )
 
@@ -830,7 +830,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 "base_dn",
                 None,
             )
-            if isinstance(base_dn_value, str):
+            if core_u.is_type(base_dn_value, str):
                 base_dn = base_dn_value
 
             # Get dn_registry from write_options
@@ -839,7 +839,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 "dn_registry",
                 None,
             )
-            if isinstance(dn_registry_value, m.Ldif.DnRegistry):
+            if core_u.is_type(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
 
         # Try extensions if write_options doesn't have base_dn
@@ -847,10 +847,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             extensions = entry_data.metadata.extensions
             # DynamicMetadata has .get() method for extra field access
             base_dn_ext = extensions.get("base_dn")
-            if isinstance(base_dn_ext, str):
+            if core_u.is_type(base_dn_ext, str):
                 base_dn = base_dn_ext
             dn_registry_ext = extensions.get("dn_registry")
-            if isinstance(dn_registry_ext, m.Ldif.DnRegistry):
+            if core_u.is_type(dn_registry_ext, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_ext
 
         return base_dn, dn_registry
@@ -916,7 +916,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Normalize each ACL value string
         normalized_aci_values: list[str] = []
         for aci in aci_values:
-            aci_str = aci if isinstance(aci, str) else str(aci)
+            aci_str = aci if core_u.is_type(aci, str) else str(aci)
             normalized_aci, was_filtered = self._normalize_aci_value(
                 aci_str,
                 base_dn,
@@ -995,11 +995,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         mk = c.Ldif.MetadataKeys
         if (
             (original_dn := ext.get(mk.ORIGINAL_DN_COMPLETE))
-            and isinstance(original_dn, str)
+            and core_u.is_type(original_dn, str)
             and entry_data.dn
         ):
             dn_diff = ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
-            if isinstance(dn_diff, dict):
+            if core_u.is_type(dn_diff, dict):
                 has_diff = dn_diff.get(mk.HAS_DIFFERENCES, False)
                 if has_diff:
                     entry_data = entry_data.model_copy(
@@ -1015,11 +1015,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if (
             entry_data.attributes
             and original_case_map
-            and isinstance(original_case_map, dict)
+            and core_u.is_type(original_case_map, dict)
             and (
                 orig_attrs := ext.get(c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE)
             )
-            and isinstance(orig_attrs, dict)
+            and core_u.is_type(orig_attrs, dict)
         ):
             # Business Rule: Restore original attribute case from metadata.
             # orig_case is str (from original_case_map.get()), but pyright may infer
@@ -1040,13 +1040,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     val = orig_attrs[orig_case]
                     restored[orig_case] = (
                         [str(i) for i in val]
-                        if isinstance(val, (list, tuple))
+                        if core_u.is_type(val, (list, tuple))
                         else [str(val)]
                     )
                 else:
                     restored[orig_case] = (
                         [str(i) for i in attr_values]
-                        if isinstance(attr_values, list)
+                        if core_u.is_type(attr_values, list)
                         else [str(attr_values)]
                     )
 
@@ -1277,7 +1277,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             removed_attr_names: list[str] = [
                 str(attr_name)
                 for attr_name in removed_attrs_dict
-                if isinstance(attr_name, str)
+                if core_u.is_type(attr_name, str)
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_removed_attrs = self._determine_attribute_order(
@@ -1291,7 +1291,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     continue
 
                 removed_values = entry.metadata.removed_attributes[attr_name]
-                if isinstance(removed_values, list):
+                if core_u.is_type(removed_values, list):
                     comment_lines.extend(
                         f"# [REMOVED] {attr_name}: {value}" for value in removed_values
                     )
@@ -1344,11 +1344,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Normalized values as list[str], str, or Acl model
 
         """
-        if isinstance(acl_values_raw, str):
+        if core_u.is_type(acl_values_raw, str):
             return acl_values_raw
-        if isinstance(acl_values_raw, list):
+        if core_u.is_type(acl_values_raw, list):
             return [str(v) for v in acl_values_raw]
-        if isinstance(acl_values_raw, m.Ldif.Acl):
+        if core_u.is_type(acl_values_raw, m.Ldif.Acl):
             return acl_values_raw
         return str(acl_values_raw)
 
@@ -1365,13 +1365,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        if isinstance(commented_raw, str):
+        if core_u.is_type(commented_raw, str):
             # json.loads returns Any - validate with isinstance
             result = json.loads(commented_raw)
-            if isinstance(result, dict):
+            if core_u.is_type(result, dict):
                 return result
             return None
-        if isinstance(commented_raw, dict):
+        if core_u.is_type(commented_raw, dict):
             return commented_raw
         return None
 
@@ -1419,7 +1419,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_values: list[str] | str | m.Ldif.Acl,
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
-        if isinstance(acl_values, list):
+        if core_u.is_type(acl_values, list):
             for acl_value in acl_values:
                 comments.extend([
                     f"# [TRANSFORMED] {original_attr}: {acl_value}",
@@ -1534,9 +1534,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _normalize_aci_value_simple(self, value: object) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
-        if isinstance(value, list):
+        if core_u.is_type(value, list):
             return [str(v) for v in value]
-        if isinstance(value, str):
+        if core_u.is_type(value, str):
             return value
         if value is None:
             return None
@@ -1636,23 +1636,23 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             # Type narrowing: ensure value is compatible with MetadataAttributeValue
             # MetadataAttributeValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
             # where ScalarValue = str | int | float | bool | datetime | None
-            if isinstance(value, (str, int, float, bool, type(None))):
+            if core_u.is_type(value, (str, int, float, bool, type(None))):
                 current_extensions[final_key] = value
-            elif isinstance(value, (list, tuple)):
+            elif core_u.is_type(value, (list, tuple)):
                 # Convert to list[str] if all items are strings, otherwise convert to list[ScalarValue]
                 value_list: list[t.ScalarValue] = [
                     item
-                    if isinstance(item, (str, int, float, bool, type(None)))
+                    if core_u.is_type(item, (str, int, float, bool, type(None)))
                     else str(item)
                     for item in value
                 ]
                 current_extensions[final_key] = value_list
-            elif isinstance(value, dict):
+            elif core_u.is_type(value, dict):
                 # Convert dict values to scalar types (str, int, float, bool, None)
                 # Build dict with explicit type widening
                 value_dict_inner: dict[str, str | int | float | bool | None] = {}
                 for k, v in value.items():
-                    if isinstance(v, (str, int, float, bool, type(None))):
+                    if core_u.is_type(v, (str, int, float, bool, type(None))):
                         value_dict_inner[k] = v
                     else:
                         value_dict_inner[k] = str(v)
@@ -1672,11 +1672,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Process list of ACI values and extract metadata."""
         aci_list = (
             list(aci_values)
-            if isinstance(aci_values, (list, tuple))
+            if core_u.is_type(aci_values, (list, tuple))
             else [str(aci_values)]
         )
         for aci_value in aci_list:
-            if not isinstance(aci_value, str):
+            if not core_u.is_type(aci_value, str):
                 continue
             normalized_aci = aci_value.strip()
             if not normalized_aci.startswith("aci:"):
@@ -1688,7 +1688,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = (
                         acl_model.metadata.extensions.model_dump()
-                        if hasattr(acl_model.metadata.extensions, "model_dump")
+                        if core_u.has(acl_model.metadata.extensions, "model_dump")
                         else dict(acl_model.metadata.extensions)
                     )
                     # Type narrow for proper type checking
@@ -1712,7 +1712,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if entry.metadata:
             # Get current extensions as dict
             current_extensions: dict[str, t.MetadataAttributeValue]
-            if isinstance(
+            if core_u.is_type(
                 entry.metadata.extensions,
                 FlextLdifModelsMetadata.DynamicMetadata,
             ):
@@ -1720,7 +1720,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     exclude_unset=True,
                 )
                 current_extensions = current_extensions_dict
-            elif isinstance(entry.metadata.extensions, dict):
+            elif core_u.is_type(entry.metadata.extensions, dict):
                 # Type narrowing: dict is compatible with dict[str, t.MetadataAttributeValue]
                 current_extensions = entry.metadata.extensions
             else:
@@ -1776,21 +1776,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 # Type narrowing: ensure value is compatible with MetadataAttributeValue
-                if isinstance(value_raw, (str, int, float, bool, type(None))):
+                if core_u.is_type(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
-                elif isinstance(value_raw, (list, tuple)):
+                elif core_u.is_type(value_raw, (list, tuple)):
                     value_list: list[t.ScalarValue] = [
                         item
-                        if isinstance(item, (str, int, float, bool, type(None)))
+                        if core_u.is_type(item, (str, int, float, bool, type(None)))
                         else str(item)
                         for item in value_raw
                     ]
                     acl_metadata_extensions[dest_key] = value_list
-                elif isinstance(value_raw, dict):
+                elif core_u.is_type(value_raw, dict):
                     # Build dict with explicit type widening
                     value_dict_1: dict[str, str | int | float | bool | None] = {}
                     for k, v in value_raw.items():
-                        if isinstance(v, (str, int, float, bool, type(None))):
+                        if core_u.is_type(v, (str, int, float, bool, type(None))):
                             value_dict_1[k] = v
                         else:
                             value_dict_1[k] = str(v)
@@ -1828,21 +1828,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if value_raw is not None:
                 # Type narrowing: ensure value is compatible with MetadataAttributeValue
                 # DynamicMetadata.get() returns t.MetadataAttributeValue, but mypy needs help
-                if isinstance(value_raw, (str, int, float, bool, type(None))):
+                if core_u.is_type(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
-                elif isinstance(value_raw, (list, tuple)):
+                elif core_u.is_type(value_raw, (list, tuple)):
                     value_list: list[t.ScalarValue] = [
                         item
-                        if isinstance(item, (str, int, float, bool, type(None)))
+                        if core_u.is_type(item, (str, int, float, bool, type(None)))
                         else str(item)
                         for item in value_raw
                     ]
                     acl_metadata_extensions[dest_key] = value_list
-                elif isinstance(value_raw, dict):
+                elif core_u.is_type(value_raw, dict):
                     # Build dict with explicit type widening
                     value_dict_2: dict[str, str | int | float | bool | None] = {}
                     for k, v in value_raw.items():
-                        if isinstance(v, (str, int, float, bool, type(None))):
+                        if core_u.is_type(v, (str, int, float, bool, type(None))):
                             value_dict_2[k] = v
                         else:
                             value_dict_2[k] = str(v)
@@ -1878,12 +1878,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if isinstance(acl_extensions, FlextLdifModelsMetadata.DynamicMetadata):
+                if core_u.is_type(acl_extensions, FlextLdifModelsMetadata.DynamicMetadata):
                     self._extract_acl_metadata_from_dynamic(
                         acl_extensions,
                         acl_metadata_extensions,
                     )
-                elif isinstance(acl_extensions, dict):
+                elif core_u.is_type(acl_extensions, dict):
                     self._extract_acl_metadata_from_dict(
                         acl_extensions,
                         acl_metadata_extensions,
@@ -1966,12 +1966,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # Validate ACI macros if present and extract ACL metadata
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and isinstance(aci_attrs, (list, tuple)):
+        if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
             has_macros = False
             acl_metadata_extensions: dict[str, t.MetadataAttributeValue] = {}
 
             for aci_value in aci_attrs:
-                if isinstance(aci_value, str):
+                if core_u.is_type(aci_value, str):
                     # Process single ACI using helper method (reduces nesting)
                     process_result = self._process_single_aci_value(
                         aci_value,
@@ -1989,7 +1989,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 max_len = FlextLdifServersOudConstants.MAX_LOG_LINE_LENGTH
                 aci_list = (
                     list(aci_attrs)
-                    if isinstance(aci_attrs, (list, tuple))
+                    if core_u.is_type(aci_attrs, (list, tuple))
                     else [str(aci_attrs)]
                 )
                 logger.debug(
@@ -1997,7 +1997,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     entry_dn=entry.dn.value if entry.dn else None,
                     aci_count=len(aci_list),
                     aci_preview=[
-                        s[:max_len] for s in aci_list[:10] if isinstance(s, str)
+                        s[:max_len] for s in aci_list[:10] if core_u.is_type(s, str)
                     ],
                 )
 
@@ -2061,9 +2061,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> str | None:
         """Validate ACI macros if present. Returns error message or None if valid."""
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and isinstance(aci_attrs, (list, tuple)):
+        if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
             for aci_value in aci_attrs:
-                if isinstance(aci_value, str):
+                if core_u.is_type(aci_value, str):
                     validation_result = validate_aci_macros(aci_value)
                     if validation_result.is_failure:
                         return f"ACI macro validation failed: {validation_result.error}"
@@ -2102,10 +2102,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Extract syntax_corrections with explicit type narrowing
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
         syntax_corrections_typed: list[str] | dict[str, str] | None = None
-        if isinstance(syntax_corrections_raw, list):
+        if core_u.is_type(syntax_corrections_raw, list):
             # Type narrowing: syntax_corrections_raw is list, convert to list[str]
             syntax_corrections_typed = [str(v) for v in syntax_corrections_raw]
-        elif isinstance(syntax_corrections_raw, dict):
+        elif core_u.is_type(syntax_corrections_raw, dict):
             # Type narrowing: syntax_corrections_raw is dict, convert to dict[str, str]
             # Business Rule: Use explicit iteration to help type checker understand types.
             # Implication: Type checker may infer Never for dict.items() in some contexts.
@@ -2114,7 +2114,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             # Business Rule: syntax_corrections_raw is dict[str, ...] from corrected_data_typed.
             # Implication: Values may be str | int | float | bool | list[str] | dict[str, str | list[str]] | None.
             # We convert all values to str for dict[str, str] compatibility.
-            if isinstance(syntax_corrections_raw, dict):
+            if core_u.is_type(syntax_corrections_raw, dict):
                 for k, v in syntax_corrections_raw.items():
                     syntax_corrections_dict[str(k)] = str(v) if v is not None else ""
             syntax_corrections_typed = syntax_corrections_dict
@@ -2141,18 +2141,18 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         # Type narrowing: corrected_attrs should be dict[str, str | list[str]] | None
-        if not isinstance(corrected_attrs_raw, dict):
+        if not core_u.is_type(corrected_attrs_raw, dict):
             return FlextResult[m.Ldif.Entry].ok(entry)
 
         attrs_for_model: dict[str, list[str]] = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
             # Type narrowing: ensure key is string
-            if not isinstance(raw_key, str):
+            if not core_u.is_type(raw_key, str):
                 continue
             # Type narrowing: handle different value types
-            if isinstance(raw_value, list):
+            if core_u.is_type(raw_value, list):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
-            elif isinstance(raw_value, str):
+            elif core_u.is_type(raw_value, str):
                 attrs_for_model[raw_key] = [raw_value]
             else:
                 # Handle other GeneralValueType values
@@ -2169,7 +2169,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "OUD quirks: Applied syntax corrections before writing (structure preserved)",
             entry_dn=entry.dn.value if entry.dn else None,
             corrections_count=len(syntax_corrections)
-            if isinstance(syntax_corrections, (list, tuple))
+            if core_u.is_type(syntax_corrections, (list, tuple))
             else 0,
             corrections=syntax_corrections,
             corrected_attributes=list(attrs_for_model.keys()),
@@ -2227,7 +2227,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return FlextResult.ok(entry)
 
         # Type narrow for proper type checking
-        if not isinstance(acl_quirk_raw, FlextLdifServersOudAcl):
+        if not core_u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
             return FlextResult.ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
 
@@ -2333,14 +2333,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Convert entry_dict to proper type for parse_entry (str only, decode bytes)
         entry_attrs: dict[str, list[str]] = {}
         for k, v in entry_dict.items():
-            if isinstance(v, list):
+            if core_u.is_type(v, list):
                 entry_attrs[str(k)] = [
-                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                    item.decode("utf-8") if core_u.is_type(item, bytes) else str(item)
                     for item in v
                 ]
-            elif isinstance(v, bytes):
+            elif core_u.is_type(v, bytes):
                 entry_attrs[str(k)] = [v.decode("utf-8")]
-            elif isinstance(v, str):
+            elif core_u.is_type(v, str):
                 entry_attrs[str(k)] = [v]
             else:
                 entry_attrs[str(k)] = [str(v)]
@@ -2355,7 +2355,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             # CONSOLIDATED: Use utilities for difference analysis and storage (DRY)
             # Type annotation uses str | bytes to match analyze_differences signature
             converted_attrs: dict[str, list[str | bytes]] = {
-                k: list(v) if isinstance(v, list) else [str(v)]
+                k: list(v) if core_u.is_type(v, list) else [str(v)]
                 for k, v in parsed_attrs.items()
             }
             dn_differences, attribute_differences, original_attrs_complete, _ = (
@@ -2447,7 +2447,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if (
             entry.metadata
             and entry.metadata.extensions
-            and isinstance(entry.metadata.extensions, dict)
+            and core_u.is_type(entry.metadata.extensions, dict)
         ):
             rejection_reason = entry.metadata.extensions.get("rejection_reason")
             if rejection_reason:

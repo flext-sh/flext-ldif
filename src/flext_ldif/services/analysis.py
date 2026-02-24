@@ -110,7 +110,7 @@ class FlextLdifAnalysis(
             errors.append("Entry has None DN")
             return (False, "", errors)
 
-        dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+        dn_str = entry.dn.value if getattr(entry.dn, "value", None) is not None else str(entry.dn)
         if not dn_str:
             errors.append(f"Entry has invalid DN: {entry.dn}")
             return (False, dn_str, errors)
@@ -151,23 +151,23 @@ class FlextLdifAnalysis(
             default=[],
         )
 
-        if isinstance(oc_values_raw, str):
+        if issubclass(oc_values_raw.__class__, str):
             oc_values: list[str] | str = oc_values_raw
-        elif isinstance(oc_values_raw, list):
+        elif issubclass(oc_values_raw.__class__, list):
             oc_values = [str(oc) for oc in oc_values_raw]
         else:
             oc_values = []
 
-        if isinstance(oc_values, list):
+        if issubclass(oc_values.__class__, list):
             for oc_item in oc_values:
-                if not isinstance(oc_item, str):
+                if not issubclass(oc_item.__class__, str):
                     msg = f"Expected str, got {type(oc_item)}"
                     raise TypeError(msg)
                 oc_result = validation_service.validate_objectclass_name(oc_item)
                 if oc_result.is_failure or not oc_result.value:
                     errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
                     is_valid = False
-        elif isinstance(oc_values, str):
+        elif issubclass(oc_values.__class__, str):
             oc_result = validation_service.validate_objectclass_name(oc_values)
             if oc_result.is_failure or not oc_result.value:
                 errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_values}'")

@@ -98,7 +98,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
+            if u.Guards.is_type(attr_definition, m.Ldif.SchemaAttribute):
                 return u.Ldif.Server.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -134,7 +134,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+            if u.Guards.is_type(oc_definition, m.Ldif.SchemaObjectClass):
                 return u.Ldif.Server.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -201,7 +201,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
-            if isinstance(acl_line, str):
+            if u.Guards.is_type(acl_line, str):
                 if not acl_line or not acl_line.strip():
                     return False
                 normalized = acl_line.strip()
@@ -214,10 +214,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return normalized.lower().startswith(
                     FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                if not acl_line.raw_acl:
+            if u.Guards.is_type(acl_line, m.Ldif.Acl):
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not u.Guards.is_type(raw_acl, str) or not raw_acl:
                     return False
-                normalized = acl_line.raw_acl.strip()
+                normalized = raw_acl.strip()
                 if not normalized:
                     return False
 
@@ -265,7 +266,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> FlextResult[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: dict[str, list[str]] = {
-                k: [v.decode() if isinstance(v, bytes) else v for v in vals]
+                k: [v.decode() if u.Guards.is_type(v, bytes) else v for v in vals]
                 for k, vals in entry_attrs.items()
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
