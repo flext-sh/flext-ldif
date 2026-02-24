@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
 from flext_core import m, r, t
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -120,6 +120,198 @@ class WriteConfig(m.Value):
     server: str | None = Field(default=None)
 
 
+# =========================================================================
+# UTILITY CONFIGURATION MODELS (private)
+# Canonical definitions moved from _utilities/configs.py.
+# Accessed via FlextLdifModelsSettings.<Name> aliases.
+# =========================================================================
+
+
+class UtilMetadataPreserveConfig(BaseModel):
+    """Configuration for metadata preservation."""
+
+    model_config = ConfigDict(frozen=False)
+
+    original: bool = Field(default=False)
+    tracking: bool = Field(default=False)
+    validation: bool = Field(default=False)
+
+
+class UtilDnNormalizationConfig(BaseModel):
+    """DN (Distinguished Name) normalization configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    case_fold: c.Ldif.CaseFoldOption = Field(default=c.Ldif.CaseFoldOption.LOWER)
+    space_handling: c.Ldif.SpaceHandlingOption = Field(
+        default=c.Ldif.SpaceHandlingOption.PRESERVE,
+    )
+    validate_before: bool = Field(
+        default=True,
+        description="Validate DN before normalization",
+    )
+
+
+class UtilAttrNormalizationConfig(BaseModel):
+    """Attribute normalization configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    sort_values: bool = Field(default=True)
+    normalize_whitespace: bool = Field(default=True)
+    case_fold_names: bool = Field(default=True, description="Lowercase attribute names")
+    trim_values: bool = Field(default=True, description="Trim whitespace from values")
+    remove_empty: bool = Field(
+        default=False,
+        description="Remove empty attribute values",
+    )
+
+
+class UtilAclConversionConfig(BaseModel):
+    """ACL (Access Control List) conversion configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    convert_aci: bool = Field(default=True)
+    preserve_original_aci: bool = Field(default=False)
+    map_server_specific: bool = Field(default=True)
+
+
+class UtilMetadataConfig(BaseModel):
+    """Metadata preservation configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    preserve_original: bool = Field(default=True)
+    preserve_tracking: bool = Field(default=True)
+    preserve_validation: bool = Field(default=False)
+
+
+class UtilValidationConfig(BaseModel):
+    """Validation configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    strict_rfc: bool = Field(default=False)
+    allow_server_quirks: bool = Field(default=True)
+    validate_dn_format: bool = Field(default=True)
+
+
+class UtilFilterConfig(BaseModel):
+    """Entry filtering configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    filter_expression: str | None = Field(default=None)
+    exclude_filter: str | None = Field(default=None)
+    include_operational: bool = Field(default=False)
+    mode: Literal["all", "any"] = Field(
+        default="all",
+        description="Filter combination mode (all=AND, any=OR)",
+    )
+    case_sensitive: bool = Field(default=False, description="Case-sensitive matching")
+    include_metadata_matches: bool = Field(
+        default=False,
+        description="Match against metadata fields",
+    )
+
+
+class UtilProcessConfig(BaseModel):
+    """Main process configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    source_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
+    target_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
+    dn_config: UtilDnNormalizationConfig = Field(
+        default_factory=UtilDnNormalizationConfig,
+    )
+    attr_config: UtilAttrNormalizationConfig = Field(
+        default_factory=UtilAttrNormalizationConfig,
+    )
+    acl_config: UtilAclConversionConfig = Field(
+        default_factory=UtilAclConversionConfig,
+    )
+    validation_config: UtilValidationConfig = Field(
+        default_factory=UtilValidationConfig,
+    )
+    metadata_config: UtilMetadataConfig = Field(
+        default_factory=UtilMetadataConfig,
+    )
+
+
+class UtilTransformConfig(BaseModel):
+    """Transformation pipeline configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    process_config: UtilProcessConfig = Field(default_factory=UtilProcessConfig)
+    filter_config: UtilFilterConfig = Field(default_factory=UtilFilterConfig)
+    normalize_dns: bool = Field(default=True)
+    normalize_attrs: bool = Field(default=True)
+    convert_acls: bool = Field(default=True)
+    fail_fast: bool = Field(default=True, description="Stop on first error")
+    preserve_order: bool = Field(default=True, description="Preserve entry order")
+    track_changes: bool = Field(default=True, description="Track changes in metadata")
+
+
+class UtilWriteConfig(BaseModel):
+    """LDIF output/write configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    version: int = Field(default=1, ge=1)
+    wrap_lines: bool = Field(default=True)
+    line_length: int = Field(default=76, ge=10)
+    line_width: int = Field(default=76, ge=10, description="Alias for line_length")
+    fold_lines: bool = Field(default=True, description="Alias for wrap_lines")
+    base64_attrs: Sequence[str] | Literal["auto"] = Field(
+        default="auto",
+        description="Attributes to encode in base64",
+    )
+    attr_order: Sequence[str] | None = Field(
+        default=None,
+        description="Preferred attribute order",
+    )
+    include_metadata: bool = Field(
+        default=False,
+        description="Include metadata in output",
+    )
+
+
+class UtilLoadConfig(BaseModel):
+    """LDIF file loading configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    file_path: str = Field(default="")
+    encoding: str = Field(default="utf-8")
+    ignore_errors: bool = Field(default=False)
+    skip_comments: bool = Field(default=False)
+
+
+class UtilSchemaParseConfig(BaseModel):
+    """Schema parsing configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    parse_attributes: bool = Field(default=True)
+    parse_objectclasses: bool = Field(default=True)
+    parse_matching_rules: bool = Field(default=False)
+    parse_syntaxes: bool = Field(default=False)
+
+
+class UtilValidationRuleSet(BaseModel):
+    """Validation rule set configuration."""
+
+    model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+    name: str = Field(default="default")
+    strict_mode: bool = Field(default=False)
+    allow_undefined_attrs: bool = Field(default=True)
+    allow_undefined_ocs: bool = Field(default=True)
+
+
 class FlextLdifModelsSettings:
     """LDIF configuration models container class.
 
@@ -128,6 +320,23 @@ class FlextLdifModelsSettings:
     """
 
     # Access configuration classes directly via composition - no aliases needed
+
+    # =========================================================================
+    # UTILITY CONFIGURATION ALIASES (moved from _utilities/configs.py)
+    # =========================================================================
+    MetadataPreserveConfig = UtilMetadataPreserveConfig
+    DnNormalizationConfig = UtilDnNormalizationConfig
+    AttrNormalizationConfig = UtilAttrNormalizationConfig
+    AclConversionConfig = UtilAclConversionConfig
+    MetadataConfig = UtilMetadataConfig
+    UtilValidationConfig = UtilValidationConfig
+    UtilFilterConfig = UtilFilterConfig
+    UtilProcessConfig = UtilProcessConfig
+    UtilTransformConfig = UtilTransformConfig
+    UtilWriteConfig = UtilWriteConfig
+    LoadConfig = UtilLoadConfig
+    SchemaParseConfig = UtilSchemaParseConfig
+    ValidationRuleSet = UtilValidationRuleSet
 
     class AclMetadataConfig(m.Value):
         """Configuration for ACL metadata extensions.

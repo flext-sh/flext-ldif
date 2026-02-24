@@ -178,11 +178,11 @@ class _FlexibleCategories(
 type _DynCategoriesInput = dict[str, list[FlextLdifModelsDomains.Entry]]
 
 
-def _statistics_factory() -> FlextLdifModelsResults.Statistics:
-    return FlextLdifModelsResults.Statistics()
-
-
 class FlextLdifModelsResults:
+    @staticmethod
+    def _statistics_factory() -> FlextLdifModelsResults.Statistics:
+        return FlextLdifModelsResults.Statistics()
+
     type EventType = (
         FlextLdifModelsEvents.AclEvent
         | FlextLdifModelsEvents.CategoryEvent
@@ -237,7 +237,7 @@ class FlextLdifModelsResults:
             default_factory=_FlexibleCategories
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
-            default_factory=_statistics_factory
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
         )
         file_paths: _CategoryPaths = Field(default_factory=_CategoryPaths)
 
@@ -503,7 +503,7 @@ class FlextLdifModelsResults:
         migrated_schema: _SchemaContent = Field(default_factory=_SchemaContent)
         entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         stats: FlextLdifModelsResults.Statistics = Field(
-            default_factory=_statistics_factory
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
         )
         output_files: list[str] = Field(default_factory=list)
 

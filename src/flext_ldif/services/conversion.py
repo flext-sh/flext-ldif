@@ -33,58 +33,6 @@ logger = FlextLogger(__name__)
 _MISSING_ATTR = object()
 
 
-def _has_attr(obj: object, attr_name: str) -> bool:
-    """Check attribute presence via sentinel lookup."""
-    return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
-
-
-def _is_schema_quirk_protocol(
-    obj: FlextTypes.GeneralValueType,
-) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
-    """TypeGuard to check if object satisfies SchemaQuirkProtocol."""
-    return (
-        _has_attr(obj, "parse")
-        and _has_attr(obj, "write")
-        and _has_attr(obj, "write_attribute")
-    )
-
-
-def _get_schema_quirk(
-    quirk: FlextLdifServersBase,
-) -> p.Ldif.SchemaQuirkProtocol:
-    """Get schema quirk from base quirk with proper type narrowing."""
-    return _get_schema_from_attribute(quirk)
-
-
-def _validate_schema_quirk(
-    quirk: FlextLdifServersBase,
-) -> p.Ldif.SchemaQuirkProtocol:
-    """Validate and return quirk as Schema protocol."""
-    if not _has_attr(quirk, "parse") or not _has_attr(quirk, "write_attribute"):
-        msg = f"Expected Schema quirk, got {type(quirk)}"
-        raise TypeError(msg)
-
-    if not _is_schema_quirk_protocol(quirk):
-        msg = f"Quirk {type(quirk)} doesn't satisfy SchemaQuirkProtocol"
-        raise TypeError(msg)
-    return quirk
-
-
-def _get_schema_from_attribute(
-    quirk: FlextLdifServersBase,
-) -> p.Ldif.SchemaQuirkProtocol:
-    """Get schema quirk from schema_quirk attribute."""
-    if _has_attr(quirk, "schema_quirk"):
-        schema = quirk.schema_quirk
-
-        if _is_schema_quirk_protocol(schema):
-            return schema
-        msg = f"Expected Schema quirk, got {type(schema)}"
-        raise TypeError(msg)
-    msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
-    raise TypeError(msg)
-
-
 class FlextLdifConversion(
     FlextLdifServiceBase[
         m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
@@ -93,6 +41,54 @@ class FlextLdifConversion(
     """Facade for universal, model-driven quirk-to-quirk conversion."""
 
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
+
+    @staticmethod
+    def _has_attr(obj: object, attr_name: str) -> bool:
+        return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
+
+    @staticmethod
+    def _is_schema_quirk_protocol(
+        obj: FlextTypes.GeneralValueType,
+    ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
+        return (
+            FlextLdifConversion._has_attr(obj, "parse")
+            and FlextLdifConversion._has_attr(obj, "write")
+            and FlextLdifConversion._has_attr(obj, "write_attribute")
+        )
+
+    @staticmethod
+    def _get_schema_quirk(
+        quirk: FlextLdifServersBase,
+    ) -> p.Ldif.SchemaQuirkProtocol:
+        return FlextLdifConversion._get_schema_from_attribute(quirk)
+
+    @staticmethod
+    def _validate_schema_quirk(
+        quirk: FlextLdifServersBase,
+    ) -> p.Ldif.SchemaQuirkProtocol:
+        if not FlextLdifConversion._has_attr(
+            quirk, "parse"
+        ) or not FlextLdifConversion._has_attr(quirk, "write_attribute"):
+            msg = f"Expected Schema quirk, got {type(quirk)}"
+            raise TypeError(msg)
+        if not FlextLdifConversion._is_schema_quirk_protocol(quirk):
+            msg = f"Quirk {type(quirk)} doesn't satisfy SchemaQuirkProtocol"
+            raise TypeError(msg)
+        return quirk
+
+    @staticmethod
+    def _get_schema_from_attribute(
+        quirk: FlextLdifServersBase,
+    ) -> p.Ldif.SchemaQuirkProtocol:
+        if FlextLdifConversion._has_attr(quirk, "schema_quirk"):
+            schema = quirk.schema_quirk
+            if FlextLdifConversion._is_schema_quirk_protocol(schema):
+                return schema
+            msg = f"Expected Schema quirk, got {type(schema)}"
+            raise TypeError(msg)
+        msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
+        raise TypeError(msg)
+
     _PERMISSION_KEY_MAPPING: ClassVar[Mapping[str, t.GeneralValueType]] = {
         "read": "read",
         "write": "write",
@@ -451,7 +447,9 @@ class FlextLdifConversion(
             str | dict[str, str | t.MetadataAttributeValue],
         ] = {}
 
-        if not source_metadata or not _has_attr(source_metadata, "boolean_conversions"):
+        if not source_metadata or not FlextLdifConversion._has_attr(
+            source_metadata, "boolean_conversions"
+        ):
             return conversion_analysis
 
         target_server_str = str(target_server_type)
@@ -698,7 +696,9 @@ class FlextLdifConversion(
                 current_attrs = dict(converted_entry.attributes.attributes)
                 updated_attrs = {}
 
-                if _has_attr(source_quirk, "entry_quirk") and _has_attr(
+                if FlextLdifConversion._has_attr(
+                    source_quirk, "entry_quirk"
+                ) and FlextLdifConversion._has_attr(
                     source_quirk.entry_quirk, "_convert_boolean_attributes_to_rfc"
                 ):
                     try:
@@ -733,7 +733,9 @@ class FlextLdifConversion(
                 )
 
             if source_type_norm == "rfc" and target_type_norm == "oid":
-                if _has_attr(target_quirk, "entry_quirk") and _has_attr(
+                if FlextLdifConversion._has_attr(
+                    target_quirk, "entry_quirk"
+                ) and FlextLdifConversion._has_attr(
                     target_quirk.entry_quirk, "_restore_boolean_values_to_oid"
                 ):
                     try:
@@ -814,7 +816,7 @@ class FlextLdifConversion(
     ) -> r[p.Ldif.SchemaQuirkProtocol]:
         """Get schema quirk safely with error handling."""
         result = u.try_(
-            lambda: _get_schema_quirk(quirk),
+            lambda: FlextLdifConversion._get_schema_quirk(quirk),
             default=None,
         )
         if result is None:
@@ -839,7 +841,8 @@ class FlextLdifConversion(
     ]:
         """Process schema conversion pipeline (write->parse)."""
         if not (
-            _has_attr(config, "write_method") and _has_attr(config, "source_schema")
+            FlextLdifConversion._has_attr(config, "write_method")
+            and FlextLdifConversion._has_attr(config, "source_schema")
         ):
             return r[
                 m.Ldif.Entry
@@ -924,8 +927,8 @@ class FlextLdifConversion(
                 )
 
             if not (
-                _has_attr(source_schema, "write_attribute")
-                and _has_attr(target_schema, "parse_attribute")
+                FlextLdifConversion._has_attr(source_schema, "write_attribute")
+                and FlextLdifConversion._has_attr(target_schema, "parse_attribute")
             ):
                 return r[
                     m.Ldif.Entry
@@ -1003,8 +1006,8 @@ class FlextLdifConversion(
                 )
 
             if not (
-                _has_attr(source_schema, "write_objectclass")
-                and _has_attr(target_schema, "parse_objectclass")
+                FlextLdifConversion._has_attr(source_schema, "write_objectclass")
+                and FlextLdifConversion._has_attr(target_schema, "parse_objectclass")
             ):
                 return r[
                     m.Ldif.Entry
@@ -1227,7 +1230,7 @@ class FlextLdifConversion(
                     "permissions": (
                         original_acl_typed.permissions.model_copy(deep=True)
                         if original_acl_typed.permissions
-                        and _has_attr(
+                        and FlextLdifConversion._has_attr(
                             original_acl_typed.permissions,
                             "model_copy",
                         )
@@ -1564,7 +1567,7 @@ class FlextLdifConversion(
 
         source_quirk = self._resolve_quirk(source)
         try:
-            schema_quirk = _get_schema_quirk(source_quirk)
+            schema_quirk = FlextLdifConversion._get_schema_quirk(source_quirk)
         except TypeError:
             return r[str].ok(source_attr)
 
@@ -1689,7 +1692,7 @@ class FlextLdifConversion(
 
         source_quirk = self._resolve_quirk(source)
         try:
-            schema_quirk = _get_schema_quirk(source_quirk)
+            schema_quirk = FlextLdifConversion._get_schema_quirk(source_quirk)
         except TypeError:
             return r[_TSchemaConversionValue].ok(source_oc)
 
@@ -1775,7 +1778,7 @@ class FlextLdifConversion(
     ) -> r[p.Ldif.SchemaQuirkProtocol]:
         quirk = self._resolve_quirk(quirk_or_type)
         try:
-            schema = _get_schema_quirk(quirk)
+            schema = FlextLdifConversion._get_schema_quirk(quirk)
             return r[p.Ldif.SchemaQuirkProtocol].ok(schema)
         except TypeError as e:
             return r[p.Ldif.SchemaQuirkProtocol].fail(f"{role} quirk error: {e}")
@@ -1847,7 +1850,7 @@ class FlextLdifConversion(
         target_quirk = self._resolve_quirk(target)
 
         try:
-            schema_quirk = _get_schema_quirk(target_quirk)
+            schema_quirk = FlextLdifConversion._get_schema_quirk(target_quirk)
         except TypeError:
             return FlextLdifConversion._schema_conversion_ok(parsed_oc)
 
@@ -1981,7 +1984,9 @@ class FlextLdifConversion(
                 error_details=error_details or None,
             )
 
-            if _has_attr(logger, "bind") and callable(getattr(logger, "bind", None)):
+            if FlextLdifConversion._has_attr(logger, "bind") and callable(
+                getattr(logger, "bind", None)
+            ):
                 _ = u.Ldif.Events.log_and_emit_conversion_event(
                     logger=logger,
                     config=conversion_config,
@@ -2039,7 +2044,9 @@ class FlextLdifConversion(
                 ],
             )
 
-            if _has_attr(logger, "bind") and callable(getattr(logger, "bind", None)):
+            if FlextLdifConversion._has_attr(logger, "bind") and callable(
+                getattr(logger, "bind", None)
+            ):
                 _ = u.Ldif.Events.log_and_emit_conversion_event(
                     logger=logger,
                     config=conversion_config,
@@ -2099,10 +2106,13 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
     ) -> object | None:
         """Get schema quirk from base quirk for support checking."""
-        if _has_attr(quirk, "parse_attribute") or _has_attr(quirk, "parse_objectclass"):
+        if FlextLdifConversion._has_attr(
+            quirk, "parse_attribute"
+        ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
             required_methods = ("parse", "write")
             if all(
-                _has_attr(quirk, method) and callable(getattr(quirk, method))
+                FlextLdifConversion._has_attr(quirk, method)
+                and callable(getattr(quirk, method))
                 for method in required_methods
             ):
                 return quirk
@@ -2112,7 +2122,7 @@ class FlextLdifConversion(
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
             if all(
-                _has_attr(schema_quirk_raw, method)
+                FlextLdifConversion._has_attr(schema_quirk_raw, method)
                 and callable(getattr(schema_quirk_raw, method))
                 for method in required_methods
             ):
@@ -2127,9 +2137,9 @@ class FlextLdifConversion(
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
         """Check attribute support for schema quirk."""
-        if not _has_attr(quirk_schema, "can_handle_attribute"):
+        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
             return support
-        if not _has_attr(quirk_schema, "parse_attribute"):
+        if not FlextLdifConversion._has_attr(quirk_schema, "parse_attribute"):
             return support
 
         can_handle_attr = getattr(quirk_schema, "can_handle_attribute", None)
@@ -2156,9 +2166,9 @@ class FlextLdifConversion(
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
         """Check objectClass support for schema quirk."""
-        if not _has_attr(quirk_schema, "can_handle_objectclass"):
+        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
             return support
-        if not _has_attr(quirk_schema, "parse_objectclass"):
+        if not FlextLdifConversion._has_attr(quirk_schema, "parse_objectclass"):
             return support
 
         can_handle_oc = getattr(quirk_schema, "can_handle_objectclass", None)
@@ -2226,8 +2236,8 @@ class FlextLdifConversion(
             entry = getattr(quirk, "_entry_quirk", None)
         if (
             entry is None
-            and _has_attr(quirk, "parse")
-            and _has_attr(quirk, "can_handle_entry")
+            and FlextLdifConversion._has_attr(quirk, "parse")
+            and FlextLdifConversion._has_attr(quirk, "can_handle_entry")
         ):
             entry = quirk
         if entry is not None and callable(getattr(entry, "parse", None)):

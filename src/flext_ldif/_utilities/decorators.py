@@ -16,11 +16,6 @@ from flext_ldif.typings import t
 logger = FlextLogger(__name__)
 
 
-def generate_iso_timestamp() -> str:
-    """Generate ISO 8601 timestamp string."""
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
 class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
 
@@ -73,7 +68,7 @@ class FlextLdifUtilitiesDecorators:
         # Create metadata with extensions
         extensions_dict = {
             "server_type": server_type,
-            "parsed_timestamp": generate_iso_timestamp(),
+            "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
         # Normalize quirk_type if provided, otherwise None
         # normalize_server_type validates and returns a valid ServerTypeLiteral string

@@ -19,6 +19,7 @@ from typing import ClassVar, Self, TypedDict, Unpack
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities, m
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Field,
     computed_field,
@@ -608,6 +609,23 @@ class FlextLdifModelsDomains:
                 "optional": may_count,
                 "total": must_count + may_count,
             }
+
+    class ParsedObjectClass(BaseModel):
+        """Typed payload for parsed objectClass definitions.
+
+        Used internally by FlextLdifUtilitiesObjectClass.parse() to validate
+        parsed dict before creating SchemaObjectClass model.
+        """
+
+        model_config = ConfigDict(extra="ignore")
+
+        oid: str
+        kind: str
+        name: str = Field(default="")
+        desc: str | None = Field(default=None)
+        sup: str | list[str] | None = Field(default=None)
+        must: list[str] | None = Field(default=None)
+        may: list[str] | None = Field(default=None)
 
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""

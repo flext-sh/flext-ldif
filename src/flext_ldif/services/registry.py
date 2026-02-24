@@ -46,18 +46,6 @@ class FlextLdifServiceRegistry(FlextRegistry):
         cls._global_instance = None
 
 
-def get_registry() -> FlextLdifServiceRegistry:
-    """Get or create global registry instance."""
-    return FlextLdifServiceRegistry.get_global()
-
-
-def reset_registry() -> None:
-    """Reset global registry (for testing)."""
-    FlextLdifServiceRegistry.reset_global()
-
-
 __all__ = [
     "FlextLdifServiceRegistry",
-    "get_registry",
-    "reset_registry",
 ]

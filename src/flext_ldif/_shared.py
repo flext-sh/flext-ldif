@@ -11,9 +11,21 @@ from __future__ import annotations
 
 from flext_ldif.constants import c
 
+_MISSING_ATTR = object()
+"""Sentinel for _has_attr — a single canonical instance shared across all callers."""
+
 
 class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
+
+    @staticmethod
+    def _has_attr(obj: object, attr_name: str) -> bool:
+        """Check if an object has a non-None attribute (canonical implementation).
+
+        Uses a sentinel object to distinguish between attributes that are None
+        and attributes that don't exist at all.
+        """
+        return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
     def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:

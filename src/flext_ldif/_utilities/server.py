@@ -42,15 +42,14 @@ _VALID_SERVER_TYPES: frozenset[str] = frozenset(
 _CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
 
 
-def _is_valid_server_type_literal(
-    value: str,
-) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
-    """TypeGuard to narrow str to ServerTypeLiteral."""
-    return value in _VALID_SERVER_TYPES
-
-
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
+
+    @staticmethod
+    def _is_valid_server_type_literal(
+        value: str,
+    ) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
+        return value in _VALID_SERVER_TYPES
 
     @staticmethod
     def _extract_server_type_from_constants(
@@ -66,7 +65,7 @@ class FlextLdifUtilitiesServer:
         if (
             server_type_raw is not None
             and issubclass(server_type_raw.__class__, str)
-            and _is_valid_server_type_literal(server_type_raw)
+            and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
         ):
             return server_type_raw
         return None
@@ -124,7 +123,7 @@ class FlextLdifUtilitiesServer:
 
         # Validate against known server types (No dynamic import)
         # Use TypeGuard to narrow to ServerTypeLiteral
-        if _is_valid_server_type_literal(server_type_lower):
+        if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
             return server_type_lower
         return None
 
@@ -279,7 +278,7 @@ class FlextLdifUtilitiesServer:
     ]:
         """Normalize server type string to canonical ServerTypes enum value."""
         normalized = FlextLdifShared.normalize_server_type(server_type).value
-        if _is_valid_server_type_literal(normalized):
+        if FlextLdifUtilitiesServer._is_valid_server_type_literal(normalized):
             return normalized
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
         msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"

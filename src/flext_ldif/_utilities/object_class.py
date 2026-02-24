@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r, u
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -38,18 +37,7 @@ class _SchemaConstants:
 logger = FlextLogger(__name__)
 
 
-class _ParsedObjectClass(BaseModel):
-    """Typed payload for parsed objectClass definitions."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    oid: str
-    kind: str
-    name: str = Field(default="")
-    desc: str | None = Field(default=None)
-    sup: str | list[str] | None = Field(default=None)
-    must: list[str] | None = Field(default=None)
-    may: list[str] | None = Field(default=None)
+_ParsedObjectClass = FlextLdifModelsDomains.ParsedObjectClass
 
 
 class FlextLdifUtilitiesObjectClass:

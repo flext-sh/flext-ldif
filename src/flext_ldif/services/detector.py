@@ -16,11 +16,6 @@ from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import u
 
 
-def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance."""
-    return FlextLdifServer.get_global_instance()
-
-
 class ServerDetectionConstants(Protocol):
     """Protocol for server Constants classes with detection attributes."""
 
@@ -581,11 +576,16 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         return patterns
 
     @staticmethod
+    def _get_server_registry() -> FlextLdifServer:
+        """Get server registry instance."""
+        return FlextLdifServer.get_global_instance()
+
+    @staticmethod
     def _get_server_constants(
         server_type: str,
     ) -> type[ServerDetectionConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
-        registry = _get_server_registry()
+        registry = FlextLdifDetector._get_server_registry()
         server_quirk_result = registry.quirk(server_type)
         if not server_quirk_result.is_success:
             return None

@@ -14,13 +14,6 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
-_MISSING_ATTR = object()
-
-
-def _has_attr(obj: object, attr_name: str) -> bool:
-    """Check attribute presence via sentinel lookup."""
-    return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
-
 
 class FlextLdifSorting(
     FlextLdifServiceBase[list[m.Ldif.Entry]],
@@ -352,7 +345,7 @@ class FlextLdifSorting(
         if sorted_entries_raw is None:
             error_msg = (
                 result.error
-                if _has_attr(result, "error") and result.error
+                if FlextLdifSorting._has_attr(result, "error") and result.error
                 else "Sort failed"
             )
             return r[list[m.Ldif.Entry]].fail(error_msg)
@@ -366,7 +359,7 @@ class FlextLdifSorting(
             if sorted_entries_attr_raw is None:
                 error_msg = (
                     result.error
-                    if _has_attr(result, "error") and result.error
+                    if FlextLdifSorting._has_attr(result, "error") and result.error
                     else "Attribute sort failed"
                 )
                 return r[list[m.Ldif.Entry]].fail(error_msg)
@@ -380,7 +373,7 @@ class FlextLdifSorting(
             if sorted_entries_raw is None:
                 error_msg = (
                     result.error
-                    if _has_attr(result, "error") and result.error
+                    if FlextLdifSorting._has_attr(result, "error") and result.error
                     else "ACL sort failed"
                 )
                 return r[list[m.Ldif.Entry]].fail(error_msg)

@@ -16,7 +16,7 @@ class FlextLdifTypes(FlextTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
     # Conversion target type (alias to flext_core general value union)
-    GeneralValueType: TypeAlias = (
+    GeneralValueType: TypeAlias = FlextTypes.GeneralValueType | (
         FlextTypes.GeneralScalarValue | FlextTypes.GeneralListValue
     )
 
