@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 from typing import Final, override
 
@@ -15,7 +16,6 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.pipeline import ProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
 
-import struct
 logger: Final = FlextLogger(__name__)
 
 
@@ -139,7 +139,13 @@ class FlextLdifMigrationPipeline(
 
             return pipeline.execute(entries)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "Migration failed",
                 source=self.source_server_type,
@@ -224,7 +230,13 @@ class FlextLdifMigrationPipeline(
 
             return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "File migration failed",
                 input_file=str(input_file),
@@ -296,7 +308,13 @@ class FlextLdifMigrationPipeline(
 
             return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(pipeline_result)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception("Migration pipeline failed")
             return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
                 f"Migration pipeline failed: {e}",

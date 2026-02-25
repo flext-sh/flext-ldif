@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import struct
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import ClassVar, Literal
@@ -19,7 +20,6 @@ from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-import struct
 logger = FlextLogger(__name__)
 
 _OidConstants = FlextLdifServersOidConstants
@@ -70,7 +70,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 return False
             if acl_model.metadata and acl_model.metadata.quirk_type:
                 return acl_model.metadata.quirk_type == self._get_server_type()
@@ -507,7 +513,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if metadata:
             try:
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 metadata_dict = self._normalize_to_dict(metadata)
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
 
@@ -718,7 +730,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 raw_acl=acl_line,
             )
             return FlextResult[m.Ldif.Acl].ok(acl_model)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
             logger.debug(

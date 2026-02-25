@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -20,7 +21,6 @@ from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -77,7 +77,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 return False
             if acl_model.metadata and acl_model.metadata.quirk_type:
                 return str(acl_model.metadata.quirk_type) == self._get_server_type()
@@ -202,7 +208,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
             return FlextResult[m.Ldif.Acl].ok(acl_model)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "Failed to parse OUD ds-privilege-name",
             )
@@ -522,7 +534,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
             return FlextResult[str].ok("\n".join(aci_output_lines))
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "Failed to write ACL to OUD ACI format",
             )

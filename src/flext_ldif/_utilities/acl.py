@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 
@@ -15,7 +16,6 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
-import struct
 f = FlextFunctional  # Pure functional utilities (no circular import)
 
 logger = FlextLogger(__name__)
@@ -763,7 +763,13 @@ class FlextLdifUtilitiesACL:
                     processed = process_rule_config(item)
                     if processed is not None:
                         result.append(processed)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
@@ -800,7 +806,13 @@ class FlextLdifUtilitiesACL:
                     processed = process_target_config(item)
                     if processed is not None:
                         result.append(processed)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result

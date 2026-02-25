@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import re
+import struct
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
@@ -18,7 +19,6 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 SchemaModelT = TypeVar(
@@ -166,14 +166,26 @@ class FlextLdifUtilitiesSchema:
         try:
             _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(definition)
             return "attribute"
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as exc:
             logger.debug(
                 "SchemaAttribute model validation did not match", error=str(exc)
             )
         try:
             _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
             return "objectclass"
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as exc:
             logger.debug(
                 "SchemaObjectClass model validation did not match",
                 error=str(exc),
@@ -241,7 +253,13 @@ class FlextLdifUtilitiesSchema:
                 setattr(transformed, field_name, new_value)
 
             return FlextResult.ok(transformed)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "Schema field transformation failed",
                 field_name=field_name,
@@ -263,7 +281,13 @@ class FlextLdifUtilitiesSchema:
             return FlextResult.ok(
                 FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
             )
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as exc:
             logger.debug(
                 "SchemaAttribute validation failed while returning result",
                 error=str(exc),
@@ -308,7 +332,13 @@ class FlextLdifUtilitiesSchema:
                 unwrapped,
             )
             return FlextResult.ok(validated_attr)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as exc:
             logger.debug(
                 "SchemaAttribute validation failed after transformation",
                 error=str(exc),
@@ -385,7 +415,13 @@ class FlextLdifUtilitiesSchema:
                     unwrapped_validated,
                 )
                 continue
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as exc:
                 logger.debug(
                     "SchemaAttribute cast failed after transformation",
                     error=str(exc),
@@ -395,7 +431,13 @@ class FlextLdifUtilitiesSchema:
                     unwrapped_validated,
                 )
                 continue
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 return FlextResult.fail(
                     f"Unexpected type after transformation: {type(unwrapped_validated).__name__}",
                 )
@@ -443,7 +485,13 @@ class FlextLdifUtilitiesSchema:
                 transformed = transform_result.value
 
             return FlextLdifUtilitiesSchema._return_result(transformed, schema_obj)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception(
                 "Transformation pipeline error",
             )
@@ -471,7 +519,13 @@ class FlextLdifUtilitiesSchema:
                 if result.is_success:
                     try:
                         items.append(model_type.model_validate(result.value))
-                    except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+                    except (
+                        ValueError,
+                        KeyError,
+                        AttributeError,
+                        UnicodeDecodeError,
+                        struct.error,
+                    ) as exc:
                         logger.debug(
                             "Schema line item validation failed",
                             error=str(exc),
@@ -1298,7 +1352,13 @@ class FlextLdifUtilitiesSchema:
         """Generic helper for writing schema elements (DRY pattern)."""
         try:
             validated_data = expected_type.model_validate(data)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as exc:
             msg = f"{type_name} must be {expected_type.__name__} model"
             raise TypeError(msg) from exc
 

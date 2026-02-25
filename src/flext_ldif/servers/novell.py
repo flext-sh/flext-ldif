@@ -1,4 +1,4 @@
-"""Novell eDirectory Quirks - Stub Implementation."""
+"""Novell eDirectory Quirks — eDirectory flavor detection and schema handling."""
 
 from __future__ import annotations
 

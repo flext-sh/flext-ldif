@@ -1,4 +1,4 @@
-"""389 Directory Server Quirks - Stub Implementation."""
+"""389 Directory Server Quirks — DS389 flavor detection and schema handling."""
 
 from __future__ import annotations
 

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-import struct
 from typing import ClassVar, Literal, TypeVar, overload
 
 from flext_core import t, x

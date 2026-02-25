@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from datetime import UTC, datetime
 from functools import wraps
 
@@ -13,7 +14,6 @@ from flext_ldif._shared import FlextLdifShared
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -67,7 +67,13 @@ class FlextLdifUtilitiesDecorators:
 
         try:
             setattr(result_value, "metadata", metadata)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
@@ -157,7 +163,13 @@ class FlextLdifUtilitiesDecorators:
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
                     return func(self, arg)
-                except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
                     return FlextResult.fail(error_msg)
@@ -191,7 +203,13 @@ class FlextLdifUtilitiesDecorators:
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:
                     return func(self, arg)
-                except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
                     return FlextResult.fail(error_msg)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
@@ -10,7 +11,6 @@ from flext_core import FlextLogger, FlextResult, r
 
 from flext_ldif.models import m
 
-import struct
 logger = FlextLogger.create_module_logger(__name__)
 
 
@@ -121,7 +121,13 @@ class FlextLdifUtilitiesParsers:
 
                 return r[m.Ldif.Entry].ok(entry)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception(
                     "Failed to parse entry",
                     server_type=server_type,
@@ -204,7 +210,13 @@ class FlextLdifUtilitiesParsers:
 
                 return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception(
                     "Failed to parse attribute",
                     server_type=server_type,
@@ -285,7 +297,13 @@ class FlextLdifUtilitiesParsers:
 
                 return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception(
                     "Failed to parse objectClass",
                     server_type=server_type,
@@ -370,7 +388,13 @@ class FlextLdifUtilitiesParsers:
 
                 return r[list[m.Ldif.Entry]].ok(entries)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception(
                     "Failed to parse content",
                     server_type=server_type,

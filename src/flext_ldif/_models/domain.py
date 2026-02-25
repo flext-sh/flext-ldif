@@ -23,10 +23,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationError,
     computed_field,
     field_validator,
     model_validator,
-    ValidationError,
 )
 
 from flext_ldif._models.base import (

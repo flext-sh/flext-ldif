@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
@@ -14,7 +15,6 @@ from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -561,7 +561,13 @@ class FlextLdifUtilitiesEntry:
             try:
                 result = transform_entry(entry)
                 transformed_list.append(result)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as exc:
                 if config.fail_fast:
                     return r[list[m.Ldif.Entry]].fail(
                         f"Transform failed at entry {i}: {exc}",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -15,7 +16,6 @@ from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -184,7 +184,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_domain,
                 )
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug(
                     "Relaxed attribute parse exception",
                     error=str(e),
@@ -567,7 +573,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     ),
                 )
                 return r[m.Ldif.Acl].ok(relaxed_acl)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug(
                     "Relaxed ACL parse failed",
                     error=str(e),
@@ -692,7 +704,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(entry)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug(
                     "Relaxed entry creation failed",
                     error=str(e),
@@ -804,7 +822,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
                 return r[str].ok(ldif_text)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug(
                     "Write entry failed",
                     error=str(e),
@@ -840,7 +864,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[str].fail(
                     f"DN normalization failed for DN: {dn}: {norm_result.error}",
                 )
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.debug(
                     "DN normalization exception",
                     error=str(e),

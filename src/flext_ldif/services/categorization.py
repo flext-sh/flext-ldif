@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
 
@@ -16,7 +17,6 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
-import struct
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 
 logger: Final = FlextLogger(__name__)
@@ -160,7 +160,7 @@ class FlextLdifCategorization(
     def execute(
         self,
     ) -> r[m.Ldif.LdifResults.FlexibleCategories]:
-        """Execute empty categorization (placeholder - use individual methods)."""
+        """Execute categorization pass (use individual methods for specific operations)."""
         categories = m.Ldif.LdifResults.FlexibleCategories()
         categories[FlextLdifCategorization._cat("schema")] = []
         categories[FlextLdifCategorization._cat("hierarchy")] = []
@@ -494,7 +494,13 @@ class FlextLdifCategorization(
                 return r[m.Ldif.LdifResults.CategoryRules].ok(
                     m.Ldif.LdifResults.CategoryRules.model_validate(dict(rules))
                 )
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 return r[m.Ldif.LdifResults.CategoryRules].fail(
                     f"Invalid rules mapping: {e}"
                 )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import ClassVar, Self
@@ -19,7 +20,6 @@ from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -608,7 +608,13 @@ class FlextLdifServersBaseSchema(
         if operation == "write":
             try:
                 attr_model = m.Ldif.SchemaAttribute.model_validate(data)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 attr_model = None
             if attr_model is not None:
                 return self._handle_write_operation(
@@ -616,7 +622,13 @@ class FlextLdifServersBaseSchema(
                 )
             try:
                 oc_model = m.Ldif.SchemaObjectClass.model_validate(data)
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 oc_model = None
             if oc_model is not None:
                 return self._handle_write_operation(attr_model=None, oc_model=oc_model)
@@ -642,17 +654,35 @@ class FlextLdifServersBaseSchema(
             if data_raw is not None:
                 try:
                     data = str(data_raw) if isinstance(data_raw, str) else None
-                except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ):
                     data = None
                 if data is None:
                     try:
                         data = m.Ldif.SchemaAttribute.model_validate(data_raw)
-                    except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+                    except (
+                        ValueError,
+                        KeyError,
+                        AttributeError,
+                        UnicodeDecodeError,
+                        struct.error,
+                    ):
                         data = None
                 if data is None:
                     try:
                         data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
-                    except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+                    except (
+                        ValueError,
+                        KeyError,
+                        AttributeError,
+                        UnicodeDecodeError,
+                        struct.error,
+                    ):
                         data = None
 
         if operation is None:

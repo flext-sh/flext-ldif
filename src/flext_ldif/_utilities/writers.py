@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
@@ -12,7 +13,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import m
 
-import struct
 # Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 
 # REMOVED: Type aliases for nested objects - use m.* or FlextLdifModelsDomains.* directly
@@ -150,7 +150,13 @@ class FlextLdifUtilitiesWriters:
                 ldif_str = "\n".join(lines) + "\n"
                 return r[str].ok(ldif_str)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 # Type narrowing: config.entry is Entry, extract DN for error message
                 entry_for_error: FlextLdifModelsDomains.Entry | None = config.entry
                 # Extract DN string
@@ -229,7 +235,13 @@ class FlextLdifUtilitiesWriters:
                 definition = "( " + " ".join(parts) + " )"
                 return r[str].ok(definition)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception("Failed to write attribute", server_type=server_type)
                 return r[str].fail(f"Failed to write attribute: {e}")
 
@@ -296,7 +308,13 @@ class FlextLdifUtilitiesWriters:
                 definition = "( " + " ".join(parts) + " )"
                 return r[str].ok(definition)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception("Failed to write objectClass", server_type=server_type)
                 return r[str].fail(f"Failed to write objectClass: {e}")
 
@@ -406,7 +424,13 @@ class FlextLdifUtilitiesWriters:
                 content = config.entry_separator.join(parts)
                 return r[str].ok(content)
 
-            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 logger.exception(
                     "Failed to write content",
                     server_type=config.server_type,

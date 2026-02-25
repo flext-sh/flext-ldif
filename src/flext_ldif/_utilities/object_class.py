@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
@@ -13,7 +14,6 @@ from flext_ldif.models import m
 from flext_ldif.typings import t
 
 
-import struct
 class _SchemaConstants:
     """Schema constants container for type safety (single class, no loose helpers)."""
 
@@ -163,7 +163,13 @@ class FlextLdifUtilitiesObjectClass:
 
             return r[m.Ldif.SchemaObjectClass].ok(schema_oc)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             return r[m.Ldif.SchemaObjectClass].fail(
                 f"Failed to parse objectClass definition: {e}",
             )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar
@@ -30,7 +31,6 @@ from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.typings import t
 
 
-import struct
 class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     """Main API facade for LDIF operations using composition pattern."""
 
@@ -475,7 +475,13 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         try:
             filtered = [entry for entry in entries if filter_func(entry)]
             return r[list[m.Ldif.Entry]].ok(filtered)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             return r[list[m.Ldif.Entry]].fail(f"Filter error: {e}")
 
     def filter(
@@ -572,7 +578,13 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 "attributes": {"cn": ["health-check"]},
             })
             return r[m.Ldif.Entry].ok(health_entry)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             return r[m.Ldif.Entry].fail(f"Health check failed: {e}")
 
 

@@ -69,9 +69,9 @@ def is_valid_rfc2849_attribute_value(value: str) -> bool:
 __all__ = [
     "RFC4512_DESCRIPTOR_PATTERN",
     "RFC4514_DN_COMPONENT_PATTERN",
+    "Rfc2849AttributeValue",
     "Rfc4512Descriptor",
     "Rfc4514DnComponent",
-    "Rfc2849AttributeValue",
     "is_valid_rfc2849_attribute_value",
     "is_valid_rfc4512_descriptor",
     "is_valid_rfc4514_dn_component",

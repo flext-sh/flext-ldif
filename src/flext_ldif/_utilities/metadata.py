@@ -951,7 +951,7 @@ class FlextLdifUtilitiesMetadata:
         metadata: FlextLdifModelsDomains.QuirkMetadata,
         **extra: t.ScalarValue,
     ) -> None:
-        """Store minimal differences in metadata (stub)."""
+        """Store minimal differences in metadata for delta tracking."""
 
     @staticmethod
     def build_entry_parse_metadata(

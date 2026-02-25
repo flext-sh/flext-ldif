@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Mapping
 from typing import Final
 
@@ -9,7 +10,6 @@ from flext_core import FlextLogger, r
 
 from flext_ldif.models import m
 
-import struct
 logger: Final = FlextLogger(__name__)
 
 
@@ -127,7 +127,13 @@ class FlextLdifFilters:
 
             return r[list[m.Ldif.Entry]].ok(filtered)
 
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception("Failed to filter schema entries by OIDs")
             return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
 

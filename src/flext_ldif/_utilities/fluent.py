@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Sequence
 from typing import Literal, Self
 
@@ -10,8 +11,6 @@ from flext_core import FlextResult
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
-
-import struct
 
 # Import removed to avoid circular dependency
 # Import CaseFoldOption directly to avoid circular import issues

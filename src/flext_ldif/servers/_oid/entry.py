@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import struct
 from collections.abc import Mapping
 from functools import reduce
 
@@ -20,7 +21,6 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
-import struct
 logger = FlextLogger(__name__)
 
 
@@ -865,7 +865,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     )
 
             return FlextResult.ok(entry)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             logger.exception("OID post-parse entry hook failed")
             return FlextResult.fail(f"OID post-parse entry hook failed: {e}")
 
