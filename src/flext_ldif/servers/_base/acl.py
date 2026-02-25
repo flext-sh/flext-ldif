@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -220,7 +220,12 @@ class FlextLdifServersBaseSchemaAcl(
             return value
         try:
             return m.Ldif.Acl.model_validate(value)
-        except Exception:
+        except ValidationError as exc:
+            logger.warning(
+                "Failed to coerce value to ACL model",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return None
 
     def _coerce_operation(self, value: object) -> str | None:

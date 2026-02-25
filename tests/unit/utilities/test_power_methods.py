@@ -7,6 +7,9 @@ for composable LDIF data transformation workflows.
 
 from __future__ import annotations
 
+import io
+from pathlib import Path
+
 import pytest
 from flext_core import FlextResult
 from flext_ldif._utilities import (
@@ -148,6 +151,30 @@ class TestsTestFlextLdifResult(s):
         # Combined should contain both lists
         values = combined.value
         assert len(values) == 2
+
+    def test_write_operator_to_string(self, sample_entry: m.Ldif.Entry) -> None:
+        output = io.StringIO()
+
+        result = FlextLdifResult.ok(sample_entry) >> output
+
+        assert result.is_success
+        content = result.value
+        assert "dn: " in content or "dn:: " in content
+        assert "cn: TestUser" in content
+        assert output.getvalue() == content
+
+    def test_write_operator_to_file(
+        self, sample_entry: m.Ldif.Entry, tmp_path: Path
+    ) -> None:
+        file_path = tmp_path / "entry.ldif"
+
+        result = FlextLdifResult.ok(sample_entry) >> file_path
+
+        assert result.is_success
+        assert file_path.exists()
+        content = file_path.read_text(encoding="utf-8")
+        assert content == result.value
+        assert "dn: " in content or "dn:: " in content
 
 
 # =========================================================================
@@ -412,6 +439,18 @@ class TestEntryOps:
             .build()
         )
         assert result.is_success
+
+    def test_attach_metadata(self, sample_entry: m.Ldif.Entry) -> None:
+        result = EntryOps(sample_entry).attach_metadata().build()
+
+        assert result.is_success
+        entry = result.value
+        assert entry.metadata is not None
+        assert entry.metadata.extensions.get("fluent_metadata_attached") is True
+        assert (
+            entry.metadata.extensions.get("fluent_metadata_method")
+            == "EntryOps.attach_metadata"
+        )
 
 
 # =========================================================================

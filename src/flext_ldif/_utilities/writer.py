@@ -13,6 +13,7 @@ from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import c
 from flext_ldif.models import m
 
+import struct
 r = FlextResult  # Shared from flext-core
 
 _TUPLE_LENGTH_TWO = 2  # Length for tuple unpacking validation
@@ -82,7 +83,7 @@ class FlextLdifUtilitiesWriter:
                 "encoding": encoding,
             }
             return FlextResult[dict[str, str | int]].ok(stats)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "File write failed",
                 file_path=str(file_path),

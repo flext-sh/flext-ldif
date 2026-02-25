@@ -6,7 +6,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
 
 from flext_core import FlextLogger, r
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from flext_ldif.base import s
 from flext_ldif.constants import c
@@ -16,6 +16,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
+import struct
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 
 logger: Final = FlextLogger(__name__)
@@ -493,7 +494,7 @@ class FlextLdifCategorization(
                 return r[m.Ldif.LdifResults.CategoryRules].ok(
                     m.Ldif.LdifResults.CategoryRules.model_validate(dict(rules))
                 )
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[m.Ldif.LdifResults.CategoryRules].fail(
                     f"Invalid rules mapping: {e}"
                 )
@@ -933,8 +934,12 @@ class FlextLdifCategorization(
         if isinstance(value, BaseModel):
             try:
                 return m.Ldif.Entry.model_validate(value)
-            except Exception:
-                return None
+            except ValidationError as exc:
+                logger.warning(
+                    "Failed to coerce BaseModel to Entry",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                )
         return None
 
 

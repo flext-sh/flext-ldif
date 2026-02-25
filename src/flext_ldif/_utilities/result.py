@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, overload
@@ -9,6 +10,8 @@ from typing import IO, Self, overload
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
 
+from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+from flext_ldif.models import m
 from flext_ldif.protocols import p
 
 r = FlextResult
@@ -160,28 +163,97 @@ class FlextLdifResult[T]:
         if self.is_failure:
             return FlextLdifResult.fail(self.error)
 
-        # Get the value and write it
+        serialized = FlextLdifResult._serialize_entries_to_ldif(self.value)
+        if serialized.is_failure:
+            serialized_error = serialized.error
+            if serialized_error is None:
+                return FlextLdifResult.fail("Entry serialization failed")
+            return FlextLdifResult.fail(serialized_error)
+
+        ldif_content = serialized.value
 
         # Handle different output types
         if isinstance(output, str):
             output = Path(output)
 
         if isinstance(output, Path):
-            # Business Rule: Write entries to LDIF file format
-            # Note: write_entries_to_file method needs implementation in FlextLdifUtilitiesWriter
-            # For now, convert entries to LDIF string format and write using write_file
-            # This requires serialization of entries to LDIF format
-            return FlextLdifResult.fail(
-                "write_entries_to_file not yet implemented - entries serialization required",
-            )
+            write_result = FlextLdifUtilitiesWriter.write_file(ldif_content, output)
+            if write_result.is_failure:
+                write_error = write_result.error
+                if write_error is None:
+                    return FlextLdifResult.fail("write_entries_to_file failed")
+                return FlextLdifResult.fail(write_error)
+            return FlextLdifResult.ok(ldif_content)
 
         # Write to file-like object
-        # Business Rule: Write entries to LDIF string format for file-like objects
-        # Note: write_entries_to_string method needs implementation in FlextLdifUtilitiesWriter
-        # This requires serialization of entries to LDIF format
-        return FlextLdifResult.fail(
-            "write_entries_to_string not yet implemented - entries serialization required",
-        )
+        try:
+            _ = output.write(ldif_content)
+        except (ValueError, AttributeError, OSError, TypeError) as exc:
+            return FlextLdifResult.fail(f"write_entries_to_string failed: {exc}")
+
+        return FlextLdifResult.ok(ldif_content)
+
+    @staticmethod
+    def _encode_dn_line(dn_value: str) -> str:
+        if FlextLdifUtilitiesWriter.needs_base64_encoding(dn_value):
+            encoded_dn = base64.b64encode(dn_value.encode("utf-8")).decode("ascii")
+            return f"dn:: {encoded_dn}"
+        return f"dn: {dn_value}"
+
+    @staticmethod
+    def _serialize_single_entry(entry: m.Ldif.Entry) -> FlextResult[list[str]]:
+        if entry.dn is None:
+            return r[list[str]].fail("Entry serialization failed: missing DN")
+
+        dn_value = entry.dn.value
+        if not dn_value:
+            return r[list[str]].fail("Entry serialization failed: empty DN")
+
+        lines: list[str] = [FlextLdifResult._encode_dn_line(dn_value)]
+
+        entry_attributes = entry.attributes.attributes if entry.attributes else {}
+        for attr_name, values in entry_attributes.items():
+            for value in values:
+                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                    attr_name, value
+                )
+                lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
+
+        lines.append("")
+        return r[list[str]].ok(lines)
+
+    @staticmethod
+    def _serialize_entries_to_ldif(value: object) -> FlextResult[str]:
+        entries: list[m.Ldif.Entry] = []
+
+        if isinstance(value, m.Ldif.Entry):
+            entries = [value]
+        elif isinstance(value, Sequence) and not isinstance(value, str):
+            for item in value:
+                if not isinstance(item, m.Ldif.Entry):
+                    return r[str].fail(
+                        "Entry serialization failed: sequence contains non-entry value",
+                    )
+                entries.append(item)
+        else:
+            return r[str].fail(
+                "Entry serialization failed: value must be Entry or sequence of Entry",
+            )
+
+        all_lines: list[str] = []
+        for entry in entries:
+            entry_lines_result = FlextLdifResult._serialize_single_entry(entry)
+            if entry_lines_result.is_failure:
+                entry_error = entry_lines_result.error
+                if entry_error is None:
+                    return r[str].fail("Entry serialization failed")
+                return r[str].fail(entry_error)
+            all_lines.extend(entry_lines_result.value)
+
+        ldif_text = "\n".join(all_lines)
+        if ldif_text and not ldif_text.endswith("\n"):
+            ldif_text += "\n"
+        return r[str].ok(ldif_text)
 
     def __matmul__(
         self,

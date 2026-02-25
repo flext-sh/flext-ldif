@@ -11,6 +11,8 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
 
+import struct
+
 # Import removed to avoid circular dependency
 # Import CaseFoldOption directly to avoid circular import issues
 from flext_ldif.constants import c
@@ -73,7 +75,13 @@ class DnOps:
         try:
             cleaned = FlextLdifUtilitiesDN.clean_dn(self._dn)
             self._dn = cleaned
-        except Exception as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             self._error = str(e)
 
         return self
@@ -92,7 +100,13 @@ class DnOps:
                 old_base,
                 new_base,
             )
-        except Exception as e:
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
             self._error = f"Base DN replacement failed: {e}"
             return self
 
@@ -347,14 +361,19 @@ class EntryOps:
         if self._error:
             return self
 
-        # Business Rule: Attach metadata to entry for audit trail and transformation tracking
-        # Note: Metadata attachment is not yet implemented
-        # This would store metadata in entry.metadata field for round-trip conversions
-        # When implemented, use FlextLdifUtilitiesMetadata.attach_metadata() here
-        #     metadata=dict(_metadata),
-        # )
-        # For now, just store error to indicate not implemented
-        self._error = "attach_metadata not yet implemented"
+        metadata = self._entry.metadata
+        if metadata is None:
+            metadata = m.Ldif.QuirkMetadata.create_for()
+
+        extensions_map = dict(metadata.extensions.items())
+        extensions_map["fluent_metadata_attached"] = True
+        extensions_map["fluent_metadata_method"] = "EntryOps.attach_metadata"
+
+        updated_extensions = m.Ldif.DynamicMetadata.from_dict(extensions_map)
+        updated_metadata = metadata.model_copy(
+            update={"extensions": updated_extensions}
+        )
+        self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
 
         return self
 

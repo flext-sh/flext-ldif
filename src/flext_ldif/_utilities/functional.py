@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
+import struct
 from typing import ClassVar, Literal, TypeVar, overload
 
 from flext_core import t, x
@@ -259,7 +260,13 @@ class FlextFunctional:
                     ])
                 elif predicate(processed):
                     result.append(processed)
-            except Exception:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 if on_error == "stop":
                     raise
         return result

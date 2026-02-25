@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextService, u as core_u
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -387,7 +387,12 @@ class FlextLdifServersBaseEntry(
             return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
                 metadata.write_options.model_dump(exclude_none=True),
             )
-        except Exception:
+        except ValidationError as exc:
+            logger.warning(
+                "Failed to validate write format options",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return None
 
     def _convert_write_options(

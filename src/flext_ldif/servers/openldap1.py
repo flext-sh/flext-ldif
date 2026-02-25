@@ -14,6 +14,7 @@ from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
+import struct
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
 
@@ -221,7 +222,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
                 return r[str].ok(attr_str)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[str].fail(
                     f"OpenLDAP 1.x attribute write failed: {e}",
                 )
@@ -264,7 +265,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
                 return r[str].ok(oc_str)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[str].fail(
                     f"OpenLDAP 1.x objectClass write failed: {e}",
                 )
@@ -399,7 +400,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
                 return r[m.Ldif.Acl].ok(acl)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[m.Ldif.Acl].fail(
                     f"OpenLDAP 1.x ACL parsing failed: {e}",
                 )
@@ -430,7 +431,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
                 return r[str].ok(acl_str)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[str].fail(f"OpenLDAP 1.x ACL write failed: {e}")
 
     class Entry(FlextLdifServersRfc.Entry):
@@ -477,7 +478,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     processed_entry,
                 )
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return r[m.Ldif.Entry].fail(
                     f"OpenLDAP 1.x entry processing failed: {e}",
                 )

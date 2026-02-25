@@ -14,6 +14,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
 
+import struct
 logger = logging.getLogger(__name__)
 
 
@@ -139,7 +140,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
                 return r[m.Ldif.Syntax].fail(
                     f"Failed to resolve syntax OID: {oid}",
                 )
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[m.Ldif.Syntax].fail(
                 f"Failed to create syntax: {oid} - {e}",
             )

@@ -9,6 +9,7 @@ from flext_core import FlextLogger, FlextResult, r, u as core_u
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers.base import FlextLdifServersBase
 
+import struct
 logger = FlextLogger(__name__)
 
 
@@ -64,7 +65,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
             return FlextResult[list[m.Ldif.Entry]].ok(entries)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception("Failed to parse LDIF content")
             return FlextResult[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
 
@@ -136,7 +137,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 attributes=m.Ldif.Attributes(attributes=attributes_dict),
             )
             return r[m.Ldif.Entry].ok(entry)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
 
     def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:

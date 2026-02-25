@@ -20,6 +20,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
+import struct
 TUPLE_LENGTH_PAIR = 2
 type _TConvertedModel = (
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
@@ -167,7 +168,7 @@ class FlextLdifConversion(
                 | m.Ldif.SchemaObjectClass
                 | m.Ldif.Acl
             ].ok(empty_entry)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[
                 m.Ldif.Entry
                 | m.Ldif.SchemaAttribute
@@ -289,7 +290,7 @@ class FlextLdifConversion(
                 f"Unsupported model type for conversion: {type(model_instance).__name__}",
             )
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return FlextResult.fail(f"Model conversion failed: {e}")
 
     @staticmethod
@@ -619,7 +620,7 @@ class FlextLdifConversion(
                             _,
                         ) = method(current_attrs)
                         current_attrs = converted_bools
-                    except Exception as e:
+                    except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                         logger.warning(f"Boolean conversion failed: {e}")
 
                 mapping = (
@@ -649,7 +650,7 @@ class FlextLdifConversion(
                         entry_quirk = getattr(target_quirk, "entry_quirk")
                         method = getattr(entry_quirk, "_restore_boolean_values_to_oid")
                         converted_entry = method(converted_entry)
-                    except Exception as e:
+                    except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                         logger.warning(f"Boolean restoration failed: {e}")
 
                 if converted_entry.attributes and converted_entry.attributes.attributes:
@@ -701,7 +702,7 @@ class FlextLdifConversion(
                 | m.Ldif.Acl
             ].ok(converted_entry)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "Failed to convert Entry model",
                 error=str(e),
@@ -878,7 +879,7 @@ class FlextLdifConversion(
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[
                 m.Ldif.Entry
                 | m.Ldif.SchemaAttribute
@@ -964,7 +965,7 @@ class FlextLdifConversion(
             )
             return FlextLdifConversion._process_schema_conversion_pipeline(config)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[
                 m.Ldif.Entry
                 | m.Ldif.SchemaAttribute
@@ -1479,7 +1480,7 @@ class FlextLdifConversion(
 
             return r[_TConvertedModel].ok(converted_acl)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "Failed to convert ACL model",
                 error=str(e),
@@ -1600,7 +1601,7 @@ class FlextLdifConversion(
 
             return self._write_target_attribute(parsed_value)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return FlextLdifConversion._schema_conversion_fail(
                 f"Attribute conversion failed: {e}",
                 "Attribute conversion failed",
@@ -1708,7 +1709,7 @@ class FlextLdifConversion(
 
             return self._write_target_objectclass(target, parsed_value)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return FlextLdifConversion._schema_conversion_fail(
                 f"ObjectClass conversion failed: {e}",
                 "ObjectClass conversion failed",

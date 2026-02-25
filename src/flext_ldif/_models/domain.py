@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ast
 import re
+import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
@@ -25,6 +26,7 @@ from pydantic import (
     computed_field,
     field_validator,
     model_validator,
+    ValidationError,
 )
 
 from flext_ldif._models.base import (
@@ -532,7 +534,13 @@ class FlextLdifModelsDomains:
                     metadata=metadata,
                 )
 
-            except Exception:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 # Return None for any resolution errors
                 # This prevents the model from being invalid due to service failures
                 return None
@@ -1172,7 +1180,13 @@ class FlextLdifModelsDomains:
                     normalized_data,
                 )
 
-            except Exception as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 return FlextResult[dict[str, str | list[str] | dict[str, str]]].fail(
                     f"Failed to normalize DN references: {e}",
                 )
@@ -2184,13 +2198,22 @@ class FlextLdifModelsDomains:
                     return None
                 try:
                     return ServerValidationRules.model_validate(parsed_rules)
-                except Exception:
+                except ValidationError as exc:
+                    logger.warning(
+                        "Failed to validate server rules from parsed dict",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
                     return None
             if isinstance(validation_rules, Mapping):
                 try:
                     return ServerValidationRules.model_validate(dict(validation_rules))
-                except Exception:
-                    return None
+                except ValidationError as exc:
+                    logger.warning(
+                        "Failed to validate server rules from mapping",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
             return None
 
         @model_validator(mode="after")
@@ -2699,7 +2722,13 @@ class FlextLdifModelsDomains:
                     attributes=attrs_dict,
                 )
 
-            except Exception as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 return FlextResult.fail(
                     f"Failed to create Entry from ldap3: {e}",
                 )
@@ -2824,7 +2853,13 @@ class FlextLdifModelsDomains:
             try:
                 # filter_func expects Entry object (per signature)
                 return bool(filter_func(self))
-            except Exception:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 return False
 
         def clone(self) -> Self:

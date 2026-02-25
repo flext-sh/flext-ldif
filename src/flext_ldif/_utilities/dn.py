@@ -16,6 +16,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 
 
+import struct
 class FlextLdifUtilitiesDN:
     r"""RFC 4514 DN Operations - STRICT Implementation.
 
@@ -418,7 +419,7 @@ class FlextLdifUtilitiesDN:
                 if result
                 else r.fail(f"Failed to parse DN components from '{dn_str}'")
             )
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[list[tuple[str, str]]].fail(f"DN parsing error: {e}")
 
     @overload
@@ -480,7 +481,7 @@ class FlextLdifUtilitiesDN:
                     f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
             )
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[str].fail(f"DN normalization error: {e}")
 
     @overload
@@ -519,7 +520,7 @@ class FlextLdifUtilitiesDN:
             for pattern, replacement in patterns:
                 result = re.sub(pattern, replacement, result)
             return result
-        except Exception:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return dn_str
 
     @staticmethod
@@ -799,7 +800,7 @@ class FlextLdifUtilitiesDN:
             norm1_lower, norm2_lower = norm_result.value
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
             return r[int].ok(comparison)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[int].fail(f"DN comparison error: {e}")
 
     @staticmethod
@@ -933,7 +934,7 @@ class FlextLdifUtilitiesDN:
 
             return r[list[tuple[str, str]]].ok(pairs)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[list[tuple[str, str]]].fail(f"RDN parsing error: {e}")
 
     @staticmethod
@@ -951,7 +952,7 @@ class FlextLdifUtilitiesDN:
                     f"Failed to extract RDN: no components found in '{dn}'",
                 )
             return r[str].ok(components[0])
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[str].fail(f"RDN extraction error: {e}")
 
     @staticmethod
@@ -969,7 +970,7 @@ class FlextLdifUtilitiesDN:
                     f"Cannot extract parent DN: DN has only one component '{dn}'",
                 )
             return r[str].ok(",".join(components[1:]))
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             return r[str].fail(f"Parent DN extraction error: {e}")
 
     @staticmethod
@@ -1416,7 +1417,7 @@ class FlextLdifUtilitiesDN:
                     prefix = dn[: len(dn) - len(old_base)]
                     return prefix + new_base
                 return dn
-            except Exception:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
                 if fail_fast:
                     raise
                 return dn
@@ -1425,7 +1426,7 @@ class FlextLdifUtilitiesDN:
         for dn in dns:
             try:
                 results.append(replace_dn(dn))
-            except Exception as exc:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
                 if fail_fast:
                     return r[list[str]].fail(f"Base replacement failed: {exc}")
         return r[list[str]].ok(results)
@@ -1445,7 +1446,7 @@ class FlextLdifUtilitiesDN:
         if clean:
             try:
                 current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
-            except Exception as exc:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
                 return r[str | list[tuple[str, str]]].fail(f"Clean failed: {exc}")
 
         if validate:

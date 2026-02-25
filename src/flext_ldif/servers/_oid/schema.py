@@ -14,6 +14,7 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
 
+import struct
 logger = FlextLogger(__name__)
 
 _OidConstants = FlextLdifServersOidConstants
@@ -93,7 +94,7 @@ class FlextLdifServersOidSchema(
 
             return r[m.Ldif.SchemaAttribute].ok(attr)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "OID post-parse attribute hook failed",
             )
@@ -144,7 +145,7 @@ class FlextLdifServersOidSchema(
 
             return r[m.Ldif.SchemaObjectClass].ok(oc)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "OID post-parse objectclass hook failed",
             )
@@ -298,7 +299,7 @@ class FlextLdifServersOidSchema(
 
             return r[m.Ldif.SchemaAttribute].ok(attr_data)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "OID attribute parsing failed",
             )
@@ -503,7 +504,7 @@ class FlextLdifServersOidSchema(
 
             return r[m.Ldif.SchemaObjectClass].ok(oc_data)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "OID objectClass parsing failed",
             )

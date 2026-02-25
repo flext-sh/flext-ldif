@@ -14,6 +14,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import u
 
 
+import struct
 class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
@@ -123,7 +124,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return r[m.Ldif.SchemaAttribute].ok(attr)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error parsing attribute: {e}"
             self.logger.exception(
                 "Failed to parse attribute definition",
@@ -172,7 +173,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return r[m.Ldif.SchemaObjectClass].ok(oc)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error parsing objectClass: {e}"
             self.logger.exception(
                 "Failed to parse objectClass definition",
@@ -200,7 +201,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return r[bool].ok(value=True)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error validating attribute: {e}"
             self.logger.exception(
                 "Failed to validate attribute",
@@ -236,7 +237,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return r[bool].ok(value=True)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error validating objectclass: {e}"
             self.logger.exception(
                 "Failed to validate objectClass",
@@ -256,7 +257,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return u.Ldif.Writer.write_rfc_attribute(attr)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error writing attribute: {e}"
             self.logger.exception(
                 "Failed to write attribute",
@@ -276,7 +277,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
 
             return u.Ldif.Writer.write_rfc_objectclass(oc)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             error_msg = f"Error writing objectClass: {e}"
             self.logger.exception(
                 "Failed to write objectClass",

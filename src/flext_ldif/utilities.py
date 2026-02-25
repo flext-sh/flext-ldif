@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import struct
 from collections.abc import (
     Callable,
     Collection as ABCCollection,
@@ -480,7 +481,13 @@ class FlextLdifUtilities(FlextUtilities):
                 return r[list[R]].fail(
                     "Processor requires 2 arguments but single item provided",
                 )
-            except Exception as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
                 return r[list[R]].fail(f"Processing failed: {e}")
 
         @staticmethod
@@ -503,7 +510,13 @@ class FlextLdifUtilities(FlextUtilities):
                 try:
                     result_item: R = processor_func(item)
                     results.append(result_item)
-                except Exception as e:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
                     if on_error == "fail":
                         return r[list[R]].fail(f"Processing failed: {e}")
                     if on_error == "skip":
@@ -2315,7 +2328,13 @@ class FlextLdifUtilities(FlextUtilities):
                             result.extend(processed_seq)
                         case _:
                             result.append(processed)
-                except Exception:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ):
                     if on_error == "fail":
                         raise
                     if on_error == "return":

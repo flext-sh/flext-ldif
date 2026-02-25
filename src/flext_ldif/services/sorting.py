@@ -15,6 +15,7 @@ from flext_ldif.models import m
 from flext_ldif.utilities import u
 
 
+import struct
 class FlextLdifSorting(
     FlextLdifServiceBase[list[m.Ldif.Entry]],
 ):
@@ -421,7 +422,7 @@ class FlextLdifSorting(
         for entry in entries:
             try:
                 processed.append(sort_entry(entry))
-            except Exception as exc:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
                 return r[list[m.Ldif.Entry]].fail(f"Attribute sort failed: {exc}")
         return r[list[m.Ldif.Entry]].ok(processed)
 
@@ -504,7 +505,7 @@ class FlextLdifSorting(
         for entry in entries:
             try:
                 processed.append(sort_acl_entry(entry))
-            except Exception as exc:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as exc:
                 return r[list[m.Ldif.Entry]].fail(f"ACL sort failed: {exc}")
 
         return r[list[m.Ldif.Entry]].ok(processed)

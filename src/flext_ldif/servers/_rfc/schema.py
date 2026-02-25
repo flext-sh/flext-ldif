@@ -19,6 +19,7 @@ from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import FlextLdifTypes as t
 
+import struct
 logger = FlextLogger(__name__)
 
 
@@ -809,7 +810,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 ]
             ].ok(schema_dict)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception(
                 "Schema extraction failed",
             )

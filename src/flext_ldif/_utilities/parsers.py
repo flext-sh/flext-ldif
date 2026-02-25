@@ -10,6 +10,7 @@ from flext_core import FlextLogger, FlextResult, r
 
 from flext_ldif.models import m
 
+import struct
 logger = FlextLogger.create_module_logger(__name__)
 
 
@@ -120,7 +121,7 @@ class FlextLdifUtilitiesParsers:
 
                 return r[m.Ldif.Entry].ok(entry)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.exception(
                     "Failed to parse entry",
                     server_type=server_type,
@@ -203,7 +204,7 @@ class FlextLdifUtilitiesParsers:
 
                 return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.exception(
                     "Failed to parse attribute",
                     server_type=server_type,
@@ -284,7 +285,7 @@ class FlextLdifUtilitiesParsers:
 
                 return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.exception(
                     "Failed to parse objectClass",
                     server_type=server_type,
@@ -369,7 +370,7 @@ class FlextLdifUtilitiesParsers:
 
                 return r[list[m.Ldif.Entry]].ok(entries)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.exception(
                     "Failed to parse content",
                     server_type=server_type,

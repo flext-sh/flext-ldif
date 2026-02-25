@@ -15,6 +15,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import t
 
+import struct
 f = FlextFunctional  # Pure functional utilities (no circular import)
 
 logger = FlextLogger(__name__)
@@ -762,7 +763,7 @@ class FlextLdifUtilitiesACL:
                     processed = process_rule_config(item)
                     if processed is not None:
                         result.append(processed)
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
@@ -799,7 +800,7 @@ class FlextLdifUtilitiesACL:
                     processed = process_target_config(item)
                     if processed is not None:
                         result.append(processed)
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
@@ -1062,7 +1063,12 @@ class FlextLdifUtilitiesACL:
         """Parse single ACL line, return None on error."""
         try:
             result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
-        except Exception:
+        except (ValueError, TypeError) as exc:
+            logger.warning(
+                "Failed to parse single ACL line",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return None
         if not result.is_success:
             if fail_fast:

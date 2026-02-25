@@ -14,6 +14,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
+import struct
 logger = FlextLogger(__name__)
 
 
@@ -326,7 +327,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_str = " ".join(acl_parts)
                 return FlextResult[str].ok(acl_str)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
 
         def _strip_acl_prefix_and_index(self, acl_line: str) -> str:
@@ -476,7 +477,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                 return FlextResult[m.Ldif.Acl].ok(acl)
 
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
                 return FlextResult[m.Ldif.Acl].fail(
                     f"OpenLDAP 2.x ACL parsing failed: {e}",
                 )

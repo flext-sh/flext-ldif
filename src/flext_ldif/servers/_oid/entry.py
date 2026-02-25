@@ -20,6 +20,7 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
+import struct
 logger = FlextLogger(__name__)
 
 
@@ -864,7 +865,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     )
 
             return FlextResult.ok(entry)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error) as e:
             logger.exception("OID post-parse entry hook failed")
             return FlextResult.fail(f"OID post-parse entry hook failed: {e}")
 
@@ -949,7 +950,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 mapped_key = key_mapping.get(key)
                 if mapped_key and not current_extensions.get(mapped_key):
                     current_extensions[mapped_key] = value
-        except Exception:
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             logger.debug("Failed to parse ACL extension metadata", exc_info=True)
 
     def _process_orclaci_values(
