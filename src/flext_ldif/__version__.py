@@ -14,7 +14,7 @@ from importlib.metadata import metadata
 
 _metadata = metadata("flext-ldif")
 
-__version__ = _metadata.get("Version", "0.0.0")
+__version__ = _metadata.get("Version", "0.12.0-dev")
 __version_info__ = tuple(
     int(part) if part.isdigit() else part for part in __version__.split(".")
 )

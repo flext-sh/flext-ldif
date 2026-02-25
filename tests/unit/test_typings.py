@@ -271,8 +271,19 @@ class TestPhase1StandardizationResults:
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        # AttributeDict usage test
-        pass
+        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {
+            c.Names.CN: ["Jane Doe"],
+            c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
+        }
+        distribution: t_ldif.Ldif.CommonDict.DistributionDict = {
+            c.Names.INETORGPERSON: 2,
+            c.Names.PERSON: 1,
+        }
+
+        assert attr_dict[c.Names.CN] == ["Jane Doe"]
+        assert c.Names.INETORGPERSON in attr_dict[c.Names.OBJECTCLASS]
+        assert sum(distribution.values()) == 3
+        assert distribution[c.Names.PERSON] == 1
 
 
 class TestIntegrationWithLdifFixtures:

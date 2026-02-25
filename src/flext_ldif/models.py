@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Mapping
 from typing import Literal, TypeAlias
 
@@ -34,15 +33,6 @@ class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
 
     ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Warn when FlextLdifModels is subclassed directly."""
-        super().__init_subclass__(**kwargs)
-        warnings.warn(
-            "Subclassing FlextLdifModels is deprecated. Use FlextModels.Ldif instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     class Ldif:
         """LDIF namespace for cross-project access."""
