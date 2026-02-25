@@ -1,5 +1,4 @@
 """LDIF Server Utilities - Helpers for Server Type Resolution and Detection."""
-# ruff: noqa: SLF001  # Accessing own private methods within the same class
 
 from __future__ import annotations
 

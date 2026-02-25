@@ -1,5 +1,4 @@
 """FLEXT LDIF Utilities - Reusable helpers for LDIF operations."""
-# ruff: noqa: SLF001
 
 from __future__ import annotations
 
