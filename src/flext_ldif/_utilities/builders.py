@@ -37,6 +37,7 @@ class ProcessConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
+        super().__init__()
         self._source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC
         self._target_server: c.Ldif.ServerTypes | None = None
         self._dn_config: DnNormalizationConfig | None = None
@@ -168,6 +169,7 @@ class TransformConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
+        super().__init__()
         self._fail_fast: bool = True
         self._preserve_order: bool = True
         self._track_changes: bool = True
@@ -207,6 +209,7 @@ class FilterConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
+        super().__init__()
         self._mode: Literal["all", "any"] = "all"
         self._case_sensitive: bool = False
         self._include_metadata_matches: bool = False
@@ -255,6 +258,7 @@ class WriteConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
+        super().__init__()
         self._format: c.Ldif.Domain.OutputFormat = c.Ldif.Domain.OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True

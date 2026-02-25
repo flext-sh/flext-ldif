@@ -164,16 +164,13 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
     ) -> None:
         """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower
-        if re.search(pattern, search_content):
-            if isinstance(server_type, str):
-                scores[server_type] += weight
+        if re.search(pattern, search_content) and server_type:
+            scores[server_type] += weight
 
         score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             server_type_lower = server_type.lower() if server_type else ""
-            item_lower = (
-                item.lower() if issubclass(item.__class__, str) else str(item).lower()
-            )
+            item_lower = item.lower()
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
 

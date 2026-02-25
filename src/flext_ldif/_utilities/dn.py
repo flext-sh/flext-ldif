@@ -250,7 +250,7 @@ class FlextLdifUtilitiesDN:
             components,
             mapper=FlextLdifUtilitiesDN.norm_component,
         )
-        return ",".join(normalized if isinstance(normalized, list) else components)
+        return ",".join(normalized)
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -264,7 +264,7 @@ class FlextLdifUtilitiesDN:
             return bool(attr.strip() and value.strip())
 
         filtered = u.Collection.filter(components, is_valid_component)
-        return isinstance(filtered, list) and len(filtered) == len(components)
+        return len(filtered) == len(components)
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -471,9 +471,7 @@ class FlextLdifUtilitiesDN:
                 predicate=lambda x: isinstance(x, str),
             )
             normalized: list[str] = [
-                str(item)
-                for item in (filtered_str if isinstance(filtered_str, list) else [])
-                if item is not None
+                str(item) for item in filtered_str if item is not None
             ]
             return (
                 r.ok(",".join(normalized))
@@ -720,12 +718,7 @@ class FlextLdifUtilitiesDN:
 
         enumerated = list(enumerate(value))
         mapped_result = u.Collection.map(enumerated, mapper=escape_char)
-        mapped = (
-            mapped_result
-            if isinstance(mapped_result, list)
-            else [escape_char(item) for item in enumerated]
-        )
-        return "".join(mapped)
+        return "".join(mapped_result)
 
     @staticmethod
     def unesc(value: str) -> str:
@@ -886,7 +879,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
-        if not rdn or not isinstance(rdn, str):
+        if not rdn:
             return r[list[tuple[str, str]]].fail(
                 "RDN must be a non-empty string",
             )
@@ -1151,7 +1144,7 @@ class FlextLdifUtilitiesDN:
     ) -> None:
         """Update metadata with transformation tracking."""
         if config.transformed_dn != config.original_dn:
-            metadata.track_dn_transformation(
+            _ = metadata.track_dn_transformation(
                 original_dn=config.original_dn,
                 transformed_dn=config.transformed_dn,
                 transformation_type="basedn_transform",
@@ -1159,7 +1152,7 @@ class FlextLdifUtilitiesDN:
 
         def track_attr(attr_name: str) -> None:
             """Track single attribute transformation."""
-            metadata.track_attribute_transformation(
+            _ = metadata.track_attribute_transformation(
                 original_name=attr_name,
                 new_name=attr_name,
                 transformation_type="modified",
@@ -1168,12 +1161,12 @@ class FlextLdifUtilitiesDN:
                 reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
             )
 
-        u.Collection.process(
+        _ = u.Collection.process(
             config.transformed_attr_names,
             processor=track_attr,
             on_error="skip",
         )
-        metadata.add_conversion_note(
+        _ = metadata.add_conversion_note(
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
         )
@@ -1215,12 +1208,7 @@ class FlextLdifUtilitiesDN:
             source_dn,
             target_dn,
         )
-        if isinstance(entry.attributes, m.Ldif.Attributes):
-            attrs_dict = entry.attributes.attributes
-        else:
-            attrs_dict = (
-                dict(entry.attributes) if isinstance(entry.attributes, Mapping) else {}
-            )
+        attrs_dict = entry.attributes.attributes
         transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
             attrs_dict,
             dn_attributes,
@@ -1285,7 +1273,7 @@ class FlextLdifUtilitiesDN:
             content = ldif_file.read_text(encoding="utf-8")
             transformed_content = source_pattern.sub(target_basedn, content)
             if transformed_content != content:
-                ldif_file.write_text(transformed_content, encoding="utf-8")
+                _ = ldif_file.write_text(transformed_content, encoding="utf-8")
                 transformed_count += 1
 
         return r[dict[str, int]].ok({

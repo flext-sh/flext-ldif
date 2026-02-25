@@ -75,7 +75,7 @@ class FlextLdifUtilitiesWriter:
         """Write content to file (pure I/O operation)."""
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.write_text(content, encoding=encoding)
+            _ = file_path.write_text(content, encoding=encoding)
             stats: dict[str, str | int] = {
                 "bytes_written": len(content.encode(encoding)),
                 "path": str(file_path),
@@ -439,7 +439,7 @@ class FlextLdifUtilitiesWriter:
         str_value: str = value
 
         try:
-            str_value.encode("utf-8")
+            _ = str_value.encode("utf-8")
         except UnicodeEncodeError:
             str_value = str_value.encode("utf-8", errors="replace").decode(
                 "utf-8",
@@ -563,7 +563,7 @@ class FlextLdifUtilitiesWriter:
             u.mapper().get(changetype_config, "fold_long_lines", default=True),
         )
         width_raw = u.mapper().get(changetype_config, "width", default=76)
-        width = int(width_raw) if issubclass(width_raw.__class__, int | str) else 76
+        width = int(width_raw)
 
         if format_type == "modify":
             changetype_line = "changetype: modify"

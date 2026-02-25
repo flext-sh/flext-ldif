@@ -333,7 +333,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 }
                 active_perms: list[str] = []
                 if acl_data.permissions:
-                    perms_dict = acl_data.permissions.model_dump()
+                    perms_dict = {
+                        key: getattr(acl_data.permissions, key)
+                        for key in type(acl_data.permissions).model_fields
+                    }
                     for perm_name, perm_value in perms_dict.items():
                         if perm_value is True and perm_name in permission_map:
                             active_perms.append(permission_map[perm_name])

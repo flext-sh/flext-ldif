@@ -8,6 +8,7 @@ from typing import Final
 
 from flext_core import FlextResult, FlextTypes
 
+from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 
 
@@ -34,9 +35,6 @@ class FlextLdifUtilitiesAttribute:
     ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
-        from flext_ldif._utilities.schema import (
-            FlextLdifUtilitiesSchema,
-        )
 
         if parse_parts_hook:
             return parse_parts_hook(definition)
@@ -102,14 +100,12 @@ class FlextLdifUtilitiesAttribute:
         # Validate base attribute
         if not cls.validate_attribute_name(base_attr):
             violations.append(
-                f"Invalid base attribute '{base_attr}' - "
-                f"must start with letter and contain only letters, digits, hyphens",
+                f"Invalid base attribute '{base_attr}' - must start with letter and contain only letters, digits, hyphens",
             )
 
         # Validate each option
         violations.extend(
-            f"Invalid option '{option}' - "
-            f"must start with letter and contain only letters, digits, hyphens, underscores"
+            f"Invalid option '{option}' - must start with letter and contain only letters, digits, hyphens, underscores"
             for option in options
             if not cls.validate_attribute_option(option)
         )

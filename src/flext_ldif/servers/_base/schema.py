@@ -222,12 +222,9 @@ class FlextLdifServersBaseSchema(
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route schema definition to appropriate parse method."""
         schema_util = FlextLdifUtilitiesSchema
-        if schema_util is not None:
-            detect_method = getattr(schema_util, "detect_schema_type", None)
-            if detect_method is not None and callable(detect_method):
-                schema_type = detect_method(definition)
-            else:
-                schema_type = "attribute"
+        detect_method = getattr(schema_util, "detect_schema_type", None)
+        if detect_method is not None and callable(detect_method):
+            schema_type = detect_method(definition)
         else:
             schema_type = "attribute"
         if schema_type == "objectclass":
@@ -313,23 +310,20 @@ class FlextLdifServersBaseSchema(
 
         oid_util = FlextLdifUtilitiesOID
         oid_validate_result: FlextResult[bool]
-        if oid_util is not None:
-            validate_method = getattr(oid_util, "validate_format", None)
-            if validate_method is not None and callable(validate_method):
-                validate_result_raw = validate_method(oid_value)
-                if isinstance(validate_result_raw, FlextResult):
-                    if validate_result_raw.is_failure:
-                        oid_validate_result = FlextResult.fail(
-                            validate_result_raw.error,
-                        )
-                    else:
-                        oid_validate_result = FlextResult.ok(
-                            bool(validate_result_raw.value),
-                        )
+        validate_method = getattr(oid_util, "validate_format", None)
+        if validate_method is not None and callable(validate_method):
+            validate_result_raw = validate_method(oid_value)
+            if isinstance(validate_result_raw, FlextResult):
+                if validate_result_raw.is_failure:
+                    oid_validate_result = FlextResult.fail(
+                        validate_result_raw.error,
+                    )
                 else:
-                    oid_validate_result = FlextResult.ok(bool(validate_result_raw))
+                    oid_validate_result = FlextResult.ok(
+                        bool(validate_result_raw.value),
+                    )
             else:
-                oid_validate_result = FlextResult.ok(True)
+                oid_validate_result = FlextResult.ok(bool(validate_result_raw))
         else:
             oid_validate_result = FlextResult.ok(True)
         if oid_validate_result.is_failure:
@@ -352,21 +346,23 @@ class FlextLdifServersBaseSchema(
     ) -> dict[str, list[str] | str | bool | None]:
         """Extract metadata extensions from attribute definition."""
         parser_util = FlextLdifUtilitiesParser
-        if parser_util is None:
-            return {}
         extract_method = getattr(parser_util, "extract_extensions", None)
         if extract_method is None or not callable(extract_method):
             return {}
         extensions_raw = extract_method(attr_definition)
-        try:
-            extensions_items = extensions_raw.items()
-        except Exception:
+        if not isinstance(extensions_raw, Mapping):
             return {}
-        return {
-            k: v
-            for k, v in extensions_items
-            if k.__class__ is str and (v.__class__ in {str, bool, list} or v is None)
-        }
+        extensions_mapping: Mapping[object, object] = extensions_raw
+        extracted: dict[str, list[str] | str | bool | None] = {}
+        for key, value in extensions_mapping.items():
+            if not isinstance(key, str):
+                continue
+            if isinstance(value, str | bool) or value is None:
+                extracted[key] = value
+                continue
+            if isinstance(value, list):
+                extracted[key] = [str(item) for item in value]
+        return extracted
 
     @staticmethod
     def _resolve_quirk_type(
@@ -400,8 +396,6 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
         metadata_util = FlextLdifUtilitiesMetadata
-        if metadata_util is None:
-            return
         preserve_method = getattr(metadata_util, "preserve_schema_formatting", None)
         if preserve_method is not None and callable(preserve_method):
             _ = preserve_method(metadata, attr_definition)
@@ -595,12 +589,9 @@ class FlextLdifServersBaseSchema(
                 ].fail(f"parse operation requires str, got {type(data).__name__}")
 
             schema_util = FlextLdifUtilitiesSchema
-            if schema_util is not None:
-                detect_method = getattr(schema_util, "detect_schema_type", None)
-                if detect_method is not None and callable(detect_method):
-                    schema_type = detect_method(data)
-                else:
-                    schema_type = "attribute"
+            detect_method = getattr(schema_util, "detect_schema_type", None)
+            if detect_method is not None and callable(detect_method):
+                schema_type = detect_method(data)
             else:
                 schema_type = "attribute"
             if schema_type == "objectClass":
@@ -649,7 +640,7 @@ class FlextLdifServersBaseSchema(
             data_raw = kwargs.get("data")
             if data_raw is not None:
                 try:
-                    data = str(data_raw) if data_raw.__class__ is str else None
+                    data = str(data_raw) if isinstance(data_raw, str) else None
                 except Exception:
                     data = None
                 if data is None:
@@ -667,7 +658,7 @@ class FlextLdifServersBaseSchema(
             operation_raw = kwargs.get("operation")
 
             operation_typed: str | None = None
-            if operation_raw.__class__ is str:
+            if isinstance(operation_raw, str):
                 if operation_raw == "parse":
                     operation_typed = "parse"
                 elif operation_raw == "write":

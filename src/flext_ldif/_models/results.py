@@ -165,11 +165,10 @@ class _FlexibleCategories(
         return iter(pairs)
 
     def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-        entry_values: list[list[FlextLdifModelsDomains.Entry]] = []
-        for values in self.categories.values():
-            entry_values.append([
-                FlextLdifModelsDomains.Entry.model_validate(value) for value in values
-            ])
+        entry_values: list[list[FlextLdifModelsDomains.Entry]] = [
+            [FlextLdifModelsDomains.Entry.model_validate(value) for value in values]
+            for values in self.categories.values()
+        ]
         return iter(entry_values)
 
     def keys(self) -> Iterator[str]:
@@ -627,7 +626,7 @@ class FlextLdifModelsResults:
             return str(value)
 
         def _resolve_key(self, key: str) -> object:
-            if key in self.model_fields:
+            if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -639,7 +638,7 @@ class FlextLdifModelsResults:
             return self._as_scalar(value)
 
         def __contains__(self, key: str) -> bool:
-            if key in self.model_fields:
+            if key in type(self).model_fields:
                 return True
             extra = self.__pydantic_extra__
             return extra is not None and key in extra

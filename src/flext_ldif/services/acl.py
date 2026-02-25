@@ -151,10 +151,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         )
         if batch_result.is_success:
             results_raw = batch_result.value.results
-
-            for item in results_raw:
-                if isinstance(item, m.Ldif.Acl):
-                    acls.append(item)
+            acls.extend(item for item in results_raw if isinstance(item, m.Ldif.Acl))
 
         return r[m.Ldif.LdifResults.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),

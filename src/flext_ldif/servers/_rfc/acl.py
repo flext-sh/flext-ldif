@@ -148,11 +148,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __new__(
         cls,
-        _acl_service: object | None = None,
+        acl_service: object | None = None,
         parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
+        _ = acl_service
         instance = super().__new__(cls)
 
         auto_execute_kwargs = {"data", "operation", "parent_quirk", "_parent_quirk"}

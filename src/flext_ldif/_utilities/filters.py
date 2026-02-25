@@ -51,6 +51,7 @@ class AndFilter[T](EntryFilter[T]):
 
     def __init__(self, left: EntryFilter[T], right: EntryFilter[T]) -> None:
         """Initialize AND filter."""
+        super().__init__()
         self._left = left
         self._right = right
 
@@ -66,6 +67,7 @@ class OrFilter[T](EntryFilter[T]):
 
     def __init__(self, left: EntryFilter[T], right: EntryFilter[T]) -> None:
         """Initialize OR filter."""
+        super().__init__()
         self._left = left
         self._right = right
 
@@ -81,6 +83,7 @@ class NotFilter[T](EntryFilter[T]):
 
     def __init__(self, inner: EntryFilter[T]) -> None:
         """Initialize NOT filter."""
+        super().__init__()
         self._inner = inner
 
     def matches(self, item: T) -> bool:
@@ -103,11 +106,14 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize DN filter."""
-        if issubclass(pattern.__class__, str):
+        super().__init__()
+        compiled_pattern: Pattern[str]
+        if isinstance(pattern, str):
             flags = re.IGNORECASE if case_insensitive else 0
-            self._pattern = re.compile(pattern, flags)
+            compiled_pattern = re.compile(pattern, flags)
         else:
-            self._pattern = pattern
+            compiled_pattern = pattern
+        self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
     def matches(self, item: m.Ldif.Entry) -> bool:
@@ -135,6 +141,7 @@ class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize base DN filter."""
+        super().__init__()
         self._base_dn = base_dn.lower() if case_insensitive else base_dn
         self._case_insensitive = case_insensitive
 
@@ -169,6 +176,7 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize objectClass filter."""
+        super().__init__()
         self._case_insensitive = case_insensitive
         self._classes = (
             {c.lower() for c in classes} if case_insensitive else set(classes)
@@ -219,6 +227,7 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize attribute filter."""
+        super().__init__()
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
         self._mode = mode
@@ -256,12 +265,15 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize attribute value filter."""
+        super().__init__()
         self._attr = attr.lower() if case_insensitive else attr
-        if issubclass(pattern.__class__, str):
+        compiled_pattern: Pattern[str]
+        if isinstance(pattern, str):
             flags = re.IGNORECASE if case_insensitive else 0
-            self._pattern = re.compile(pattern, flags)
+            compiled_pattern = re.compile(pattern, flags)
         else:
-            self._pattern = pattern
+            compiled_pattern = pattern
+        self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
     def matches(self, item: m.Ldif.Entry) -> bool:
@@ -295,6 +307,7 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize exclude attributes filter."""
+        super().__init__()
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
 
@@ -325,6 +338,7 @@ class IsSchemaEntryFilter(EntryFilter["m.Ldif.Entry"]):
 
     def __init__(self, *, is_schema: bool = True) -> None:
         """Initialize schema entry filter."""
+        super().__init__()
         self._is_schema = is_schema
 
     def matches(self, item: m.Ldif.Entry) -> bool:
@@ -345,6 +359,7 @@ class CustomFilter(EntryFilter["m.Ldif.Entry"]):
         predicate: Callable[[m.Ldif.Entry], bool],
     ) -> None:
         """Initialize custom filter."""
+        super().__init__()
         self._predicate = predicate
 
     def matches(self, item: m.Ldif.Entry) -> bool:

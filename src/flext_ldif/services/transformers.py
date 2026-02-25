@@ -21,6 +21,7 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
         target_server: c.Ldif.ServerTypes,
     ) -> None:
         """Initialize server transformer."""
+        super().__init__()
         self._source_server = source_server
         self._target_server = target_server
 
@@ -37,9 +38,10 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(result.error)
 
         converted = result.value
-        if issubclass(converted.__class__, m.Ldif.Entry):
-            return r[m.Ldif.Entry].ok(converted)
-
-        return r[m.Ldif.Entry].fail(
-            f"Conversion returned unexpected type: {type(converted).__name__}"
-        )
+        match converted:
+            case m.Ldif.Entry() as converted_entry:
+                return r[m.Ldif.Entry].ok(converted_entry)
+            case _:
+                return r[m.Ldif.Entry].fail(
+                    f"Conversion returned unexpected type: {type(converted).__name__}"
+                )

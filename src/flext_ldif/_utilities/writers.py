@@ -151,13 +151,7 @@ class FlextLdifUtilitiesWriters:
 
             except Exception as e:
                 # Type narrowing: config.entry is Entry, extract DN for error message
-                entry_for_error_raw = config.entry
-                # Use isinstance check for type-safe access to dn attribute
-                entry_for_error: FlextLdifModelsDomains.Entry | None = (
-                    entry_for_error_raw
-                    if isinstance(entry_for_error_raw, FlextLdifModelsDomains.Entry)
-                    else None
-                )
+                entry_for_error: FlextLdifModelsDomains.Entry | None = config.entry
                 # Extract DN string
                 dn_for_error: str | None = None
                 try:
@@ -290,10 +284,8 @@ class FlextLdifUtilitiesWriters:
                     sup_list: list[str]
                     if isinstance(sup_value, list | tuple):
                         sup_list = [str(item) for item in sup_value]
-                    elif isinstance(sup_value, str):
-                        sup_list = [sup_value]
                     else:
-                        sup_list = [str(sup_value)]
+                        sup_list = [sup_value]
                     objectclass.sup = transform_sup_hook(sup_list)
 
                 # Build parts using hook
@@ -394,12 +386,7 @@ class FlextLdifUtilitiesWriters:
                     total_entries=len(config.entries),
                 )
 
-                # Filter entries to m.Ldif.Entry for type compatibility
-                entries_typed: list[FlextLdifModelsDomains.Entry] = [
-                    entry_raw
-                    for entry_raw in config.entries
-                    if isinstance(entry_raw, FlextLdifModelsDomains.Entry)
-                ]
+                entries_typed: list[FlextLdifModelsDomains.Entry] = list(config.entries)
 
                 # Write each entry using manual loop for clear type inference
                 # (avoiding complex generic type inference issues with u.Collection.batch)

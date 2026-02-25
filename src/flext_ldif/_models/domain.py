@@ -4160,7 +4160,7 @@ class SchemaLookup(FlextLdifModelsBase):
 # Rebuild Entry model to resolve forward references from parent class (m.Entry)
 # The parent class has domain_events: list[m.DomainEvent] which needs resolution
 # NOTE: We pass _types_namespace to provide m for resolution
-FlextLdifModelsDomains.Entry.model_rebuild(
+_ = FlextLdifModelsDomains.Entry.model_rebuild(
     _types_namespace={"m": m},
 )
 

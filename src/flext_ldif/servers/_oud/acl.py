@@ -470,7 +470,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         try:
             sc = FlextLdifServersOudConstants
             extensions: dict[str, t.MetadataAttributeValue] | None = (
-                acl_data.metadata.extensions.model_dump()
+                dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None
             )

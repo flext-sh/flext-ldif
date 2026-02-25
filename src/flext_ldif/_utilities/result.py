@@ -28,6 +28,7 @@ class FlextLdifResult[T]:
 
     def __init__(self, inner: FlextResult[T] | FlextRuntime.RuntimeResult[T]) -> None:
         """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult."""
+        super().__init__()
         # FlextResult extends RuntimeResult, so check FlextResult first (more specific)
         inner_result: FlextResult[T]
         if isinstance(inner, FlextResult):

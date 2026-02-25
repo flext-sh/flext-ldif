@@ -10,13 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal
+from typing import Annotated, Literal
 
 from flext_core import m, r, t
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
 from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
 from flext_ldif.protocols import FlextLdifProtocols
@@ -1287,7 +1288,14 @@ class FlextLdifModelsSettings:
     class EncodingRules(m.Value):
         """Generic encoding rules - server classes provide values."""
 
-        default_encoding: str
+        default_encoding: Annotated[
+            str,
+            StringConstraints(
+                min_length=1,
+                max_length=50,
+                pattern=r"^[A-Za-z0-9._-]+$",
+            ),
+        ]
         allowed_encodings: list[c.Ldif.LiteralTypes.EncodingLiteral] = Field(
             default_factory=list,
         )
@@ -1296,13 +1304,13 @@ class FlextLdifModelsSettings:
         """Generic DN case rules - server classes provide values."""
 
         preserve_case: bool
-        normalize_to: str | None = Field(default=None)
+        normalize_to: Literal["lower", "upper"] | None = Field(default=None)
 
     class AclFormatRules(m.Value):
         """Generic ACL format rules - server classes provide values."""
 
         format: str
-        attribute_name: str
+        attribute_name: Rfc4512Descriptor
         requires_target: bool
         requires_subject: bool
 
@@ -2018,11 +2026,16 @@ class FlextLdifModelsSettings:
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry] | None = Field(
+        post_parse_hook: (
+            Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry]
+            | None
+        ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -2082,7 +2095,9 @@ class FlextLdifModelsSettings:
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -2204,11 +2219,15 @@ class FlextLdifModelsSettings:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[FlextLdifModelsDomains.Entry, list[str]], None] = Field(
+        write_attributes_hook: Callable[
+            [FlextLdifModelsDomains.Entry, list[str]], None
+        ] = Field(
             ...,
             description="Core attributes writing",
         )
-        write_comments_hook: Callable[[FlextLdifModelsDomains.Entry, list[str]], None] | None = Field(
+        write_comments_hook: (
+            Callable[[FlextLdifModelsDomains.Entry, list[str]], None] | None
+        ) = Field(
             default=None,
             description="Optional comments writing",
         )

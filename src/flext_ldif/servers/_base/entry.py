@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
+from contextlib import suppress
 from datetime import UTC, datetime
 from typing import ClassVar
 
@@ -167,14 +168,12 @@ class FlextLdifServersBaseEntry(
         acl_original_format: str | None = None
 
         extensions_data: Mapping[str, object] = {}
-        if entry_data.metadata and entry_data.metadata.extensions is not None:
+        if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
-            elif core_u.has(metadata_extensions, "model_dump"):
-                dumped = metadata_extensions.model_dump()
-                if core_u.is_type(dumped, dict):
-                    extensions_data = dumped
+            elif isinstance(metadata_extensions, m.Ldif.DynamicMetadata):
+                extensions_data = dict(metadata_extensions.to_dict())
 
         hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
@@ -369,20 +368,17 @@ class FlextLdifServersBaseEntry(
         if metadata is None:
             return None
 
-        if metadata.extensions is not None:
-            extensions_extra = getattr(metadata.extensions, "__pydantic_extra__", None)
-            format_options_raw = None
-            if isinstance(extensions_extra, Mapping):
-                format_options_raw = extensions_extra.get("write_format_options")
-            if format_options_raw is None:
-                format_options_raw = metadata.extensions.get("write_format_options")
-            if isinstance(format_options_raw, Mapping):
-                try:
-                    return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
-                        dict(format_options_raw),
-                    )
-                except Exception:
-                    pass
+        extensions_extra = getattr(metadata.extensions, "__pydantic_extra__", None)
+        format_options_raw = None
+        if isinstance(extensions_extra, Mapping):
+            format_options_raw = extensions_extra.get("write_format_options")
+        if format_options_raw is None:
+            format_options_raw = metadata.extensions.get("write_format_options")
+        if isinstance(format_options_raw, Mapping):
+            with suppress(Exception):
+                return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
+                    dict(format_options_raw),
+                )
 
         if metadata.write_options is None:
             return None
@@ -417,21 +413,18 @@ class FlextLdifServersBaseEntry(
                     ),
                 },
             )
-        if isinstance(write_options, Mapping):
-            write_options_payload = dict(write_options)
-            return FlextLdifModelsDomains.WriteOptions.model_validate({
-                "sort_entries": write_options_payload.get("sort_attributes", False),
-                "include_comments": write_options_payload.get(
-                    "include_dn_comments",
-                    False,
-                ),
-                "base64_encode_binary": write_options_payload.get(
-                    "base64_encode_binary",
-                    False,
-                ),
-            })
-        msg = f"Expected WriteFormatOptions | WriteOptions | dict, got {type(write_options)}"
-        raise TypeError(msg)
+        write_options_payload = dict(write_options)
+        return FlextLdifModelsDomains.WriteOptions.model_validate({
+            "sort_entries": write_options_payload.get("sort_attributes", False),
+            "include_comments": write_options_payload.get(
+                "include_dn_comments",
+                False,
+            ),
+            "base64_encode_binary": write_options_payload.get(
+                "base64_encode_binary",
+                False,
+            ),
+        })
 
     def _inject_write_options(
         self,
@@ -444,7 +437,7 @@ class FlextLdifServersBaseEntry(
 
         existing_extensions = (
             entry.metadata.extensions.model_copy(deep=True)
-            if entry.metadata and entry.metadata.extensions is not None
+            if entry.metadata
             else m.Ldif.DynamicMetadata()
         )
         existing_extensions["write_format_options"] = format_options_payload

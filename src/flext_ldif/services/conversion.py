@@ -862,10 +862,17 @@ class FlextLdifConversion(
                     p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
                 ].ok(parse_result.value)
 
+            def _write_attribute_pipeline(
+                _source_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+            ) -> r[str]:
+                return write_attr(attribute)
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
-                write_method=lambda _s: write_attr(attribute),
+                write_method=_write_attribute_pipeline,
                 parse_method=_parse_attribute_pipeline,
                 item_name="attribute",
             )
@@ -941,10 +948,17 @@ class FlextLdifConversion(
                     p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
                 ].ok(parse_result.value)
 
+            def _write_objectclass_pipeline(
+                _source_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+            ) -> r[str]:
+                return write_oc(objectclass)
+
             config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
-                write_method=lambda _s: write_oc(objectclass),
+                write_method=_write_objectclass_pipeline,
                 parse_method=_parse_objectclass_pipeline,
                 item_name="objectclass",
             )
@@ -1193,6 +1207,26 @@ class FlextLdifConversion(
         acl: m.Ldif.Acl,
     ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Extract extensions dict from ACL metadata."""
+
+        def to_general_value(value: object) -> FlextTypes.GeneralValueType:
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return value
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                return value
+            if isinstance(value, datetime):
+                return value.isoformat()
+            if isinstance(value, Mapping):
+                return {str(key): to_general_value(item) for key, item in value.items()}
+            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+                return [to_general_value(item) for item in value]
+            return str(value)
+
         get_metadata = u.mapper().prop("metadata")
         get_extensions = u.mapper().prop("extensions")
 
@@ -1201,10 +1235,16 @@ class FlextLdifConversion(
 
         extensions_raw = get_extensions(acl.metadata)
         if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
-            dumped = extensions_raw.model_dump()
-            if isinstance(dumped, dict):
-                return dict(dumped)
-            return {}
+            return {
+                key: to_general_value(value)
+                for key, value in extensions_raw.to_dict().items()
+            }
+
+        if isinstance(extensions_raw, Mapping):
+            return {
+                str(key): to_general_value(value)
+                for key, value in extensions_raw.items()
+            }
 
         return {}
 
@@ -2071,11 +2111,12 @@ class FlextLdifConversion(
             return support
 
         oc_result = parse_oc(test_oc_def)
-        if FlextLdifConversion._has_attr(oc_result, "map_or") and callable(
-            getattr(oc_result, "map_or", None)
+        if (
+            FlextLdifConversion._has_attr(oc_result, "map_or")
+            and callable(getattr(oc_result, "map_or", None))
+            and getattr(oc_result, "map_or")(None) is not None
         ):
-            if getattr(oc_result, "map_or")(None) is not None:
-                support["objectclass"] = 1
+            support["objectclass"] = 1
 
         return support
 

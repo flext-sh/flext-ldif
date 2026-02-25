@@ -30,6 +30,7 @@ class DnOps:
 
     def __init__(self, dn: str) -> None:
         """Initialize DN operations."""
+        super().__init__()
         self._dn: str = dn
         self._error: str | None = None
 
@@ -192,6 +193,7 @@ class EntryOps:
 
     def __init__(self, entry: m.Ldif.Entry) -> None:
         """Initialize entry operations."""
+        super().__init__()
         self._entry = entry
         self._error: str | None = None
 

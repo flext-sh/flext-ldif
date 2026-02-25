@@ -73,6 +73,12 @@ class FlextLdifUtilities(FlextUtilities):
 
         type VariadicCallable[T] = Callable[..., T]
 
+        @staticmethod
+        def _to_config_map_value(value: object) -> t.ConfigMapValue:
+            if FlextUtilities.Guards.is_general_value_type(value):
+                return value
+            return str(value)
+
         class ConvBuilder:
             """Conversion builder for type-safe value conversion (DSL pattern)."""
 
@@ -607,7 +613,7 @@ class FlextLdifUtilities(FlextUtilities):
             match items:
                 case dict() as items_dict:
                     dict_items: dict[str, t.ConfigMapValue] = {
-                        key: FlextUtilities.Mapper.narrow_to_general_value_type(value)
+                        key: FlextLdifUtilities.Ldif._to_config_map_value(value)
                         for key, value in items_dict.items()
                     }
                     results = FlextLdifUtilities.Ldif.process_dict_items(
@@ -672,7 +678,7 @@ class FlextLdifUtilities(FlextUtilities):
             match items_or_entries:
                 case Sequence() as seq if seq:
                     match seq:
-                        case str() | bytes() | dict():
+                        case str() | bytes():
                             pass
                         case _:
                             match seq[0]:
@@ -726,9 +732,7 @@ class FlextLdifUtilities(FlextUtilities):
                 case dict() as items_or_entries_dict:
                     items_dict: dict[str, t.ConfigMapValue] = {}
                     for k, v in items_or_entries_dict.items():
-                        items_dict[k] = (
-                            FlextUtilities.Mapper.narrow_to_general_value_type(v)
-                        )
+                        items_dict[k] = FlextLdifUtilities.Ldif._to_config_map_value(v)
                     dict_filter_result = FlextUtilities.Collection.filter(
                         items_dict, predicate
                     )
@@ -866,7 +870,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def normalize_list(
             cls,
-            value: t.ConfigMapValue,
+            value: t.ConfigMapValue | r[t.ConfigMapValue],
             *,
             default: list[t.ConfigMapValue] | None = None,
         ) -> list[t.ConfigMapValue]:
@@ -893,17 +897,17 @@ class FlextLdifUtilities(FlextUtilities):
             match result:
                 case list() as result_list:
                     return [
-                        FlextUtilities.Mapper.narrow_to_general_value_type(item)
+                        FlextLdifUtilities.Ldif._to_config_map_value(item)
                         for item in result_list
                     ]
                 case tuple() as result_tuple:
                     return [
-                        FlextUtilities.Mapper.narrow_to_general_value_type(item)
+                        FlextLdifUtilities.Ldif._to_config_map_value(item)
                         for item in result_tuple
                     ]
                 case _:
                     pass
-            result_typed = FlextUtilities.Mapper.narrow_to_general_value_type(result)
+            result_typed = FlextLdifUtilities.Ldif._to_config_map_value(result)
             return [result_typed]
 
         nl = normalize_list
@@ -1296,11 +1300,9 @@ class FlextLdifUtilities(FlextUtilities):
             type_spec: str | type | tuple[type, ...],
         ) -> bool:
             """Type check using FlextUtilities.build() DSL (mnemonic: it)."""
-            types_tuple: tuple[str | type, ...]
-            if isinstance(type_spec, tuple):
-                types_tuple = type_spec
-            else:
-                types_tuple = (type_spec,)
+            types_tuple: tuple[str | type, ...] = (
+                type_spec if isinstance(type_spec, tuple) else (type_spec,)
+            )
 
             type_map = {
                 "list": list,
@@ -1311,11 +1313,9 @@ class FlextLdifUtilities(FlextUtilities):
                 "tuple": tuple,
             }
             for t_val in types_tuple:
-                resolved_type: type | None
-                if isinstance(t_val, str):
-                    resolved_type = type_map.get(t_val)
-                else:
-                    resolved_type = t_val
+                resolved_type: type | None = (
+                    type_map.get(t_val) if isinstance(t_val, str) else t_val
+                )
                 if resolved_type is not None and FlextUtilities.Guards.is_type(
                     value,
                     resolved_type,
@@ -1386,7 +1386,7 @@ class FlextLdifUtilities(FlextUtilities):
             result = cls.build(value, ops=ops)
             if result is None:
                 return cls.or_(None, default=default)
-            result_typed = FlextUtilities.Mapper.narrow_to_general_value_type(result)
+            result_typed = FlextLdifUtilities.Ldif._to_config_map_value(result)
             return cls.or_(result_typed, default=default)
 
         @classmethod
@@ -1455,8 +1455,6 @@ class FlextLdifUtilities(FlextUtilities):
                 converted_args: list[t.ConfigMapValue] = []
                 for arg in combined_args:
                     match arg:
-                        case str() | int() | float() | bool():
-                            converted_args.append(arg)
                         case None:
                             converted_args.append(None)
                         case list() | tuple() | dict() | Mapping():
@@ -1755,7 +1753,7 @@ class FlextLdifUtilities(FlextUtilities):
                     items = list(dict_items.items())
                     sliced = items[:n] if from_start else items[-n:]
                     sliced_dict: dict[str, t.ConfigMapValue] = {
-                        key: FlextUtilities.Mapper.narrow_to_general_value_type(value)
+                        key: FlextLdifUtilities.Ldif._to_config_map_value(value)
                         for key, value in sliced
                     }
                     return sliced_dict  # Overloads ensure type safety at call sites
@@ -2008,7 +2006,7 @@ class FlextLdifUtilities(FlextUtilities):
                 match obj:
                     case Mapping() as obj_mapping:
                         return {
-                            key: FlextUtilities.Mapper.narrow_to_general_value_type(
+                            key: FlextLdifUtilities.Ldif._to_config_map_value(
                                 obj_mapping.get(key, None),
                             )
                             for key in keys
@@ -2222,11 +2220,16 @@ class FlextLdifUtilities(FlextUtilities):
                         case str() | bytes():
                             pass
                         case _:
-                            items_list = [
-                                item
-                                for item in items_sequence
-                                if FlextUtilities.Guards.is_type(item, dict)
-                            ]
+                            for item in items_sequence:
+                                if isinstance(item, Mapping):
+                                    items_list.append({
+                                        str(
+                                            key
+                                        ): FlextLdifUtilities.Ldif._to_config_map_value(
+                                            value
+                                        )
+                                        for key, value in item.items()
+                                    })
                 case _:
                     pass
 

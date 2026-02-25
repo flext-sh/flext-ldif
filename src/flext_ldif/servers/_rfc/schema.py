@@ -243,10 +243,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         parsed = parse_result_raw.value
 
-        metadata_extensions = self._convert_extensions_for_quirk(
-            self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
-        )
-
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
 

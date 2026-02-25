@@ -18,13 +18,14 @@ class _SchemaConstants:
 
     _instance: _SchemaConstants | None = None
 
-    AUXILIARY: str
-    STRUCTURAL: str
+    auxiliary: str
+    structural: str
 
     def __init__(self) -> None:
         """Initialize schema constants from SchemaKind enum."""
-        self.AUXILIARY = c.Ldif.SchemaKind.AUXILIARY.value
-        self.STRUCTURAL = c.Ldif.SchemaKind.STRUCTURAL.value
+        super().__init__()
+        self.auxiliary = c.Ldif.SchemaKind.AUXILIARY.value
+        self.structural = c.Ldif.SchemaKind.STRUCTURAL.value
 
     @classmethod
     def get_instance(cls) -> _SchemaConstants:
@@ -50,7 +51,7 @@ class FlextLdifUtilitiesObjectClass:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = _SchemaConstants.get_instance()
         # Only fix AUXILIARY classes - STRUCTURAL classes are left unchanged
-        if schema_oc.kind == schema_constants.AUXILIARY and not schema_oc.sup:
+        if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
             schema_oc.sup = "top"
 
     @staticmethod
@@ -72,27 +73,27 @@ class FlextLdifUtilitiesObjectClass:
         # Known AUXILIARY superior classes that cause conflicts
         auxiliary_superiors = {"javanamingref", "javanamingReference"}
 
-        if isinstance(schema_oc.sup, list):
-            sup_lower = schema_oc.sup[0].lower() if schema_oc.sup else ""
-        elif isinstance(schema_oc.sup, str):
-            sup_lower = schema_oc.sup.lower()
+        sup_value = schema_oc.sup
+        if isinstance(sup_value, list):
+            first_sup = sup_value[0] if sup_value else ""
+            sup_lower = str(first_sup).lower() if first_sup else ""
         else:
-            sup_lower = ""
+            sup_lower = sup_value.lower() if sup_value else ""
 
         schema_constants = _SchemaConstants.get_instance()
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
         if (
             sup_lower in structural_superiors
-            and schema_oc.kind == schema_constants.AUXILIARY
+            and schema_oc.kind == schema_constants.auxiliary
         ):
-            schema_oc.kind = schema_constants.STRUCTURAL
+            schema_oc.kind = schema_constants.structural
 
         # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
         elif (
             sup_lower in auxiliary_superiors
-            and schema_oc.kind == schema_constants.STRUCTURAL
+            and schema_oc.kind == schema_constants.structural
         ):
-            schema_oc.kind = schema_constants.AUXILIARY
+            schema_oc.kind = schema_constants.auxiliary
 
     @staticmethod
     def ensure_sup_for_auxiliary(
@@ -101,7 +102,7 @@ class FlextLdifUtilitiesObjectClass:
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute."""
         schema_constants = _SchemaConstants.get_instance()
-        if schema_oc.kind == schema_constants.AUXILIARY and not schema_oc.sup:
+        if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
             schema_oc.sup = default_sup
 
     @staticmethod

@@ -44,6 +44,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         validate: bool = True,
     ) -> None:
         """Initialize DN normalization transformer."""
+        super().__init__()
         self._case = case
         self._spaces = spaces
         self._validate = validate
@@ -81,11 +82,6 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
-        if not isinstance(item, m.Ldif.Entry):
-            return r[m.Ldif.Entry].fail(
-                f"NormalizeDnTransformer.apply expected m.Ldif.Entry, got {type(item).__name__}: {item}",
-            )
-
         if item.dn is None:
             return r[m.Ldif.Entry].fail("Entry has no DN")
 
@@ -131,6 +127,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         remove_empty: bool = False,
     ) -> None:
         """Initialize attribute normalization transformer."""
+        super().__init__()
         self._case_fold_names = case_fold_names
         self._trim_values = trim_values
         self._remove_empty = remove_empty
@@ -223,6 +220,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         case_insensitive: bool = True,
     ) -> None:
         """Initialize base DN replacement transformer."""
+        super().__init__()
         self._old_base = old_base
         self._new_base = new_base
         self._case_insensitive = case_insensitive
@@ -262,6 +260,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         attributes: Sequence[str] | None = None,
     ) -> None:
         """Initialize boolean conversion transformer."""
+        super().__init__()
         self._format = boolean_format
         self._attributes = attributes
 
@@ -309,6 +308,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         exclude: Sequence[str] | None = None,
     ) -> None:
         """Initialize attribute filter transformer."""
+        super().__init__()
         self._include = set(include) if include else None
         self._exclude = set(exclude) if exclude else set()
 
@@ -356,6 +356,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
     def __init__(self, *attributes: str) -> None:
         """Initialize attribute removal transformer."""
+        super().__init__()
         self._attributes = {attr.lower() for attr in attributes}
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -381,6 +382,7 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
         ],
     ) -> None:
         """Initialize custom transformer."""
+        super().__init__()
         self._func = func
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:

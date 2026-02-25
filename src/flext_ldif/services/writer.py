@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import suppress
 from pathlib import Path
 
 from flext_core import r
@@ -69,28 +70,20 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         result_raw: m.Ldif.LdifResults.WriteFormatOptions | None
         if format_options is None:
             result_raw = m.Ldif.LdifResults.WriteFormatOptions()
-        elif issubclass(
-            format_options.__class__, m.Ldif.LdifResults.WriteFormatOptions
-        ):
-            result_raw = format_options
-        elif issubclass(format_options.__class__, m.Ldif.LdifResults.WriteOptions):
+        elif isinstance(format_options, m.Ldif.LdifResults.WriteFormatOptions):
+            format_opts: m.Ldif.LdifResults.WriteFormatOptions = format_options
+            result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
+                format_opts
+            )
+        elif isinstance(format_options, m.Ldif.LdifResults.WriteOptions):
             write_options = m.Ldif.LdifResults.WriteOptions.model_validate(
                 format_options
             )
             result_raw = FlextLdifWriter._extract_write_options(write_options)
-        elif issubclass(format_options.__class__, Mapping):
+        else:
             result_raw = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
                 dict(format_options)
             )
-        else:
-            result_raw = None
-        if result_raw is None:
-            msg = (
-                "Expected WriteFormatOptions | WriteOptions | Mapping | None, got "
-                f"{format_options.__class__.__name__}"
-            )
-            raise TypeError(msg)
-
         return m.Ldif.LdifResults.WriteFormatOptions.model_validate(result_raw)
 
     def write_to_string(
@@ -155,7 +148,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             )
 
         try:
-            path.write_text(ldif_content, encoding="utf-8")
+            _ = path.write_text(ldif_content, encoding="utf-8")
         except (OSError, UnicodeEncodeError) as e:
             return r[m.Ldif.LdifResults.WriteResponse].fail(
                 f"Failed to write LDIF file {path}: {e}",
@@ -218,15 +211,14 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
         entries_raw = u.take(params, "entries", as_type=list, default=[])
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[object, ...] = ()
-        try:
+        with suppress(Exception):
             entry_candidates = tuple(t.ObjectList.model_validate(entries_raw).root)
-        except Exception:
-            pass
         for entry_candidate in entry_candidates:
-            try:
-                entries.append(m.Ldif.Entry.model_validate(entry_candidate))
-            except Exception:
-                continue
+            validated_entry: m.Ldif.Entry | None = None
+            with suppress(Exception):
+                validated_entry = m.Ldif.Entry.model_validate(entry_candidate)
+            if validated_entry is not None:
+                entries.append(validated_entry)
         target_server_type_raw = u.take(
             params,
             "target_server_type",
@@ -257,17 +249,26 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             | None
         ) = None
         if format_options_raw is not None:
-            try:
-                format_options = m.Ldif.LdifResults.WriteFormatOptions.model_validate(
-                    format_options_raw,
-                )
-            except Exception:
-                try:
-                    format_options = m.Ldif.LdifResults.WriteOptions.model_validate(
+            validated_format_options: m.Ldif.LdifResults.WriteFormatOptions | None = (
+                None
+            )
+            with suppress(Exception):
+                validated_format_options = (
+                    m.Ldif.LdifResults.WriteFormatOptions.model_validate(
                         format_options_raw,
                     )
-                except Exception:
-                    format_options = None
+                )
+            if validated_format_options is not None:
+                format_options = validated_format_options
+            else:
+                validated_write_options: m.Ldif.LdifResults.WriteOptions | None = None
+                with suppress(Exception):
+                    validated_write_options = (
+                        m.Ldif.LdifResults.WriteOptions.model_validate(
+                            format_options_raw,
+                        )
+                    )
+                format_options = validated_write_options
 
         write_result = self.write(
             entries=entries,
@@ -280,13 +281,11 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             return r[m.Ldif.LdifResults.WriteResponse].fail(write_result.error)
 
         result_value = write_result.value
-        try:
+        with suppress(Exception):
             result_response = m.Ldif.LdifResults.WriteResponse.model_validate(
                 result_value
             )
             return r[m.Ldif.LdifResults.WriteResponse].ok(result_response)
-        except Exception:
-            pass
 
         return r[m.Ldif.LdifResults.WriteResponse].ok(
             m.Ldif.LdifResults.WriteResponse(

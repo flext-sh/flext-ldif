@@ -44,6 +44,7 @@ class PipelineStep[TIn, TOut]:
         func: _StepFunction[TIn, TOut],
     ) -> None:
         """Initialize pipeline step."""
+        super().__init__()
         self._name = name
         self._func = func
 
@@ -67,6 +68,7 @@ class Pipeline:
 
     def __init__(self, *, fail_fast: bool = True) -> None:
         """Initialize pipeline."""
+        super().__init__()
         self._steps: list[
             tuple[
                 str,
@@ -144,16 +146,14 @@ class Pipeline:
             if func_result is None:
                 # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
                 return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
-            if issubclass(func_result.__class__, r):
+            if isinstance(func_result, r):
                 # If result is Entry, wrap in Entry | FILTERED union
                 if func_result.is_success:
                     entry_value = func_result.value
-                    # Type narrowing: entry_value is Entry when success
                     return r[m.Ldif.Entry | _Filtered].ok(entry_value)
                 # Convert r[Entry] failure to r[Entry | FILTERED] failure
                 return r[m.Ldif.Entry | _Filtered].fail(func_result.error)
             # func_result is Entry (not None, not r)
-            # Type narrowing: func_result is Entry
             return r[m.Ldif.Entry | _Filtered].ok(func_result)
 
         self._steps.append((name, wrapped_func))
@@ -167,7 +167,7 @@ class Pipeline:
         current: m.Ldif.Entry | _Filtered = entry
 
         for step_name, step_func in self._steps:
-            if issubclass(current.__class__, _Filtered):
+            if isinstance(current, _Filtered):
                 # Entry was filtered out in previous step
                 return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
 
@@ -202,7 +202,7 @@ class Pipeline:
                 return r[m.Ldif.Entry].fail(result.error or "Processing failed")
             processed = result.value
             # Type narrowing: processed is Entry | _Filtered
-            if issubclass(processed.__class__, _Filtered):
+            if isinstance(processed, _Filtered):
                 # Filtered entries return None (not an error, just skipped)
                 return None
             # Type narrowing: processed is Entry when not _Filtered
@@ -244,6 +244,7 @@ class ValidationPipeline:
         max_errors: int = 0,
     ) -> None:
         """Initialize validation pipeline."""
+        super().__init__()
         self._strict = strict
         self._collect_all = collect_all
         self._max_errors = max_errors
@@ -352,6 +353,7 @@ class ValidationResult:
         warnings: list[str] | None = None,
     ) -> None:
         """Initialize validation result."""
+        super().__init__()
         self._is_valid = is_valid
         self._errors = errors or []
         self._warnings = warnings or []

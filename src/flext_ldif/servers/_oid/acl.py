@@ -413,11 +413,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> Mapping[str, str | int | bool]:
         """Normalize value to dict for model validation."""
         if isinstance(value, Mapping):
-            normalized: dict[str, str | int | bool] = {}
-            for key, raw_value in value.items():
-                if isinstance(key, str) and isinstance(raw_value, (str, int, bool)):
-                    normalized[key] = raw_value
-            return normalized
+            return {
+                key: raw_value
+                for key, raw_value in value.items()
+                if isinstance(key, str) and isinstance(raw_value, (str, int, bool))
+            }
 
         if value is None:
             return {}
@@ -427,11 +427,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         if isinstance(value, (m.Ldif.AclSubject, m.Ldif.QuirkMetadata)):
             dumped = value.model_dump()
-            normalized_dumped: dict[str, str | int | bool] = {}
-            for key, raw_value in dumped.items():
-                if isinstance(key, str) and isinstance(raw_value, (str, int, bool)):
-                    normalized_dumped[key] = raw_value
-            return normalized_dumped
+            return {
+                key: raw_value
+                for key, raw_value in dumped.items()
+                if isinstance(key, str) and isinstance(raw_value, (str, int, bool))
+            }
 
         return {}
 

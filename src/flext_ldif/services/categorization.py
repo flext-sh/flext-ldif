@@ -440,10 +440,13 @@ class FlextLdifCategorization(
             acl_attrs = acl_attrs_raw
             acl_category = FlextLdifCategorization._cat("acl")
 
+            def _to_attr_key(attr: str) -> str:
+                return f"attr:{attr.lower()}"
+
             if override_existing or acl_category not in category_map:
                 mapped = u.Collection.map(
                     acl_attrs,
-                    mapper=lambda attr: f"attr:{attr.lower()}",
+                    mapper=_to_attr_key,
                 )
 
                 if isinstance(mapped, frozenset):
@@ -457,7 +460,7 @@ class FlextLdifCategorization(
 
                 mapped = u.Collection.map(
                     acl_attrs,
-                    mapper=lambda attr: f"attr:{attr.lower()}",
+                    mapper=_to_attr_key,
                 )
 
                 if isinstance(mapped, frozenset):
@@ -764,8 +767,8 @@ class FlextLdifCategorization(
 
         if all_excluded_entries:
             rejected_category = FlextLdifCategorization._cat("rejected")
-            existing_rejected_raw: Sequence[object] = (
-                filtered[rejected_category] if rejected_category in filtered else ()
+            existing_rejected_raw: Sequence[object] = filtered.get(
+                rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]:
@@ -878,8 +881,8 @@ class FlextLdifCategorization(
 
         if excluded_entries:
             rejected_category = FlextLdifCategorization._cat("rejected")
-            existing_rejected_raw: Sequence[object] = (
-                filtered[rejected_category] if rejected_category in filtered else ()
+            existing_rejected_raw: Sequence[object] = filtered.get(
+                rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]:

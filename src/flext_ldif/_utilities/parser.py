@@ -38,8 +38,6 @@ class FlextLdifUtilitiesParser:
                 return normalized
             return None
 
-        if metadata is None:
-            return {}
         result = metadata.get("extensions")
         if result is None or not isinstance(result, Mapping):
             extensions: dict[str, list[str]] = {}
@@ -293,14 +291,7 @@ class FlextLdifUtilitiesParser:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
             existing_list: list[str]
-            if isinstance(existing, list):
-                existing_list = [
-                    item if isinstance(item, str) else str(item) for item in existing
-                ]
-            else:
-                existing_list = [
-                    item if isinstance(item, str) else str(item) for item in existing
-                ]
+            existing_list = [str(item) for item in existing]
             existing_list.append(attr_value)
             entry_dict[attr_name] = existing_list
 

@@ -1,41 +1,39 @@
-"""Validation models for LDIF processing."""
-
-from __future__ import annotations
+from typing import Annotated, Literal
 
 from flext_core._models.entity import FlextModelsEntity
-from pydantic import Field
+from pydantic import Field, StringConstraints
 
+from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
 from flext_ldif.constants import c
 
 
 class EncodingRules(FlextModelsEntity.Value):
-    """Generic encoding rules - server classes provide values."""
-
-    default_encoding: str
+    default_encoding: Annotated[
+        str,
+        StringConstraints(
+            min_length=1,
+            max_length=50,
+            pattern=r"^[A-Za-z0-9._-]+$",
+        ),
+    ]
     allowed_encodings: list[c.Ldif.LiteralTypes.EncodingLiteral] = Field(
         default_factory=list,
     )
 
 
 class DnCaseRules(FlextModelsEntity.Value):
-    """Generic DN case rules - server classes provide values."""
-
     preserve_case: bool
-    normalize_to: str | None = Field(default=None)
+    normalize_to: Literal["lower", "upper"] | None = Field(default=None)
 
 
 class AclFormatRules(FlextModelsEntity.Value):
-    """Generic ACL format rules - server classes provide values."""
-
     format: str
-    attribute_name: str
+    attribute_name: Rfc4512Descriptor
     requires_target: bool
     requires_subject: bool
 
 
 class ServerValidationRules(FlextModelsEntity.Value):
-    """Generic server validation rules - server classes provide values."""
-
     requires_objectclass: bool
     requires_naming_attr: bool
     requires_binary_option: bool
@@ -45,3 +43,11 @@ class ServerValidationRules(FlextModelsEntity.Value):
     track_deletions: bool
     track_modifications: bool
     track_conversions: bool
+
+
+__all__ = [
+    "EncodingRules",
+    "DnCaseRules",
+    "AclFormatRules",
+    "ServerValidationRules",
+]

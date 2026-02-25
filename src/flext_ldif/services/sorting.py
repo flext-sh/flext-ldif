@@ -720,9 +720,7 @@ class FlextLdifSorting(
                 return (3, dn_value.lower())
 
             first_val = str(
-                oid_values[0]
-                if isinstance(oid_values, (list, tuple))
-                else oid_values,
+                oid_values[0] if isinstance(oid_values, (list, tuple)) else oid_values,
             )
             oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
 

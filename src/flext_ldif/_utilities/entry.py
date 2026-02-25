@@ -53,8 +53,17 @@ class FlextLdifUtilitiesEntry:
         ]
 
     @staticmethod
+    def _stringify_attribute_value(value: object) -> str:
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        return str(value)
+
+    @staticmethod
     def convert_boolean_attributes(
-        attributes: Mapping[str, list[str] | list[bytes] | bytes | str],
+        attributes: Mapping[
+            str,
+            Sequence[str] | Sequence[bytes] | str | bytes,
+        ],
         boolean_attr_names: set[str],
         *,
         source_format: str = "0/1",
@@ -66,42 +75,32 @@ class FlextLdifUtilitiesEntry:
                 return {}
             normalized_result: dict[str, list[str]] = {}
             for attr_name in attributes:
-                raw_values: list[str] | list[bytes] | bytes | str = attributes[
-                    attr_name
-                ]
-                if issubclass(raw_values.__class__, (list, tuple)):
+                raw_values = attributes[attr_name]
+                if isinstance(raw_values, str | bytes):
                     normalized_result[attr_name] = [
-                        v.decode("utf-8", errors="replace")
-                        if issubclass(v.__class__, bytes)
-                        else str(v)
-                        for v in raw_values
-                    ]
-                elif issubclass(raw_values.__class__, bytes):
-                    normalized_result[attr_name] = [
-                        raw_values.decode("utf-8", errors="replace"),
+                        FlextLdifUtilitiesEntry._stringify_attribute_value(raw_values)
                     ]
                 else:
-                    normalized_result[attr_name] = [str(raw_values)]
+                    normalized_result[attr_name] = [
+                        FlextLdifUtilitiesEntry._stringify_attribute_value(v)
+                        for v in raw_values
+                    ]
             return normalized_result
 
         result: dict[str, list[str]] = {}
 
         for attr_name in attributes:
-            attr_raw_values: list[str] | list[bytes] | bytes | str = attributes[
-                attr_name
-            ]
+            attr_raw_values = attributes[attr_name]
             str_values: list[str]
-            if issubclass(attr_raw_values.__class__, (list, tuple)):
+            if isinstance(attr_raw_values, str | bytes):
                 str_values = [
-                    v.decode("utf-8", errors="replace")
-                    if issubclass(v.__class__, bytes)
-                    else str(v)
+                    FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values)
+                ]
+            else:
+                str_values = [
+                    FlextLdifUtilitiesEntry._stringify_attribute_value(v)
                     for v in attr_raw_values
                 ]
-            elif issubclass(attr_raw_values.__class__, bytes):
-                str_values = [attr_raw_values.decode("utf-8", errors="replace")]
-            else:
-                str_values = [str(attr_raw_values)]
 
             if attr_name.lower() in boolean_attr_names:
                 result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
@@ -168,13 +167,14 @@ class FlextLdifUtilitiesEntry:
         if not entry.attributes:
             return False
 
-        if issubclass(objectclasses.__class__, str):
-            objectclasses = (objectclasses,)
+        objectclass_candidates: tuple[str, ...] = (
+            (objectclasses,) if isinstance(objectclasses, str) else objectclasses
+        )
 
         entry_ocs = entry.attributes.get("objectClass", [])
         entry_ocs_lower = {oc.lower() for oc in entry_ocs}
 
-        return any(oc.lower() in entry_ocs_lower for oc in objectclasses)
+        return any(oc.lower() in entry_ocs_lower for oc in objectclass_candidates)
 
     @staticmethod
     def has_all_attributes(
@@ -241,7 +241,11 @@ class FlextLdifUtilitiesEntry:
         Mapping[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
-        normalize = normalize_attr_fn or (lambda x: x.lower())
+
+        def _default_normalize(value: str) -> str:
+            return value.lower()
+
+        normalize = normalize_attr_fn or _default_normalize
 
         dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
             original=original_dn,
@@ -276,7 +280,9 @@ class FlextLdifUtilitiesEntry:
             canonical_name = normalize(original_attr_name)
 
             original_values_list: list[str] = []
-            if issubclass(attr_values.__class__, (list, tuple)):
+            if isinstance(attr_values, Sequence) and not isinstance(
+                attr_values, str | bytes
+            ):
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
@@ -377,18 +383,21 @@ class FlextLdifUtilitiesEntry:
             if config.attr_name_mappings:
                 output_name = config.attr_name_mappings.get(attr_name, output_name)
 
-            def normalize_value(value: str) -> str:
+            def normalize_value(value: t.Ldif.AttributeValue) -> str:
                 """Normalize single value."""
-                if config.boolean_mappings and value in config.boolean_mappings:
-                    return config.boolean_mappings[value]
-                return value
+                normalized_value = FlextLdifUtilitiesEntry._stringify_attribute_value(
+                    value
+                )
+                if (
+                    config.boolean_mappings
+                    and normalized_value in config.boolean_mappings
+                ):
+                    return config.boolean_mappings[normalized_value]
+                return normalized_value
 
-            output_values: list[str | bytes] = []
-            for value in values:
-                if issubclass(value.__class__, str):
-                    output_values.append(normalize_value(value))
-                else:
-                    output_values.append(str(value))
+            output_values: list[str | bytes] = [
+                normalize_value(value) for value in values
+            ]
 
             result[output_name] = output_values
 
@@ -550,8 +559,7 @@ class FlextLdifUtilitiesEntry:
         for i, entry in enumerate(entries):
             try:
                 result = transform_entry(entry)
-                if issubclass(result.__class__, m.Ldif.Entry):
-                    transformed_list.append(result)
+                transformed_list.append(result)
             except Exception as exc:
                 if config.fail_fast:
                     return r[list[m.Ldif.Entry]].fail(

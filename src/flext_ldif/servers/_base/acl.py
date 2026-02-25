@@ -309,16 +309,18 @@ class FlextLdifServersBaseSchemaAcl(
         if not original_format:
             return FlextResult[str].ok(acl_value)
 
-        sanitize_result = FlextLdifUtilitiesACL.sanitize_acl_name(original_format)
+        sanitize_result_raw: object = FlextLdifUtilitiesACL.sanitize_acl_name(
+            original_format
+        )
 
         sanitized_name: str
         _was_sanitized: bool
         tuple_length_pair = 2
         if (
-            isinstance(sanitize_result, tuple)
-            and len(sanitize_result) == tuple_length_pair
+            isinstance(sanitize_result_raw, tuple)
+            and len(sanitize_result_raw) == tuple_length_pair
         ):
-            sanitized_name, _was_sanitized = sanitize_result
+            sanitized_name, _was_sanitized = sanitize_result_raw
         else:
             sanitized_name = original_format
             _was_sanitized = False

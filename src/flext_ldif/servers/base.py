@@ -36,9 +36,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
-    def __init__(self, **kwargs: str | float | bool | None) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize base quirk and its nested quirks."""
-        super().__init__(**kwargs)
+        init_kwargs: dict[str, str | int | float | bool | None] = {}
+        for key, value in kwargs.items():
+            if value is None:
+                init_kwargs[key] = None
+            elif isinstance(value, (str, int, float, bool)):
+                init_kwargs[key] = value
+        super().__init__(**init_kwargs)
 
         parent_ref: FlextLdifServersBase = self
 
@@ -84,16 +90,19 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             raise AttributeError(msg)
 
         server_type_value = getattr(constants_class, "SERVER_TYPE", None)
-        if not isinstance(server_type_value, str):
+        if server_type_value is None:
             msg = f"{cls.__name__}.Constants must define SERVER_TYPE"
             raise AttributeError(msg)
+        server_type_text = str(server_type_value)
+
         priority_value = getattr(constants_class, "PRIORITY", None)
-        if not isinstance(priority_value, int):
+        if priority_value is None:
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
+        priority_number = int(priority_value)
 
-        type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_value))
-        type.__setattr__(cls, "priority", _PriorityDescriptor(priority_value))
+        type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_text))
+        type.__setattr__(cls, "priority", _PriorityDescriptor(priority_number))
 
     def get_schema_quirk(
         self,
@@ -116,11 +125,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         if entries:
             first_entry = entries[0]
-            if isinstance(first_entry, m.Ldif.Entry):
-                return r[m.Ldif.Entry].ok(first_entry)
-            return r[m.Ldif.Entry].fail(
-                f"Invalid entry type: {type(first_entry).__name__}",
-            )
+            return r[m.Ldif.Entry].ok(first_entry)
 
         return r[m.Ldif.Entry].fail("No valid parameters")
 
@@ -137,10 +142,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return r[m.Ldif.Entry].fail("No entries parsed")
 
         first_entry = entries[0]
-        if isinstance(first_entry, m.Ldif.Entry):
-            return r[m.Ldif.Entry].ok(first_entry)
-
-        return r[m.Ldif.Entry].fail("Invalid entry type")
+        return r[m.Ldif.Entry].ok(first_entry)
 
     @overload
     def __call__(
@@ -311,8 +313,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         )
 
         domain_entries: Sequence[m.Ldif.Entry] = [
-            entry if isinstance(entry, m.Ldif.Entry) else entry.model_copy(deep=True)
-            for entry in entries
+            entry.model_copy(deep=True) for entry in entries
         ]
         parse_response = FlextLdifModelsResults.ParseResponse(
             entries=list(domain_entries),
@@ -357,10 +358,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             return self._schema_quirk.write_attribute(model)
         if isinstance(model, m.Ldif.SchemaObjectClass):
             return self._schema_quirk.write_objectclass(model)
-        if isinstance(model, m.Ldif.Acl):
-            return self.acl.write(model)
-
-        return r[str].fail(f"Unknown model type: {type(model).__name__}")
+        return self.acl.write(model)
 
     def _handle_parse_operation(
         self,
@@ -516,7 +514,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 captured = method
 
                 def typed_register(server_type: str, quirk: object) -> None:
-                    captured(server_type, quirk)
+                    _ = captured(server_type, quirk)
 
                 return typed_register
             return None
@@ -571,6 +569,7 @@ class _ServerTypeDescriptor:
     """Descriptor that returns SERVER_TYPE from Constants (single source of truth)."""
 
     def __init__(self, value: str) -> None:
+        super().__init__()
         self.value = value
 
     def __get__(
@@ -586,6 +585,7 @@ class _PriorityDescriptor:
     """Descriptor that returns PRIORITY from Constants (single source of truth)."""
 
     def __init__(self, value: int) -> None:
+        super().__init__()
         self.value = value
 
     def __get__(

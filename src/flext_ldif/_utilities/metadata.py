@@ -56,7 +56,17 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = m.Metadata(attributes=dict(metadata.to_dict()))
-            model.validation_metadata = metadata_obj.model_dump()
+            normalized_metadata: dict[
+                str, str | int | float | bool | list[str] | None
+            ] = {}
+            for key, value in metadata_obj.attributes.items():
+                if isinstance(value, (str, int, float, bool)) or value is None:
+                    normalized_metadata[key] = value
+                elif isinstance(value, list):
+                    normalized_metadata[key] = [str(item) for item in value]
+                else:
+                    normalized_metadata[key] = str(value)
+            setattr(model, "validation_metadata", normalized_metadata)
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -111,17 +121,14 @@ class FlextLdifUtilitiesMetadata:
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(value)
             for key, inner_value in item_data.items():
-                if isinstance(key, str):
-                    if isinstance(inner_value, list):
-                        merged_value[key] = (
-                            FlextLdifUtilitiesMetadata._normalize_dict_list(inner_value)
-                        )
-                    elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(
+                if isinstance(inner_value, list):
+                    merged_value[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
                         inner_value
-                    ):
-                        merged_value[key] = inner_value
-                    else:
-                        merged_value[key] = str(inner_value)
+                    )
+                elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
+                    merged_value[key] = inner_value
+                else:
+                    merged_value[key] = str(inner_value)
             metadata[metadata_key] = merged_value
             return
         metadata[metadata_key] = item_data
@@ -607,8 +614,6 @@ class FlextLdifUtilitiesMetadata:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             for key, value in extracted_raw.items():
-                if not isinstance(key, str):
-                    continue
                 if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
                     combined[key] = value
                 elif isinstance(value, list):
@@ -884,9 +889,11 @@ class FlextLdifUtilitiesMetadata:
             "quirk_type": quirk_type,
             "source_server": quirk_type,
         }
-        for key, value in extra.items():
-            if isinstance(value, (str, int, bool)):
-                result[key] = value
+        result.update({
+            key: value
+            for key, value in extra.items()
+            if isinstance(value, (str, int, bool))
+        })
         return result
 
     @staticmethod

@@ -5,25 +5,22 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
+from typing import ClassVar, Literal, TypeVar, overload
 
-from flext_core import T, U, t, x
+from flext_core import t, x
 from pydantic import BaseModel
 
+from flext_ldif._models.conversion import (
+    ConvertToBool,
+    ConvertToDict,
+    ConvertToFloat,
+    ConvertToInt,
+    ConvertToList,
+    ConvertToStr,
+    ConvertToTuple,
+)
+
 CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
-_TThunk_co = TypeVar("_TThunk_co", covariant=True)
-_TUnaryIn_contra = TypeVar("_TUnaryIn_contra", contravariant=True)
-_TUnaryOut_co = TypeVar("_TUnaryOut_co", covariant=True)
-
-
-@runtime_checkable
-class _Thunk(Protocol[_TThunk_co]):
-    def __call__(self) -> _TThunk_co: ...
-
-
-@runtime_checkable
-class _UnaryCase(Protocol[_TUnaryIn_contra, _TUnaryOut_co]):
-    def __call__(self, value: _TUnaryIn_contra) -> _TUnaryOut_co: ...
 
 
 class FlextFunctional:
@@ -39,7 +36,15 @@ class FlextFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            return FlextFunctional._to_general(value.model_dump())
+            model_mapping: dict[str, t.GeneralValueType] = {
+                key: FlextFunctional._to_general(getattr(value, key))
+                for key in type(value).model_fields
+            }
+            extra = value.__pydantic_extra__
+            if extra:
+                for key, item in extra.items():
+                    model_mapping[key] = FlextFunctional._to_general(item)
+            return model_mapping
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.GeneralValueType] = {}
             for key, item in value.items():
@@ -338,16 +343,13 @@ class FlextFunctional:
     def when[T](
         *,
         condition: bool = False,
-        then: T | _Thunk[T] | None = None,
+        then: T | None = None,
         else_: T | None = None,
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
-        if condition:
-            if callable(then):
-                return then()
-            if then is not None:
-                return then
-        return else_
+        if not condition:
+            return else_
+        return then if then is not None else else_
 
     wh = when
 
@@ -412,14 +414,11 @@ class FlextFunctional:
     def switch[T, U](
         cls,
         value: T,
-        cases: Mapping[T, U | _UnaryCase[T, U]],
+        cases: Mapping[T, U],
         default: U | None = None,
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
-        result = cases.get(value, default)
-        if callable(result):
-            return result(value)
-        return result
+        return cases.get(value, default)
 
     sw = switch
 
@@ -492,16 +491,6 @@ class FlextFunctional:
             Converted value or default if conversion fails
 
         """
-        from flext_ldif._models.conversion import (
-            ConvertToBool,
-            ConvertToDict,
-            ConvertToFloat,
-            ConvertToInt,
-            ConvertToList,
-            ConvertToStr,
-            ConvertToTuple,
-        )
-
         conversion_model: (
             ConvertToStr
             | ConvertToInt
@@ -623,7 +612,7 @@ class FlextFunctional:
         if target_type is None:
             return default
 
-        if isinstance(target_type, type) and isinstance(value, target_type):
+        if isinstance(value, target_type):
             return FlextFunctional._to_general(value)
 
         try:
@@ -645,8 +634,7 @@ class FlextFunctional:
             if isinstance(obj, Mapping):
                 return FlextFunctional._to_general(obj.get(key))
             if x.is_base_model(obj):
-                dumped = obj.model_dump()
-                return dumped.get(key)
+                return FlextFunctional._to_general(getattr(obj, key, None))
             return None
 
         return getter
@@ -667,8 +655,7 @@ class FlextFunctional:
                 if isinstance(obj, Mapping):
                     result_dict[k] = FlextFunctional._to_general(obj.get(k))
                 elif x.is_base_model(obj):
-                    dumped = obj.model_dump()
-                    result_dict[k] = dumped.get(k)
+                    result_dict[k] = FlextFunctional._to_general(getattr(obj, k, None))
                 else:
                     result_dict[k] = None
             return result_dict
@@ -696,8 +683,7 @@ class FlextFunctional:
                 if isinstance(obj, Mapping):
                     return FlextFunctional._to_general(obj.get(key))
                 if x.is_base_model(obj):
-                    dumped = obj.model_dump()
-                    return dumped.get(key)
+                    return FlextFunctional._to_general(getattr(obj, key, None))
                 return None
 
             return getter_fn

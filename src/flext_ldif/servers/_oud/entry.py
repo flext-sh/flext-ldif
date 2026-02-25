@@ -460,14 +460,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # WriteOptions can be a Pydantic model or dict
         write_opts = entry_data.metadata.write_options
-        write_opts_dict: dict[str, object]
-        if isinstance(write_opts, m.Ldif.WriteOptions):
-            write_opts_dict = write_opts.model_dump()
-        elif isinstance(write_opts, Mapping):
-            write_opts_dict = {str(key): value for key, value in write_opts.items()}
-        else:
-            write_opts_dict = {}
-        original_entry_obj = write_opts_dict.get("original_entry")
+        original_entry_obj = (
+            getattr(write_opts, "original_entry", None)
+            if isinstance(write_opts, m.Ldif.WriteOptions)
+            else None
+        )
         if not (original_entry_obj and isinstance(original_entry_obj, m.Ldif.Entry)):
             return []
 
@@ -1274,8 +1271,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             and format_options.write_removed_attributes_as_comments
             and entry.metadata.removed_attributes
         ):
-            # removed_attributes is a DynamicMetadata, iterate over model_dump keys
-            removed_attrs_dict = entry.metadata.removed_attributes.model_dump()
+            removed_attrs_dict = entry.metadata.removed_attributes.to_dict()
             removed_attr_names: list[str] = [
                 str(attr_name)
                 for attr_name in removed_attrs_dict
@@ -1695,11 +1691,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if acl_result.is_success:
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
-                    acl_ext_raw = (
-                        acl_model.metadata.extensions.model_dump()
-                        if core_u.has(acl_model.metadata.extensions, "model_dump")
-                        else dict(acl_model.metadata.extensions)
-                    )
+                    acl_ext_raw = acl_model.metadata.extensions.to_dict()
                     acl_extensions: dict[str, t.MetadataAttributeValue] = {}
                     for raw_key, raw_value in acl_ext_raw.items():
                         if not isinstance(raw_key, str):
@@ -2382,7 +2374,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
             entry_attrs_for_diff: dict[
                 str,
-                str | int | float | bool | None | list[str] | Mapping[str, str],
+                str | int | float | bool | list[str] | Mapping[str, str] | None,
             ] = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)

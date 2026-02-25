@@ -70,11 +70,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         """Get singleton instance of FlextLdif."""
         if cls._instance is None:
             cls._instance = cls()
-        instance = cls._instance
-        if instance is None:
-            msg = "FlextLdif singleton instance was not initialized"
-            raise RuntimeError(msg)
-        return instance
+        return cls._instance
 
     @classmethod
     def categorization(
@@ -136,22 +132,14 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         """Get processing service instance (lazy initialization)."""
         if self._processing_service is None:
             self._processing_service = FlextLdifProcessing()
-        service = self._processing_service
-        if service is None:
-            msg = "Processing service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._processing_service
 
     @property
     def acl_service(self) -> FlextLdifAcl:
         """Get ACL service instance (lazy initialization)."""
         if self._acl_service is None:
             self._acl_service = FlextLdifAcl(server=self.server)
-        service = self._acl_service
-        if service is None:
-            msg = "ACL service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._acl_service
 
     @property
     def models(self) -> type[m]:
@@ -168,55 +156,35 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         """Get parser service instance (lazy initialization)."""
         if self._parser_service is None:
             self._parser_service = FlextLdifParser(server=self.server)
-        service = self._parser_service
-        if service is None:
-            msg = "Parser service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._parser_service
 
     @property
     def writer(self) -> FlextLdifWriter:
         """Get writer service instance (lazy initialization)."""
         if self._writer_service is None:
             self._writer_service = FlextLdifWriter()
-        service = self._writer_service
-        if service is None:
-            msg = "Writer service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._writer_service
 
     @property
     def detector(self) -> FlextLdifDetector:
         """Get detector service instance (lazy initialization)."""
         if self._detector_service is None:
             self._detector_service = FlextLdifDetector()
-        service = self._detector_service
-        if service is None:
-            msg = "Detector service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._detector_service
 
     @property
     def entries_service(self) -> FlextLdifEntries:
         """Get entries service instance (lazy initialization)."""
         if self._entries_service is None:
             self._entries_service = FlextLdifEntries()
-        service = self._entries_service
-        if service is None:
-            msg = "Entries service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._entries_service
 
     @property
     def server(self) -> FlextLdifServer:
         """Get server registry instance (lazy initialization)."""
         if self._server_service is None:
             self._server_service = FlextLdifServer.get_global_instance()
-        service = self._server_service
-        if service is None:
-            msg = "Server service initialization failed"
-            raise RuntimeError(msg)
-        return service
+        return self._server_service
 
     def migrate(
         self,
@@ -537,17 +505,18 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 attr_map = entry.attributes.attributes
                 matches_values = True
                 for attr_name, expected in attributes.items():
+                    expected_raw: object = expected
                     entry_values = attr_map.get(attr_name)
-                    if expected is None:
+                    if expected_raw is None:
                         continue
                     if entry_values is None:
                         matches_values = False
                         break
-                    match expected:
+                    match expected_raw:
                         case list() as expected_list:
                             expected_values = [str(v) for v in expected_list]
                         case _:
-                            expected_values = [str(expected)]
+                            expected_values = [str(expected_raw)]
                     existing_values = [str(v) for v in entry_values]
                     if not any(value in existing_values for value in expected_values):
                         matches_values = False
@@ -584,13 +553,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                     return False
                 objectclasses = attrs.attributes.get("objectClass", [])
 
-                match objectclasses:
-                    case str() as value:
-                        objectclasses_list: list[str] = [value]
-                    case list() as values:
-                        objectclasses_list = [str(oc) for oc in values]
-                    case _:
-                        return False
+                objectclasses_list: list[str] = [str(oc) for oc in objectclasses]
 
                 return any(oc.lower() in person_classes for oc in objectclasses_list)
 
