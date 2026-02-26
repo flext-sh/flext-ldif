@@ -24,9 +24,8 @@ import pytest
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
-    FlextLdifProtocols,
     FlextLdifWriter,
-    p,
+    m,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
@@ -190,7 +189,7 @@ def oid_integration_fixture() -> str:
 def oid_schema_entries(
     api: FlextLdif,
     oid_schema_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models.
 
     Args:
@@ -213,7 +212,7 @@ def oid_schema_entries(
 def oid_entries(
     api: FlextLdif,
     oid_entries_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models.
 
     Args:
@@ -289,7 +288,7 @@ def oud_integration_fixture() -> str:
 def oud_schema_entries(
     api: FlextLdif,
     oud_schema_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models.
 
     Args:
@@ -312,7 +311,7 @@ def oud_schema_entries(
 def oud_entries(
     api: FlextLdif,
     oud_entries_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models.
 
     Args:
@@ -388,7 +387,7 @@ def openldap_integration_fixture() -> str:
 def openldap_schema_entries(
     api: FlextLdif,
     openldap_schema_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
     Args:
@@ -411,7 +410,7 @@ def openldap_schema_entries(
 def openldap_entries(
     api: FlextLdif,
     openldap_entries_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
     Args:
@@ -451,7 +450,7 @@ def rfc_schema_fixture() -> str:
 def rfc_schema_entries(
     api: FlextLdif,
     rfc_schema_fixture: str,
-) -> list[p.Entry]:
+) -> list[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models.
 
     Args:
@@ -611,7 +610,7 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 @pytest.fixture
 def oid_schema_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+) -> object:
     """Create OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
@@ -619,7 +618,7 @@ def oid_schema_quirk(
 @pytest.fixture
 def oud_schema_quirk(
     oud_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+) -> object:
     """Create OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 
@@ -627,7 +626,7 @@ def oud_schema_quirk(
 @pytest.fixture
 def oid_acl_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.AclProtocol:
+) -> object:
     """Create OID ACL quirk instance for conversion tests."""
     return oid_quirk.acl_quirk
 
@@ -635,7 +634,7 @@ def oid_acl_quirk(
 @pytest.fixture
 def oud_acl_quirk(
     oud_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.AclProtocol:
+) -> object:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk
 

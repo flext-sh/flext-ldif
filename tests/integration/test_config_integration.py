@@ -24,6 +24,7 @@ from typing import Final
 import pytest
 from flext_core import FlextLogger
 from flext_ldif import FlextLdif, FlextLdifSettings
+from flext_ldif.constants import c
 
 logger = FlextLogger(__name__)
 
@@ -119,7 +120,10 @@ class TestFlextLdifSettingsIntegration:
         assert result2.is_success
 
     @pytest.mark.parametrize("server_type", ConfigTestData.SERVER_TYPES[:3])
-    def test_config_affects_parsing_behavior(self, server_type: str) -> None:
+    def test_config_affects_parsing_behavior(
+        self,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+    ) -> None:
         """Test that config settings affect parsing behavior."""
         config = FlextLdifSettings(server_type=server_type)
         ldif = FlextLdif(config=config)
@@ -138,7 +142,7 @@ class TestFlextLdifSettingsIntegration:
     )
     def test_config_with_server_type(
         self,
-        server_type: str,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         expected_content_key: str,
     ) -> None:
         """Test config with specific server type using parametrization."""

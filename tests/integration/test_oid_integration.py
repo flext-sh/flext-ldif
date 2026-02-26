@@ -14,10 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_ldif import FlextLdif, m
-from flext_ldif.protocols import p
 
 
 class TestOidSchemaIntegration:
@@ -50,7 +47,7 @@ class TestOidSchemaIntegration:
         assert len(entries) > 0, "No schema entries parsed"
 
         # Verify schema entry structure
-        schema_entry = cast("m.Ldif.Entry", entries[0])
+        schema_entry = entries[0]
         assert schema_entry.dn is not None
 
     def test_oracle_attributes_in_parsed_schema(
@@ -198,10 +195,15 @@ class TestOidEntryIntegration:
 
         # Count entries with Oracle ACLs
         entries_with_orclaci = sum(
-            1 for entry in entries if "orclaci" in entry.attributes.attributes
+            1
+            for entry in entries
+            if entry.attributes is not None and "orclaci" in entry.attributes.attributes
         )
         entries_with_orclentrylevelaci = sum(
-            1 for entry in entries if "orclentrylevelaci" in entry.attributes.attributes
+            1
+            for entry in entries
+            if entry.attributes is not None
+            and "orclentrylevelaci" in entry.attributes.attributes
         )
 
         assert entries_with_orclaci > 0, "No entries with orclaci found"
@@ -233,7 +235,10 @@ class TestOidEntryIntegration:
 
         for attr_name in oracle_attr_patterns:
             entries_with_attr = sum(
-                1 for entry in entries if attr_name in entry.attributes.attributes
+                1
+                for entry in entries
+                if entry.attributes is not None
+                and attr_name in entry.attributes.attributes
             )
             assert entries_with_attr > 0, f"No entries with {attr_name} found"
 
@@ -331,9 +336,11 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs in original
         def get_attribute_values_count(
-            entry: p.Entry,
+            entry: m.Ldif.Entry,
             attr_name: str,
         ) -> int:
+            if entry.attributes is None:
+                return 0
             attr_values = entry.attributes.attributes.get(attr_name)
             if attr_values is None:
                 return 0

@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
 from flext_ldif.models import m
 
-from tests import GenericFieldsDict, s
+from tests import s
+
+type DnRefData = dict[str, Mapping[str, str] | list[str] | str]
 
 
 class TestDnCaseRegistry(s):
@@ -135,7 +138,7 @@ class TestDnCaseRegistry(s):
         """Test normalizing single DN field."""
         registry.register_dn("cn=admin,dc=com")
 
-        data: GenericFieldsDict = {
+        data: DnRefData = {
             "dn": "CN=Admin,DC=Com",
             "cn": ["admin"],
         }
@@ -154,7 +157,7 @@ class TestDnCaseRegistry(s):
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("cn=user2,dc=com")
 
-        data: GenericFieldsDict = {
+        data: DnRefData = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
@@ -169,7 +172,7 @@ class TestDnCaseRegistry(s):
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: GenericFieldsDict = {"dn": "cn=unknown,dc=com"}
+        data: DnRefData = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -253,7 +256,6 @@ class TestDnCaseNormalizationScenarios:
 
 
 __all__ = [
-    "TestConversionMatrixDnHandling",
     "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
 ]

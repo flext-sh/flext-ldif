@@ -171,7 +171,9 @@ class TestOudAclIntegration:
 
         # Count entries with ACI attributes
         entries_with_aci = sum(
-            1 for entry in entries if "aci" in entry.attributes.attributes
+            1
+            for entry in entries
+            if entry.attributes is not None and "aci" in entry.attributes.attributes
         )
 
         assert entries_with_aci > 0, "No entries with aci found"
@@ -329,8 +331,8 @@ class TestOudRoundTripIntegration:
         )
 
         # Validate: DNs preserved
-        dns1 = {entry.dn.value for entry in entries1}
-        dns2 = {entry.dn.value for entry in entries2}
+        dns1 = {entry.dn.value for entry in entries1 if entry.dn is not None}
+        dns2 = {entry.dn.value for entry in entries2 if entry.dn is not None}
         assert dns1 == dns2, "DN set mismatch after round-trip"
 
     def test_roundtrip_dn_preservation(
@@ -348,11 +350,16 @@ class TestOudRoundTripIntegration:
         entries = parse_result.value
 
         # Find entries with spaces in DN
-        entries_with_dn_spaces = [entry for entry in entries if ", " in entry.dn.value]
+        entries_with_dn_spaces = [
+            entry
+            for entry in entries
+            if entry.dn is not None and ", " in entry.dn.value
+        ]
 
         if u.Guards.is_list_non_empty(entries_with_dn_spaces):
             # Take first entry and round-trip it
             test_entry = entries_with_dn_spaces[0]
+            assert test_entry.dn is not None
             original_dn = test_entry.dn.value
 
             # Write and parse back
@@ -366,6 +373,7 @@ class TestOudRoundTripIntegration:
 
             entries2 = parse2_result.value
             assert len(entries2) == 1
+            assert entries2[0].dn is not None
 
             # Verify DN normalization (ldap3 will normalize spaces)
             # The DN should still be functionally equivalent

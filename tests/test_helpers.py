@@ -16,10 +16,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TypeVar
 
 from flext_core.result import r
 from flext_ldif import FlextLdif
-from flext_ldif.protocols import p
+from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_tests import (
     FlextTestsFactories as tf_base,
@@ -27,6 +28,26 @@ from flext_tests import (
     FlextTestsValidator as tv_base,
     tt as tt_base,
 )
+
+TResult = TypeVar("TResult")
+
+
+def _unwrap_result(
+    result: r[TResult],
+    *,
+    msg: str | None = None,
+    expected_type: type[TResult] | None = None,
+) -> TResult:
+    if result.is_failure:
+        error_msg = msg or str(result.error)
+        raise AssertionError(error_msg)
+    value = result.value
+    if expected_type is not None and not isinstance(value, expected_type):
+        error_msg = (
+            msg or f"Expected {expected_type.__name__}, got {type(value).__name__}"
+        )
+        raise AssertionError(error_msg)
+    return value
 
 
 class TestsFlextLdifMatchers(tm_base):
@@ -40,7 +61,7 @@ class TestsFlextLdifMatchers(tm_base):
 
     @staticmethod
     def entry(
-        entry: p.Entry | r[p.Entry],
+        entry: m.Ldif.Entry | r[m.Ldif.Entry],
         *,
         # DN validation
         dn: str | None = None,
@@ -68,7 +89,7 @@ class TestsFlextLdifMatchers(tm_base):
         oc_count_lte: int | None = None,
         # General validation
         msg: str | None = None,
-    ) -> p.Entry:
+    ) -> m.Ldif.Entry:
         """Unified entry validation - ALL entry assertions in ONE method.
 
         Consolidates multiple entry validation patterns into a single,
@@ -115,7 +136,14 @@ class TestsFlextLdifMatchers(tm_base):
         """
         # Unwrap if FlextResult
         if isinstance(entry, r):
-            entry = TestsFlextLdifMatchers.ok(entry, msg=msg, is_=p.Entry)
+            if entry.is_failure:
+                error_msg = msg or str(entry.error)
+                raise AssertionError(error_msg)
+            entry_value = entry.value
+            if not isinstance(entry_value, m.Ldif.Entry):
+                error_msg = msg or "Expected Entry value"
+                raise AssertionError(error_msg)
+            entry = entry_value
 
         # Get entry attributes - normalized to dict
         if not hasattr(entry, "attributes"):
@@ -277,7 +305,7 @@ class TestsFlextLdifMatchers(tm_base):
 
     @staticmethod
     def entries(
-        entries: Sequence[p.Entry] | r[Sequence[p.Entry]],
+        entries: Sequence[m.Ldif.Entry] | r[Sequence[m.Ldif.Entry]],
         *,
         # Count validation
         count: int | None = None,
@@ -295,7 +323,7 @@ class TestsFlextLdifMatchers(tm_base):
         at_index: dict[int, dict[str, object]] | None = None,
         # General validation
         msg: str | None = None,
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Unified entries list validation - validates counts and entry properties.
 
         Consolidates multiple entry list validation patterns into one method.
@@ -327,22 +355,28 @@ class TestsFlextLdifMatchers(tm_base):
 
         """
         # Unwrap if FlextResult
+        entries_list: list[m.Ldif.Entry]
         if isinstance(entries, r):
-            entries = TestsFlextLdifMatchers.ok(entries, msg=msg, is_=list)
+            if entries.is_failure:
+                error_msg = msg or str(entries.error)
+                raise AssertionError(error_msg)
+            entries_list = list(entries.value)
+        else:
+            entries_list = list(entries)
 
         # ===== COUNT VALIDATION =====
         if count is not None:
-            TestsFlextLdifMatchers.that(entries, length=count, msg=msg)
+            TestsFlextLdifMatchers.that(entries_list, length=count, msg=msg)
         if count_gt is not None:
-            TestsFlextLdifMatchers.that(entries, length_gt=count_gt, msg=msg)
+            TestsFlextLdifMatchers.that(entries_list, length_gt=count_gt, msg=msg)
         if count_gte is not None:
-            TestsFlextLdifMatchers.that(entries, length_gte=count_gte, msg=msg)
+            TestsFlextLdifMatchers.that(entries_list, length_gte=count_gte, msg=msg)
         if count_lt is not None:
-            TestsFlextLdifMatchers.that(entries, length_lt=count_lt, msg=msg)
+            TestsFlextLdifMatchers.that(entries_list, length_lt=count_lt, msg=msg)
         if count_lte is not None:
-            TestsFlextLdifMatchers.that(entries, length_lte=count_lte, msg=msg)
+            TestsFlextLdifMatchers.that(entries_list, length_lte=count_lte, msg=msg)
         if empty is not None:
-            TestsFlextLdifMatchers.that(entries, msg=msg, empty=empty)
+            TestsFlextLdifMatchers.that(entries_list, msg=msg, empty=empty)
 
         # ===== VALIDATE ALL ENTRIES =====
         if all_have_attr is not None:
@@ -351,14 +385,14 @@ class TestsFlextLdifMatchers(tm_base):
                 if isinstance(all_have_attr, str)
                 else list(all_have_attr)
             )
-            for entry in entries:
+            for entry in entries_list:
                 TestsFlextLdifMatchers.entry(entry, has_attr=attr_list, msg=msg)
 
         if all_have_oc is not None:
             oc_list = (
                 [all_have_oc] if isinstance(all_have_oc, str) else list(all_have_oc)
             )
-            for entry in entries:
+            for entry in entries_list:
                 TestsFlextLdifMatchers.entry(entry, has_oc=oc_list, msg=msg)
 
         # ===== VALIDATE ANY ENTRY =====
@@ -367,7 +401,7 @@ class TestsFlextLdifMatchers(tm_base):
                 [any_has_attr] if isinstance(any_has_attr, str) else list(any_has_attr)
             )
             found = False
-            for entry in entries:
+            for entry in entries_list:
                 if hasattr(entry, "attributes"):
                     attrs_obj = entry.attributes
                     if attrs_obj is None:
@@ -390,7 +424,7 @@ class TestsFlextLdifMatchers(tm_base):
         if any_has_oc is not None:
             oc_list = [any_has_oc] if isinstance(any_has_oc, str) else list(any_has_oc)
             found = False
-            for entry in entries:
+            for entry in entries_list:
                 if hasattr(entry, "attributes"):
                     attrs_obj = entry.attributes
                     if attrs_obj is None:
@@ -418,29 +452,54 @@ class TestsFlextLdifMatchers(tm_base):
         # ===== VALIDATE SPECIFIC ENTRIES =====
         if at_index is not None:
             for idx, validation_params in at_index.items():
-                if idx >= len(entries):
+                if idx >= len(entries_list):
                     error_msg = (
                         msg
-                        or f"Index {idx} out of range (list has {len(entries)} entries)"
+                        or f"Index {idx} out of range (list has {len(entries_list)} entries)"
                     )
                     raise AssertionError(error_msg)
                 # Type-safe entry validation with explicit parameters
                 if isinstance(validation_params, dict):
+                    raw_dn = validation_params.get("dn")
+                    dn_value = raw_dn if isinstance(raw_dn, str) else None
+
+                    raw_has_attr = validation_params.get("has_attr")
+                    if isinstance(raw_has_attr, str):
+                        has_attr_value: str | Sequence[str] | None = raw_has_attr
+                    elif isinstance(raw_has_attr, list) and all(
+                        isinstance(item, str) for item in raw_has_attr
+                    ):
+                        has_attr_value = raw_has_attr
+                    else:
+                        has_attr_value = None
+
+                    raw_not_has_attr = validation_params.get("not_has_attr")
+                    if isinstance(raw_not_has_attr, str):
+                        not_has_attr_value: str | Sequence[str] | None = (
+                            raw_not_has_attr
+                        )
+                    elif isinstance(raw_not_has_attr, list) and all(
+                        isinstance(item, str) for item in raw_not_has_attr
+                    ):
+                        not_has_attr_value = raw_not_has_attr
+                    else:
+                        not_has_attr_value = None
+
                     TestsFlextLdifMatchers.entry(
-                        entries[idx],
+                        entries_list[idx],
                         msg=msg,
-                        dn=validation_params.get("dn"),
-                        has_attr=validation_params.get("has_attr"),
-                        not_has_attr=validation_params.get("not_has_attr"),
+                        dn=dn_value,
+                        has_attr=has_attr_value,
+                        not_has_attr=not_has_attr_value,
                     )
                 else:
-                    TestsFlextLdifMatchers.entry(entries[idx], msg=msg)
+                    TestsFlextLdifMatchers.entry(entries_list[idx], msg=msg)
 
-        return list(entries)
+        return entries_list
 
     @staticmethod
     def ok_entry(
-        result: r[p.Entry],
+        result: r[m.Ldif.Entry],
         *,
         msg: str | None = None,
         dn: str | None = None,
@@ -463,7 +522,7 @@ class TestsFlextLdifMatchers(tm_base):
         oc_count_gte: int | None = None,
         oc_count_lt: int | None = None,
         oc_count_lte: int | None = None,
-    ) -> p.Entry:
+    ) -> m.Ldif.Entry:
         """Assert FlextResult success and validate entry.
 
         Args:
@@ -475,7 +534,7 @@ class TestsFlextLdifMatchers(tm_base):
             The validated Entry
 
         """
-        entry = TestsFlextLdifMatchers.ok(result, msg=msg, is_=p.Entry)
+        entry = _unwrap_result(result, msg=msg, expected_type=m.Ldif.Entry)
         return TestsFlextLdifMatchers.entry(
             entry,
             msg=msg,
@@ -503,7 +562,7 @@ class TestsFlextLdifMatchers(tm_base):
 
     @staticmethod
     def ok_entries(
-        result: r[Sequence[p.Entry]] | r[list[p.Entry]],
+        result: r[Sequence[m.Ldif.Entry]],
         *,
         msg: str | None = None,
         count: int | None = None,
@@ -517,7 +576,7 @@ class TestsFlextLdifMatchers(tm_base):
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
         at_index: dict[int, dict[str, object]] | None = None,
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Assert FlextResult success and validate entries list.
 
         Args:
@@ -530,12 +589,7 @@ class TestsFlextLdifMatchers(tm_base):
 
         """
         # Type narrowing for Sequence/list union
-        entries_result = TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
-        entries: list[p.Entry] = (
-            list(entries_result)
-            if not isinstance(entries_result, list)
-            else entries_result
-        )
+        entries: list[m.Ldif.Entry] = list(_unwrap_result(result, msg=msg))
         return TestsFlextLdifMatchers.entries(
             entries,
             msg=msg,
@@ -564,7 +618,7 @@ class TestsFlextLdifValidators(tv_base):
     @classmethod
     def validate_entry_structure(
         cls,
-        entry: p.Entry,
+        entry: m.Ldif.Entry,
         *,
         require_dn: bool = True,
         require_attrs: bool = True,
@@ -612,9 +666,9 @@ class TestsFlextLdifTypes(tt_base):
     __test__ = False
 
     @classmethod
-    def entry_type(cls) -> type[p.Entry]:
+    def entry_type(cls) -> type[m.Ldif.Entry]:
         """Get Entry type for type checking."""
-        return p.Entry
+        return m.Ldif.Entry
 
 
 class TestsFlextLdifFixtures(tf_base):
@@ -631,7 +685,7 @@ class TestsFlextLdifFixtures(tf_base):
         cls,
         dn: str,
         **attributes: str | list[str],
-    ) -> p.Entry:
+    ) -> m.Ldif.Entry:
         """Create test entry from DN and attributes.
 
         Args:
@@ -656,7 +710,7 @@ class TestsFlextLdifFixtures(tf_base):
     def create_entries(
         cls,
         entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:
@@ -676,7 +730,7 @@ class TestsFlextLdifFixtures(tf_base):
     def run_fixture_roundtrip(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Run fixture roundtrip - parse, write, parse again.
 
         Args:
@@ -689,18 +743,18 @@ class TestsFlextLdifFixtures(tf_base):
         """
         api = FlextLdif.get_instance()
         parse_result = api.parse(fixture_path)
-        entries = TestsFlextLdifMatchers.ok(parse_result, msg=msg, is_=list)
+        entries = _unwrap_result(parse_result, msg=msg)
         # Roundtrip through write/parse
         write_result = api.write(entries)
-        ldif_content = TestsFlextLdifMatchers.ok(write_result, msg=msg, is_=str)
+        ldif_content = _unwrap_result(write_result, msg=msg)
         roundtrip_result = api.parse(ldif_content)
-        return TestsFlextLdifMatchers.ok(roundtrip_result, msg=msg, is_=list)
+        return _unwrap_result(roundtrip_result, msg=msg)
 
     @staticmethod
     def load_fixture_entries(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture entries from LDIF file.
 
         Args:
@@ -713,13 +767,13 @@ class TestsFlextLdifFixtures(tf_base):
         """
         api = FlextLdif.get_instance()
         result = api.parse(fixture_path)
-        return TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
+        return _unwrap_result(result, msg=msg)
 
     @staticmethod
     def load_fixture_and_validate_structure(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Load fixture and validate structure.
 
         Args:
@@ -732,7 +786,7 @@ class TestsFlextLdifFixtures(tf_base):
         """
         api = FlextLdif.get_instance()
         result = api.parse(fixture_path)
-        entries = TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
+        entries = _unwrap_result(result, msg=msg)
         TestsFlextLdifMatchers.entries(entries, msg=msg)
         return entries
 

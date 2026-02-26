@@ -35,7 +35,7 @@ from flext_ldif._models.base import (
     SchemaElement,
 )
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.validation import ServerValidationRules
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
@@ -2105,7 +2105,7 @@ class FlextLdifModelsDomains:
 
         def _check_objectclass_rule(
             self,
-            rules: ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check objectClass requirement from server rules."""
@@ -2134,7 +2134,7 @@ class FlextLdifModelsDomains:
 
         def _check_naming_attr_rule(
             self,
-            rules: ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
             dn_value: str,
         ) -> list[str]:
             """Check naming attribute requirement from server rules."""
@@ -2158,7 +2158,7 @@ class FlextLdifModelsDomains:
 
         def _check_binary_option_rule(
             self,
-            rules: ServerValidationRules,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
         ) -> list[str]:
             """Check binary attribute option requirement from server rules."""
             violations: list[str] = []
@@ -2185,9 +2185,12 @@ class FlextLdifModelsDomains:
         @staticmethod
         def _parse_validation_rules(
             validation_rules: t.MetadataAttributeValue,
-        ) -> ServerValidationRules | None:
+        ) -> FlextLdifModelsSettings.ServerValidationRules | None:
             """Normalize dynamic validation_rules payload to ServerValidationRules."""
-            if isinstance(validation_rules, ServerValidationRules):
+            if isinstance(
+                validation_rules,
+                FlextLdifModelsSettings.ServerValidationRules,
+            ):
                 return validation_rules
             if isinstance(validation_rules, str):
                 try:
@@ -2197,7 +2200,9 @@ class FlextLdifModelsDomains:
                 if not isinstance(parsed_rules, dict):
                     return None
                 try:
-                    return ServerValidationRules.model_validate(parsed_rules)
+                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                        parsed_rules,
+                    )
                 except ValidationError as exc:
                     logger.warning(
                         "Failed to validate server rules from parsed dict",
@@ -2207,7 +2212,9 @@ class FlextLdifModelsDomains:
                     return None
             if isinstance(validation_rules, Mapping):
                 try:
-                    return ServerValidationRules.model_validate(dict(validation_rules))
+                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                        dict(validation_rules),
+                    )
                 except ValidationError as exc:
                     logger.warning(
                         "Failed to validate server rules from mapping",

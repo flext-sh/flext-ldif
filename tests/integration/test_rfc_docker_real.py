@@ -73,6 +73,7 @@ class TestRfcDockerRealData:
                 for attr in entry.attributes.attributes
             )
             for entry in entries
+            if entry.attributes is not None
         )
 
     def test_parse_real_oud_entries(
@@ -138,12 +139,18 @@ class TestRfcDockerRealData:
 
         parse_response = parse_result.value
         entries = parse_response.entries
+        typed_entries = [
+            m.Ldif.Entry(
+                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+            )
+            for entry in entries
+        ]
         # Write to new file
         output_file = tmp_path / "roundtrip.ldif"
 
         writer = FlextLdifWriter()
         write_result = writer.write(
-            entries=entries,
+            entries=typed_entries,
             target_server_type="oid",
             output_path=output_file,
         )
@@ -156,7 +163,7 @@ class TestRfcDockerRealData:
         reparsed_response = reparse_result.value
         reparsed_entries = reparsed_response.entries
         # Verify counts match
-        assert len(reparsed_entries) == len(entries)
+        assert len(reparsed_entries) == len(typed_entries)
 
     def test_parse_oud_acl_entries(
         self,
@@ -178,7 +185,11 @@ class TestRfcDockerRealData:
         entries = parse_response.entries
         # OUD ACLs should have 'aci' attributes
         # Attributes is a wrapper - access inner dict via .attributes
-        acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
+        acl_entries = [
+            e
+            for e in entries
+            if e.attributes is not None and "aci" in e.attributes.attributes
+        ]
         assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
 
     def test_parse_edge_case_unicode(
@@ -289,6 +300,7 @@ class TestRfcDockerRealData:
                 for attr in e.attributes.attributes
             )
             for e in entries
+            if e.attributes is not None
         )
 
 

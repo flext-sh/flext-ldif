@@ -799,7 +799,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             metadata.extensions["schema_transformations"] = schema_transformations
 
         if acl_transformations:
-            metadata.attribute_transformations.update(acl_transformations)
+            metadata.attribute_transformations = {
+                **metadata.attribute_transformations,
+                **acl_transformations,
+            }
 
         ldif_attrs = m.Ldif.Attributes(attributes=dict(converted_attributes))
         return FlextResult[m.Ldif.Entry].ok(

@@ -19,19 +19,18 @@ from typing import TextIO
 from flext_ldif import FlextLdif
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.utilities import FlextLdifUtilities
 
 
 def _write_entry_to_file(
-    entry: p.Entry,
+    entry: m.Ldif.Entry,
     f: TextIO,
     output_content_lines: list[str],
     *,
     include_attributes: bool = False,
 ) -> None:
     """Write single entry to file."""
-    dn = entry.dn.value if entry.dn else "N/A"
+    dn = entry.dn.value if entry.dn is not None else "N/A"
     entry_line = f"dn: {dn}\n"
     f.write(entry_line)
     output_content_lines.append(entry_line)
@@ -46,12 +45,14 @@ def _write_entry_to_file(
 
     if entry.metadata and entry.metadata.processing_stats:
         stats = entry.metadata.processing_stats
-        if stats.rejected:
-            rejected_line = f"# Rejected: {stats.rejected}\n"
+        rejected = getattr(stats, "rejected", None)
+        if isinstance(rejected, str) and rejected:
+            rejected_line = f"# Rejected: {rejected}\n"
             f.write(rejected_line)
             output_content_lines.append(rejected_line)
-        if stats.filtered:
-            filtered_line = f"# Filtered: {stats.filtered}\n"
+        filtered = getattr(stats, "filtered", None)
+        if isinstance(filtered, str) and filtered:
+            filtered_line = f"# Filtered: {filtered}\n"
             f.write(filtered_line)
             output_content_lines.append(filtered_line)
 
@@ -60,7 +61,7 @@ def _write_entry_to_file(
 
 
 def _write_categories_to_file(
-    filtered: m.FlexibleCategories,
+    filtered: m.Ldif.FlexibleCategories,
     f: TextIO,
     output_content_lines: list[str],
     *,
@@ -90,12 +91,13 @@ def _write_categories_to_file(
         )
 
         for entry in cat_entries:
-            _write_entry_to_file(
-                entry,
-                f,
-                output_content_lines,
-                include_attributes=include_attributes,
-            )
+            if isinstance(entry, m.Ldif.Entry):
+                _write_entry_to_file(
+                    entry,
+                    f,
+                    output_content_lines,
+                    include_attributes=include_attributes,
+                )
 
 
 def _write_category_header(
@@ -207,7 +209,11 @@ class TestCategorizationRealData:
 
         # dc=example should be in hierarchy (not rejected)
         example_dns = [
-            e.dn.value for e in hierarchy if e.dn and e.dn.value == "dc=example"
+            e.dn.value
+            for e in hierarchy
+            if isinstance(e, m.Ldif.Entry)
+            and e.dn is not None
+            and e.dn.value == "dc=example"
         ]
         assert len(example_dns) == 1, "dc=example should be in hierarchy category"
 
@@ -215,7 +221,9 @@ class TestCategorizationRealData:
         users_ou_dns = [
             e.dn.value
             for e in hierarchy
-            if e.dn and e.dn.value == "ou=users,dc=example"
+            if isinstance(e, m.Ldif.Entry)
+            and e.dn is not None
+            and e.dn.value == "ou=users,dc=example"
         ]
         assert len(users_ou_dns) == 1, (
             "ou=users,dc=example should be in hierarchy category"
@@ -225,7 +233,9 @@ class TestCategorizationRealData:
         user1_dns = [
             e.dn.value
             for e in users
-            if e.dn and e.dn.value == "cn=user1,ou=users,dc=example"
+            if isinstance(e, m.Ldif.Entry)
+            and e.dn is not None
+            and e.dn.value == "cn=user1,ou=users,dc=example"
         ]
         assert len(user1_dns) == 1, (
             "cn=user1,ou=users,dc=example should be in users category"
@@ -233,7 +243,11 @@ class TestCategorizationRealData:
 
         # dc=example2 should be in rejected (not matching base DN - substring false positive prevention)
         example2_rejected = [
-            e.dn.value for e in rejected if e.dn and e.dn.value == "dc=example2"
+            e.dn.value
+            for e in rejected
+            if isinstance(e, m.Ldif.Entry)
+            and e.dn is not None
+            and e.dn.value == "dc=example2"
         ]
         assert len(example2_rejected) == 1, (
             "dc=example2 should be rejected (not under base DN, prevents substring false positive)"
@@ -241,7 +255,11 @@ class TestCategorizationRealData:
 
         # ou=test,dc=example2 should be in rejected (not matching base DN)
         test_ou_rejected = [
-            e.dn.value for e in rejected if e.dn and e.dn.value == "ou=test,dc=example2"
+            e.dn.value
+            for e in rejected
+            if isinstance(e, m.Ldif.Entry)
+            and e.dn is not None
+            and e.dn.value == "ou=test,dc=example2"
         ]
         assert len(test_ou_rejected) == 1, (
             "ou=test,dc=example2 should be rejected (not under base DN)"
@@ -301,11 +319,13 @@ class TestCategorizationRealData:
         acl_category = categories.get_entries(c.Ldif.Categories.ACL)
 
         # Filter ACLs by base DN (simulating flext-oud-mig logic)
-        acls_with_basedn: list[p.Entry] = []
-        acls_without_basedn: list[p.Entry] = []
+        acls_with_basedn: list[m.Ldif.Entry] = []
+        acls_without_basedn: list[m.Ldif.Entry] = []
 
         for entry in acl_category:
-            dn_str = entry.dn.value if entry.dn else None
+            if not isinstance(entry, m.Ldif.Entry):
+                continue
+            dn_str = entry.dn.value if entry.dn is not None else None
             # Use is_under_base for correct hierarchical check
             if dn_str and FlextLdifUtilities.Ldif.DN.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)
@@ -323,7 +343,7 @@ class TestCategorizationRealData:
             f.write("# ACLs WITH BaseDN (should be filtered):\n")
             output_content_lines.append("# ACLs WITH BaseDN (should be filtered):\n")
             for entry in acls_with_basedn:
-                dn = entry.dn.value if entry.dn else "N/A"
+                dn = entry.dn.value if entry.dn is not None else "N/A"
                 entry_line = f"dn: {dn}\n\n"
                 f.write(entry_line)
                 output_content_lines.append(entry_line)
@@ -333,7 +353,7 @@ class TestCategorizationRealData:
                 "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n",
             )
             for entry in acls_without_basedn:
-                dn = entry.dn.value if entry.dn else "N/A"
+                dn = entry.dn.value if entry.dn is not None else "N/A"
                 entry_line = f"dn: {dn}\n\n"
                 f.write(entry_line)
                 output_content_lines.append(entry_line)
@@ -349,7 +369,7 @@ class TestCategorizationRealData:
         )
 
         # Validate: dc=example and ou=users,dc=example should be in acls_with_basedn
-        basedn_dns = [e.dn.value for e in acls_with_basedn if e.dn]
+        basedn_dns = [e.dn.value for e in acls_with_basedn if e.dn is not None]
         assert "dc=example" in basedn_dns, "dc=example should be in acls_with_basedn"
         assert "ou=users,dc=example" in basedn_dns, (
             "ou=users,dc=example should be in acls_with_basedn"
@@ -361,7 +381,9 @@ class TestCategorizationRealData:
         )
 
         # Validate: cn=config should be in acls_without_basedn (system ACL)
-        without_basedn_dns = [e.dn.value for e in acls_without_basedn if e.dn]
+        without_basedn_dns = [
+            e.dn.value for e in acls_without_basedn if e.dn is not None
+        ]
         assert "cn=config" in without_basedn_dns, (
             "cn=config should be in acls_without_basedn"
         )

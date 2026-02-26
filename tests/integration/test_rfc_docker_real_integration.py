@@ -43,10 +43,17 @@ class TestRfcParserRealFixtures:
         # Using unified methods - parse and validate
         parser = FlextLdifParser()
         parse_result = parser.parse(entries_file)
-        parse_response = tm.ok(parse_result)
+        assert parse_result.is_success
+        parse_response = parse_result.value
+        typed_entries = [
+            m.Ldif.Entry(
+                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+            )
+            for entry in parse_response.entries
+        ]
 
         # Validate entries structure using unified method
-        tm.entries(parse_response.entries)
+        tm.entries(typed_entries)
 
     def test_parse_oud_entries_fixture(
         self,
@@ -155,6 +162,12 @@ class TestRfcWriterRealFixtures:
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
+        typed_entries = [
+            m.Ldif.Entry(
+                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+            )
+            for entry in entries
+        ]
         original_count = len(entries)
 
         # Write to file
@@ -163,7 +176,7 @@ class TestRfcWriterRealFixtures:
         # quirk_registry is already a FlextLdifServer instance
         writer = FlextLdifWriter(server=quirk_registry)
         write_result = writer.write(
-            entries,
+            typed_entries,
             target_server_type="rfc",
             output_path=output_file,
         )
@@ -201,6 +214,12 @@ class TestRfcWriterRealFixtures:
 
         parse_response = parse_result.value
         entries = parse_response.entries
+        typed_entries = [
+            m.Ldif.Entry(
+                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+            )
+            for entry in entries
+        ]
 
         # Write to file
         output_file = tmp_path / "acl_output.ldif"
@@ -209,7 +228,7 @@ class TestRfcWriterRealFixtures:
         writer = FlextLdifWriter(server=quirk_registry)
 
         result = writer.write(
-            entries,
+            typed_entries,
             target_server_type="rfc",
             output_path=output_file,
         )

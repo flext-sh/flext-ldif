@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import pytest
 from flext_ldif import FlextLdif
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.utilities import FlextLdifUtilities
@@ -28,12 +27,12 @@ class TestSchemaDeviationsSyntaxQuotes:
     """Test syntax OID quotation tracking (OID uses quotes, OUD/RFC don't)."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oud_schema(self) -> object:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
@@ -105,12 +104,12 @@ class TestSchemaDeviationsXOrigin:
     """Test X-ORIGIN presence/absence tracking."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oud_schema(self) -> object:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
@@ -189,12 +188,12 @@ class TestSchemaDeviationsNameAliases:
     """Test multiple NAME aliases preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oud_schema(self) -> object:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
@@ -266,7 +265,7 @@ class TestSchemaDeviationsObsolete:
     """Test OBSOLETE marker preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -332,7 +331,7 @@ class TestSchemaDeviationsSpacing:
     """Test spacing preservation between fields."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -413,12 +412,12 @@ class TestSchemaDeviationsOriginalString:
     """Test complete original string preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oid_schema(self) -> object:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oud_schema(self) -> object:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
@@ -521,6 +520,8 @@ class TestSchemaDeviationsRoundTrip:
         # Verify all key metadata is present for round-trip
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
+        assert format_details is not None
+        assert format_details.extensions is not None
 
         # These fields are essential for restoring OID format
         assert "syntax_quotes" in format_details.extensions.model_dump(), (
@@ -558,6 +559,8 @@ class TestSchemaDeviationsRoundTrip:
         # Verify all key metadata is present for round-trip
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
+        assert format_details is not None
+        assert format_details.extensions is not None
 
         # These fields are essential for restoring OUD format
         assert "x_origin_presence" in format_details.extensions.model_dump(), (
@@ -666,7 +669,7 @@ class TestSchemaDeviationsMissingSpaces:
     """Test malformed definitions with missing spaces."""
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def oud_schema(self) -> object:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 

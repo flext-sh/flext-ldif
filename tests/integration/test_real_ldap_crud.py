@@ -69,6 +69,7 @@ class TestRealLdapCRUD:
         # Write to LDAP
         obj_class_values = person_entry.get_attribute_values("objectclass")
         assert isinstance(obj_class_values, list)
+        assert person_entry.attributes is not None
         ldap_connection.add(
             str(person_entry.dn),
             obj_class_values,

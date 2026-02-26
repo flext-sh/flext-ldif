@@ -97,10 +97,8 @@ description: Application data entry
         # Display results
         pipeline_result = result.value
 
-        for _category, path in sorted(pipeline_result.file_paths.items()):
-            # Cast path to str for Path constructor
-            path_str = cast("str", path)
-            file_path = Path(path_str)
+        for path in pipeline_result.output_files:
+            file_path = Path(path)
             if file_path.exists():
                 _lines = len(file_path.read_text(encoding="utf-8").splitlines())
 

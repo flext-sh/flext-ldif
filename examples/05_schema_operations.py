@@ -16,6 +16,7 @@ Original: .bak file | Advanced: ~250 lines with parallel schema processing + int
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
@@ -75,7 +76,7 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
     ]
 
     def create_attr_entry(
-        attr_def: dict[str, str | int | float | bool | list[str]],
+        attr_def: Mapping[str, str | bool | list[str]],
     ) -> m.Ldif.Entry | None:
         """Create attribute type entry."""
         attr_dn = f"cn={attr_def['name']},cn=schema"
@@ -92,14 +93,10 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
         )
         return attr_result.map_or(None)
 
-    batch_result = u.process(
-        attribute_types,
-        create_attr_entry,
-        on_error="skip",
-    )
-    if batch_result.is_success:
-        entries_from_batch = [x for x in batch_result.value if x is not None]
-        schema_entries.extend(entries_from_batch)
+    for attr_def in attribute_types:
+        created_entry = create_attr_entry(attr_def)
+        if created_entry is not None:
+            schema_entries.append(created_entry)
 
     # Object class definitions
     object_classes = [
@@ -127,7 +124,7 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
     ]
 
     def create_oc_entry(
-        oc_def: dict[str, str | list[str] | object],
+        oc_def: Mapping[str, str | list[str]],
     ) -> m.Ldif.Entry | None:
         """Create object class entry."""
         oc_dn = f"cn={oc_def['name']},cn=schema"
@@ -148,13 +145,10 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
         return oc_result.map_or(None)
 
-    batch_result = u.process(
-        object_classes,
-        create_oc_entry,
-        on_error="skip",
-    )
-    if batch_result.is_success:
-        schema_entries.extend([x for x in batch_result.value if x is not None])
+    for oc_def in object_classes:
+        created_entry = create_oc_entry(oc_def)
+        if created_entry is not None:
+            schema_entries.append(created_entry)
 
     return r[list[m.Ldif.Entry]].ok(schema_entries)
 

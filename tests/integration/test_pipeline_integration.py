@@ -38,6 +38,7 @@ mail: test@example.com
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
+        assert entries[0].dn is not None
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
 
     def test_parse_multiple_entries(self) -> None:
@@ -233,4 +234,5 @@ sn: Test
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
+        assert entries[0].attributes is not None
         assert "cn" in entries[0].attributes.attributes

@@ -314,12 +314,15 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
+        source_content: str
 
         match source:
             case Path() as source_path:
                 return self._parse_file(source_path, server_type=effective_type)
             case str() as content:
                 source_content = content
+            case _:
+                return r[list[m.Ldif.Entry]].fail("Unsupported source type")
 
         parse_result = self.parser.parse_string(
             source_content,

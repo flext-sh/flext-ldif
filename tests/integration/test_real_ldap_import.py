@@ -77,6 +77,7 @@ mail: import@example.com
         # Convert FlextLdif entry attributes to dict format for ldap3
         # EXCLUDE objectclass as it's passed separately to ldap3.add()
         attrs_dict = {}
+        assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             # Skip objectclass - it's handled separately
             if attr_name.lower() == "objectclass":
@@ -144,6 +145,7 @@ jpegPhoto:: {encoded_photo}
 
         # Import to LDAP
         # Build attrs_dict from FlextLdif entry attributes
+        assert entry.attributes is not None
         attrs_dict: dict[str, list[str] | bytes] = {
             attr_name: attr_values
             for attr_name, attr_values in entry.attributes.attributes.items()
@@ -212,6 +214,7 @@ mail: import@example.com
         # Convert FlextLdif entry attributes to dict format for ldap3
         # EXCLUDE objectclass as it's passed separately to ldap3.add()
         attrs_dict = {}
+        assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             # Skip objectclass - it's handled separately
             if attr_name.lower() == "objectclass":

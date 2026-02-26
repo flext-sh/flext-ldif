@@ -132,7 +132,8 @@ cn: ManyAttrs
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
-        assert len(entries[0].attributes) > 0
+        assert entries[0].attributes is not None
+        assert len(entries[0].attributes.attributes) > 0
 
     def test_entry_with_many_values_per_attribute(self, api: FlextLdif) -> None:
         """Test single attribute with many values (100+).

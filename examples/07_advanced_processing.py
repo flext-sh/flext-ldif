@@ -80,7 +80,7 @@ def parallel_processing() -> None:
     api = FlextLdif.get_instance()
 
     # Create larger dataset for parallel processing benefit
-    entries: list[FlextLdifModels.Entry] = []
+    entries: list[FlextLdifModels.Ldif.Entry] = []
     for i in range(10):
         result = api.create_entry(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",
@@ -258,7 +258,7 @@ sn: User
     entries = parse_result.value
 
     # Validate using services
-    def validate_entry(entry: FlextLdifModels.Entry) -> bool:
+    def validate_entry(entry: FlextLdifModels.Ldif.Entry) -> bool:
         """Validate entry DN."""
         dn_result = FlextLdifDn.validate_format(str(entry.dn))
         return dn_result.is_success

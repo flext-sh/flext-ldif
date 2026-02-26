@@ -717,9 +717,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                     target_dn=target_dn,
                     attributes=target_attrs or [],
                 ),
-                subject=m.Ldif.AclSubject(
-                    subject_type=rfc_subject_type.value,
-                    subject_value=rfc_subject_value,
+                subject=m.Ldif.AclSubject.model_validate(
+                    {
+                        "subject_type": str(rfc_subject_type),
+                        "subject_value": rfc_subject_value,
+                    },
                 ),
                 permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
                 server_type=server_type,

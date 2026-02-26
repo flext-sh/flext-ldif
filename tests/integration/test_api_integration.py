@@ -120,6 +120,8 @@ class TestFlextLdifAPIIntegration:
         # Validate entry structure
         for entry in entries:
             assert hasattr(entry, "dn") and hasattr(entry, "attributes")
+            assert entry.dn is not None
+            assert entry.attributes is not None
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -194,6 +196,8 @@ class TestFlextLdifAPIIntegration:
             ),
         )
 
+        assert entry.dn is not None
+        assert entry.attributes is not None
         assert entry.dn.value == test_dn
         assert c.Names.CN in entry.attributes.attributes
         assert entry.attributes.attributes[c.Names.CN] == [c.General.ATTR_VALUE_TEST]
@@ -224,6 +228,8 @@ class TestFlextLdifAPIIntegration:
         entries2 = result2.value
 
         assert len(entries1) == len(entries2) == 1
+        assert entries1[0].dn is not None
+        assert entries2[0].dn is not None
         assert entries1[0].dn.value == entries2[0].dn.value
 
     def test_filter_multiple_criteria_combined(self) -> None:
@@ -238,7 +244,7 @@ class TestFlextLdifAPIIntegration:
         result = ldif.filter(
             entries,
             dn_pattern="ou=Admins",
-            attributes={c.Names.MAIL: None},  # Has mail attribute
+            attributes={c.Names.MAIL: ""},  # Has mail attribute
         )
         assert result.is_success
 

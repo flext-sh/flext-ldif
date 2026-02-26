@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import p
 from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.typings import t
 
 
 # Cross-quirk conversion test constants - defined at top of module without type checking
@@ -49,8 +49,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_schema_quirk: t.SchemaQuirk,
-        oud_schema_quirk: t.SchemaQuirk,
+        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
@@ -96,8 +96,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_schema_quirk: t.SchemaQuirk,
-        oud_schema_quirk: t.SchemaQuirk,
+        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
@@ -154,7 +154,7 @@ class TestOidToOudAclConversion:
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: t.AclQuirk,
+        oid_acl_quirk: p.Ldif.AclQuirkProtocol,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
@@ -178,7 +178,7 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl_quirk: t.AclQuirk,
+        oud_acl_quirk: p.Ldif.AclQuirkProtocol,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
@@ -220,8 +220,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_schema_quirk: t.SchemaQuirk,
-        oud_schema_quirk: t.SchemaQuirk,
+        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format.
@@ -463,9 +463,7 @@ class TestQuirksConversionMatrixFacade:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test error handling for invalid model type."""
-        # Try to convert with an invalid model type (not Entry, SchemaAttribute, etc.)
-        # Use a plain dict instead of a proper model to trigger validation error
-        invalid_model: dict[str, str] = {"invalid": "data"}
+        invalid_model = m.Ldif.Entry(dn=None, attributes=None)
 
         result = conversion_matrix.convert(oud_quirk, oid_quirk, invalid_model)
 

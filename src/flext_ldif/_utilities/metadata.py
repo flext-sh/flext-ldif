@@ -55,11 +55,11 @@ class FlextLdifUtilitiesMetadata:
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
-            metadata_obj = m.Metadata(attributes=dict(metadata.to_dict()))
+            metadata_obj = metadata.to_dict()
             normalized_metadata: dict[
                 str, str | int | float | bool | list[str] | None
             ] = {}
-            for key, value in metadata_obj.attributes.items():
+            for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)) or value is None:
                     normalized_metadata[key] = value
                 elif isinstance(value, list):
@@ -218,8 +218,7 @@ class FlextLdifUtilitiesMetadata:
             )
 
         metadata_typed = {
-            key: u.Guards.normalize_to_metadata_value(value)
-            for key, value in metadata.items()
+            key: u.normalize_to_metadata_value(value) for key, value in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed

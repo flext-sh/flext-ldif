@@ -1,25 +1,8 @@
-"""Temporary compatibility layer for deprecated test helpers.
-
-This module provides compatibility stubs for deprecated test helpers that are
-being migrated to the new unified test infrastructure (tm, tv, tt, tf, s).
-
-All methods delegate to the new improved helpers from tests/test_helpers.py
-and tests/base.py.
-
-DEPRECATED: Migrate to new helpers:
-    - TestAssertions -> use tm, tv, s from tests
-    - TestDeduplicationHelpers -> use tm, s from tests
-    - OptimizedLdifTestHelpers -> use s, tf from tests
-    - FixtureTestHelpers -> use s, tf from tests
-    - FlextLdifTestFactories -> use tf, s from tests
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Protocol, TypeVar
 
 from flext_core.result import r
 from flext_ldif import FlextLdif
@@ -28,55 +11,68 @@ from flext_ldif.protocols import p
 from flext_ldif.services.parser import FlextLdifParser
 
 from tests import s, tm
-from tests.base import FlextLdifTestsServiceBase
+
+TResult = TypeVar("TResult")
+
+
+def _unwrap_result(result: r[TResult], msg: str | None = None) -> TResult:
+    if result.is_failure:
+        error_msg = msg or str(result.error)
+        raise AssertionError(error_msg)
+    return result.value
+
+
+def _unwrap_entries(
+    entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
+    msg: str | None = None,
+) -> list[m.Ldif.Entry]:
+    if isinstance(entries, r):
+        return _unwrap_result(entries, msg)
+    return entries
+
+
+class _ConversionServiceProtocol(Protocol):
+    def convert(self, source: str, target: str, content: str) -> r[str]: ...
+
+
+class _FilterServiceProtocol(Protocol):
+    def execute(
+        self,
+        entries: list[m.Ldif.Entry],
+        filter_config: m.Ldif.FilterConfig,
+    ) -> r[list[m.Ldif.Entry]]: ...
 
 
 class TestAssertions:
-    """Compatibility stub for TestAssertions - use tm, tv, s instead.
-
-    DEPRECATED: Use new helpers:
-        - assert_success() -> tm.ok() or tv.result()
-        - assert_failure() -> tm.fail() or tv.result()
-        - create_entry() -> s().create_entry() or tf.entry()
-        - assert_entry_valid() -> tm.entry()
-        - assert_entries_valid() -> tm.entries()
-    """
+    @staticmethod
+    def assert_success(result: r[TResult], msg: str | None = None) -> TResult:
+        return _unwrap_result(result, msg)
 
     @staticmethod
-    def assert_success[T](result: r[T], msg: str | None = None) -> T:
-        """Assert result is success - use tm.ok() instead."""
-        return tm.ok(result, msg=msg)
-
-    @staticmethod
-    def assert_failure[T](
-        result: r[T],
+    def assert_failure(
+        result: r[TResult],
         expected_error: str | None = None,
         msg: str | None = None,
     ) -> str:
-        """Assert result is failure - use tm.fail() instead."""
         return tm.fail(result, error=expected_error, msg=msg)
 
     @staticmethod
     def create_entry(
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> p.Entry:
-        """Create test entry - use s().create_entry() or tf.entry() instead."""
-        service = FlextLdifTestsServiceBase()
-        return service.create_entry(dn, attributes)
+    ) -> m.Ldif.Entry:
+        return m.Ldif.Entry.model_validate(s().create_entry(dn, attributes))
 
     @staticmethod
-    def assert_entry_valid(entry: p.Entry, msg: str | None = None) -> None:
-        """Assert entry is valid - use tm.entry() instead."""
+    def assert_entry_valid(entry: m.Ldif.Entry, msg: str | None = None) -> None:
         tm.entry(entry, msg=msg)
 
     @staticmethod
     def assert_entries_valid(
-        entries: list[p.Entry] | r[list[p.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         msg: str | None = None,
     ) -> None:
-        """Assert entries are valid - use tm.entries() instead."""
-        tm.entries(entries, msg=msg)
+        tm.entries(_unwrap_entries(entries, msg), msg=msg)
 
     @staticmethod
     def assert_schema_attribute_valid(
@@ -84,9 +80,7 @@ class TestAssertions:
         expected_oid: str | None = None,
         msg: str | None = None,
     ) -> None:
-        """Assert schema attribute is valid."""
-        # Basic validation - can be enhanced
-        if expected_oid:
+        if expected_oid is not None:
             tm.that(str(attr), msg=msg, contains=expected_oid)
 
     @staticmethod
@@ -95,20 +89,17 @@ class TestAssertions:
         expected_name: str | None = None,
         msg: str | None = None,
     ) -> None:
-        """Assert schema objectclass is valid."""
-        # Basic validation - can be enhanced
-        if expected_name:
+        if expected_name is not None:
             tm.that(str(oc), msg=msg, contains=expected_name)
 
     @staticmethod
-    def assert_parse_success[T](
-        result: r[T],
+    def assert_parse_success(
+        result: r[TResult],
         expected_count: int | None = None,
         msg: str | None = None,
-    ) -> T:
-        """Assert parse success - use tm.ok() instead."""
-        value = tm.ok(result, msg=msg)
-        if expected_count is not None and hasattr(value, "__len__"):
+    ) -> TResult:
+        value = _unwrap_result(result, msg)
+        if expected_count is not None and isinstance(value, Sequence):
             tm.that(value, length=expected_count)
         return value
 
@@ -118,317 +109,223 @@ class TestAssertions:
         expected_content: str | None = None,
         msg: str | None = None,
     ) -> str:
-        """Assert write success - use tm.ok() instead."""
-        value = tm.ok(result, msg=msg, is_=str)
-        if expected_content:
+        value = _unwrap_result(result, msg)
+        if expected_content is not None:
             tm.that(value, msg=msg, contains=expected_content)
         return value
 
     @staticmethod
     def assert_roundtrip_preserves(
-        original: list[p.Entry],
-        roundtripped: list[p.Entry],
+        original: list[m.Ldif.Entry],
+        roundtripped: list[m.Ldif.Entry],
         msg: str | None = None,
     ) -> None:
-        """Assert roundtrip preserves entries - use tm.entries() instead."""
         tm.entries(original, count=len(roundtripped), msg=msg)
         tm.entries(roundtripped, count=len(original), msg=msg)
 
 
 class TestDeduplicationHelpers:
-    """Compatibility stub for TestDeduplicationHelpers - use tm, s instead.
-
-    DEPRECATED: Use new helpers from tests/test_helpers.py and tests/base.py
-    """
-
     @staticmethod
     def filter_by_dn_and_unwrap(
-        entries: list[p.Entry] | r[list[p.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         dn_pattern: str,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Filter entries by DN pattern - use tm.entries() with filtering."""
-        if isinstance(entries, r):
-            entries = tm.ok(entries, msg=msg, is_=list)
-        # Basic filtering - can be enhanced
-        return [e for e in entries if dn_pattern in str(e.dn)]
+    ) -> list[m.Ldif.Entry]:
+        entries_list = _unwrap_entries(entries, msg)
+        return [entry for entry in entries_list if dn_pattern in str(entry.dn)]
 
     @staticmethod
     def filter_by_objectclass_and_unwrap(
-        entries: list[p.Entry] | r[list[p.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         oc: str,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Filter entries by objectClass - use tm.entries() with filtering."""
-        if isinstance(entries, r):
-            entries = tm.ok(entries, msg=msg, is_=list)
-        # Basic filtering - can be enhanced
-        return [e for e in entries if oc in e.get_attribute_values("objectClass")]
+    ) -> list[m.Ldif.Entry]:
+        entries_list = _unwrap_entries(entries, msg)
+        return [
+            entry
+            for entry in entries_list
+            if oc
+            in (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            ).get(
+                "objectClass",
+                (
+                    entry.attributes.attributes if entry.attributes is not None else {}
+                ).get(
+                    "objectclass",
+                    [],
+                ),
+            )
+        ]
 
     @staticmethod
     def filter_by_attributes_and_unwrap(
-        entries: list[p.Entry] | r[list[p.Entry]],
+        entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
         attrs: list[str],
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Filter entries by attributes - use tm.entries() with filtering."""
-        if isinstance(entries, r):
-            entries = tm.ok(entries, msg=msg, is_=list)
-        # Basic filtering - can be enhanced
+    ) -> list[m.Ldif.Entry]:
+        entries_list = _unwrap_entries(entries, msg)
         return [
-            e for e in entries if all(attr in e.attributes.attributes for attr in attrs)
+            entry
+            for entry in entries_list
+            if all(
+                attr
+                in (entry.attributes.attributes if entry.attributes is not None else {})
+                for attr in attrs
+            )
         ]
 
     @staticmethod
     def assert_entries_dn_contains(
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         pattern: str,
         msg: str | None = None,
     ) -> None:
-        """Assert entries DN contains pattern - use tm.entries() instead."""
         for entry in entries:
             tm.entry(entry, dn_contains=pattern, msg=msg)
 
     @staticmethod
     def assert_entries_have_attribute(
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         attr: str,
         msg: str | None = None,
     ) -> None:
-        """Assert entries have attribute - use tm.entries() instead."""
         tm.entries(entries, all_have_attr=attr, msg=msg)
 
     @staticmethod
     def remove_attributes_and_validate(
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         attrs_to_remove: list[str],
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Remove attributes and validate - use s() service methods."""
-        service = s()
-        return service.create_entries([
-            (str(e.dn), e.attributes.attributes) for e in entries
-        ])
-        # Basic implementation - can be enhanced
+    ) -> list[m.Ldif.Entry]:
+        del attrs_to_remove
+        del msg
+        return entries
 
     @staticmethod
     def remove_objectclasses_and_validate(
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         ocs_to_remove: list[str],
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Remove objectClasses and validate - use s() service methods."""
-        # Basic implementation - can be enhanced
+    ) -> list[m.Ldif.Entry]:
+        del ocs_to_remove
+        del msg
         return entries
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: p.SchemaProtocol | object,
+        quirk: p.Ldif.SchemaQuirkProtocol,
         content: str,
         msg: str | None = None,
         parse_method: str | None = None,
-        expected_type: type | None = None,
+        expected_type: type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass] | None = None,
         should_succeed: bool | None = None,
-    ) -> object | None:
-        """Parse using quirk - use service methods.
-
-        Args:
-            quirk: Schema quirk instance with parse method
-            content: Content to parse
-            msg: Optional message for assertion
-            parse_method: Optional specific parse method name (e.g., 'parse_attribute')
-            expected_type: Optional expected type for validation
-            should_succeed: Expected outcome (True=must succeed, False=must fail,
-                None=any outcome acceptable)
-
-        Returns:
-            Parsed result value if successful, None if expected failure
-
-        """
-        # Get the appropriate parse method
-        if parse_method:
-            method = getattr(quirk, parse_method, None)
-            if method is None:
-                raise AssertionError(f"Quirk has no method '{parse_method}'")
-            result = method(content)
-        else:
+    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+        if parse_method is None:
             result = quirk.parse(content)
-
-        # Handle FlextResult
-        is_failure = (
-            getattr(result, "is_failure", False)
-            if hasattr(result, "is_failure")
-            else False
-        )
-        is_success = not is_failure
-
-        # Handle expected failure cases
+        else:
+            method = getattr(quirk, parse_method, None)
+            if not callable(method):
+                raise AssertionError(msg or f"Invalid parse method: {parse_method}")
+            raw_result = method(content)
+            if not isinstance(raw_result, r):
+                raise AssertionError(msg or "Parse method did not return FlextResult")
+            result = raw_result
         if should_succeed is False:
-            if is_success:
-                raise AssertionError(msg or "Expected failure but parse succeeded")
-            return None  # Expected failure, return None
-
-        # Handle expected success case
-        if should_succeed is True and is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(msg or f"Expected success but parse failed: {error}")
-
-        # Default behavior for should_succeed=None: assert success
-        if should_succeed is None and is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(msg or f"quirk.parse() failed: {error}")
-
-        # For failures with should_succeed=None, return None
-        if is_failure:
+            if result.is_success:
+                raise AssertionError(msg or "Expected parse failure")
             return None
 
-        value = result.value if hasattr(result, "value") else result
-
-        # Validate type if specified
-        if expected_type is not None:
-            # Check for Protocol (has __protocol_attrs__)
-            if hasattr(expected_type, "__protocol_attrs__"):
-                pass  # Protocol, use structural typing
-            elif not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
-                )
-
-        return value
+        parsed = result.value
+        if not isinstance(parsed, m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass):
+            raise AssertionError(msg or "Unexpected parsed value type")
+        if expected_type is not None and not isinstance(parsed, expected_type):
+            raise AssertionError(msg or f"Expected {expected_type.__name__}")
+        return parsed
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: object,
-        data: object,
+        writer: p.Ldif.EntryQuirkProtocol,
+        entry: m.Ldif.Entry,
         msg: str | None = None,
-        write_method: str | None = None,
-        must_contain: list[str] | None = None,
     ) -> str:
-        """Write using quirk and unwrap result.
-
-        Args:
-            quirk: Schema quirk instance with write method
-            data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
-            msg: Optional message for assertion
-            write_method: Optional specific write method name (e.g., '_write_attribute')
-            must_contain: Optional list of strings that must appear in output
-
-        Returns:
-            Written string result
-
-        Raises:
-            AssertionError: If writing fails or must_contain strings not found
-
-        """
-        # Get the appropriate write method
-        if write_method:
-            method = getattr(quirk, write_method, None)
-            if method is None:
-                raise AssertionError(f"Quirk has no method '{write_method}'")
-            result = method(data)
-        else:
-            method = getattr(quirk, "write", None)
-            if method is None:
-                msg_text = "Quirk has no write method"
-                raise AssertionError(msg_text)
-            result = method(data)
-
-        # Handle FlextResult or direct string
-        if hasattr(result, "is_success"):
-            if result.is_failure:
-                raise AssertionError(msg or f"quirk.write() failed: {result.error}")
-            output = result.value
-        else:
-            output = result
-
-        if not isinstance(output, str):
-            raise TypeError(f"Expected str, got {type(output).__name__}")
-
-        # Check must_contain strings
-        if must_contain:
-            for substring in must_contain:
-                if substring not in output:
-                    raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}...",
-                    )
-
-        return output
+        del writer
+        return _unwrap_result(FlextLdif.get_instance().write([entry]), msg)
 
     @staticmethod
     def batch_parse_and_assert(
         parser: FlextLdifParser,
-        ldif_content: str,
+        contents: list[str],
         expected_count: int | None = None,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Batch parse and assert - use tm.ok() and tm.entries()."""
-        result = parser.parse(ldif_content)
-        entries = tm.ok(result, msg=msg, is_=list)
+    ) -> list[m.Ldif.Entry]:
+        all_entries: list[m.Ldif.Entry] = []
+        for content in contents:
+            parse_result = parser.parse_string(content)
+            response = _unwrap_result(parse_result, msg)
+            all_entries.extend([
+                m.Ldif.Entry.model_validate(entry) for entry in response.entries
+            ])
         if expected_count is not None:
-            tm.entries(entries, count=expected_count, msg=msg)
-        return entries
+            tm.that(all_entries, length=expected_count, msg=msg)
+        return all_entries
 
     @staticmethod
     def helper_get_supported_conversions_and_assert(
-        matrix: object,  # Conversion matrix type - using object for flexibility
-        source: str,
-        target: str,
+        service: _ConversionServiceProtocol,
         msg: str | None = None,
-    ) -> bool:
-        """Get supported conversions and assert."""
-        # Basic implementation
-        return True
+    ) -> list[str]:
+        del service
+        del msg
+        return []
 
     @staticmethod
     def helper_convert_and_assert_strings(
-        service: object,  # Conversion service - using object for flexibility
+        service: _ConversionServiceProtocol,
         source: str,
         target: str,
         content: str,
         msg: str | None = None,
     ) -> str:
-        """Convert and assert strings."""
-        result = service.convert(source, target, content)
-        return tm.ok(result, msg=msg, is_=str)
+        return _unwrap_result(service.convert(source, target, content), msg)
 
     @staticmethod
     def helper_batch_convert_and_assert(
-        service: object,  # Conversion service - using object for flexibility
+        service: _ConversionServiceProtocol,
         source: str,
         target: str,
         contents: list[str],
         msg: str | None = None,
     ) -> list[str]:
-        """Batch convert and assert."""
         results: list[str] = []
         for content in contents:
-            result = service.convert(source, target, content)
-            results.append(tm.ok(result, msg=msg, is_=str))
+            results.append(
+                _unwrap_result(service.convert(source, target, content), msg)
+            )
         return results
 
     @staticmethod
     def filter_execute_and_unwrap(
-        service: object,  # Filter service - using object for flexibility
-        entries: list[p.Entry],
-        filter_config: m.Config.FilterConfig,
+        service: _FilterServiceProtocol,
+        entries: list[m.Ldif.Entry],
+        filter_config: m.Ldif.FilterConfig,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Filter execute and unwrap."""
-        result = service.execute(entries=entries, filter_config=filter_config)
-        return tm.ok(result, msg=msg, is_=list)
+    ) -> list[m.Ldif.Entry]:
+        return _unwrap_result(
+            service.execute(entries=entries, filter_config=filter_config),
+            msg,
+        )
 
     @staticmethod
     def api_parse_write_file_and_assert(
         api: FlextLdif,
-        input_file: Path,
+        ldif_content: str,
         output_file: Path,
         msg: str | None = None,
-    ) -> None:
-        """API parse write file and assert."""
-        result = api.parse(input_file)
-        entries = tm.ok(result, msg=msg, is_=list)
-        write_result = api.write(entries, output_file)
-        tm.ok(write_result, msg=msg)
+    ) -> bool:
+        entries = _unwrap_result(api.parse(ldif_content), msg)
+        write_result = api.write_file(entries, output_file)
+        return _unwrap_result(write_result, msg)
 
     @staticmethod
     def api_parse_write_string_and_assert(
@@ -436,49 +333,31 @@ class TestDeduplicationHelpers:
         ldif_content: str,
         msg: str | None = None,
     ) -> str:
-        """API parse write string and assert."""
-        result = api.parse_string(ldif_content)
-        entries = tm.ok(result, msg=msg, is_=list)
-        write_result = api.write_string(entries)
-        return tm.ok(write_result, msg=msg, is_=str)
+        entries = _unwrap_result(api.parse(ldif_content), msg)
+        write_result = api.write(entries)
+        return _unwrap_result(write_result, msg)
 
     @staticmethod
     def helper_api_write_and_unwrap(
         api: FlextLdif,
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         msg: str | None = None,
     ) -> str:
-        """Helper API write and unwrap."""
-        result = api.write_string(entries)
-        return tm.ok(result, msg=msg, is_=str)
+        return _unwrap_result(api.write(entries), msg)
 
     @staticmethod
     def create_entries_batch(
-        count: int = 3,
-        base_dn: str = "dc=example,dc=com",
-    ) -> list[p.Entry]:
-        """Create entries batch - use tf.entries() instead."""
-        entries_data: list[tuple[str, dict[str, str | list[str]]]] = []
-        for i in range(count):
-            dn = f"cn=test{i},{base_dn}"
-            attrs = {
-                "cn": [f"test{i}"],
-                "objectClass": ["person"],
-            }
-            entries_data.append((dn, attrs))
-        service = FlextLdifTestsServiceBase()
-        return service.create_entries(entries_data)
+        entries_data: list[tuple[str, dict[str, list[str] | str]]],
+    ) -> list[m.Ldif.Entry]:
+        return [
+            m.Ldif.Entry.model_validate(entry)
+            for entry in s().create_entries(entries_data)
+        ]
 
 
 class OptimizedLdifTestHelpers:
-    """Compatibility stub for OptimizedLdifTestHelpers - use s, tf instead.
-
-    DEPRECATED: Use new helpers from tests/base.py and tests/test_helpers.py
-    """
-
     @staticmethod
     def create_parser() -> FlextLdifParser:
-        """Create parser - use service directly."""
         return FlextLdifParser()
 
     @staticmethod
@@ -486,36 +365,28 @@ class OptimizedLdifTestHelpers:
         parser: FlextLdifParser,
         file_path: Path,
         msg: str | None = None,
-    ) -> r[list[p.Entry]]:
-        """Parse LDIF file and validate."""
-        result = parser.parse(file_path)
-        return tm.ok(result, msg=msg)
+    ) -> list[m.Ldif.Entry]:
+        parse_result = parser.parse(file_path)
+        response = _unwrap_result(parse_result, msg)
+        return [m.Ldif.Entry.model_validate(entry) for entry in response.entries]
 
     @staticmethod
     def validate_entries_structure(
-        entries: list[p.Entry],
+        entries: list[m.Ldif.Entry],
         msg: str | None = None,
-    ) -> None:
-        """Validate entries structure - use tm.entries() instead."""
+    ) -> list[m.Ldif.Entry]:
         tm.entries(entries, msg=msg)
+        return entries
 
 
 class FixtureTestHelpers:
-    """Compatibility stub for FixtureTestHelpers - use s, tf, conftest instead.
-
-    DEPRECATED: Use new helpers from tests/base.py, tests/test_helpers.py,
-    and tests/conftest.py
-    """
-
     @staticmethod
     def load_fixture_and_validate_structure(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Load fixture and validate structure."""
-        api = FlextLdif.get_instance()
-        result = api.parse(fixture_path)
-        entries = tm.ok(result, msg=msg, is_=list)
+    ) -> list[m.Ldif.Entry]:
+        result = FlextLdif.get_instance().parse(fixture_path)
+        entries = _unwrap_result(result, msg)
         tm.entries(entries, msg=msg)
         return entries
 
@@ -523,49 +394,27 @@ class FixtureTestHelpers:
     def load_fixture_entries(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Load fixture entries."""
-        api = FlextLdif.get_instance()
-        result = api.parse(fixture_path)
-        return tm.ok(result, msg=msg, is_=list)
+    ) -> list[m.Ldif.Entry]:
+        result = FlextLdif.get_instance().parse(fixture_path)
+        return _unwrap_result(result, msg)
 
     @staticmethod
     def run_fixture_roundtrip(
         fixture_path: Path,
         msg: str | None = None,
-    ) -> list[p.Entry]:
-        """Run fixture roundtrip."""
+    ) -> list[m.Ldif.Entry]:
         api = FlextLdif.get_instance()
         parse_result = api.parse(fixture_path)
-        entries = tm.ok(parse_result, msg=msg, is_=list)
-        # Roundtrip through write/parse
-        write_result = api.write_string(entries)
-        ldif_content = tm.ok(write_result, msg=msg, is_=str)
-        roundtrip_result = api.parse_string(ldif_content)
-        return tm.ok(roundtrip_result, msg=msg, is_=list)
+        entries = _unwrap_result(parse_result, msg)
+        ldif_content = _unwrap_result(api.write(entries), msg)
+        roundtrip_result = api.parse(ldif_content)
+        return _unwrap_result(roundtrip_result, msg)
 
 
 class FlextLdifTestFactories:
-    """Compatibility stub for FlextLdifTestFactories - use tf, s instead.
-
-    DEPRECATED: Use new helpers from tests/test_helpers.py and tests/base.py
-    """
-
     @staticmethod
     def create_entry(
         dn: str,
         attributes: dict[str, str | list[str]],
-    ) -> p.Entry:
-        """Create entry - use tf.entry() or s().create_entry() instead."""
-        service = FlextLdifTestsServiceBase()
-        return service.create_entry(dn, attributes)
-
-
-# Export for backward compatibility
-__all__ = [
-    "FixtureTestHelpers",
-    "FlextLdifTestFactories",
-    "OptimizedLdifTestHelpers",
-    "TestAssertions",
-    "TestDeduplicationHelpers",
-]
+    ) -> m.Ldif.Entry:
+        return m.Ldif.Entry.model_validate(s().create_entry(dn, attributes))

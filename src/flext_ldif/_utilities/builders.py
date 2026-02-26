@@ -313,7 +313,7 @@ class WriteConfigBuilder:
         # Create config with all values at construction time (frozen model)
         # Convert types to match WriteConfig expectations
         base64_attrs_value = (
-            list(self._base64_attrs)
+            [str(item) for item in self._base64_attrs]
             if issubclass(self._base64_attrs.__class__, (list, tuple))
             else None
         )

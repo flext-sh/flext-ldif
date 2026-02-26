@@ -201,8 +201,6 @@ class FlextLdifUtilities(FlextUtilities):
                     return elem
             return None
 
-        match = staticmethod(FlextUtilities.match)
-
         # === LDIF-specific utility classes ===
 
         class ACL(FlextLdifUtilitiesACL):
@@ -868,7 +866,7 @@ class FlextLdifUtilities(FlextUtilities):
             validators: tuple[p.ValidatorSpec, ...] = (
                 (validator_first, *validators_rest) if validator_first else ()
             )
-            return FlextUtilities.validate(value_or_entries, *validators)
+            return FlextLdifUtilitiesValidation.validate(value_or_entries, *validators)
 
         @classmethod
         def dn(cls, dn: str) -> DnOps:
@@ -1787,8 +1785,10 @@ class FlextLdifUtilities(FlextUtilities):
             """Try executing function, return default on exception (mnemonic: tr)."""
             try:
                 return func()
-            except catch:
-                return default
+            except Exception as exc:
+                if isinstance(exc, catch):
+                    return default
+                raise
 
         tr = try_
 

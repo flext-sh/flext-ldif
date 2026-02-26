@@ -99,25 +99,25 @@ mail: jane.smith@example.com
         ldif_content = sample_file.read_text(encoding="utf-8")
         detect_result = api.detect_server_type(ldif_content=ldif_content)
         if detect_result.is_failure:
-            return detect_result
+            return r.fail(detect_result.error or "Server detection failed")
 
         detected = detect_result.value
         server_type = detected.detected_server_type or "rfc"
 
         parse_result = api.parse(sample_file, server_type=server_type)
         if parse_result.is_failure:
-            return parse_result
+            return r.fail(parse_result.error or "Parse failed")
 
         validate_result = api.validate_entries(parse_result.value)
         if validate_result.is_failure:
-            return validate_result
+            return r.fail(validate_result.error or "Validation failed")
 
         write_result = api.write_file(
             parse_result.value,
             Path("examples/output_dry.ldif"),
         )
         if write_result.is_failure:
-            return write_result
+            return r.fail(write_result.error or "Write failed")
 
         return r.ok("File processing complete")
 
@@ -181,6 +181,6 @@ mail: jane.smith@example.com
             max_workers=6,
         )
         if transform_result.is_failure:
-            return transform_result
+            return r.fail(transform_result.error or "Transform failed")
 
         return r.ok(entries)

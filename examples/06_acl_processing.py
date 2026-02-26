@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.models import m
 from flext_ldif.utilities import u
 
 
@@ -105,11 +105,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     required_perms: dict[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
         required_perms = cast("dict[str, bool]", eval_context["permissions"])
-    # Type cast needed for type checker - acls is already correct type at runtime
-    acls_for_eval: list[FlextLdifModelsDomains.Acl] = cast(
-        "list[FlextLdifModelsDomains.Acl]",
-        acls,
-    )
+    acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
         acls_for_eval,
         required_perms,
@@ -152,7 +148,7 @@ sn: test
     acl_service = api.acl_service
 
     # Process each entry for ACLs
-    def process_entry_acls(entry: FlextLdifModels.Entry) -> tuple[str, int] | None:
+    def process_entry_acls(entry: FlextLdifModels.Ldif.Entry) -> tuple[str, int] | None:
         """Extract ACLs from entry."""
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
@@ -177,7 +173,7 @@ def execute_acl_service() -> None:
     api = FlextLdif.get_instance()
 
     # Entry with ACL
-    entry_result = api.models.Entry.create(
+    entry_result = api.models.Ldif.Entry.create(
         dn="ou=Test,dc=example,dc=com",
         attributes={
             "objectClass": ["organizationalUnit"],
@@ -244,10 +240,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
         "permissions": {"read": True},
     }
 
-    # Cast acls to domain Acl type for API compatibility
-    acls_typed: list[FlextLdifModelsDomains.Acl] = [
-        cast("FlextLdifModelsDomains.Acl", acl) for acl in acls
-    ]
+    acls_typed = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     # Extract permissions from context dict directly
     required_perms: dict[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):

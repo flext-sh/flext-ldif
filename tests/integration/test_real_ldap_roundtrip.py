@@ -24,8 +24,6 @@ import pytest
 from flext_ldif import FlextLdif
 from ldap3 import Connection
 
-from tests import GenericFieldsDict
-
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 @pytest.fixture
@@ -51,7 +49,7 @@ class TestRealLdapRoundtrip:
         # Create original LDAP entry with isolated username
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: GenericFieldsDict = {
+        original_attrs: dict[str, str | list[str]] = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -115,9 +113,11 @@ class TestRealLdapRoundtrip:
             "modifyTimestamp",
             "modifiersName",
         }
+        attrs = reimport_entry.attributes
+        assert attrs is not None
         reimport_attrs: dict[str, list[str]] = {
             attr_name: attr_values
-            for attr_name, attr_values in reimport_entry.attributes.attributes.items()
+            for attr_name, attr_values in attrs.attributes.items()
             if attr_name.lower() not in ldif_special_attrs
             and attr_name.lower() != "objectclass"
         }
@@ -129,8 +129,8 @@ class TestRealLdapRoundtrip:
             reimport_dn,
             obj_class_values,
             attributes={
-                attr: reimport_entry.attributes.attributes[attr]
-                for attr in reimport_entry.attributes.attributes
+                attr: attrs.attributes[attr]
+                for attr in attrs.attributes
                 if attr.lower() not in ldif_special_attrs
                 and attr.lower() != "objectclass"
             },
@@ -141,6 +141,9 @@ class TestRealLdapRoundtrip:
         reimported = ldap_connection.entries[0]
 
         # Verify attributes preserved
+        assert isinstance(original_attrs["sn"], str)
+        assert isinstance(original_attrs["mail"], str)
+        assert isinstance(original_attrs["telephoneNumber"], list)
         assert reimported["sn"].value == original_attrs["sn"]
         assert reimported["mail"].value == original_attrs["mail"]
         assert set(reimported["telephoneNumber"].values) == set(

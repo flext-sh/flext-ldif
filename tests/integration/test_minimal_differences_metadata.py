@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 from flext_ldif import FlextLdif, FlextLdifParser, u
 from flext_ldif.constants import c
+from flext_ldif.models import m
 
 
 class TestMinimalDifferencesOidOud:
@@ -143,7 +144,9 @@ orcldasisenabled: 1
         assert "original_dn_complete" in original_entry.metadata.extensions
 
         # Write back to OID format (FlextLdif.write accepts entries only)
-        write_result = writer.write(entries=[original_entry])
+        write_result = writer.write(
+            entries=[m.Ldif.Entry.model_validate(original_entry)]
+        )
         assert write_result.is_success
 
         written_ldif = write_result.value
@@ -280,9 +283,14 @@ pwdlockout: 0
             {},
         )
         if isinstance(converted_attrs, dict):
-            boolean_conversions = converted_attrs.get(
+            raw_boolean_conversions = converted_attrs.get(
                 c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
+            )
+            boolean_conversions = (
+                raw_boolean_conversions
+                if isinstance(raw_boolean_conversions, dict)
+                else {}
             )
         else:
             boolean_conversions = {}
@@ -294,6 +302,7 @@ pwdlockout: 0
         ):
             # Verify specific conversions
             conv = boolean_conversions["orcldasisenabled"]
+            assert isinstance(conv, dict)
             # Check structure: should have original_value and converted_value keys
             original_key = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
             converted_key = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
