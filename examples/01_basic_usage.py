@@ -61,30 +61,29 @@ mail: jane.smith@example.com
 
         # Railway pattern with advanced type narrowing (PEP 742 ready)
         server_type = "rfc"  # Default value
-        match api.detect_server_type(ldif_content=self.SAMPLE_LDIF):
-            case r.Ok(detected) if detected.detected_server_type:
-                server_type = detected.detected_server_type
-            case r.Ok(_):
-                server_type = "rfc"  # Default fallback
-            case r.Err(error):
-                return r.fail(error or "Detection failed")
+        detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
+        if detect_result.is_success and detect_result.value.detected_server_type:
+            server_type = detect_result.value.detected_server_type
+        elif detect_result.is_failure:
+            return r.fail(detect_result.error or "Detection failed")
 
         # Chain operations with Railway pattern
-        validate_result = api.parse(self.SAMPLE_LDIF, server_type=server_type).flat_map(
-            api.validate_entries,
-        )
+        parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
+        if parse_result.is_failure:
+            return r.fail(parse_result.error or "Parse failed")
+        entries = parse_result.value
+        validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r.fail(validate_result.error or "Validation failed")
 
-        # Get entries from successful validation
-        entries = validate_result.value
-
         # Process returns transformed data, but we want entries
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
-        return (process_result.is_success and r.ok(entries)) or process_result
+        if process_result.is_success:
+            return r[list[m.Ldif.Entry]].ok(entries)
+        return r.fail(process_result.error or "Process failed")
 
     @staticmethod
-    def file_pipeline() -> r:
+    def file_pipeline() -> r[str]:
         """DRY file processing: detect → parse → validate → write.
 
         Returns:
@@ -122,7 +121,7 @@ mail: jane.smith@example.com
 
         return r.ok("File processing complete")
 
-    def context_pipeline(self) -> r:
+    def context_pipeline(self) -> r[list[m.Ldif.Entry]]:
         """Context-aware processing with correlation tracking.
 
         Returns:
@@ -152,7 +151,7 @@ mail: jane.smith@example.com
             return r.ok(parse_result.value)
 
     @staticmethod
-    def batch_transform() -> r:
+    def batch_transform() -> r[list[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
 

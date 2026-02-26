@@ -3679,7 +3679,7 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
             description="Map of conversion operation name → human-readable description",
         )
-        attribute_transformations: dict[
+        attribute_transformations: Mapping[
             str,
             FlextLdifModelsDomains.AttributeTransformation,
         ] = Field(
@@ -3927,7 +3927,9 @@ class FlextLdifModelsDomains:
                 original_values=list(original_values) if original_values else [],
                 target_values=new_values or [],
             )
-            self.attribute_transformations[original_name] = transformation
+            updated_transformations = dict(self.attribute_transformations)
+            updated_transformations[original_name] = transformation
+            self.attribute_transformations = updated_transformations
 
             # Add conversion note for audit trail
             note_key = f"attr_{original_name}_{transformation_type}"

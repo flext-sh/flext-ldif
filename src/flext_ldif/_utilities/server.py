@@ -6,19 +6,9 @@ import re
 import sys
 from typing import Literal, TypeGuard
 
-from flext_core.utilities import FlextUtilities
-
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import c
-
-# Import FlextLdifModelsDomains for type annotations
-# Models import moved to runtime to avoid circular import
-
-# Aliases for simplified usage - after all imports
-# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
-u = FlextUtilities  # Use base class to avoid circular dependency
-
 
 # Valid server types for validation - must match c.Ldif.ServerTypes enum values
 _VALID_SERVER_TYPES: frozenset[str] = frozenset(
@@ -51,16 +41,16 @@ class FlextLdifUtilitiesServer:
         return value in _VALID_SERVER_TYPES
 
     @staticmethod
-    def _extract_server_type_from_constants(
+    def extract_server_type_from_constants(
         cls_with_constants: type[object] | None,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
-        constants_obj: object = getattr(cls_with_constants, "Constants", None)
+        constants_obj: object | None = vars(cls_with_constants).get("Constants")
         if not isinstance(constants_obj, type):
             return None
-        server_type_raw: object = getattr(constants_obj, "SERVER_TYPE", None)
+        server_type_raw: object | None = vars(constants_obj).get("SERVER_TYPE")
         if (
             server_type_raw is not None
             and isinstance(server_type_raw, str)
@@ -75,23 +65,18 @@ class FlextLdifUtilitiesServer:
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         # First try the nested class pattern with __qualname__
-        if (
-            getattr(target_cls, "__qualname__", None) is not None
-            and "." in target_cls.__qualname__
-        ):
+        if "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
             # Check if module is loaded (safe lookup without dynamic import)
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
-                parent_server_cls_obj: object = getattr(
-                    parent_module,
+                parent_server_cls_obj: object | None = vars(parent_module).get(
                     parent_class_name,
-                    None,
                 )
                 if isinstance(parent_server_cls_obj, type):
                     # Extract server type from parent class constants
                     srv = FlextLdifUtilitiesServer
-                    result = srv._extract_server_type_from_constants(
+                    result = srv.extract_server_type_from_constants(
                         parent_server_cls_obj,
                     )
                     if result is not None:
@@ -99,7 +84,7 @@ class FlextLdifUtilitiesServer:
 
         # Fallback: search through MRO for a class with Constants.SERVER_TYPE
         for mro_cls in target_cls.__mro__:
-            result = FlextLdifUtilitiesServer._extract_server_type_from_constants(
+            result = FlextLdifUtilitiesServer.extract_server_type_from_constants(
                 mro_cls,
             )
             if result is not None:
@@ -142,7 +127,7 @@ class FlextLdifUtilitiesServer:
         cls = (
             nested_class_instance_or_type
             if isinstance(nested_class_instance_or_type, type)
-            else type(nested_class_instance_or_type)
+            else nested_class_instance_or_type.__class__
         )
         # Try nested class pattern first
         server_type = FlextLdifUtilitiesServer._get_type_from_nested_class(cls)

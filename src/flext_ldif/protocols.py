@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
@@ -32,16 +32,6 @@ class FlextLdifProtocols(FlextProtocols):
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
-                ...
-
-            def model_copy(
-                self,
-                *,
-                deep: bool = False,
-                update: Mapping[str, str | int | float | bool | Sequence[str] | None]
-                | None = None,
-            ) -> Self:
-                """Create a copy of the entry with optional updates."""
                 ...
 
         @runtime_checkable

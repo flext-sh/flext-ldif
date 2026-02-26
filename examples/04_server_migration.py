@@ -17,11 +17,9 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif, m
-from flext_ldif.constants import c
 from flext_ldif.utilities import u
 
 
@@ -36,7 +34,7 @@ class ExampleServerMigration:
     """
 
     @staticmethod
-    def parallel_server_migration() -> r[m.EntryResult]:
+    def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
 
@@ -86,9 +84,9 @@ member: cn=OUD User,ou=People,dc=example,dc=com
             output_dir=output_dir,
             source_server="oid",  # Source server with specific quirks
             target_server="oud",  # Target server with different quirks
-            options=m.MigrateOptions(
+            options=m.Ldif.MigrateOptions(
                 # Enable parallel processing for large datasets
-                write_options=m.WriteFormatOptions(
+                write_options=m.Ldif.LdifResults.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -100,16 +98,11 @@ member: cn=OUD User,ou=People,dc=example,dc=com
 
         result = migration_result.value
 
-        # Verify migration results
-        if hasattr(result, "entries_by_category"):
-            sum(len(entries) for entries in result.entries_by_category.values())
-        else:
-            len(result.entries_by_category) if hasattr(
-                result,
-                "entries_by_category",
-            ) else 0
+        # Verify migration results (MigrationPipelineResult has entries, stats)
+        _ = len(result.entries)
+        _ = result.stats.processed_entries if result.stats else 0
 
-        return r.ok(result)
+        return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
 
     @staticmethod
     def auto_detection_migration_pipeline() -> r[dict[str, object]]:
@@ -206,7 +199,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         # Parallel parsing comparison
         for server in servers:
             # Cast to Literal type for server_type parameter
-            server_type = cast("c.Ldif.LiteralTypes.ServerTypeLiteral", server)
+            server_type = server
             parse_result = api.parse(test_ldif, server_type=server_type)
             if parse_result.is_success:
                 entries = parse_result.value
@@ -313,7 +306,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         if batch_result.is_success:
             value = batch_result.value
             if isinstance(value, list):
-                source_data = cast("list[str]", value)
+                source_data = value
 
         def write_file(item: tuple[int, str]) -> None:
             """Write entry to file."""
@@ -365,17 +358,14 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
 
         # Step 2: Migrate OID → Intermediate (OUD format)
-        source_server_typed = cast(
-            "c.Ldif.LiteralTypes.ServerTypeLiteral",
-            source_server,
-        )
+        source_server_typed = source_server
         intermediate_migration = api.migrate(
             input_dir=source_dir,
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=m.MigrateOptions(
-                write_options=m.WriteFormatOptions(
+            options=m.Ldif.MigrateOptions(
+                write_options=m.Ldif.LdifResults.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -399,11 +389,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             return r.fail(f"Final migration failed: {final_migration.error}")
 
         final_result = final_migration.value
-        final_count = (
-            final_result.statistics.processed_entries
-            if hasattr(final_result, "statistics") and final_result.statistics
-            else 0
-        )
+        final_count = final_result.stats.processed_entries if final_result.stats else 0
 
         # Step 4: Validate final results
         workflow_results = {

@@ -17,14 +17,13 @@ Original: .bak file | Advanced: ~250 lines with parallel schema processing + int
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
-from flext_core import FlextResult
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_core import r
+from flext_ldif import FlextLdif, m
 from flext_ldif.utilities import u
 
 
-def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
+def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
     api = FlextLdif.get_instance()
 
@@ -77,7 +76,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
 
     def create_attr_entry(
         attr_def: dict[str, str | int | float | bool | list[str]],
-    ) -> FlextLdifModels.Entry | None:
+    ) -> m.Ldif.Entry | None:
         """Create attribute type entry."""
         attr_dn = f"cn={attr_def['name']},cn=schema"
         attr_result = api.create_entry(
@@ -94,14 +93,13 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
         return attr_result.map_or(None)
 
     batch_result = u.process(
-        cast("list[dict[str, str | int | float | bool | list[str]]]", attribute_types),
+        attribute_types,
         create_attr_entry,
         on_error="skip",
     )
     if batch_result.is_success:
-        schema_entries.extend(
-            cast("list[FlextLdifModels.Entry]", batch_result.value["results"]),
-        )
+        entries_from_batch = [x for x in batch_result.value if x is not None]
+        schema_entries.extend(entries_from_batch)
 
     # Object class definitions
     object_classes = [
@@ -130,43 +128,38 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
 
     def create_oc_entry(
         oc_def: dict[str, str | list[str] | object],
-    ) -> FlextLdifModels.Entry | None:
+    ) -> m.Ldif.Entry | None:
         """Create object class entry."""
         oc_dn = f"cn={oc_def['name']},cn=schema"
-        attrs = cast(
-            "dict[str, list[str] | str]",
-            {
-                "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
-                "cn": [str(oc_def["name"])],
-                "description": [str(oc_def["description"])],
-                "sup": [str(oc_def["sup"])],
-            },
-        )
+        attrs: dict[str, list[str]] = {
+            "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
+            "cn": [str(oc_def["name"])],
+            "description": [str(oc_def["description"])],
+            "sup": [str(oc_def["sup"])],
+        }
 
-        if oc_def.get("must"):
-            must_val: list[str] = cast("list[str]", oc_def["must"])
-            attrs["must"] = must_val
-        if oc_def.get("may"):
-            may_val: list[str] = cast("list[str]", oc_def["may"])
-            attrs["may"] = may_val
+        must_raw = oc_def.get("must")
+        if isinstance(must_raw, list) and all(isinstance(x, str) for x in must_raw):
+            attrs["must"] = must_raw
+        may_raw = oc_def.get("may")
+        if isinstance(may_raw, list) and all(isinstance(x, str) for x in may_raw):
+            attrs["may"] = may_raw
 
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
         return oc_result.map_or(None)
 
     batch_result = u.process(
-        cast("list[dict[str, str | list[str] | object]]", object_classes),
+        object_classes,
         create_oc_entry,
         on_error="skip",
     )
     if batch_result.is_success:
-        schema_entries.extend(
-            cast("list[FlextLdifModels.Entry]", batch_result.value["results"]),
-        )
+        schema_entries.extend([x for x in batch_result.value if x is not None])
 
-    return FlextResult.ok(schema_entries)
+    return r[list[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> FlextResult[dict[str, object]]:
+def parallel_schema_validation() -> r[dict[str, object]]:
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
 
@@ -256,7 +249,7 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
             continue
         if isinstance(attributes, dict):
             # Ensure attributes are in correct format
-            attrs_dict = cast("dict[str, list[str] | str]", attributes)
+            attrs_dict = attributes
         else:
             continue
         entry_result = api.create_entry(dn=dn, attributes=attrs_dict)
@@ -266,7 +259,7 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
     # Parallel schema validation
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
-        return FlextResult.fail(f"Schema validation failed: {validation_result.error}")
+        return r.fail(f"Schema validation failed: {validation_result.error}")
 
     validation_report = validation_result.value
 
@@ -296,10 +289,10 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
         validation_report.valid_entries / len(test_entries) if test_entries else 0
     )
 
-    return FlextResult.ok(analysis)
+    return r[dict[str, object]].ok(analysis)
 
 
-def schema_migration_pipeline() -> FlextResult[dict[str, object]]:
+def schema_migration_pipeline() -> r[dict[str, object]]:
     """Schema-aware migration pipeline with validation."""
     api = FlextLdif.get_instance()
 
@@ -352,7 +345,7 @@ mail: modern@example.com
     migration_results: dict[str, object] = {}
 
     # Step 1: Parse source data with schema validation
-    def parse_file(ldif_file: Path) -> list[FlextLdifModels.Entry]:
+    def parse_file(ldif_file: Path) -> list[m.Ldif.Entry]:
         """Parse LDIF file."""
         parse_result = api.parse(ldif_file)
         return parse_result.map_or([])
@@ -361,10 +354,9 @@ mail: modern@example.com
         list(source_dir.glob("*.ldif")),
         parse_file,
         on_error="skip",
-        flatten=True,
     )
     all_entries = (
-        cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        [e for sub in batch_result.value for e in sub]
         if batch_result.is_success
         else []
     )
@@ -384,8 +376,8 @@ mail: modern@example.com
     # Step 3: Schema-aware migration (attribute name changes, etc.)
     # This would transform legacy 'emailAddress' to 'mail', etc.
     def migrate_entry(
-        ldif_entry: FlextLdifModels.Entry,
-    ) -> FlextLdifModels.Entry | None:
+        ldif_entry: m.Ldif.Entry,
+    ) -> m.Ldif.Entry | None:
         """Migrate legacy entry to modern schema."""
         # Transform legacy attributes to modern schema
         attrs_dict: dict[str, str | list[str]] = {}
@@ -421,7 +413,7 @@ mail: modern@example.com
         on_error="skip",
     )
     migrated_entries = (
-        cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        [x for x in batch_result.value if x is not None]
         if batch_result.is_success
         else []
     )
@@ -441,13 +433,13 @@ mail: modern@example.com
     # Step 5: Write migrated data with schema compliance
     if migrated_entries:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
-        write_result = api.write(migrated_entries, output_file)
+        write_result = api.write_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.is_success
 
-    return FlextResult.ok(migration_results)
+    return r[dict[str, object]].ok(migration_results)
 
 
-def batch_schema_operations() -> FlextResult[dict[str, object]]:
+def batch_schema_operations() -> r[dict[str, object]]:
     """Batch schema operations with parallel processing."""
     api = FlextLdif.get_instance()
 
@@ -465,7 +457,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
 
     def create_core_attr(
         attr_def: tuple[str, str, str, bool],
-    ) -> FlextLdifModels.Entry | None:
+    ) -> m.Ldif.Entry | None:
         """Create core attribute entry."""
         name, desc, syntax, single_val = attr_def
         attr_result = api.create_entry(
@@ -486,9 +478,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
         on_error="skip",
     )
     if batch_result.is_success:
-        core_attrs.extend(
-            cast("list[FlextLdifModels.Entry]", batch_result.value["results"]),
-        )
+        core_attrs.extend([x for x in batch_result.value if x is not None])
 
     schema_batches.append(("core_attributes", core_attrs))
 
@@ -515,18 +505,15 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
 
     def create_oc_def(
         oc_def: tuple[str, str, str, list[str], list[str]],
-    ) -> FlextLdifModels.Entry | None:
+    ) -> m.Ldif.Entry | None:
         """Create object class definition entry."""
         name, desc, sup, must_attrs, may_attrs = oc_def
-        attrs = cast(
-            "dict[str, list[str] | str]",
-            {
-                "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
-                "cn": [name],
-                "description": [desc],
-                "sup": [sup],
-            },
-        )
+        attrs = {
+            "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
+            "cn": [name],
+            "description": [desc],
+            "sup": [sup],
+        }
         if must_attrs:
             attrs["must"] = must_attrs
         if may_attrs:
@@ -541,9 +528,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
         on_error="skip",
     )
     if batch_result.is_success:
-        object_classes.extend(
-            cast("list[FlextLdifModels.Entry]", batch_result.value["results"]),
-        )
+        object_classes.extend([x for x in batch_result.value if x is not None])
 
     schema_batches.append(("object_classes", object_classes))
 
@@ -580,17 +565,17 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
         ]),
     }
 
-    return FlextResult.ok(batch_results)
+    return r[dict[str, object]].ok(batch_results)
 
 
-def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
+def railway_schema_pipeline() -> r[dict[str, object]]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = FlextLdif.get_instance()
 
     # Railway Step 1: Build schema definitions
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
-        return FlextResult[dict[str, object]].fail(
+        return r[dict[str, object]].fail(
             f"Schema building failed: {schema_build_result.error}",
         )
 
@@ -599,14 +584,14 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     # Railway Step 2: Validate schema compliance
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
-        return FlextResult.fail(f"Schema validation failed: {schema_validation.error}")
+        return r.fail(f"Schema validation failed: {schema_validation.error}")
 
     schema_report = schema_validation.value
     if not schema_report.is_valid:
-        return FlextResult.fail(f"Schema entries invalid: {schema_report.errors}")
+        return r.fail(f"Schema entries invalid: {schema_report.errors}")
 
     # Railway Step 3: Create test entries using the schema
-    def create_test_entry(i: int) -> FlextLdifModels.Entry | None:
+    def create_test_entry(i: int) -> m.Ldif.Entry | None:
         """Create test entry compliant with schema."""
         # Create entries compliant with our schema
         if i % 2 == 0:
@@ -642,7 +627,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
         on_error="skip",
     )
     test_entries = (
-        cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        [x for x in batch_result.value if x is not None]
         if batch_result.is_success
         else []
     )
@@ -650,11 +635,11 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     # Railway Step 4: Validate test entries against schema
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
-        return FlextResult.fail(f"Entry validation failed: {entry_validation.error}")
+        return r.fail(f"Entry validation failed: {entry_validation.error}")
 
     entry_report = entry_validation.value
     if not entry_report.is_valid:
-        return FlextResult.fail(f"Test entries invalid: {entry_report.errors}")
+        return r.fail(f"Test entries invalid: {entry_report.errors}")
 
     # Railway Step 5: Parallel processing of validated entries
     process_result = api.process(
@@ -664,7 +649,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
         max_workers=4,
     )
     if process_result.is_failure:
-        return FlextResult[dict[str, object]].fail(
+        return r[dict[str, object]].fail(
             f"Processing failed: {process_result.error}",
         )
 
@@ -675,12 +660,12 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     output_dir.mkdir(exist_ok=True)
 
     schema_file = output_dir / "schema.ldif"
-    schema_write = api.write(schema_entries, schema_file)
+    schema_write = api.write_file(schema_entries, schema_file)
 
     entries_file = output_dir / "entries.ldif"
-    entries_write = api.write(test_entries, entries_file)
+    entries_write = api.write_file(test_entries, entries_file)
 
-    return FlextResult.ok({
+    return r[dict[str, object]].ok({
         "schema_entries": len(schema_entries),
         "schema_valid": schema_report.valid_entries,
         "test_entries": len(test_entries),

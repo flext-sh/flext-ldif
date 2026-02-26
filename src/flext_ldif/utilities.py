@@ -74,7 +74,8 @@ class FlextLdifUtilities(FlextUtilities):
         type VariadicCallable[T] = Callable[..., T]
 
         @staticmethod
-        def _to_config_map_value(value: object) -> t.ConfigMapValue:
+        def to_config_map_value(value: object) -> t.ConfigMapValue:
+            """Convert value to ConfigMapValue (general value or str)."""
             if FlextUtilities.Guards.is_general_value_type(value):
                 return value
             return str(value)
@@ -457,7 +458,7 @@ class FlextLdifUtilities(FlextUtilities):
             return results
 
         @staticmethod
-        def _call_single_item_processor[R](
+        def call_single_item_processor[R](
             processor_func: Callable[..., R],
             item: object,
         ) -> r[list[R]]:
@@ -595,7 +596,7 @@ class FlextLdifUtilities(FlextUtilities):
                 | Mapping[str, object]
             ) = items_or_entries
             if processor_normalized is None:
-                if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
+                if FlextLdifUtilities.Ldif.is_entry_sequence(items_or_entries):
                     return FlextLdifResult.from_result(
                         FlextLdifUtilities.Ldif.Entry.transform_batch(
                             items_or_entries,
@@ -608,7 +609,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             match processor_normalized:
                 case m.Ldif.ProcessConfig():
-                    if FlextLdifUtilities.Ldif._is_entry_sequence(items_or_entries):
+                    if FlextLdifUtilities.Ldif.is_entry_sequence(items_or_entries):
                         return FlextLdifResult.from_result(
                             FlextLdifUtilities.Ldif.Entry.transform_batch(
                                 items_or_entries,
@@ -625,7 +626,7 @@ class FlextLdifUtilities(FlextUtilities):
             match items:
                 case dict() as items_dict:
                     dict_items: dict[str, t.ConfigMapValue] = {
-                        key: FlextLdifUtilities.Ldif._to_config_map_value(value)
+                        key: FlextLdifUtilities.Ldif.to_config_map_value(value)
                         for key, value in items_dict.items()
                     }
                     results = FlextLdifUtilities.Ldif.process_dict_items(
@@ -644,7 +645,7 @@ class FlextLdifUtilities(FlextUtilities):
                         on_error,
                     )
                 case _:
-                    return FlextLdifUtilities.Ldif._call_single_item_processor(
+                    return FlextLdifUtilities.Ldif.call_single_item_processor(
                         processor_func,
                         items,
                     )
@@ -744,7 +745,7 @@ class FlextLdifUtilities(FlextUtilities):
                 case dict() as items_or_entries_dict:
                     items_dict: dict[str, t.ConfigMapValue] = {}
                     for k, v in items_or_entries_dict.items():
-                        items_dict[k] = FlextLdifUtilities.Ldif._to_config_map_value(v)
+                        items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(v)
                     dict_filter_result = FlextUtilities.Collection.filter(
                         items_dict, predicate
                     )
@@ -788,7 +789,7 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextLdifResult.from_result(pipeline.execute(entries))
 
         @staticmethod
-        def _is_entry_sequence(
+        def is_entry_sequence(
             value: object,
         ) -> TypeIs[Sequence[m.Ldif.Entry]]:
             """Check if value is a Sequence of Entry objects."""
@@ -807,7 +808,7 @@ class FlextLdifUtilities(FlextUtilities):
                     return False
 
         @staticmethod
-        def _validate_entries(
+        def validate_entries(
             entries: Sequence[m.Ldif.Entry],
             *,
             strict: bool,
@@ -854,10 +855,10 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> FlextLdifResult[list[ValidationResult]] | r[t.Ldif.JsonValue]:
             """Validate entries against rules."""
             if (
-                FlextLdifUtilities.Ldif._is_entry_sequence(value_or_entries)
+                FlextLdifUtilities.Ldif.is_entry_sequence(value_or_entries)
                 and validator_first is None
             ):
-                return FlextLdifUtilities.Ldif._validate_entries(
+                return FlextLdifUtilities.Ldif.validate_entries(
                     value_or_entries,
                     strict=strict,
                     collect_all=collect_all,
@@ -909,17 +910,17 @@ class FlextLdifUtilities(FlextUtilities):
             match result:
                 case list() as result_list:
                     return [
-                        FlextLdifUtilities.Ldif._to_config_map_value(item)
+                        FlextLdifUtilities.Ldif.to_config_map_value(item)
                         for item in result_list
                     ]
                 case tuple() as result_tuple:
                     return [
-                        FlextLdifUtilities.Ldif._to_config_map_value(item)
+                        FlextLdifUtilities.Ldif.to_config_map_value(item)
                         for item in result_tuple
                     ]
                 case _:
                     pass
-            result_typed = FlextLdifUtilities.Ldif._to_config_map_value(result)
+            result_typed = FlextLdifUtilities.Ldif.to_config_map_value(result)
             return [result_typed]
 
         nl = normalize_list
@@ -1090,7 +1091,7 @@ class FlextLdifUtilities(FlextUtilities):
             for item in items:
                 if callable(key):
                     result.append(key(item))
-                elif FlextUtilities.Guards._is_str(key):
+                elif isinstance(key, str):
                     match item:
                         case Mapping() as item_mapping:
                             result.append(item_mapping.get(key))
@@ -1099,7 +1100,7 @@ class FlextLdifUtilities(FlextUtilities):
                                 result.append(getattr(item, str(key)))
                             else:
                                 result.append(None)
-                elif FlextUtilities.Guards._is_int(key):
+                elif isinstance(key, int):
                     match item:
                         case Sequence() as item_sequence:
                             result.append(
@@ -1273,15 +1274,13 @@ class FlextLdifUtilities(FlextUtilities):
             conv_builder = cls.conv(extracted)
             conv_result: t.ConfigMapValue = None
             if target_type == "str":  # String comparison for target_type
-                str_default = default if FlextUtilities.Guards._is_str(default) else ""
+                str_default = default if isinstance(default, str) else ""
                 conv_result = conv_builder.to_str(default=str_default).build()
             elif target_type == "int":  # String comparison for target_type
-                int_default = default if FlextUtilities.Guards._is_int(default) else 0
+                int_default = default if isinstance(default, int) else 0
                 conv_result = conv_builder.to_int(default=int_default).build()
             elif target_type == "bool":  # String comparison for target_type
-                bool_default = (
-                    default if FlextUtilities.Guards._is_bool(default) else False
-                )
+                bool_default = default if isinstance(default, bool) else False
                 conv_result = conv_builder.to_bool(default=bool_default).build()
             elif target_type == "list":  # String comparison for target_type
                 list_default: list[str] = []
@@ -1357,7 +1356,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return default
 
             if target_type is str:
-                str_default = default if FlextUtilities.Guards._is_str(default) else ""
+                str_default = default if isinstance(default, str) else ""
                 return (
                     FlextLdifUtilities.Ldif
                     .conv(value)
@@ -1366,12 +1365,10 @@ class FlextLdifUtilities(FlextUtilities):
                     .build()
                 )
             if target_type is int:
-                int_default = default if FlextUtilities.Guards._is_int(default) else 0
+                int_default = default if isinstance(default, int) else 0
                 return cls.conv(value).to_int(default=int_default).safe().build()
             if target_type is bool:
-                bool_default = (
-                    default if FlextUtilities.Guards._is_bool(default) else False
-                )
+                bool_default = default if isinstance(default, bool) else False
                 return (
                     FlextLdifUtilities.Ldif
                     .conv(value)
@@ -1398,7 +1395,7 @@ class FlextLdifUtilities(FlextUtilities):
             result = cls.build(value, ops=ops)
             if result is None:
                 return cls.or_(None, default=default)
-            result_typed = FlextLdifUtilities.Ldif._to_config_map_value(result)
+            result_typed = FlextLdifUtilities.Ldif.to_config_map_value(result)
             return cls.or_(result_typed, default=default)
 
         @classmethod
@@ -1765,7 +1762,7 @@ class FlextLdifUtilities(FlextUtilities):
                     items = list(dict_items.items())
                     sliced = items[:n] if from_start else items[-n:]
                     sliced_dict: dict[str, t.ConfigMapValue] = {
-                        key: FlextLdifUtilities.Ldif._to_config_map_value(value)
+                        key: FlextLdifUtilities.Ldif.to_config_map_value(value)
                         for key, value in sliced
                     }
                     return sliced_dict  # Overloads ensure type safety at call sites
@@ -2018,7 +2015,7 @@ class FlextLdifUtilities(FlextUtilities):
                 match obj:
                     case Mapping() as obj_mapping:
                         return {
-                            key: FlextLdifUtilities.Ldif._to_config_map_value(
+                            key: FlextLdifUtilities.Ldif.to_config_map_value(
                                 obj_mapping.get(key, None),
                             )
                             for key in keys
@@ -2237,7 +2234,7 @@ class FlextLdifUtilities(FlextUtilities):
                                     items_list.append({
                                         str(
                                             key
-                                        ): FlextLdifUtilities.Ldif._to_config_map_value(
+                                        ): FlextLdifUtilities.Ldif.to_config_map_value(
                                             value
                                         )
                                         for key, value in item.items()

@@ -16,14 +16,14 @@ SRP: Each method does ONE thing, composition handles complexity
 from __future__ import annotations
 
 from flext_core import r
-from flext_ldif import FlextLdif, p
+from flext_ldif import FlextLdif, m
 
 
 class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def intelligent_builders() -> r[list[p.Entry]]:
+    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
 
@@ -55,7 +55,7 @@ class DRYEntryOperations:
         ])
 
     @staticmethod
-    def advanced_filtering() -> r[list[p.Entry]]:
+    def advanced_filtering() -> r[list[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
 
@@ -69,21 +69,21 @@ class DRYEntryOperations:
         # DRY filtering: department IT + valid email in one pipeline
         filtered_it = api.filter_entries(
             entries,
-            filter_func=lambda x: (
-                x.attributes is not None
-                and "IT" in x.attributes.get("departmentNumber", [])
+            filter_func=lambda item: (
+                item.attributes is not None
+                and "IT" in item.attributes.get("departmentNumber", [])
             ),
         )
         if filtered_it.is_failure:
             return filtered_it
         return api.filter_entries(
             filtered_it.value,
-            filter_func=lambda x: (
-                x.attributes is not None
+            filter_func=lambda item: (
+                item.attributes is not None
                 and "@example.com"
                 in (
-                    x.attributes.get("mail", [""])[0]
-                    if x.attributes.get("mail")
+                    item.attributes.get("mail", [""])[0]
+                    if item.attributes.get("mail")
                     else ""
                 )
             ),

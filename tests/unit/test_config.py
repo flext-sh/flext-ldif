@@ -177,9 +177,6 @@ class TestsTestFlextLdifSettings(s):
         ) -> FlextLdifSettings:
             """Create config with single field override."""
             kwargs: dict[str, object] = {field_name: value}
-            # Type narrowing: use type: ignore for dynamic field assignment in tests
-            # In test context, we know values are valid for their respective fields
-            # Pydantic will validate at runtime
             return FlextLdifSettings(**kwargs)
 
         @staticmethod
