@@ -243,6 +243,7 @@ def test_get_schema_quirk_thin_interface():
 ## Files Modified
 
 1. **src/flext_ldif/services/server.py**
+
    - Simplified docstrings
    - Added `_get_attr()` generic method
    - Renamed public methods (removed "\_quirk" suffix)
@@ -250,6 +251,7 @@ def test_get_schema_quirk_thin_interface():
    - Renamed internal storage: `_base_quirks` → `_bases`
 
 1. **src/flext_ldif/services/sorting.py**
+
    - Fixed 8 syntax errors from incomplete line breaks in `_get_dn_value` calls
    - All calls now properly formatted
 
@@ -288,7 +290,7 @@ Future phases will:
 ✅ All tests pass
 ✅ Syntax errors fixed
 
----
+______________________________________________________________________
 
 **Phase 2.A Status**: **COMPLETE** ✓
 

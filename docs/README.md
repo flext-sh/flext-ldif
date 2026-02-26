@@ -285,7 +285,7 @@ When contributing to FLEXT-LDIF documentation:
 1. **Test Links**: Verify all internal and external references
 1. **Update Versions**: Maintain current version and date information
 
----
+______________________________________________________________________
 
 **FLEXT-LDIF Documentation**: Your guide to practical LDIF processing within the FLEXT ecosystem. This documentation reflects the current v0.9.9 implementation and provides accurate, tested examples for real-world usage.
 

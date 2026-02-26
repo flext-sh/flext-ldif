@@ -200,6 +200,6 @@ def generate_diagrams():
 - **../adr/**: Architecture Decision Records
 - **../../README.md**: Project overview and usage
 
----
+______________________________________________________________________
 
 **FLEXT-LDIF Architecture Diagrams**: Visual documentation using C4 Model and PlantUML for comprehensive system understanding.

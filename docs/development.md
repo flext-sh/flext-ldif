@@ -317,6 +317,6 @@ Focus on LDIF-specific concerns:
 - RFC 2849 compliance
 - Directory data transformation
 
----
+______________________________________________________________________
 
 **Development Focus**: LDIF processing efficiency, memory optimization, and RFC 2849 compliance within FLEXT ecosystem patterns.

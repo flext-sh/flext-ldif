@@ -89,12 +89,15 @@ result = registry.validate_oud_consistency()
 **Alternatives Considered**:
 
 1. **Manual DN Case Management**: Require users to specify canonical case
+
    - **Rejected**: Error-prone, requires domain expertise, not scalable
 
 1. **Case-Insensitive Storage**: Store all DNs in lowercase
+
    - **Rejected**: Loses original case information needed for some servers
 
 1. **Runtime Case Resolution**: Resolve case conflicts during OUD operations
+
    - **Rejected**: Would cause runtime failures and poor user experience
 
 **Related ADRs**:

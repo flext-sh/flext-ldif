@@ -107,12 +107,15 @@ result = rfc_parser.parse_withs(
 **Alternatives Considered**:
 
 1. **Conditional Logic**: Hard-coded if/else statements for each server
+
    - **Rejected**: Inextensible, violates OCP, hard to maintain
 
 1. **Configuration Files**: External configuration instead of code
+
    - **Rejected**: Cannot handle complex server-specific logic, less type-safe
 
 1. **Inheritance Hierarchy**: Complex inheritance instead of composition
+
    - **Rejected**: Tightly coupled, harder to test and maintain
 
 **Related ADRs**:

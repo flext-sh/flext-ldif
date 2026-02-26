@@ -329,6 +329,6 @@ When adding examples:
 - Demonstrate specific functionality
 - Add clear docstrings
 
----
+______________________________________________________________________
 
 FLEXT-LDIF - RFC-compliant LDIF processing library

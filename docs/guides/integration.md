@@ -586,6 +586,6 @@ def process_large_ldif(file_path: Path) -> FlextResult[str]:
     return FlextResult[str].fail("Large file processing not yet implemented")
 ```
 
----
+______________________________________________________________________
 
 This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).
