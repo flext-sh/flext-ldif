@@ -532,9 +532,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             update={
                                 "metadata": m.Ldif.QuirkMetadata(
                                     quirk_type=self._get_server_type(),
-                                    extensions=m.Ldif.DynamicMetadata.model_validate({
-                                        "original_format": acl_line.strip(),
-                                    }),
+                                    extensions=m.Ldif.DynamicMetadata(
+                                        original_format=acl_line.strip(),
+                                    ),
                                 ),
                             },
                         )

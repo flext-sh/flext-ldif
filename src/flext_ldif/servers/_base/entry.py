@@ -419,17 +419,17 @@ class FlextLdifServersBaseEntry(
                 },
             )
         write_options_payload = dict(write_options)
-        return FlextLdifModelsDomains.WriteOptions.model_validate({
-            "sort_entries": write_options_payload.get("sort_attributes", False),
-            "include_comments": write_options_payload.get(
+        return FlextLdifModelsDomains.WriteOptions(
+            sort_entries=write_options_payload.get("sort_attributes", False),
+            include_comments=write_options_payload.get(
                 "include_dn_comments",
                 False,
             ),
-            "base64_encode_binary": write_options_payload.get(
+            base64_encode_binary=write_options_payload.get(
                 "base64_encode_binary",
                 False,
             ),
-        })
+        )
 
     def _inject_write_options(
         self,

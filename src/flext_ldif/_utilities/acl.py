@@ -693,10 +693,10 @@ class FlextLdifUtilitiesACL:
                 target_dn=target_dn,
                 attributes=target_attributes,
             ),
-            subject=m.Ldif.AclSubject.model_validate({
-                "subject_type": subject_type,
-                "subject_value": subject_value,
-            }),
+            subject=m.Ldif.AclSubject(
+                subject_type=subject_type,
+                subject_value=subject_value,
+            ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=config.server_type,
             raw_acl=acl_line,

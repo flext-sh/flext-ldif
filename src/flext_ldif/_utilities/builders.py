@@ -150,12 +150,11 @@ class ProcessConfigBuilder:
         return ProcessConfig(
             source_server=self._source_server,
             target_server=self._target_server or c.Ldif.ServerTypes.RFC,
-            dn_config=self._dn_config or DnNormalizationConfig.model_validate({}),
-            attr_config=self._attr_config or AttrNormalizationConfig.model_validate({}),
-            acl_config=self._acl_config or AclConversionConfig.model_validate({}),
-            validation_config=self._validation_config
-            or ValidationConfig.model_validate({}),
-            metadata_config=self._metadata_config or MetadataConfig.model_validate({}),
+            dn_config=self._dn_config or DnNormalizationConfig(),
+            attr_config=self._attr_config or AttrNormalizationConfig(),
+            acl_config=self._acl_config or AclConversionConfig(),
+            validation_config=self._validation_config or ValidationConfig(),
+            metadata_config=self._metadata_config or MetadataConfig(),
         )
 
 

@@ -209,7 +209,7 @@ class FlextLdifModelsDomains:
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
-            return cls.model_validate({"value": str(dn)})
+            return cls(value=str(dn))
 
         def __str__(self) -> str:
             """Return DN value as string for str() conversion."""
@@ -1670,7 +1670,7 @@ class FlextLdifModelsDomains:
             if isinstance(value, Mapping):
                 return FlextLdifModelsDomains.DN.model_validate(value)
 
-            return FlextLdifModelsDomains.DN.model_validate({"value": str(value)})
+            return FlextLdifModelsDomains.DN(value=str(value))
 
         @field_validator("attributes", mode="before")
         @classmethod
