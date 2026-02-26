@@ -17,8 +17,6 @@ from flext_ldif import (
 )
 from flext_ldif.services.server import FlextLdifServer
 
-from tests import GenericFieldsDict
-
 
 class FlextLdifTestFactory:
     """RFC-first service factory for testing."""
@@ -28,7 +26,7 @@ class FlextLdifTestFactory:
 
         @staticmethod
         def create_ldif_parser(
-            params: GenericFieldsDict | None = None,
+            params: dict[str, object] | None = None,
         ) -> FlextLdifParser:
             """Create unified LDIF parser service.
 
@@ -40,7 +38,7 @@ class FlextLdifTestFactory:
 
         @staticmethod
         def create_schema_parser(
-            params: GenericFieldsDict | None = None,
+            params: dict[str, object] | None = None,
         ) -> FlextLdifParser:
             """Create unified LDIF parser service with schema support.
 
@@ -54,7 +52,7 @@ class FlextLdifTestFactory:
 
         @staticmethod
         def create_ldif_writer(
-            config: GenericFieldsDict | None = None,
+            config: dict[str, object] | None = None,
             quirk_registry: FlextLdifServer | None = None,
         ) -> FlextLdifWriter:
             """Create unified LDIF writer service."""
@@ -64,7 +62,7 @@ class FlextLdifTestFactory:
 
         @staticmethod
         def create_migration_pipeline(
-            params: GenericFieldsDict | None = None,
+            params: dict[str, object] | None = None,
             source_server_type: str = "oid",
             target_server_type: str = "oud",
         ) -> FlextLdifMigrationPipeline:
@@ -179,7 +177,7 @@ class FlextLdifTestFactory:
     @classmethod
     def create_api(
         cls,
-        config: GenericFieldsDict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifServer | None = None,
     ) -> dict[str, object]:
         """Create unified service API for backward compatibility.
@@ -215,7 +213,7 @@ class FlextLdifTestFactory:
     @classmethod
     def create_parser(
         cls,
-        config: GenericFieldsDict | None = None,
+        config: dict[str, object] | None = None,
         _registry: FlextLdifServer | None = None,
     ) -> FlextLdifParser:
         """Create parser service with optional config."""
@@ -224,7 +222,7 @@ class FlextLdifTestFactory:
     @classmethod
     def create_validator(
         cls,
-        config: GenericFieldsDict | None = None,
+        config: dict[str, object] | None = None,
         _registry: FlextLdifServer | None = None,
     ) -> FlextLdifParser:
         """Create validator service (schema parser) with optional config.
@@ -236,7 +234,7 @@ class FlextLdifTestFactory:
     @classmethod
     def create_writer(
         cls,
-        config: GenericFieldsDict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifServer | None = None,
     ) -> FlextLdifWriter:
         """Create writer service with config and quirk registry."""

@@ -15,7 +15,7 @@ from tests import s, tm
 TResult = TypeVar("TResult")
 
 
-def _unwrap_result(result: r[TResult], msg: str | None = None) -> TResult:
+def _unwrap_result[TResult](result: r[TResult], msg: str | None = None) -> TResult:
     if result.is_failure:
         error_msg = msg or str(result.error)
         raise AssertionError(error_msg)
@@ -218,7 +218,8 @@ class TestDeduplicationHelpers:
         content: str,
         msg: str | None = None,
         parse_method: str | None = None,
-        expected_type: type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass] | None = None,
+        expected_type: type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]
+        | None = None,
         should_succeed: bool | None = None,
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         if parse_method is None:
@@ -297,11 +298,10 @@ class TestDeduplicationHelpers:
         contents: list[str],
         msg: str | None = None,
     ) -> list[str]:
-        results: list[str] = []
-        for content in contents:
-            results.append(
-                _unwrap_result(service.convert(source, target, content), msg)
-            )
+        results: list[str] = [
+            _unwrap_result(service.convert(source, target, content), msg)
+            for content in contents
+        ]
         return results
 
     @staticmethod

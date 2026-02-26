@@ -32,7 +32,7 @@ from flext_tests import (
 TResult = TypeVar("TResult")
 
 
-def _unwrap_result(
+def _unwrap_result[TResult](
     result: r[TResult],
     *,
     msg: str | None = None,

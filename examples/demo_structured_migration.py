@@ -14,7 +14,6 @@ This example demonstrates the new structured migration feature that produces
 
 import tempfile
 from pathlib import Path
-from typing import cast
 
 from flext_ldif import FlextLdif
 
