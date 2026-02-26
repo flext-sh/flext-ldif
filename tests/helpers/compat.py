@@ -1,3 +1,4 @@
+"""Helper classes for testing LDIF functionality."""
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -44,6 +45,8 @@ class _FilterServiceProtocol(Protocol):
 
 
 class TestAssertions:
+    """Helper class for common test assertions."""
+
     @staticmethod
     def assert_success(result: r[TResult], msg: str | None = None) -> TResult:
         return _unwrap_result(result, msg)
@@ -125,6 +128,8 @@ class TestAssertions:
 
 
 class TestDeduplicationHelpers:
+    """Helper methods for filtering and deduplicating test results."""
+
     @staticmethod
     def filter_by_dn_and_unwrap(
         entries: list[m.Ldif.Entry] | r[list[m.Ldif.Entry]],
@@ -356,6 +361,8 @@ class TestDeduplicationHelpers:
 
 
 class OptimizedLdifTestHelpers:
+    """Helper methods for optimized LDIF parsing tests."""
+
     @staticmethod
     def create_parser() -> FlextLdifParser:
         return FlextLdifParser()
@@ -380,6 +387,8 @@ class OptimizedLdifTestHelpers:
 
 
 class FixtureTestHelpers:
+    """Helper methods for loading and validating test fixtures."""
+
     @staticmethod
     def load_fixture_and_validate_structure(
         fixture_path: Path,
@@ -412,6 +421,8 @@ class FixtureTestHelpers:
 
 
 class FlextLdifTestFactories:
+    """Factories for creating LDIF test entities."""
+
     @staticmethod
     def create_entry(
         dn: str,

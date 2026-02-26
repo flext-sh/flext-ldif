@@ -1,3 +1,8 @@
+"""Complete LDIF processing workflow examples.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+"""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -8,6 +13,7 @@ from flext_ldif.models import m
 
 
 def complete_ldif_processing_workflow() -> None:
+    """Run a complete LDIF processing workflow."""
     api = FlextLdif.get_instance()
     content = """dn: cn=Workflow User,dc=example,dc=com
 objectClass: person
@@ -33,6 +39,7 @@ sn: User
 
 
 def server_migration_workflow() -> None:
+    """Run a server migration workflow."""
     api = FlextLdif.get_instance()
     source_dir = Path("examples/workflow_source")
     target_dir = Path("examples/workflow_target")
@@ -63,6 +70,7 @@ sn: User
 
 
 def entry_building_and_processing_workflow() -> None:
+    """Run an entry building and processing workflow."""
     api = FlextLdif.get_instance()
     created: list[m.Ldif.Entry] = []
     for idx in range(2):
@@ -91,6 +99,7 @@ def entry_building_and_processing_workflow() -> None:
 
 
 def schema_driven_workflow() -> None:
+    """Run a schema driven workflow."""
     api = FlextLdif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(5):
@@ -108,6 +117,7 @@ def schema_driven_workflow() -> None:
 
 
 def acl_processing_workflow() -> None:
+    """Run an ACL processing workflow."""
     api = FlextLdif.get_instance()
     ldif_content = """dn: ou=Secure,dc=example,dc=com
 objectClass: organizationalUnit
@@ -125,6 +135,7 @@ aci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone"
 
 
 def batch_processing_workflow() -> None:
+    """Run a batch processing workflow."""
     api = FlextLdif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(10):
@@ -144,6 +155,7 @@ def batch_processing_workflow() -> None:
 
 
 def access_all_namespace_classes() -> None:
+    """Access all namespace classes."""
     api = FlextLdif.get_instance()
     entry_result = api.models.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
@@ -160,6 +172,7 @@ def access_all_namespace_classes() -> None:
 
 
 def error_handling_and_recovery() -> None:
+    """Run an error handling and recovery workflow."""
     api = FlextLdif.get_instance()
     parse_result = api.parse(
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
@@ -178,6 +191,7 @@ def error_handling_and_recovery() -> None:
 
 
 def main() -> None:
+    """Run all workflows."""
     complete_ldif_processing_workflow()
     server_migration_workflow()
     entry_building_and_processing_workflow()

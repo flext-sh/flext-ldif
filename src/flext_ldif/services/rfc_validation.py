@@ -1,3 +1,5 @@
+"""RFC validation services."""
+
 from __future__ import annotations
 
 import struct
@@ -21,6 +23,8 @@ from flext_ldif.models import m
 class FlextLdifValidation(
     FlextLdifServiceBase[m.Ldif.LdifResults.ValidationServiceStatus],
 ):
+    """FlextLdifValidation class."""
+
     attribute_names: list[str] = Field(default_factory=list)
     objectclass_names: list[str] = Field(default_factory=list)
     max_attr_value_length: int | None = Field(default=None)
@@ -46,19 +50,24 @@ class FlextLdifValidation(
 
     @classmethod
     def builder(cls) -> Self:
+        """Builder method."""
         return cls()
 
     def with_attribute_names(self, names: list[str]) -> Self:
+        """With_attribute_names method."""
         return self.model_copy(update={"attribute_names": names})
 
     def with_objectclass_names(self, names: list[str]) -> Self:
+        """With_objectclass_names method."""
         return self.model_copy(update={"objectclass_names": names})
 
     def with_max_attr_value_length(self, length: int) -> Self:
+        """With_max_attr_value_length method."""
         return self.model_copy(update={"max_attr_value_length": length})
 
     @d.track_performance()
     def build(self) -> m.Ldif.ValidationBatchResult:
+        """Build method."""
         result: dict[str, bool] = {}
 
         if self.attribute_names:
@@ -75,6 +84,7 @@ class FlextLdifValidation(
         return m.Ldif.ValidationBatchResult(results=results_flags)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
+        """Validate_attribute_name method."""
         try:
             return r[bool].ok(is_valid_rfc4512_descriptor(name))
         except (
@@ -87,6 +97,7 @@ class FlextLdifValidation(
             return r[bool].fail(f"Failed to validate attribute name: {e}")
 
     def validate_objectclass_name(self, name: str) -> r[bool]:
+        """Validate_objectclass_name method."""
         return self.validate_attribute_name(name)
 
     def validate_attribute_value(
@@ -94,6 +105,7 @@ class FlextLdifValidation(
         value: str,
         max_length: int | None = None,
     ) -> r[bool]:
+        """Validate_attribute_value method."""
         try:
             if not value:
                 return r[bool].ok(value=True)
@@ -115,6 +127,7 @@ class FlextLdifValidation(
         attr: str,
         value: t.ScalarValue,
     ) -> r[bool]:
+        """Validate_dn_component method."""
         try:
             if not isinstance(value, str):
                 return r[bool].ok(False)
@@ -129,6 +142,7 @@ class FlextLdifValidation(
         self,
         names: list[str],
     ) -> r[Mapping[str, bool]]:
+        """Validate_attribute_names method."""
         try:
             validated_names: dict[str, bool] = {}
 

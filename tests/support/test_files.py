@@ -140,8 +140,7 @@ class FileManager:
 
         """
         with cls() as manager:
-            files = manager.create_all_samples()
-            yield files
+            yield manager.create_all_samples()
 
     @classmethod
     @contextmanager
@@ -159,8 +158,7 @@ class FileManager:
 
         """
         with cls() as manager:
-            created_files = manager.create_file_set(files, extension=".ldif")
-            yield created_files
+            yield manager.create_file_set(files, extension=".ldif")
 
     def __init__(self) -> None:
         """Initialize FileManager."""

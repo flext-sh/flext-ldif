@@ -155,10 +155,7 @@ class ConvertToList(BaseModel):
         if isinstance(self.value, list):
             return list(self.value)
         if isinstance(self.value, tuple | set):
-            converted: list[t.GeneralValueType] = []
-            for item in self.value:
-                converted.append(item)
-            return converted
+            return list(self.value)
         try:
             return [self.value]
         except (TypeError, ValueError):
@@ -186,10 +183,7 @@ class ConvertToTuple(BaseModel):
     def convert(self) -> t.GeneralValueType | None:
         """Execute tuple conversion."""
         if isinstance(self.value, list | tuple):
-            converted: list[t.GeneralValueType] = []
-            for item in self.value:
-                converted.append(item)
-            return tuple(converted)
+            return tuple(self.value)
         try:
             return (self.value,)
         except (TypeError, ValueError):
