@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Protocol
 
 from flext_core import FlextLogger, r
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -72,17 +72,22 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(self, dn: str, lines: list[str]) -> None: ...
 
-        # ===== NESTED STATISTICS DATACLASS =====
+        # ===== NESTED STATISTICS MODEL =====
 
-        @dataclass
-        class Stats:
+        class Stats(BaseModel):
             """Statistics for entry writing."""
 
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
-            total_attributes: int = 0
-            folded_lines: int = 0
+            model_config = ConfigDict(extra="forbid")
+
+            total_entries: int = Field(default=0, description="Total entries written")
+            successful: int = Field(
+                default=0, description="Successfully written entries"
+            )
+            failed: int = Field(default=0, description="Failed entries")
+            total_attributes: int = Field(
+                default=0, description="Total attributes written"
+            )
+            folded_lines: int = Field(default=0, description="Folded lines")
 
         # ===== STATIC METHODS =====
 
@@ -335,15 +340,18 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(self) -> str: ...
 
-        # ===== NESTED STATISTICS DATACLASS =====
+        # ===== NESTED STATISTICS MODEL =====
 
-        @dataclass
-        class Stats:
+        class Stats(BaseModel):
             """Statistics for content writing."""
 
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
+            model_config = ConfigDict(extra="forbid")
+
+            total_entries: int = Field(default=0, description="Total entries written")
+            successful: int = Field(
+                default=0, description="Successfully written entries"
+            )
+            failed: int = Field(default=0, description="Failed entries")
 
         # ===== STATIC METHODS =====
 

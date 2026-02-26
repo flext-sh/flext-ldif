@@ -11,12 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.validation import (
-    AclFormatRules,
-    DnCaseRules,
-    EncodingRules,
-    ServerValidationRules,
-)
+from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.models import FlextLdifModels
 from flext_tests.models import FlextTestsModels
 
@@ -78,10 +73,10 @@ class TestsFlextLdifModels:
         StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
 
         # Validation rules for testing
-        ServerValidationRules = ServerValidationRules
-        EncodingRules = EncodingRules
-        DnCaseRules = DnCaseRules
-        AclFormatRules = AclFormatRules
+        ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
+        EncodingRules = FlextLdifModelsSettings.EncodingRules
+        DnCaseRules = FlextLdifModelsSettings.DnCaseRules
+        AclFormatRules = FlextLdifModelsSettings.AclFormatRules
 
 
 # Short aliases for tests

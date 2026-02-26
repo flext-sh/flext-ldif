@@ -375,7 +375,7 @@ class FlextLdifTestConftest:
     def ldif_processor_config(self) -> dict[str, object]:
         """LDIF processor configuration."""
         return {
-            "encoding": FlextConstants.Mixins.DEFAULT_ENCODING,
+            "encoding": FlextConstants.Utilities.DEFAULT_ENCODING,
             "strict_parsing": True,
             "max_entries": 10000,
             "validate_dn": True,

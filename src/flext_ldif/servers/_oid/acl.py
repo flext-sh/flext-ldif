@@ -6,10 +6,10 @@ import json
 import re
 import struct
 from collections.abc import Mapping
-from dataclasses import dataclass
 from typing import ClassVar, Literal
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -46,24 +46,33 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Get RFC + OID extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
 
-    @dataclass(frozen=True)
-    class OidAclMetadataConfig:
+    class OidAclMetadataConfig(BaseModel):
         """Configuration for building OID ACL metadata."""
 
-        acl_line: str
-        oid_subject_type: str
-        rfc_subject_type: str
-        oid_subject_value: str
-        target_dn: str
-        perms_dict: Mapping[str, bool]
-        target_attrs: list[str] | None = None
-        acl_filter: str | None = None
-        acl_constraint: str | None = None
-        bindmode: str | None = None
-        deny_group_override: bool | None = None
-        append_to_all: bool | None = None
-        bind_ip_filter: str | None = None
-        constrain_to_added_object: str | None = None
+        model_config = ConfigDict(frozen=True, extra="forbid")
+
+        acl_line: str = Field(description="ACL line content")
+        oid_subject_type: str = Field(description="OID subject type")
+        rfc_subject_type: str = Field(description="RFC subject type")
+        oid_subject_value: str = Field(description="OID subject value")
+        target_dn: str = Field(description="Target DN")
+        perms_dict: Mapping[str, bool] = Field(description="Permissions dictionary")
+        target_attrs: list[str] | None = Field(
+            default=None, description="Target attributes"
+        )
+        acl_filter: str | None = Field(default=None, description="ACL filter")
+        acl_constraint: str | None = Field(default=None, description="ACL constraint")
+        bindmode: str | None = Field(default=None, description="Bind mode")
+        deny_group_override: bool | None = Field(
+            default=None, description="Deny group override flag"
+        )
+        append_to_all: bool | None = Field(
+            default=None, description="Append to all flag"
+        )
+        bind_ip_filter: str | None = Field(default=None, description="Bind IP filter")
+        constrain_to_added_object: str | None = Field(
+            default=None, description="Constrain to added object"
+        )
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""

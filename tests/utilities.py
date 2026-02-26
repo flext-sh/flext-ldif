@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 from flext_tests.utilities import FlextTestsUtilities
 
@@ -25,7 +26,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             file_path: Path,
             expected_count: int,
             server_type: str = "rfc",
-        ) -> list[object]:
+        ) -> list[FlextLdifModels.Ldif.Entry]:
             file_content = file_path.read_text(encoding="utf-8")
             return _RfcTestHelpers.test_parse_ldif_content(
                 parser_service=parser_service,

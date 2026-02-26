@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from itertools import starmap
 
-from flext_ldif.protocols import p
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_tests import s as flext_tests_s
 
@@ -56,7 +56,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         cls,
         dn: str,
         attributes: dict[str, str | list[str]] | None = None,
-    ) -> p.Entry:
+    ) -> FlextLdifModels.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
@@ -83,7 +83,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
     def create_entries(
         cls,
         entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
-    ) -> list[p.Entry]:
+    ) -> list[FlextLdifModels.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:

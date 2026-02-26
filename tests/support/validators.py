@@ -5,13 +5,9 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core import FlextResult, u
 from flext_ldif.models import m
 from flext_ldif.protocols import p
-
-from tests import GenericFieldsDict
 
 
 class MockResultHelpers:
@@ -70,7 +66,7 @@ class TestValidators:
             Dict with validation results.
 
         """
-        dn_value = entry.dn.value if entry.dn is not None else ""
+        dn_value = entry.dn if entry.dn is not None else ""
         # entry.attributes is Attributes, need to access .attributes dict
         if entry.attributes is not None:
             if isinstance(entry.attributes, m.Ldif.Attributes):
@@ -114,7 +110,7 @@ class TestValidators:
             assert not chain_valid, "Expected failures but all succeeded"
 
     @staticmethod
-    def validate_result_success(result: FlextResult[Any]) -> GenericFieldsDict:
+    def validate_result_success(result: FlextResult[object]) -> dict[str, bool]:
         """Validate FlextResult success characteristics."""
         return {
             "is_success": result.is_success,

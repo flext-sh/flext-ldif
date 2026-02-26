@@ -31,10 +31,10 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     Short name 't' for convenient access in tests, 'tt' as test-specific alias.
     """
 
-    class Tests:
+    class LdifTests:
         """flext-ldif-specific test type definitions namespace.
 
-        Use tt.Tests.* for flext-ldif-specific test types.
+        Use tt.LdifTests.* for flext-ldif-specific test types.
         Use t.Tests.* for generic test types from FlextTestsTypes.
         """
 
@@ -62,7 +62,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 # Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
 
-GenericFieldsDict = TestsFlextLdifTypes.Tests.Fixtures.GenericFieldsDict
+GenericFieldsDict = TestsFlextLdifTypes.LdifTests.Fixtures.GenericFieldsDict
 
 __all__ = [
     "GenericFieldsDict",

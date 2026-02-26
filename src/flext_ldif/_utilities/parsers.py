@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Mapping
-from dataclasses import dataclass
 from typing import Protocol
 
 from flext_core import FlextLogger, FlextResult, r
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif.models import m
 
@@ -58,17 +58,22 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(self, line: str) -> str | None: ...
 
-        # ===== NESTED STATISTICS DATACLASS =====
+        # ===== NESTED STATISTICS MODEL =====
 
-        @dataclass
-        class Stats:
+        class Stats(BaseModel):
             """Statistics for entry parsing."""
 
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
-            total_attributes: int = 0
-            base64_values: int = 0
+            model_config = ConfigDict(extra="forbid")
+
+            total_entries: int = Field(default=0, description="Total entries parsed")
+            successful: int = Field(
+                default=0, description="Successfully parsed entries"
+            )
+            failed: int = Field(default=0, description="Failed entries")
+            total_attributes: int = Field(
+                default=0, description="Total attributes parsed"
+            )
+            base64_values: int = Field(default=0, description="Base64-encoded values")
 
         # ===== STATIC METHODS =====
 
@@ -327,15 +332,18 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(self, header: str) -> Mapping[str, str]: ...
 
-        # ===== NESTED STATISTICS DATACLASS =====
+        # ===== NESTED STATISTICS MODEL =====
 
-        @dataclass
-        class Stats:
+        class Stats(BaseModel):
             """Statistics for content parsing."""
 
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
+            model_config = ConfigDict(extra="forbid")
+
+            total_entries: int = Field(default=0, description="Total entries parsed")
+            successful: int = Field(
+                default=0, description="Successfully parsed entries"
+            )
+            failed: int = Field(default=0, description="Failed entries")
 
         # ===== STATIC METHODS =====
 

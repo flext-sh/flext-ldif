@@ -29,10 +29,11 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
     - Only flext-ldif-specific test protocols allowed
     """
 
-    class Tests:
-        """Project-specific test protocols.
+    class LdifTests:
+        """Project-specific test protocols for flext-ldif.
 
-        Extends FlextTestsProtocols.Tests with flext-ldif-specific protocols.
+        Separated from FlextTestsProtocols.Tests to avoid bad-override.
+        Access via p.LdifTests.* for flext-ldif-specific protocols.
         """
 
         class Ldif:
