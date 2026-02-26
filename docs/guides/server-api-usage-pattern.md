@@ -21,7 +21,7 @@
 **Data**: 2025-11-18
 **Status**: PADRÃO OBRIGATÓRIO
 
-______________________________________________________________________
+---
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
@@ -43,7 +43,7 @@ rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO
 - Quebra o padrão singleton/registry
 - Dificulta manutenção e testes
 
-______________________________________________________________________
+---
 
 ## ✅ PADRÃO CORRETO (Obrigatório)
 
@@ -68,7 +68,7 @@ rfc_quirk: FlextLdifServersBase = server.quirk("rfc")
 - ✅ API única e consistente
 - ✅ Evita duplicação de funcionalidade
 
-______________________________________________________________________
+---
 
 ## 📝 Uso em Testes (Fixtures)
 
@@ -123,7 +123,7 @@ def test_conversion_oid_to_oud(
     assert result.is_success
 ```
 
-______________________________________________________________________
+---
 
 ## 🔄 Migração de Código Existente
 
@@ -164,7 +164,7 @@ def my_function(oid: FlextLdifServersBase) -> None:
     pass
 ```
 
-______________________________________________________________________
+---
 
 ## 📊 Status de Migração
 
@@ -182,7 +182,7 @@ ______________________________________________________________________
 - ⏳ `tests/integration/*.py` - Tests de integração
 - ⏳ `tests/helpers/*.py` - Helpers
 
-______________________________________________________________________
+---
 
 ## 🎯 Servers Disponíveis via API
 
@@ -205,7 +205,7 @@ server.quirk("novell")   # Novell eDirectory
 server.quirk("tivoli")   # IBM Tivoli DS
 ```
 
-______________________________________________________________________
+---
 
 ## 🔍 Verificação
 
@@ -222,7 +222,7 @@ grep -r "from flext_ldif.servers.\(oid\|oud\|rfc\) import" src/
 grep -r "server.quirk(" src/
 ```
 
-______________________________________________________________________
+---
 
 ## 📚 Referências
 
@@ -231,6 +231,6 @@ ______________________________________________________________________
 - **Exemplo Correto**: `src/flext_ldif/services/conversion.py` - método `_resolve_quirk()`
 - **Fixtures Corretas**: `tests/conftest.py` - server, oid_quirk, oud_quirk, rfc_quirk
 
-______________________________________________________________________
+---
 
 **IMPORTANTE**: Este padrão é OBRIGATÓRIO para todo código novo. Código existente deve ser migrado progressivamente.

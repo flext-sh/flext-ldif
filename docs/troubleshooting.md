@@ -626,6 +626,6 @@ For critical production issues:
 1. Document issue with support information
 1. Contact FLEXT support team with detailed report
 
-______________________________________________________________________
+---
 
 This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues while maintaining integration with FLEXT ecosystem support patterns.

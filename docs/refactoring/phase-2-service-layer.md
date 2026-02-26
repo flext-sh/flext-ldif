@@ -33,7 +33,7 @@ Phase 2 refactors the flext-ldif architecture to create a proper service layer w
 
 **Target State**: Services handle all business logic; servers provide configuration and delegate to services.
 
-______________________________________________________________________
+---
 
 ## Current Architecture Problem
 
@@ -72,7 +72,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - Services in `/services` directory are underutilized (3 usages)
 - Each server reimplements similar logic with minor variations
 
-______________________________________________________________________
+---
 
 ## Target Architecture
 
@@ -128,7 +128,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - ✅ Better separation of concerns
 - ✅ Cleaner code with less duplication
 
-______________________________________________________________________
+---
 
 ## Implementation Plan
 
@@ -237,7 +237,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         return self.schema_service.parse_attribute(attr_def)
 ```
 
-______________________________________________________________________
+---
 
 ## Service Composition Pattern
 
@@ -259,7 +259,7 @@ services = FlextLdifServiceComposer.create_services(self.config)
 attribute = services.schema.parse_attribute(attr_def)
 ```
 
-______________________________________________________________________
+---
 
 ## Migration Path
 
@@ -287,7 +287,7 @@ ______________________________________________________________________
 - Update all server implementations
 - Remove nested classes
 
-______________________________________________________________________
+---
 
 ## Success Criteria
 
@@ -299,7 +299,7 @@ ______________________________________________________________________
 - [ ] Server-specific logic is in config, not code
 - [ ] Documentation updated with new patterns
 
-______________________________________________________________________
+---
 
 ## Related Documentation
 

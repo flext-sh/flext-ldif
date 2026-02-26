@@ -407,6 +407,6 @@ Once you have FLEXT-LDIF installed and working:
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
-______________________________________________________________________
+---
 
 This getting started guide provides the foundation for using FLEXT-LDIF effectively within the FLEXT ecosystem while maintaining software development practices.

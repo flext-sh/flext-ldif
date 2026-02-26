@@ -68,15 +68,12 @@ result = ldif.parse(file_path)  # No direct parser access
 **Alternatives Considered**:
 
 1. **Direct Parser Access**: Allow direct use of parsers with optional quirks
-
    - **Rejected**: Would compromise standards compliance and create bypass paths
 
 1. **Server-Specific Parsers**: Separate parsers for each LDAP server
-
    - **Rejected**: Would duplicate RFC logic and complicate maintenance
 
 1. **Configuration-Driven Extensions**: Runtime configuration instead of code
-
    - **Rejected**: Less type-safe and harder to test server-specific logic
 
 **Related ADRs**:

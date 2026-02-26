@@ -1354,7 +1354,7 @@ server_type=None  # Pure RFC 2849/4512 compliance
 server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
 ```
 
-______________________________________________________________________
+---
 
 This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY quirk_registry, generic migration pipeline, and comprehensive quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
 

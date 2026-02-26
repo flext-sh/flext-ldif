@@ -528,6 +528,6 @@ def get_config_version() -> str:
 | `FLEXT_LDIF_BUFFER_SIZE`          | `buffer_size`               | `16384`  |
 | `FLEXT_LDIF_LOG_LEVEL`            | `log_level`                 | `DEBUG`  |
 
-______________________________________________________________________
+---
 
 This configuration guide provides comprehensive coverage of FLEXT-LDIF configuration options while maintaining integration with FLEXT ecosystem patterns and professional configuration management practices.

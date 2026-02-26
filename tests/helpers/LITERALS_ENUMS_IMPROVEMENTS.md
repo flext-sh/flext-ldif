@@ -19,22 +19,18 @@
 #### Melhorias Aplicadas
 
 1. **TypeAlias Adicionado**:
-
    - Import de `TypeAlias` adicionado para melhor type checking
 
 1. **TestLiterals Class Criada**:
-
    - Classe para centralizar type aliases de Literals de produção
    - Reutiliza `FlextLdifConstants.LiteralTypes.*` sem duplicar
    - Type aliases para: `ServerTypeLiteral`, `ValidationLevelLiteral`, `CategoryLiteral`
 
 1. **TestServerTypes Melhorado**:
-
    - Adicionado `Final[str]` para garantir imutabilidade e type safety
    - Documentação melhorada
 
 1. **TestConfig Corrigido**:
-
    - Removido uso incorreto de Literal types como valores
    - Adicionado type alias `ValidationLevelLiteral` correto
 
@@ -49,19 +45,16 @@
 #### Melhorias Aplicadas
 
 1. **Parâmetros `server_type` Atualizados**:
-
    - De `str | None` → `FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None`
    - Mantém compatibilidade retroativa com `str`
    - 9 ocorrências atualizadas
 
 1. **Parâmetros `target_server_type` Atualizados**:
-
    - De `str` → `FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str`
    - Mantém compatibilidade retroativa com `str`
    - 3 ocorrências atualizadas
 
 1. **Import Adicionado**:
-
    - Import de `FlextLdifTestConstants` para usar os Literals
 
 **Benefícios**:
