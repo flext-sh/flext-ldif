@@ -515,7 +515,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 attr_map = entry.attributes.attributes
                 matches_values = True
                 for attr_name, expected in attributes.items():
-                    expected_raw: object = expected
+                    expected_raw: t.Ldif.JsonValue = expected
                     entry_values = attr_map.get(attr_name)
                     if expected_raw is None:
                         continue

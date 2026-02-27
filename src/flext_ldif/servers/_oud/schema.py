@@ -12,6 +12,7 @@ from flext_ldif.models import m
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -21,7 +22,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: object | None = None,
+        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""

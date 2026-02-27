@@ -14,6 +14,7 @@ from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -27,7 +28,7 @@ class FlextLdifServersOidSchema(
 
     def __init__(
         self,
-        schema_service: object | None = None,
+        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         _parent_quirk: FlextLdifServersRfc | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
@@ -39,7 +40,7 @@ class FlextLdifServersOidSchema(
             and (v is None or v.__class__ in {str, float, bool})
         }
 
-        schema_service_typed: object | None = (
+        schema_service_typed: p.Ldif.SchemaQuirkProtocol | None = (
             schema_service if schema_service is not None else None
         )
 

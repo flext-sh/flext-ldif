@@ -7,7 +7,7 @@ import re
 from collections.abc import Mapping
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from flext_core import FlextLogger, FlextResult, FlextService, u as core_u
 from pydantic import Field, ValidationError
@@ -18,6 +18,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -34,7 +35,7 @@ class FlextLdifServersBaseEntry(
     priority: int = 0
     """Quirk priority (lower number = higher priority)."""
 
-    parent_quirk: object | None = Field(
+    parent_quirk: Self | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -43,8 +44,8 @@ class FlextLdifServersBaseEntry(
 
     def __init__(
         self,
-        entry_service: object | None = None,
-        _parent_quirk: object | None = None,
+        entry_service: p.Ldif.EntryQuirkProtocol | None = None,
+        _parent_quirk: Self | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize entry quirk service with optional DI service injection."""

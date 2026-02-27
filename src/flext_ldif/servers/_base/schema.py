@@ -19,6 +19,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -58,7 +59,7 @@ class FlextLdifServersBaseSchema(
         - RFC 4512 compliant baseline (no extensions)
         """
 
-    parent_quirk: object | None = Field(
+    parent_quirk: Self | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -77,13 +78,13 @@ class FlextLdifServersBaseSchema(
         repr=False,
         description="ObjectClass definition for auto-execute pattern",
     )
-    attr_model: object | None = Field(
+    attr_model: m.Ldif.SchemaAttribute | None = Field(
         default=None,
         exclude=True,
         repr=False,
         description="SchemaAttribute model for auto-execute pattern",
     )
-    oc_model: object | None = Field(
+    oc_model: m.Ldif.SchemaObjectClass | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -98,8 +99,8 @@ class FlextLdifServersBaseSchema(
 
     def __new__(
         cls,
-        _schema_service: object | None = None,
-        _parent_quirk: object | None = None,
+        _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
+        _parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to FlextService."""
@@ -114,8 +115,8 @@ class FlextLdifServersBaseSchema(
 
     def __init__(
         self,
-        _schema_service: object | None = None,
-        _parent_quirk: object | None = None,
+        _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
+        _parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
@@ -646,14 +647,26 @@ class FlextLdifServersBaseSchema(
         *,
         data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None) = None,
         operation: str | None = None,
-        **kwargs: Mapping[str, t.GeneralValueType],
+        **kwargs: t.GeneralValueType,
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         if data is None:
             data_raw = kwargs.get("data")
             if data_raw is not None:
                 try:
-                    data = str(data_raw) if isinstance(data_raw, str) else None
+                    if isinstance(data_raw, str):
+                        data = data_raw
+                    else:
+                        try:
+                            data = m.Ldif.SchemaAttribute.model_validate(data_raw)
+                        except (
+                            ValueError,
+                            KeyError,
+                            AttributeError,
+                            UnicodeDecodeError,
+                            struct.error,
+                        ):
+                            data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
                 except (
                     ValueError,
                     KeyError,
@@ -662,28 +675,6 @@ class FlextLdifServersBaseSchema(
                     struct.error,
                 ):
                     data = None
-                if data is None:
-                    try:
-                        data = m.Ldif.SchemaAttribute.model_validate(data_raw)
-                    except (
-                        ValueError,
-                        KeyError,
-                        AttributeError,
-                        UnicodeDecodeError,
-                        struct.error,
-                    ):
-                        data = None
-                if data is None:
-                    try:
-                        data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
-                    except (
-                        ValueError,
-                        KeyError,
-                        AttributeError,
-                        UnicodeDecodeError,
-                        struct.error,
-                    ):
-                        data = None
 
         if operation is None:
             operation_raw = kwargs.get("operation")

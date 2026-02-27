@@ -151,12 +151,12 @@ class FlextLdifUtilitiesMetadata:
                 )
 
     @staticmethod
-    def _is_metadata_scalar(value: object) -> bool:
+    def _is_metadata_scalar(value: t.ConfigMapValue) -> bool:
         return isinstance(value, (str, int, float, bool, datetime, type(None)))
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: object,
+        value: t.ConfigMapValue,
     ) -> TypeGuard[str | int | float | bool | datetime | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 

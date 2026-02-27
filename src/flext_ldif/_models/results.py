@@ -27,7 +27,7 @@ class DynamicCounts(FlextLdifModelsBase):
         setattr(self, key, value)
 
     @staticmethod
-    def _to_count(value: object) -> int:
+    def _to_count(value: str | int | float) -> int:
         if value.__class__ in {int, float}:
             return int(str(value))
         return 0
@@ -47,7 +47,7 @@ class DynamicCounts(FlextLdifModelsBase):
             return self._to_count(v)
         return default
 
-    def __contains__(self, key: object) -> bool:
+    def __contains__(self, key: str) -> bool:
         extra = self.__pydantic_extra__
         return extra is not None and key in extra
 
@@ -618,14 +618,14 @@ class FlextLdifModelsResults:
 
     class DictAccessibleValue(FlextModelsEntity.Value):
         @staticmethod
-        def _as_scalar(value: object) -> str | int | float | bool | None:
+        def _as_scalar(value: t.ConfigMapValue) -> str | int | float | bool | None:
             if value is None:
                 return None
             if value.__class__ is str:
                 return str(value)
             return str(value)
 
-        def _resolve_key(self, key: str) -> object:
+        def _resolve_key(self, key: str) -> t.ConfigMapValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__

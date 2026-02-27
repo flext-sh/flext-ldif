@@ -14,6 +14,7 @@ from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -148,7 +149,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __new__(
         cls,
-        acl_service: object | None = None,
+        acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
@@ -192,7 +193,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __init__(
         self,
-        acl_service: object | None = None,
+        acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
@@ -203,7 +204,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             if k not in {"_parent_quirk", "parent_quirk"}
         }
 
-        acl_service_typed: object | None = (
+        acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
             acl_service if acl_service is not None else None
         )
 

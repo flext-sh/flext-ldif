@@ -47,10 +47,10 @@ class FlextLdifUtilitiesServer:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
-        constants_obj: object | None = vars(cls_with_constants).get("Constants")
+        constants_obj: type | None = vars(cls_with_constants).get("Constants")
         if not isinstance(constants_obj, type):
             return None
-        server_type_raw: object | None = vars(constants_obj).get("SERVER_TYPE")
+        server_type_raw: str | None = vars(constants_obj).get("SERVER_TYPE")
         if (
             server_type_raw is not None
             and isinstance(server_type_raw, str)
@@ -70,7 +70,7 @@ class FlextLdifUtilitiesServer:
             # Check if module is loaded (safe lookup without dynamic import)
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
-                parent_server_cls_obj: object | None = vars(parent_module).get(
+                parent_server_cls_obj: type | None = vars(parent_module).get(
                     parent_class_name,
                 )
                 if isinstance(parent_server_cls_obj, type):

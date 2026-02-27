@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.constants import c
+from flext_ldif.typings import t
 
 _MISSING_ATTR = object()
 """Sentinel for _has_attr — a single canonical instance shared across all callers."""
@@ -19,7 +20,7 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: object, attr_name: str) -> bool:
+    def _has_attr(obj: t.ConfigMapValue, attr_name: str) -> bool:
         """Check if an object has a non-None attribute (canonical implementation).
 
         Uses a sentinel object to distinguish between attributes that are None

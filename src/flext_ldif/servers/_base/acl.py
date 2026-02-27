@@ -15,6 +15,7 @@ from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -42,8 +43,8 @@ class FlextLdifServersBaseSchemaAcl(
 
     def __init__(
         self,
-        acl_service: object | None = None,
-        _parent_quirk: object | None = None,
+        acl_service: p.Ldif.AclQuirkProtocol | None = None,
+        _parent_quirk: Self | None = None,
         **_kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
@@ -212,7 +213,9 @@ class FlextLdifServersBaseSchemaAcl(
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
-    def _coerce_acl_data(self, value: object) -> str | m.Ldif.Acl | None:
+    def _coerce_acl_data(
+        self, value: str | m.Ldif.Acl | t.ConfigMapValue
+    ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
             return None
@@ -228,7 +231,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: object) -> str | None:
+    def _coerce_operation(self, value: t.Ldif.JsonValue) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -314,8 +317,8 @@ class FlextLdifServersBaseSchemaAcl(
         if not original_format:
             return FlextResult[str].ok(acl_value)
 
-        sanitize_result_raw: object = FlextLdifUtilitiesACL.sanitize_acl_name(
-            original_format
+        sanitize_result_raw: tuple[str, bool] | str = (
+            FlextLdifUtilitiesACL.sanitize_acl_name(original_format)
         )
 
         sanitized_name: str

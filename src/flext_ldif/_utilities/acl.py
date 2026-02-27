@@ -27,7 +27,7 @@ class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
     @staticmethod
-    def _is_metadata_scalar_or_container(value: object) -> bool:
+    def _is_metadata_scalar_or_container(value: t.GeneralValueType) -> bool:
         """Check supported metadata extension value shape."""
         return value is None or value.__class__ in {str, int, float, bool, list, dict}
 
@@ -725,7 +725,7 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule config item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: object = extensions.get(ext_key) if extensions else None
+            value_raw: t.GeneralValueType = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
 
@@ -788,7 +788,7 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target config item."""
             ext_key, format_template = target_item
-            value_raw: object = extensions.get(ext_key) if extensions else None
+            value_raw: t.GeneralValueType = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
             return format_template.format(value=str(value_raw))
@@ -835,7 +835,7 @@ class FlextLdifUtilitiesACL:
         if not converted_from_value:
             return []
 
-        comments_value: object = extensions.get(comments_key) if extensions else None
+        comments_value: t.GeneralValueType = extensions.get(comments_key) if extensions else None
         if comments_value is None:
             return []
         normalized: list[str]

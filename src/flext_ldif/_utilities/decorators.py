@@ -22,7 +22,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _get_server_type_from_class(
-        obj: object,
+        obj: t.GeneralValueType,
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
@@ -40,7 +40,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: object | None,
+        result_value: t.GeneralValueType | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -89,7 +89,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object,
+                self: t.GeneralValueType,
                 arg: str,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
@@ -138,7 +138,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.WriteMethod:
             @wraps(func)
             def wrapper(
-                self: object,
+                self: t.GeneralValueType,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
@@ -158,7 +158,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.ParseMethod:
             @wraps(func)
             def wrapper(
-                self: object,
+                self: t.GeneralValueType,
                 arg: t.Ldif.Decorators.ParseMethodArg,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
@@ -198,7 +198,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.WriteMethod:
             @wraps(func)
             def wrapper(
-                self: object,
+                self: t.GeneralValueType,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:

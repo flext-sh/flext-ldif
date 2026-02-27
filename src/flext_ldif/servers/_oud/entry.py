@@ -27,6 +27,7 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -145,7 +146,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def __init__(
         self,
-        entry_service: object | None = None,
+        entry_service: p.Ldif.EntryQuirkProtocol | None = None,
         _parent_quirk: FlextLdifServersBase | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
@@ -172,7 +173,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Use same pattern as FlextLdifServersRfcEntry - call base class directly
         # Cast entry_service to protocol type for type compatibility
 
-        entry_service_typed: object | None = (
+        entry_service_typed: p.Ldif.EntryQuirkProtocol | None = (
             entry_service if entry_service is not None else None
         )
 
@@ -1331,7 +1332,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _normalize_acl_values(
-        acl_values_raw: object,
+        acl_values_raw: t.MetadataAttributeValue,
     ) -> list[str] | str | m.Ldif.Acl:
         """Normalize ACL values to expected type for comment generation.
 
@@ -1352,7 +1353,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _parse_commented_values(
-        commented_raw: object,
+        commented_raw: t.MetadataAttributeValue,
     ) -> dict[str, t.MetadataAttributeValue] | None:
         """Parse commented ACL values from raw storage format.
 
@@ -1363,7 +1364,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        parsed: object
+        parsed: t.MetadataAttributeValue
         if isinstance(commented_raw, str):
             parsed = json.loads(commented_raw)
         else:
@@ -1539,7 +1540,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
-    def _normalize_aci_value_simple(self, value: object) -> list[str] | str | None:
+    def _normalize_aci_value_simple(self, value: t.MetadataAttributeValue) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
         if isinstance(value, list):
             return [str(v) for v in value]

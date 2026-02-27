@@ -23,7 +23,7 @@ class FlextLdifModelsMetadata:
         transformations: list[object] | None = Field(default=None)
 
         @staticmethod
-        def coerce_metadata_value(value: object) -> t.MetadataAttributeValue:
+        def coerce_metadata_value(value: str | int | float | bool | None | Sequence[str]) -> t.MetadataAttributeValue:
             """Coerce dynamic values to MetadataAttributeValue-compatible output."""
             if value is None:
                 return None
@@ -112,7 +112,7 @@ class FlextLdifModelsMetadata:
                 return self.coerce_metadata_value(value)
             raise KeyError(key)
 
-        def __setitem__(self, key: str, value: object) -> None:
+        def __setitem__(self, key: str, value: t.MetadataAttributeValue) -> None:
             """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 

@@ -54,7 +54,7 @@ class FlextLdifUtilitiesEntry:
         ]
 
     @staticmethod
-    def _stringify_attribute_value(value: object) -> str:
+    def _stringify_attribute_value(value: str | bytes | int | float | bool) -> str:
         if isinstance(value, bytes):
             return value.decode("utf-8", errors="replace")
         return str(value)
@@ -358,7 +358,7 @@ class FlextLdifUtilitiesEntry:
         attributes: Mapping[str, list[t.Ldif.AttributeValue]],
         *,
         config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
-        **kwargs: object,
+        **kwargs: str | int | float | bool | None,
     ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
@@ -443,7 +443,7 @@ class FlextLdifUtilitiesEntry:
     def matches_criteria(
         entry: m.Ldif.Entry,
         config: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
-        **kwargs: object,
+        **kwargs: str | int | float | bool | None,
     ) -> bool:
         """Check multiple entry criteria in one call."""
         if config is None:
@@ -495,7 +495,7 @@ class FlextLdifUtilitiesEntry:
     def transform_batch(
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
-        **kwargs: object,
+        **kwargs: str | int | float | bool | None,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
         if config is None:
@@ -584,7 +584,7 @@ class FlextLdifUtilitiesEntry:
     def filter_batch(
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
-        **kwargs: object,
+        **kwargs: str | int | float | bool | None,
     ) -> FlextResult[list[m.Ldif.Entry]]:
         """Filter entries based on criteria."""
         if config is None:

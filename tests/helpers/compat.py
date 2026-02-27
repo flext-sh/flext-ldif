@@ -1,4 +1,5 @@
 """Helper classes for testing LDIF functionality."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

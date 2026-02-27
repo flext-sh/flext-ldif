@@ -8,17 +8,20 @@ from __future__ import annotations
 from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
 from typing import TypeGuard
 
+from flext_ldif.models import m
+from flext_ldif.typings import t
+
 
 class FlextLdifTypeHelpers:
     """Type guards and helpers for LDIF (single class per module)."""
 
     @staticmethod
-    def is_entry_sequence(obj: object) -> TypeGuard[ABCSequence[object]]:
+    def is_entry_sequence(obj: object) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and not isinstance(obj, str | bytes | dict)
 
     @staticmethod
-    def is_mapping_type(obj: object) -> TypeGuard[ABCMapping[str, object]]:
+    def is_mapping_type(obj: object) -> TypeGuard[ABCMapping[str, t.ConfigMapValue]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, ABCMapping) and not isinstance(obj, str | bytes)
 

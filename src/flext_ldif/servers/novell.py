@@ -14,6 +14,7 @@ from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
+from flext_ldif.typings import t
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -460,7 +461,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
 
-        def model_post_init(self, _context: object, /) -> None:
+        def model_post_init(self, _context: t.GeneralValueType, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         def can_handle(

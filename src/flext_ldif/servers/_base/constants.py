@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from typing import TYPE_CHECKING
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -53,28 +54,28 @@ class FlextLdifServersBaseQuirkHelpers:
 
     @staticmethod
     def get_server_type_from_utilities(
-        quirk_class: type[object],
+        quirk_class: type[p.Ldif.SchemaQuirkProtocol],
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server type from utilities using type-safe access pattern."""
         return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
     @staticmethod
-    def get_priority_from_parent(parent: object | None) -> int:
+    def get_priority_from_parent(parent: p.Ldif.SchemaQuirkProtocol | None) -> int:
         """Get priority from parent server class Constants."""
         if parent is None:
             return 100
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_raw: object = getattr(constants_attr, "PRIORITY", 100)
+        priority_raw: int | t.GeneralValueType = getattr(constants_attr, "PRIORITY", 100)
         if isinstance(priority_raw, int):
             return priority_raw
         return 100
 
     @staticmethod
-    def get_parent_quirk_safe(instance: object) -> object | None:
+    def get_parent_quirk_safe(instance: p.Ldif.SchemaQuirkProtocol) -> p.Ldif.SchemaQuirkProtocol | None:
         """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: object | None = getattr(instance, "_parent_quirk", None)
+        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(instance, "_parent_quirk", None)
         if (
             parent_raw is not None
             and getattr(parent_raw, "_parent_quirk", None) is not None
@@ -97,7 +98,7 @@ class QuirkMethodsMixin:
         parent = self._get_parent_quirk_safe()
         return FlextLdifServersBaseQuirkHelpers.get_priority_from_parent(parent)
 
-    def _get_parent_quirk_safe(self) -> object | None:
+    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirkProtocol | None:
         """Get _parent_quirk attribute safely with type narrowing."""
         return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
 

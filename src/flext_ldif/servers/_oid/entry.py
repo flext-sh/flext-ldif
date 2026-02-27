@@ -20,6 +20,7 @@ from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -313,7 +314,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
 
         if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: object = converted_attrs_data.get(
+            boolean_conversions_obj: t.GeneralValueType = converted_attrs_data.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )
@@ -924,7 +925,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _merge_parsed_acl_extensions(
         self,
-        acl_quirk: object,
+        acl_quirk: p.Ldif.AclQuirkProtocol | object,
         acl_value: str,
         current_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:

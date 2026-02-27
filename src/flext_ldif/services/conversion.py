@@ -48,12 +48,12 @@ class FlextLdifConversion(
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
 
     @staticmethod
-    def _has_attr(obj: object, attr_name: str) -> bool:
+    def _has_attr(obj: t.GeneralValueType, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: object,
+        obj: t.GeneralValueType,
     ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -306,7 +306,7 @@ class FlextLdifConversion(
             return FlextResult.fail(f"Model conversion failed: {e}")
 
     @staticmethod
-    def _normalize_metadata_value(value: object) -> t.MetadataAttributeValue:
+    def _normalize_metadata_value(value: t.GeneralValueType) -> t.MetadataAttributeValue:
         """Normalize metadata value to proper type."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value if value is not None else ""
@@ -317,7 +317,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: object,
+        boolean_conversions: t.GeneralValueType,
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
@@ -339,7 +339,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: object,
+        original_attribute_case: t.GeneralValueType,
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
         """Analyze attribute case for target compatibility."""
@@ -357,7 +357,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: object,
+        original_format_details: t.GeneralValueType,
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
         """Analyze DN spacing for target compatibility."""
@@ -397,7 +397,7 @@ class FlextLdifConversion(
         get_format_details = u.mapper().prop("original_format_details")
 
         boolean_raw = get_boolean(source_metadata)
-        boolean_conversions: object = (
+        boolean_conversions: t.GeneralValueType = (
             boolean_raw if isinstance(boolean_raw, dict) else {}
         )
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
@@ -1251,7 +1251,7 @@ class FlextLdifConversion(
     ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: object) -> FlextTypes.GeneralValueType:
+        def to_general_value(value: t.GeneralValueType) -> FlextTypes.GeneralValueType:
             if value is None:
                 return None
             if isinstance(value, str):
@@ -1580,7 +1580,7 @@ class FlextLdifConversion(
         return r[_TSchemaConversionValue].ok(value)
 
     @staticmethod
-    def _schema_passthrough_ok(value: object) -> r[_TSchemaConversionValue] | None:
+    def _schema_passthrough_ok(value: t.GeneralValueType) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
         if isinstance(value, dict):
@@ -2092,7 +2092,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> object | None:
+    ) -> t.GeneralValueType | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk, "parse_attribute"
@@ -2106,7 +2106,7 @@ class FlextLdifConversion(
                 return quirk
             return None
 
-        schema_quirk_raw: object | None = getattr(quirk, "schema_quirk", None)
+        schema_quirk_raw: t.GeneralValueType | None = getattr(quirk, "schema_quirk", None)
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
             if all(
@@ -2120,7 +2120,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: object,
+        quirk_schema: t.GeneralValueType,
         test_attr_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -2151,7 +2151,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: object,
+        quirk_schema: t.GeneralValueType,
         test_oc_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:

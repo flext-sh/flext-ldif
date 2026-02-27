@@ -21,6 +21,8 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.utilities import u
+from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -36,7 +38,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize base quirk and its nested quirks."""
         init_kwargs: dict[str, str | int | float | bool | None] = {}
         for key, value in kwargs.items():
@@ -106,7 +108,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def get_schema_quirk(
         self,
-    ) -> object:
+    ) -> p.Ldif.SchemaQuirkProtocol:
         """Get schema quirk instance."""
         return self.schema_quirk
 
@@ -186,13 +188,13 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def __new__(
         cls,
-        **kwargs: object,
+        **kwargs: t.GeneralValueType,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
 
         filtered_kwargs: dict[str, str | float | bool | None] = {}
-        execute_kwargs: dict[str, object] = {}
+        execute_kwargs: dict[str, t.GeneralValueType] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)) or value is None:
@@ -217,7 +219,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: Mapping[str, object],
+        kwargs: Mapping[str, t.GeneralValueType],
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -491,18 +493,18 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     @classmethod
     def _register_in_registry(
         cls,
-        quirk_instance: (object | FlextLdifServersBase),
-        registry: object,
+        quirk_instance: (p.Ldif.SchemaQuirkProtocol | FlextLdifServersBase),
+        registry: p.Ldif.QuirkRegistryProtocol | object,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: object,
+            registry_obj: p.Ldif.QuirkRegistryProtocol | object,
         ) -> (
             Callable[
                 [
                     str,
-                    object,
+                    p.Ldif.SchemaQuirkProtocol | object,
                 ],
                 None,
             ]
@@ -513,7 +515,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if method is not None and callable(method):
                 captured = method
 
-                def typed_register(server_type: str, quirk: object) -> None:
+                def typed_register(server_type: str, quirk: p.Ldif.SchemaQuirkProtocol | object) -> None:
                     _ = captured(server_type, quirk)
 
                 return typed_register

@@ -20,6 +20,7 @@ from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -45,8 +46,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def __init__(
         self,
-        acl_service: object | None = None,
-        _parent_quirk: object | None = None,
+        acl_service: p.Ldif.AclQuirkProtocol | None = None,
+        _parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk."""
@@ -54,11 +55,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             k: v for k, v in kwargs.items() if k != "_parent_quirk"
         }
 
-        acl_service_typed: object | None = (
+        acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
             acl_service if acl_service is not None else None
         )
 
-        parent_quirk_typed: object | None = (
+        parent_quirk_typed: p.Ldif.SchemaQuirkProtocol | None = (
             _parent_quirk if _parent_quirk is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
@@ -244,7 +245,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return value if isinstance(value, str) else None
 
     @staticmethod
-    def _scalar_or_list_value(value: object) -> bool:
+    def _scalar_or_list_value(value: t.MetadataAttributeValue) -> bool:
         """Check if value is scalar metadata value or list."""
         return value is None or value.__class__ in {str, int, float, bool, list}
 
