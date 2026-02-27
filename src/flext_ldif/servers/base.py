@@ -46,7 +46,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 init_kwargs[key] = None
             elif isinstance(value, (str, int, float, bool)):
                 init_kwargs[key] = value
-        super().__init__(**init_kwargs)
+        super().__init__()
 
         parent_ref: FlextLdifServersBase = self
 

@@ -181,7 +181,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             self,
             entry_service_typed,  # Pass as positional arg (first parameter)
             _parent_quirk=None,  # Pass None, handle separately
-            **filtered_kwargs,
         )
         # Store _parent_quirk after initialization using object.__setattr__
         if _parent_quirk is not None:

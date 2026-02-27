@@ -150,7 +150,7 @@ class FlextLdifServersBaseSchema(
                 else:
                     service_kwargs[key] = scalar_values
 
-        super().__init__(**service_kwargs)
+        super().__init__()
         self._schema_service = _schema_service
 
         if _parent_quirk is not None:

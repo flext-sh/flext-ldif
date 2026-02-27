@@ -33,7 +33,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             and issubclass(v.__class__, (str, float, bool, type(None)))
         }
 
-        FlextService.__init__(self, **filtered_kwargs)
+        FlextService.__init__(self)
 
         if schema_service is not None:
             object.__setattr__(self, "_schema_service", schema_service)
