@@ -31,6 +31,7 @@ from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.typings import t
 from flext_tests.constants import FlextTestsConstants
 
 

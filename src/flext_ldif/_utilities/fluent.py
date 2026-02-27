@@ -11,9 +11,6 @@ from flext_core import FlextResult
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
-
-# Import removed to avoid circular dependency
-# Import CaseFoldOption directly to avoid circular import issues
 from flext_ldif.constants import c
 from flext_ldif.models import m
 

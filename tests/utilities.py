@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import p
 from flext_ldif.utilities import FlextLdifUtilities
 from flext_tests.utilities import FlextTestsUtilities
 

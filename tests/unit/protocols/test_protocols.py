@@ -12,7 +12,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import FlextLdifProtocols, p
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from flext_ldif.servers.oud import FlextLdifServersOud

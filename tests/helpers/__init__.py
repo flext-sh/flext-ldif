@@ -28,7 +28,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Temporary compatibility layer for deprecated helpers
 from .compat import (
     FixtureTestHelpers,
     FlextLdifTestFactories,

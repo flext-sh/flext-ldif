@@ -54,7 +54,7 @@ class FlextLdifUtilitiesEntry:
         ]
 
     @staticmethod
-    def _stringify_attribute_value(value: str | bytes | float | bool) -> str:
+    def _stringify_attribute_value(value: str | bytes | float) -> str:
         if isinstance(value, bytes):
             return value.decode("utf-8", errors="replace")
         return str(value)

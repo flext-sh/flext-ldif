@@ -18,6 +18,7 @@ class FlextLdifModelsMetadata:
         """Model with extra='allow' for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+        __hash__: ClassVar[None] = None
 
         transformations: list[t.MetadataScalarValue] | None = Field(default=None)
         original_format: str | None = Field(default=None)

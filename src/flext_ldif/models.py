@@ -10,7 +10,6 @@ from pydantic import Field
 
 # Resolve circular dependency: settings.py references FlextLdifModelsDomains
 # in annotations but cannot import domain.py (domain.py imports settings.py).
-# Inject the reference here after both modules are loaded, then rebuild.
 import flext_ldif._models.settings as _settings_mod
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents

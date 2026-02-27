@@ -8,6 +8,7 @@ from __future__ import annotations
 from flext_core import FlextResult, u
 from flext_ldif.models import m
 from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class MockResultHelpers:

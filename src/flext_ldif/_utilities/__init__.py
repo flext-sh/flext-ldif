@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-# FlextLdifUtilities moved to avoid circular import - import from utilities.py directly when needed
-# Type aliases using string literals to break circular import
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.builders import (
