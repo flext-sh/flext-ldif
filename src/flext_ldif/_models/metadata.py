@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, KeysView, Mapping, ValuesView
-from typing import ClassVar
+from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
+from typing import Any, ClassVar
 
 from flext_core._models.base import FlextModelFoundation
 from pydantic import ConfigDict, Field
@@ -69,7 +69,7 @@ class FlextLdifModelsMetadata:
         def __len__(self) -> int:
             return len(self._extra())
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[tuple[str, Any]]:
             yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:

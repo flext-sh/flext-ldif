@@ -6,7 +6,7 @@ import struct
 from collections.abc import Callable
 from typing import Protocol
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
