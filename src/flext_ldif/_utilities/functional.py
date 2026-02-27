@@ -28,7 +28,7 @@ class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
-    def _to_general(value: object) -> t.GeneralValueType:
+    def _to_general(value: t.GeneralValueType) -> t.GeneralValueType:
         """Normalize arbitrary values into GeneralValueType-compatible shape."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value

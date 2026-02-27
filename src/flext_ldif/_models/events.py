@@ -17,176 +17,53 @@ class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
     class DnEventConfig(FlextLdifModelsBase):
-        """Configuration for DN event creation."""
-
-        dn_operation: str = Field(
-            ...,
-            description="Operation name (parse, validate, normalize, etc.)",
-        )
-        input_dn: str = Field(
-            ...,
-            description="Input DN before operation",
-        )
-        output_dn: str | None = Field(
-            default=None,
-            description="Output DN after operation (None if failed)",
-        )
-        operation_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        validation_result: bool | None = Field(
-            default=None,
-            description="Validation result (None if not validated)",
-        )
-        parse_components: list[tuple[str, str]] | None = Field(
-            default=None,
-            description="Parsed DN components",
-        )
+        dn_operation: str
+        input_dn: str
+        output_dn: str | None = None
+        operation_duration_ms: float = 0.0
+        validation_result: bool | None = None
+        parse_components: list[tuple[str, str]] | None = None
 
     class MigrationEventConfig(FlextLdifModelsBase):
-        """Configuration for migration event creation."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        migration_operation: str = Field(
-            ...,
-            description="Operation name (full_migration, incremental, etc.)",
-        )
-        source_server: str = Field(
-            ...,
-            description="Source LDAP server type",
-        )
-        target_server: str = Field(
-            ...,
-            description="Target LDAP server type",
-        )
-        entries_processed: int = Field(
-            ...,
-            description="Total entries processed",
-        )
-        entries_migrated: int = Field(
-            default=0,
-            description="Entries successfully migrated",
-        )
-        entries_failed: int = Field(
-            default=0,
-            description="Entries that failed migration",
-        )
-        migration_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed entries",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        migration_operation: str
+        source_server: str
+        target_server: str
+        entries_processed: int
+        entries_migrated: int = 0
+        entries_failed: int = 0
+        migration_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
 
     class ConversionEventConfig(FlextLdifModelsBase):
-        """Configuration for conversion event creation."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        conversion_operation: str = Field(
-            ...,
-            description="Operation name (acl_transform, schema_convert, etc.)",
-        )
-        source_format: str = Field(
-            ...,
-            description="Source format type",
-        )
-        target_format: str = Field(
-            ...,
-            description="Target format type",
-        )
-        items_processed: int = Field(
-            ...,
-            description="Total items processed",
-        )
-        items_converted: int = Field(
-            default=0,
-            description="Items successfully converted",
-        )
-        items_failed: int = Field(
-            default=0,
-            description="Items that failed conversion",
-        )
-        conversion_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed conversions",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        conversion_operation: str
+        source_format: str
+        target_format: str
+        items_processed: int
+        items_converted: int = 0
+        items_failed: int = 0
+        conversion_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
 
     class FilterEvent(m.DomainEvent):
-        """Event emitted when LDIF entries are filtered."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        filter_operation: str = Field(
-            ...,
-            description="Filter operation name (e.g., 'filter_by_dn_pattern')",
-        )
-        entries_before: int = Field(
-            ...,
-            description="Number of entries before filtering",
-        )
-        entries_after: int = Field(
-            ...,
-            description="Number of entries after filtering",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        filter_operation: str
+        entries_before: int
+        entries_after: int
         filter_criteria: list[FlextLdifModelsSettings.FilterCriteria] = Field(
-            default_factory=list,
-            description="Filter criteria applied",
+            default_factory=list
         )
-        filter_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
+        filter_duration_ms: float = 0.0
 
     class ParseEvent(m.DomainEvent):
-        """Event emitted when LDIF content is parsed."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        parse_operation: str = Field(
-            ...,
-            description="Parse operation name (e.g., 'parse_file', 'parse_string')",
-        )
-        source_type: str = Field(
-            ...,
-            description="Source type (file, string, ldap3)",
-        )
-        entries_parsed: int = Field(
-            default=0,
-            description="Number of entries successfully parsed",
-        )
-        entries_failed: int = Field(
-            default=0,
-            description="Number of entries that failed parsing",
-        )
-        parse_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed entries",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        parse_operation: str
+        source_type: str
+        entries_parsed: int = 0
+        entries_failed: int = 0
+        parse_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
 
         @classmethod
         def for_file(
@@ -195,9 +72,8 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[object] | None = None,
+            error_details: Sequence[str] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
-            """Create ParseEvent for file parsing operation."""
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=str(file_path),
@@ -216,9 +92,8 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[object] | None = None,
+            error_details: Sequence[str] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
-            """Create ParseEvent for LDAP3 parsing operation."""
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=connection_info,
@@ -237,9 +112,8 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[object] | None = None,
+            error_details: Sequence[str] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
-            """Create ParseEvent for string parsing operation."""
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=f"content_{content_length}chars",
@@ -252,279 +126,80 @@ class FlextLdifModelsEvents:
             )
 
     class WriteEvent(m.DomainEvent):
-        """Event emitted when LDIF content is written."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        write_operation: str = Field(
-            default="write_file",
-            description="Write operation name (e.g., 'write_file', 'write_string')",
-        )
-        target_type: str = Field(
-            default="file",
-            description="Target type (file, string)",
-        )
-        entries_written: int = Field(
-            default=0,
-            description="Number of entries successfully written",
-        )
-        entries_failed: int = Field(
-            default=0,
-            description="Number of entries that failed writing",
-        )
-        write_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed entries",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        write_operation: str = "write_file"
+        target_type: str = "file"
+        entries_written: int = 0
+        entries_failed: int = 0
+        write_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
 
     class CategoryEvent(m.DomainEvent):
-        """Event emitted when entries are categorized."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        category_operation: str = Field(
-            ...,
-            description="Category operation name (e.g., 'categorize_by_dn')",
-        )
-        entries_categorized: int = Field(
-            default=0,
-            description="Number of entries categorized",
-        )
-        categories_created: list[str] = Field(
-            default_factory=list,
-            description="List of categories created",
-        )
-        categorization_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        category_operation: str
+        entries_categorized: int = 0
+        categories_created: list[str] = Field(default_factory=list)
+        categorization_duration_ms: float = 0.0
 
     class AclEvent(m.DomainEvent):
-        """Event emitted when ACLs are processed."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        acl_operation: str = Field(
-            ...,
-            description="ACL operation name (e.g., 'parse_acl', 'transform_acl')",
-        )
-        acls_processed: int = Field(
-            default=0,
-            description="Number of ACLs processed",
-        )
-        acls_succeeded: int = Field(
-            default=0,
-            description="Number of ACLs successfully processed",
-        )
-        acls_failed: int = Field(
-            default=0,
-            description="Number of ACLs that failed processing",
-        )
-        acl_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed ACLs",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        acl_operation: str
+        acls_processed: int = 0
+        acls_succeeded: int = 0
+        acls_failed: int = 0
+        acl_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
 
     class DnEvent(m.DomainEvent):
-        """Event emitted when DNs are processed."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        dn_operation: str = Field(
-            ...,
-            description="DN operation name (e.g., 'parse_dn', 'normalize_dn')",
-        )
-        input_dn: str = Field(
-            ...,
-            description="Input DN before operation",
-        )
-        output_dn: str | None = Field(
-            default=None,
-            description="Output DN after operation (None if failed)",
-        )
-        dn_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        validation_result: bool | None = Field(
-            default=None,
-            description="Validation result (None if not validated)",
-        )
-        has_output: bool = Field(
-            default=False,
-            description="Whether operation produced output DN",
-        )
-        component_count: int = Field(
-            default=0,
-            description="Number of DN components parsed",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        dn_operation: str
+        input_dn: str
+        output_dn: str | None = None
+        dn_duration_ms: float = 0.0
+        validation_result: bool | None = None
+        has_output: bool = False
+        component_count: int = 0
 
     class MigrationEvent(m.DomainEvent):
-        """Event emitted during migration operations."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        migration_operation: str = Field(
-            ...,
-            description="Migration operation name (e.g., 'full_migration')",
-        )
-        source_server: str = Field(
-            ...,
-            description="Source LDAP server type",
-        )
-        target_server: str = Field(
-            ...,
-            description="Target LDAP server type",
-        )
-        entries_migrated: int = Field(
-            default=0,
-            description="Number of entries successfully migrated",
-        )
-        entries_failed: int = Field(
-            default=0,
-            description="Number of entries that failed migration",
-        )
-        migration_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed entries",
-        )
-        migration_success_rate: float = Field(
-            default=0.0,
-            description="Migration success rate as percentage",
-        )
-        throughput_entries_per_sec: float = Field(
-            default=0.0,
-            description="Migration throughput in entries per second",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        migration_operation: str
+        source_server: str
+        target_server: str
+        entries_migrated: int = 0
+        entries_failed: int = 0
+        migration_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
+        migration_success_rate: float = 0.0
+        throughput_entries_per_sec: float = 0.0
 
     class ConversionEvent(m.DomainEvent):
-        """Event emitted during conversion operations."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        conversion_operation: str = Field(
-            ...,
-            description="Conversion operation name (e.g., 'acl_transform')",
-        )
-        source_format: str = Field(
-            ...,
-            description="Source format type",
-        )
-        target_format: str = Field(
-            ...,
-            description="Target format type",
-        )
-        items_converted: int = Field(
-            default=0,
-            description="Number of items successfully converted",
-        )
-        items_failed: int = Field(
-            default=0,
-            description="Number of items that failed conversion",
-        )
-        conversion_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed conversions",
-        )
-        conversion_success_rate: float = Field(
-            default=0.0,
-            description="Conversion success rate as percentage",
-        )
-        throughput_items_per_sec: float = Field(
-            default=0.0,
-            description="Conversion throughput in items per second",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        conversion_operation: str
+        source_format: str
+        target_format: str
+        items_converted: int = 0
+        items_failed: int = 0
+        conversion_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
+        conversion_success_rate: float = 0.0
+        throughput_items_per_sec: float = 0.0
 
     class SchemaEvent(m.DomainEvent):
-        """Event emitted during schema processing."""
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-
-        schema_operation: str = Field(
-            ...,
-            description="Schema operation name (e.g., 'parse_attribute')",
-        )
-        items_processed: int = Field(
-            default=0,
-            description="Number of schema items processed",
-        )
-        items_succeeded: int = Field(
-            default=0,
-            description="Number of schema items successfully processed",
-        )
-        items_failed: int = Field(
-            default=0,
-            description="Number of schema items that failed processing",
-        )
-        schema_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        error_details: Sequence[object] | None = Field(
-            default=None,
-            description="Error information for failed schema items",
-        )
-        schema_success_rate: float = Field(
-            default=0.0,
-            description="Schema processing success rate as percentage",
-        )
-        throughput_items_per_sec: float = Field(
-            default=0.0,
-            description="Schema processing throughput in items per second",
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        schema_operation: str
+        items_processed: int = 0
+        items_succeeded: int = 0
+        items_failed: int = 0
+        schema_duration_ms: float = 0.0
+        error_details: Sequence[str] | None = None
+        schema_success_rate: float = 0.0
+        throughput_items_per_sec: float = 0.0
 
     class SchemaEventConfig(FlextLdifModelsBase):
-        """Configuration for schema event creation."""
-
-        schema_operation: str = Field(description="Schema operation name")
-        items_processed: int = Field(default=0, description="Items processed")
-        items_succeeded: int = Field(default=0, description="Items succeeded")
-        items_failed: int = Field(default=0, description="Items failed")
-        operation_duration_ms: float = Field(
-            default=0.0,
-            description="Duration in milliseconds",
-        )
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-            description="Server type",
-        )
-        schema_type: str = Field(
-            default=c.Ldif.ServerTypes.RFC.value,
-            description="Schema type",
-        )
+        schema_operation: str
+        items_processed: int = 0
+        items_succeeded: int = 0
+        items_failed: int = 0
+        operation_duration_ms: float = 0.0
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        schema_type: str = c.Ldif.ServerTypes.RFC.value

@@ -29,7 +29,7 @@ class FlextLdifCategorization(
     """LDIF Entry Categorization Service."""
 
     @staticmethod
-    def _has_attr(obj: object, attr_name: str) -> bool:
+    def _has_attr(obj: t.GeneralValueType, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -308,7 +308,7 @@ class FlextLdifCategorization(
         constants: type,
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
-        priority_classes: object = getattr(
+        priority_classes: t.GeneralValueType = getattr(
             constants, "HIERARCHY_PRIORITY_OBJECTCLASSES", frozenset()
         )
         if not isinstance(priority_classes, frozenset):
@@ -432,7 +432,7 @@ class FlextLdifCategorization(
                 override_existing=override_existing,
             )
 
-        acl_attrs_raw: object = getattr(
+        acl_attrs_raw: t.GeneralValueType = getattr(
             constants,
             "CATEGORIZATION_ACL_ATTRIBUTES",
             frozenset(),
@@ -934,7 +934,7 @@ class FlextLdifCategorization(
         )
 
     @staticmethod
-    def _ensure_entry_model(value: object) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(value: t.GeneralValueType) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):

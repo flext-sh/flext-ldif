@@ -29,6 +29,8 @@ from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.protocols import p
+from flext_ldif.services.conversion import FlextLdifConversion
 from flext_tests.constants import FlextTestsConstants
 
 
@@ -834,7 +836,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_parse_ldif_content(
-        parser_service: object,
+        parser_service: FlextLdifParser,
         content: str,
         expected_count: int,
         server_type: str = "rfc",
@@ -896,7 +898,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_quirk_schema_parse_and_assert_properties(
-        quirk: object,
+        quirk: p.Ldif.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str | None = None,
@@ -909,7 +911,7 @@ class RfcTestHelpers:
         expected_sup: str | None = None,
         expected_must: list[str] | None = None,
         expected_may: list[str] | None = None,
-    ) -> object:
+    ) -> p.Ldif.SchemaAttribute | None:
         """Parse schema definition and assert properties.
 
         Args:
@@ -1032,10 +1034,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_result_success_and_unwrap(
-        result: object,
+        result: r[t.GeneralValueType],
         expected_type: type | None = None,
         expected_count: int | None = None,
-    ) -> object:
+    ) -> t.GeneralValueType:
         """Assert result is successful and unwrap its value.
 
         Args:
@@ -1113,7 +1115,7 @@ class RfcTestHelpers:
         syntax: str | None = None,
         *,
         single_value: bool = False,
-    ) -> object:
+    ) -> m.Ldif.SchemaAttribute:
         """Create a schema attribute and unwrap the result.
 
         Args:
@@ -1147,7 +1149,7 @@ class RfcTestHelpers:
         sup: str | None = None,
         must: list[str] | None = None,
         may: list[str] | None = None,
-    ) -> object:
+    ) -> m.Ldif.SchemaObjectClass:
         """Create a schema objectClass and unwrap the result.
 
         Args:
@@ -1178,10 +1180,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_quirk_parse_success_and_unwrap(
-        quirk: object,
+        quirk: p.Ldif.SchemaQuirk,
         content: str,
         parse_method: str | None = None,
-    ) -> object:
+    ) -> p.Ldif.SchemaAttribute | None:
         """Parse using quirk and assert success.
 
         Args:
@@ -1211,7 +1213,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_schema_quirk_parse_and_assert(
-        quirk: object,
+        quirk: p.Ldif.SchemaQuirk,
         content: str,
         expected_oid: str | None = None,
         expected_name: str | None = None,
@@ -1223,7 +1225,7 @@ class RfcTestHelpers:
         expected_syntax: str | None = None,
         expected_equality: str | None = None,
         expected_single_value: bool | None = None,
-    ) -> object:
+    ) -> p.Ldif.SchemaAttribute | None:
         """Parse schema content and assert properties.
 
         Args:
@@ -1333,8 +1335,8 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_attribute_from_dict(
-        data: dict[str, object],
-    ) -> object:
+        data: dict[str, t.GeneralValueType],
+    ) -> m.Ldif.SchemaAttribute:
         """Create a schema attribute from dictionary.
 
         Args:
@@ -1356,8 +1358,8 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_objectclass_from_dict(
-        data: dict[str, object],
-    ) -> object:
+        data: dict[str, t.GeneralValueType],
+    ) -> m.Ldif.SchemaObjectClass:
         """Create a schema objectClass from dictionary.
 
         Args:
@@ -1393,11 +1395,11 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_schema_parse_attribute(
-        schema_quirk: object,
+        schema_quirk: p.Ldif.SchemaQuirk,
         attr_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> object:
+    ) -> m.Ldif.SchemaAttribute:
         """Parse attribute definition and validate expected properties.
 
         Args:
@@ -1444,11 +1446,11 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_schema_parse_objectclass(
-        schema_quirk: object,
+        schema_quirk: p.Ldif.SchemaQuirk,
         oc_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> object:
+    ) -> m.Ldif.SchemaObjectClass:
         """Parse objectClass definition and validate expected properties.
 
         Args:
@@ -1495,7 +1497,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_schema_write_attribute_with_metadata(
-        schema_quirk: object,
+        schema_quirk: p.Ldif.SchemaQuirk,
         attr_def: str,
         expected_oid: str,
         expected_name: str,
@@ -1551,7 +1553,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_parse_and_assert_entry_structure(
-        parser_service: object,
+        parser_service: FlextLdifParser,
         content: str,
         expected_dn: str,
         expected_attributes: list[str],
@@ -1605,7 +1607,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_parse_and_assert_multiple_entries(
-        parser_service: object,
+        parser_service: FlextLdifParser,
         content: str,
         expected_dns: list[str],
         expected_count: int,
@@ -1674,7 +1676,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_write_entries_to_string(
-        writer_service: object,
+        writer_service: FlextLdifWriter,
         entries: list[m.Ldif.Entry],
         expected_content: list[str] | None = None,
     ) -> str:
@@ -1713,9 +1715,9 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_write_entries_to_file(
-        writer_service: object,
+        writer_service: FlextLdifWriter,
         entries: list[m.Ldif.Entry],
-        file_path: object,
+        file_path: str | Path,
         expected_content: list[str] | None = None,
     ) -> None:
         """Write entries to LDIF file.
@@ -1752,10 +1754,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_parse_edge_case(
-        parser_service: object,
+        parser_service: FlextLdifParser,
         content: str,
         should_succeed: bool | None = None,
-    ) -> object | None:
+    ) -> list[m.Ldif.Entry] | None:
         """Parse edge case LDIF content.
 
         Args:
@@ -1786,7 +1788,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_write_entry_variations(
-        writer_service: object,
+        writer_service: FlextLdifWriter,
         entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
     ) -> None:
         """Test writing entries with various data types.
@@ -1825,8 +1827,8 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_entry_quirk_can_handle(
-        entry_quirk: object,
-        entry: object,
+        entry_quirk: p.Ldif.EntryQuirk,
+        entry: m.Ldif.Entry,
         expected: bool,
     ) -> None:
         """Test Entry quirk can_handle method.
@@ -1856,10 +1858,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_acl_quirk_parse_and_verify(
-        acl_quirk: object,
+        acl_quirk: p.Ldif.AclQuirk,
         acl_line: str,
         expected_raw_acl: str | None = None,
-    ) -> object:
+    ) -> m.Ldif.Acl | None:
         """Parse ACL and verify result.
 
         Args:
@@ -1897,8 +1899,8 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_acl_quirk_write_and_verify(
-        acl_quirk: object,
-        acl: object,
+        acl_quirk: p.Ldif.AclQuirk,
+        acl: m.Ldif.Acl,
         expected_content: str | None = None,
     ) -> str:
         """Write ACL and verify result.
@@ -1937,11 +1939,11 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_parse_error_handling(
-        schema_quirk: object,
+        schema_quirk: p.Ldif.SchemaQuirk,
         invalid_def: str,
         *,
         should_fail: bool = True,
-    ) -> object | None:
+    ) -> m.Ldif.SchemaAttribute | None:
         """Test parsing error handling for invalid definitions.
 
         Args:
@@ -2040,7 +2042,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def batch_parse_and_assert(
-        parser_service: object,
+        parser_service: FlextLdifParser,
         test_cases: list[dict[str, object]],
         *,
         validate_all: bool = True,
@@ -2089,7 +2091,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_api_write_and_unwrap(
-        api: object,
+        api: FlextLdif,
         entries: list[m.Ldif.Entry],
         must_contain: list[str] | None = None,
     ) -> str:
@@ -2120,9 +2122,9 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_parse_write_file_and_assert(
-        api: object,
+        api: FlextLdif,
         entries: list[m.Ldif.Entry],
-        output_file: object,
+        output_file: str | Path,
         must_contain: list[str] | None = None,
     ) -> None:
         """Write entries to file and assert content.
@@ -2148,7 +2150,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_parse_write_string_and_assert(
-        api: object,
+        api: FlextLdif,
         entries: list[m.Ldif.Entry],
         must_contain: list[str] | None = None,
     ) -> None:
@@ -2168,13 +2170,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: object,
+        quirk: p.Ldif.SchemaQuirkProtocol,
         content: str,
         msg: str | None = None,
         parse_method: str | None = None,
         expected_type: type | None = None,
         should_succeed: bool | None = None,
-    ) -> object | None:
+    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Entry | m.Ldif.Acl | None:
         """Parse using quirk and unwrap result.
 
         Args:
@@ -2250,8 +2252,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: object,
-        data: object,
+        quirk: p.Ldif.SchemaQuirkProtocol,
+        data: m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
         msg: str | None = None,
         write_method: str | None = None,
         must_contain: list[str] | None = None,
@@ -2306,9 +2308,9 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_convert_and_assert_strings(
-        conversion_matrix: object,
-        source_quirk: object,
-        target_quirk: object,
+        conversion_matrix: FlextLdifConversion,
+        source_quirk: p.Ldif.SchemaQuirkProtocol,
+        target_quirk: p.Ldif.SchemaQuirkProtocol,
         conversion_type: str,
         data: str,
         must_contain: list[str] | None = None,
@@ -2393,8 +2395,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_get_supported_conversions_and_assert(
-        conversion_matrix: object,
-        quirk: object,
+        conversion_matrix: FlextLdifConversion,
+        quirk: p.Ldif.SchemaQuirkProtocol,
         must_have_keys: list[str] | None = None,
         expected_support: dict[str, bool] | None = None,
     ) -> dict[str, bool]:
@@ -2456,13 +2458,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def helper_batch_convert_and_assert(
-        conversion_matrix: object,
-        source_quirk: object,
-        target_quirk: object,
+        conversion_matrix: FlextLdifConversion,
+        source_quirk: p.Ldif.SchemaQuirkProtocol,
+        target_quirk: p.Ldif.SchemaQuirkProtocol,
         conversion_type: str,
-        items: list[object],
+        items: list[str],
         expected_count: int | None = None,
-    ) -> list[object]:
+    ) -> list[m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]:
         """Batch convert items and assert result.
 
         Args:

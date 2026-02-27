@@ -28,6 +28,10 @@ from flext_ldif import (
     m,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers._base import (
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+)
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
 from flext_tests import FlextTestsDocker
@@ -610,34 +614,30 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 @pytest.fixture
 def oid_schema_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> object:
+) -> FlextLdifServersBaseSchema:
     """Create OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
-
 
 @pytest.fixture
 def oud_schema_quirk(
     oud_quirk: FlextLdifServersBase,
-) -> object:
+) -> FlextLdifServersBaseSchema:
     """Create OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
-
 
 @pytest.fixture
 def oid_acl_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> object:
+) -> FlextLdifServersBaseSchemaAcl:
     """Create OID ACL quirk instance for conversion tests."""
     return oid_quirk.acl_quirk
-
 
 @pytest.fixture
 def oud_acl_quirk(
     oud_quirk: FlextLdifServersBase,
-) -> object:
+) -> FlextLdifServersBaseSchemaAcl:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk
-
 
 # ============================================================================
 # LDAP CONTAINER FIXTURES

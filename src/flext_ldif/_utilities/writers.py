@@ -129,7 +129,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
-            **kwargs: object,
+            **kwargs: t.GeneralValueType,
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             # Use provided config or build from kwargs
@@ -391,7 +391,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
-            **kwargs: object,
+            **kwargs: t.GeneralValueType,
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             # Use provided config or build from kwargs

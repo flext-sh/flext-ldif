@@ -669,7 +669,7 @@ objectClass: person
     class LocalTestDomains:
         """Local test domains."""
 
-        def create_configuration(self, **kwargs: object) -> dict[str, object]:
+        def create_configuration(self, **kwargs: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
             """Create config."""
             return dict(kwargs)
 
@@ -883,7 +883,7 @@ objectClass: person
         assert quirk is not None, "OUD quirk must be registered"
         return quirk
 
-    def oid(self) -> object:
+    def oid(self) -> p.Ldif.SchemaQuirkProtocol:
         """OID quirk (deprecated)."""
         server = FlextLdifServer()
         quirk = server.quirk("oid")

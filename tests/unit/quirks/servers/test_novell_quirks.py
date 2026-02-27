@@ -229,7 +229,7 @@ class TestsFlextLdifNovellInitialization(s):
 
     def test_schema_quirk_initialization(
         self,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test schema quirk is initialized."""
         assert schema_quirk is not None
@@ -425,7 +425,7 @@ class TestNovellEntryDetection:
 
     def test_entry_initialization(
         self,
-        entry_quirk: object,
+        entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry quirk is initialized."""
         assert entry_quirk is not None

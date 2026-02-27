@@ -16,7 +16,6 @@ from flext_core import m, r, t
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
 from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
@@ -2426,9 +2425,3 @@ class FlextLdifModelsSettings:
         )
 
     # ServerValidationRules is already defined above
-
-
-# Note: All type references use direct imports with runtime aliases (c, m, p, t, u)
-# Nested objects use full namespace (FlextLdifModelsDomains.Entry, not aliases)
-# No string-quoted forward references - models work without rebuilding
-# No model_rebuild() calls needed - architectural requirement

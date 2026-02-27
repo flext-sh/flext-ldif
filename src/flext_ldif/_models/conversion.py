@@ -1,8 +1,4 @@
-"""Centralized Pydantic v2 conversion models for type casting.
-
-This module provides discriminated union models for type conversions
-to replace the polymorphic _convert_with_target function.
-"""
+"""Centralized Pydantic v2 conversion models for type casting."""
 
 from __future__ import annotations
 
@@ -13,27 +9,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif.typings import t
 
+_TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
+
+type ConversionTargetType = Literal["str", "int", "float", "bool", "list", "tuple", "dict"]
+
 
 class ConvertToStr(BaseModel):
-    """Convert value to string."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["str"] = Field(
-        default="str", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["str"] = "str"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute string conversion."""
         try:
             return str(self.value)
         except (TypeError, ValueError):
@@ -41,31 +28,12 @@ class ConvertToStr(BaseModel):
 
 
 class ConvertToInt(BaseModel):
-    """Convert value to integer."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["int"] = Field(
-        default="int", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["int"] = "int"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute integer conversion with type guards."""
-        if isinstance(self.value, (str, bytes, bytearray, int, float)):
-            try:
-                return int(self.value)
-            except (TypeError, ValueError):
-                return self.default
-
         try:
             return int(str(self.value))
         except (TypeError, ValueError):
@@ -73,31 +41,12 @@ class ConvertToInt(BaseModel):
 
 
 class ConvertToFloat(BaseModel):
-    """Convert value to float."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["float"] = Field(
-        default="float", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["float"] = "float"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute float conversion with type guards."""
-        if isinstance(self.value, (str, bytes, bytearray, int, float)):
-            try:
-                return float(self.value)
-            except (TypeError, ValueError):
-                return self.default
-
         try:
             return float(str(self.value))
         except (TypeError, ValueError):
@@ -105,111 +54,54 @@ class ConvertToFloat(BaseModel):
 
 
 class ConvertToBool(BaseModel):
-    """Convert value to boolean."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["bool"] = Field(
-        default="bool", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["bool"] = "bool"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute boolean conversion with string special handling."""
-        if isinstance(self.value, str):
-            return self.value.lower() in {"true", "1", "yes", "on"}
+        val = self.value
+        if val.__class__ is str:
+            return val.lower() in _TRUE_STRINGS
         try:
-            return bool(self.value)
+            return bool(val)
         except (TypeError, ValueError):
             return self.default
 
 
 class ConvertToList(BaseModel):
-    """Convert value to list."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["list"] = Field(
-        default="list", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["list"] = "list"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute list conversion."""
-        if isinstance(self.value, list):
-            return list(self.value)
-        if isinstance(self.value, tuple | set):
-            return list(self.value)
-        try:
-            return [self.value]
-        except (TypeError, ValueError):
-            return self.default
+        val = self.value
+        if val.__class__ in (list, tuple, set, frozenset):
+            return list(val)
+        return [val]
 
 
 class ConvertToTuple(BaseModel):
-    """Convert value to tuple."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["tuple"] = Field(
-        default="tuple", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["tuple"] = "tuple"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute tuple conversion."""
-        if isinstance(self.value, list | tuple):
-            return tuple(self.value)
-        try:
-            return (self.value,)
-        except (TypeError, ValueError):
-            return self.default
+        val = self.value
+        if val.__class__ in (list, tuple, set, frozenset):
+            return tuple(val)
+        return (val,)
 
 
 class ConvertToDict(BaseModel):
-    """Convert value to dict."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    target_type: Literal["dict"] = Field(
-        default="dict", description="Conversion target type"
-    )
-    value: t.GeneralValueType = Field(..., description="Value to convert")
-    default: t.GeneralValueType | None = Field(
-        default=None,
-        description="Default value if conversion fails",
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    target_type: Literal["dict"] = "dict"
+    value: t.GeneralValueType = Field(...)
+    default: t.GeneralValueType | None = None
 
     def convert(self) -> t.GeneralValueType | None:
-        """Execute dict conversion with type guards."""
         if u.is_dict_like(self.value):
             return self.value
         return self.default

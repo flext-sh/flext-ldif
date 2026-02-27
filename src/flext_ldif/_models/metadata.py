@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
-from datetime import datetime
-from typing import ClassVar, overload
+from collections.abc import ItemsView, KeysView, Mapping, ValuesView
+from typing import ClassVar
 
 from flext_core._models.base import FlextModelFoundation
 from pydantic import ConfigDict, Field
@@ -16,49 +15,15 @@ class FlextLdifModelsMetadata:
     """LDIF metadata models container."""
 
     class DynamicMetadata(FlextModelFoundation.ArbitraryTypesModel):
-        """Model with extra="allow" for dynamic field storage."""
+        """Model with extra='allow' for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
-        transformations: list[object] | None = Field(default=None)
-
-        @staticmethod
-        def coerce_metadata_value(value: str | int | float | bool | None | Sequence[str]) -> t.MetadataAttributeValue:
-            """Coerce dynamic values to MetadataAttributeValue-compatible output."""
-            if value is None:
-                return None
-            if isinstance(value, str):
-                return value
-            if isinstance(value, int):
-                return value
-            if isinstance(value, float):
-                return value
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, list):
-                coerced_items: list[str | int | float | bool | datetime | None] = []
-                for item in value:
-                    if isinstance(item, str):
-                        coerced_items.append(item)
-                        continue
-                    if isinstance(item, int):
-                        coerced_items.append(item)
-                        continue
-                    if isinstance(item, float):
-                        coerced_items.append(item)
-                        continue
-                    if isinstance(item, bool):
-                        coerced_items.append(item)
-                        continue
-                    if isinstance(item, datetime):
-                        coerced_items.append(item)
-                        continue
-                    if item is None:
-                        coerced_items.append(None)
-                        continue
-                    coerced_items.append(str(item))
-                return coerced_items
-            return str(value)
+        transformations: list[t.MetadataScalarValue] | None = Field(default=None)
+        original_format: str | None = Field(default=None)
+        schema_source_server: str | None = Field(default=None)
+        server_type: str | None = Field(default=None)
+        relaxed_mode: bool | None = Field(default=None)
 
         @classmethod
         def from_dict(
@@ -68,23 +33,17 @@ class FlextLdifModelsMetadata:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
-
             return cls.model_validate(dict(data))
 
-        original_format: str | None = Field(default=None)
-        schema_source_server: str | None = Field(default=None)
-        server_type: str | None = Field(default=None)
-        relaxed_mode: bool | None = Field(default=None)
+        @staticmethod
+        def coerce_metadata_value(
+            value: t.MetadataAttributeValue,
+        ) -> t.MetadataAttributeValue:
+            """Identity coercion — value already typed by MetadataAttributeValue."""
+            return value
 
-        @overload
-        def get(self, key: str) -> t.MetadataAttributeValue: ...
-
-        @overload
-        def get(
-            self,
-            key: str,
-            default: t.MetadataAttributeValue,
-        ) -> t.MetadataAttributeValue: ...
+        def _extra(self) -> dict[str, t.MetadataAttributeValue]:
+            return self.__pydantic_extra__ or {}
 
         def get(
             self,
@@ -93,100 +52,60 @@ class FlextLdifModelsMetadata:
         ) -> t.MetadataAttributeValue:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
-                field_value = getattr(self, key)
-                return self.coerce_metadata_value(field_value)
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                value = extra[key]
-                return self.coerce_metadata_value(value)
-            return default
+                return getattr(self, key)
+            return self._extra().get(key, default)
 
         def __getitem__(self, key: str) -> t.MetadataAttributeValue:
-            """Get value by key, raising KeyError if not found."""
             if key in type(self).model_fields:
-                field_value = getattr(self, key)
-                return self.coerce_metadata_value(field_value)
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                value = extra[key]
-                return self.coerce_metadata_value(value)
-            raise KeyError(key)
+                return getattr(self, key)
+            return self._extra()[key]
 
         def __setitem__(self, key: str, value: t.MetadataAttributeValue) -> None:
-            """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 
         def __contains__(self, key: str) -> bool:
-            """Check if key exists."""
-            extra = self.__pydantic_extra__
-            return extra is not None and key in extra
+            return key in self._extra()
 
         def __len__(self) -> int:
-            """Return number of extra fields."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
+            return len(self._extra())
 
-        def __iter__(
-            self,
-        ) -> Generator[tuple[str, t.MetadataAttributeValue]]:
-            """Iterate over key-value pairs from extra fields."""
-            extra = self.__pydantic_extra__
-            if extra is not None:
-                for key, value in extra.items():
-                    yield (key, self.coerce_metadata_value(value))
+        def __iter__(self):  # noqa: ANN204
+            yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:
-            """Return keys from extra fields."""
-            extra = self.__pydantic_extra__
-            return (extra or {}).keys()
+            return self._extra().keys()
 
         def values(self) -> ValuesView[t.MetadataAttributeValue]:
-            """Return values from extra fields."""
-            extra = self.__pydantic_extra__
-            return (extra or {}).values()
+            return self._extra().values()
 
         def items(self) -> ItemsView[str, t.MetadataAttributeValue]:
-            """Return items from extra fields."""
-            extra = self.__pydantic_extra__
-            return (extra or {}).items()
+            return self._extra().items()
 
         def pop(
             self,
             key: str,
             default: t.MetadataAttributeValue = None,
         ) -> t.MetadataAttributeValue:
-            """Pop value by key."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
-                value = extra.pop(key)
-                return self.coerce_metadata_value(value)
+                return extra.pop(key)
             return default
 
         def clear(self) -> None:
-            """Clear all extra fields."""
             extra = self.__pydantic_extra__
             if extra is not None:
                 extra.clear()
 
         def update(self, other: Mapping[str, t.MetadataAttributeValue]) -> None:
-            """Update with values from another dict."""
             for key, value in other.items():
                 setattr(self, key, value)
 
-        def __hash__(self) -> int:
-            """Make unhashable - mutable with extra="allow"."""
-            class_name = self.__class__.__name__
-            msg = f"{class_name} is unhashable"
-            raise TypeError(msg)
-
         def __eq__(self, other: object) -> bool:
-            """Compare with dict or another DynamicMetadata."""
             if other.__class__ is dict:
                 return dict(self.items()) == other
             return NotImplemented
 
         def to_dict(self) -> Mapping[str, t.MetadataAttributeValue]:
-            """Convert to dict for serialization."""
             return dict(self.items())
 
     class EntryMetadata(FlextModelFoundation.ArbitraryTypesModel):
@@ -199,47 +118,29 @@ class FlextLdifModelsMetadata:
             str_strip_whitespace=True,
         )
 
+        def _extra(self) -> dict[str, t.MetadataAttributeValue]:
+            return self.__pydantic_extra__ or {}
+
         def __getitem__(self, key: str) -> t.MetadataAttributeValue:
-            """Get value by key, raising KeyError if not found."""
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                value = extra[key]
-                return FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
-                    value,
-                )
-            raise KeyError(key)
+            return self._extra()[key]
 
         def __contains__(self, key: str) -> bool:
-            """Check if key exists."""
-            extra = self.__pydantic_extra__
-            return extra is not None and key in extra
+            return key in self._extra()
 
         def get(
             self,
             key: str,
             default: t.MetadataAttributeValue = None,
         ) -> t.MetadataAttributeValue:
-            """Get value by key, returning default if not found."""
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                value = extra[key]
-                return FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
-                    value,
-                )
-            return default
+            return self._extra().get(key, default)
 
     class TransformationInfo(FlextModelFoundation.ArbitraryTypesModel):
         """Transformation step information stored in metadata."""
 
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
+        model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
         step: str | None = None
-
         server: str | None = None
-
         changes: ClassVar[list[str]] = []
 
 

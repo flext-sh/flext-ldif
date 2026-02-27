@@ -22,7 +22,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
         @staticmethod
         def test_parse_ldif_file(
-            parser_service: object,
+            parser_service: p.Ldif.Parser,
             file_path: Path,
             expected_count: int,
             server_type: str = "rfc",

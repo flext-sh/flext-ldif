@@ -141,9 +141,9 @@ class TestModelsNamespace:
             c.Names.UID: "jdoe",
         }
         # Access test data directly
-        cn_value: Any = attrs.get(c.Names.CN)
+        cn_value: str | list[str] | None = attrs.get(c.Names.CN)
         assert cn_value == ["John Doe"]
-        objectclass_value: Any = attrs.get(c.Names.OBJECTCLASS)
+        objectclass_value: str | list[str] | None = attrs.get(c.Names.OBJECTCLASS)
         assert isinstance(objectclass_value, list)
 
     def test_attributes_data_with_real_schema(self) -> None:
@@ -163,9 +163,9 @@ class TestModelsNamespace:
             },
         }
         # Access test data directly with Any type
-        cn_oid: Any = data[c.Names.CN].get("oid")
+        cn_oid: str | None = data[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN
-        uid_single_valued: Any = data[c.Names.UID].get("single_valued")
+        uid_single_valued: bool | None = data[c.Names.UID].get("single_valued")
         assert uid_single_valued is True
 
     def test_objectclasses_data_with_real_schema(self) -> None:
@@ -181,9 +181,9 @@ class TestModelsNamespace:
             },
         }
         # Access test data directly with Any type
-        oid_value: Any = data[c.Names.INETORGPERSON].get("oid")
+        oid_value: str | None = data[c.Names.INETORGPERSON].get("oid")
         assert oid_value == "2.16.840.1.113730.3.2.2"
-        may_values: Any = data[c.Names.INETORGPERSON].get("may")
+        may_values: list[str] | None = data[c.Names.INETORGPERSON].get("may")
         assert c.Names.MAIL in may_values
 
     def test_extensions_with_reals(self) -> None:
@@ -195,7 +195,7 @@ class TestModelsNamespace:
             "server_type": "oud",
         }
         # Access test data directly with Any type
-        supports_dn_case: Any = extensions.get("supports_dn_case_registry")
+        supports_dn_case: bool | None = extensions.get("supports_dn_case_registry")
         assert supports_dn_case is True
 
 
@@ -316,5 +316,5 @@ class TestIntegrationWithLdifFixtures:
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         # Access test data directly with Any type
-        cn_oid: Any = schema_attrs[c.Names.CN].get("oid")
+        cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN

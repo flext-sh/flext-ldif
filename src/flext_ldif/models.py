@@ -28,6 +28,17 @@ from flext_ldif._models.settings import (
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
+# Resolve circular dependency: settings.py references FlextLdifModelsDomains
+# in annotations but cannot import domain.py (domain.py imports settings.py).
+# Inject the reference here after both modules are loaded, then rebuild.
+import flext_ldif._models.settings as _settings_mod
+
+_settings_mod.FlextLdifModelsDomains = FlextLdifModelsDomains
+FlextLdifModelsSettings.EntryProcessingConfig.model_rebuild()
+FlextLdifModelsSettings.EntryParseConfig.model_rebuild()
+FlextLdifModelsSettings.EntryWriteConfig.model_rebuild()
+FlextLdifModelsSettings.BatchWriteConfig.model_rebuild()
+FlextLdifModelsSettings.PermissionMappingConfig.model_rebuild()
 
 class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
