@@ -127,6 +127,7 @@ markers = [
 
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
+enable_assertion_pass_hook = true
 [tool.pyrefly]
 python-version = "3.13"
 
