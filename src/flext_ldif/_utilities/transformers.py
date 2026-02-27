@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
+from typing import override
 
 from flext_core import r
 
@@ -80,6 +81,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             normalized_dn = ",".join(p.strip() for p in parts)
         return normalized_dn
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
         if item.dn is None:
@@ -132,6 +134,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         self._trim_values = trim_values
         self._remove_empty = remove_empty
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply attribute normalization to an entry."""
         if item.attributes is None:
@@ -225,6 +228,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         self._new_base = new_base
         self._case_insensitive = case_insensitive
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Replace base DN in an entry."""
         if item.dn is None:
@@ -264,6 +268,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         self._format = boolean_format
         self._attributes = attributes
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Convert boolean attributes in an entry."""
         if item.attributes is None:
@@ -312,6 +317,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         self._include = set(include) if include else None
         self._exclude = set(exclude) if exclude else set()
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Filter attributes in an entry."""
         if item.attributes is None:
@@ -359,6 +365,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         super().__init__()
         self._attributes = {attr.lower() for attr in attributes}
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Remove attributes from an entry."""
         updated_entry = FlextLdifUtilitiesEntry.remove_attributes(
@@ -385,6 +392,7 @@ class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
         super().__init__()
         self._func = func
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply custom transformation to an entry."""
         result = self._func(item)

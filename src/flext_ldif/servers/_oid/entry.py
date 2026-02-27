@@ -6,6 +6,7 @@ import json
 import struct
 from collections.abc import Mapping
 from functools import reduce
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, u as core_u
 
@@ -47,6 +48,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok((normalized_dn, attrs))
 
+    @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize OID attribute names to RFC-canonical format."""
         match attr_name.lower():
@@ -814,6 +816,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             ),
         )
 
+    @override
     def _hook_post_parse_entry(
         self,
         entry: m.Ldif.Entry,
@@ -1074,6 +1077,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok(entry)
 
+    @override
     def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
         """Parse entry from LDIF lines and finalize with OID metadata (original_dn_complete)."""
         result = super()._parse_entry_from_lines(lines)

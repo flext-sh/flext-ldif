@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Self
+from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field, ValidationError
@@ -260,6 +260,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
         return self._execute_acl_write(parsed_acl)
 
+    @override
     def execute(
         self,
         *,

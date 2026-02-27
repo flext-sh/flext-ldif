@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self
+from typing import Protocol, Self, override
 
 from flext_core import r
 
@@ -373,6 +373,7 @@ class ValidationResult:
         """Get list of warning messages."""
         return self._warnings
 
+    @override
     def __repr__(self) -> str:
         """Return string representation."""
         status = "valid" if self._is_valid else "invalid"

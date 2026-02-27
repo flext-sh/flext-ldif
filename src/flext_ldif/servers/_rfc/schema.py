@@ -6,7 +6,7 @@ import re
 import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Literal, Self, overload
+from typing import Literal, Self, overload, override
 
 from flext_core import FlextLogger, FlextResult
 
@@ -65,6 +65,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", parent_quirk)
 
+    @override
     def can_handle_attribute(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
@@ -73,6 +74,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         _ = (self, attr_definition)
         return True
 
+    @override
     def can_handle_objectclass(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -220,6 +222,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return value
         return cls._to_string_list(value)
 
+    @override
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -331,6 +334,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         )
         return metadata
 
+    @override
     def _parse_objectclass(
         self,
         oc_definition: str,
@@ -560,6 +564,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             logger.exception(f"RFC {item_type} writing exception")
             return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
+    @override
     def _write_attribute(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -567,6 +572,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
+    @override
     def _write_objectclass(
         self,
         oc_data: m.Ldif.SchemaObjectClass,

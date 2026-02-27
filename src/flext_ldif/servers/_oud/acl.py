@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextLogger, FlextResult
 
@@ -40,6 +40,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         "ds-privilege-name",
     ]
 
+    @override
     def get_acl_attributes(self) -> list[str]:
         """Get RFC + OUD extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OUD_ACL_ATTRIBUTES
@@ -69,10 +70,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             **filtered_kwargs,
         )
 
+    @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL (public method)."""
         return self.can_handle_acl(acl_line)
 
+    @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
         if not isinstance(acl_line, str):
@@ -118,6 +121,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             pattern in normalized_lower for pattern in ["access to", "(", ")", "=", ":"]
         )
 
+    @override
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model."""
         normalized = acl_line.strip()
@@ -479,6 +483,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             bind_operator,
         )
 
+    @override
     def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:

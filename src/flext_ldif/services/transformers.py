@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import r
 
 from flext_ldif._utilities.transformers import EntryTransformer
@@ -25,6 +27,7 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
         self._source_server = source_server
         self._target_server = target_server
 
+    @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply server-specific transformation."""
         service = FlextLdifConversion()

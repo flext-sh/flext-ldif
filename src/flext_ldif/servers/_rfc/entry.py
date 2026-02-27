@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Mapping
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, r, u as core_u
 
@@ -22,6 +23,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Initialize RFC LDIF Entry processor."""
         super().__init__()
 
+    @override
     def can_handle(
         self,
         entry_dn: str,
@@ -34,6 +36,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         attr_lower = {k.lower(): v for k, v in attributes.items()}
         return "objectclass" in attr_lower
 
+    @override
     def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         if not ldif_content or not ldif_content.strip():

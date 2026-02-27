@@ -5,7 +5,7 @@ from __future__ import annotations
 import struct
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
@@ -58,6 +58,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         cls._init_config_overrides = None
 
     @classmethod
+    @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Allow per-instance config overrides on initialization."""
         base_options = super()._runtime_bootstrap_options()
@@ -569,6 +570,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
         return self.filter_entries(entries, IsPersonPredicate())
 
+    @override
     def execute(self) -> r[m.Ldif.Entry]:
         """Execute service health check for FlextService pattern compliance."""
         try:

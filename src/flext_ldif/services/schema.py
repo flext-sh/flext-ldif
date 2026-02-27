@@ -342,6 +342,7 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
             return False
         return "(" in attr_definition and ")" in attr_definition
 
+    @override
     def __repr__(self) -> str:
         """String representation."""
         return f"FlextLdifSchema[{self._server_type}]"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from contextlib import suppress
 from pathlib import Path
+from typing import override
 
 from flext_core import r
 from flext_core.runtime import FlextRuntime
@@ -202,6 +203,7 @@ class FlextLdifWriter(s[m.Ldif.LdifResults.WriteResponse]):
             )
         return r[str | m.Ldif.LdifResults.WriteResponse].ok(string_result.value)
 
+    @override
     def execute(
         self,
         params: Mapping[str, t.GeneralValueType] | None = None,

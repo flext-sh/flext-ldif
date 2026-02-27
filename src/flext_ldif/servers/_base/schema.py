@@ -5,7 +5,7 @@ from __future__ import annotations
 import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import ClassVar, Self
+from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
@@ -642,6 +642,7 @@ class FlextLdifServersBaseSchema(
         msg = f"Unknown operation: {operation}"
         raise AssertionError(msg)
 
+    @override
     def execute(
         self,
         *,

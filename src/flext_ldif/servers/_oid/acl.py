@@ -6,7 +6,7 @@ import json
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import BaseModel, ConfigDict, Field
@@ -42,6 +42,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         "orclContainerLevelACL",
     ]
 
+    @override
     def get_acl_attributes(self) -> list[str]:
         """Get RFC + OID extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
@@ -74,6 +75,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             default=None, description="Constrain to added object"
         )
 
+    @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""
         if not isinstance(acl_line, str):
@@ -128,6 +130,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
         return acl_data.model_copy(update=update_dict)
 
+    @override
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse Oracle OID ACL string to RFC-compliant internal model."""
         parent_result = super()._parse_acl(acl_line)
@@ -762,6 +765,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 f"OID ACL parsing failed: {e}",
             )
 
+    @override
     def convert_rfc_acl_to_aci(
         self,
         rfc_acl_attrs: Mapping[str, list[str]],
@@ -771,6 +775,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         _ = target_server
         return FlextResult.ok(rfc_acl_attrs)
 
+    @override
     def _write_acl(
         self,
         acl_data: FlextLdifModelsDomains.Acl,

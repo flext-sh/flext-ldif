@@ -6,7 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from re import Pattern
-from typing import Literal
+from typing import Literal, override
 
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif.models import FlextLdifModels as m
@@ -55,6 +55,7 @@ class AndFilter[T](EntryFilter[T]):
         self._left = left
         self._right = right
 
+    @override
     def matches(self, item: T) -> bool:
         """Check if item matches both filters."""
         return self._left.matches(item) and self._right.matches(item)
@@ -71,6 +72,7 @@ class OrFilter[T](EntryFilter[T]):
         self._left = left
         self._right = right
 
+    @override
     def matches(self, item: T) -> bool:
         """Check if item matches either filter."""
         return self._left.matches(item) or self._right.matches(item)
@@ -86,6 +88,7 @@ class NotFilter[T](EntryFilter[T]):
         super().__init__()
         self._inner = inner
 
+    @override
     def matches(self, item: T) -> bool:
         """Check if item does NOT match inner filter."""
         return not self._inner.matches(item)
@@ -116,6 +119,7 @@ class ByDnFilter(EntryFilter["m.Ldif.Entry"]):
         self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN matches pattern."""
         if item.dn is None:
@@ -145,6 +149,7 @@ class ByDnUnderBaseFilter(EntryFilter["m.Ldif.Entry"]):
         self._base_dn = base_dn.lower() if case_insensitive else base_dn
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN is under base DN."""
         if item.dn is None:
@@ -183,6 +188,7 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
         )
         self._mode = mode
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching objectClasses."""
         if item.attributes is None:
@@ -232,6 +238,7 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
         self._mode = mode
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching attributes."""
         if item.attributes is None:
@@ -276,6 +283,7 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
         self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has attribute with matching value."""
         if item.attributes is None:
@@ -311,6 +319,7 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is missing any of the specified attributes."""
         if item.attributes is None:
@@ -341,6 +350,7 @@ class IsSchemaEntryFilter(EntryFilter["m.Ldif.Entry"]):
         super().__init__()
         self._is_schema = is_schema
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
         # Use facade Entry type directly
@@ -362,6 +372,7 @@ class CustomFilter(EntryFilter["m.Ldif.Entry"]):
         super().__init__()
         self._predicate = predicate
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry matches custom predicate."""
         return self._predicate(item)

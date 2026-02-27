@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable, Mapping
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, u as core_u
 
@@ -192,6 +193,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     # - _parse_entry(): Normalizes OUD entries with metadata during parsing (PRIVATE)
     # - _write_entry(): Writes OUD entries with proper formatting (PRIVATE)
 
+    @override
     def can_handle(
         self,
         entry_dn: str,
@@ -283,6 +285,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     # NOTE: _store_oud_minimal_differences REMOVED - use FlextLdifUtilitiesMetadata.store_minimal_differences
     # NOTE: parse_entry now calls RFC base + populates OUD metadata (2025-01)
 
+    @override
     def parse_entry(
         self,
         entry_dn: str,
@@ -1062,6 +1065,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return entry_data
 
+    @override
     def _write_entry(
         self,
         entry_data: m.Ldif.Entry,
@@ -1904,6 +1908,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok(has_macros)
 
+    @override
     def _hook_post_parse_entry(
         self,
         entry: m.Ldif.Entry,
@@ -2270,6 +2275,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok(entry)
 
+    @override
     def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
         parsed_result = super().parse(ldif_content)
@@ -2307,6 +2313,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok(processed_entries)
 
+    @override
     def _hook_pre_write_entry(
         self,
         entry: m.Ldif.Entry,

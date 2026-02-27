@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -83,6 +84,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             extensions.append("X-OID")
         return extensions
 
+    @override
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -204,6 +206,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
 
+    @override
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
@@ -321,6 +324,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             },
         )
 
+    @override
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -350,6 +354,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         return self._apply_attribute_oid_metadata(updated_attr)
 
+    @override
     def extract_schemas_from_ldif(
         self,
         ldif_content: str,

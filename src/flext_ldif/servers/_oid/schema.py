@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Mapping
+from typing import override
 
 from flext_core import FlextLogger, r
 
@@ -54,6 +55,7 @@ class FlextLdifServersOidSchema(
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
+    @override
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -109,6 +111,7 @@ class FlextLdifServersOidSchema(
                 f"OID post-parse attribute hook failed: {e}",
             )
 
+    @override
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
@@ -271,6 +274,7 @@ class FlextLdifServersOidSchema(
             u.Generators.generate_iso_timestamp()
         )
 
+    @override
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -326,6 +330,7 @@ class FlextLdifServersOidSchema(
                 f"OID attribute parsing failed: {e}",
             )
 
+    @override
     def _write_attribute(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -497,6 +502,7 @@ class FlextLdifServersOidSchema(
         case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
         return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
+    @override
     def _parse_objectclass(
         self,
         oc_definition: str,
@@ -537,6 +543,7 @@ class FlextLdifServersOidSchema(
                 f"OID objectClass parsing failed: {e}",
             )
 
+    @override
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -611,6 +618,7 @@ class FlextLdifServersOidSchema(
             x_oid=attr_data.x_oid,
         )
 
+    @override
     def extract_schemas_from_ldif(
         self,
         ldif_content: str,

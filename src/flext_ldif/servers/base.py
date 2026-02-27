@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, Mapping, Sequence
-from typing import (
-    ClassVar,
-    Self,
-    overload,
-)
+from typing import ClassVar, Self, overload, override
 
 from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
@@ -114,6 +110,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     auto_execute: ClassVar[bool] = False
 
+    @override
     def execute(
         self,
         *,

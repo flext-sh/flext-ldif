@@ -16,7 +16,7 @@ import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
-from typing import ClassVar, Self, TypedDict, Unpack
+from typing import ClassVar, Self, TypedDict, Unpack, override
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities, m
 from pydantic import (
@@ -211,6 +211,7 @@ class FlextLdifModelsDomains:
                 raise ValueError(msg)
             return cls(value=str(dn))
 
+        @override
         def __str__(self) -> str:
             """Return DN value as string for str() conversion."""
             return self.value
@@ -1800,6 +1801,7 @@ class FlextLdifModelsDomains:
                 return {}
             return self.attributes.attributes
 
+        @override
         def model_post_init(self, _context: object, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import overload
+from typing import overload, override
 
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -55,6 +55,7 @@ class DynamicCounts(FlextLdifModelsBase):
         extra = self._extra()
         return [(k, self._to_count(v)) for k, v in extra.items()]
 
+    @override
     def __eq__(self, other: object) -> bool:
         if other.__class__ is dict:
             self_dict = {
@@ -109,6 +110,7 @@ class _BooleanFlags(FlextLdifModelsBase):
             raise KeyError(msg)
         return bool(extra[key])
 
+    @override
     def __eq__(self, other: object) -> bool:
         if other.__class__ is dict:
             extra = self.model_extra
@@ -131,6 +133,7 @@ class _FlexibleCategories(FlextModelsCollections.Categories):
         msg = f"{self.__class__.__name__} is unhashable"
         raise TypeError(msg)
 
+    @override
     def __eq__(self, other: object) -> bool:
         if other.__class__ is self.__class__:
             return self.categories == other.categories

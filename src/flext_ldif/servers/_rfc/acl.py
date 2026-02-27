@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Self, overload
+from typing import Self, overload, override
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
@@ -22,11 +22,13 @@ logger = FlextLogger(__name__)
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     """LDAP ACL Quirk - Base Implementation."""
 
+    @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this quirk can handle the ACL definition."""
         _ = acl_line
         return True
 
+    @override
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature."""
         return super()._supports_feature(_feature_id)
@@ -48,6 +50,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         """Convert RFC permission back to server-specific format."""
         return permission
 
+    @override
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
         """Get RFC fallback value for unsupported vendor feature."""
         return super()._get_feature_fallback(_feature_id)
@@ -62,6 +65,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         base_key = "unsupported_feature"
         metadata[f"{base_key}_{feature_id}"] = original_value
 
+    @override
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
@@ -87,6 +91,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         )
         return FlextResult.ok(acl_model)
 
+    @override
     def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
@@ -97,6 +102,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
         return FlextResult[str].fail("ACL has no raw_acl or name to write")
 
+    @override
     def can_handle_attribute(
         self,
         attribute: m.Ldif.SchemaAttribute,
@@ -105,6 +111,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         _ = attribute
         return False
 
+    @override
     def can_handle_objectclass(
         self,
         objectclass: m.Ldif.SchemaObjectClass,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Self
+from typing import Self, override
 
 from flext_core import r
 
@@ -56,6 +56,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             raise RuntimeError(msg)
         return result.value
 
+    @override
     def execute(self) -> r[list[m.Ldif.Entry]]:
         """Run configured entry operation."""
         if not self._operation:

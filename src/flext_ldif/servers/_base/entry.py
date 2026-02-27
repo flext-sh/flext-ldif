@@ -7,7 +7,7 @@ import re
 from collections.abc import Mapping
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import ClassVar, Self
+from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService, u as core_u
 from pydantic import Field, ValidationError
@@ -520,6 +520,7 @@ class FlextLdifServersBaseEntry(
         _ = target_server
         return entry
 
+    @override
     def execute(
         self,
         **kwargs: Mapping[str, t.GeneralValueType],

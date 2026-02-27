@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import IO, Self, overload
+from typing import IO, Self, overload, override
 
 from flext_core import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -343,6 +343,7 @@ class FlextLdifResult[T]:
 
     # SPECIAL METHODS
 
+    @override
     def __repr__(self) -> str:
         """Return string representation."""
         if self.is_success:
@@ -353,6 +354,7 @@ class FlextLdifResult[T]:
         """Return True if result is success."""
         return self.is_success
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Check equality with another FlextLdifResult."""
         if not isinstance(other, FlextLdifResult):

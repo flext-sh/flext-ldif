@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import override
 
 from flext_core import FlextLogger, r
 
@@ -259,6 +260,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
             ),
         )
 
+    @override
     def execute(self) -> r[m.Ldif.LdifResults.AclResponse]:
         """Execute ACL service health check."""
         return r[m.Ldif.LdifResults.AclResponse].ok(
