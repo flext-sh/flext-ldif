@@ -9,7 +9,7 @@ from re import Pattern
 from typing import Literal, override
 
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.models import m
 
 # BASE FILTER CLASS
 

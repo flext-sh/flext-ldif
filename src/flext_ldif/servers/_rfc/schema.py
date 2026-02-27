@@ -19,7 +19,7 @@ from flext_ldif.models import m
 from flext_ldif.protocols import p
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

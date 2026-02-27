@@ -154,31 +154,38 @@ ______________________________________________________________________
 
 ### Zero Tolerância (Proibido Completamente)
 
-1. **TYPE_CHECKING**: ❌ PROIBIDO - Mover código que causa dependência circular para módulo apropriado
-1. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções
-1. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - Todas as metaclasses são proibidas (incluindo `__getattr__`)
-1. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry)
-1. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo
-1. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código
-1. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta
-1. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários)
-1. **Importação**: ❌ Sem root aliases, lazy imports ou fallbacks de ImportError; imports sempre no topo
-1. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade
+1. **Hacks**: ❌ PROIBIDO - `model_rebuild()`, `eval()`, `exec()`.
+2. **Inline/Lazy Imports**: ❌ PROIBIDO - Sem imports dentro de funções ou `.try / except ImportError:`.
+3. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções.
+4. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - (Com exceção do `__getattr__` no `__init__.py` para lazy-load de módulo).
+5. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry).
+6. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo.
+7. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código.
+8. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta.
+9. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários).
+10. **Importação**: ❌ Sem root aliases, lazy imports genéricos ou fallbacks de ImportError; imports sempre no topo.
+11. **TYPE_CHECKING**: ❌ Uso restrito APENAS para resolver ciclos de dependência de tipagem em módulos não-Pydantic.
+12. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade.
 
 ### Exemplos de Correções
 
 #### TYPE_CHECKING
 
 ```python
-# ❌ PROIBIDO
+# ❌ PROIBIDO - Importações Inline e Try/Except Hacks
+def my_func():
+    from flext_ldif import p  # PROIBIDO
+
+try:
+    import pandas  # PROIBIDO
+except ImportError:
+    pass
+
+# ✅ CORRETO - TYPE_CHECKING apenas para resolver ciclos em módulos não-Pydantic
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import ClassVar as TypeClassVar
-else:
-    TypeClassVar = type
-
-# ✅ CORRETO - Mover para módulo apropriado
-# _utilities/type_helpers.py
+    from flext_ldif.protocols import p
+```
 from typing import ClassVar
 TypeClassVar = ClassVar
 ```
@@ -558,9 +565,9 @@ from flext_ldif._utilities.builders import ProcessConfigBuilder
 def ldif_client() -> FlextLdif:
     return FlextLdif()
 
-# ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests
+# ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests unnecessarily
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:  # FORBIDDEN even in tests
+if TYPE_CHECKING:
     from flext_ldif import FlextLdif
 ```
 
