@@ -306,7 +306,9 @@ class FlextLdifConversion(
             return FlextResult.fail(f"Model conversion failed: {e}")
 
     @staticmethod
-    def _normalize_metadata_value(value: t.GeneralValueType) -> t.MetadataAttributeValue:
+    def _normalize_metadata_value(
+        value: t.GeneralValueType,
+    ) -> t.MetadataAttributeValue:
         """Normalize metadata value to proper type."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value if value is not None else ""
@@ -1580,7 +1582,9 @@ class FlextLdifConversion(
         return r[_TSchemaConversionValue].ok(value)
 
     @staticmethod
-    def _schema_passthrough_ok(value: t.GeneralValueType) -> r[_TSchemaConversionValue] | None:
+    def _schema_passthrough_ok(
+        value: t.GeneralValueType,
+    ) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
         if isinstance(value, dict):
@@ -2106,7 +2110,9 @@ class FlextLdifConversion(
                 return quirk
             return None
 
-        schema_quirk_raw: t.GeneralValueType | None = getattr(quirk, "schema_quirk", None)
+        schema_quirk_raw: t.GeneralValueType | None = getattr(
+            quirk, "schema_quirk", None
+        )
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
             if all(

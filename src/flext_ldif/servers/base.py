@@ -14,15 +14,15 @@ from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.results import FlextLdifModelsResults
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
-from flext_ldif.utilities import u
 from flext_ldif.typings import t
-from flext_ldif.protocols import p
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -515,7 +515,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if method is not None and callable(method):
                 captured = method
 
-                def typed_register(server_type: str, quirk: p.Ldif.SchemaQuirkProtocol | object) -> None:
+                def typed_register(
+                    server_type: str, quirk: p.Ldif.SchemaQuirkProtocol | object
+                ) -> None:
                     _ = captured(server_type, quirk)
 
                 return typed_register

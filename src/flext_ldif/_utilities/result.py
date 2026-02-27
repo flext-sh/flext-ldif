@@ -223,7 +223,9 @@ class FlextLdifResult[T]:
         return r[list[str]].ok(lines)
 
     @staticmethod
-    def _serialize_entries_to_ldif(value: Sequence[m.Ldif.Entry] | m.Ldif.Entry) -> FlextResult[str]:
+    def _serialize_entries_to_ldif(
+        value: Sequence[m.Ldif.Entry] | m.Ldif.Entry,
+    ) -> FlextResult[str]:
         entries: list[m.Ldif.Entry] = []
 
         if isinstance(value, m.Ldif.Entry):

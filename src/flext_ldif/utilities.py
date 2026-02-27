@@ -1610,7 +1610,9 @@ class FlextLdifUtilities(FlextUtilities):
             if not dicts:
                 return {}
 
-            def apply_defaults(acc: t.ConfigMapValue, d: t.ConfigMapValue) -> t.ConfigMapValue:
+            def apply_defaults(
+                acc: t.ConfigMapValue, d: t.ConfigMapValue
+            ) -> t.ConfigMapValue:
                 """Apply defaults using fold() pattern: first wins, later fill missing/None."""
                 match (acc, d):
                     case (dict() as acc_dict, dict() as d_dict):

@@ -17,9 +17,9 @@ from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
-from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 

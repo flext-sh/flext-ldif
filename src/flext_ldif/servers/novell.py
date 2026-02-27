@@ -13,8 +13,8 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import u
 from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):

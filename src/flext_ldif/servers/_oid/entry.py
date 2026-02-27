@@ -17,10 +17,10 @@ from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 

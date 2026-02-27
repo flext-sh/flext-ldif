@@ -24,7 +24,7 @@ class DynamicCounts(FlextLdifModelsBase):
         setattr(self, key, value)
 
     @staticmethod
-    def _to_count(value: str | int | float) -> int:
+    def _to_count(value: str | float) -> int:
         if value.__class__ in {int, float}:
             return int(str(value))
         return 0
@@ -457,8 +457,7 @@ class FlextLdifModelsResults:
                 "file_size_bytes",
             }
             updates = {
-                name: getattr(self, name) + getattr(other, name)
-                for name in sum_fields
+                name: getattr(self, name) + getattr(other, name) for name in sum_fields
             }
             updates |= {
                 "processing_duration": self.processing_duration
@@ -486,8 +485,7 @@ class FlextLdifModelsResults:
         @computed_field
         def is_empty(self) -> bool:
             has_schema = (
-                self.stats.schema_attributes > 0
-                or self.stats.schema_objectclasses > 0
+                self.stats.schema_attributes > 0 or self.stats.schema_objectclasses > 0
             )
             return not has_schema and self.stats.total_entries == 0
 

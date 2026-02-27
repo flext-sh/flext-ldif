@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -67,15 +66,21 @@ class FlextLdifServersBaseQuirkHelpers:
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_raw: int | t.GeneralValueType = getattr(constants_attr, "PRIORITY", 100)
+        priority_raw: int | t.GeneralValueType = getattr(
+            constants_attr, "PRIORITY", 100
+        )
         if isinstance(priority_raw, int):
             return priority_raw
         return 100
 
     @staticmethod
-    def get_parent_quirk_safe(instance: p.Ldif.SchemaQuirkProtocol) -> p.Ldif.SchemaQuirkProtocol | None:
+    def get_parent_quirk_safe(
+        instance: p.Ldif.SchemaQuirkProtocol,
+    ) -> p.Ldif.SchemaQuirkProtocol | None:
         """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(instance, "_parent_quirk", None)
+        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(
+            instance, "_parent_quirk", None
+        )
         if (
             parent_raw is not None
             and getattr(parent_raw, "_parent_quirk", None) is not None

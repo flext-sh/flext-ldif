@@ -11,7 +11,9 @@ from flext_ldif.typings import t
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 
-type ConversionTargetType = Literal["str", "int", "float", "bool", "list", "tuple", "dict"]
+type ConversionTargetType = Literal[
+    "str", "int", "float", "bool", "list", "tuple", "dict"
+]
 
 
 class ConvertToStr(BaseModel):
@@ -77,7 +79,7 @@ class ConvertToList(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if val.__class__ in (list, tuple, set, frozenset):
+        if val.__class__ in {list, tuple, set, frozenset}:
             return list(val)
         return [val]
 
@@ -90,7 +92,7 @@ class ConvertToTuple(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if val.__class__ in (list, tuple, set, frozenset):
+        if val.__class__ in {list, tuple, set, frozenset}:
             return tuple(val)
         return (val,)
 

@@ -20,6 +20,7 @@ from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
@@ -27,7 +28,6 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
-from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -162,7 +162,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Implication: _parent_quirk is handled separately, not via Pydantic fields
         # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
         # Implication: Filter kwargs to ensure type safety (int is not t.GeneralValueType, only str/float/bool/None)
-        filtered_kwargs: dict[str, str | float | bool | None] = {
+        {
             k: v
             for k, v in kwargs.items()
             if k != "_parent_quirk"
@@ -1539,7 +1539,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
-    def _normalize_aci_value_simple(self, value: t.MetadataAttributeValue) -> list[str] | str | None:
+    def _normalize_aci_value_simple(
+        self, value: t.MetadataAttributeValue
+    ) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
         if isinstance(value, list):
             return [str(v) for v in value]

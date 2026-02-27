@@ -14,7 +14,9 @@ class MockResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod
-    def validate_composition(*args: t.GeneralValueType, **kwargs: t.GeneralValueType) -> bool:
+    def validate_composition(
+        *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+    ) -> bool:
         """Validate composition."""
         return True
 
@@ -24,11 +26,15 @@ class MockResultHelpers:
         return True
 
     @staticmethod
-    def assert_composition(*args: t.GeneralValueType, **kwargs: t.GeneralValueType) -> None:
+    def assert_composition(
+        *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+    ) -> None:
         """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(*args: t.GeneralValueType, **kwargs: t.GeneralValueType) -> None:
+    def assert_chain_success(
+        *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+    ) -> None:
         """Assert chain success."""
 
 

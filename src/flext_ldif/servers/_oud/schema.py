@@ -9,10 +9,10 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.constants import c
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import u
-from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -26,10 +26,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""
-        filtered_kwargs: dict[str, str | float | bool | None] = {
+        {
             k: v
             for k, v in kwargs.items()
-            if k not in ("_parent_quirk", "_schema_service")
+            if k not in {"_parent_quirk", "_schema_service"}
             and issubclass(v.__class__, (str, float, bool, type(None)))
         }
 

@@ -25,12 +25,12 @@ from flext_core import r
 from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.writer import FlextLdifWriter
-from flext_ldif.protocols import p
-from flext_ldif.services.conversion import FlextLdifConversion
 from flext_tests.constants import FlextTestsConstants
 
 
@@ -2176,7 +2176,13 @@ class TestDeduplicationHelpers:
         parse_method: str | None = None,
         expected_type: type | None = None,
         should_succeed: bool | None = None,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Entry | m.Ldif.Acl | None:
+    ) -> (
+        m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Entry
+        | m.Ldif.Acl
+        | None
+    ):
         """Parse using quirk and unwrap result.
 
         Args:
@@ -2253,7 +2259,10 @@ class TestDeduplicationHelpers:
     @staticmethod
     def quirk_write_and_unwrap(
         quirk: p.Ldif.SchemaQuirkProtocol,
-        data: m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
+        data: m.Ldif.Entry
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Acl,
         msg: str | None = None,
         write_method: str | None = None,
         must_contain: list[str] | None = None,
@@ -2464,7 +2473,9 @@ class TestDeduplicationHelpers:
         conversion_type: str,
         items: list[str],
         expected_count: int | None = None,
-    ) -> list[m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]:
+    ) -> list[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
         """Batch convert items and assert result.
 
         Args:

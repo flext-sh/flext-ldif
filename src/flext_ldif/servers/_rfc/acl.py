@@ -10,11 +10,11 @@ from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
-from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
