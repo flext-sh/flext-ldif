@@ -69,7 +69,7 @@ class FlextLdifModelsMetadata:
         def __len__(self) -> int:
             return len(self._extra())
 
-        def __iter__(self):  # noqa: ANN204
+        def __iter__(self):
             yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:
