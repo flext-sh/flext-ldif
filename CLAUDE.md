@@ -164,7 +164,7 @@ ______________________________________________________________________
 8. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta.
 9. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários).
 10. **Importação**: ❌ Sem root aliases, lazy imports genéricos ou fallbacks de ImportError; imports sempre no topo.
-11. **TYPE_CHECKING**: ❌ Uso restrito APENAS para resolver ciclos de dependência de tipagem em módulos não-Pydantic.
+11. **TYPE_CHECKING**: Allowed for non-Pydantic, type-only imports to avoid circular dependencies. NEVER use with Pydantic models (they require runtime type resolution).
 12. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade.
 
 ### Exemplos de Correções
