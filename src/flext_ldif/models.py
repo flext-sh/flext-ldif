@@ -231,7 +231,9 @@ class FlextLdifModels(FlextModels):
             ClientStatus: Final = FlextLdifModelsResults.ClientStatus
             ServiceStatus: Final = FlextLdifModelsResults.ServiceStatus
             SchemaServiceStatus: Final = FlextLdifModelsResults.SchemaServiceStatus
-            StatisticsServiceStatus: Final = FlextLdifModelsResults.StatisticsServiceStatus
+            StatisticsServiceStatus: Final = (
+                FlextLdifModelsResults.StatisticsServiceStatus
+            )
 
             DictAccessibleValue: Final = FlextLdifModelsResults.DictAccessibleValue
             BooleanFlags: Final = FlextLdifModelsResults.BooleanFlags

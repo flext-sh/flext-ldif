@@ -59,13 +59,9 @@ class TestsFlextLdifModels:
         WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
 
         # Service status models for testing
-        ValidationServiceStatus = (
-            FlextLdifModels.Ldif.Results.ValidationServiceStatus
-        )
+        ValidationServiceStatus = FlextLdifModels.Ldif.Results.ValidationServiceStatus
         SchemaServiceStatus = FlextLdifModels.Ldif.Results.SchemaServiceStatus
-        StatisticsServiceStatus = (
-            FlextLdifModels.Ldif.Results.StatisticsServiceStatus
-        )
+        StatisticsServiceStatus = FlextLdifModels.Ldif.Results.StatisticsServiceStatus
 
         # Result models for testing
         ValidationBatchResult = FlextLdifModels.Ldif.Results.ValidationBatchResult
