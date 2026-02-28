@@ -124,6 +124,7 @@ class FlextLdifUtilitiesDecorators:
 
             # Type narrowing: wrapper is compatible with ParseMethod type
             return wrapper
+            return wrapper
 
         return decorator
 
