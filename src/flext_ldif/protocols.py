@@ -6,10 +6,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult
-
-from flext_ldif.constants import c
-from flext_ldif.typings import t
+from flext_core import FlextResult
+from flext_core.protocols import FlextProtocols
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -413,6 +411,6 @@ class FlextLdifProtocols(FlextProtocols):
 
 
 p = FlextLdifProtocols
-fldif = FlextLdifProtocols
 
-__all__ = ["FlextLdifProtocols", "fldif", "p"]
+
+__all__ = ["FlextLdifProtocols", "p"]
