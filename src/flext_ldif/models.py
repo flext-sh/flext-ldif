@@ -8,9 +8,6 @@ from typing import Final, Literal, TypeAlias
 from flext_core import FlextModels, t
 from pydantic import Field
 
-# Resolve circular dependency: settings.py references FlextLdifModelsDomains
-# in annotations but cannot import domain.py (domain.py imports settings.py).
-import flext_ldif._models.settings as _settings_mod
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -31,7 +28,7 @@ from flext_ldif._models.settings import (
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-_settings_mod.FlextLdifModelsDomains = FlextLdifModelsDomains  # type: ignore[attr-defined]
+# Circular dependency resolved via TYPE_CHECKING in settings.py
 
 
 class FlextLdifModels(FlextModels):
@@ -304,10 +301,10 @@ class FlextLdifModels(FlextModels):
             class SchemaDict(FlextModels.ArbitraryTypesModel):
                 """Schema extraction result dictionary model."""
 
-                ATTRIBUTES: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
+                ATTRIBUTES: list[str] = Field(
                     default_factory=list,
                 )
-                OBJECTCLASS: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+                OBJECTCLASS: list[str] = Field(
                     default_factory=list,
                 )
 

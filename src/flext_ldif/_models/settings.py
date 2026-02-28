@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from flext_core import m, r, t
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
@@ -20,6 +20,9 @@ from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
 from flext_ldif._models.shared import SchemaObjectClass
 from flext_ldif.constants import c
 from flext_ldif.protocols import FlextLdifProtocols
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 # Configuration classes defined outside main class for type resolution
