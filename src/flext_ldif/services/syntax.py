@@ -18,7 +18,7 @@ from flext_ldif.utilities import u
 logger = logging.getLogger(__name__)
 
 
-class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service."""
 
     _VALIDATOR_MAP: ClassVar[Mapping[str, Callable[[str], r[bool]]]] = {
@@ -53,10 +53,10 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.SyntaxServiceStatus]:
+    ) -> r[m.Ldif.Results.SyntaxServiceStatus]:
         """Execute Syntax service self-check."""
-        return r[m.Ldif.LdifResults.SyntaxServiceStatus].ok(
-            m.Ldif.LdifResults.SyntaxServiceStatus(
+        return r[m.Ldif.Results.SyntaxServiceStatus].ok(
+            m.Ldif.Results.SyntaxServiceStatus(
                 service="SyntaxService",
                 status="operational",
                 rfc_compliance="RFC 4517",
@@ -120,11 +120,11 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.LdifResults.SyntaxServiceStatu
         name: str | None = None,
         desc: str | None = None,
         server_type: str = "rfc",
-    ) -> r[m.Ldif.LdifResults.Syntax]:
+    ) -> r[m.Ldif.Results.Syntax]:
         """Resolve OID to complete Syntax model with validation."""
         oid_valid = self.validate_oid(oid)
         if oid_valid.is_failure:
-            return r[m.Ldif.LdifResults.Syntax].fail(
+            return r[m.Ldif.Results.Syntax].fail(
                 f"Invalid OID format: {oid}",
             )
 

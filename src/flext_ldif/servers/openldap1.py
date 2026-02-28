@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import r
 
@@ -108,6 +108,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 1.x schema quirk."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -129,6 +130,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 has_olc = "olc" in attr_definition.name.lower()
             return not has_olc
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -150,6 +152,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 has_olc = "olc" in oc_definition.name.lower()
             return not has_olc
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -173,6 +176,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -194,6 +198,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _write_attribute(
             self,
             attr_data: m.Ldif.SchemaAttribute,
@@ -233,6 +238,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     f"OpenLDAP 1.x attribute write failed: {e}",
                 )
 
+        @override
         def _write_objectclass(
             self,
             oc_data: m.Ldif.SchemaObjectClass,
@@ -285,10 +291,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """OpenLDAP 1.x ACL quirk (nested)."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL (public method)."""
             return self.can_handle_acl(acl_line)
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL."""
             if isinstance(acl_line, str):
@@ -311,6 +319,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 ),
             )
 
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse OpenLDAP 1.x ACL definition."""
             try:
@@ -423,6 +432,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     f"OpenLDAP 1.x ACL parsing failed: {e}",
                 )
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
@@ -461,6 +471,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 1.x entry quirk (nested)."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

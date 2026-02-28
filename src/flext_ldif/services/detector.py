@@ -26,7 +26,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
+class FlextLdifDetector(s[m.Ldif.Results.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content."""
 
     @staticmethod
@@ -39,31 +39,31 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
         max_lines: int | None = None,
-    ) -> r[m.Ldif.LdifResults.ServerDetectionResult]:
+    ) -> r[m.Ldif.Results.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content."""
         max_lines = max_lines or u.Ldif.Server.get_server_detection_default_max_lines()
 
         match (ldif_path, ldif_content):
             case (None, None):
-                return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                return r[m.Ldif.Results.ServerDetectionResult].fail(
                     "Either ldif_path or ldif_content must be provided",
                 )
             case (path, None) if path is not None and not path.exists():
-                return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                return r[m.Ldif.Results.ServerDetectionResult].fail(
                     f"LDIF file not found: {path}",
                 )
             case (path, None) if path is not None:
                 try:
                     ldif_content = path.read_text(encoding="utf-8")
                 except UnicodeDecodeError as e:
-                    return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                    return r[m.Ldif.Results.ServerDetectionResult].fail(
                         f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
                     )
             case (_, content) if issubclass(content.__class__, str):
                 pass
 
         if ldif_content is None:
-            return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+            return r[m.Ldif.Results.ServerDetectionResult].fail(
                 "No LDIF content provided",
             )
         lines = ldif_content.split("\n")
@@ -77,7 +77,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
 
         scores_model = m.Ldif.Results.DynamicCounts(**scores_dict)
 
-        detection_result = m.Ldif.LdifResults.ServerDetectionResult(
+        detection_result = m.Ldif.Results.ServerDetectionResult(
             detected_server_type=detected_type,
             confidence=confidence,
             scores=scores_model,
@@ -85,21 +85,21 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             is_confident=confidence
             >= u.Ldif.Server.get_server_detection_confidence_threshold(),
         )
-        return r[m.Ldif.LdifResults.ServerDetectionResult].ok(
+        return r[m.Ldif.Results.ServerDetectionResult].ok(
             detection_result,
         )
 
     @override
-    def execute(self) -> r[m.Ldif.LdifResults.ClientStatus]:
+    def execute(self) -> r[m.Ldif.Results.ClientStatus]:
         """Execute server detector self-check (required by FlextService)."""
         config_settings = m.Ldif.Results.ConfigSettings()
         config_settings.set_setting("service", "FlextLdifDetector")
-        status_result = m.Ldif.LdifResults.ClientStatus(
+        status_result = m.Ldif.Results.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
             config=config_settings,
         )
-        return r[m.Ldif.LdifResults.ClientStatus].ok(status_result)
+        return r[m.Ldif.Results.ClientStatus].ok(status_result)
 
     @staticmethod
     def resolve_from_config(
@@ -143,7 +143,7 @@ class FlextLdifDetector(s[m.Ldif.LdifResults.ClientStatus]):
             if detection_result.is_success:
                 result = detection_result.value
                 if issubclass(
-                    result.__class__, m.Ldif.LdifResults.ServerDetectionResult
+                    result.__class__, m.Ldif.Results.ServerDetectionResult
                 ):
                     return r[str].ok(result.detected_server_type)
 

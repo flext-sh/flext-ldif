@@ -6,7 +6,7 @@ import json
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextLogger, FlextResult
 
@@ -179,6 +179,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 2.x schema quirk."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -209,6 +210,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return super().can_handle_attribute(attr_definition)
             return False
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -236,6 +238,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return super().can_handle_objectclass(oc_definition)
             return False
 
+        @override
         def _transform_attribute_for_write(
             self,
             attr_data: m.Ldif.SchemaAttribute,
@@ -243,6 +246,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """Transform attribute before writing (hook from base.py)."""
             return super()._transform_attribute_for_write(attr_data)
 
+        @override
         def _transform_objectclass_for_write(
             self,
             oc_data: m.Ldif.SchemaObjectClass,
@@ -253,6 +257,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """OpenLDAP 2.x ACL quirk (nested)."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL."""
             if isinstance(acl_line, str):
@@ -263,6 +268,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return self.can_handle_acl(str(raw_acl_value))
             return False
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal)."""
             if isinstance(acl_line, m.Ldif.Acl):
@@ -289,6 +295,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
             )
 
+        @override
         def _write_acl(
             self,
             acl_data: FlextLdifModelsDomains.Acl,
@@ -446,6 +453,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 raw_acl=acl_line,
             )
 
+        @override
         def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse OpenLDAP 2.x ACL definition (internal)."""
             try:
@@ -497,6 +505,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry quirk (nested)."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

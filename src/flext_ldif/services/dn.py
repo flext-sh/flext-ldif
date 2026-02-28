@@ -47,7 +47,7 @@ class FlextLdifDn(
         description="Enable domain event emission for operations",
     )
 
-    _last_event: m.Ldif.LdifResults.DnEvent | None = PrivateAttr(default=None)
+    _last_event: m.Ldif.Results.DnEvent | None = PrivateAttr(default=None)
 
     @field_validator("operation")
     @classmethod
@@ -120,7 +120,7 @@ class FlextLdifDn(
             if self.operation == "parse" and result.is_success:
                 parse_components = self.parse_components(self.dn).map_or(None)
 
-            dn_config = m.Ldif.LdifResults.DnEventConfig(
+            dn_config = m.Ldif.Results.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
                 output_dn=result.map_or(None),
@@ -140,7 +140,7 @@ class FlextLdifDn(
 
         return result
 
-    def get_last_event(self) -> m.Ldif.LdifResults.DnEvent | None:
+    def get_last_event(self) -> m.Ldif.Results.DnEvent | None:
         """Retrieve last emitted DnEvent."""
         return (
             self._last_event if getattr(self, "_last_event", None) is not None else None

@@ -24,7 +24,7 @@ _MISSING_ATTR = object()
 
 
 class FlextLdifCategorization(
-    s[m.Ldif.LdifResults.FlexibleCategories],
+    s[m.Ldif.Results.FlexibleCategories],
 ):
     """LDIF Entry Categorization Service."""
 
@@ -70,12 +70,12 @@ class FlextLdifCategorization(
     def __init__(
         self,
         categorization_rules: (
-            m.Ldif.LdifResults.CategoryRules
+            m.Ldif.Results.CategoryRules
             | Mapping[str, str | list[str] | None]
             | None
         ) = None,
         schema_whitelist_rules: (
-            m.Ldif.LdifResults.WhitelistRules
+            m.Ldif.Results.WhitelistRules
             | Mapping[str, str | list[str] | bool | None]
             | None
         ) = None,
@@ -88,8 +88,8 @@ class FlextLdifCategorization(
         """Initialize categorization service."""
         super().__init__()
 
-        self._categorization_rules: m.Ldif.LdifResults.CategoryRules
-        self._schema_whitelist_rules: m.Ldif.LdifResults.WhitelistRules | None
+        self._categorization_rules: m.Ldif.Results.CategoryRules
+        self._schema_whitelist_rules: m.Ldif.Results.WhitelistRules | None
         self._forbidden_attributes: list[str]
         self._forbidden_objectclasses: list[str]
         self._base_dn: str | None
@@ -106,28 +106,28 @@ class FlextLdifCategorization(
                 FlextLdifServer.get_global_instance(),
             )
 
-        if isinstance(categorization_rules, m.Ldif.LdifResults.CategoryRules):
+        if isinstance(categorization_rules, m.Ldif.Results.CategoryRules):
             object.__setattr__(self, "_categorization_rules", categorization_rules)
         elif isinstance(categorization_rules, dict):
             object.__setattr__(
                 self,
                 "_categorization_rules",
-                m.Ldif.LdifResults.CategoryRules.model_validate(categorization_rules),
+                m.Ldif.Results.CategoryRules.model_validate(categorization_rules),
             )
         else:
             object.__setattr__(
                 self,
                 "_categorization_rules",
-                m.Ldif.LdifResults.CategoryRules(),
+                m.Ldif.Results.CategoryRules(),
             )
 
-        if isinstance(schema_whitelist_rules, m.Ldif.LdifResults.WhitelistRules):
+        if isinstance(schema_whitelist_rules, m.Ldif.Results.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
         elif isinstance(schema_whitelist_rules, dict):
             object.__setattr__(
                 self,
                 "_schema_whitelist_rules",
-                m.Ldif.LdifResults.WhitelistRules.model_validate(
+                m.Ldif.Results.WhitelistRules.model_validate(
                     schema_whitelist_rules,
                 ),
             )
@@ -159,9 +159,9 @@ class FlextLdifCategorization(
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.FlexibleCategories]:
+    ) -> r[m.Ldif.Results.FlexibleCategories]:
         """Execute categorization pass (use individual methods for specific operations)."""
-        categories = m.Ldif.LdifResults.FlexibleCategories()
+        categories = m.Ldif.Results.FlexibleCategories()
         categories[c.Ldif.Category.SCHEMA] = []
         categories[c.Ldif.Category.HIERARCHY] = []
         categories[c.Ldif.Category.USERS] = []
@@ -169,7 +169,7 @@ class FlextLdifCategorization(
         categories[c.Ldif.Category.ACL] = []
         categories[c.Ldif.Category.REJECTED] = []
 
-        return r[m.Ldif.LdifResults.FlexibleCategories].ok(categories)
+        return r[m.Ldif.Results.FlexibleCategories].ok(categories)
 
     @property
     def rejection_tracker(self) -> Mapping[str, list[m.Ldif.Entry]]:
@@ -194,7 +194,7 @@ class FlextLdifCategorization(
     @property
     def schema_whitelist_rules(
         self,
-    ) -> m.Ldif.LdifResults.WhitelistRules | None:
+    ) -> m.Ldif.Results.WhitelistRules | None:
         """Get schema whitelist rules (read-only)."""
         return self._schema_whitelist_rules
 
@@ -368,7 +368,7 @@ class FlextLdifCategorization(
 
     def _build_category_map_from_rules(
         self,
-        rules: m.Ldif.LdifResults.CategoryRules,
+        rules: m.Ldif.Results.CategoryRules,
     ) -> dict[str, frozenset[str]]:
         """Build category map from rules."""
         category_map: dict[
@@ -476,21 +476,21 @@ class FlextLdifCategorization(
     def _normalize_rules(
         self,
         rules: (
-            m.Ldif.LdifResults.CategoryRules
+            m.Ldif.Results.CategoryRules
             | Mapping[str, t.MetadataAttributeValue]
             | None
         ),
-    ) -> r[m.Ldif.LdifResults.CategoryRules]:
+    ) -> r[m.Ldif.Results.CategoryRules]:
         """Normalize rules to CategoryRules model."""
-        if isinstance(rules, m.Ldif.LdifResults.CategoryRules):
-            return r[m.Ldif.LdifResults.CategoryRules].ok(rules)
+        if isinstance(rules, m.Ldif.Results.CategoryRules):
+            return r[m.Ldif.Results.CategoryRules].ok(rules)
         if rules is None:
-            return r[m.Ldif.LdifResults.CategoryRules].ok(self._categorization_rules)
+            return r[m.Ldif.Results.CategoryRules].ok(self._categorization_rules)
 
         if isinstance(rules, Mapping):
             try:
-                return r[m.Ldif.LdifResults.CategoryRules].ok(
-                    m.Ldif.LdifResults.CategoryRules.model_validate(dict(rules))
+                return r[m.Ldif.Results.CategoryRules].ok(
+                    m.Ldif.Results.CategoryRules.model_validate(dict(rules))
                 )
             except (
                 ValueError,
@@ -499,11 +499,11 @@ class FlextLdifCategorization(
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.LdifResults.CategoryRules].fail(
+                return r[m.Ldif.Results.CategoryRules].fail(
                     f"Invalid rules mapping: {e}"
                 )
 
-        return r[m.Ldif.LdifResults.CategoryRules].fail(
+        return r[m.Ldif.Results.CategoryRules].fail(
             f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
         )
 
@@ -568,7 +568,7 @@ class FlextLdifCategorization(
         self,
         entry: m.Ldif.Entry,
         rules: (
-            m.Ldif.LdifResults.CategoryRules
+            m.Ldif.Results.CategoryRules
             | Mapping[str, t.MetadataAttributeValue]
             | None
         ) = None,
@@ -628,9 +628,9 @@ class FlextLdifCategorization(
     def categorize_entries(
         self,
         entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.LdifResults.FlexibleCategories]:
+    ) -> r[m.Ldif.Results.FlexibleCategories]:
         """Categorize entries into 6 categories."""
-        categories = m.Ldif.LdifResults.FlexibleCategories()
+        categories = m.Ldif.Results.FlexibleCategories()
         categories[c.Ldif.Category.SCHEMA] = []
         categories[c.Ldif.Category.HIERARCHY] = []
         categories[c.Ldif.Category.USERS] = []
@@ -697,17 +697,17 @@ class FlextLdifCategorization(
                     entries_count=entries_count,
                 )
 
-        return r[m.Ldif.LdifResults.FlexibleCategories].ok(categories)
+        return r[m.Ldif.Results.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
         self,
-        categories: m.Ldif.LdifResults.FlexibleCategories,
-    ) -> m.Ldif.LdifResults.FlexibleCategories:
+        categories: m.Ldif.Results.FlexibleCategories,
+    ) -> m.Ldif.Results.FlexibleCategories:
         """Filter entries by base DN (if configured)."""
         if not self._base_dn:
             return categories
 
-        filtered = m.Ldif.LdifResults.FlexibleCategories()
+        filtered = m.Ldif.Results.FlexibleCategories()
 
         filtered[c.Ldif.Category.SCHEMA] = []
         filtered[c.Ldif.Category.HIERARCHY] = []
@@ -830,14 +830,14 @@ class FlextLdifCategorization(
 
     @staticmethod
     def filter_categories_by_base_dn(
-        categories: m.Ldif.LdifResults.FlexibleCategories,
+        categories: m.Ldif.Results.FlexibleCategories,
         base_dn: str,
-    ) -> m.Ldif.LdifResults.FlexibleCategories:
+    ) -> m.Ldif.Results.FlexibleCategories:
         """Filter categorized entries by base DN."""
         if not base_dn or not categories:
             return categories
 
-        filtered = m.Ldif.LdifResults.FlexibleCategories()
+        filtered = m.Ldif.Results.FlexibleCategories()
 
         excluded_entries: list[m.Ldif.Entry] = []
 

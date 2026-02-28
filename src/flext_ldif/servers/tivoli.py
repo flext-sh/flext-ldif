@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import r
 
@@ -134,6 +134,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -157,6 +158,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
             )
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -179,6 +181,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
             )
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -195,6 +198,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -214,6 +218,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL quirks implementation."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this ACL is a Tivoli DS ACL."""
             if isinstance(acl_line, str):
@@ -225,6 +230,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return self.can_handle_acl(raw_acl)
             return False
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
@@ -258,6 +264,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
@@ -305,6 +312,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     f"IBM Tivoli DS ACL parsing failed: {exc}",
                 )
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
@@ -372,6 +380,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """Normalize attribute name for Tivoli DS."""
             return attr_name.lower()
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

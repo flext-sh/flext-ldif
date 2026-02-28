@@ -196,7 +196,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         target_server: str = "rfc",
         options: m.Ldif.MigrateOptions | None = None,
         **kwargs: str | float | bool | None,
-    ) -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
+    ) -> r[m.Ldif.Results.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         if (
             options
@@ -381,7 +381,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def detect_server_type(
         self,
         ldif_content: str | Path,
-    ) -> r[m.Ldif.LdifResults.ServerDetectionResult]:
+    ) -> r[m.Ldif.Results.ServerDetectionResult]:
         """Detect LDAP server type from LDIF content."""
         content_str: str | None = None
         match ldif_content:
@@ -389,7 +389,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 try:
                     content_str = source_path.read_text(encoding="utf-8")
                 except OSError as e:
-                    return r[m.Ldif.LdifResults.ServerDetectionResult].fail(
+                    return r[m.Ldif.Results.ServerDetectionResult].fail(
                         f"Failed to read file: {e}"
                     )
             case str() as content:
@@ -416,8 +416,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         *,
         server_type: str | None = None,
         format_options: (
-            m.Ldif.LdifResults.WriteFormatOptions
-            | m.Ldif.LdifResults.WriteOptions
+            m.Ldif.WriteFormatOptions
+            | m.Ldif.WriteOptions
             | None
         ) = None,
     ) -> r[str]:
@@ -437,8 +437,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         *,
         server_type: str | None = None,
         format_options: (
-            m.Ldif.LdifResults.WriteFormatOptions
-            | m.Ldif.LdifResults.WriteOptions
+            m.Ldif.WriteFormatOptions
+            | m.Ldif.WriteOptions
             | None
         ) = None,
     ) -> r[bool]:

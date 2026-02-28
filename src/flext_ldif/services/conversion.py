@@ -1965,7 +1965,7 @@ class FlextLdifConversion(
             items_converted = u.count(converted_typed)
             items_failed = u.count(errors_typed)
 
-            conversion_config = m.Ldif.LdifResults.Events.ConversionEventConfig(
+            conversion_config = m.Ldif.Results.Events.ConversionEventConfig(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,
@@ -2020,7 +2020,7 @@ class FlextLdifConversion(
 
             model_list_as_list: list[object] = list(model_list) if model_list else []
             items_count = u.count(model_list_as_list)
-            conversion_config = m.Ldif.LdifResults.Events.ConversionEventConfig(
+            conversion_config = m.Ldif.Results.Events.ConversionEventConfig(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,

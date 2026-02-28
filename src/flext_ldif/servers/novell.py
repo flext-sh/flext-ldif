@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import r
 
@@ -138,6 +138,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Novell eDirectory schema quirk."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -176,6 +177,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
             )
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -204,6 +206,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 for name in name_matches
             )
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -222,6 +225,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -243,10 +247,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a Novell eDirectory ACL."""
             return self.can_handle_acl(acl_line)
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
@@ -273,6 +279,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse eDirectory ACL definition."""
             try:
@@ -402,6 +409,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         perms_dict[canonical_name] = True
             return perms_dict
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
@@ -461,9 +469,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
 
+        @override
         def model_post_init(self, _context: t.GeneralValueType, /) -> None:
             """Initialize eDirectory entry quirk."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

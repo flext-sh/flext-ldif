@@ -16,7 +16,7 @@ from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(
-    s[m.Ldif.LdifResults.EntryAnalysisResult],
+    s[m.Ldif.Results.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation."""
 
@@ -54,10 +54,10 @@ class FlextLdifAnalysis(
             with contextlib.suppress(Exception):
                 process_entry(entry)
 
-        return r[m.Ldif.LdifResults.EntryAnalysisResult].ok(
-            m.Ldif.LdifResults.EntryAnalysisResult(
+        return r[m.Ldif.Results.EntryAnalysisResult].ok(
+            m.Ldif.Results.EntryAnalysisResult(
                 total_entries=total_entries,
-                objectclass_distribution=m.Ldif.LdifResults.DynamicCounts(
+                objectclass_distribution=m.Ldif.Results.DynamicCounts(
                     **objectclass_distribution,
                 ),
                 patterns_detected=sorted(patterns_detected),
@@ -68,7 +68,7 @@ class FlextLdifAnalysis(
     def validate_entries(
         entries: list[m.Ldif.Entry],
         validation_service: FlextLdifValidation,
-    ) -> r[m.Ldif.LdifResults.ValidationResult]:
+    ) -> r[m.Ldif.Results.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         errors: list[str] = []
         valid_count = 0
@@ -90,8 +90,8 @@ class FlextLdifAnalysis(
         total_entries = u.count(entries)
         invalid_count = total_entries - valid_count
 
-        return r[m.Ldif.LdifResults.ValidationResult].ok(
-            m.Ldif.LdifResults.ValidationResult(
+        return r[m.Ldif.Results.ValidationResult].ok(
+            m.Ldif.Results.ValidationResult(
                 is_valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,

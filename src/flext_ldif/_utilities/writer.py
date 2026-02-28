@@ -131,7 +131,7 @@ class FlextLdifUtilitiesWriter:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
-        if attr_data.metadata and u.mapper().get(
+        if attr_data.metadata and u.get(
             attr_data.metadata.extensions,
             c.Ldif.MetadataKeys.COLLECTIVE,
         ):
@@ -152,7 +152,7 @@ class FlextLdifUtilitiesWriter:
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
 
-        if attr_data.metadata and u.mapper().get(
+        if attr_data.metadata and u.get(
             attr_data.metadata.extensions,
             c.Ldif.MetadataKeys.OBSOLETE,
         ):
@@ -169,7 +169,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"USAGE {attr_data.usage}")
 
         x_origin = (
-            u.mapper().get(attr_data.metadata.extensions, "x_origin")
+            u.get(attr_data.metadata.extensions, "x_origin")
             if attr_data.metadata
             else None
         )
@@ -228,7 +228,7 @@ class FlextLdifUtilitiesWriter:
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
 
-        if oc_data.metadata and u.mapper().get(
+        if oc_data.metadata and u.get(
             oc_data.metadata.extensions,
             c.Ldif.MetadataKeys.OBSOLETE,
         ):
@@ -249,7 +249,7 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
 
         oc_x_origin = (
-            u.mapper().get(oc_data.metadata.extensions, "x_origin")
+            u.get(oc_data.metadata.extensions, "x_origin")
             if oc_data.metadata
             else None
         )
@@ -563,13 +563,13 @@ class FlextLdifUtilitiesWriter:
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(
-            u.mapper().get(changetype_config, "include_changetype"),
+            u.get(changetype_config, "include_changetype"),
         )
-        changetype_value = u.mapper().get(changetype_config, "changetype_value")
+        changetype_value = u.get(changetype_config, "changetype_value")
         fold_long_lines = bool(
-            u.mapper().get(changetype_config, "fold_long_lines", default=True),
+            u.get(changetype_config, "fold_long_lines", default=True),
         )
-        width_raw = u.mapper().get(changetype_config, "width", default=76)
+        width_raw = u.get(changetype_config, "width", default=76)
         width = int(width_raw)
 
         if format_type == "modify":

@@ -15,7 +15,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import u
 
 
-class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
+class FlextLdifSchema(s[m.Ldif.Results.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
     _registry: FlextLdifServer = PrivateAttr(
@@ -70,10 +70,10 @@ class FlextLdifSchema(s[m.Ldif.LdifResults.SchemaServiceStatus]):
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.SchemaServiceStatus]:
+    ) -> r[m.Ldif.Results.SchemaServiceStatus]:
         """Execute schema service self-check."""
-        return r[m.Ldif.LdifResults.SchemaServiceStatus].ok(
-            m.Ldif.LdifResults.SchemaServiceStatus(
+        return r[m.Ldif.Results.SchemaServiceStatus].ok(
+            m.Ldif.Results.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
                 status="operational",

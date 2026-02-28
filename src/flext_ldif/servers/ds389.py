@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextResult
 
@@ -152,6 +152,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -185,6 +186,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -215,6 +217,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -231,6 +234,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -253,10 +257,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method)."""
             return self.can_handle_acl(acl_line)
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
@@ -288,6 +294,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return normalized.lower().startswith("(version")
             return False
 
+        @override
         def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
@@ -402,6 +409,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
@@ -529,6 +537,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for 389 Directory Server."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

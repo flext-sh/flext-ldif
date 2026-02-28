@@ -21,7 +21,7 @@ from flext_ldif.models import m
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[m.Ldif.LdifResults.ValidationServiceStatus],
+    FlextLdifServiceBase[m.Ldif.Results.ValidationServiceStatus],
 ):
     """FlextLdifValidation class."""
 
@@ -34,9 +34,9 @@ class FlextLdifValidation(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.ValidationServiceStatus]:
-        return r[m.Ldif.LdifResults.ValidationServiceStatus].ok(
-            m.Ldif.LdifResults.ValidationServiceStatus(
+    ) -> r[m.Ldif.Results.ValidationServiceStatus]:
+        return r[m.Ldif.Results.ValidationServiceStatus].ok(
+            m.Ldif.Results.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
                 rfc_compliance="RFC 2849, RFC 4512",

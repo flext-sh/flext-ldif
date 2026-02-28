@@ -163,7 +163,7 @@ class FlextLdifSorting(
     @classmethod
     def sort(
         cls,
-        config: m.Ldif.LdifResults.SortConfig | None = None,
+        config: m.Ldif.Results.SortConfig | None = None,
         entries: Sequence[m.Ldif.Entry] | None = None,
         target: str | None = None,
         by: str | None = None,

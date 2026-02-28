@@ -6,7 +6,7 @@ import base64
 import binascii
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import r
 
@@ -183,6 +183,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -195,6 +196,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 detection_string=FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY,
             )
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -206,6 +208,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 detection_names=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
             )
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -221,6 +224,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaAttribute].ok(attr_updated)
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -242,6 +246,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an Active Directory ACL (public method)."""
             if isinstance(acl_line, str):
@@ -253,6 +258,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return self.can_handle_acl(raw_acl)
             return False
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
@@ -296,6 +302,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
@@ -373,6 +380,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     f"Active Directory ACL parsing failed: {exc}",
                 )
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
@@ -400,6 +408,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing quirk."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,

@@ -29,10 +29,10 @@ class FlextLdifStatistics(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.LdifResults.StatisticsServiceStatus]:
+    ) -> r[m.Ldif.Results.StatisticsServiceStatus]:
         """Execute statistics service self-check."""
-        return r[m.Ldif.LdifResults.StatisticsServiceStatus].ok(
-            m.Ldif.LdifResults.StatisticsServiceStatus(
+        return r[m.Ldif.Results.StatisticsServiceStatus].ok(
+            m.Ldif.Results.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[
@@ -46,11 +46,11 @@ class FlextLdifStatistics(
 
     def generate_statistics(
         self,
-        categorized: m.Ldif.LdifResults.FlexibleCategories,
+        categorized: m.Ldif.Results.FlexibleCategories,
         written_counts: Mapping[str, int],
         output_dir: Path,
         output_files: Mapping[str, str],
-    ) -> r[m.Ldif.LdifResults.StatisticsResult]:
+    ) -> r[m.Ldif.Results.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
         categorized_values_list: list[object] = [
             entries for _category_key, entries in categorized.items()
@@ -64,7 +64,7 @@ class FlextLdifStatistics(
         categorized_counts_dict = {
             category: u.count(entries) for category, entries in categorized.items()
         }
-        categorized_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
+        categorized_counts_model = m.Ldif.Results.DynamicCounts.model_validate(
             categorized_counts_dict,
         )
 
@@ -80,7 +80,7 @@ class FlextLdifStatistics(
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
 
-        written_counts_model = m.Ldif.LdifResults.DynamicCounts.model_validate(
+        written_counts_model = m.Ldif.Results.DynamicCounts.model_validate(
             written_counts,
         )
 
@@ -94,8 +94,8 @@ class FlextLdifStatistics(
                 output_files_model, category, str(output_dir.joinpath(output_filename))
             )
 
-        return r[m.Ldif.LdifResults.StatisticsResult].ok(
-            m.Ldif.LdifResults.StatisticsResult(
+        return r[m.Ldif.Results.StatisticsResult].ok(
+            m.Ldif.Results.StatisticsResult(
                 total_entries=total_entries_int,
                 categorized=categorized_counts_model,
                 rejection_rate=rejection_rate,
@@ -109,7 +109,7 @@ class FlextLdifStatistics(
     def calculate_for_entries(
         self,
         entries: Sequence[m.Ldif.Entry],
-    ) -> r[m.Ldif.LdifResults.EntriesStatistics]:
+    ) -> r[m.Ldif.Results.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
@@ -123,21 +123,21 @@ class FlextLdifStatistics(
                 if isinstance(server_type_value, str):
                     server_type_distribution[server_type_value] += 1
 
-        obj_class_model = m.Ldif.LdifResults.DynamicCounts()
+        obj_class_model = m.Ldif.Results.DynamicCounts()
         for class_name, count in object_class_distribution.items():
             obj_class_model.set_count(class_name, count)
 
-        server_type_model = m.Ldif.LdifResults.DynamicCounts()
+        server_type_model = m.Ldif.Results.DynamicCounts()
         for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
 
-        entries_stats = m.Ldif.LdifResults.EntriesStatistics(
+        entries_stats = m.Ldif.Results.EntriesStatistics(
             total_entries=len(entries),
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
 
-        return r[m.Ldif.LdifResults.EntriesStatistics].ok(entries_stats)
+        return r[m.Ldif.Results.EntriesStatistics].ok(entries_stats)
 
     def _extract_rejection_reasons(
         self,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextLogger, r
 
@@ -62,6 +62,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Relaxed schema quirk - main class for lenient LDIF processing."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -100,6 +101,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             return None
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -200,6 +202,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"Failed to parse attribute definition: {e}",
                 )
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -398,6 +401,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ),
             )
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -421,6 +425,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
             return self._parse_objectclass_relaxed(oc_definition)
 
+        @override
         def _write_attribute(
             self,
             attr_data: m.Ldif.SchemaAttribute,
@@ -458,6 +463,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             attr_name = attr_data.name or attr_data.oid
             return r[str].ok(f"( {attr_data.oid} NAME '{attr_name}' )")
 
+        @override
         def _write_objectclass(
             self,
             oc_data: m.Ldif.SchemaObjectClass,
@@ -501,12 +507,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Relaxed ACL quirk for lenient LDIF processing."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a relaxed ACL (public method)."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
             return self.can_handle_acl(acl_line)
 
+        @override
         def can_handle_acl(
             self,
             acl_line: str | m.Ldif.Acl | object,
@@ -515,6 +523,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = acl_line
             return True
 
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse ACL with best-effort approach."""
             if not acl_line or not acl_line.strip():
@@ -587,6 +596,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"Failed to parse ACL: {e}",
                 )
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_acl(acl_data)
@@ -603,6 +613,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"{FlextLdifServersRelaxed.Constants.ACL_WRITE_PREFIX}{acl_name}",
             )
 
+        @override
         def can_handle_attribute(
             self,
             attribute: m.Ldif.SchemaAttribute,
@@ -611,6 +622,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = attribute
             return True
 
+        @override
         def can_handle_objectclass(
             self,
             objectclass: m.Ldif.SchemaObjectClass,
@@ -629,6 +641,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Process entry for relaxed mode."""
             return r[m.Ldif.Entry].ok(entry)
 
+        @override
         def can_handle(
             self,
             entry_dn: str,
@@ -639,6 +652,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = attributes
             return True
 
+        @override
         def _parse_entry(
             self,
             entry_dn: str,
@@ -719,6 +733,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"Failed to parse entry: {e}",
                 )
 
+        @override
         def _parse_content(
             self,
             ldif_content: str,
@@ -776,6 +791,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
             return self._parse_entry(dn, attrs)
 
+        @override
         def _write_entry(
             self,
             entry_data: m.Ldif.Entry,
@@ -835,6 +851,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
                 return r[str].fail(f"Failed to write entry: {e}")
 
+        @override
         def can_handle_attribute(
             self,
             attribute: m.Ldif.SchemaAttribute,
@@ -843,6 +860,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = attribute
             return True
 
+        @override
         def can_handle_objectclass(
             self,
             objectclass: m.Ldif.SchemaObjectClass,

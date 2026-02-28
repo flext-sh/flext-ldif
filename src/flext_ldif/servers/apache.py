@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextResult
 
@@ -94,6 +94,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Apache Directory Server (ApacheDS)."""
 
+        @override
         def can_handle_attribute(
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
@@ -130,6 +131,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             prefixes = FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
             return any(prefix in attr_lower for prefix in prefixes)
 
+        @override
         def can_handle_objectclass(
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -158,6 +160,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 for name in name_matches
             )
 
+        @override
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -174,6 +177,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             return result
 
+        @override
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -196,10 +200,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Apache Directory Server ACI quirk."""
 
+        @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an ApacheDS ACI."""
             return self.can_handle_acl(acl_line)
 
+        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
@@ -235,6 +241,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             return False
 
+        @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
@@ -250,6 +257,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for Apache Directory Server."""
 
+        @override
         def can_handle(
             self,
             entry_dn: str,
@@ -260,6 +268,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             _ = attributes
             return True
 
+        @override
         def _parse_entry(
             self,
             entry_dn: str,
