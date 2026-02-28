@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 from flext_core._models.base import FlextModelFoundation
 from pydantic import ConfigDict, Field
@@ -71,7 +71,7 @@ class FlextLdifModelsMetadata:
             return len(self._extra())
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, Any]]:
+        def __iter__(self) -> Iterator[tuple[str, t.MetadataAttributeValue]]:
             yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:
