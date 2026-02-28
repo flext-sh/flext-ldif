@@ -32,27 +32,16 @@ class FlextLdifUtilitiesACL:
         return value is None or value.__class__ in {str, int, float, bool, list, dict}
 
     @staticmethod
-    def get_acl_attributes(server_type: str | None) -> list[str]:
+    def get_acl_attributes() -> list[str]:
         """Get ACL attributes for a server type."""
-        attrs = list(c.Ldif.AclAttributeRegistry.RFC_FOUNDATION)
-
-        if server_type:
-            server_key = server_type.lower()
-            server_quirks = c.Ldif.AclAttributeRegistry.SERVER_QUIRKS.get(
-                server_key,
-                [],
-            )
-            attrs.extend(server_quirks)
-
-        return attrs
+        return list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
 
     @staticmethod
     def is_acl_attribute(
         attribute_name: str,
-        server_type: str | None = None,
     ) -> bool:
         """Check if attribute is an ACL attribute (case-insensitive)."""
-        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes(server_type)
+        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes()
         all_attrs_lower = {a.lower() for a in all_attrs}
         return attribute_name.lower() in all_attrs_lower
 

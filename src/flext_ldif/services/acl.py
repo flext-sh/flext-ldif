@@ -108,9 +108,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
         server_type: str,
     ) -> r[m.Ldif.LdifResults.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
-        acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes(
-            server_type,
-        )
+        acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
 
         if not acl_attr_name:
             return r[m.Ldif.LdifResults.AclResponse].ok(
@@ -169,7 +167,7 @@ class FlextLdifAcl(s[m.Ldif.LdifResults.AclResponse]):
 
         if acl_attributes is None:
             acl_attributes = list(
-                FlextLdifUtilitiesACL.get_acl_attributes(None),
+                FlextLdifUtilitiesACL.get_acl_attributes(),
             )
 
         def has_acl_attribute(entry: m.Ldif.Entry) -> bool:

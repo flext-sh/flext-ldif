@@ -27,9 +27,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             attributes: Mapping[str, Sequence[str]] | None
 
-            metadata: (
-                Mapping[str, str | int | float | bool | Sequence[str] | None] | None
-            )
+            metadata: t.ConfigMap | None
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -248,10 +246,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entries: FlextLdifProtocols.Ldif.EntryProtocol
                 | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                format_options: Mapping[
-                    str, str | int | float | bool | Sequence[str] | None
-                ]
-                | None = None,
+                format_options: t.ConfigMap | None = None,
             ) -> FlextResult[str]:
                 """Write entries to LDIF."""
                 ...
@@ -289,9 +284,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadataProtocol(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
-            validation_metadata: (
-                Mapping[str, str | int | float | bool | list[str] | None] | None
-            )
+            validation_metadata: t.ConfigMap | None
 
         @runtime_checkable
         class TransformerProtocol[T](Protocol):

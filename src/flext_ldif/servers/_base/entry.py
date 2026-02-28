@@ -280,11 +280,7 @@ class FlextLdifServersBaseEntry(
         acl_attribute_names: set[str] = {
             name.lower() for name in c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES
         }
-        acl_attribute_names.update(
-            name.lower() for name in c.Ldif.AclAttributeRegistry.RFC_FOUNDATION
-        )
-        for names in c.Ldif.AclAttributeRegistry.SERVER_QUIRKS.values():
-            acl_attribute_names.update(name.lower() for name in names)
+        # No server-specific quirks in modern design
 
         def append_attribute_line(attr_name: str, line: str) -> None:
             if attr_name.lower() in acl_attribute_names:

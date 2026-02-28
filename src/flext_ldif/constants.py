@@ -2220,41 +2220,6 @@ class FlextLdifConstants(FlextConstants):
                 "all": ("all", "*"),
             }
 
-        class SchemaConversionMappings:
-            """Schema attribute and objectClass conversion mappings."""
-
-            MATCHING_RULE_NORMALIZATIONS: Final[Mapping[str, str]] = {
-                "caseIgnoreIA5SubstringsMatch": "caseIgnoreIA5Match",
-                "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
-            }
-
-        class AclAttributeRegistry:
-            """LDAP Server-specific ACL attributes with RFC foundation."""
-
-            RFC_FOUNDATION: Final[list[str]] = [
-                "aci",
-                "acl",
-                "olcAccess",
-                "aclRights",
-                "aclEntry",
-            ]
-
-            SERVER_QUIRKS: Final[Mapping[str, list[str]]] = {
-                "oid": [
-                    "orclaci",
-                    "orclentrylevelaci",
-                    "orclContainerLevelACL",
-                ],
-                "oud": [
-                    "orclaci",
-                    "orclentrylevelaci",
-                ],
-                "ad": [
-                    "nTSecurityDescriptor",
-                ],
-                "generic": [],
-            }
-
         class ServiceType(StrEnum):
             """Service types for internal management."""
 

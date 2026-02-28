@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Final, Literal, TypeAlias
+from typing import Final, TypeAlias
 
-from flext_core import FlextModels, t
+from flext_core import FlextModels
 from pydantic import Field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -236,116 +236,34 @@ class FlextLdifModels(FlextModels):
             CategoryPaths: Final = FlextLdifModelsResults.CategoryPaths
             EventType: Final = FlextLdifModelsResults.EventType
 
-        class Types:
-            """Type models namespace - moved from typings.py TypedDict to Pydantic models."""
+        class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
+            """Quirks by server dictionary model."""
 
-            class SchemaDict(FlextModels.ArbitraryTypesModel):
-                """Schema extraction result dictionary model."""
+            schema_type: str | None = Field(
+                default=None,
+                alias="schema",
+                description="Schema quirk type",
+            )
+            acl_type: str | None = Field(
+                default=None,
+                alias="acl",
+                description="ACL quirk type",
+            )
+            entry_type: str | None = Field(
+                default=None,
+                alias="entry",
+                description="Entry quirk type",
+            )
 
-                ATTRIBUTES: list[str] = Field(
-                    default_factory=list,
-                )
-                OBJECTCLASS: list[str] = Field(
-                    default_factory=list,
-                )
+        class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
+            """Registry statistics dictionary model."""
 
-            class PermissionsDict(FlextModels.ArbitraryTypesModel):
-                """ACL permissions dictionary model."""
-
-                read: bool | None = Field(default=None)
-                write: bool | None = Field(default=None)
-                add: bool | None = Field(default=None)
-                delete: bool | None = Field(default=None)
-                search: bool | None = Field(default=None)
-                compare: bool | None = Field(default=None)
-                self_write: bool | None = Field(default=None)
-                proxy: bool | None = Field(default=None)
-                browse: bool | None = Field(default=None)
-                auth: bool | None = Field(default=None)
-                all: bool | None = Field(default=None)
-
-            class EvaluationContextDict(FlextModels.ArbitraryTypesModel):
-                """ACL evaluation context dictionary model."""
-
-                subject_dn: str | None = Field(default=None)
-                target_dn: str | None = Field(default=None)
-                operation: str | None = Field(default=None)
-                attributes: list[str] | None = Field(default=None)
-
-            class TransformationInfo(FlextModels.ArbitraryTypesModel):
-                """Transformation step information model."""
-
-                step: str | None = Field(default=None)
-                server: str | None = Field(default=None)
-                changes: list[str] | None = Field(default=None)
-
-            class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
-                """Quirks by server dictionary model."""
-
-                schema_type: str | None = Field(
-                    default=None,
-                    alias="schema",
-                    description="Schema quirk type",
-                )
-                acl_type: str | None = Field(
-                    default=None,
-                    alias="acl",
-                    description="ACL quirk type",
-                )
-                entry_type: str | None = Field(
-                    default=None,
-                    alias="entry",
-                    description="Entry quirk type",
-                )
-
-            class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
-                """Registry statistics dictionary model."""
-
-                total_servers: int = Field(default=0)
-                quirks_by_server: dict[
-                    str,
-                    FlextLdifModels.Ldif.Types.QuirksByServerDict,
-                ] = Field(default_factory=dict)
-                server_priorities: dict[str, int] = Field(default_factory=dict)
-
-            class EntryParsingContext(FlextModels.ArbitraryTypesModel):
-                """Entry parsing context model."""
-
-                original_entry_dn: str | None = Field(default=None)
-                cleaned_dn: str | None = Field(default=None)
-                original_dn_line: str | None = Field(default=None)
-                original_attr_lines: list[str] | None = Field(default=None)
-                dn_was_base64: bool | None = Field(default=None)
-                original_attribute_case: dict[str, str] | None = Field(default=None)
-                dn_differences: (
-                    dict[str, t.MetadataAttributeValue]
-                    | dict[str, dict[str, t.MetadataAttributeValue]]
-                    | None
-                ) = Field(default=None)
-                attribute_differences: (
-                    dict[str, t.MetadataAttributeValue]
-                    | dict[str, dict[str, t.MetadataAttributeValue]]
-                    | None
-                ) = Field(default=None)
-                original_attributes_complete: (
-                    dict[str, t.MetadataAttributeValue] | None
-                ) = Field(default=None)
-
-            class AttributeWriteContext(FlextModels.ArbitraryTypesModel):
-                """Attribute write context model."""
-
-                attr_name: str | None = Field(default=None)
-                attr_values: t.GuardInputValue | None = Field(default=None)
-                minimal_differences_attrs: dict[
-                    str,
-                    t.MetadataAttributeValue,
-                ] = Field(default_factory=dict)
-                hidden_attrs: set[str] = Field(default_factory=set)
-
-            type BooleanFormat = Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"]
-
-            type AttributeMetadataMap = Mapping[str, Mapping[str, str | list[str]]]
-
+            total_servers: int = Field(default=0)
+            quirks_by_server: dict[
+                str,
+                FlextLdifModels.Ldif.QuirksByServerDict,
+            ] = Field(default_factory=dict)
+            server_priorities: dict[str, int] = Field(default_factory=dict)
         class Schema:
             """Schema element type with protocol references."""
 
