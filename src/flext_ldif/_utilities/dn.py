@@ -1359,7 +1359,7 @@ class FlextLdifUtilitiesDN:
                 result = normalize_dn(dn)
                 if result.is_failure:
                     return r[list[str]].fail(
-                        result.error or f"Failed to normalize DN: {dn}"
+                        result.error or f"Failed to normalize DN: {dn}",
                     )
                 normalized_results.append(result.value)
             return r[list[str]].ok(normalized_results)
@@ -1387,7 +1387,7 @@ class FlextLdifUtilitiesDN:
         batch_result = u.Collection.batch(list(dns), validate_dn, on_error="skip")
         if batch_result.is_failure:
             return r[list[tuple[str, bool, list[str]]]].fail(
-                batch_result.error or "Validation failed"
+                batch_result.error or "Validation failed",
             )
         results: list[tuple[str, bool, list[str]]] = [validate_dn(dn) for dn in dns]
         if not collect_errors:
@@ -1469,14 +1469,14 @@ class FlextLdifUtilitiesDN:
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
             if not is_valid:
                 return r[str | list[tuple[str, str]]].fail(
-                    f"Validation failed: {', '.join(errors)}"
+                    f"Validation failed: {', '.join(errors)}",
                 )
 
         if normalize:
             norm_result = FlextLdifUtilitiesDN.norm(current_dn)
             if norm_result.is_failure:
                 return r[str | list[tuple[str, str]]].fail(
-                    f"Normalization failed: {norm_result.error}"
+                    f"Normalization failed: {norm_result.error}",
                 )
             current_dn = norm_result.value
 
@@ -1484,7 +1484,7 @@ class FlextLdifUtilitiesDN:
             parse_result = FlextLdifUtilitiesDN.parse(current_dn)
             if parse_result.is_failure:
                 return r[str | list[tuple[str, str]]].fail(
-                    f"Parse failed: {parse_result.error}"
+                    f"Parse failed: {parse_result.error}",
                 )
             return r[str | list[tuple[str, str]]].ok(parse_result.value)
 

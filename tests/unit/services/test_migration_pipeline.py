@@ -252,7 +252,7 @@ sn: test
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"cn": ["test"], "objectClass": ["person"]}
+                    attributes={"cn": ["test"], "objectClass": ["person"]},
                 ),
             ),
         ]

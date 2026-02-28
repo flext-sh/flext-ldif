@@ -16,7 +16,10 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 class DynamicCounts(FlextLdifModelsBase):
     model_config = ConfigDict(
-        frozen=False, extra="allow", use_enum_values=True, str_strip_whitespace=True
+        frozen=False,
+        extra="allow",
+        use_enum_values=True,
+        str_strip_whitespace=True,
     )
 
     def set_count(self, key: str, value: int) -> None:
@@ -86,10 +89,10 @@ class DynamicCounts(FlextLdifModelsBase):
 class _SchemaContent(FlextLdifModelsBase):
     model_config = ConfigDict(frozen=True)
     attributes: Sequence[FlextLdifModelsDomains.SchemaAttribute] = Field(
-        default_factory=list
+        default_factory=list,
     )
     object_classes: Sequence[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-        default_factory=list
+        default_factory=list,
     )
 
 
@@ -104,7 +107,10 @@ class _ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
 
 class _BooleanFlags(FlextLdifModelsBase):
     model_config = ConfigDict(
-        frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
+        frozen=True,
+        extra="allow",
+        use_enum_values=True,
+        str_strip_whitespace=True,
     )
 
     def __getitem__(self, key: str) -> bool:
@@ -170,7 +176,9 @@ class _FlexibleCategories(FlextModelsCollections.Categories):
         ]
 
     def __setitem__(
-        self, category: str, entries: Sequence[FlextLdifModelsDomains.Entry]
+        self,
+        category: str,
+        entries: Sequence[FlextLdifModelsDomains.Entry],
     ) -> None:
         self.categories[category] = list(entries)
 
@@ -231,17 +239,18 @@ class FlextLdifModelsResults:
     class EntryResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         entries_by_category: _FlexibleCategories = Field(
-            default_factory=_FlexibleCategories
+            default_factory=_FlexibleCategories,
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
-            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory(),
         )
         file_paths: _CategoryPaths = Field(default_factory=_CategoryPaths)
 
         @field_validator("entries_by_category", mode="before")
         @classmethod
         def _convert_dict_to_categories(
-            cls, value: _FlexibleCategories | _DynCategoriesInput
+            cls,
+            value: _FlexibleCategories | _DynCategoriesInput,
         ) -> _FlexibleCategories:
             if isinstance(value, dict):
                 result = _FlexibleCategories()
@@ -272,7 +281,8 @@ class FlextLdifModelsResults:
         @overload
         def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
         def __getitem__(
-            self, key: int | slice
+            self,
+            key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
             return self.get_all_entries()[key]
 
@@ -294,7 +304,7 @@ class FlextLdifModelsResults:
         ) -> FlextLdifModelsResults.EntryResult:
             entry_list = list(entries)
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entry_list)
+                total=len(entry_list),
             )
             flex = _FlexibleCategories()
             flex[category] = entry_list
@@ -308,7 +318,8 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self, other: FlextLdifModelsResults.EntryResult
+            self,
+            other: FlextLdifModelsResults.EntryResult,
         ) -> FlextLdifModelsResults.EntryResult:
             merged_categories = _FlexibleCategories()
             for cat, entries in self.entries_by_category.items():
@@ -325,7 +336,7 @@ class FlextLdifModelsResults:
                 update={
                     "total_entries": self_stats.total_entries
                     + other_stats.total_entries,
-                }
+                },
             )
             merged_paths = _CategoryPaths()
             merged_paths.update(self.file_paths.to_dict())
@@ -440,7 +451,8 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self, other: FlextLdifModelsResults.Statistics
+            self,
+            other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
             merged_reasons = dict(self.rejection_reasons)
             for reason, count in other.rejection_reasons.items():
@@ -486,7 +498,7 @@ class FlextLdifModelsResults:
         migrated_schema: _SchemaContent = Field(default_factory=_SchemaContent)
         entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         stats: FlextLdifModelsResults.Statistics = Field(
-            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory(),
         )
         output_files: list[str] = Field(default_factory=list)
 
@@ -588,7 +600,9 @@ class FlextLdifModelsResults:
             return extra is not None and key in extra
 
         def get(
-            self, key: str, default: str | float | bool | None = None
+            self,
+            key: str,
+            default: str | float | bool | None = None,
         ) -> str | int | float | bool | None:
             try:
                 return self[key]

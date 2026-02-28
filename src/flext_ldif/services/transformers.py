@@ -44,5 +44,5 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
                 return r[m.Ldif.Entry].ok(converted_entry)
             case _:
                 return r[m.Ldif.Entry].fail(
-                    f"Conversion returned unexpected type: {type(converted).__name__}"
+                    f"Conversion returned unexpected type: {type(converted).__name__}",
                 )

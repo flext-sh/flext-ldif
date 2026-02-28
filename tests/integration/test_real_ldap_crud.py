@@ -138,7 +138,8 @@ class TestRealLdapBatchOperations:
                 unwrapped_entry = result.value
                 # Convert domain Entry to facade Entry if needed
                 if hasattr(unwrapped_entry, "dn") and hasattr(
-                    unwrapped_entry, "attributes"
+                    unwrapped_entry,
+                    "attributes",
                 ):
                     entries.append(unwrapped_entry)
                 else:
@@ -247,7 +248,8 @@ class TestRealLdapBatchOperations:
             unwrapped_entry = result.value
             # Convert domain Entry to facade Entry if needed
             if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry, "attributes"
+                unwrapped_entry,
+                "attributes",
             ):
                 entries.append(unwrapped_entry)
             else:

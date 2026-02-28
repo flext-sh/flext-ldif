@@ -141,7 +141,9 @@ class TestRfcDockerRealData:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]

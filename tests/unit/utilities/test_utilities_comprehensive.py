@@ -15,7 +15,8 @@ class TestFlextLdifUtilitiesComprehensive:
 
     @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
     def test_all_utility_functions_with_real_data(
-        self, test_data: dict[str, object]
+        self,
+        test_data: dict[str, object],
     ) -> None:
         """Test all utility functions with real generated data."""
         # Test DN operations using correct namespace
@@ -30,7 +31,8 @@ class TestFlextLdifUtilitiesComprehensive:
         """Test complete LDIF processing pipeline with real data."""
         # Generate real LDIF content
         ldif_content = FlextLdifTestFactory.create_real_ldif_content(
-            entries_count=5, include_schema=True
+            entries_count=5,
+            include_schema=True,
         )
 
         # Process through utilities

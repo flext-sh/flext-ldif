@@ -209,7 +209,7 @@ class TestAttributeFixer:
     def test_normalize_matching_rules_equality_only(self) -> None:
         """Test normalizing matching rules with equality rule only."""
         result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules(
-            "caseIgnoreMatch"
+            "caseIgnoreMatch",
         )
         assert result == ("caseIgnoreMatch", None)
 

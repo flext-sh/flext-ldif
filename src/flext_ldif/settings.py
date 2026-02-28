@@ -613,7 +613,9 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("ldif_version_string", mode="after")
     @classmethod
     def validate_ldif_version_string(
-        cls, v: str, info: ValidationInfo | None = None
+        cls,
+        v: str,
+        info: ValidationInfo | None = None,
     ) -> str:
         """Validate ldif_version_string is RFC 2849 compliant.
 
@@ -667,7 +669,9 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("quirks_server_type", mode="before")
     @classmethod
     def validate_quirks_server_type(
-        cls, v: str | None, info: ValidationInfo | None = None
+        cls,
+        v: str | None,
+        info: ValidationInfo | None = None,
     ) -> str | None:
         """Validate quirks_server_type when specified is a recognized server.
 
@@ -725,7 +729,9 @@ class FlextLdifSettings(FlextSettings):
     @field_validator("ldif_default_server_type", mode="after")
     @classmethod
     def validate_ldif_default_server_type(
-        cls, v: str, info: ValidationInfo | None = None
+        cls,
+        v: str,
+        info: ValidationInfo | None = None,
     ) -> str:
         """Validate ldif_default_server_type is a recognized server.
 

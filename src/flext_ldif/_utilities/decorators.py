@@ -32,7 +32,7 @@ class FlextLdifUtilitiesDecorators:
                 constants_obj is not None
                 and getattr(constants_obj, "SERVER_TYPE", None) is not None
             ):
-                return str(getattr(constants_obj, "SERVER_TYPE"))
+                return str(constants_obj.SERVER_TYPE)
 
         return None
 
@@ -59,12 +59,12 @@ class FlextLdifUtilitiesDecorators:
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions_dict
+                extensions_dict,
             ),
         )
 
         try:
-            setattr(result_value, "metadata", metadata)
+            result_value.metadata = metadata
         except (
             ValueError,
             KeyError,

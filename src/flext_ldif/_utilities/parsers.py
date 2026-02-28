@@ -67,11 +67,13 @@ class FlextLdifUtilitiesParsers:
 
             total_entries: int = Field(default=0, description="Total entries parsed")
             successful: int = Field(
-                default=0, description="Successfully parsed entries"
+                default=0,
+                description="Successfully parsed entries",
             )
             failed: int = Field(default=0, description="Failed entries")
             total_attributes: int = Field(
-                default=0, description="Total attributes parsed"
+                default=0,
+                description="Total attributes parsed",
             )
             base64_values: int = Field(default=0, description="Base64-encoded values")
 
@@ -341,7 +343,8 @@ class FlextLdifUtilitiesParsers:
 
             total_entries: int = Field(default=0, description="Total entries parsed")
             successful: int = Field(
-                default=0, description="Successfully parsed entries"
+                default=0,
+                description="Successfully parsed entries",
             )
             failed: int = Field(default=0, description="Failed entries")
 

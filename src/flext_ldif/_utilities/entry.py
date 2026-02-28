@@ -78,7 +78,7 @@ class FlextLdifUtilitiesEntry:
                 raw_values = attributes[attr_name]
                 if isinstance(raw_values, str | bytes):
                     normalized_result[attr_name] = [
-                        FlextLdifUtilitiesEntry._stringify_attribute_value(raw_values)
+                        FlextLdifUtilitiesEntry._stringify_attribute_value(raw_values),
                     ]
                 else:
                     normalized_result[attr_name] = [
@@ -94,7 +94,7 @@ class FlextLdifUtilitiesEntry:
             str_values: list[str]
             if isinstance(attr_raw_values, str | bytes):
                 str_values = [
-                    FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values)
+                    FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values),
                 ]
             else:
                 str_values = [
@@ -281,7 +281,8 @@ class FlextLdifUtilitiesEntry:
 
             original_values_list: list[str] = []
             if isinstance(attr_values, Sequence) and not isinstance(
-                attr_values, str | bytes
+                attr_values,
+                str | bytes,
             ):
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
@@ -386,7 +387,7 @@ class FlextLdifUtilitiesEntry:
             def normalize_value(value: t.Ldif.AttributeValue) -> str:
                 """Normalize single value."""
                 normalized_value = FlextLdifUtilitiesEntry._stringify_attribute_value(
-                    value
+                    value,
                 )
                 if (
                     config.boolean_mappings
@@ -514,7 +515,7 @@ class FlextLdifUtilitiesEntry:
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
                     current = current.model_copy(
-                        update={"dn": m.Ldif.DN(value=norm_result.value)}
+                        update={"dn": m.Ldif.DN(value=norm_result.value)},
                     )
             if config.normalize_attrs and current.attributes:
                 attrs = current.attributes.attributes
@@ -526,7 +527,9 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes=dict(new_attrs))}
+                    update={
+                        "attributes": m.Ldif.Attributes(attributes=dict(new_attrs))
+                    },
                 )
             if config.convert_booleans and current.attributes:
                 source_format, target_format = config.convert_booleans
@@ -545,7 +548,9 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes=dict(converted))}
+                    update={
+                        "attributes": m.Ldif.Attributes(attributes=dict(converted))
+                    },
                 )
             if config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(

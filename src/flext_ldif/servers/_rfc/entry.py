@@ -164,7 +164,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not core_u.is_type(entry.attributes, dict):
             return r[m.Ldif.Entry].fail(
-                f"Invalid attributes in entry: {entry.attributes}"
+                f"Invalid attributes in entry: {entry.attributes}",
             )
 
         return r[m.Ldif.Entry].ok(entry)

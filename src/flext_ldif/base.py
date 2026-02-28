@@ -22,7 +22,8 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
     def ldif_config(self) -> FlextLdifSettings:
         """Return the LDIF configuration namespace with proper typing."""
         return FlextSettings.get_global_instance().get_namespace(
-            "ldif", FlextLdifSettings
+            "ldif",
+            FlextLdifSettings,
         )
 
 

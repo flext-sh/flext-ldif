@@ -446,7 +446,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 metadata=m.Ldif.QuirkMetadata.create_for(
                     self._get_server_type(),
                     extensions=m.Ldif.DynamicMetadata.from_dict({
-                        "original_format": acl_line
+                        "original_format": acl_line,
                     }),
                 ),
                 raw_acl=acl_line,

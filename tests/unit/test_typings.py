@@ -45,7 +45,7 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core (Tier 0 architecture rule)."""
         project_root = Path(
-            __file__
+            __file__,
         ).parent.parent.parent  # tests/unit/test_typings.py -> project root
         types_path = project_root / "src" / "flext_ldif" / "typings.py"
         tree = ast.parse(types_path.read_text())
@@ -313,7 +313,7 @@ class TestIntegrationWithLdifFixtures:
         """Verify Models namespace types work with schema data."""
         # Use dict[str, Any] for flexible test data
         schema_attrs: dict[str, dict[str, Any]] = {
-            c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
+            c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"},
         }
         # Access test data directly with Any type
         cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")

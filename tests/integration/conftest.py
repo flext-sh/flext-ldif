@@ -652,7 +652,8 @@ def oud_acl_quirk(
 def ldap_container(worker_id: str) -> dict[str, object]:
     """Ensure shared OpenLDAP container is available for integration tests."""
     docker_control = FlextTestsDocker(
-        workspace_root=WORKSPACE_ROOT, worker_id=worker_id
+        workspace_root=WORKSPACE_ROOT,
+        worker_id=worker_id,
     )
     server_url = f"ldap://localhost:{LDAP_PORT}"
 
@@ -665,7 +666,7 @@ def ldap_container(worker_id: str) -> dict[str, object]:
             )
             if compose_result.is_failure:
                 pytest.skip(
-                    f"Could not start shared OpenLDAP container: {compose_result.error}"
+                    f"Could not start shared OpenLDAP container: {compose_result.error}",
                 )
 
         port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 15)
@@ -771,7 +772,9 @@ def clean_test_ou(
 
     with contextlib.suppress(Exception):
         ldap_connection.add(
-            test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
+            test_ou_dn,
+            ["organizationalUnit"],
+            {"ou": "FlextLdifTests"},
         )
 
     yield test_ou_dn

@@ -174,7 +174,7 @@ def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
     api = FlextLdif.get_instance()
     parse_result = api.parse(
-        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )
     if parse_result.is_failure:
         return

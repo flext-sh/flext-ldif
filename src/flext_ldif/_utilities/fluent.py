@@ -366,7 +366,7 @@ class EntryOps:
 
         updated_extensions = m.Ldif.DynamicMetadata.from_dict(extensions_map)
         updated_metadata = metadata.model_copy(
-            update={"extensions": updated_extensions}
+            update={"extensions": updated_extensions},
         )
         self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
 

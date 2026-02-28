@@ -90,7 +90,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_values: list[str] = list(attr_values)
 
                 converted_values: list[str] = converted_attributes.get(
-                    attr_name, original_values
+                    attr_name,
+                    original_values,
                 )
 
                 if converted_values != original_values:
@@ -788,7 +789,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             == FlextLdifServersOidConstants.SCHEMA_DN_QUIRK.lower()
         ):
             schema_transformations_raw = metadata.extensions.get(
-                "schema_transformations"
+                "schema_transformations",
             )
             schema_transformations = (
                 [str(item) for item in schema_transformations_raw]

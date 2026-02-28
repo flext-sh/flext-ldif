@@ -664,7 +664,8 @@ objectClass: person
         """Local test domains."""
 
         def create_configuration(
-            self, **kwargs: t.GeneralValueType
+            self,
+            **kwargs: t.GeneralValueType,
         ) -> dict[str, t.GeneralValueType]:
             """Create config."""
             return dict(kwargs)

@@ -12,7 +12,13 @@ from flext_ldif import t
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 
 type ConversionTargetType = Literal[
-    "str", "int", "float", "bool", "list", "tuple", "dict"
+    "str",
+    "int",
+    "float",
+    "bool",
+    "list",
+    "tuple",
+    "dict",
 ]
 
 

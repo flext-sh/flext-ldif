@@ -596,7 +596,7 @@ class FlextLdifUtilities(FlextUtilities):
                             items_or_entries,
                             normalize_dns=normalize_dns,
                             normalize_attrs=normalize_attrs,
-                        )
+                        ),
                     )
                 msg = "processor is required for base class process"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
@@ -609,7 +609,7 @@ class FlextLdifUtilities(FlextUtilities):
                                 items_or_entries,
                                 normalize_dns=normalize_dns,
                                 normalize_attrs=normalize_attrs,
-                            )
+                            ),
                         )
                     msg = "ProcessConfig requires LDIF entry sequence"
                     return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
@@ -733,7 +733,8 @@ class FlextLdifUtilities(FlextUtilities):
                 case list() | tuple() as seq_items:
                     items_list: list[object] = list(seq_items)
                     list_filter_result = FlextUtilities.Collection.filter(
-                        items_list, predicate
+                        items_list,
+                        predicate,
                     )
                     return list(list_filter_result) if list_filter_result else []
                 case dict() as items_or_entries_dict:
@@ -741,13 +742,15 @@ class FlextLdifUtilities(FlextUtilities):
                     for k, v in items_or_entries_dict.items():
                         items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(v)
                     dict_filter_result = FlextUtilities.Collection.filter(
-                        items_dict, predicate
+                        items_dict,
+                        predicate,
                     )
                     return dict_filter_result or {}
                 case _:
                     items_single_list: list[object] = [items_or_entries]
                     single_filter_result = FlextUtilities.Collection.filter(
-                        items_single_list, predicate
+                        items_single_list,
+                        predicate,
                     )
                     return list(single_filter_result) if single_filter_result else []
 
@@ -1098,7 +1101,9 @@ class FlextLdifUtilities(FlextUtilities):
                     match item:
                         case Sequence() as item_sequence:
                             result.append(
-                                item_sequence[key] if len(item_sequence) > key else None
+                                item_sequence[key]
+                                if len(item_sequence) > key
+                                else None,
                             )
                         case _:
                             if getattr(item, str(key), None) is not None:
@@ -1139,7 +1144,7 @@ class FlextLdifUtilities(FlextUtilities):
                 match (value, other):
                     case (str() as value_str, str() as other_str):
                         return normalize_single(value_str) == normalize_single(
-                            other_str
+                            other_str,
                         )
                     case _:
                         pass
@@ -1607,7 +1612,8 @@ class FlextLdifUtilities(FlextUtilities):
                 return {}
 
             def apply_defaults(
-                acc: t.ConfigMapValue, d: t.ConfigMapValue
+                acc: t.ConfigMapValue,
+                d: t.ConfigMapValue,
             ) -> t.ConfigMapValue:
                 """Apply defaults using fold() pattern: first wins, later fill missing/None."""
                 match (acc, d):
@@ -1656,7 +1662,9 @@ class FlextLdifUtilities(FlextUtilities):
             merged: dict[str, t.Ldif.JsonValue] = dict(mapping_list[0])
             for mapping in mapping_list[1:]:
                 merge_result = FlextUtilities.merge(
-                    merged, dict(mapping), strategy="deep"
+                    merged,
+                    dict(mapping),
+                    strategy="deep",
                 )
                 if merge_result.is_success:
                     merged = merge_result.value
@@ -2231,9 +2239,9 @@ class FlextLdifUtilities(FlextUtilities):
                                 if isinstance(item, Mapping):
                                     items_list.append({
                                         str(
-                                            key
+                                            key,
                                         ): FlextLdifUtilities.Ldif.to_config_map_value(
-                                            value
+                                            value,
                                         )
                                         for key, value in item.items()
                                     })

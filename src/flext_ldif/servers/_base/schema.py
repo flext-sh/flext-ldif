@@ -132,7 +132,8 @@ class FlextLdifServersBaseSchema(
                 continue
 
             if isinstance(value, Sequence) and not isinstance(
-                value, (str, bytes, bytearray)
+                value,
+                (str, bytes, bytearray),
             ):
                 scalar_values: list[FlextTypes.ScalarValue] = []
                 for item in value:
@@ -457,7 +458,7 @@ class FlextLdifServersBaseSchema(
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions_typed
+                extensions_typed,
             )
             if extensions_typed
             else FlextLdifModelsMetadata.DynamicMetadata(),
@@ -616,7 +617,8 @@ class FlextLdifServersBaseSchema(
                 attr_model = None
             if attr_model is not None:
                 return self._handle_write_operation(
-                    attr_model=attr_model, oc_model=None
+                    attr_model=attr_model,
+                    oc_model=None,
                 )
             try:
                 oc_model = m.Ldif.SchemaObjectClass.model_validate(data)

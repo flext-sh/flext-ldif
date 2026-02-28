@@ -213,7 +213,8 @@ class FlextLdifResult[T]:
         for attr_name, values in entry_attributes.items():
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
 

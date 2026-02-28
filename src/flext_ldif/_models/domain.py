@@ -2562,7 +2562,7 @@ class FlextLdifModelsDomains:
                 )
                 # ext_kwargs already typed as dict[str, t.MetadataAttributeValue]
                 extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    ext_kwargs
+                    ext_kwargs,
                 )
                 return FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.GENERIC,
@@ -3879,7 +3879,7 @@ class FlextLdifModelsDomains:
                 extensions_model = extensions
             else:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions
+                    extensions,
                 )
             return cls(
                 quirk_type=default_quirk_type,

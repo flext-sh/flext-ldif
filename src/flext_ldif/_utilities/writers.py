@@ -81,11 +81,13 @@ class FlextLdifUtilitiesWriters:
 
             total_entries: int = Field(default=0, description="Total entries written")
             successful: int = Field(
-                default=0, description="Successfully written entries"
+                default=0,
+                description="Successfully written entries",
             )
             failed: int = Field(default=0, description="Failed entries")
             total_attributes: int = Field(
-                default=0, description="Total attributes written"
+                default=0,
+                description="Total attributes written",
             )
             folded_lines: int = Field(default=0, description="Folded lines")
 
@@ -349,7 +351,8 @@ class FlextLdifUtilitiesWriters:
 
             total_entries: int = Field(default=0, description="Total entries written")
             successful: int = Field(
-                default=0, description="Successfully written entries"
+                default=0,
+                description="Successfully written entries",
             )
             failed: int = Field(default=0, description="Failed entries")
 

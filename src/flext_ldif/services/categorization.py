@@ -234,7 +234,7 @@ class FlextLdifCategorization(
             return r[m.Ldif.Entry].ok(
                 entry.model_copy(
                     update={"dn": dn_obj},
-                )
+                ),
             )
 
         validated: list[m.Ldif.Entry] = []
@@ -299,7 +299,9 @@ class FlextLdifCategorization(
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
         priority_classes: t.GeneralValueType = getattr(
-            constants, "HIERARCHY_PRIORITY_OBJECTCLASSES", frozenset()
+            constants,
+            "HIERARCHY_PRIORITY_OBJECTCLASSES",
+            frozenset(),
         )
         if not isinstance(priority_classes, frozenset):
             return False
@@ -323,7 +325,8 @@ class FlextLdifCategorization(
     ) -> list[str]:
         """Get priority order from constants or use default."""
         if constants is not None and FlextLdifCategorization._has_attr(
-            constants, "CATEGORIZATION_PRIORITY"
+            constants,
+            "CATEGORIZATION_PRIORITY",
         ):
 
             def is_valid_category(value: str) -> bool:
@@ -476,7 +479,7 @@ class FlextLdifCategorization(
         if isinstance(rules, Mapping):
             try:
                 return r[m.Ldif.CategoryRules].ok(
-                    m.Ldif.CategoryRules.model_validate(dict(rules))
+                    m.Ldif.CategoryRules.model_validate(dict(rules)),
                 )
             except (
                 ValueError,
@@ -488,7 +491,7 @@ class FlextLdifCategorization(
                 return r[m.Ldif.CategoryRules].fail(f"Invalid rules mapping: {e}")
 
         return r[m.Ldif.CategoryRules].fail(
-            f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
+            f"Invalid rules type: {type(rules)}. Expected CategoryRules model.",
         )
 
     def _match_entry_to_category(
@@ -755,12 +758,13 @@ class FlextLdifCategorization(
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
             existing_rejected_raw: Sequence[object] = filtered.get(
-                rejected_category, []
+                rejected_category,
+                [],
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]:
                 rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
-                    rejected_raw_item
+                    rejected_raw_item,
                 )
                 if rejected_entry_model is not None:
                     merged_rejected.append(rejected_entry_model)
@@ -869,12 +873,13 @@ class FlextLdifCategorization(
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
             existing_rejected_raw: Sequence[object] = filtered.get(
-                rejected_category, []
+                rejected_category,
+                [],
             )
             merged_rejected: list[m.Ldif.Entry] = []
             for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]:
                 rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
-                    rejected_raw_item
+                    rejected_raw_item,
                 )
                 if rejected_entry_model is not None:
                     merged_rejected.append(rejected_entry_model)

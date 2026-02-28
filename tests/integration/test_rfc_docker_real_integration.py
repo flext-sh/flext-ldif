@@ -44,7 +44,9 @@ class TestRfcParserRealFixtures:
         parse_response = parse_result.value
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in parse_response.entries
         ]
@@ -161,7 +163,9 @@ class TestRfcWriterRealFixtures:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]
@@ -213,7 +217,9 @@ class TestRfcWriterRealFixtures:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]

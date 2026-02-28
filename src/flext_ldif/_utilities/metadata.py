@@ -55,7 +55,8 @@ class FlextLdifUtilitiesMetadata:
         try:
             metadata_obj = metadata.to_dict()
             normalized_metadata: dict[
-                str, str | int | float | bool | list[str] | None
+                str,
+                str | int | float | bool | list[str] | None,
             ] = {}
             for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)) or value is None:
@@ -64,7 +65,7 @@ class FlextLdifUtilitiesMetadata:
                     normalized_metadata[key] = [str(item) for item in value]
                 else:
                     normalized_metadata[key] = str(value)
-            setattr(model, "validation_metadata", normalized_metadata)
+            model.validation_metadata = normalized_metadata
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -121,7 +122,7 @@ class FlextLdifUtilitiesMetadata:
             for key, inner_value in item_data.items():
                 if isinstance(inner_value, list):
                     merged_value[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        inner_value
+                        inner_value,
                     )
                 elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
                     merged_value[key] = inner_value
@@ -219,7 +220,7 @@ class FlextLdifUtilitiesMetadata:
             key: u.normalize_to_metadata_value(value) for key, value in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            metadata_typed
+            metadata_typed,
         )
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
         return model
@@ -247,7 +248,8 @@ class FlextLdifUtilitiesMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
         if target_metadata_obj is None or not isinstance(
-            target_metadata_obj, m.Metadata
+            target_metadata_obj,
+            m.Metadata,
         ):
             target_metadata_obj = m.Metadata(attributes={})
 
@@ -615,7 +617,7 @@ class FlextLdifUtilitiesMetadata:
                     combined[key] = value
                 elif isinstance(value, list):
                     combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        value
+                        value,
                     )
                 elif isinstance(value, Mapping):
                     combined[key] = str(value)
@@ -969,13 +971,13 @@ class FlextLdifUtilitiesMetadata:
 
         if config.original_attr_lines:
             attr_lines_typed: t.MetadataAttributeValue = list(
-                config.original_attr_lines
+                config.original_attr_lines,
             )
             server_data_dict["original_attribute_lines"] = attr_lines_typed
 
         if config.original_attribute_case:
             attr_case_typed: t.MetadataAttributeValue = dict(
-                config.original_attribute_case
+                config.original_attribute_case,
             )
             server_data_dict["original_attribute_case"] = attr_case_typed
 
@@ -995,7 +997,7 @@ class FlextLdifUtilitiesMetadata:
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
 
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            extensions_dict
+            extensions_dict,
         )
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=config.quirk_type,

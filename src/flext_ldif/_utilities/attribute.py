@@ -29,7 +29,8 @@ class FlextLdifUtilitiesAttribute:
         *,
         server_type: str | None = None,
         parse_parts_hook: Callable[
-            [str], FlextResult[Mapping[str, FlextTypes.GeneralValueType]]
+            [str],
+            FlextResult[Mapping[str, FlextTypes.GeneralValueType]],
         ]
         | None = None,
     ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:

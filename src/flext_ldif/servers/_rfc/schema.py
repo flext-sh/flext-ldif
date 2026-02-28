@@ -205,7 +205,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @staticmethod
     def _to_string_list(value: t.GeneralValueType | None) -> list[str] | None:
         if isinstance(value, Sequence) and not isinstance(
-            value, str | bytes | bytearray
+            value,
+            str | bytes | bytearray,
         ):
             return [str(item) for item in value]
         return None
@@ -558,7 +559,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            logger.exception(f"RFC {item_type} writing exception")
+            logger.exception("RFC %s writing exception", item_type)
             return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
     @override

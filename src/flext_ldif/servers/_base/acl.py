@@ -212,7 +212,8 @@ class FlextLdifServersBaseSchemaAcl(
         return "parse" if isinstance(data, str) else "write"
 
     def _coerce_acl_data(
-        self, value: str | m.Ldif.Acl | t.ConfigMapValue
+        self,
+        value: str | m.Ldif.Acl | t.ConfigMapValue,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -291,7 +292,7 @@ class FlextLdifServersBaseSchemaAcl(
             all_extensions.update(extensions)
 
         extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            all_extensions
+            all_extensions,
         )
         return m.Ldif.QuirkMetadata(
             quirk_type=self._get_server_type(),

@@ -172,7 +172,8 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute model validation did not match", error=str(exc)
+                "SchemaAttribute model validation did not match",
+                error=str(exc),
             )
         try:
             _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
@@ -277,7 +278,7 @@ class FlextLdifUtilitiesSchema:
         """Wrap transformation result with proper type."""
         try:
             return FlextResult.ok(
-                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
+                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed),
             )
         except (
             ValueError,
@@ -292,7 +293,7 @@ class FlextLdifUtilitiesSchema:
             )
         try:
             return FlextResult.ok(
-                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
+                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed),
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return FlextResult.fail(
@@ -917,7 +918,8 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_extensions(
         extensions_raw: Mapping[str, t.MetadataAttributeValue],
     ) -> Mapping[
-        str, t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]
+        str,
+        t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]],
     ]:
         return {
             key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)

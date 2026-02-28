@@ -175,7 +175,7 @@ class Pipeline:
             result = step_func(current)
             if result.is_failure:
                 return r[m.Ldif.Entry | _Filtered].fail(
-                    f"Step '{step_name}' failed: {result.error}"
+                    f"Step '{step_name}' failed: {result.error}",
                 )
 
             unwrapped = result.value

@@ -995,7 +995,8 @@ class FlextLdifUtilitiesACL:
                 normalized_list: list[str | int | float | bool | datetime | None] = []
                 for item in raw_default:
                     if item is None or isinstance(
-                        item, (str, int, float, bool, datetime)
+                        item,
+                        (str, int, float, bool, datetime),
                     ):
                         normalized_list.append(item)
                     else:
@@ -1016,7 +1017,8 @@ class FlextLdifUtilitiesACL:
                     if not isinstance(key, str):
                         continue
                     if item is None or isinstance(
-                        item, (str, int, float, bool, datetime)
+                        item,
+                        (str, int, float, bool, datetime),
                     ):
                         normalized_mapping[key] = item
                         continue

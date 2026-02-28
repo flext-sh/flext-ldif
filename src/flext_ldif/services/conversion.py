@@ -66,7 +66,8 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
     ) -> p.Ldif.SchemaQuirkProtocol:
         if not FlextLdifConversion._has_attr(
-            quirk, "parse"
+            quirk,
+            "parse",
         ) or not FlextLdifConversion._has_attr(quirk, "write_attribute"):
             msg = f"Expected Schema quirk, got {type(quirk)}"
             raise TypeError(msg)
@@ -383,7 +384,8 @@ class FlextLdifConversion(
         ] = {}
 
         if not source_metadata or not FlextLdifConversion._has_attr(
-            source_metadata, "boolean_conversions"
+            source_metadata,
+            "boolean_conversions",
         ):
             return conversion_analysis
 
@@ -612,16 +614,16 @@ class FlextLdifConversion(
                 updated_attrs = {}
 
                 if FlextLdifConversion._has_attr(
-                    source_quirk, "entry_quirk"
+                    source_quirk,
+                    "entry_quirk",
                 ) and FlextLdifConversion._has_attr(
-                    source_quirk.entry_quirk, "_convert_boolean_attributes_to_rfc"
+                    source_quirk.entry_quirk,
+                    "_convert_boolean_attributes_to_rfc",
                 ):
                     try:
                         # dynamic dispatch to known method on OID quirk
-                        entry_quirk = getattr(source_quirk, "entry_quirk")
-                        method = getattr(
-                            entry_quirk, "_convert_boolean_attributes_to_rfc"
-                        )
+                        entry_quirk = source_quirk.entry_quirk
+                        method = entry_quirk._convert_boolean_attributes_to_rfc
                         (
                             converted_bools,
                             _,
@@ -635,7 +637,7 @@ class FlextLdifConversion(
                         UnicodeDecodeError,
                         struct.error,
                     ) as e:
-                        logger.warning(f"Boolean conversion failed: {e}")
+                        logger.warning("Boolean conversion failed: %s", e)
 
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
@@ -650,19 +652,21 @@ class FlextLdifConversion(
 
                 new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
                 converted_entry = converted_entry.model_copy(
-                    update={"attributes": new_attributes}
+                    update={"attributes": new_attributes},
                 )
 
             if source_type_norm == "rfc" and target_type_norm == "oid":
                 if FlextLdifConversion._has_attr(
-                    target_quirk, "entry_quirk"
+                    target_quirk,
+                    "entry_quirk",
                 ) and FlextLdifConversion._has_attr(
-                    target_quirk.entry_quirk, "_restore_boolean_values_to_oid"
+                    target_quirk.entry_quirk,
+                    "_restore_boolean_values_to_oid",
                 ):
                     try:
                         # dynamic dispatch to known method on OID quirk
-                        entry_quirk = getattr(target_quirk, "entry_quirk")
-                        method = getattr(entry_quirk, "_restore_boolean_values_to_oid")
+                        entry_quirk = target_quirk.entry_quirk
+                        method = entry_quirk._restore_boolean_values_to_oid
                         converted_entry = method(converted_entry)
                     except (
                         ValueError,
@@ -671,7 +675,7 @@ class FlextLdifConversion(
                         UnicodeDecodeError,
                         struct.error,
                     ) as e:
-                        logger.warning(f"Boolean restoration failed: {e}")
+                        logger.warning("Boolean restoration failed: %s", e)
 
                 if converted_entry.attributes and converted_entry.attributes.attributes:
                     current_attrs = dict(converted_entry.attributes.attributes)
@@ -690,7 +694,7 @@ class FlextLdifConversion(
 
                     new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
                     converted_entry = converted_entry.model_copy(
-                        update={"attributes": new_attributes}
+                        update={"attributes": new_attributes},
                     )
 
             entry_dn_model = converted_entry.dn
@@ -700,10 +704,11 @@ class FlextLdifConversion(
                 if source_type_norm == "oid" and target_type_norm == "rfc":
                     if "cn=subschemasubentry" in dn_val:
                         new_dn_val = dn_value.replace(
-                            "cn=subschemasubentry", "cn=schema"
+                            "cn=subschemasubentry",
+                            "cn=schema",
                         )
                         converted_entry = converted_entry.model_copy(
-                            update={"dn": m.Ldif.DN(value=new_dn_val)}
+                            update={"dn": m.Ldif.DN(value=new_dn_val)},
                         )
                 elif (
                     source_type_norm == "rfc"
@@ -712,7 +717,7 @@ class FlextLdifConversion(
                 ):
                     new_dn_val = dn_value.replace("cn=schema", "cn=subschemasubentry")
                     converted_entry = converted_entry.model_copy(
-                        update={"dn": m.Ldif.DN(value=new_dn_val)}
+                        update={"dn": m.Ldif.DN(value=new_dn_val)},
                     )
 
             return r[
@@ -1362,7 +1367,7 @@ class FlextLdifConversion(
         for key, value in merged_ext_raw.items():
             if isinstance(value, (str, int, float, bool, datetime)) or value is None:
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
-                    value
+                    value,
                 )
                 continue
 
@@ -1394,7 +1399,7 @@ class FlextLdifConversion(
             metadata_kwargs: dict[str, t.MetadataAttributeValue] = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
-                    "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs)
+                    "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
                 },
                 deep=True,
             )
@@ -1464,7 +1469,8 @@ class FlextLdifConversion(
             converted_metadata_raw = get_metadata(converted_entry)
 
             if not isinstance(
-                converted_metadata_raw, (m.Ldif.QuirkMetadata, type(None))
+                converted_metadata_raw,
+                (m.Ldif.QuirkMetadata, type(None)),
             ):
                 return FlextResult.fail(
                     f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
@@ -1694,7 +1700,7 @@ class FlextLdifConversion(
             return r[_TSchemaConversionValue].ok(source_oc)
 
         write_result: r[_TSchemaConversionValue] = r[_TSchemaConversionValue].ok(
-            schema_quirk.write_objectclass(source_oc).map_or(source_oc)
+            schema_quirk.write_objectclass(source_oc).map_or(source_oc),
         )
         write_value = write_result.map_or(None)
         if write_value is not None and isinstance(write_value, str):
@@ -1796,7 +1802,7 @@ class FlextLdifConversion(
         parse_result = schema.parse_attribute(value)
         if parse_result.is_failure:
             return r[m.Ldif.SchemaAttribute].fail(
-                parse_result.error or parse_error_message
+                parse_result.error or parse_error_message,
             )
         parsed_value = parse_result.value
         if not isinstance(parsed_value, m.Ldif.SchemaAttribute):
@@ -1971,7 +1977,7 @@ class FlextLdifConversion(
             )
 
             if FlextLdifConversion._has_attr(logger, "bind") and callable(
-                getattr(logger, "bind", None)
+                getattr(logger, "bind", None),
             ):
                 _ = u.Ldif.Events.log_and_emit_conversion_event(
                     logger=logger,
@@ -2031,7 +2037,7 @@ class FlextLdifConversion(
             )
 
             if FlextLdifConversion._has_attr(logger, "bind") and callable(
-                getattr(logger, "bind", None)
+                getattr(logger, "bind", None),
             ):
                 _ = u.Ldif.Events.log_and_emit_conversion_event(
                     logger=logger,
@@ -2059,7 +2065,8 @@ class FlextLdifConversion(
         self.dn_registry.clear()
 
     def get_supported_conversions(
-        self, quirk: FlextLdifServersBase
+        self,
+        quirk: FlextLdifServersBase,
     ) -> Mapping[str, bool]:
         """Check which data types a quirk supports for conversion."""
         support: t.Ldif.CommonDict.DistributionDict = {
@@ -2093,7 +2100,8 @@ class FlextLdifConversion(
     ) -> t.GeneralValueType | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
-            quirk, "parse_attribute"
+            quirk,
+            "parse_attribute",
         ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
             required_methods = ("parse", "write")
             if all(
@@ -2105,7 +2113,9 @@ class FlextLdifConversion(
             return None
 
         schema_quirk_raw: t.GeneralValueType | None = getattr(
-            quirk, "schema_quirk", None
+            quirk,
+            "schema_quirk",
+            None,
         )
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
@@ -2143,7 +2153,7 @@ class FlextLdifConversion(
         attr_result = parse_attr(test_attr_def)
 
         if FlextLdifConversion._has_attr(attr_result, "is_success") and bool(
-            getattr(attr_result, "is_success", False)
+            getattr(attr_result, "is_success", False),
         ):
             support["attribute"] = 1
 
@@ -2175,7 +2185,7 @@ class FlextLdifConversion(
         if (
             FlextLdifConversion._has_attr(oc_result, "map_or")
             and callable(getattr(oc_result, "map_or", None))
-            and getattr(oc_result, "map_or")(None) is not None
+            and oc_result.map_or(None) is not None
         ):
             support["objectclass"] = 1
 

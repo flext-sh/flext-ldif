@@ -194,7 +194,7 @@ class FlextLdifSorting(
             )
             if config.predicate is not None:
                 sorting_instance = sorting_instance.model_copy(
-                    update={"custom_predicate": config.predicate}
+                    update={"custom_predicate": config.predicate},
                 )
             return sorting_instance.execute()
 
@@ -217,7 +217,7 @@ class FlextLdifSorting(
         )
         if predicate is not None:
             sorting_instance = sorting_instance.model_copy(
-                update={"custom_predicate": predicate}
+                update={"custom_predicate": predicate},
             )
         return sorting_instance.execute()
 
@@ -658,7 +658,8 @@ class FlextLdifSorting(
 
                         entries_for_dn: list[m.Ldif.Entry] = []
                         if isinstance(entries_raw, Sequence) and not isinstance(
-                            entries_raw, str
+                            entries_raw,
+                            str,
                         ):
                             entries_for_dn.extend(
                                 item

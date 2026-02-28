@@ -210,7 +210,7 @@ class FlextLdifMigrationPipeline(
 
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_text(write_result.value, encoding="utf-8")
-            logger.debug(f"Wrote migrated file to: {output_file}")
+            logger.debug("Wrote migrated file to: %s", output_file)
 
             converted_entries: list[m.Ldif.Entry] = list(migrated)
 
@@ -268,7 +268,7 @@ class FlextLdifMigrationPipeline(
             output_files: list[str] = []
 
             for input_file in in_dir.glob("*.ldif"):
-                logger.debug(f"Processing input file: {input_file}")
+                logger.debug("Processing input file: %s", input_file)
                 result = self.migrate_file(input_file)
                 if result.is_success:
                     res = result.value

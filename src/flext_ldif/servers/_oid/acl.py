@@ -58,20 +58,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         target_dn: str = Field(description="Target DN")
         perms_dict: Mapping[str, bool] = Field(description="Permissions dictionary")
         target_attrs: list[str] | None = Field(
-            default=None, description="Target attributes"
+            default=None,
+            description="Target attributes",
         )
         acl_filter: str | None = Field(default=None, description="ACL filter")
         acl_constraint: str | None = Field(default=None, description="ACL constraint")
         bindmode: str | None = Field(default=None, description="Bind mode")
         deny_group_override: bool | None = Field(
-            default=None, description="Deny group override flag"
+            default=None,
+            description="Deny group override flag",
         )
         append_to_all: bool | None = Field(
-            default=None, description="Append to all flag"
+            default=None,
+            description="Append to all flag",
         )
         bind_ip_filter: str | None = Field(default=None, description="Bind IP filter")
         constrain_to_added_object: str | None = Field(
-            default=None, description="Constrain to added object"
+            default=None,
+            description="Constrain to added object",
         )
 
     @override
@@ -719,7 +723,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
 
             extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions
+                extensions,
             )
 
             acl_model = m.Ldif.Acl(

@@ -618,7 +618,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         if isinstance(write_opts, m.Ldif.WriteOptions):
             return write_opts.model_copy(
-                update={"hidden_attrs": list(hidden_attrs_set)}
+                update={"hidden_attrs": list(hidden_attrs_set)},
             )
 
         if isinstance(write_opts, Mapping):
@@ -647,7 +647,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 write_opts_dict["include_comments"] = include_comments_value
             else:
                 write_metadata_as_comments = write_opts.get(
-                    "write_metadata_as_comments"
+                    "write_metadata_as_comments",
                 )
                 if isinstance(write_metadata_as_comments, bool):
                     write_opts_dict["include_comments"] = write_metadata_as_comments
@@ -1009,7 +1009,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_data.metadata.original_attribute_case if entry_data.metadata else None
         )
         original_attributes_raw = ext.get(
-            c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE
+            c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE,
         )
         if (
             entry_data.attributes
@@ -1170,7 +1170,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             ._write_entry(entry_data)
             .map(
                 lambda ldif_text: u.Ldif.Writer.finalize_ldif_text(
-                    ldif_parts + [ldif_text]
+                    ldif_parts + [ldif_text],
                 ),
             )
         )
@@ -1540,7 +1540,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
     def _normalize_aci_value_simple(
-        self, value: t.MetadataAttributeValue
+        self,
+        value: t.MetadataAttributeValue,
     ) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
         if isinstance(value, list):
@@ -1878,7 +1879,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if core_u.is_type(
-                    acl_extensions, FlextLdifModelsMetadata.DynamicMetadata
+                    acl_extensions,
+                    FlextLdifModelsMetadata.DynamicMetadata,
                 ):
                     self._extract_acl_metadata_from_dynamic(
                         acl_extensions,
@@ -1887,9 +1889,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 elif isinstance(acl_extensions, Mapping):
                     acl_extensions_dict: dict[str, t.MetadataAttributeValue] = {
                         str(
-                            k
+                            k,
                         ): FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
-                            v
+                            v,
                         )
                         for k, v in acl_extensions.items()
                         if isinstance(k, str)
@@ -2278,7 +2280,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.is_failure:
                 return FlextResult.fail(
-                    post_parse_result.error or "OUD post-parse failed"
+                    post_parse_result.error or "OUD post-parse failed",
                 )
 
             entry_after_post = post_parse_result.value

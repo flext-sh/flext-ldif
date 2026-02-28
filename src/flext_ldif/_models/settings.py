@@ -2218,7 +2218,8 @@ class FlextLdifModelsSettings:
             description="Server type identifier",
         )
         write_attributes_hook: Callable[
-            [FlextLdifModelsDomains.Entry, list[str]], None
+            [FlextLdifModelsDomains.Entry, list[str]],
+            None,
         ] = Field(
             ...,
             description="Core attributes writing",

@@ -53,7 +53,8 @@ class FlextFunctional:
                     normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
         if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
+            value,
+            (str, bytes, bytearray),
         ):
             return [FlextFunctional._to_general(item) for item in value]
         return str(value)

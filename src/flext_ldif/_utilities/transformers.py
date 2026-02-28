@@ -171,7 +171,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
 
         if needs_update:
             update_dict: dict[str, object] = {
-                "attributes": m.Ldif.Attributes(attributes=new_attrs)
+                "attributes": m.Ldif.Attributes(attributes=new_attrs),
             }
             item = item.model_copy(update=update_dict)
 

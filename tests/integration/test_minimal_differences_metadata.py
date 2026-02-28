@@ -143,7 +143,7 @@ orcldasisenabled: 1
 
         # Write back to OID format (FlextLdif.write accepts entries only)
         write_result = writer.write(
-            entries=[m.Ldif.Entry.model_validate(original_entry)]
+            entries=[m.Ldif.Entry.model_validate(original_entry)],
         )
         assert write_result.is_success
 

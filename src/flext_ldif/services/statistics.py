@@ -89,7 +89,9 @@ class FlextLdifStatistics(
                 filename if isinstance(filename, str) else f"{category}.ldif"
             )
             setattr(
-                output_files_model, category, str(output_dir.joinpath(output_filename))
+                output_files_model,
+                category,
+                str(output_dir.joinpath(output_filename)),
             )
 
         return r[m.Ldif.Results.StatisticsResult].ok(

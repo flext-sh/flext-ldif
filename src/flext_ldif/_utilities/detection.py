@@ -29,7 +29,7 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and not u.is_dict_like(getattr(cls, "Constants", None))
                 ):
-                    constants_obj: type = getattr(cls, "Constants")
+                    constants_obj: type = cls.Constants
                     if not isinstance(constants_obj, type):
                         continue
                     constants_class = constants_obj

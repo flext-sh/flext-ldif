@@ -34,7 +34,9 @@ class FlextLdifServer(FlextRegistry):
     _discovery_initialized: ClassVar[bool] = False
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
+        self,
+        dispatcher: p.CommandBus | None = None,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
@@ -142,7 +144,7 @@ class FlextLdifServer(FlextRegistry):
                 "schema": base.schema_quirk,
                 "acl": base.acl_quirk,
                 "entry": base.entry_quirk,
-            }
+            },
         )
 
     def get_constants(self, server_type: str) -> r[type]:

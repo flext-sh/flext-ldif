@@ -37,12 +37,14 @@ class TestSystematicFixtureCoverage:
 
     @staticmethod
     def _limit_schema_fixture_content(
-        fixture_data: str, max_definitions: int = 50
+        fixture_data: str,
+        max_definitions: int = 50,
     ) -> str:
         """Build a minimal schema LDIF sample with bounded definitions."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
+            (line for line in lines if line.startswith("dn:")),
+            "dn: cn=schema",
         )
 
         selected_lines = [first_dn]

@@ -67,7 +67,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
             return self.remove_attributes_batch(
-                self._entries, self._attributes_to_remove
+                self._entries,
+                self._attributes_to_remove,
             )
         return r[list[m.Ldif.Entry]].fail(f"Unknown operation: {self._operation}")
 
@@ -81,7 +82,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             result = FlextLdifEntries.remove_operational_attributes(entry)
             if result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry"
+                    result.error or "Failed to process entry",
                 )
             results.append(result.value)
         return r[list[m.Ldif.Entry]].ok(results)
@@ -97,7 +98,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             result = FlextLdifEntries.remove_attributes(entry, attributes)
             if result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry"
+                    result.error or "Failed to process entry",
                 )
             results.append(result.value)
         return r[list[m.Ldif.Entry]].ok(results)
@@ -215,7 +216,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         new_ocs = [oc for oc in current_ocs if oc.lower() not in ocs_to_remove_lower]
         if not new_ocs:
             return r[m.Ldif.Entry].fail(
-                "Cannot remove all objectClass values from entry"
+                "Cannot remove all objectClass values from entry",
             )
         new_attrs = dict(entry.attributes.attributes)
         new_attrs["objectClass"] = new_ocs
@@ -276,7 +277,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("Cannot normalize unsupported value type")
 
     def get_normalized_attribute(
-        self, entry: m.Ldif.Entry, attribute_name: str
+        self,
+        entry: m.Ldif.Entry,
+        attribute_name: str,
     ) -> r[str]:
         """Get and normalize one entry attribute."""
         return self.get_entry_attribute(entry, attribute_name).flat_map(

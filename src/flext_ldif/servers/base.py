@@ -289,7 +289,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         entry_quirk = getattr(self, "entry_quirk", None)
         if entry_quirk is None:
             return r[FlextLdifModelsResults.ParseResponse].fail(
-                "Entry quirk not available"
+                "Entry quirk not available",
             )
 
         entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(
@@ -509,7 +509,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 captured = method
 
                 def typed_register(
-                    server_type: str, quirk: p.Ldif.SchemaQuirkProtocol | object
+                    server_type: str,
+                    quirk: p.Ldif.SchemaQuirkProtocol | object,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -594,8 +595,8 @@ class _PriorityDescriptor:
         return self.value
 
 
-setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
+FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
+FlextLdifServersBase.priority = _PriorityDescriptor(0)
 
 __all__ = [
     "FlextLdifServersBase",

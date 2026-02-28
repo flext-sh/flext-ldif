@@ -269,7 +269,7 @@ class FlextLdifServersBaseEntry(
             effective_value = maybe_replace_acl_name(attr_name, value)
             if should_base64_encode(effective_name, effective_value):
                 encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
-                    "ascii"
+                    "ascii",
                 )
                 return f"{effective_name}:: {encoded}"
             return f"{effective_name}: {effective_value}"

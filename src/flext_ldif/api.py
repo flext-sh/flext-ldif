@@ -206,10 +206,12 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             and options.write_options
         ):
             _ = kwargs.setdefault(
-                "fold_long_lines", options.write_options.fold_long_lines
+                "fold_long_lines",
+                options.write_options.fold_long_lines,
             )
             _ = kwargs.setdefault(
-                "sort_attributes", options.write_options.sort_attributes
+                "sort_attributes",
+                options.write_options.sort_attributes,
             )
 
         source_server_typed: str = str(source_server)
@@ -392,7 +394,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                     content_str = source_path.read_text(encoding="utf-8")
                 except OSError as e:
                     return r[m.Ldif.Results.ServerDetectionResult].fail(
-                        f"Failed to read file: {e}"
+                        f"Failed to read file: {e}",
                     )
             case str() as content:
                 content_str = content
