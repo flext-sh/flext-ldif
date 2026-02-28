@@ -74,7 +74,6 @@ class FlextLdifSettings(FlextSettings):
 
     ldif_encoding: c.Ldif.LiteralTypes.EncodingLiteral = Field(
         default="utf-8",  # Use literal value instead of constant for
-        # type compatibility
         description="Character encoding for LDIF files",
     )
 
@@ -182,7 +181,7 @@ class FlextLdifSettings(FlextSettings):
     )
 
     ldif_default_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc",  # Use literal value instead of enum for type compatibility
+        default="rfc",
         description="Default server type for LDIF processing",
     )
 

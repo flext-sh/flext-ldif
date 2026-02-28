@@ -219,7 +219,9 @@ class FlextLdifModels(FlextModels):
                 FlextLdifModelsResults.MigrationPipelineResult
             )
 
-            ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
+            ValidationServiceStatus: TypeAlias = (
+                FlextLdifModelsResults.ValidationServiceStatus
+            )
             ValidationBatchResult: TypeAlias = (
                 FlextLdifModelsResults.ValidationBatchResult
             )

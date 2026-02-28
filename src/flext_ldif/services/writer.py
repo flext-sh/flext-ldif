@@ -22,12 +22,7 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
     _server: FlextLdifServer
 
     @staticmethod
-    def _extract_pipe_value(
-        pipe_result: r[t.GeneralValueType]
-        | FlextRuntime.RuntimeResult[t.GeneralValueType],
-    ) -> t.GeneralValueType | None:
-        return pipe_result.unwrap_or(None)
-
+    def _to_format_options(
         write_options: m.Ldif.WriteOptions,
     ) -> m.Ldif.WriteFormatOptions:
         dumped = write_options.model_dump(exclude_none=True)

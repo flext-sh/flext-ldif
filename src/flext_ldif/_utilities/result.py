@@ -354,7 +354,7 @@ class FlextLdifResult[T]:
         return self.is_success
 
     @override
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: t.GeneralValueType) -> bool:
         """Check equality with another FlextLdifResult."""
         if not isinstance(other, FlextLdifResult):
             return NotImplemented

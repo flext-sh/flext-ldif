@@ -787,7 +787,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def is_entry_sequence(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeIs[Sequence[m.Ldif.Entry]]:
             """Check if value is a Sequence of Entry objects."""
             match value:

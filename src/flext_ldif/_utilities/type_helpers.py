@@ -16,18 +16,18 @@ class FlextLdifTypeHelpers:
     """Type guards and helpers for LDIF (single class per module)."""
 
     @staticmethod
-    def is_entry_sequence(obj: object) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
+    def is_entry_sequence(obj: t.GeneralValueType) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and not isinstance(obj, str | bytes | dict)
 
     @staticmethod
-    def is_mapping_type(obj: object) -> TypeGuard[ABCMapping[str, t.ConfigMapValue]]:
+    def is_mapping_type(obj: t.GeneralValueType) -> TypeGuard[ABCMapping[str, t.ConfigMapValue]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, ABCMapping) and not isinstance(obj, str | bytes)
 
     @staticmethod
     def is_sequence_of_scalars(
-        obj: object,
+        obj: t.GeneralValueType,
     ) -> TypeGuard[ABCSequence[str | int | float | bool | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
@@ -36,7 +36,7 @@ class FlextLdifTypeHelpers:
 
     @staticmethod
     def is_mapping_of_scalars(
-        obj: object,
+        obj: t.GeneralValueType,
     ) -> TypeGuard[ABCMapping[str, str | int | float | bool | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):

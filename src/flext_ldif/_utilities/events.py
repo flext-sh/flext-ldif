@@ -146,7 +146,6 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
-        # Build log context with event data (explicit type annotation for compatibility)
         log_context: dict[str, t.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,

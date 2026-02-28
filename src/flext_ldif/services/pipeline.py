@@ -32,7 +32,6 @@ class ProcessingPipeline:
 
         # Add DN normalization if enabled
         if self._config.normalize_dns and self._config.process_config is not None:
-            # Convert Literal to StrEnum for type compatibility
             dn_config = (
                 self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
             )

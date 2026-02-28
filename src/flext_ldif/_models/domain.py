@@ -695,7 +695,6 @@ class FlextLdifModelsDomains:
             """Check if attribute exists."""
             return key in self.attributes
 
-        # NOTE: __iter__ method REMOVED - was incompatible with BaseModel type signature
         # Use: entry.attributes.keys() for iteration over attribute names
         # Use: entry.model_dump() for Pydantic default iteration behavior
 
@@ -1744,7 +1743,6 @@ class FlextLdifModelsDomains:
                 t.Ldif.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
             ] = dict(data)
 
-            # Coerce ISO datetime strings to datetime objects for strict=True compatibility
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
             for dt_field in ("created_at", "updated_at"):
                 field_value = data_dict.get(dt_field)
@@ -1802,7 +1800,7 @@ class FlextLdifModelsDomains:
             return self.attributes.attributes
 
         @override
-        def model_post_init(self, _context: object, /) -> None:
+        def model_post_init(self, _context: t.GeneralValueType, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.
@@ -2099,7 +2097,7 @@ class FlextLdifModelsDomains:
                             "dn": dn_value,
                             "attribute_count": str(attribute_count),
                             "total_violations": str(len(violations)),
-                        },
+                        },  # type: ignore[arg-type]
                     )
                 )
 
@@ -2628,7 +2626,6 @@ class FlextLdifModelsDomains:
 
             """
             try:
-                # Normalize DN to DN object (uses Self for facade compatibility)
                 dn_obj = FlextLdifModelsDomains.DN.from_value(dn)
 
                 # Normalize attributes to Attributes object

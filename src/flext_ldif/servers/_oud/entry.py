@@ -172,7 +172,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Business Rule: Entry.__init__ accepts entry_service and _parent_quirk
         # Implication: Call parent __init__ directly, parent handles FlextService call
         # Use same pattern as FlextLdifServersRfcEntry - call base class directly
-        # Cast entry_service to protocol type for type compatibility
 
         entry_service_typed: p.Ldif.EntryQuirkProtocol | None = (
             entry_service if entry_service is not None else None
@@ -1647,7 +1646,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if mapped_key is None and key in known_keys:
                 mapped_key = key
             final_key = mapped_key or key
-            # Type narrowing: ensure value is compatible with MetadataAttributeValue
             # MetadataAttributeValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
             # where ScalarValue = str | int | float | bool | datetime | None
             if isinstance(value, (str, int, float, bool, type(None))):
@@ -1778,7 +1776,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                # Type narrowing: ensure value is compatible with MetadataAttributeValue
                 if isinstance(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
@@ -1831,7 +1828,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                # Type narrowing: ensure value is compatible with MetadataAttributeValue
                 # DynamicMetadata.get() returns t.MetadataAttributeValue, but mypy needs help
                 if isinstance(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
@@ -2107,7 +2103,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_data = corrected_result.value
         # Business Rule: apply_syntax_corrections expects specific types
         # Implication: Convert corrected_data and syntax_corrections to expected formats
-        # Type compatibility: corrected_data is AttributeDict (dict[str, list[str]])
         # Use dict() to create a mutable copy with proper type inference
         corrected_data_typed: dict[
             str,
@@ -2132,7 +2127,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             syntax_corrections_dict: dict[str, str] = {}
             # Business Rule: syntax_corrections_raw is dict[str, ...] from corrected_data_typed.
             # Implication: Values may be str | int | float | bool | list[str] | dict[str, str | list[str]] | None.
-            # We convert all values to str for dict[str, str] compatibility.
             for k, v in syntax_corrections_raw.items():
                 syntax_corrections_dict[str(k)] = str(v) if v is not None else ""
             syntax_corrections_typed = syntax_corrections_dict

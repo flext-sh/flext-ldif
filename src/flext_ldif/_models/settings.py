@@ -1147,11 +1147,9 @@ class FlextLdifModelsSettings:
             default=None,
             description="Structured migration config with 6-file output and tracking",
         )
-        write_options: FlextLdifModelsSettings.WriteFormatOptions | None = Field(
+        write_options: FlextLdifModelsSettings.UtilWriteConfig | None = Field(
             default=None,
-            description=(
-                "Write format options (line folding, removed attrs as comments)"
-            ),
+            description="Write options for migration",
         )
 
         #Categorized mode parameters
@@ -1332,6 +1330,7 @@ class FlextLdifModelsSettings:
         track_modifications: bool
         track_conversions: bool
 
+    class WriteFormatOptions(m.Value):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -1343,7 +1342,6 @@ class FlextLdifModelsSettings:
 
             .. code-block:: python
 
-                # OLD (deprecated):
                 options = WriteFormatOptions(line_width=80, fold_long_lines=True)
                 result = ldif.write(entries, options=options)
 

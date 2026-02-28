@@ -71,7 +71,7 @@ class FlextLdifModelsMetadata:
             return len(self._extra())
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, t.MetadataAttributeValue]]:
+        def __iter__(self) -> Iterator[tuple[str, t.MetadataAttributeValue]]:  # type: ignore[override]
             yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:
@@ -103,7 +103,7 @@ class FlextLdifModelsMetadata:
                 setattr(self, key, value)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.GeneralValueType) -> bool:
             if other.__class__ is dict:
                 return dict(self.items()) == other
             return NotImplemented
