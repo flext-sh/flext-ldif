@@ -70,12 +70,12 @@ class FlextLdifCategorization(
     def __init__(
         self,
         categorization_rules: (
-            m.Ldif.Results.CategoryRules
+            m.Ldif.CategoryRules
             | Mapping[str, str | list[str] | None]
             | None
         ) = None,
         schema_whitelist_rules: (
-            m.Ldif.Results.WhitelistRules
+            m.Ldif.WhitelistRules
             | Mapping[str, str | list[str] | bool | None]
             | None
         ) = None,
@@ -88,8 +88,8 @@ class FlextLdifCategorization(
         """Initialize categorization service."""
         super().__init__()
 
-        self._categorization_rules: m.Ldif.Results.CategoryRules
-        self._schema_whitelist_rules: m.Ldif.Results.WhitelistRules | None
+        self._categorization_rules: m.Ldif.CategoryRules
+        self._schema_whitelist_rules: m.Ldif.WhitelistRules | None
         self._forbidden_attributes: list[str]
         self._forbidden_objectclasses: list[str]
         self._base_dn: str | None
@@ -106,28 +106,28 @@ class FlextLdifCategorization(
                 FlextLdifServer.get_global_instance(),
             )
 
-        if isinstance(categorization_rules, m.Ldif.Results.CategoryRules):
+        if isinstance(categorization_rules, m.Ldif.CategoryRules):
             object.__setattr__(self, "_categorization_rules", categorization_rules)
         elif isinstance(categorization_rules, dict):
             object.__setattr__(
                 self,
                 "_categorization_rules",
-                m.Ldif.Results.CategoryRules.model_validate(categorization_rules),
+                m.Ldif.CategoryRules.model_validate(categorization_rules),
             )
         else:
             object.__setattr__(
                 self,
                 "_categorization_rules",
-                m.Ldif.Results.CategoryRules(),
+                m.Ldif.CategoryRules(),
             )
 
-        if isinstance(schema_whitelist_rules, m.Ldif.Results.WhitelistRules):
+        if isinstance(schema_whitelist_rules, m.Ldif.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
         elif isinstance(schema_whitelist_rules, dict):
             object.__setattr__(
                 self,
                 "_schema_whitelist_rules",
-                m.Ldif.Results.WhitelistRules.model_validate(
+                m.Ldif.WhitelistRules.model_validate(
                     schema_whitelist_rules,
                 ),
             )
@@ -194,7 +194,7 @@ class FlextLdifCategorization(
     @property
     def schema_whitelist_rules(
         self,
-    ) -> m.Ldif.Results.WhitelistRules | None:
+    ) -> m.Ldif.WhitelistRules | None:
         """Get schema whitelist rules (read-only)."""
         return self._schema_whitelist_rules
 
@@ -368,7 +368,7 @@ class FlextLdifCategorization(
 
     def _build_category_map_from_rules(
         self,
-        rules: m.Ldif.Results.CategoryRules,
+        rules: m.Ldif.CategoryRules,
     ) -> dict[str, frozenset[str]]:
         """Build category map from rules."""
         category_map: dict[
@@ -476,21 +476,21 @@ class FlextLdifCategorization(
     def _normalize_rules(
         self,
         rules: (
-            m.Ldif.Results.CategoryRules
+            m.Ldif.CategoryRules
             | Mapping[str, t.MetadataAttributeValue]
             | None
         ),
-    ) -> r[m.Ldif.Results.CategoryRules]:
+    ) -> r[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
-        if isinstance(rules, m.Ldif.Results.CategoryRules):
-            return r[m.Ldif.Results.CategoryRules].ok(rules)
+        if isinstance(rules, m.Ldif.CategoryRules):
+            return r[m.Ldif.CategoryRules].ok(rules)
         if rules is None:
-            return r[m.Ldif.Results.CategoryRules].ok(self._categorization_rules)
+            return r[m.Ldif.CategoryRules].ok(self._categorization_rules)
 
         if isinstance(rules, Mapping):
             try:
-                return r[m.Ldif.Results.CategoryRules].ok(
-                    m.Ldif.Results.CategoryRules.model_validate(dict(rules))
+                return r[m.Ldif.CategoryRules].ok(
+                    m.Ldif.CategoryRules.model_validate(dict(rules))
                 )
             except (
                 ValueError,
@@ -499,11 +499,11 @@ class FlextLdifCategorization(
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.Results.CategoryRules].fail(
+                return r[m.Ldif.CategoryRules].fail(
                     f"Invalid rules mapping: {e}"
                 )
 
-        return r[m.Ldif.Results.CategoryRules].fail(
+        return r[m.Ldif.CategoryRules].fail(
             f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
         )
 
@@ -568,7 +568,7 @@ class FlextLdifCategorization(
         self,
         entry: m.Ldif.Entry,
         rules: (
-            m.Ldif.Results.CategoryRules
+            m.Ldif.CategoryRules
             | Mapping[str, t.MetadataAttributeValue]
             | None
         ) = None,

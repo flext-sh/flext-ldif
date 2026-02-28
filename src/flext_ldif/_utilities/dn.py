@@ -243,8 +243,6 @@ class FlextLdifUtilitiesDN:
     def norm_string(dn: str | m.Ldif.DN) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            return dn_str  # Return as-is if invalid (legacy method - returns str not r)
         components = FlextLdifUtilitiesDN.split(dn_str)
         normalized = u.Collection.map(
             components,

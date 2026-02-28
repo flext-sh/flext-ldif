@@ -24,9 +24,14 @@ class DynamicCounts(FlextLdifModelsBase):
         setattr(self, key, value)
 
     @staticmethod
-    def _to_count(value: str | float) -> int:
-        if value.__class__ in {int, float}:
-            return int(str(value))
+    def _to_count(value: t.MetadataAttributeValue) -> int:
+        if isinstance(value, int | float):
+            return int(value)
+        if isinstance(value, str):
+            try:
+                return int(float(value))
+            except (ValueError, TypeError):
+                return 0
         return 0
 
     def __getitem__(self, key: str) -> int:
@@ -111,11 +116,12 @@ class _BooleanFlags(FlextLdifModelsBase):
         return bool(extra[key])
 
     @override
+    @override
     def __eq__(self, other: object) -> bool:
-        if other.__class__ is dict:
+        if isinstance(other, dict):
             extra = self.model_extra
             return (extra or {}) == other
-        if other.__class__ is self.__class__:
+        if isinstance(other, self.__class__):
             return self.model_extra == other.model_extra
         return NotImplemented
 
@@ -238,7 +244,7 @@ class FlextLdifModelsResults:
         def _convert_dict_to_categories(
             cls, value: _FlexibleCategories | _DynCategoriesInput
         ) -> _FlexibleCategories:
-            if value.__class__ is dict:
+            if isinstance(value, dict):
                 result = _FlexibleCategories()
                 for cat, entries in value.items():
                     result.add_entries(str(cat), list(entries))

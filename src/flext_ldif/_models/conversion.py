@@ -63,7 +63,7 @@ class ConvertToBool(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if val.__class__ is str:
+        if isinstance(val, str):
             return val.lower() in _TRUE_STRINGS
         try:
             return bool(val)
@@ -79,8 +79,8 @@ class ConvertToList(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if val.__class__ in {list, tuple, set, frozenset}:
-            return list(val)
+        if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, set) or isinstance(val, frozenset):
+            return list(val)  # type: ignore[arg-type]
         return [val]
 
 
@@ -92,8 +92,8 @@ class ConvertToTuple(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if val.__class__ in {list, tuple, set, frozenset}:
-            return tuple(val)
+        if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, set) or isinstance(val, frozenset):
+            return tuple(val)  # type: ignore[arg-type]
         return (val,)
 
 

@@ -1154,7 +1154,7 @@ class FlextLdifModelsSettings:
             ),
         )
 
-        # Categorized mode parameters (legacy)
+        #Categorized mode parameters
         categorization_rules: FlextLdifModelsSettings.CategoryRules | None = Field(
             default=None,
             description="Entry categorization rules (enables categorized mode)",
@@ -1332,7 +1332,6 @@ class FlextLdifModelsSettings:
         track_modifications: bool
         track_conversions: bool
 
-    class WriteFormatOptions(m.ArbitraryTypesModel):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0

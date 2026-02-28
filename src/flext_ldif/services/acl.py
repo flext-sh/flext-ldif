@@ -195,11 +195,11 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
     @staticmethod
     def evaluate_acl_context(
         acls: list[m.Ldif.Acl],
-        required_permissions: m.Ldif.Results.AclPermissions | Mapping[str, bool],
+        required_permissions: m.Ldif.AclPermissions | Mapping[str, bool],
     ) -> r[m.Ldif.Results.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):
-            required = m.Ldif.Results.AclPermissions(
+            required = m.Ldif.AclPermissions(
                 read=bool(required_permissions.get("read", False)),
                 write=bool(required_permissions.get("write", False)),
                 delete=bool(required_permissions.get("delete", False)),

@@ -616,7 +616,7 @@ class FlextLdifSorting(
     def _levelorder_traverse(
         entries: list[m.Ldif.Entry],
     ) -> list[m.Ldif.Entry]:
-        """Level-order traversal (original behavior for backward compatibility)."""
+        #JM|        """Level-order traversal."""
 
         def sort_key(entry: m.Ldif.Entry) -> tuple[int, str]:
             dn_value = FlextLdifSorting._entry_dn_value(entry)

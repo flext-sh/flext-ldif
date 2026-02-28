@@ -1268,7 +1268,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
                 processed_attrs.add(attr_name.lower())
 
-        # Also check removed_attributes field for legacy compatibility
+        #VN|        # Also check removed_attributes field
+#VK|        # This ensures all removed attributes are shown, even if not tracked as transformations
         # This ensures all removed attributes are shown, even if not tracked as transformations
         if (
             format_options

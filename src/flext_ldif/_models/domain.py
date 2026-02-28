@@ -1500,7 +1500,7 @@ class FlextLdifModelsDomains:
         def get_acl_type(self) -> str:
             """Get ACL type identifier for this server.
 
-            Uses FROM_LONG mapping to normalize legacy long-form identifiers
+            #YB|            Uses FROM_LONG mapping to normalize long-form identifiers
             (e.g., "oracle_oid" → "oid") to short-form canonical identifiers.
             """
             # Normalize to short form using FROM_LONG dict
@@ -1909,7 +1909,7 @@ class FlextLdifModelsDomains:
                     ]
                 else:
                     base_attr = attr_desc
-                    options = []
+                    options: list[str] = []
 
                 # Validate base attribute
                 if not base_attr or not base_attr[0].isalpha():
@@ -2086,15 +2086,15 @@ class FlextLdifModelsDomains:
             if violations and self.metadata is not None:
                 attribute_count = len(self.attributes) if self.attributes else 0
                 # Create/update validation results with current violations
-                old_context = {}
+                old_context: dict[str, t.MetadataAttributeValue] = {}
                 if self.metadata.validation_results is not None:
-                    old_context = self.metadata.validation_results.context
+                    old_context = dict(self.metadata.validation_results.context)  # type: ignore[arg-type]
 
                 self.metadata.validation_results = (
                     FlextLdifModelsDomains.ValidationMetadata(
                         rfc_violations=violations,
                         context={
-                            **old_context,
+                            **old_context,  # type: ignore[arg-type]
                             "validator": "validate_entry_rfc_compliance",
                             "dn": dn_value,
                             "attribute_count": str(attribute_count),
@@ -2459,7 +2459,6 @@ class FlextLdifModelsDomains:
             statistics: FlextLdifModelsDomains.EntryStatistics
             | None = None,  # New parameter
         ) -> FlextResult[Self]:
-            """Create a new Entry instance with composition fields (legacy method, prefer builder())."""
             return cls._create_entry(
                 dn=dn,
                 attributes=attributes,

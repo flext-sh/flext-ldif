@@ -829,7 +829,8 @@ class FlextLdifSettings(FlextSettings):
     # =========================================================================
     # PUBLIC API - Direct access to models (no wrappers)
     # =========================================================================
-    # WriteFormatOptions is deprecated - use FlextLdifSettings fields (ldif_write_*)
+    #XS|    # Use FlextLdifSettings fields (ldif_write_*) for formatting options
+#BJ|    # Direct access via FlextLdifModelsSettings.WriteFormatOptions when needed
     # Direct access via FlextLdifModelsSettings.WriteFormatOptions when needed
 
 

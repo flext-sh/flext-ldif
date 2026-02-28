@@ -34,7 +34,7 @@ from flext_ldif.protocols import p
 class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
 
-    ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
+    #TQ|    # ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
 
     class Ldif:
         """LDIF namespace for cross-project access."""

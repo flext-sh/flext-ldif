@@ -28,15 +28,12 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
     ) -> t.GeneralValueType | None:
         return pipe_result.unwrap_or(None)
 
-    @staticmethod
-    def _extract_write_options(
         write_options: m.Ldif.WriteOptions,
     ) -> m.Ldif.WriteFormatOptions:
         dumped = write_options.model_dump(exclude_none=True)
         normalized = FlextLdifWriter._normalize_write_format(dumped)
         return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
-    @staticmethod
     def _normalize_write_format(
         d: Mapping[str, t.GeneralValueType],
     ) -> Mapping[str, t.GeneralValueType]:
@@ -75,7 +72,10 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
             result_raw = m.Ldif.WriteFormatOptions.model_validate(
                 format_opts
             )
-        elif isinstance(format_options, m.Ldif.WriteOptions):
+        #PP|        elif isinstance(format_options, m.Ldif.WriteOptions):
+#ZN|            result_raw = m.Ldif.WriteFormatOptions.model_validate(
+#QX|                format_options.model_dump(exclude_none=True)
+#RK|            )
             write_options = m.Ldif.WriteOptions.model_validate(
                 format_options
             )
