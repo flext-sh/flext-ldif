@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextSettings, s
-from flext_core.protocols import p
-from flext_core.service import FlextService
+from flext_core import FlextService, FlextSettings, p, s
 
 from flext_ldif.settings import FlextLdifSettings
 

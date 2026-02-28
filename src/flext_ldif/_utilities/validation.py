@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from flext_core import r
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextUtilities, r
 
 from flext_ldif.protocols import p
 from flext_ldif.typings import t

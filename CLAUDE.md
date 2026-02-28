@@ -392,10 +392,10 @@ from flext_ldif.protocols import p    # FlextLdifProtocols
 from flext_ldif.utilities import u    # FlextLdifUtilities
 
 # flext_core aliases (also available)
-from flext_core.result import r      # FlextResult
-from flext_core.exceptions import e  # FlextExceptions
-from flext_core.decorators import d  # FlextDecorators
-from flext_core.mixins import mx     # FlextMixins
+from flext_core import r      # FlextResult
+from flext_core import e  # FlextExceptions
+from flext_core import d  # FlextDecorators
+from flext_core import mx     # FlextMixins
 
 # Usage with full namespace (MANDATORY)
 result: r[str] = r[str].ok("value")
@@ -468,7 +468,7 @@ class QuirkBase:
 
 ```python
 # protocols.py (Tier 0 - no internal imports except flext_core)
-from flext_core.protocols import FlextProtocols
+from flext_core import FlextProtocols
 
 class FlextLdifProtocols(FlextProtocols):
     class Ldif:

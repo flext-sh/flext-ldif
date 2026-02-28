@@ -12,8 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence as ABCSequence
 from typing import TypeGuard
 
-from flext_core.typings import t
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextUtilities, t
 
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):

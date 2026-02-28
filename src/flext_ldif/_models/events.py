@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from flext_core.models import m
+from flext_core import m
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase

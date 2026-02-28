@@ -7,8 +7,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import override
 
-from flext_core import r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, r
 
 from flext_ldif.base import s
 from flext_ldif.models import m

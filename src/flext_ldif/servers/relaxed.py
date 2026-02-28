@@ -7,8 +7,7 @@ import struct
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import r
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c

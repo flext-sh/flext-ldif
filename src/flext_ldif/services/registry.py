@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core.protocols import p
-from flext_core.registry import FlextRegistry
+from flext_core import FlextRegistry, p
 
 from flext_ldif.typings import t
 

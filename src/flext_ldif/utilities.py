@@ -22,8 +22,7 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, r
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextLogger, FlextUtilities, r
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute

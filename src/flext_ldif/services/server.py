@@ -6,8 +6,7 @@ import inspect
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, r, t
-from flext_core.registry import FlextRegistry
+from flext_core import FlextLogger, FlextRegistry, r, t
 
 import flext_ldif.servers as servers_package
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer

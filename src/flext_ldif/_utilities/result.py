@@ -7,8 +7,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, overload, override
 
-from flext_core import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.models import m

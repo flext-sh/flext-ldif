@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypeVar
 
-from flext_core.result import r
+from flext_core import r
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
