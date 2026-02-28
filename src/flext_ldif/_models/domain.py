@@ -3440,20 +3440,20 @@ class FlextLdifModelsDomains:
 
             Returns new instance with attribute change tracked (frozen model).
             """
-            if change_type == "added":
+            if change_type == c.Ldif.ChangeType.ADDED:
                 attributes_added = [*self.attributes_added, attr_name]
                 return self.model_copy(update={"attributes_added": attributes_added})
-            if change_type == "removed":
+            if change_type == c.Ldif.ChangeType.REMOVED:
                 attributes_removed = [*self.attributes_removed, attr_name]
                 return self.model_copy(
                     update={"attributes_removed": attributes_removed},
                 )
-            if change_type == "modified":
+            if change_type == c.Ldif.ChangeType.MODIFIED:
                 attributes_modified = [*self.attributes_modified, attr_name]
                 return self.model_copy(
                     update={"attributes_modified": attributes_modified},
                 )
-            if change_type == "filtered":
+            if change_type == c.Ldif.ChangeType.FILTERED:
                 attributes_filtered = [*self.attributes_filtered, attr_name]
                 return self.model_copy(
                     update={"attributes_filtered": attributes_filtered},

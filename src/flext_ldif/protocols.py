@@ -9,6 +9,9 @@ from typing import Protocol, runtime_checkable
 from flext_core import FlextResult
 from flext_core.protocols import FlextProtocols
 
+from flext_ldif.constants import c
+from flext_ldif.typings import t
+
 
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols."""

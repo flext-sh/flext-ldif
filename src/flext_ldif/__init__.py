@@ -30,13 +30,19 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
-    "FlextLdifCategorization": ("flext_ldif.services.categorization", "FlextLdifCategorization"),
+    "FlextLdifCategorization": (
+        "flext_ldif.services.categorization",
+        "FlextLdifCategorization",
+    ),
     "FlextLdifConstants": ("flext_ldif.constants", "FlextLdifConstants"),
     "FlextLdifConversion": ("flext_ldif.services.conversion", "FlextLdifConversion"),
     "FlextLdifDetector": ("flext_ldif.services.detector", "FlextLdifDetector"),
     "FlextLdifEntries": ("flext_ldif.services.entries", "FlextLdifEntries"),
     "FlextLdifFilters": ("flext_ldif.services.filters", "FlextLdifFilters"),
-    "FlextLdifMigrationPipeline": ("flext_ldif.services.migration", "FlextLdifMigrationPipeline"),
+    "FlextLdifMigrationPipeline": (
+        "flext_ldif.services.migration",
+        "FlextLdifMigrationPipeline",
+    ),
     "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
     "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),

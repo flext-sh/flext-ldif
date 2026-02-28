@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Literal, TypeAlias
 
 from flext_core import FlextModels, t
+from typing import Final
 from pydantic import Field
 
 # Resolve circular dependency: settings.py references FlextLdifModelsDomains
@@ -15,7 +16,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult
-from flext_ldif._models.results import FlextLdifModelsResults, _FlexibleCategories
+from flext_ldif._models.results import FlextLdifModelsResults, FlexibleCategories
 from flext_ldif._models.settings import (
     AclConversionConfig,
     AttrNormalizationConfig,
@@ -32,17 +33,12 @@ from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
 _settings_mod.FlextLdifModelsDomains = FlextLdifModelsDomains
-FlextLdifModelsSettings.EntryProcessingConfig.model_rebuild()
-FlextLdifModelsSettings.EntryParseConfig.model_rebuild()
-FlextLdifModelsSettings.EntryWriteConfig.model_rebuild()
-FlextLdifModelsSettings.BatchWriteConfig.model_rebuild()
-FlextLdifModelsSettings.PermissionMappingConfig.model_rebuild()
 
 
 class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
 
-    ParseFormatOptions = FlextLdifModelsSettings.ParseFormatOptions
+    ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
 
     class Ldif:
         """LDIF namespace for cross-project access."""

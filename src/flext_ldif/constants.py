@@ -1874,6 +1874,7 @@ class FlextLdifConstants(FlextConstants):
 
         class ChangeType(StrEnum):
             """LDIF change types — single source of truth."""
+
             ADDED = "added"
             REMOVED = "removed"
             MODIFIED = "modified"
