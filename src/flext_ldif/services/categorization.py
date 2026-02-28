@@ -556,7 +556,7 @@ class FlextLdifCategorization(
                     passed,
                 ),
                 mark_rejected=(
-                    ("rejected", rejection_reason)
+                    (c.Ldif.Category.REJECTED, rejection_reason)
                     if not passed and rejection_reason
                     else None
                 ),
@@ -647,7 +647,7 @@ class FlextLdifCategorization(
             rejection_reason = reason if reason is not None else "No category match"
             is_rejected = category == c.Ldif.Category.REJECTED
 
-            category_literal: c.Ldif.LiteralTypes.CategoryLiteral | None = None
+            category_literal: str | None = None
             if category == c.Ldif.Category.USERS:
                 category_literal = c.Ldif.Category.USERS
             elif category == c.Ldif.Category.GROUPS:

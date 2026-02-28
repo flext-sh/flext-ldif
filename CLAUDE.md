@@ -155,17 +155,17 @@ ______________________________________________________________________
 ### Zero Tolerância (Proibido Completamente)
 
 1. **Hacks**: ❌ PROIBIDO - `model_rebuild()`, `eval()`, `exec()`.
-2. **Inline/Lazy Imports**: ❌ PROIBIDO - Sem imports dentro de funções ou `.try / except ImportError:`.
-3. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções.
-4. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - (Com exceção do `__getattr__` no `__init__.py` para lazy-load de módulo).
-5. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry).
-6. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo.
-7. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código.
-8. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta.
-9. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários).
-10. **Importação**: ❌ Sem root aliases, lazy imports genéricos ou fallbacks de ImportError; imports sempre no topo.
-11. **TYPE_CHECKING**: Allowed for non-Pydantic, type-only imports to avoid circular dependencies. NEVER use with Pydantic models (they require runtime type resolution).
-12. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade.
+1. **Inline/Lazy Imports**: ❌ PROIBIDO - Sem imports dentro de funções ou `.try / except ImportError:`.
+1. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções.
+1. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - (Com exceção do `__getattr__` no `__init__.py` para lazy-load de módulo).
+1. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry).
+1. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo.
+1. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código.
+1. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta.
+1. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários).
+1. **Importação**: ❌ Sem root aliases, lazy imports genéricos ou fallbacks de ImportError; imports sempre no topo.
+1. **TYPE_CHECKING**: Allowed for non-Pydantic, type-only imports to avoid circular dependencies. NEVER use with Pydantic models (they require runtime type resolution).
+1. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade.
 
 ### Exemplos de Correções
 
@@ -186,9 +186,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from flext_ldif.protocols import p
 ```
+
 from typing import ClassVar
 TypeClassVar = ClassVar
-```
+
+````
 
 #### # type: ignore
 
@@ -199,7 +201,7 @@ Field(default="lower")  # type: ignore[assignment]
 # ✅ CORRETO - Usar model_config ou type hints adequados
 from pydantic import ConfigDict
 model_config = ConfigDict(...)
-```
+````
 
 #### Metaclasses
 

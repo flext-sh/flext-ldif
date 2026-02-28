@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Literal, TypeAlias
+from typing import Final, Literal, TypeAlias
 
 from flext_core import FlextModels, t
-from typing import Final
 from pydantic import Field
 
 # Resolve circular dependency: settings.py references FlextLdifModelsDomains
@@ -16,7 +15,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult
-from flext_ldif._models.results import FlextLdifModelsResults, FlexibleCategories
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._models.settings import (
     AclConversionConfig,
     AttrNormalizationConfig,
@@ -32,7 +31,7 @@ from flext_ldif._models.settings import (
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
 
-_settings_mod.FlextLdifModelsDomains = FlextLdifModelsDomains
+_settings_mod.FlextLdifModelsDomains = FlextLdifModelsDomains  # type: ignore[attr-defined]
 
 
 class FlextLdifModels(FlextModels):
@@ -139,7 +138,7 @@ class FlextLdifModels(FlextModels):
         MigrationPipelineResult: TypeAlias = (
             FlextLdifModelsResults.MigrationPipelineResult
         )
-        FlexibleCategories: TypeAlias = _FlexibleCategories
+        FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
 
         class Events:
             """Extended event models namespace."""
@@ -228,17 +227,17 @@ class FlextLdifModels(FlextModels):
                 FlextLdifModelsResults.ValidationBatchResult
             )
 
-            DynamicCounts = FlextLdifModelsResults.DynamicCounts
-            FlexibleCategories: TypeAlias = _FlexibleCategories
+            DynamicCounts: Final = FlextLdifModelsResults.DynamicCounts
+            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
 
-            ClientStatus = FlextLdifModelsResults.ClientStatus
-            ServiceStatus = FlextLdifModelsResults.ServiceStatus
+            ClientStatus: Final = FlextLdifModelsResults.ClientStatus
+            ServiceStatus: Final = FlextLdifModelsResults.ServiceStatus
 
-            DictAccessibleValue = FlextLdifModelsResults.DictAccessibleValue
-            BooleanFlags = FlextLdifModelsResults.BooleanFlags
-            ConfigSettings = FlextLdifModelsResults.ConfigSettings
-            CategoryPaths = FlextLdifModelsResults.CategoryPaths
-            EventType = FlextLdifModelsResults.EventType
+            DictAccessibleValue: Final = FlextLdifModelsResults.DictAccessibleValue
+            BooleanFlags: Final = FlextLdifModelsResults.BooleanFlags
+            ConfigSettings: Final = FlextLdifModelsResults.ConfigSettings
+            CategoryPaths: Final = FlextLdifModelsResults.CategoryPaths
+            EventType: Final = FlextLdifModelsResults.EventType
 
         class LdifResults:
             """Backward-compatible namespace for result types."""
@@ -284,8 +283,8 @@ class FlextLdifModels(FlextModels):
             )
             EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
 
-            FlexibleCategories: TypeAlias = _FlexibleCategories
-            DynamicCounts = FlextLdifModelsResults.DynamicCounts
+            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+            DynamicCounts: Final = FlextLdifModelsResults.DynamicCounts
 
             DnEvent: TypeAlias = FlextLdifModelsEvents.DnEvent
             DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
@@ -297,7 +296,7 @@ class FlextLdifModels(FlextModels):
             class Events:
                 """Events namespace for conversion events."""
 
-                ConversionEventConfig = FlextLdifModelsEvents.ConversionEventConfig
+                ConversionEventConfig: Final = FlextLdifModelsEvents.ConversionEventConfig
 
         class Types:
             """Type models namespace - moved from typings.py TypedDict to Pydantic models."""
@@ -436,9 +435,9 @@ class FlextLdifModels(FlextModels):
         class ProcessingConfig:
             """Processing configuration models namespace."""
 
-            EntryTransformConfig = FlextLdifModelsSettings.EntryTransformConfig
-            EntryFilterConfig = FlextLdifModelsSettings.EntryFilterConfig
-            CaseFoldOption = c.Ldif.CaseFoldOption
+            EntryTransformConfig: Final = FlextLdifModelsSettings.EntryTransformConfig
+            EntryFilterConfig: Final = FlextLdifModelsSettings.EntryFilterConfig
+            CaseFoldOption: Final = c.Ldif.CaseFoldOption
 
 
 m = FlextLdifModels

@@ -776,7 +776,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _apply_category_update(
         stats: m.Ldif.EntryStatistics,
-        category: c.Ldif.LiteralTypes.CategoryLiteral,
+        category: str,
     ) -> m.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
         return stats.model_copy(update={"category_assigned": category})
@@ -820,7 +820,7 @@ class FlextLdifUtilitiesMetadata:
     def update_entry_statistics(
         entry: m.Ldif.Entry,
         *,
-        category: c.Ldif.LiteralTypes.CategoryLiteral | None = None,
+        category: str | None = None,
         mark_rejected: tuple[str, str] | None = None,
         mark_filtered: tuple[str, bool] | None = None,
     ) -> m.Ldif.Entry:
