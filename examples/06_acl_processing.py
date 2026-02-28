@@ -16,9 +16,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdif, FlextLdifModels, m, u
 
 
 def extract_acls_from_entry() -> None:

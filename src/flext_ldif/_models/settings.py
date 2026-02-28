@@ -15,11 +15,10 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from flext_core import m, r, t
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from flext_ldif import FlextLdifProtocols, c
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
 from flext_ldif._models.shared import SchemaObjectClass
-from flext_ldif.constants import c
-from flext_ldif.protocols import FlextLdifProtocols
 
 if TYPE_CHECKING:
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -1152,7 +1151,7 @@ class FlextLdifModelsSettings:
             description="Write options for migration",
         )
 
-        #Categorized mode parameters
+        # Categorized mode parameters
         categorization_rules: FlextLdifModelsSettings.CategoryRules | None = Field(
             default=None,
             description="Entry categorization rules (enables categorized mode)",

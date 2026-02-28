@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_ldif.models import m
+from flext_ldif import m
 
 from tests import s
 

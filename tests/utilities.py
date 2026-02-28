@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import p
-from flext_ldif.utilities import FlextLdifUtilities
-from flext_tests.utilities import FlextTestsUtilities
+from flext_ldif import FlextLdifModels, FlextLdifUtilities, p
+from flext_tests import FlextTestsUtilities
 
 from tests.constants import RfcTestHelpers as _RfcTestHelpers, TestDeduplicationHelpers
 

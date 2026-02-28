@@ -10,7 +10,7 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
-from flext_ldif.models import m
+from flext_ldif import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
 from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 

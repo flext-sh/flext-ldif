@@ -24,6 +24,7 @@ from typing import (
 
 from flext_core import FlextLogger, FlextUtilities, r
 
+from flext_ldif import c, m, p, t
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
@@ -51,10 +52,6 @@ from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

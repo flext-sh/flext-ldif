@@ -20,10 +20,8 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings, t
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
-from flext_ldif.protocols import p
+from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.server import FlextLdifServer
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 

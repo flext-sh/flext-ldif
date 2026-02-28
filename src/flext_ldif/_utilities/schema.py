@@ -11,13 +11,11 @@ from typing import TypeVar
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
+from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

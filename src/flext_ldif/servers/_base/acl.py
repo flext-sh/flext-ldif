@@ -9,13 +9,11 @@ from typing import ClassVar, Self, override
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field, ValidationError
 
+from flext_ldif import m, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

@@ -9,11 +9,7 @@ from typing import Protocol, override
 
 from flext_core import r
 
-from flext_ldif.base import s
-from flext_ldif.models import m
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.settings import FlextLdifSettings
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m, s, u
 
 
 class ServerDetectionConstants(Protocol):
@@ -142,9 +138,7 @@ class FlextLdifDetector(s[m.Ldif.Results.ClientStatus]):
             )
             if detection_result.is_success:
                 result = detection_result.value
-                if issubclass(
-                    result.__class__, m.Ldif.Results.ServerDetectionResult
-                ):
+                if issubclass(result.__class__, m.Ldif.Results.ServerDetectionResult):
                     return r[str].ok(result.detected_server_type)
 
         return r[str].ok("rfc")

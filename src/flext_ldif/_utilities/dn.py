@@ -10,10 +10,9 @@ from typing import Literal, overload
 
 from flext_core import r, u
 
+from flext_ldif import c, m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import c
-from flext_ldif.models import m
 
 
 class FlextLdifUtilitiesDN:

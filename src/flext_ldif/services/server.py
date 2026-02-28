@@ -9,8 +9,8 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextRegistry, r, t
 
 import flext_ldif.servers as servers_package
+from flext_ldif import p
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.protocols import p
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,

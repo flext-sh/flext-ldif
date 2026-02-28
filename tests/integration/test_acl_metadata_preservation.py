@@ -15,8 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
-from flext_ldif import FlextLdif, m
-from flext_ldif.constants import c
+from flext_ldif import FlextLdif, c, m
 
 
 def _entry_extensions(entry: m.Ldif.Entry) -> dict[str, object]:

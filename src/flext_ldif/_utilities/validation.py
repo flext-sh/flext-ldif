@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from flext_core import FlextUtilities, r
 
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
+from flext_ldif import p, t
 
 
 class FlextLdifUtilitiesValidation(FlextUtilities):

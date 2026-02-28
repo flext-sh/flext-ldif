@@ -10,25 +10,27 @@ from typing import ClassVar, override
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, computed_field
 
+from flext_ldif import (
+    FlextLdifAcl,
+    FlextLdifAnalysis,
+    FlextLdifCategorization,
+    FlextLdifDetector,
+    FlextLdifEntries,
+    FlextLdifMigrationPipeline,
+    FlextLdifParser,
+    FlextLdifProcessing,
+    FlextLdifServer,
+    FlextLdifServiceBase,
+    FlextLdifSettings,
+    FlextLdifStatistics,
+    FlextLdifValidation,
+    FlextLdifWriter,
+    c,
+    m,
+    p,
+    t,
+)
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.services.acl import FlextLdifAcl
-from flext_ldif.services.analysis import FlextLdifAnalysis
-from flext_ldif.services.categorization import FlextLdifCategorization
-from flext_ldif.services.detector import FlextLdifDetector
-from flext_ldif.services.entries import FlextLdifEntries
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.processing import FlextLdifProcessing
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.statistics import FlextLdifStatistics
-from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.services.writer import FlextLdifWriter
-from flext_ldif.settings import FlextLdifSettings
-from flext_ldif.typings import t
 
 
 class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
@@ -415,11 +417,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries: list[m.Ldif.Entry],
         *,
         server_type: str | None = None,
-        format_options: (
-            m.Ldif.WriteFormatOptions
-            | m.Ldif.WriteOptions
-            | None
-        ) = None,
+        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
     ) -> r[str]:
         """Write entries to LDIF format string."""
         effective_type = server_type or self._get_effective_server_type_value()
@@ -436,11 +434,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         path: Path,
         *,
         server_type: str | None = None,
-        format_options: (
-            m.Ldif.WriteFormatOptions
-            | m.Ldif.WriteOptions
-            | None
-        ) = None,
+        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
     ) -> r[bool]:
         """Write entries to LDIF file."""
         write_result = self.write(

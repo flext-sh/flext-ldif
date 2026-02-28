@@ -15,20 +15,16 @@ from typing import override
 
 from flext_core import FlextLogger, FlextResult, u as core_u
 
+from flext_ldif import c, m, p, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -1267,8 +1263,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
                 processed_attrs.add(attr_name.lower())
 
-        #VN|        # Also check removed_attributes field
-#VK|        # This ensures all removed attributes are shown, even if not tracked as transformations
+        # VN|        # Also check removed_attributes field
+        # VK|        # This ensures all removed attributes are shown, even if not tracked as transformations
         # This ensures all removed attributes are shown, even if not tracked as transformations
         if (
             format_options

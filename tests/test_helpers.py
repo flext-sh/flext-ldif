@@ -19,9 +19,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import r
-from flext_ldif import FlextLdif
-from flext_ldif.models import m
-from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif import FlextLdif, FlextLdifEntries, m
 from flext_tests import (
     FlextTestsFactories as tf_base,
     FlextTestsMatchers as tm_base,

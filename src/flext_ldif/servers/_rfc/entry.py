@@ -8,7 +8,7 @@ from typing import override
 
 from flext_core import FlextLogger, FlextResult, r, u as core_u
 
-from flext_ldif.models import m
+from flext_ldif import m
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)

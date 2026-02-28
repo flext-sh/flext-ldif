@@ -8,11 +8,9 @@ from functools import wraps
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif import FlextLdifShared, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._shared import FlextLdifShared
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

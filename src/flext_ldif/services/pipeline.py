@@ -6,11 +6,9 @@ from collections.abc import Sequence
 
 from flext_core import r
 
+from flext_ldif import ServerTransformer, c, m
 from flext_ldif._utilities.pipeline import Pipeline
 from flext_ldif._utilities.transformers import Normalize
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.services.transformers import ServerTransformer
 
 
 class ProcessingPipeline:

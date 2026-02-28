@@ -189,7 +189,7 @@ def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
 ### For New Code (Use Thin Interface)
 
 ```python
-from flext_ldif.services import FlextLdifServer
+from flext_ldif import FlextLdifServer
 
 registry = FlextLdifServer()
 

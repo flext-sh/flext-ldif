@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import Literal, Self
 
+from flext_ldif import c
 from flext_ldif._models.settings import (
     AclConversionConfig,
     AttrNormalizationConfig,
@@ -17,7 +18,6 @@ from flext_ldif._models.settings import (
     ValidationConfig,
     WriteConfig,
 )
-from flext_ldif.constants import c
 
 # PROCESS CONFIG BUILDER
 

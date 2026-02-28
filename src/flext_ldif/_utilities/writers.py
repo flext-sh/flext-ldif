@@ -9,9 +9,9 @@ from typing import Protocol
 from flext_core import FlextLogger, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldif import m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.models import m
 
 # Use flext_core utilities directly to avoid circular import with flext_ldif.utilities
 

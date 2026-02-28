@@ -9,7 +9,7 @@ from typing import Any, ClassVar
 
 import flext_ldif
 import pytest
-from flext_ldif.typings import t as t_ldif
+from flext_ldif import t as t_ldif
 
 from tests import OIDs, c, s
 

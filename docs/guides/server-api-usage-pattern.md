@@ -49,7 +49,7 @@ ______________________________________________________________________
 
 ```python
 # CORRETO - Via FlextLdifServer API
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 
 server = FlextLdifServer()
@@ -76,7 +76,7 @@ ______________________________________________________________________
 
 ```python
 import pytest
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 
 
@@ -135,7 +135,7 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 
 # DEPOIS
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 ```
 

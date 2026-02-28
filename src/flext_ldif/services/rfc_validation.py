@@ -9,15 +9,13 @@ from typing import Self, override
 from flext_core import d, r, t
 from pydantic import Field
 
+from flext_ldif import FlextLdifServiceBase, c, m
 from flext_ldif._models.results import _BooleanFlags
 from flext_ldif._models.rfc_validation_types import (
     is_valid_rfc2849_attribute_value,
     is_valid_rfc4512_descriptor,
     is_valid_rfc4514_dn_component,
 )
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import c
-from flext_ldif.models import m
 
 
 class FlextLdifValidation(

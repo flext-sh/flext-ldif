@@ -7,8 +7,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import u
 
-from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif import m, p
 
 
 class FlextLdifUtilitiesDetection:

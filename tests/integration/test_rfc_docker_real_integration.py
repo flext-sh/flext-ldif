@@ -14,10 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdifWriter
-from flext_ldif.models import m
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
 
 from tests import tm
 

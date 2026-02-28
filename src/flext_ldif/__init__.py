@@ -4,28 +4,36 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r
 
-    from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase, s
-    from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
-    from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
-    from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
-    from flext_ldif.services.categorization import FlextLdifCategorization
-    from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector
-    from flext_ldif.services.entries import FlextLdifEntries
-    from flext_ldif.services.filters import FlextLdifFilters
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser
-    from flext_ldif.services.sorting import FlextLdifSorting
-    from flext_ldif.services.writer import FlextLdifWriter
-    from flext_ldif.settings import FlextLdifSettings
-    from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
-    from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
+    from flext_ldif import (
+        FlextLdif,
+        FlextLdifCategorization,
+        FlextLdifConstants,
+        FlextLdifConstants as c,
+        FlextLdifConversion,
+        FlextLdifDetector,
+        FlextLdifEntries,
+        FlextLdifFilters,
+        FlextLdifMigrationPipeline,
+        FlextLdifModels,
+        FlextLdifModels as m,
+        FlextLdifParser,
+        FlextLdifProtocols,
+        FlextLdifProtocols as p,
+        FlextLdifServiceBase,
+        FlextLdifSettings,
+        FlextLdifSorting,
+        FlextLdifTypes,
+        FlextLdifTypes as t,
+        FlextLdifUtilities,
+        FlextLdifUtilities as u,
+        FlextLdifWriter,
+        s,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

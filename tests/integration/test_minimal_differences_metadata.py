@@ -12,9 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdif, FlextLdifParser, u
-from flext_ldif.constants import c
-from flext_ldif.models import m
+from flext_ldif import FlextLdif, FlextLdifParser, c, m, u
 
 
 class TestMinimalDifferencesOidOud:

@@ -13,9 +13,9 @@ from pathlib import Path
 from flext_ldif import (
     FlextLdifMigrationPipeline,
     FlextLdifParser,
+    FlextLdifServer,
     FlextLdifWriter,
 )
-from flext_ldif.services.server import FlextLdifServer
 
 
 class FlextLdifTestFactory:

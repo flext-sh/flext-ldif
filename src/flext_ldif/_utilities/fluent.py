@@ -8,11 +8,10 @@ from typing import Literal, Self
 
 from flext_core import FlextResult
 
+from flext_ldif import c, m
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform
-from flext_ldif.constants import c
-from flext_ldif.models import m
 
 # REMOVED: Runtime aliases redundantes - use m.* diretamente (já importado com runtime alias)
 # Entry: TypeAlias = m.Ldif.Entry  # Use m.Ldif.Entry directly

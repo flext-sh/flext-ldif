@@ -9,11 +9,10 @@ from typing import Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r
 
+from flext_ldif import m, t
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

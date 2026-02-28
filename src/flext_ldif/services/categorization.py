@@ -9,13 +9,7 @@ from typing import Final, override
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ValidationError
 
-from flext_ldif.base import s
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.services.filters import FlextLdifFilters
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdifFilters, FlextLdifServer, c, m, s, t, u
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 
@@ -70,14 +64,10 @@ class FlextLdifCategorization(
     def __init__(
         self,
         categorization_rules: (
-            m.Ldif.CategoryRules
-            | Mapping[str, str | list[str] | None]
-            | None
+            m.Ldif.CategoryRules | Mapping[str, str | list[str] | None] | None
         ) = None,
         schema_whitelist_rules: (
-            m.Ldif.WhitelistRules
-            | Mapping[str, str | list[str] | bool | None]
-            | None
+            m.Ldif.WhitelistRules | Mapping[str, str | list[str] | bool | None] | None
         ) = None,
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
@@ -475,11 +465,7 @@ class FlextLdifCategorization(
 
     def _normalize_rules(
         self,
-        rules: (
-            m.Ldif.CategoryRules
-            | Mapping[str, t.MetadataAttributeValue]
-            | None
-        ),
+        rules: (m.Ldif.CategoryRules | Mapping[str, t.MetadataAttributeValue] | None),
     ) -> r[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):
@@ -499,9 +485,7 @@ class FlextLdifCategorization(
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.CategoryRules].fail(
-                    f"Invalid rules mapping: {e}"
-                )
+                return r[m.Ldif.CategoryRules].fail(f"Invalid rules mapping: {e}")
 
         return r[m.Ldif.CategoryRules].fail(
             f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
@@ -568,9 +552,7 @@ class FlextLdifCategorization(
         self,
         entry: m.Ldif.Entry,
         rules: (
-            m.Ldif.CategoryRules
-            | Mapping[str, t.MetadataAttributeValue]
-            | None
+            m.Ldif.CategoryRules | Mapping[str, t.MetadataAttributeValue] | None
         ) = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:

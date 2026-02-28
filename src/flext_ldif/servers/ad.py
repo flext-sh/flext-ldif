@@ -10,11 +10,10 @@ from typing import ClassVar, override
 
 from flext_core import r
 
+from flext_ldif import c, m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.constants import c
-from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 

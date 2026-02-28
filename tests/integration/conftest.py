@@ -23,7 +23,9 @@ from pathlib import Path
 import pytest
 from flext_ldif import (
     FlextLdif,
+    FlextLdifConversion,
     FlextLdifParser,
+    FlextLdifServer,
     FlextLdifWriter,
     m,
 )
@@ -32,8 +34,6 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.server import FlextLdifServer
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 

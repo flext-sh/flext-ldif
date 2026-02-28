@@ -16,10 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdif
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifUtilities, c, m
 
 
 def _write_entry_to_file(

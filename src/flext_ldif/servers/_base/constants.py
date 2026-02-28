@@ -8,10 +8,8 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
+from flext_ldif import c, p, t
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

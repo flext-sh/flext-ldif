@@ -9,12 +9,7 @@ from typing import Final, override
 from flext_core import FlextLogger, r
 from pydantic import PrivateAttr
 
-from flext_ldif.base import s
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.pipeline import ProcessingPipeline
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif import FlextLdifParser, FlextLdifWriter, ProcessingPipeline, c, m, s
 
 logger: Final = FlextLogger(__name__)
 

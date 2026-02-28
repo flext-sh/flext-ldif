@@ -28,9 +28,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services.dn import FlextLdifDn
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdif, FlextLdifDn, FlextLdifModels, u
 
 
 def basic_batch_processing() -> None:

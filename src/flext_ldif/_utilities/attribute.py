@@ -8,8 +8,8 @@ from typing import Final
 
 from flext_core import FlextResult, FlextTypes
 
+from flext_ldif import c
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.constants import c
 
 
 class FlextLdifUtilitiesAttribute:

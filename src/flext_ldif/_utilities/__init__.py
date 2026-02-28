@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_ldif import c, t
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.builders import (
@@ -65,8 +66,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-    from flext_ldif.constants import c
-    from flext_ldif.typings import t
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

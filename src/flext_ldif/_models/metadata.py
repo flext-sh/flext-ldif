@@ -8,7 +8,7 @@ from typing import ClassVar, override
 from flext_core._models.base import FlextModelFoundation
 from pydantic import ConfigDict, Field
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifModelsMetadata:

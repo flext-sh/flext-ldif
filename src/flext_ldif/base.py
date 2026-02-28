@@ -6,7 +6,7 @@ from typing import override
 
 from flext_core import FlextService, FlextSettings, p, s
 
-from flext_ldif.settings import FlextLdifSettings
+from flext_ldif import FlextLdifSettings
 
 
 class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):

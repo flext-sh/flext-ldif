@@ -17,9 +17,7 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_ldif import FlextLdif
-from flext_ldif.models import m
-from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_ldif import FlextLdif, FlextLdifStatistics, m
 
 from tests import c
 

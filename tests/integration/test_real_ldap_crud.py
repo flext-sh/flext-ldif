@@ -22,8 +22,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from flext_ldif import FlextLdif
-from flext_ldif.models import m
+from flext_ldif import FlextLdif, m
 from ldap3 import Connection
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py

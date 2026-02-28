@@ -6,11 +6,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextResult
-from flext_core.protocols import FlextProtocols
+from flext_core import FlextProtocols, FlextResult
 
-from flext_ldif.constants import c
-from flext_ldif.typings import t
+from flext_ldif import c, t
 
 
 class FlextLdifProtocols(FlextProtocols):

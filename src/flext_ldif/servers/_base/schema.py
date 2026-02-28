@@ -10,16 +10,13 @@ from typing import ClassVar, Self, override
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
+from flext_ldif import c, m, p, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

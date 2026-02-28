@@ -9,12 +9,10 @@ from collections.abc import Mapping
 
 from flext_core import FlextLogger, u
 
+from flext_ldif import c, m, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 

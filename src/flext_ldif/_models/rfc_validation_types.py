@@ -4,7 +4,7 @@ from typing import Annotated, Final
 
 from pydantic import StringConstraints, TypeAdapter, ValidationError
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 RFC4512_DESCRIPTOR_PATTERN: Final[str] = r"^[A-Za-z][A-Za-z0-9-]{0,126}$"
 RFC4514_DN_COMPONENT_PATTERN: Final[str] = (

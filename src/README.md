@@ -128,16 +128,16 @@ src/flext_ldif/
 
 ```python
 # Domain model usage
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 # Application service usage
-from flext_ldif.api import FlextLdif
+from flext_ldif import FlextLdif
 
 # Configuration management
-from flext_ldif.settings import FlextLdifSettings
+from flext_ldif import FlextLdifSettings
 
 # Core processing (advanced usage)
-from flext_ldif.core import TLdif
+from flext_ldif import TLdif
 ```
 
 ### Recommended Public API

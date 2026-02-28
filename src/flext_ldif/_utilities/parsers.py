@@ -9,7 +9,7 @@ from typing import Protocol
 from flext_core import FlextLogger, FlextResult, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif.models import m
+from flext_ldif import m
 
 logger = FlextLogger.create_module_logger(__name__)
 

@@ -205,7 +205,7 @@ class FlextLdif(Flext[dict[str, object]]):
 Add parser service to exports:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 __all__ = [
     # ... existing exports
@@ -218,7 +218,7 @@ __all__ = [
 Add import for parser service:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 ```
 
 ______________________________________________________________________

@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif.models import m
+from flext_ldif import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
 from tests import RfcTestHelpers, c, s
 

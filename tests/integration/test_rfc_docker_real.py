@@ -16,10 +16,10 @@ from pathlib import Path
 import pytest
 from flext_ldif import (
     FlextLdifParser,
+    FlextLdifServer,
     FlextLdifWriter,
+    m,
 )
-from flext_ldif.models import m
-from flext_ldif.services.server import FlextLdifServer
 
 
 class TestRfcDockerRealData:

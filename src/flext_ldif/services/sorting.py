@@ -10,10 +10,7 @@ from typing import ClassVar, Self, override
 from flext_core import r, t
 from pydantic import Field, field_validator, model_validator
 
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdifServiceBase, c, m, u
 
 
 class FlextLdifSorting(
@@ -616,7 +613,7 @@ class FlextLdifSorting(
     def _levelorder_traverse(
         entries: list[m.Ldif.Entry],
     ) -> list[m.Ldif.Entry]:
-        #JM|        """Level-order traversal."""
+        # JM|        """Level-order traversal."""
 
         def sort_key(entry: m.Ldif.Entry) -> tuple[int, str]:
             dn_value = FlextLdifSorting._entry_dn_value(entry)

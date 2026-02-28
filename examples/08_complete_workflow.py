@@ -8,8 +8,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import m
+from flext_ldif import FlextLdif, m
 
 
 def complete_ldif_processing_workflow() -> None:

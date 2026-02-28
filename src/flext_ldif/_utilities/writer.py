@@ -9,10 +9,9 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, t, u
 
+from flext_ldif import c, m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import c
-from flext_ldif.models import m
 
 r = FlextResult  # Shared from flext-core
 
@@ -249,9 +248,7 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
 
         oc_x_origin = (
-            u.get(oc_data.metadata.extensions, "x_origin")
-            if oc_data.metadata
-            else None
+            u.get(oc_data.metadata.extensions, "x_origin") if oc_data.metadata else None
         )
         if oc_x_origin:
             parts.append(f"X-ORIGIN '{oc_x_origin}'")

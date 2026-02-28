@@ -7,7 +7,7 @@ from typing import Literal
 from flext_core import u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 
@@ -79,7 +79,7 @@ class ConvertToList(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, set) or isinstance(val, frozenset):
+        if isinstance(val, (list, tuple, set, frozenset)):
             return list(val)  # type: ignore[arg-type]
         return [val]
 
@@ -92,7 +92,7 @@ class ConvertToTuple(BaseModel):
 
     def convert(self) -> t.GeneralValueType | None:
         val = self.value
-        if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, set) or isinstance(val, frozenset):
+        if isinstance(val, (list, tuple, set, frozenset)):
             return tuple(val)  # type: ignore[arg-type]
         return (val,)
 

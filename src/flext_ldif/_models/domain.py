@@ -29,6 +29,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_ldif import FlextLdifShared, c, p, t
 from flext_ldif._models.base import (
     AclElement,
     FlextLdifModelsBase,
@@ -36,10 +37,6 @@ from flext_ldif._models.base import (
 )
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif._shared import FlextLdifShared
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 # Type aliases for clarity
 # Access types directly via composition - no aliases needed

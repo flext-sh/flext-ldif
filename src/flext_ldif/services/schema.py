@@ -8,11 +8,7 @@ from typing import Self, override
 from flext_core import r
 from pydantic import PrivateAttr
 
-from flext_ldif.base import s
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdifServer, c, m, s, u
 
 
 class FlextLdifSchema(s[m.Ldif.Results.SchemaServiceStatus]):

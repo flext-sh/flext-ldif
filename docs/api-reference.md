@@ -871,8 +871,8 @@ Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks su
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 class RfcSchemaParserService:
     """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
@@ -912,8 +912,8 @@ The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-fi
 
 ```python
 # ✅ CORRECT: v1.0+ flat imports with MANDATORY quirk_registry
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService
 
 # Initialize registry FIRST (auto-discovers all standard quirks)
 quirk_registry = QuirkRegistryService()
@@ -960,7 +960,7 @@ rfc_parser = RfcSchemaParserService(
 Generic LDIF migration between different LDAP servers.
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigration
+from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
 class FlextLdifMigration:
@@ -1027,7 +1027,7 @@ if result.is_success:
 Central registry for managing server-specific quirks.
 
 ```python
-from flext_ldif.services.server import QuirkRegistryService
+from flext_ldif import QuirkRegistryService
 
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
@@ -1201,8 +1201,8 @@ if write_result.is_success:
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 # ⚠️ MANDATORY: Initialize quirk registry first
 quirk_registry = QuirkRegistryService()
@@ -1242,7 +1242,7 @@ rfc_parser = RfcSchemaParserService(
 ### Generic Migration Pipeline
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigration
+from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
 # Migrate OID → OUD using generic transformation pipeline

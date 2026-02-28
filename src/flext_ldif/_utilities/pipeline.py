@@ -7,11 +7,11 @@ from typing import Protocol, Self, override
 
 from flext_core import r
 
+from flext_ldif import m
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import (
     EntryTransformer,
 )
-from flext_ldif.models import m
 
 
 # Sentinel for filtered out entries (since r.ok(None) is not allowed)

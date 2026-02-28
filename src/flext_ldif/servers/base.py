@@ -9,16 +9,12 @@ from typing import ClassVar, Self, overload, override
 from flext_core import FlextLogger, r, s
 from pydantic import ConfigDict
 
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.results import FlextLdifModelsResults
+from flext_ldif import FlextLdifModelsResults, m, p, t, u
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 

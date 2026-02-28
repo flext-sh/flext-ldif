@@ -8,6 +8,7 @@ from typing import Final, TypeAlias
 from flext_core import FlextModels
 from pydantic import Field
 
+from flext_ldif import c, p
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -25,8 +26,6 @@ from flext_ldif._models.settings import (
     ValidationConfig,
     WriteConfig,
 )
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
 
 # Circular dependency resolved via TYPE_CHECKING in settings.py
 
@@ -34,7 +33,7 @@ from flext_ldif.protocols import p
 class FlextLdifModels(FlextModels):
     """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
 
-    #TQ|    # ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
+    # TQ|    # ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
 
     class Ldif:
         """LDIF namespace for cross-project access."""
@@ -266,6 +265,7 @@ class FlextLdifModels(FlextModels):
                 FlextLdifModels.Ldif.QuirksByServerDict,
             ] = Field(default_factory=dict)
             server_priorities: dict[str, int] = Field(default_factory=dict)
+
         class Schema:
             """Schema element type with protocol references."""
 

@@ -9,12 +9,10 @@ from datetime import datetime
 
 from flext_core import FlextLogger, r, u
 
+from flext_ldif import c, m, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 f = FlextFunctional  # Pure functional utilities (no circular import)
 

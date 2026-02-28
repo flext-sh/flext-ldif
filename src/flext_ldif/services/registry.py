@@ -7,7 +7,7 @@ from typing import ClassVar
 
 from flext_core import FlextRegistry, p
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 type FilterFactoryType = Callable[[], t.GeneralValueType]
 type CategorizationFactoryType = Callable[[str], t.GeneralValueType]
