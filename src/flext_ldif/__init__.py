@@ -9,12 +9,15 @@ from flext_core import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import d, e, h, r
 
+    from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._shared import FlextLdifShared
     from flext_ldif.api import FlextLdif
     from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
     from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
     from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from flext_ldif.services.acl import FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
     from flext_ldif.services.conversion import FlextLdifConversion
     from flext_ldif.services.detector import FlextLdifDetector
@@ -24,8 +27,14 @@ if TYPE_CHECKING:
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
     from flext_ldif.services.pipeline import ProcessingPipeline
+    from flext_ldif.services.processing import FlextLdifProcessing
+    from flext_ldif.services.registry import FlextLdifServiceRegistry
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
+    from flext_ldif.services.schema import FlextLdifSchema
+    from flext_ldif.services.server import FlextLdifServer
     from flext_ldif.services.sorting import FlextLdifSorting
     from flext_ldif.services.statistics import FlextLdifStatistics
+    from flext_ldif.services.syntax import FlextLdifSyntax
     from flext_ldif.services.transformers import ServerTransformer
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
@@ -35,6 +44,8 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
+    "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
+    "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
     "FlextLdifCategorization": ("flext_ldif.services.categorization", "FlextLdifCategorization"),
     "FlextLdifConstants": ("flext_ldif.constants", "FlextLdifConstants"),
     "FlextLdifConversion": ("flext_ldif.services.conversion", "FlextLdifConversion"),
@@ -44,15 +55,22 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifFilters": ("flext_ldif.services.filters", "FlextLdifFilters"),
     "FlextLdifMigrationPipeline": ("flext_ldif.services.migration", "FlextLdifMigrationPipeline"),
     "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
+    "FlextLdifModelsResults": ("flext_ldif._models.results", "FlextLdifModelsResults"),
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
+    "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
     "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
+    "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
+    "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
     "FlextLdifServiceBase": ("flext_ldif.base", "FlextLdifServiceBase"),
+    "FlextLdifServiceRegistry": ("flext_ldif.services.registry", "FlextLdifServiceRegistry"),
     "FlextLdifSettings": ("flext_ldif.settings", "FlextLdifSettings"),
     "FlextLdifShared": ("flext_ldif._shared", "FlextLdifShared"),
     "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
     "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
+    "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
     "FlextLdifTypes": ("flext_ldif.typings", "FlextLdifTypes"),
     "FlextLdifUtilities": ("flext_ldif.utilities", "FlextLdifUtilities"),
+    "FlextLdifValidation": ("flext_ldif.services.rfc_validation", "FlextLdifValidation"),
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
     "ProcessingPipeline": ("flext_ldif.services.pipeline", "ProcessingPipeline"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
@@ -70,6 +88,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "FlextLdif",
+    "FlextLdifAcl",
+    "FlextLdifAnalysis",
     "FlextLdifCategorization",
     "FlextLdifConstants",
     "FlextLdifConversion",
@@ -79,15 +99,22 @@ __all__ = [
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifModelsResults",
     "FlextLdifParser",
+    "FlextLdifProcessing",
     "FlextLdifProtocols",
+    "FlextLdifSchema",
+    "FlextLdifServer",
     "FlextLdifServiceBase",
+    "FlextLdifServiceRegistry",
     "FlextLdifSettings",
     "FlextLdifShared",
     "FlextLdifSorting",
     "FlextLdifStatistics",
+    "FlextLdifSyntax",
     "FlextLdifTypes",
     "FlextLdifUtilities",
+    "FlextLdifValidation",
     "FlextLdifWriter",
     "ProcessingPipeline",
     "ServerTransformer",
