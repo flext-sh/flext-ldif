@@ -14,7 +14,6 @@ SpaceHandlingOption = c.Ldif.SpaceHandlingOption
 EscapeHandlingOption = c.Ldif.EscapeHandlingOption
 
 MetadataPreserveConfig = FlextLdifModelsSettings.MetadataPreserveConfig
-MetadataPreserveParams = MetadataPreserveConfig
 
 DnNormalizationConfig = FlextLdifModelsSettings.DnNormalizationConfig
 AttrNormalizationConfig = FlextLdifModelsSettings.AttrNormalizationConfig

@@ -20,26 +20,10 @@ Use these imports instead:
     from tests.base import s
     from tests.test_helpers import tm, tv, tt, tf
 
-Temporary compatibility layer provided in compat.py for migration.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from .compat import (
-    FixtureTestHelpers,
-    FlextLdifTestFactories,
-    OptimizedLdifTestHelpers,
-    TestAssertions,
-    TestDeduplicationHelpers,
-)
-
-__all__ = [
-    "FixtureTestHelpers",
-    "FlextLdifTestFactories",
-    "OptimizedLdifTestHelpers",
-    "TestAssertions",
-    "TestDeduplicationHelpers",
-]
+__all__: list[str] = []

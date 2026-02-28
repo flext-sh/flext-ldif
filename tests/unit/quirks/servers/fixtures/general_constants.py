@@ -9,9 +9,4 @@ This module provides a simple alias to maintain backward compatibility.
 
 from __future__ import annotations
 
-from tests.constants import TestsFlextLdifConstants
-
-# Alias for backward compatibility
-TestGeneralConstants = TestsFlextLdifConstants.General
-
-__all__ = ["TestGeneralConstants"]
+__all__ = []

@@ -344,7 +344,3 @@ class FlextLdifTestFactory:
             "parser": cls.create_parser(_registry=quirk_registry),
             "quirk_registry": quirk_registry,
         }
-
-
-# Backward compatibility: expose old name
-RealServiceFactory = FlextLdifTestFactory

@@ -28,9 +28,8 @@ from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
 from ..conftest import FlextLdifFixtures
-from ..helpers.compat import TestAssertions
 from .ldif_data import LdifTestData
-from .real_services import RealServiceFactory
+from .real_services import FlextLdifTestFactory
 from .test_files import FileManager
 from .validators import TestValidators
 
@@ -383,15 +382,15 @@ class FlextLdifTestConftest:
 
     def real_ldif_api(self) -> dict[str, object]:
         """Real LDIF API services."""
-        return RealServiceFactory.create_api()
+        return FlextLdifTestFactory.create_api()
 
     def strict_ldif_api(self) -> dict[str, object]:
         """Strict LDIF API services."""
-        return RealServiceFactory.create_strict_api()
+        return FlextLdifTestFactory.create_strict_api()
 
     def lenient_ldif_api(self) -> dict[str, object]:
         """Lenient LDIF API services."""
-        return RealServiceFactory.create_lenient_api()
+        return FlextLdifTestFactory.create_lenient_api()
 
     def ldif_test_data(self) -> LdifTestData:
         """LDIF test data provider."""
@@ -461,26 +460,24 @@ class FlextLdifTestConftest:
 
     def real_parser_service(self, quirk_registry: FlextLdifServer) -> FlextLdifParser:
         """Real parser service."""
-        return RealServiceFactory.create_parser()
+        return FlextLdifTestFactory.create_parser()
 
     def real_writer_service(self, quirk_registry: FlextLdifServer) -> FlextLdifWriter:
         """Real writer service."""
-        return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
+        return FlextLdifTestFactory.create_writer(quirk_registry=quirk_registry)
 
     def integration_services(self) -> dict[str, object]:
         """Integration services."""
-        return RealServiceFactory.services_for_integration_test()
+        return FlextLdifTestFactory.services_for_integration_test()
 
     def assert_result_success(
         self,
-        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result success assertion."""
         return self._assert_result_success
 
     def assert_result_failure(
         self,
-        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result failure assertion."""
         return self._assert_result_failure

@@ -236,65 +236,6 @@ class FlextLdifModels(FlextModels):
             CategoryPaths: Final = FlextLdifModelsResults.CategoryPaths
             EventType: Final = FlextLdifModelsResults.EventType
 
-        class LdifResults:
-            """Backward-compatible namespace for result types."""
-
-            AclResponse: TypeAlias = FlextLdifModelsResults.AclResponse
-            AclEvaluationResult: TypeAlias = FlextLdifModelsResults.AclEvaluationResult
-            AclPermissions: TypeAlias = FlextLdifModelsDomains.AclPermissions
-
-            Statistics: TypeAlias = FlextLdifModelsResults.Statistics
-            StatisticsResult: TypeAlias = FlextLdifModelsResults.StatisticsResult
-            StatisticsSummary: TypeAlias = FlextLdifModelsResults.StatisticsSummary
-            EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
-
-            ClientStatus: TypeAlias = FlextLdifModelsResults.ClientStatus
-            StatisticsServiceStatus: TypeAlias = (
-                FlextLdifModelsResults.StatisticsServiceStatus
-            )
-            SchemaServiceStatus: TypeAlias = FlextLdifModelsResults.SchemaServiceStatus
-            SyntaxServiceStatus: TypeAlias = FlextLdifModelsResults.SyntaxServiceStatus
-            ValidationServiceStatus: TypeAlias = (
-                FlextLdifModelsResults.ValidationServiceStatus
-            )
-            EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
-            ServiceStatus: TypeAlias = FlextLdifModelsResults.ServiceStatus
-            Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
-
-            ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
-            WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
-            WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
-            WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
-
-            MigrationPipelineResult: TypeAlias = (
-                FlextLdifModelsResults.MigrationPipelineResult
-            )
-
-            ValidationResult: TypeAlias = FlextLdifModelsResults.ValidationResult
-            ValidationBatchResult: TypeAlias = (
-                FlextLdifModelsResults.ValidationBatchResult
-            )
-
-            ServerDetectionResult: TypeAlias = (
-                FlextLdifModelsResults.ServerDetectionResult
-            )
-            EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
-
-            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
-            DynamicCounts: Final = FlextLdifModelsResults.DynamicCounts
-
-            DnEvent: TypeAlias = FlextLdifModelsEvents.DnEvent
-            DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
-
-            CategoryRules: TypeAlias = FlextLdifModelsSettings.CategoryRules
-            WhitelistRules: TypeAlias = FlextLdifModelsSettings.WhitelistRules
-            SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
-
-            class Events:
-                """Events namespace for conversion events."""
-
-                ConversionEventConfig: Final = FlextLdifModelsEvents.ConversionEventConfig
-
         class Types:
             """Type models namespace - moved from typings.py TypedDict to Pydantic models."""
 

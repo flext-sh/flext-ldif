@@ -8,14 +8,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from .ldif_data import LdifSample, LdifTestData
-from .real_services import RealServiceFactory
+from .real_services import FlextLdifTestFactory
 from .test_files import FileManager
 from .validators import TestValidators
 
 __all__ = [
     "FileManager",
+    "FlextLdifTestFactory",
     "LdifSample",
     "LdifTestData",
-    "RealServiceFactory",
     "TestValidators",
 ]

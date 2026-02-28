@@ -47,11 +47,6 @@ class MockMatchers:
         """Assert success."""
 
 
-# Global assignments
-ResultHelpers = MockResultHelpers
-Matchers = MockMatchers
-
-
 class TestValidators:
     """Validation utilities for flext-ldif tests.
 

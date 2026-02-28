@@ -792,12 +792,10 @@ class TestsFlextLdifFixtures(tf_base):
 
 
 # Alias for tests/__init__.py
-Teststt = TestsFlextLdifTypes
 
 __all__ = [
     "TestsFlextLdifFixtures",
     "TestsFlextLdifMatchers",
     "TestsFlextLdifTypes",
     "TestsFlextLdifValidators",
-    "Teststt",
 ]

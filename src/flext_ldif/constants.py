@@ -2220,9 +2220,6 @@ class FlextLdifConstants(FlextConstants):
                 "all": ("all", "*"),
             }
 
-        class AclPermissionCompatibility:
-            """Permission compatibility matrix for server types."""
-
         class SchemaConversionMappings:
             """Schema attribute and objectClass conversion mappings."""
 
