@@ -18,6 +18,16 @@ class FlextLdifConstants(FlextConstants):
     class Ldif:
         """LDIF domain constants namespace."""
 
+        class Category(StrEnum):
+            """LDIF entry categories — single source of truth."""
+
+            USERS = "users"
+            GROUPS = "groups"
+            HIERARCHY = "hierarchy"
+            SCHEMA = "schema"
+            ACL = "acl"
+            REJECTED = "rejected"
+
         class SortStrategy(StrEnum):
             """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
 
