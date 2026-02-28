@@ -86,31 +86,6 @@ class TestValidators:
             ),
         }
 
-    # Delegate to mock implementations
-    assert_successful_result = staticmethod(Matchers.assert_success)
-    validate_flext_result_composition = staticmethod(
-        ResultHelpers.validate_composition,
-    )
-    validate_flext_result_chain = staticmethod(
-        ResultHelpers.validate_chain,
-    )
-    assert_flext_result_composition = staticmethod(
-        ResultHelpers.assert_composition,
-    )
-
-    @staticmethod
-    def assert_flext_result_chain(
-        results: list[FlextResult[object]],
-        *,
-        expect_all_success: bool = True,
-    ) -> None:
-        """Assert FlextResult chain operations."""
-        if expect_all_success:
-            ResultHelpers.assert_chain_success(results)
-        else:
-            chain_valid = ResultHelpers.validate_chain(results)
-            assert not chain_valid, "Expected failures but all succeeded"
-
     @staticmethod
     def validate_result_success(result: FlextResult[object]) -> dict[str, bool]:
         """Validate FlextResult success characteristics."""

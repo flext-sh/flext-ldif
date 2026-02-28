@@ -38,7 +38,6 @@ __all__: list[str] = [
     "LoadConfig",
     "MetadataConfig",
     "MetadataPreserveConfig",
-    "MetadataPreserveParams",
     "ProcessConfig",
     "SchemaParseConfig",
     "SpaceHandlingOption",

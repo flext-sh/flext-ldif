@@ -3011,9 +3011,6 @@ class FlextLdifModelsDomains:
         validation_warnings: list[str]
         validation_errors: list[str]
 
-    # Backward compatibility alias (deprecated, use DNStatisticsFlags)
-    _DNStatisticsFlags = DNStatisticsFlags
-
     class DNStatistics(FlextLdifModelsBase):
         """Statistics tracking for DN transformations and validation.
 
