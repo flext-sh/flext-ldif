@@ -1863,13 +1863,11 @@ class FlextLdifConstants(FlextConstants):
             CHANGETYPE: Final[str] = r"^changetype:\s*(add|delete|modify|modrdn|moddn)$"
 
         class ChangeType(StrEnum):
-            """LDIF change types for entry operations."""
-
-            ADD = "add"
-            DELETE = "delete"
-            MODIFY = "modify"
-            MODRDN = "modrdn"
-            MODDN = "moddn"
+            """LDIF change types — single source of truth."""
+            ADDED = "added"
+            REMOVED = "removed"
+            MODIFIED = "modified"
+            FILTERED = "filtered"
 
         class ModifyOperation(StrEnum):
             """LDIF modify operation types."""
