@@ -32,19 +32,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersDs389": ("flext_ldif.servers.ds389", "FlextLdifServersDs389"),
     "FlextLdifServersNovell": ("flext_ldif.servers.novell", "FlextLdifServersNovell"),
     "FlextLdifServersOid": ("flext_ldif.servers.oid", "FlextLdifServersOid"),
-    "FlextLdifServersOpenldap": (
-        "flext_ldif.servers.openldap",
-        "FlextLdifServersOpenldap",
-    ),
-    "FlextLdifServersOpenldap1": (
-        "flext_ldif.servers.openldap1",
-        "FlextLdifServersOpenldap1",
-    ),
+    "FlextLdifServersOpenldap": ("flext_ldif.servers.openldap", "FlextLdifServersOpenldap"),
+    "FlextLdifServersOpenldap1": ("flext_ldif.servers.openldap1", "FlextLdifServersOpenldap1"),
     "FlextLdifServersOud": ("flext_ldif.servers.oud", "FlextLdifServersOud"),
-    "FlextLdifServersRelaxed": (
-        "flext_ldif.servers.relaxed",
-        "FlextLdifServersRelaxed",
-    ),
+    "FlextLdifServersRelaxed": ("flext_ldif.servers.relaxed", "FlextLdifServersRelaxed"),
     "FlextLdifServersRfc": ("flext_ldif.servers.rfc", "FlextLdifServersRfc"),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
 }

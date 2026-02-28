@@ -650,7 +650,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = attributes
             return True
 
-        @override
         def _parse_entry(
             self,
             entry_dn: str,

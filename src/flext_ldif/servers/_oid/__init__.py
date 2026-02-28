@@ -15,18 +15,9 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
-    "FlextLdifServersOidConstants": (
-        "flext_ldif.servers._oid.constants",
-        "FlextLdifServersOidConstants",
-    ),
-    "FlextLdifServersOidEntry": (
-        "flext_ldif.servers._oid.entry",
-        "FlextLdifServersOidEntry",
-    ),
-    "FlextLdifServersOidSchema": (
-        "flext_ldif.servers._oid.schema",
-        "FlextLdifServersOidSchema",
-    ),
+    "FlextLdifServersOidConstants": ("flext_ldif.servers._oid.constants", "FlextLdifServersOidConstants"),
+    "FlextLdifServersOidEntry": ("flext_ldif.servers._oid.entry", "FlextLdifServersOidEntry"),
+    "FlextLdifServersOidSchema": ("flext_ldif.servers._oid.schema", "FlextLdifServersOidSchema"),
 }
 
 __all__ = [
