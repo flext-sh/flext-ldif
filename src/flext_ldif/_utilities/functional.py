@@ -6,7 +6,7 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Literal, TypeVar, overload
+from typing import ClassVar, Literal, overload
 
 from flext_core import t, x
 from pydantic import BaseModel
@@ -20,8 +20,6 @@ from flext_ldif._models.conversion import (
     ConvertToStr,
     ConvertToTuple,
 )
-
-CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 
 
 class FlextFunctional:
@@ -52,18 +50,14 @@ class FlextFunctional:
                 if isinstance(key, str):
                     normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
-        if isinstance(value, Sequence) and not isinstance(
-            value,
-            (str, bytes, bytearray),
+        if isinstance(value, Sequence) and (
+            not isinstance(value, (str, bytes, bytearray))
         ):
             return [FlextFunctional._to_general(item) for item in value]
         return str(value)
 
     @staticmethod
-    def or_[T](
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
+    def or_[T](*values: T | None, default: T | None = None) -> T | None:
         """Return first non-None value (mnemonic: oo)."""
         for v in values:
             if v is not None:
@@ -89,10 +83,7 @@ class FlextFunctional:
     mb = maybe
 
     @staticmethod
-    def chain[T](
-        value: T,
-        *funcs: Callable[[T], T],
-    ) -> T:
+    def chain[T](value: T, *funcs: Callable[[T], T]) -> T:
         """Chain function calls (DSL helper, mnemonic: ch)."""
         result: T = value
         for func in funcs:
@@ -103,9 +94,7 @@ class FlextFunctional:
 
     @staticmethod
     def pick[T](
-        data: Mapping[str, T],
-        *keys: str,
-        as_dict: bool = True,
+        data: Mapping[str, T], *keys: str, as_dict: bool = True
     ) -> Mapping[str, T] | list[T]:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if as_dict:
@@ -116,8 +105,7 @@ class FlextFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: Mapping[str, T],
-        mapper: Callable[[str, T], tuple[str, U]],
+        data: Mapping[str, T], mapper: Callable[[str, T], tuple[str, U]]
     ) -> Mapping[str, U]:
         """Map dict with transformations (mnemonic: md)."""
         result: dict[str, U] = {}
@@ -204,20 +192,14 @@ class FlextFunctional:
     fv = find_val
 
     @staticmethod
-    def pairs[T](
-        d: Mapping[str, T],
-    ) -> list[tuple[str, T]]:
+    def pairs[T](d: Mapping[str, T]) -> list[tuple[str, T]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
 
     pr = pairs
 
     @staticmethod
-    def fold[T, U](
-        items: Sequence[T],
-        folder: Callable[[U, T], U],
-        initial: U,
-    ) -> U:
+    def fold[T, U](items: Sequence[T], folder: Callable[[U, T], U], initial: U) -> U:
         """Fold items using folder function (mnemonic: fd)."""
         result = initial
         for item in items:
@@ -275,10 +257,7 @@ class FlextFunctional:
     pf = process_flatten
 
     @staticmethod
-    def build[T](
-        value: T,
-        ops: Mapping[str, Callable[[T], T]],
-    ) -> T:
+    def build[T](value: T, ops: Mapping[str, Callable[[T], T]]) -> T:
         """Build value using operations dict."""
         result = value
         for op in ops.values():
@@ -299,15 +278,12 @@ class FlextFunctional:
             if default is not None:
                 return list(default)
             return []
-
         items: list[T] = list(value) if isinstance(value, list | tuple) else [value]
-
         if mapper is not None:
             items_mapped: list[T] = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
-
         if predicate is not None:
             return [item for item in items if predicate(item)]
         return items
@@ -315,20 +291,14 @@ class FlextFunctional:
     nl = normalize_list
 
     @staticmethod
-    def get[T](
-        data: Mapping[str, T],
-        key: str,
-        default: T | None = None,
-    ) -> T | None:
+    def get[T](data: Mapping[str, T], key: str, default: T | None = None) -> T | None:
         """Get value from dict with default (mnemonic: gt)."""
         return data.get(key, default)
 
     gt = get
 
     @staticmethod
-    def merge[T](
-        *dicts: Mapping[str, T],
-    ) -> Mapping[str, T]:
+    def merge[T](*dicts: Mapping[str, T]) -> Mapping[str, T]:
         """Merge multiple dicts (mnemonic: mg)."""
         result: dict[str, T] = {}
         for d in dicts:
@@ -338,10 +308,7 @@ class FlextFunctional:
     mg = merge
 
     @staticmethod
-    def evolve[T](
-        data: Mapping[str, T],
-        updates: Mapping[str, T],
-    ) -> Mapping[str, T]:
+    def evolve[T](data: Mapping[str, T], updates: Mapping[str, T]) -> Mapping[str, T]:
         """Update dict with changes (mnemonic: ev)."""
         return {**data, **updates}
 
@@ -349,10 +316,7 @@ class FlextFunctional:
 
     @staticmethod
     def when[T](
-        *,
-        condition: bool = False,
-        then: T | None = None,
-        else_: T | None = None,
+        *, condition: bool = False, then: T | None = None, else_: T | None = None
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
         if not condition:
@@ -363,8 +327,7 @@ class FlextFunctional:
 
     @staticmethod
     def cond[T, U](
-        *cases: tuple[Callable[[T], bool], Callable[[T], U]],
-        default: U | None = None,
+        *cases: tuple[Callable[[T], bool], Callable[[T], U]], default: U | None = None
     ) -> Callable[[T], U | None]:
         """Conditional expression returning curried function (mnemonic: cd)."""
 
@@ -379,10 +342,7 @@ class FlextFunctional:
     cd = cond
 
     @staticmethod
-    def pipe[T](
-        initial: T,
-        *transforms: Callable[[T], T],
-    ) -> T:
+    def pipe[T](initial: T, *transforms: Callable[[T], T]) -> T:
         """Pipe value through transformation functions (mnemonic: pp)."""
         result = initial
         for transform in transforms:
@@ -395,10 +355,7 @@ class FlextFunctional:
     def match[T, U](
         cls,
         value: T,
-        *cases: tuple[
-            type[T] | T | Callable[[T], bool],
-            U,
-        ],
+        *cases: tuple[type[T] | T | Callable[[T], bool], U],
         default: U | None = None,
     ) -> U | None:
         """Pattern match (mnemonic: mt)."""
@@ -420,10 +377,7 @@ class FlextFunctional:
 
     @classmethod
     def switch[T, U](
-        cls,
-        value: T,
-        cases: Mapping[T, U],
-        default: U | None = None,
+        cls, value: T, cases: Mapping[T, U], default: U | None = None
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
         return cases.get(value, default)
@@ -431,11 +385,7 @@ class FlextFunctional:
     sw = switch
 
     @classmethod
-    def is_type[T](
-        cls,
-        value: T,
-        *types: type[T] | str,
-    ) -> bool:
+    def is_type[T](cls, value: T, *types: type[T] | str) -> bool:
         """Type check (mnemonic: it)."""
         type_map: dict[str, type] = {
             "list": list,
@@ -448,7 +398,6 @@ class FlextFunctional:
             "set": set,
         }
         for t_val in types:
-            # Resolve type: if string, look up in map; if type, use directly
             resolved_type: type | None = (
                 type_map.get(t_val) if isinstance(t_val, str) else t_val
             )
@@ -457,7 +406,6 @@ class FlextFunctional:
         return False
 
     it = is_type
-
     _ConvertibleType = (
         str
         | int
@@ -468,7 +416,6 @@ class FlextFunctional:
         | set[t.GeneralValueType]
         | dict[str, t.GeneralValueType]
     )
-
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
         "dict": dict,
@@ -481,9 +428,7 @@ class FlextFunctional:
 
     @staticmethod
     def _convert_with_target(
-        value: t.GeneralValueType,
-        target_type: type,
-        default: t.GeneralValueType | None,
+        value: t.GeneralValueType, target_type: type, default: t.GeneralValueType | None
     ) -> t.GeneralValueType | None:
         """Execute type conversion using centralized Pydantic v2 models.
 
@@ -509,7 +454,6 @@ class FlextFunctional:
             | ConvertToDict
             | None
         ) = None
-
         if target_type is str:
             conversion_model = ConvertToStr(value=value, default=default)
         elif target_type is int:
@@ -524,10 +468,8 @@ class FlextFunctional:
             conversion_model = ConvertToTuple(value=value, default=default)
         elif target_type is dict:
             conversion_model = ConvertToDict(value=value, default=default)
-
         if conversion_model is None:
             return default
-
         try:
             converted = conversion_model.convert()
             return FlextFunctional._to_general(converted)
@@ -616,13 +558,10 @@ class FlextFunctional:
         target_type: type | None = (
             cls._TYPE_MAP.get(target) if isinstance(target, str) else target
         )
-
         if target_type is None:
             return default
-
         if isinstance(value, target_type):
             return FlextFunctional._to_general(value)
-
         try:
             return cls._convert_with_target(value, target_type, default)
         except (TypeError, ValueError):
@@ -631,10 +570,7 @@ class FlextFunctional:
     at = as_type
 
     @classmethod
-    def prop(
-        cls,
-        key: str,
-    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def prop(cls, key: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
         """Property accessor (mnemonic: pp)."""
 
         def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
@@ -651,8 +587,7 @@ class FlextFunctional:
 
     @classmethod
     def props(
-        cls,
-        *keys: str,
+        cls, *keys: str
     ) -> Callable[[t.GeneralValueType], Mapping[str, t.GeneralValueType]]:
         """Multiple property accessor (mnemonic: ps)."""
 
@@ -673,15 +608,10 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path(
-        cls,
-        *keys: str,
-    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def path(cls, *keys: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
         """Path accessor using chain() DSL (mnemonic: ph)."""
 
-        def make_getter(
-            key: str,
-        ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+        def make_getter(key: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
             """Create a single-key getter."""
 
             def getter_fn(obj: t.GeneralValueType) -> t.GeneralValueType:
@@ -717,9 +647,4 @@ class FlextFunctional:
 
 
 f = FlextFunctional
-
-
-__all__ = [
-    "FlextFunctional",
-    "f",
-]
+__all__ = ["FlextFunctional", "f"]

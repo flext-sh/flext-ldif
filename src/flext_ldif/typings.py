@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import Literal, TypeAlias, TypeVar
 
-from flext_core import FlextTypes, r
+from flext_core import FlextTypes, r, t
+
+CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
 
 
 class FlextLdifTypes(FlextTypes):
@@ -21,17 +23,13 @@ class FlextLdifTypes(FlextTypes):
         type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
         type ScalarValue = FlextTypes.ScalarValue
         type JsonValue = FlextTypes.ConfigMapValue
-
         ValueType: TypeAlias = str | bytes | int | float | bool | list[str] | None
         ValueList: TypeAlias = list[ValueType]
         AttributeValue: TypeAlias = str | bytes
-
         DnString: TypeAlias = str
         RdnString: TypeAlias = str
-
         ServerType: TypeAlias = str
         MetadataKey: TypeAlias = str
-
         ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
         ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
 
@@ -54,12 +52,8 @@ class FlextLdifTypes(FlextTypes):
             ParseMethodReturn: TypeAlias = r[
                 str | int | float | bool | list[str] | None
             ]
-            ParseMethod: TypeAlias = Callable[
-                [object, str],
-                ParseMethodReturn,
-            ]
+            ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
-
             WriteMethodArg: TypeAlias = str | int | float | bool | list[str] | None
             WriteMethodReturn: TypeAlias = (
                 str
@@ -71,14 +65,11 @@ class FlextLdifTypes(FlextTypes):
                 | r[str | int | float | bool | list[str] | None]
             )
             WriteMethod: TypeAlias = Callable[
-                [object, WriteMethodArg],
-                WriteMethodReturn,
+                [object, WriteMethodArg], WriteMethodReturn
             ]
             WriteMethodDecorator: TypeAlias = Callable[[WriteMethod], WriteMethod]
-
             SafeMethod: TypeAlias = Callable[
-                [object, ParseMethodArg],
-                str | int | float | bool | list[str] | None,
+                [object, ParseMethodArg], str | int | float | bool | list[str] | None
             ]
             SafeMethodDecorator: TypeAlias = Callable[[SafeMethod], SafeMethod]
 
@@ -90,7 +81,6 @@ class FlextLdifTypes(FlextTypes):
             AttributeDictGeneric: TypeAlias = Mapping[str, list[str] | str]
 
         TemplateValue: TypeAlias = str | int | float | bool | None
-
         T = TypeVar("T")
         TEntry = TypeVar("TEntry")
         TAttribute = TypeVar("TAttribute")
@@ -98,9 +88,4 @@ class FlextLdifTypes(FlextTypes):
 
 
 t = FlextLdifTypes
-
-
-__all__ = [
-    "FlextLdifTypes",
-    "t",
-]
+__all__ = ["FlextLdifTypes", "t"]
