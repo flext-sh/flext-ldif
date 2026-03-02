@@ -121,7 +121,6 @@ class FlextLdifUtilitiesDecorators:
                 return result
 
             return wrapper
-            return wrapper
 
         return decorator
 

@@ -62,7 +62,7 @@ class DynamicCounts(FlextLdifModelsBase):
         return [(k, self._to_count(v)) for k, v in extra.items()]
 
     @override
-    def __eq__(self, other: t.GeneralValueType) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other.__class__ is dict:
             self_dict = {
                 key: value
@@ -121,7 +121,7 @@ class _BooleanFlags(FlextLdifModelsBase):
 
     @override
     @override
-    def __eq__(self, other: t.GeneralValueType) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, dict):
             extra = self.model_extra
             return (extra or {}) == other
@@ -144,7 +144,7 @@ class _FlexibleCategories(m.Collections.Categories):
         raise TypeError(msg)
 
     @override
-    def __eq__(self, other: t.GeneralValueType) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other.__class__ is self.__class__:
             return self.categories == other.categories
         if other.__class__ is dict:

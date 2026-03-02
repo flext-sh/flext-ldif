@@ -103,7 +103,7 @@ class FlextLdifModelsMetadata:
                 setattr(self, key, value)
 
         @override
-        def __eq__(self, other: t.GeneralValueType) -> bool:
+        def __eq__(self, other: object) -> bool:
             if other.__class__ is dict:
                 return dict(self.items()) == other
             return NotImplemented

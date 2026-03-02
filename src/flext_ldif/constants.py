@@ -2123,6 +2123,21 @@ class FlextLdifConstants(FlextConstants):
             SERVICE_NAMES: Final[str] = "service_names"
             DATA: Final[str] = "data"
 
+            SYNTAX_VALID_BOOLEAN_VALUES: Final[frozenset[str]] = frozenset({
+                "TRUE",
+                "FALSE",
+            })
+
+            SYNTAX_TIME_PATTERN: Final[str] = r"^\d{14}(\.\d+)?Z$"
+
+            SYNTAX_VALIDATOR_CATEGORIES: Final[frozenset[str]] = frozenset({
+                "boolean",
+                "integer",
+                "dn",
+                "time",
+                "binary",
+            })
+
         class LdifFormatting:
             """LDIF formatting constants (line width, folding)."""
 

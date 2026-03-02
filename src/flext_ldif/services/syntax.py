@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Callable, Mapping
-from typing import ClassVar, override
+from typing import override
 
 from flext_core import d, r
 
@@ -15,16 +15,23 @@ from flext_ldif import FlextLdifServiceBase, c, m, u
 class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service."""
 
-    _VALIDATOR_MAP: ClassVar[Mapping[str, Callable[[str], r[bool]]]] = {
-        "boolean": lambda v: r[bool].ok(v.upper() in {"TRUE", "FALSE"}),
-        "integer": lambda v: r[bool].ok(
-            v != "not_a_number"
-            and (v.isdigit() or (v.startswith("-") and v[1:].isdigit())),
-        ),
-        "dn": lambda v: r[bool].ok("=" in v),
-        "time": lambda v: r[bool].ok(bool(re.match(r"^\d{14}(\.\d+)?Z$", v))),
-        "binary": lambda _: r[bool].ok(value=True),
-    }
+    @classmethod
+    def _build_validator_map(cls) -> Mapping[str, Callable[[str], r[bool]]]:
+        """Build syntax validator map from constants."""
+        return {
+            "boolean": lambda v: r[bool].ok(
+                v.upper() in c.Ldif.RfcSyntaxOids.SYNTAX_VALID_BOOLEAN_VALUES,
+            ),
+            "integer": lambda v: r[bool].ok(
+                v != "not_a_number"
+                and (v.isdigit() or (v.startswith("-") and v[1:].isdigit())),
+            ),
+            "dn": lambda v: r[bool].ok("=" in v),
+            "time": lambda v: r[bool].ok(
+                bool(re.match(c.Ldif.RfcSyntaxOids.SYNTAX_TIME_PATTERN, v)),
+            ),
+            "binary": lambda _: r[bool].ok(value=True),
+        }
 
     def __init__(self) -> None:
         """Initialize Syntax service."""
@@ -47,10 +54,10 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.Ldif.Results.SyntaxServiceStatus]:
+    ) -> r[m.Ldif.SyntaxServiceStatus]:
         """Execute Syntax service self-check."""
-        return r[m.Ldif.Results.SyntaxServiceStatus].ok(
-            m.Ldif.Results.SyntaxServiceStatus(
+        return r[m.Ldif.SyntaxServiceStatus].ok(
+            m.Ldif.SyntaxServiceStatus(
                 service="SyntaxService",
                 status="operational",
                 rfc_compliance="RFC 4517",
@@ -175,7 +182,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
             )
 
         type_category = resolve_result.value.type_category
-        validator_raw = self._VALIDATOR_MAP.get(
+        validator_map = self._build_validator_map()
+        validator_raw = validator_map.get(
             type_category,
             lambda _: r[bool].ok(value=True),
         )
