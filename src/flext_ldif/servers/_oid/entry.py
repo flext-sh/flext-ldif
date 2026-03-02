@@ -692,12 +692,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         for attr_name, conv_data in boolean_conversions.items():
             original_vals_raw = conv_data.get(mk.CONVERSION_ORIGINAL_VALUE)
             converted_vals_raw = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
-            original_vals = (
+            original_vals: list[str] = (
                 [original_vals_raw]
                 if isinstance(original_vals_raw, str)
                 else [str(item) for item in original_vals_raw]
                 if isinstance(original_vals_raw, list)
-                else ([] if False else [])
+                else []
             )
             converted_vals: list[str] = (
                 [converted_vals_raw]

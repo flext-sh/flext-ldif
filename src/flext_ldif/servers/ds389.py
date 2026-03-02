@@ -309,7 +309,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     content,
                     re.IGNORECASE,
                 )
-                permissions = (
+                permissions: list[str] = (
                     [
                         perm.strip()
                         for perm in permissions_match.group(1).split(
@@ -317,7 +317,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         )
                     ]
                     if permissions_match
-                    else ([] if False else [])
+                    else []
                 )
                 target_attr_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_TARGETATTR_PATTERN,
