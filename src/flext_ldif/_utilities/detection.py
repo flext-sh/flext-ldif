@@ -217,7 +217,7 @@ class FlextLdifUtilitiesDetection:
                 return False
 
             # Handle list/set/tuple of objectClasses
-            if isinstance(objectclasses, list | tuple | set):
+            if isinstance(objectclasses, (list, tuple, set)):
                 detection_set = {oc.lower() for oc in detection_classes}
                 oc_set = {str(oc).lower() for oc in objectclasses}
                 return bool(oc_set & detection_set)

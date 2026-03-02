@@ -358,9 +358,10 @@ class FlextLdifUtilitiesMetadata:
                     definition[name_match.start() : name_match.end() + 50],
                 )
                 details["name_values"] = [m[1] for m in all_name_matches]
-                details["name_quotes"] = (
+                name_quotes_list: list[str] = (
                     [m[0] for m in all_name_matches] if all_name_matches else []
                 )
+                details["name_quotes"] = name_quotes_list
                 name_section = definition[name_match.start() : name_match.end() + 50]
                 name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
                 details["name_spacing_between"] = name_spacing
@@ -368,7 +369,8 @@ class FlextLdifUtilitiesMetadata:
                 details["name_format"] = "single"
                 details["name_values"] = [name_value]
                 quote_char = name_quote_start or name_quote_end
-                details["name_quotes"] = [quote_char] if quote_char else []
+                name_quotes_2: list[str] = [quote_char] if quote_char else []
+                details["name_quotes"] = name_quotes_2
             name_pos = definition.find("NAME")
             if name_pos >= 0:
                 before_name = definition[:name_pos]

@@ -237,7 +237,7 @@ class FlextFunctional:
         for item in items:
             try:
                 processed = processor(item)
-                if isinstance(processed, list | tuple):
+                if isinstance(processed, (list, tuple)):
                     result.extend([
                         sub_item for sub_item in processed if predicate(sub_item)
                     ])
@@ -278,7 +278,7 @@ class FlextFunctional:
             if default is not None:
                 return list(default)
             return []
-        items: list[T] = list(value) if isinstance(value, list | tuple) else [value]
+        items: list[T] = list(value) if isinstance(value, (list, tuple)) else [value]
         if mapper is not None:
             items_mapped: list[T] = [mapper(item) for item in items]
             if predicate is not None:

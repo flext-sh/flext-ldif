@@ -5,6 +5,7 @@ from __future__ import annotations
 import struct
 from datetime import UTC, datetime
 from functools import wraps
+from typing import TypeGuard
 
 from flext_core import FlextLogger, FlextResult
 
@@ -13,6 +14,13 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 logger = FlextLogger(__name__)
+
+
+def _has_metadata_attribute(
+    obj: t.GeneralValueType,
+) -> TypeGuard[t.GeneralValueType]:
+    """Type guard to check if object has metadata attribute."""
+    return hasattr(obj, "metadata")
 
 
 class FlextLdifUtilitiesDecorators:
@@ -43,7 +51,7 @@ class FlextLdifUtilitiesDecorators:
         server_type: str | None,
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
-        if result_value is None or not hasattr(result_value, "metadata"):
+        if result_value is None or not _has_metadata_attribute(result_value):
             return
 
         # Create metadata with extensions

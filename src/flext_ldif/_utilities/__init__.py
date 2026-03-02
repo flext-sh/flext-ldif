@@ -66,7 +66,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.constants import c
-    from flext_ldif.typings import t
+    from flext_ldif.typings import FlextLdifTypes as t
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

@@ -201,7 +201,8 @@ class FlextLdifUtilitiesParser:
             return value, new_attrs
 
         if "_original_lines" not in current_attrs:
-            current_attrs["_original_lines"] = []
+            original_lines_list: list[str] = []
+            current_attrs["_original_lines"] = original_lines_list
         current_attrs["_original_lines"].append(original_line)
 
         current_attrs.setdefault(key, []).append(value)

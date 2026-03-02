@@ -145,9 +145,9 @@ class _FlexibleCategories(m.Collections.Categories):
 
     @override
     def __eq__(self, other: object) -> bool:
-        if other.__class__ is self.__class__:
+        if isinstance(other, self.__class__):
             return self.categories == other.categories
-        if other.__class__ is dict:
+        if isinstance(other, dict):
             return self.categories == other
         return False
 
@@ -522,7 +522,7 @@ class FlextLdifModelsResults:
                 statistics=self.stats.to_summary(),
                 entry_count=len(self.entries),
                 output_files=len(self.output_files),
-                is_empty=self.is_empty,
+                is_empty=self.is_empty,  # computed_field, accessed as property
             )
 
     class ClientStatus(m.EntityModels.Value):

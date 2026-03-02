@@ -6,6 +6,7 @@ import re
 import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
+from typing import TypeGuard
 
 from flext_core import FlextLogger, r, u
 
@@ -19,6 +20,16 @@ f = FlextFunctional  # Pure functional utilities (no circular import)
 logger = FlextLogger(__name__)
 
 TUPLE_LENGTH_PAIR = 2
+
+
+def _is_acl_subject_type(
+    value: str,
+) -> TypeGuard[c.Ldif.LiteralTypes.AclSubjectTypeLiteral]:
+    """Type guard to check if string is a valid AclSubjectTypeLiteral."""
+    return value in {
+        "user", "group", "role", "self", "all",
+        "public", "anonymous", "authenticated", "sddl", "dn"
+    }
 
 
 class FlextLdifUtilitiesACL:
@@ -681,7 +692,7 @@ class FlextLdifUtilitiesACL:
                 attributes=target_attributes,
             ),
             subject=m.Ldif.AclSubject(
-                subject_type=subject_type,
+                subject_type=subject_type if _is_acl_subject_type(subject_type) else "user",
                 subject_value=subject_value,
             ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),

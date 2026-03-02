@@ -195,7 +195,7 @@ class ByObjectClassFilter(EntryFilter["m.Ldif.Entry"]):
             return False
 
         # Get entry's objectClasses
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -244,7 +244,7 @@ class ByAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         if item.attributes is None:
             return False
 
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -289,7 +289,7 @@ class ByAttrValueFilter(EntryFilter["m.Ldif.Entry"]):
         if item.attributes is None:
             return False
 
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -325,7 +325,7 @@ class ExcludeAttrsFilter(EntryFilter["m.Ldif.Entry"]):
         if item.attributes is None:
             return True
 
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
