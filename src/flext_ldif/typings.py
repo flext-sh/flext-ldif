@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import Literal, TypeAlias, TypeVar
 
-from flext_core import FlextTypes, r, t
-
-CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
+from flext_core import FlextResult, FlextTypes
 
 
 class FlextLdifTypes(FlextTypes):
@@ -20,9 +18,6 @@ class FlextLdifTypes(FlextTypes):
     class Ldif:
         """LDIF domain type namespace."""
 
-        type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
-        type ScalarValue = FlextTypes.ScalarValue
-        type JsonValue = FlextTypes.ConfigMapValue
         ValueType: TypeAlias = str | bytes | int | float | bool | list[str] | None
         ValueList: TypeAlias = list[ValueType]
         AttributeValue: TypeAlias = str | bytes
@@ -49,7 +44,7 @@ class FlextLdifTypes(FlextTypes):
             """
 
             ParseMethodArg: TypeAlias = str
-            ParseMethodReturn: TypeAlias = r[
+            ParseMethodReturn: TypeAlias = FlextResult[
                 str | int | float | bool | list[str] | None
             ]
             ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
@@ -62,7 +57,7 @@ class FlextLdifTypes(FlextTypes):
                 | bool
                 | list[str]
                 | None
-                | r[str | int | float | bool | list[str] | None]
+                | FlextResult[str | int | float | bool | list[str] | None]
             )
             WriteMethod: TypeAlias = Callable[
                 [object, WriteMethodArg], WriteMethodReturn
@@ -87,5 +82,4 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
 
-t = FlextLdifTypes
-__all__ = ["FlextLdifTypes", "t"]
+__all__ = ["FlextLdifTypes"]

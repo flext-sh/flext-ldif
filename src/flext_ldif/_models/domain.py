@@ -1465,7 +1465,7 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and not FlextUtilities.Guards.is_string_non_empty(
+            if acl_is_defined and not u.Guards.is_string_non_empty(
                 self.raw_acl,
             ):
                 violations.append(
@@ -1647,10 +1647,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: FlextLdifModelsDomains.DN
-            | Mapping[str, t.Ldif.JsonValue]
-            | str
-            | None,
+            value: FlextLdifModelsDomains.DN | Mapping[str, t.JsonValue] | str | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1673,9 +1670,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: FlextLdifModelsDomains.Attributes
-            | Mapping[str, t.Ldif.JsonValue]
-            | None,
+            value: FlextLdifModelsDomains.Attributes | Mapping[str, t.JsonValue] | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
 
@@ -1689,7 +1684,7 @@ class FlextLdifModelsDomains:
             if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
 
-            wrapped_value: Mapping[str, t.Ldif.JsonValue] = value
+            wrapped_value: Mapping[str, t.JsonValue] = value
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
 
@@ -1713,10 +1708,10 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: Mapping[str, t.Ldif.JsonValue],
+            data: Mapping[str, t.JsonValue],
         ) -> Mapping[
             str,
-            t.Ldif.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
+            t.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -1737,7 +1732,7 @@ class FlextLdifModelsDomains:
             """
             data_dict: dict[
                 str,
-                t.Ldif.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
+                t.JsonValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
             ] = dict(data)
 
             # This enables JSON round-trips (model_dump(mode='json') -> model_validate)
@@ -2685,7 +2680,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_ldap3(
             cls,
-            ldap3_entry: Mapping[str, t.Ldif.JsonValue],
+            ldap3_entry: Mapping[str, t.JsonValue],
         ) -> FlextResult[Self]:
             """Create Entry from ldap3 Entry object.
 

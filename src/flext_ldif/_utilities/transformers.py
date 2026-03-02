@@ -108,7 +108,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
-        update_dict: dict[str, t.Ldif.JsonValue] = {"dn": normalized_dn}
+        update_dict: dict[str, t.JsonValue] = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r[m.Ldif.Entry].ok(updated_entry)

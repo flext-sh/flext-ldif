@@ -8,11 +8,11 @@ from flext_ldif import p, t
 class FlextLdifUtilitiesValidation(FlextUtilities):
     @staticmethod
     def validate(
-        value: t.Ldif.JsonValue,
+        value: t.JsonValue,
         *validators: p.ValidatorSpec,
-    ) -> r[t.Ldif.JsonValue]:
+    ) -> r[t.JsonValue]:
         del validators
-        return r[t.Ldif.JsonValue].ok(value)
+        return r[t.JsonValue].ok(value)
 
 
 __all__ = ["FlextLdifUtilitiesValidation"]

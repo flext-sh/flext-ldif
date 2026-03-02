@@ -928,7 +928,7 @@ class FlextLdifUtilitiesACL:
         patterns: Mapping[str, str | tuple[str, int]],
         *,
         defaults: Mapping[str, object] | None = None,
-    ) -> Mapping[str, t.Ldif.JsonValue]:
+    ) -> Mapping[str, t.JsonValue]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -977,7 +977,7 @@ class FlextLdifUtilitiesACL:
         def extract_component_batch(
             name: str,
             pattern_spec: str | tuple[str, int],
-        ) -> tuple[str, t.Ldif.JsonValue]:
+        ) -> tuple[str, t.JsonValue]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
@@ -986,7 +986,7 @@ class FlextLdifUtilitiesACL:
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: t.Ldif.JsonValue | None
+            default_value: t.JsonValue | None
             if raw_default is None:
                 default_value = None
             elif isinstance(raw_default, (str, int, float, bool)):
@@ -1040,12 +1040,10 @@ class FlextLdifUtilitiesACL:
                 default_value = normalized_mapping
             else:
                 default_value = str(raw_default)
-            final_value: t.Ldif.JsonValue = (
-                value if value is not None else default_value
-            )
+            final_value: t.JsonValue = value if value is not None else default_value
             return name, final_value
 
-        result_dict: dict[str, tuple[str, t.Ldif.JsonValue]] = {}
+        result_dict: dict[str, tuple[str, t.JsonValue]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
@@ -1053,7 +1051,7 @@ class FlextLdifUtilitiesACL:
             except (ValueError, TypeError, AttributeError):
                 continue
 
-        final_result: dict[str, t.Ldif.JsonValue] = {}
+        final_result: dict[str, t.JsonValue] = {}
         for key, value_item in result_dict.items():
             if len(value_item) == TUPLE_LENGTH_PAIR:
                 final_result[key] = value_item[1]

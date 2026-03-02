@@ -182,7 +182,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: Mapping[str, t.Ldif.JsonValue],
+        kwargs: Mapping[str, t.JsonValue],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -193,7 +193,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: Mapping[str, t.Ldif.JsonValue],
+        kwargs: Mapping[str, t.JsonValue],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
@@ -230,7 +230,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: t.Ldif.JsonValue) -> str | None:
+    def _coerce_operation(self, value: t.JsonValue) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -265,7 +265,7 @@ class FlextLdifServersBaseSchemaAcl(
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
-        **kwargs: t.Ldif.JsonValue,
+        **kwargs: t.JsonValue,
     ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
         kwargs_dict = dict(kwargs)

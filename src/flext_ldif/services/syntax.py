@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import re
 import struct
 from collections.abc import Callable, Mapping
@@ -11,8 +10,6 @@ from typing import ClassVar, override
 from flext_core import d, r
 
 from flext_ldif import FlextLdifServiceBase, c, m, u
-
-logger = logging.getLogger(__name__)
 
 
 class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):

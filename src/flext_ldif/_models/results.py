@@ -3,8 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from typing import overload, override
 
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
+from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif import c, t
@@ -137,7 +136,7 @@ class _BooleanFlags(FlextLdifModelsBase):
         return hash(tuple(sorted(extra.items())))
 
 
-class _FlexibleCategories(FlextModelsCollections.Categories):
+class _FlexibleCategories(m.Collections.Categories):
     model_config = ConfigDict(extra="allow", frozen=False)
 
     def __hash__(self) -> int:
@@ -347,7 +346,7 @@ class FlextLdifModelsResults:
                 file_paths=merged_paths,
             )
 
-    class Statistics(FlextModelsCollections.Statistics):
+    class Statistics(m.Collections.Statistics):
         model_config = ConfigDict(
             frozen=True,
             extra="forbid",
@@ -526,7 +525,7 @@ class FlextLdifModelsResults:
                 is_empty=self.is_empty,
             )
 
-    class ClientStatus(FlextModelsEntity.Value):
+    class ClientStatus(m.EntityModels.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         status: str = Field()
         services: list[str] = Field(default_factory=list)
@@ -575,12 +574,12 @@ class FlextLdifModelsResults:
         written_counts: DynamicCounts = Field(default_factory=DynamicCounts)
         output_files: _CategoryPaths = Field(default_factory=_CategoryPaths)
 
-    class EntriesStatistics(FlextModelsEntity.Value):
+    class EntriesStatistics(m.EntityModels.Value):
         total_entries: int = Field()
         object_class_distribution: DynamicCounts = Field(default_factory=DynamicCounts)
         server_type_distribution: DynamicCounts = Field(default_factory=DynamicCounts)
 
-    class DictAccessibleValue(FlextModelsEntity.Value):
+    class DictAccessibleValue(m.EntityModels.Value):
         def _resolve_key(self, key: str) -> t.ConfigMapValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
@@ -649,7 +648,7 @@ class FlextLdifModelsResults:
     class ValidationBatchResult(FlextLdifModelsBase):
         results: _BooleanFlags = Field(default_factory=_BooleanFlags)
 
-    class ParseResponse(FlextModelsEntity.Value):
+    class ParseResponse(m.EntityModels.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         statistics: FlextLdifModelsResults.Statistics = Field()
@@ -662,18 +661,18 @@ class FlextLdifModelsResults:
                 if entry.dn is not None and entry.attributes is not None
             ]
 
-    class AclResponse(FlextModelsEntity.Value):
+    class AclResponse(m.EntityModels.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         acls: list[FlextLdifModelsDomains.Acl] = Field(default_factory=list)
         statistics: FlextLdifModelsResults.Statistics = Field()
 
-    class AclEvaluationResult(FlextModelsEntity.Value):
+    class AclEvaluationResult(m.EntityModels.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         granted: bool = False
         matched_acl: FlextLdifModelsDomains.Acl | None = None
         message: str = ""
 
-    class WriteResponse(FlextModelsEntity.Value):
+    class WriteResponse(m.EntityModels.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         content: str | None = None
         statistics: FlextLdifModelsResults.Statistics = Field()
