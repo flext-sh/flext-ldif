@@ -317,7 +317,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         )
                     ]
                     if permissions_match
-                    else []
+                    else ([] if False else [])
                 )
                 target_attr_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_TARGETATTR_PATTERN,

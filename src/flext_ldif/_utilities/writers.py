@@ -302,7 +302,7 @@ class FlextLdifUtilitiesWriters:
                     # Convert sup to list[str] if it's a string
                     sup_value = objectclass.sup
                     sup_list: list[str]
-                    if isinstance(sup_value, list | tuple):
+                    if isinstance(sup_value, (list, tuple)):
                         sup_list = [str(item) for item in sup_value]
                     else:
                         sup_list = [sup_value]

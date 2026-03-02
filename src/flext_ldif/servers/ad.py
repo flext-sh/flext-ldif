@@ -444,7 +444,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             object_classes = (
                 raw_object_classes
-                if isinstance(raw_object_classes, list | tuple)
+                if isinstance(raw_object_classes, (list, tuple))
                 else [raw_object_classes]
             )
             normalized_object_classes: list[str] = []

@@ -443,7 +443,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
                 acl_str = f"access to {what} by {who}"
                 if acl_data.permissions:
-                    perms = []
+                    perms: list[str] = []
 
                     if acl_data.permissions.read:
                         perms.append(

@@ -285,7 +285,7 @@ class ValidationPipeline:
         if entry.attributes is None:
             errors.append("Entry has no attributes (RFC 2849 violation)")
         else:
-            attrs = (
+            attrs: dict[str, list[str]] = (
                 entry.attributes.attributes
                 if getattr(entry.attributes, "attributes", None) is not None
                 else {}

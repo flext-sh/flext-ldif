@@ -322,7 +322,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
 
                 if acl_data.permissions:
-                    perms = []
+                    perms: list[str] = []
                     if acl_data.permissions.read:
                         perms.append("read")
                     if acl_data.permissions.write:
@@ -527,7 +527,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
             object_classes_list: list[str] = []
-            if isinstance(object_classes_raw, list | tuple):
+            if isinstance(object_classes_raw, (list, tuple)):
                 for item in object_classes_raw:
                     if isinstance(item, str):
                         object_classes_list.append(item)

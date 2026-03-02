@@ -138,7 +138,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -321,7 +321,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
 
-        attrs = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}

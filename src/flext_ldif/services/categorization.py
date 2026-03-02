@@ -277,7 +277,7 @@ class FlextLdifCategorization(
         if entry.attributes is None:
             return False
 
-        attrs_dict = (
+        attrs_dict: dict[str, list[str]] = (
             entry.attributes.attributes
             if FlextLdifCategorization._has_attr(entry.attributes, "attributes")
             else {}
@@ -349,7 +349,7 @@ class FlextLdifCategorization(
                     if isinstance(item, str) and is_valid_category(item)
                 ]
             else:
-                filtered = []
+                filtered: list[str] = []
 
             result: list[str] = [
                 item

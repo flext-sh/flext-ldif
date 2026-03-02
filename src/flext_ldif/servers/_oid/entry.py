@@ -526,7 +526,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_entry: m.Ldif.Entry,
     ) -> FlextResult[m.Ldif.Entry]:
         """Create entry result with complete metadata."""
-        original_attrs = (
+        original_attrs: dict[str, list[str]] = (
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
 
@@ -697,9 +697,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if isinstance(original_vals_raw, str)
                 else [str(item) for item in original_vals_raw]
                 if isinstance(original_vals_raw, list)
-                else []
+                else ([] if False else [])
             )
-            converted_vals = (
+            converted_vals: list[str] = (
                 [converted_vals_raw]
                 if isinstance(converted_vals_raw, str)
                 else [str(item) for item in converted_vals_raw]
