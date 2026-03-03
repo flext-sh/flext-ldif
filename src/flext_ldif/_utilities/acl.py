@@ -292,15 +292,11 @@ class FlextLdifUtilitiesACL:
         config: FlextLdifModelsSettings.AclMetadataConfig,
     ) -> Mapping[str, t.MetadataValue]:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: (
-            list[t.ScalarValue] | None
-        ) = None
+        normalized_line_breaks: list[t.ScalarValue] | None = None
         if config.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in config.line_breaks]
 
-        normalized_targetscope: (
-            list[t.ScalarValue] | None
-        ) = None
+        normalized_targetscope: list[t.ScalarValue] | None = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
 
@@ -1026,9 +1022,7 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, Mapping):
                 normalized_mapping: dict[
                     str,
-                    t.ScalarValue
-                    | list[t.ScalarValue]
-                    | None,
+                    t.ScalarValue | list[t.ScalarValue] | None,
                 ] = {}
                 for key, item in raw_default.items():
                     if not isinstance(key, str):
@@ -1040,9 +1034,7 @@ class FlextLdifUtilitiesACL:
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
-                        nested_list: list[
-                            t.ScalarValue | None
-                        ] = []
+                        nested_list: list[t.ScalarValue | None] = []
                         for nested_item in item:
                             if nested_item is None or isinstance(
                                 nested_item,

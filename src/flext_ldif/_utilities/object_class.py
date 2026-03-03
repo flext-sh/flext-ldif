@@ -127,8 +127,7 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.ContainerValue]]
-        | None = None,
+        parse_parts_hook: Callable[[str], Mapping[str, t.ContainerValue]] | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:

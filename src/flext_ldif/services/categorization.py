@@ -554,9 +554,7 @@ class FlextLdifCategorization(
     def categorize_entry(
         self,
         entry: m.Ldif.Entry,
-        rules: (
-            m.Ldif.CategoryRules | Mapping[str, t.MetadataValue] | None
-        ) = None,
+        rules: (m.Ldif.CategoryRules | Mapping[str, t.MetadataValue] | None) = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules."""

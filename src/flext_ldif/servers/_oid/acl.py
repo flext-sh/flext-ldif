@@ -326,10 +326,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                t.JsonPrimitive
-                | list[str]
-                | Mapping[str, str | list[str]]
-                | None,
+                t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
             ]
             | None
         ),
@@ -350,10 +347,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                t.JsonPrimitive
-                | list[str]
-                | Mapping[str, str | list[str]]
-                | None,
+                t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
             ]
         ),
     ) -> Mapping[str, t.JsonPrimitive | list[str] | None]:
@@ -415,10 +409,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             | m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                t.JsonPrimitive
-                | list[str]
-                | Mapping[str, str | list[str]]
-                | None,
+                t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
             ]
             | str
             | None
@@ -500,10 +491,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                t.JsonPrimitive
-                | list[str]
-                | Mapping[str, str | list[str]]
-                | None,
+                t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
             ]
             | None
         ),

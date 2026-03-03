@@ -23,9 +23,7 @@ type _TSchemaConversionValue = (
     m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | t.MetadataValue
 )
 type _MetadataMappingValue = (
-    t.MetadataValue
-    | Mapping[str, t.MetadataValue]
-    | Sequence[t.MetadataValue]
+    t.MetadataValue | Mapping[str, t.MetadataValue] | Sequence[t.MetadataValue]
 )
 
 logger = FlextLogger(__name__)
@@ -1548,12 +1546,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         source_attr: m.Ldif.SchemaAttribute | t.MetadataValue | str,
-    ) -> r[
-        str
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | t.MetadataValue
-    ]:
+    ) -> r[str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataValue]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
             return r[str].ok(source_attr)

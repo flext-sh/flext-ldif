@@ -28,9 +28,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: t.ContainerValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass,
+        **kwargs: t.ContainerValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
         filtered_kwargs: dict[str, t.JsonPrimitive | None] = {}
@@ -658,9 +656,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         cls,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: t.ContainerValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass,
+        **kwargs: t.ContainerValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)

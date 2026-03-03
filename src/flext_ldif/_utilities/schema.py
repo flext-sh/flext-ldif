@@ -456,8 +456,7 @@ class FlextLdifUtilitiesSchema:
                 str,
                 Callable[
                     [FlextTypes.ContainerValue],
-                    FlextTypes.ContainerValue
-                    | FlextResult[FlextTypes.ContainerValue],
+                    FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
                 ]
                 | str
                 | list[str]
@@ -785,9 +784,9 @@ class FlextLdifUtilitiesSchema:
             attr_definition,
         )
 
-        additional_extensions_converted: (
-            Mapping[str, t.MetadataValue] | None
-        ) = syntax_validation_result
+        additional_extensions_converted: Mapping[str, t.MetadataValue] | None = (
+            syntax_validation_result
+        )
 
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
             attr_definition,

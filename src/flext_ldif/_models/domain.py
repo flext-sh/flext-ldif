@@ -3824,9 +3824,7 @@ class FlextLdifModelsDomains:
         )
 
         # Conversion history (complete audit trail)
-        conversion_history: list[
-            dict[str, t.JsonPrimitive | list[str] | None]
-        ] = Field(
+        conversion_history: list[dict[str, t.JsonPrimitive | list[str] | None]] = Field(
             default_factory=list,
             description=(
                 "Complete conversion history for audit trail: "
