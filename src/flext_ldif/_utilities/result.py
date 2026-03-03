@@ -260,7 +260,7 @@ class FlextLdifResult[T]:
 
     def __matmul__(
         self,
-        metadata: Mapping[str, t.JsonPrimitive | list[str] | None],
+        metadata: Mapping[str, t.Scalar | list[str] | None],
     ) -> FlextLdifResult[T]:
         """Metadata operator: result @ metadata."""
         if self.is_failure:

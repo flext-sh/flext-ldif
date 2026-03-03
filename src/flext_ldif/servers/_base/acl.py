@@ -134,10 +134,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         kwargs: Mapping[
             str,
-            t.JsonPrimitive
-            | list[str]
-            | Mapping[str, t.JsonPrimitive | list[str] | None]
-            | None,
+            t.Scalar | list[str] | Mapping[str, t.Scalar | list[str] | None] | None,
         ],
     ) -> tuple[
         str | m.Ldif.Acl | None,

@@ -1659,7 +1659,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             elif isinstance(value, Mapping):
                 # Convert dict values to scalar types (str, int, float, bool, None)
                 # Build dict with explicit type widening
-                value_dict_inner: dict[str, t.JsonPrimitive | None] = {}
+                value_dict_inner: dict[str, t.Scalar | None] = {}
                 for k, v in value.items():
                     if not isinstance(k, str):
                         continue
@@ -1785,7 +1785,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
                     # Build dict with explicit type widening
-                    value_dict_1: dict[str, t.JsonPrimitive | None] = {}
+                    value_dict_1: dict[str, t.Scalar | None] = {}
                     for k, v in value_raw.items():
                         if not isinstance(k, str):
                             continue
@@ -1838,7 +1838,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
                     # Build dict with explicit type widening
-                    value_dict_2: dict[str, t.JsonPrimitive | None] = {}
+                    value_dict_2: dict[str, t.Scalar | None] = {}
                     for k, v in value_raw.items():
                         if not isinstance(k, str):
                             continue
@@ -2104,7 +2104,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Use dict() to create a mutable copy with proper type inference
         corrected_data_typed: dict[
             str,
-            t.JsonPrimitive | list[str] | dict[str, str | list[str]] | None,
+            t.Scalar | list[str] | dict[str, str | list[str]] | None,
         ] = dict(corrected_data)
         # Business Rule: apply_syntax_corrections expects list[str] or dict[str, str], not None.
         # Implication: Type narrowing ensures syntax_corrections_typed is not None before calling.
@@ -2144,7 +2144,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         corrected_data: Mapping[
             str,
-            t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
+            t.Scalar | list[str] | Mapping[str, str | list[str]] | None,
         ],
         syntax_corrections: list[str] | Mapping[str, str] | None,
     ) -> FlextResult[m.Ldif.Entry]:
@@ -2376,7 +2376,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
             entry_attrs_for_diff: dict[
                 str,
-                t.JsonPrimitive | list[str] | Mapping[str, str] | None,
+                t.Scalar | list[str] | Mapping[str, str] | None,
             ] = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)

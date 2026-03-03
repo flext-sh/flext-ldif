@@ -407,7 +407,7 @@ class FlextFunctional:
 
     it = is_type
     _ConvertibleType = (
-        t.JsonPrimitive
+        t.Scalar
         | list[t.ContainerValue]
         | tuple[t.ContainerValue, ...]
         | set[t.ContainerValue]

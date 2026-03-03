@@ -31,7 +31,7 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_sequence_of_scalars(
         obj: t.ContainerValue,
-    ) -> TypeGuard[ABCSequence[t.JsonPrimitive | None]]:
+    ) -> TypeGuard[ABCSequence[t.Scalar | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
             return False
@@ -40,7 +40,7 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_mapping_of_scalars(
         obj: t.ContainerValue,
-    ) -> TypeGuard[ABCMapping[str, t.JsonPrimitive | None]]:
+    ) -> TypeGuard[ABCMapping[str, t.Scalar | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):
             return False

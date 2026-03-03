@@ -554,10 +554,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             validation_rules: dict[
                 str,
-                t.JsonPrimitive
-                | dict[str, t.JsonPrimitive | list[str] | None]
-                | list[str]
-                | None,
+                t.Scalar | dict[str, t.Scalar | list[str] | None] | list[str] | None,
             ] = {
                 "requires_objectclass": (
                     server_type

@@ -32,7 +32,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def __init__(self, **kwargs: t.ContainerValue) -> None:
         """Initialize base quirk and its nested quirks."""
-        init_kwargs: dict[str, t.JsonPrimitive | None] = {}
+        init_kwargs: dict[str, t.Scalar | None] = {}
         for key, value in kwargs.items():
             if value is None:
                 init_kwargs[key] = None

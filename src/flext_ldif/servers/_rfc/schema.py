@@ -31,7 +31,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         **kwargs: t.ContainerValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: dict[str, t.JsonPrimitive | None] = {}
+        filtered_kwargs: dict[str, t.Scalar | None] = {}
         excluded_keys = {
             "_parent_quirk",
             "parent_quirk",

@@ -56,7 +56,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = metadata.to_dict()
             normalized_metadata: dict[
                 str,
-                t.JsonPrimitive | list[str] | None,
+                t.Scalar | list[str] | None,
             ] = {}
             for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)) or value is None:

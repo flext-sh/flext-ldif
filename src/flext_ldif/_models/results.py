@@ -588,7 +588,7 @@ class FlextLdifModelsResults:
                 return extra[key]
             raise KeyError(key)
 
-        def __getitem__(self, key: str) -> t.JsonPrimitive | None:
+        def __getitem__(self, key: str) -> t.Scalar | None:
             value = self._resolve_key(key)
             return str(value) if value is not None else None
 
@@ -602,7 +602,7 @@ class FlextLdifModelsResults:
             self,
             key: str,
             default: str | float | bool | None = None,
-        ) -> t.JsonPrimitive | None:
+        ) -> t.Scalar | None:
             try:
                 return self[key]
             except KeyError:
