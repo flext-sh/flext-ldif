@@ -411,7 +411,7 @@ class FlextFunctional:
         | list[t.ContainerValue]
         | tuple[t.ContainerValue, ...]
         | set[t.ContainerValue]
-        | dict[str, t.ContainerValue]
+        | t.ConfigurationMapping
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
