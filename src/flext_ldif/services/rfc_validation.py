@@ -123,7 +123,7 @@ class FlextLdifValidation(
     def validate_dn_component(
         self,
         attr: str,
-        value: t.ScalarValue,
+        value: t.Scalar,
     ) -> r[bool]:
         """Validate_dn_component method."""
         try:

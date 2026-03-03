@@ -1298,7 +1298,7 @@ class FlextLdifConversion(
         if isinstance(value, (str, int, float, bool)) or value is None:
             return value
         if isinstance(value, (list, tuple)):
-            converted_list: list[t.ScalarValue | None] = []
+            converted_list: list[t.Scalar | None] = []
             for item in value:
                 if isinstance(item, (str, int, float, bool, datetime)) or item is None:
                     converted_list.append(item)

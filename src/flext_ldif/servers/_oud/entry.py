@@ -1648,8 +1648,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if isinstance(value, (str, int, float, bool, type(None))):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
-                # Convert to list[str] if all items are strings, otherwise convert to list[ScalarValue]
-                value_list: list[t.ScalarValue] = [
+                # Convert to list[str] if all items are strings, otherwise convert to list.Scalar]
+                value_list: list[t.Scalar] = [
                     item
                     if isinstance(item, (str, int, float, bool, type(None)))
                     else str(item)
@@ -1776,7 +1776,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if isinstance(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
-                    value_list: list[t.ScalarValue] = [
+                    value_list: list[t.Scalar] = [
                         item
                         if isinstance(item, (str, int, float, bool, type(None)))
                         else str(item)
@@ -1829,7 +1829,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if isinstance(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
-                    value_list: list[t.ScalarValue] = [
+                    value_list: list[t.Scalar] = [
                         item
                         if isinstance(item, (str, int, float, bool, type(None)))
                         else str(item)

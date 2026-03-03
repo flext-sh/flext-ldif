@@ -611,7 +611,7 @@ class FlextLdifModelsResults:
         def keys(self) -> list[str]:
             return list(self.model_fields_set)
 
-        def items(self) -> list[tuple[str, t.ScalarValue]]:
+        def items(self) -> list[tuple[str, t.Scalar]]:
             return [(key, getattr(self, key)) for key in self.model_fields_set]
 
     class ServiceStatus(DictAccessibleValue):

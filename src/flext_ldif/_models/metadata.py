@@ -20,7 +20,7 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
         __hash__: ClassVar[None] = None
 
-        transformations: list[t.ScalarValue] | None = Field(default=None)
+        transformations: list[t.Scalar] | None = Field(default=None)
         original_format: str | None = Field(default=None)
         schema_source_server: str | None = Field(default=None)
         server_type: str | None = Field(default=None)

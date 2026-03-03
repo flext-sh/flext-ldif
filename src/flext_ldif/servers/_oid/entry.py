@@ -652,7 +652,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if isinstance(val, list):
                 extensions_data[key] = [str(item) for item in val]
             elif isinstance(val, Mapping):
-                nested_dict: dict[str, t.ScalarValue | list[t.ScalarValue]] = {}
+                nested_dict: dict[str, t.Scalar | list[t.Scalar]] = {}
                 for nk, nv in val.items():
                     if not isinstance(nk, str):
                         continue

@@ -11,7 +11,7 @@ from typing import ClassVar, Literal, override
 from flext_core import FlextLogger, FlextResult
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import c, m
+from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL

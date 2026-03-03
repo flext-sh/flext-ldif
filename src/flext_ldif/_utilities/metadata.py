@@ -22,7 +22,7 @@ class FlextLdifUtilitiesMetadata:
     """Metadata utilities for LDIF validation metadata management."""
 
     @staticmethod
-    def _convert_transformation_to_metadata_value() -> Mapping[str, t.ScalarValue]:
+    def _convert_transformation_to_metadata_value() -> Mapping[str, t.Scalar]:
         """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict."""
         return {}
 
@@ -87,7 +87,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _normalize_metadata_list_item(
         item: t.MetadataValue,
-    ) -> t.ScalarValue | None:
+    ) -> t.Scalar | None:
         if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
             return item
         return str(item)
@@ -156,14 +156,14 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _is_metadata_scalar_typed(
         value: t.ContainerValue,
-    ) -> TypeGuard[t.ScalarValue | None]:
+    ) -> TypeGuard[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
     def _normalize_mapping_list(
         values: Sequence[object],
-    ) -> list[t.ScalarValue | None]:
-        normalized: list[t.ScalarValue | None] = [
+    ) -> list[t.Scalar | None]:
+        normalized: list[t.Scalar | None] = [
             item
             for item in values
             if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item)
@@ -173,8 +173,8 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _normalize_dict_list(
         values: Sequence[object],
-    ) -> list[t.ScalarValue | None]:
-        normalized: list[t.ScalarValue | None] = []
+    ) -> list[t.Scalar | None]:
+        normalized: list[t.Scalar | None] = []
         for item in values:
             if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
                 normalized.append(item)
@@ -883,7 +883,7 @@ class FlextLdifUtilitiesMetadata:
     def build_acl_metadata_complete(
         quirk_type: str,
         _original_acl_format: str | None = None,
-        **extra: t.ScalarValue,
+        **extra: t.Scalar,
     ) -> Mapping[str, str | int | bool]:
         """Build metadata for ACL parsing as a dictionary."""
         result: dict[str, str | int | bool] = {
@@ -910,7 +910,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_original_format_details(
         quirk_type: str,
-        **extra: t.ScalarValue,
+        **extra: t.Scalar,
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
         original_dn_line = extra.get("original_dn_line")
@@ -950,7 +950,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def store_minimal_differences(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
-        **extra: t.ScalarValue,
+        **extra: t.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
 

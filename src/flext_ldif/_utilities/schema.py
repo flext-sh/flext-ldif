@@ -720,7 +720,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _convert_metadata_value(
         value: t.MetadataValue,
-    ) -> t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]:
+    ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
         if value is None:
             return None
         if isinstance(value, (str, int, float, bool)):
@@ -729,7 +729,7 @@ class FlextLdifUtilitiesSchema:
             return value.isoformat()
         if isinstance(value, list):
             return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
-        converted_nested: dict[str, t.ScalarValue | list[str]] = {}
+        converted_nested: dict[str, t.Scalar | list[str]] = {}
         mapping_value: Mapping[str, t.MetadataValue] = value
         for k, v_raw in mapping_value.items():
             k_str = str(k)
@@ -800,7 +800,7 @@ class FlextLdifUtilitiesSchema:
         syntax_validation_converted: (
             Mapping[
                 str,
-                t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]],
+                t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]],
             ]
             | None
         ) = None
@@ -918,7 +918,7 @@ class FlextLdifUtilitiesSchema:
         extensions_raw: Mapping[str, t.MetadataValue],
     ) -> Mapping[
         str,
-        t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]],
+        t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]],
     ]:
         return {
             key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)

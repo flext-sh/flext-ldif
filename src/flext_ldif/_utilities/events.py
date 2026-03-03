@@ -114,9 +114,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _process_extras(
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> Mapping[str, t.ScalarValue]:
+    ) -> Mapping[str, t.Scalar]:
         """Extract and filter extras into a dict of loggable context."""
-        filtered_extras: dict[str, t.ScalarValue] = {}
+        filtered_extras: dict[str, t.Scalar] = {}
         if not extras:
             return filtered_extras
 
@@ -146,7 +146,7 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
-        log_context: dict[str, t.ScalarValue] = {
+        log_context: dict[str, t.Scalar] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
@@ -171,7 +171,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: FlextLogger,
-        log_context: Mapping[str, t.ScalarValue],
+        log_context: Mapping[str, t.Scalar],
         log_message: str,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -196,7 +196,7 @@ class FlextLdifUtilitiesEvents:
     def _build_operation_event_logging(
         event: FlextLdifModelsEvents.MigrationEvent,
         config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> tuple[Mapping[str, t.ScalarValue], str]:
+    ) -> tuple[Mapping[str, t.Scalar], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
@@ -217,7 +217,7 @@ class FlextLdifUtilitiesEvents:
     def _build_conversion_event_logging(
         event: FlextLdifModelsEvents.ConversionEvent,
         config: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> tuple[Mapping[str, t.ScalarValue], str]:
+    ) -> tuple[Mapping[str, t.Scalar], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
