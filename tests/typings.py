@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from flext_ldif import FlextLdifTypes
 from flext_tests import FlextTestsTypes
+
+from flext_ldif import FlextLdifTypes
 
 
 class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):

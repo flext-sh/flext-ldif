@@ -23,6 +23,7 @@ from typing import Final
 
 import pytest
 from flext_core import FlextLogger
+
 from flext_ldif import FlextLdif, FlextLdifSettings, c
 
 logger = FlextLogger(__name__)

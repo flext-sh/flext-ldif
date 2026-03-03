@@ -19,13 +19,14 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import r
-from flext_ldif import FlextLdif, FlextLdifEntries, m
 from flext_tests import (
     FlextTestsFactories as tf_base,
     FlextTestsMatchers as tm_base,
     FlextTestsValidator as tv_base,
     tt as tt_base,
 )
+
+from flext_ldif import FlextLdif, FlextLdifEntries, m
 
 TResult = TypeVar("TResult")
 

@@ -20,6 +20,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
+
 from flext_ldif import FlextLdif, m, u
 
 

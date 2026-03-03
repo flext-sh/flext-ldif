@@ -6,12 +6,12 @@ Provides automated fixture generation following factory pattern.
 from __future__ import annotations
 
 import pytest
+
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
     t,
 )
-
 from tests import c, m
 from tests.test_factory import FlextLdifTestFactory
 

@@ -21,6 +21,9 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
+from flext_tests import FlextTestsDocker
+from ldap3 import ALL, Connection, Server
+
 from flext_ldif import (
     FlextLdif,
     FlextLdifConversion,
@@ -34,9 +37,6 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_tests import FlextTestsDocker
-from ldap3 import ALL, Connection, Server
-
 from tests.conftest import FlextLdifFixtures
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]

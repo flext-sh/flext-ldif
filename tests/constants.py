@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import r
+from flext_tests import FlextTestsConstants
+
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
@@ -34,7 +36,6 @@ from flext_ldif import (
     p,
     t,
 )
-from flext_tests import FlextTestsConstants
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):

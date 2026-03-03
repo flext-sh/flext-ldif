@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+
 from flext_ldif import FlextLdif, c, m
 
 

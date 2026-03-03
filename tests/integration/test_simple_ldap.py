@@ -5,9 +5,9 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable
 
-from flext_ldif import FlextLdif
 from ldap3 import Connection
 
+from flext_ldif import FlextLdif
 from tests import GenericFieldsDict
 
 

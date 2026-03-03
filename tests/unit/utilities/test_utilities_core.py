@@ -8,8 +8,9 @@ splitting, component extraction, and handling of special characters and escaped 
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifUtilities, c as lib_c, m
 from tests import s
+
+from flext_ldif import FlextLdifUtilities, c as lib_c, m
 
 
 @pytest.mark.unit

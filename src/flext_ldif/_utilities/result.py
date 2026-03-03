@@ -209,7 +209,9 @@ class FlextLdifResult[T]:
 
         lines: list[str] = [FlextLdifResult._encode_dn_line(dn_value)]
 
-        entry_attributes: dict[str, list[str]] = entry.attributes.attributes if entry.attributes else {}
+        entry_attributes: dict[str, list[str]] = (
+            entry.attributes.attributes if entry.attributes else {}
+        )
         for attr_name, values in entry_attributes.items():
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(

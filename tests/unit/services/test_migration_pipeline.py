@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
 
+from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
 from tests import c, s
 
 m = FlextLdifModels

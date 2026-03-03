@@ -11,8 +11,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif import FlextLdifUtilities
 from tests import s
+
+from flext_ldif import FlextLdifUtilities
 
 # =============================================================================
 # TEST SCENARIO ENUMS

@@ -12,6 +12,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import s
+
 from flext_ldif import (
     FlextLdifConstants,
     FlextLdifDn,
@@ -20,7 +22,6 @@ from flext_ldif import (
     FlextLdifStatistics,
     services,
 )
-from tests import s
 
 
 class TestsTestFlextLdifServiceAPIs(s):

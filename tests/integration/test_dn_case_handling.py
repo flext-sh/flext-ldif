@@ -14,8 +14,8 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_ldif import m
 
+from flext_ldif import m
 from tests import s
 
 type DnRefData = dict[str, Mapping[str, str] | list[str] | str]

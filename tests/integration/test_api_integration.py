@@ -17,8 +17,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_ldif import FlextLdif, FlextLdifStatistics, m
 
+from flext_ldif import FlextLdif, FlextLdifStatistics, m
 from tests import c
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

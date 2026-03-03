@@ -21,8 +21,9 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
-from flext_ldif import FlextLdif
 from ldap3 import Connection
+
+from flext_ldif import FlextLdif
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py

@@ -17,8 +17,8 @@ from __future__ import annotations
 import re
 
 import pytest
-from flext_ldif import FlextLdif, u
 
+from flext_ldif import FlextLdif, u
 from tests.conftest import FlextLdifFixtures
 
 
