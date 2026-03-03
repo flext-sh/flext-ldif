@@ -326,10 +326,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                str
-                | int
-                | float
-                | bool
+                t.JsonPrimitive
                 | list[str]
                 | Mapping[str, str | list[str]]
                 | None,
@@ -353,16 +350,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                str
-                | int
-                | float
-                | bool
+                t.JsonPrimitive
                 | list[str]
                 | Mapping[str, str | list[str]]
                 | None,
             ]
         ),
-    ) -> Mapping[str, str | int | float | bool | list[str] | None]:
+    ) -> Mapping[str, t.JsonPrimitive | list[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
@@ -373,7 +367,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _format_extensions(
         self,
-        meta_extensions: Mapping[str, str | int | float | bool | list[str] | None],
+        meta_extensions: Mapping[str, t.JsonPrimitive | list[str] | None],
     ) -> list[str]:
         """Format extension values based on metadata key type."""
         extensions: list[str] = []
@@ -421,10 +415,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             | m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                str
-                | int
-                | float
-                | bool
+                t.JsonPrimitive
                 | list[str]
                 | Mapping[str, str | list[str]]
                 | None,
@@ -509,10 +500,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             m.Ldif.QuirkMetadata
             | Mapping[
                 str,
-                str
-                | int
-                | float
-                | bool
+                t.JsonPrimitive
                 | list[str]
                 | Mapping[str, str | list[str]]
                 | None,

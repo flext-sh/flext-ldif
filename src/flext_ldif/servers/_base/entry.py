@@ -393,7 +393,7 @@ class FlextLdifServersBaseEntry(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
-        | Mapping[str, t.GeneralValueType],
+        | t.ConfigurationMapping,
     ) -> FlextLdifModelsDomains.WriteOptions:
         if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
@@ -516,7 +516,7 @@ class FlextLdifServersBaseEntry(
     @override
     def execute(
         self,
-        **kwargs: Mapping[str, t.GeneralValueType],
+        **kwargs: Mapping[str, t.ContainerValue],
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         kwargs_map: Mapping[str, object] = kwargs

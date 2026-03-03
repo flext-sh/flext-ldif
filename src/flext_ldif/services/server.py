@@ -36,7 +36,7 @@ class FlextLdifServer(FlextRegistry):
     def __init__(
         self,
         dispatcher: p.CommandBus | None = None,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
@@ -162,7 +162,7 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> Mapping[str, t.GeneralValueType]:
+    def get_registry_stats(self) -> Mapping[str, t.ContainerValue]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}

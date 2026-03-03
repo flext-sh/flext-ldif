@@ -467,7 +467,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Novell eDirectory entry quirk."""
 
         @override
-        def model_post_init(self, _context: t.GeneralValueType, /) -> None:
+        def model_post_init(self, _context: t.ContainerValue, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         @override

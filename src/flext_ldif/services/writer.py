@@ -26,9 +26,9 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
     def _normalize_write_format(
-        d: Mapping[str, t.GeneralValueType],
-    ) -> Mapping[str, t.GeneralValueType]:
-        mapped: dict[str, t.GeneralValueType] = {
+        d: Mapping[str, t.ContainerValue],
+    ) -> Mapping[str, t.ContainerValue]:
+        mapped: dict[str, t.ContainerValue] = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),
@@ -50,7 +50,7 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         format_options: (
             m.Ldif.WriteFormatOptions
             | m.Ldif.WriteOptions
-            | Mapping[str, t.GeneralValueType]
+            | t.ConfigurationMapping
             | None
         ),
     ) -> m.Ldif.WriteFormatOptions:
@@ -178,7 +178,7 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
     @override
     def execute(
         self,
-        params: Mapping[str, t.GeneralValueType] | None = None,
+        params: Mapping[str, t.ContainerValue] | None = None,
     ) -> r[m.Ldif.Results.WriteResponse]:
         """Execute write operation with parameters."""
         params = params or {}
@@ -186,7 +186,7 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[object, ...] = ()
         with suppress(Exception):
-            entry_candidates = tuple(t.ObjectList.model_validate(entries_raw).root)
+            entry_candidates = tuple(m.ObjectList.model_validate(entries_raw).root)
         for entry_candidate in entry_candidates:
             validated_entry: m.Ldif.Entry | None = None
             with suppress(Exception):

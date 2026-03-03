@@ -66,7 +66,7 @@ class FlextLdifServersBaseQuirkHelpers:
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_raw: int | t.GeneralValueType = getattr(
+        priority_raw: int | t.ContainerValue = getattr(
             constants_attr,
             "PRIORITY",
             100,

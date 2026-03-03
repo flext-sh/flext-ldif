@@ -26,8 +26,8 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[ABCSequence[t.GeneralValueType]]:
+        obj: t.ContainerValue,
+    ) -> TypeGuard[ABCSequence[t.ContainerValue]]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:

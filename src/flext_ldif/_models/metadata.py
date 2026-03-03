@@ -20,7 +20,7 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
         __hash__: ClassVar[None] = None
 
-        transformations: list[t.MetadataScalarValue] | None = Field(default=None)
+        transformations: list[t.ScalarValue] | None = Field(default=None)
         original_format: str | None = Field(default=None)
         schema_source_server: str | None = Field(default=None)
         server_type: str | None = Field(default=None)
@@ -29,7 +29,7 @@ class FlextLdifModelsMetadata:
         @classmethod
         def from_dict(
             cls,
-            data: Mapping[str, t.MetadataAttributeValue] | None = None,
+            data: Mapping[str, t.MetadataValue] | None = None,
         ) -> FlextLdifModelsMetadata.DynamicMetadata:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
@@ -38,30 +38,30 @@ class FlextLdifModelsMetadata:
 
         @staticmethod
         def coerce_metadata_value(
-            value: t.MetadataAttributeValue,
-        ) -> t.MetadataAttributeValue:
+            value: t.MetadataValue,
+        ) -> t.MetadataValue:
             """Identity coercion — value already typed by MetadataAttributeValue."""
             return value
 
-        def _extra(self) -> dict[str, t.MetadataAttributeValue]:
+        def _extra(self) -> dict[str, t.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
         def get(
             self,
             key: str,
-            default: t.MetadataAttributeValue = None,
-        ) -> t.MetadataAttributeValue:
+            default: t.MetadataValue = None,
+        ) -> t.MetadataValue:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 return getattr(self, key)
             return self._extra().get(key, default)
 
-        def __getitem__(self, key: str) -> t.MetadataAttributeValue:
+        def __getitem__(self, key: str) -> t.MetadataValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
             return self._extra()[key]
 
-        def __setitem__(self, key: str, value: t.MetadataAttributeValue) -> None:
+        def __setitem__(self, key: str, value: t.MetadataValue) -> None:
             setattr(self, key, value)
 
         def __contains__(self, key: str) -> bool:
@@ -71,23 +71,23 @@ class FlextLdifModelsMetadata:
             return len(self._extra())
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, t.MetadataAttributeValue]]:  # type: ignore[override]
+        def __iter__(self) -> Iterator[tuple[str, t.MetadataValue]]:  # type: ignore[override]
             yield from self._extra().items()
 
         def keys(self) -> KeysView[str]:
             return self._extra().keys()
 
-        def values(self) -> ValuesView[t.MetadataAttributeValue]:
+        def values(self) -> ValuesView[t.MetadataValue]:
             return self._extra().values()
 
-        def items(self) -> ItemsView[str, t.MetadataAttributeValue]:
+        def items(self) -> ItemsView[str, t.MetadataValue]:
             return self._extra().items()
 
         def pop(
             self,
             key: str,
-            default: t.MetadataAttributeValue = None,
-        ) -> t.MetadataAttributeValue:
+            default: t.MetadataValue = None,
+        ) -> t.MetadataValue:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 return extra.pop(key)
@@ -98,7 +98,7 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def update(self, other: Mapping[str, t.MetadataAttributeValue]) -> None:
+        def update(self, other: Mapping[str, t.MetadataValue]) -> None:
             for key, value in other.items():
                 setattr(self, key, value)
 
@@ -108,7 +108,7 @@ class FlextLdifModelsMetadata:
                 return dict(self.items()) == other
             return NotImplemented
 
-        def to_dict(self) -> Mapping[str, t.MetadataAttributeValue]:
+        def to_dict(self) -> Mapping[str, t.MetadataValue]:
             return dict(self.items())
 
     class EntryMetadata(m.Base.ArbitraryTypesModel):
@@ -121,10 +121,10 @@ class FlextLdifModelsMetadata:
             str_strip_whitespace=True,
         )
 
-        def _extra(self) -> dict[str, t.MetadataAttributeValue]:
+        def _extra(self) -> dict[str, t.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
-        def __getitem__(self, key: str) -> t.MetadataAttributeValue:
+        def __getitem__(self, key: str) -> t.MetadataValue:
             return self._extra()[key]
 
         def __contains__(self, key: str) -> bool:
@@ -133,8 +133,8 @@ class FlextLdifModelsMetadata:
         def get(
             self,
             key: str,
-            default: t.MetadataAttributeValue = None,
-        ) -> t.MetadataAttributeValue:
+            default: t.MetadataValue = None,
+        ) -> t.MetadataValue:
             return self._extra().get(key, default)
 
     class TransformationInfo(m.Base.ArbitraryTypesModel):

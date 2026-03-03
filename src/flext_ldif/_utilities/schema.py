@@ -227,8 +227,8 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         field_name: str,
         transform_fn: Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+            [FlextTypes.ContainerValue],
+            FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
         ],
     ) -> FlextResult[
         FlextLdifModelsDomains.SchemaAttribute
@@ -360,8 +360,8 @@ class FlextLdifUtilitiesSchema:
         field_transforms: Mapping[
             str,
             Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                [FlextTypes.ContainerValue],
+                FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
             ]
             | str
             | list[str]
@@ -455,9 +455,9 @@ class FlextLdifUtilitiesSchema:
             Mapping[
                 str,
                 Callable[
-                    [FlextTypes.GeneralValueType],
-                    FlextTypes.GeneralValueType
-                    | FlextResult[FlextTypes.GeneralValueType],
+                    [FlextTypes.ContainerValue],
+                    FlextTypes.ContainerValue
+                    | FlextResult[FlextTypes.ContainerValue],
                 ]
                 | str
                 | list[str]
@@ -581,13 +581,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: Mapping[str, t.MetadataAttributeValue] | None = None,
-    ) -> Mapping[str, t.MetadataAttributeValue]:
+        additional_extensions: Mapping[str, t.MetadataValue] | None = None,
+    ) -> Mapping[str, t.MetadataValue]:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: dict[str, t.MetadataAttributeValue] = {}
+        extensions: dict[str, t.MetadataValue] = {}
         for key, val in extensions_raw.items():
-            typed_val: t.MetadataAttributeValue = list(val)
+            typed_val: t.MetadataValue = list(val)
             extensions[key] = typed_val
 
         extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
@@ -641,7 +641,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> dict[str, t.MetadataAttributeValue] | None:
+    ) -> dict[str, t.MetadataValue] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -660,10 +660,10 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
             c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: dict[str, t.MetadataAttributeValue] = {}
+        result_dict: dict[str, t.MetadataValue] = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
-                list_typed: t.MetadataAttributeValue = list(val)
+                list_typed: t.MetadataValue = list(val)
                 result_dict[key] = list_typed
             else:
                 result_dict[key] = val
@@ -720,7 +720,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_value(
-        value: t.MetadataAttributeValue,
+        value: t.MetadataValue,
     ) -> t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]]:
         if value is None:
             return None
@@ -731,7 +731,7 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, list):
             return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
         converted_nested: dict[str, t.ScalarValue | list[str]] = {}
-        mapping_value: Mapping[str, t.MetadataAttributeValue] = value
+        mapping_value: Mapping[str, t.MetadataValue] = value
         for k, v_raw in mapping_value.items():
             k_str = str(k)
             if v_raw is None or isinstance(v_raw, (str, int, float, bool)):
@@ -751,13 +751,13 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[Mapping[str, FlextTypes.GeneralValueType]]:
+    ) -> r[Mapping[str, FlextTypes.ContainerValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, FlextTypes.GeneralValueType]].fail(
+            return r[dict[str, FlextTypes.ContainerValue]].fail(
                 basic_fields_result.error,
             )
 
@@ -767,7 +767,7 @@ class FlextLdifUtilitiesSchema:
             attr_definition,
         )
 
-        syntax_validation_result: Mapping[str, t.MetadataAttributeValue] | None = None
+        syntax_validation_result: Mapping[str, t.MetadataValue] | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -786,7 +786,7 @@ class FlextLdifUtilitiesSchema:
         )
 
         additional_extensions_converted: (
-            Mapping[str, t.MetadataAttributeValue] | None
+            Mapping[str, t.MetadataValue] | None
         ) = syntax_validation_result
 
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -812,7 +812,7 @@ class FlextLdifUtilitiesSchema:
                 )
             )
 
-        parsed_dict: dict[str, FlextTypes.GeneralValueType] = {
+        parsed_dict: dict[str, FlextTypes.ContainerValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -828,7 +828,7 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, FlextTypes.GeneralValueType]].ok(parsed_dict)
+        return r[dict[str, FlextTypes.ContainerValue]].ok(parsed_dict)
 
     @staticmethod
     def _extract_objectclass_basic_fields(
@@ -916,7 +916,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: Mapping[str, t.MetadataAttributeValue],
+        extensions_raw: Mapping[str, t.MetadataValue],
     ) -> Mapping[
         str,
         t.ScalarValue | list[str] | Mapping[str, t.ScalarValue | list[str]],
@@ -929,7 +929,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> Mapping[str, FlextTypes.GeneralValueType]:
+    ) -> Mapping[str, FlextTypes.ContainerValue]:
         """Parse RFC 4512 objectClass definition into structured data."""
         oid, name, desc = FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(
             oc_definition,
@@ -949,7 +949,7 @@ class FlextLdifUtilitiesSchema:
             extensions_raw,
         )
 
-        parsed_dict: dict[str, FlextTypes.GeneralValueType] = {
+        parsed_dict: dict[str, FlextTypes.ContainerValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,

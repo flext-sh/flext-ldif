@@ -246,7 +246,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return value if isinstance(value, str) else None
 
     @staticmethod
-    def _scalar_or_list_value(value: t.MetadataAttributeValue) -> bool:
+    def _scalar_or_list_value(value: t.MetadataValue) -> bool:
         """Check if value is scalar metadata value or list."""
         return value is None or value.__class__ in {str, int, float, bool, list}
 
@@ -257,7 +257,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
 
-            target_data: dict[str, t.MetadataAttributeValue] = {}
+            target_data: dict[str, t.MetadataValue] = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if not isinstance(raw_key, str):
@@ -294,7 +294,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> FlextResult[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: Mapping[str, t.MetadataAttributeValue] | None = None
+        target_perms_dict: Mapping[str, t.MetadataValue] | None = None
 
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
@@ -485,7 +485,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: dict[str, t.MetadataAttributeValue] | None = (
+            extensions: dict[str, t.MetadataValue] | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

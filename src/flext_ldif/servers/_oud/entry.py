@@ -157,8 +157,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
         # Implication: _parent_quirk is handled separately, not via Pydantic fields
-        # Business Rule: Only pass t.GeneralValueType (str | float | bool | None) to super().__init__
-        # Implication: Filter kwargs to ensure type safety (int is not t.GeneralValueType, only str/float/bool/None)
+        # Business Rule: Only pass t.ContainerValue (str | float | bool | None) to super().__init__
+        # Implication: Filter kwargs to ensure type safety (int is not t.ContainerValue, only str/float/bool/None)
         {
             k: v
             for k, v in kwargs.items()
@@ -591,7 +591,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | Mapping[str, t.GeneralValueType] | None,
+        write_opts: m.Ldif.WriteOptions | t.ConfigurationMapping | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -686,7 +686,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Type narrowing: ensure metadata is usable as QuirkMetadata
         # Business Rule: Accept both internal and facade QuirkMetadata types
         metadata_typed: FlextLdifModelsDomains.QuirkMetadata = metadata
-        current_extensions: dict[str, t.MetadataAttributeValue] = (
+        current_extensions: dict[str, t.MetadataValue] = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
 
@@ -706,7 +706,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if commented_acl_values:
             converted_attrs_list: list[str] = list(commented_acl_values.keys())
             # Widen list[str] to MetadataAttributeValue
-            converted_attrs_typed: t.MetadataAttributeValue = list(converted_attrs_list)
+            converted_attrs_typed: t.MetadataValue = list(converted_attrs_list)
             current_extensions["converted_attributes"] = converted_attrs_typed
             # Business Rule: extensions expects MetadataAttributeValue (ScalarValue)
             # Implication: Convert dict to JSON string for storage
@@ -728,7 +728,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         if commented_attrs:
             # Widen list[str] to MetadataAttributeValue
-            commented_attrs_typed: t.MetadataAttributeValue = list(commented_attrs)
+            commented_attrs_typed: t.MetadataValue = list(commented_attrs)
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
 
         # Business Rule: metadata is frozen, must use model_copy to update both extensions and write_options
@@ -1331,7 +1331,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _normalize_acl_values(
-        acl_values_raw: t.MetadataAttributeValue,
+        acl_values_raw: t.MetadataValue,
     ) -> list[str] | str | m.Ldif.Acl:
         """Normalize ACL values to expected type for comment generation.
 
@@ -1352,8 +1352,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _parse_commented_values(
-        commented_raw: t.MetadataAttributeValue,
-    ) -> dict[str, t.MetadataAttributeValue] | None:
+        commented_raw: t.MetadataValue,
+    ) -> dict[str, t.MetadataValue] | None:
         """Parse commented ACL values from raw storage format.
 
         Args:
@@ -1363,7 +1363,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        parsed: t.MetadataAttributeValue
+        parsed: t.MetadataValue
         if isinstance(commented_raw, str):
             parsed = json.loads(commented_raw)
         else:
@@ -1372,7 +1372,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not isinstance(parsed, Mapping):
             return None
 
-        normalized: dict[str, t.MetadataAttributeValue] = {}
+        normalized: dict[str, t.MetadataValue] = {}
         for raw_key, raw_value in parsed.items():
             if not isinstance(raw_key, str):
                 continue
@@ -1541,7 +1541,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _normalize_aci_value_simple(
         self,
-        value: t.MetadataAttributeValue,
+        value: t.MetadataValue,
     ) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
         if isinstance(value, list):
@@ -1601,8 +1601,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_parsed_acl_extensions(
         self,
-        acl_extensions: Mapping[str, t.MetadataAttributeValue],
-        current_extensions: dict[str, t.MetadataAttributeValue],
+        acl_extensions: Mapping[str, t.MetadataValue],
+        current_extensions: dict[str, t.MetadataValue],
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1659,7 +1659,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             elif isinstance(value, Mapping):
                 # Convert dict values to scalar types (str, int, float, bool, None)
                 # Build dict with explicit type widening
-                value_dict_inner: dict[str, str | int | float | bool | None] = {}
+                value_dict_inner: dict[str, t.JsonPrimitive | None] = {}
                 for k, v in value.items():
                     if not isinstance(k, str):
                         continue
@@ -1668,7 +1668,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     else:
                         value_dict_inner[k] = str(v)
                 # Widen to MetadataAttributeValue
-                value_dict_typed: t.MetadataAttributeValue = dict(value_dict_inner)
+                value_dict_typed: t.MetadataValue = dict(value_dict_inner)
                 current_extensions[final_key] = value_dict_typed
             else:
                 # Convert other types to str
@@ -1678,7 +1678,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         aci_values: list[str] | str,
         acl_quirk: FlextLdifServersOudAcl,
-        current_extensions: dict[str, t.MetadataAttributeValue],
+        current_extensions: dict[str, t.MetadataValue],
     ) -> None:
         """Process list of ACI values and extract metadata."""
         aci_list = list(aci_values) if isinstance(aci_values, list) else [aci_values]
@@ -1694,7 +1694,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = acl_model.metadata.extensions.to_dict()
-                    acl_extensions: dict[str, t.MetadataAttributeValue] = {}
+                    acl_extensions: dict[str, t.MetadataValue] = {}
                     for raw_key, raw_value in acl_ext_raw.items():
                         if not isinstance(raw_key, str):
                             continue
@@ -1711,14 +1711,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _merge_acl_metadata_to_entry(
         self,
         entry: m.Ldif.Entry,
-        acl_metadata_extensions: Mapping[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: Mapping[str, t.MetadataValue],
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
 
         if entry.metadata:
-            current_extensions: dict[str, t.MetadataAttributeValue] = (
+            current_extensions: dict[str, t.MetadataValue] = (
                 dict(entry.metadata.extensions.to_dict())
                 if entry.metadata.extensions
                 else {}
@@ -1749,7 +1749,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _extract_acl_metadata_from_dynamic(
         self,
         acl_extensions: FlextLdifModelsMetadata.DynamicMetadata,
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: dict[str, t.MetadataValue],
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1785,7 +1785,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
                     # Build dict with explicit type widening
-                    value_dict_1: dict[str, str | int | float | bool | None] = {}
+                    value_dict_1: dict[str, t.JsonPrimitive | None] = {}
                     for k, v in value_raw.items():
                         if not isinstance(k, str):
                             continue
@@ -1794,15 +1794,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         else:
                             value_dict_1[k] = str(v)
                     # Widen to MetadataAttributeValue
-                    value_dict_typed_1: t.MetadataAttributeValue = dict(value_dict_1)
+                    value_dict_typed_1: t.MetadataValue = dict(value_dict_1)
                     acl_metadata_extensions[dest_key] = value_dict_typed_1
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
 
     def _extract_acl_metadata_from_dict(
         self,
-        acl_extensions: Mapping[str, t.MetadataAttributeValue],
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_extensions: Mapping[str, t.MetadataValue],
+        acl_metadata_extensions: dict[str, t.MetadataValue],
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif.MetadataKeys
@@ -1838,7 +1838,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
                     # Build dict with explicit type widening
-                    value_dict_2: dict[str, str | int | float | bool | None] = {}
+                    value_dict_2: dict[str, t.JsonPrimitive | None] = {}
                     for k, v in value_raw.items():
                         if not isinstance(k, str):
                             continue
@@ -1847,7 +1847,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         else:
                             value_dict_2[k] = str(v)
                     # Widen to MetadataAttributeValue
-                    value_dict_typed_2: t.MetadataAttributeValue = dict(value_dict_2)
+                    value_dict_typed_2: t.MetadataValue = dict(value_dict_2)
                     acl_metadata_extensions[dest_key] = value_dict_typed_2
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
@@ -1855,7 +1855,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _process_single_aci_value(
         self,
         aci_value: str,
-        acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
+        acl_metadata_extensions: dict[str, t.MetadataValue],
     ) -> FlextResult[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
@@ -1887,7 +1887,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         acl_metadata_extensions,
                     )
                 elif isinstance(acl_extensions, Mapping):
-                    acl_extensions_dict: dict[str, t.MetadataAttributeValue] = {
+                    acl_extensions_dict: dict[str, t.MetadataValue] = {
                         str(
                             k,
                         ): FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
@@ -1981,7 +1981,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
             has_macros = False
-            acl_metadata_extensions: dict[str, t.MetadataAttributeValue] = {}
+            acl_metadata_extensions: dict[str, t.MetadataValue] = {}
 
             for aci_value in aci_attrs:
                 if core_u.is_type(aci_value, str):
@@ -2104,7 +2104,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Use dict() to create a mutable copy with proper type inference
         corrected_data_typed: dict[
             str,
-            str | int | float | bool | list[str] | dict[str, str | list[str]] | None,
+            t.JsonPrimitive | list[str] | dict[str, str | list[str]] | None,
         ] = dict(corrected_data)
         # Business Rule: apply_syntax_corrections expects list[str] or dict[str, str], not None.
         # Implication: Type narrowing ensures syntax_corrections_typed is not None before calling.
@@ -2144,7 +2144,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         corrected_data: Mapping[
             str,
-            str | int | float | bool | list[str] | Mapping[str, str | list[str]] | None,
+            t.JsonPrimitive | list[str] | Mapping[str, str | list[str]] | None,
         ],
         syntax_corrections: list[str] | Mapping[str, str] | None,
     ) -> FlextResult[m.Ldif.Entry]:
@@ -2165,7 +2165,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             elif isinstance(raw_value, str):
                 attrs_for_model[raw_key] = [raw_value]
             else:
-                # Handle other GeneralValueType values
+                # Handle other ContainerValue values
                 attrs_for_model[raw_key] = [str(raw_value)]
 
         corrected_ldif_attrs = m.Ldif.Attributes(
@@ -2220,7 +2220,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
 
         # Get current extensions
-        current_extensions: dict[str, t.MetadataAttributeValue] = (
+        current_extensions: dict[str, t.MetadataValue] = (
             dict(entry.metadata.extensions.to_dict())
             if entry.metadata and entry.metadata.extensions
             else {}
@@ -2327,7 +2327,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: dict[str, t.GeneralValueType],
+        entry_dict: dict[str, t.ContainerValue],
         entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.
@@ -2376,7 +2376,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
             entry_attrs_for_diff: dict[
                 str,
-                str | int | float | bool | list[str] | Mapping[str, str] | None,
+                t.JsonPrimitive | list[str] | Mapping[str, str] | None,
             ] = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)

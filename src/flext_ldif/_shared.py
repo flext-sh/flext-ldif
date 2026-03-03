@@ -19,7 +19,7 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: t.ConfigMapValue, attr_name: str) -> bool:
+    def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
         """Check if an object has a non-None attribute (canonical implementation).
 
         Uses a sentinel object to distinguish between attributes that are None

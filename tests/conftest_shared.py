@@ -70,7 +70,7 @@ def real_ldif_content() -> str:
 
 
 @pytest.fixture(params=FlextLdifTestFactory.parametrize_real_data())
-def parametrized_real_data(request: pytest.FixtureRequest) -> t.GeneralValueType:
+def parametrized_real_data(request: pytest.FixtureRequest) -> t.ContainerValue:
     """Provide parametrized real test data."""
     return request.param
 

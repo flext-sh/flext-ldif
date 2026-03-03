@@ -33,7 +33,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _normalize_permission(
         self,
         permission: str,
-        _metadata: Mapping[str, t.MetadataAttributeValue],
+        _metadata: Mapping[str, t.MetadataValue],
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return permission, None
@@ -42,7 +42,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: Mapping[str, t.MetadataAttributeValue],
+        _metadata: Mapping[str, t.MetadataValue],
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -155,7 +155,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -199,10 +199,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> None:
         """Initialize RFC ACL quirk service."""
-        filtered_kwargs: dict[str, FlextTypes.GeneralValueType] = {
+        filtered_kwargs: dict[str, FlextTypes.ContainerValue] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "parent_quirk"}

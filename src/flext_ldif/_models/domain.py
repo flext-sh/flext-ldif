@@ -1556,7 +1556,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_extensions(
             cls,
-            extensions: Mapping[str, t.MetadataAttributeValue] | None,
+            extensions: Mapping[str, t.MetadataValue] | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 
@@ -1792,7 +1792,7 @@ class FlextLdifModelsDomains:
             return self.attributes.attributes
 
         @override
-        def model_post_init(self, _context: t.GeneralValueType, /) -> None:
+        def model_post_init(self, _context: t.ContainerValue, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.
@@ -2076,7 +2076,7 @@ class FlextLdifModelsDomains:
             if violations and self.metadata is not None:
                 attribute_count = len(self.attributes) if self.attributes else 0
                 # Create/update validation results with current violations
-                old_context: dict[str, t.MetadataAttributeValue] = {}
+                old_context: dict[str, t.MetadataValue] = {}
                 if self.metadata.validation_results is not None:
                     old_context = dict(self.metadata.validation_results.context)  # type: ignore[arg-type]
 
@@ -2176,7 +2176,7 @@ class FlextLdifModelsDomains:
 
         @staticmethod
         def _parse_validation_rules(
-            validation_rules: t.MetadataAttributeValue,
+            validation_rules: t.MetadataValue,
         ) -> FlextLdifModelsSettings.ServerValidationRules | None:
             """Normalize dynamic validation_rules payload to ServerValidationRules."""
             if isinstance(
@@ -2271,7 +2271,7 @@ class FlextLdifModelsDomains:
                 )
                 self.metadata.validation_results = updated_validation_results
                 # Convert to MetadataAttributeValue type for DynamicMetadata
-                violations_typed: t.MetadataAttributeValue = list(server_violations)
+                violations_typed: t.MetadataValue = list(server_violations)
                 self.metadata.extensions["server_specific_violations"] = (
                     violations_typed
                 )
@@ -2505,9 +2505,9 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> Mapping[str, t.MetadataAttributeValue]:
+        ) -> Mapping[str, t.MetadataValue]:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: dict[str, t.MetadataAttributeValue] = {}
+            ext_kwargs: dict[str, t.MetadataValue] = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
@@ -2515,7 +2515,7 @@ class FlextLdifModelsDomains:
             if unconverted_attributes:
                 unconverted_dump = unconverted_attributes.model_dump()
                 # Convert dict[str, list[str]] to MetadataAttributeValue
-                unconverted_typed: t.MetadataAttributeValue = unconverted_dump
+                unconverted_typed: t.MetadataValue = unconverted_dump
                 ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
 
@@ -3825,7 +3825,7 @@ class FlextLdifModelsDomains:
 
         # Conversion history (complete audit trail)
         conversion_history: list[
-            dict[str, str | int | float | bool | list[str] | None]
+            dict[str, t.JsonPrimitive | list[str] | None]
         ] = Field(
             default_factory=list,
             description=(
@@ -3845,7 +3845,7 @@ class FlextLdifModelsDomains:
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | Mapping[str, t.MetadataAttributeValue]
+                | Mapping[str, t.MetadataValue]
                 | None
             ) = None,
         ) -> Self:
@@ -3961,7 +3961,7 @@ class FlextLdifModelsDomains:
 
             """
             # Convert to MetadataAttributeValue type for DynamicMetadata
-            values_typed: t.MetadataAttributeValue = list(values)
+            values_typed: t.MetadataValue = list(values)
             self.removed_attributes[attribute_name] = values_typed
             return self.track_attribute_transformation(
                 original_name=attribute_name,
@@ -4011,7 +4011,7 @@ class FlextLdifModelsDomains:
             self.extensions[rfc_format.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
                 # Convert to MetadataAttributeValue type for DynamicMetadata
-                escapes_typed: t.MetadataAttributeValue = list(escapes_applied)
+                escapes_typed: t.MetadataValue = list(escapes_applied)
                 self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_typed
 
             # Add to conversion notes

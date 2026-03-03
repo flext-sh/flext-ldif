@@ -229,15 +229,15 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: Mapping[str, FlextTypes.GeneralValueType],
+        entry_attrs: Mapping[str, FlextTypes.ContainerValue],
         converted_attrs: Mapping[str, list[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        Mapping[str, t.MetadataAttributeValue],
-        Mapping[str, Mapping[str, t.MetadataAttributeValue]],
-        Mapping[str, t.MetadataAttributeValue],
+        Mapping[str, t.MetadataValue],
+        Mapping[str, Mapping[str, t.MetadataValue]],
+        Mapping[str, t.MetadataValue],
         Mapping[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -271,9 +271,9 @@ class FlextLdifUtilitiesEntry:
 
         attribute_differences: dict[
             str,
-            Mapping[str, t.MetadataAttributeValue],
+            Mapping[str, t.MetadataValue],
         ] = {}
-        original_attributes_complete: dict[str, t.MetadataAttributeValue] = {}
+        original_attributes_complete: dict[str, t.MetadataValue] = {}
 
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
@@ -287,7 +287,7 @@ class FlextLdifUtilitiesEntry:
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
-            typed_list: t.MetadataAttributeValue = list(original_values_list)
+            typed_list: t.MetadataValue = list(original_values_list)
             original_attributes_complete[original_attr_name] = typed_list
 
             converted_values = converted_attrs.get(canonical_name, [])
@@ -316,7 +316,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_server_patterns(
         entry_dn: str,
-        attributes: Mapping[str, FlextTypes.GeneralValueType],
+        attributes: Mapping[str, FlextTypes.ContainerValue],
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""

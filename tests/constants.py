@@ -1038,10 +1038,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_result_success_and_unwrap(
-        result: r[t.GeneralValueType],
+        result: r[t.ContainerValue],
         expected_type: type | None = None,
         expected_count: int | None = None,
-    ) -> t.GeneralValueType:
+    ) -> t.ContainerValue:
         """Assert result is successful and unwrap its value.
 
         Args:
@@ -1339,7 +1339,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_attribute_from_dict(
-        data: dict[str, t.GeneralValueType],
+        data: dict[str, t.ContainerValue],
     ) -> m.Ldif.SchemaAttribute:
         """Create a schema attribute from dictionary.
 
@@ -1362,7 +1362,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_objectclass_from_dict(
-        data: dict[str, t.GeneralValueType],
+        data: dict[str, t.ContainerValue],
     ) -> m.Ldif.SchemaObjectClass:
         """Create a schema objectClass from dictionary.
 

@@ -17,8 +17,8 @@ logger = FlextLogger(__name__)
 
 
 def _has_metadata_attribute(
-    obj: t.GeneralValueType,
-) -> TypeGuard[t.GeneralValueType]:
+    obj: t.ContainerValue,
+) -> TypeGuard[t.ContainerValue]:
     """Type guard to check if object has metadata attribute."""
     return hasattr(obj, "metadata")
 
@@ -28,7 +28,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _get_server_type_from_class(
-        obj: t.GeneralValueType,
+        obj: t.ContainerValue,
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
@@ -46,7 +46,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: t.GeneralValueType | None,
+        result_value: t.ContainerValue | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -95,7 +95,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: t.GeneralValueType,
+                self: t.ContainerValue,
                 arg: str,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
@@ -143,7 +143,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.WriteMethod:
             @wraps(func)
             def wrapper(
-                self: t.GeneralValueType,
+                self: t.ContainerValue,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
@@ -163,7 +163,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.ParseMethod:
             @wraps(func)
             def wrapper(
-                self: t.GeneralValueType,
+                self: t.ContainerValue,
                 arg: t.Ldif.Decorators.ParseMethodArg,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
@@ -203,7 +203,7 @@ class FlextLdifUtilitiesDecorators:
         ) -> t.Ldif.Decorators.WriteMethod:
             @wraps(func)
             def wrapper(
-                self: t.GeneralValueType,
+                self: t.ContainerValue,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:

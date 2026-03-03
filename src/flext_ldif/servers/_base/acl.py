@@ -43,7 +43,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **_kwargs: t.GeneralValueType,
+        **_kwargs: t.ContainerValue,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
         super().__init__()
@@ -134,12 +134,9 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         kwargs: Mapping[
             str,
-            str
-            | int
-            | float
-            | bool
+            t.JsonPrimitive
             | list[str]
-            | Mapping[str, str | int | float | bool | list[str] | None]
+            | Mapping[str, t.JsonPrimitive | list[str] | None]
             | None,
         ],
     ) -> tuple[
@@ -213,7 +210,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: str | m.Ldif.Acl | t.ConfigMapValue,
+        value: str | m.Ldif.Acl | t.ContainerValue,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -282,10 +279,10 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: Mapping[str, t.MetadataAttributeValue] | None = None,
+        extensions: Mapping[str, t.MetadataValue] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: dict[str, t.MetadataAttributeValue] = {
+        all_extensions: dict[str, t.MetadataValue] = {
             "original_format": original_format,
         }
         if extensions:

@@ -275,8 +275,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: Mapping[str, t.GeneralValueType],
-    ) -> list[tuple[str, t.GeneralValueType]] | None:
+        entry_data: Mapping[str, t.ContainerValue],
+    ) -> list[tuple[str, t.ContainerValue]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")
         if metadata is None:
@@ -305,7 +305,7 @@ class FlextLdifUtilitiesWriter:
             "_acl_attributes",
         }
 
-        result: list[tuple[str, t.GeneralValueType]] = []
+        result: list[tuple[str, t.ContainerValue]] = []
         for key in attr_order:
             if not isinstance(key, str):
                 continue  # Skip non-string keys
@@ -556,7 +556,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: Mapping[str, t.GeneralValueType],
+        changetype_config: Mapping[str, t.ContainerValue],
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(

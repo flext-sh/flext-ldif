@@ -131,12 +131,12 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
-            **kwargs: t.GeneralValueType,
+            **kwargs: t.ContainerValue,
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             # Use provided config or build from kwargs
             if config is None:
-                # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
+                # Use model_validate which accepts dict[str, t.ContainerValue] and validates at runtime
                 config = FlextLdifModelsSettings.EntryWriteConfig.model_validate(kwargs)
 
             try:
@@ -394,12 +394,12 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
-            **kwargs: t.GeneralValueType,
+            **kwargs: t.ContainerValue,
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             # Use provided config or build from kwargs
             if config is None:
-                # Use model_validate which accepts dict[str, t.GeneralValueType] and validates at runtime
+                # Use model_validate which accepts dict[str, t.ContainerValue] and validates at runtime
                 config = FlextLdifModelsSettings.BatchWriteConfig.model_validate(kwargs)
 
             try:

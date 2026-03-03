@@ -273,7 +273,7 @@ class EntryOps:
         else:
             new_attrs[name] = list(values)
 
-        # Use dict[str, t.GeneralValueType] for model_copy update (Pydantic accepts object)
+        # Use dict[str, t.ContainerValue] for model_copy update (Pydantic accepts object)
         new_attributes = m.Ldif.Attributes(attributes=new_attrs)
         self._entry = self._entry.model_copy(update={"attributes": new_attributes})
 

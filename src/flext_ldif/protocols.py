@@ -25,7 +25,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             attributes: Mapping[str, Sequence[str]] | None
 
-            metadata: t.ConfigMap | None
+            metadata: m.ConfigMap | None
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -244,7 +244,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entries: FlextLdifProtocols.Ldif.EntryProtocol
                 | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                format_options: t.ConfigMap | None = None,
+                format_options: m.ConfigMap | None = None,
             ) -> FlextResult[str]:
                 """Write entries to LDIF."""
                 ...
@@ -282,7 +282,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadataProtocol(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
-            validation_metadata: t.ConfigMap | None
+            validation_metadata: m.ConfigMap | None
 
         @runtime_checkable
         class TransformerProtocol[T](Protocol):
@@ -391,9 +391,9 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class ValuePredicate(Protocol):
-            """Protocol for predicates that test GeneralValueType values."""
+            """Protocol for predicates that test ContainerValue values."""
 
-            def __call__(self, value: t.GeneralValueType, /) -> bool:
+            def __call__(self, value: t.ContainerValue, /) -> bool:
                 """Test if value matches predicate condition."""
                 ...
 

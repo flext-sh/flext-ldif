@@ -156,8 +156,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(
-            n: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            n: t.ContainerValue,
+        ) -> t.ContainerValue:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -168,8 +168,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )
 
         def transform_equality(
-            eq: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            eq: t.ContainerValue,
+        ) -> t.ContainerValue:
             eq_str: str | None = (
                 str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
             )
@@ -182,8 +182,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[0]
 
         def transform_substr(
-            sub: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            sub: t.ContainerValue,
+        ) -> t.ContainerValue:
             sub_str: str | None = (
                 str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
             )
@@ -196,8 +196,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[1]
 
         def transform_syntax(
-            syn: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            syn: t.ContainerValue,
+        ) -> t.ContainerValue:
             syn_str: str | None = (
                 str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
             )
@@ -211,8 +211,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         field_transforms: dict[
             str,
             Callable[
-                [t.GeneralValueType],
-                t.GeneralValueType | FlextResult[t.GeneralValueType],
+                [t.ContainerValue],
+                t.ContainerValue | FlextResult[t.ContainerValue],
             ]
             | str
             | list[str]
@@ -245,8 +245,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(
-            n: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            n: t.ContainerValue,
+        ) -> t.ContainerValue:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -259,8 +259,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         field_transforms: dict[
             str,
             Callable[
-                [t.GeneralValueType],
-                t.GeneralValueType | FlextResult[t.GeneralValueType],
+                [t.ContainerValue],
+                t.ContainerValue | FlextResult[t.ContainerValue],
             ]
             | str
             | list[str]

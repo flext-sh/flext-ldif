@@ -44,7 +44,7 @@ class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
     @staticmethod
-    def _is_metadata_scalar_or_container(value: t.GeneralValueType) -> bool:
+    def _is_metadata_scalar_or_container(value: t.ContainerValue) -> bool:
         """Check supported metadata extension value shape."""
         return value is None or value.__class__ in {str, int, float, bool, list, dict}
 
@@ -290,21 +290,21 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> Mapping[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataValue]:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: (
-            list[str | int | float | bool | datetime | None] | None
+            list[t.ScalarValue] | None
         ) = None
         if config.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in config.line_breaks]
 
         normalized_targetscope: (
-            list[str | int | float | bool | datetime | None] | None
+            list[t.ScalarValue] | None
         ) = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
 
-        extension_items: list[tuple[str, t.MetadataAttributeValue]] = [
+        extension_items: list[tuple[str, t.MetadataValue]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", normalized_targetscope),
@@ -312,7 +312,7 @@ class FlextLdifUtilitiesACL:
             ("action_type", config.action_type),
         ]
 
-        result: dict[str, t.MetadataAttributeValue] = {
+        result: dict[str, t.MetadataValue] = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -623,9 +623,9 @@ class FlextLdifUtilitiesACL:
         version: str,
         acl_line: str,
         extra_patterns: Mapping[str, str],
-    ) -> Mapping[str, t.MetadataAttributeValue]:
+    ) -> Mapping[str, t.MetadataValue]:
         """Build metadata extensions dict."""
-        extensions: dict[str, t.MetadataAttributeValue] = {
+        extensions: dict[str, t.MetadataValue] = {
             "version": version,
             "original_format": acl_line,
         }
@@ -721,7 +721,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: Mapping[str, t.MetadataAttributeValue] | None,
+        extensions: Mapping[str, t.MetadataValue] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -733,7 +733,7 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule config item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: t.GeneralValueType = (
+            value_raw: t.ContainerValue = (
                 extensions.get(ext_key) if extensions else None
             )
             if value_raw is None:
@@ -787,7 +787,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, t.MetadataAttributeValue]
+        | Mapping[str, t.MetadataValue]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -798,7 +798,7 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target config item."""
             ext_key, format_template = target_item
-            value_raw: t.GeneralValueType = (
+            value_raw: t.ContainerValue = (
                 extensions.get(ext_key) if extensions else None
             )
             if value_raw is None:
@@ -832,7 +832,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, t.MetadataAttributeValue]
+        | Mapping[str, t.MetadataValue]
         | None,
         converted_from_key: str,
         comments_key: str,
@@ -847,7 +847,7 @@ class FlextLdifUtilitiesACL:
         if not converted_from_value:
             return []
 
-        comments_value: t.GeneralValueType = (
+        comments_value: t.ContainerValue = (
             extensions.get(comments_key) if extensions else None
         )
         if comments_value is None:
@@ -1013,7 +1013,7 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, (str, int, float, bool)):
                 default_value = raw_default
             elif isinstance(raw_default, list):
-                normalized_list: list[str | int | float | bool | datetime | None] = []
+                normalized_list: list[t.ScalarValue | None] = []
                 for item in raw_default:
                     if item is None or isinstance(
                         item,
@@ -1026,12 +1026,8 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, Mapping):
                 normalized_mapping: dict[
                     str,
-                    str
-                    | int
-                    | float
-                    | bool
-                    | datetime
-                    | list[str | int | float | bool | datetime | None]
+                    t.ScalarValue
+                    | list[t.ScalarValue]
                     | None,
                 ] = {}
                 for key, item in raw_default.items():
@@ -1045,7 +1041,7 @@ class FlextLdifUtilitiesACL:
                         continue
                     if isinstance(item, list):
                         nested_list: list[
-                            str | int | float | bool | datetime | None
+                            t.ScalarValue | None
                         ] = []
                         for nested_item in item:
                             if nested_item is None or isinstance(

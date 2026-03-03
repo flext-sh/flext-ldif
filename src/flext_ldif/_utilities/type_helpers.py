@@ -16,35 +16,35 @@ class FlextLdifTypeHelpers:
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.GeneralValueType,
+        obj: t.ContainerValue,
     ) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and not isinstance(obj, str | bytes | dict)
 
     @staticmethod
     def is_mapping_type(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[ABCMapping[str, t.ConfigMapValue]]:
+        obj: t.ContainerValue,
+    ) -> TypeGuard[ABCMapping[str, t.ContainerValue]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, ABCMapping) and not isinstance(obj, str | bytes)
 
     @staticmethod
     def is_sequence_of_scalars(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[ABCSequence[str | int | float | bool | None]]:
+        obj: t.ContainerValue,
+    ) -> TypeGuard[ABCSequence[t.JsonPrimitive | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
             return False
-        return all(isinstance(item, str | int | float | bool | None) for item in obj)
+        return all(isinstance(item, t.JsonPrimitive | None) for item in obj)
 
     @staticmethod
     def is_mapping_of_scalars(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[ABCMapping[str, str | int | float | bool | None]]:
+        obj: t.ContainerValue,
+    ) -> TypeGuard[ABCMapping[str, t.JsonPrimitive | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):
             return False
-        return all(isinstance(v, str | int | float | bool | None) for v in obj.values())
+        return all(isinstance(v, t.JsonPrimitive | None) for v in obj.values())
 
 
 __all__ = ["FlextLdifTypeHelpers"]

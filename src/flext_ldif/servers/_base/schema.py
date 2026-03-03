@@ -98,7 +98,7 @@ class FlextLdifServersBaseSchema(
         cls,
         _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to FlextService."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
@@ -114,7 +114,7 @@ class FlextLdifServersBaseSchema(
         self,
         _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
@@ -448,10 +448,10 @@ class FlextLdifServersBaseSchema(
 
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
 
-        extensions_typed: dict[str, t.MetadataAttributeValue] = {}
+        extensions_typed: dict[str, t.MetadataValue] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: t.MetadataAttributeValue = list(val)
+                list_typed: t.MetadataValue = list(val)
                 extensions_typed[key] = list_typed
             else:
                 extensions_typed[key] = val
@@ -647,7 +647,7 @@ class FlextLdifServersBaseSchema(
         *,
         data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None) = None,
         operation: str | None = None,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         if data is None:

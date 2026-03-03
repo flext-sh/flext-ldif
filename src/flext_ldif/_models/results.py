@@ -25,7 +25,7 @@ class DynamicCounts(FlextLdifModelsBase):
         setattr(self, key, value)
 
     @staticmethod
-    def _to_count(value: t.MetadataAttributeValue) -> int:
+    def _to_count(value: t.MetadataValue) -> int:
         if isinstance(value, int | float):
             return int(value)
         if isinstance(value, str):
@@ -42,7 +42,7 @@ class DynamicCounts(FlextLdifModelsBase):
         msg = f"Key {key!r} not found"
         raise KeyError(msg)
 
-    def _extra(self) -> dict[str, t.MetadataAttributeValue]:
+    def _extra(self) -> dict[str, t.MetadataValue]:
         return self.__pydantic_extra__ or {}
 
     def get(self, key: str, default: int | None = None) -> int | None:
@@ -580,7 +580,7 @@ class FlextLdifModelsResults:
         server_type_distribution: DynamicCounts = Field(default_factory=DynamicCounts)
 
     class DictAccessibleValue(m.EntityModels.Value):
-        def _resolve_key(self, key: str) -> t.ConfigMapValue:
+        def _resolve_key(self, key: str) -> t.ContainerValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__
@@ -588,7 +588,7 @@ class FlextLdifModelsResults:
                 return extra[key]
             raise KeyError(key)
 
-        def __getitem__(self, key: str) -> str | int | float | bool | None:
+        def __getitem__(self, key: str) -> t.JsonPrimitive | None:
             value = self._resolve_key(key)
             return str(value) if value is not None else None
 
@@ -602,7 +602,7 @@ class FlextLdifModelsResults:
             self,
             key: str,
             default: str | float | bool | None = None,
-        ) -> str | int | float | bool | None:
+        ) -> t.JsonPrimitive | None:
             try:
                 return self[key]
             except KeyError:

@@ -23,7 +23,7 @@ class FlextLdifCategorization(
     """LDIF Entry Categorization Service."""
 
     @staticmethod
-    def _has_attr(obj: t.GeneralValueType, attr_name: str) -> bool:
+    def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -298,7 +298,7 @@ class FlextLdifCategorization(
         constants: type,
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
-        priority_classes: t.GeneralValueType = getattr(
+        priority_classes: t.ContainerValue = getattr(
             constants,
             "HIERARCHY_PRIORITY_OBJECTCLASSES",
             frozenset(),
@@ -423,7 +423,7 @@ class FlextLdifCategorization(
                 override_existing=override_existing,
             )
 
-        acl_attrs_raw: t.GeneralValueType = getattr(
+        acl_attrs_raw: t.ContainerValue = getattr(
             constants,
             "CATEGORIZATION_ACL_ATTRIBUTES",
             frozenset(),
@@ -468,7 +468,7 @@ class FlextLdifCategorization(
 
     def _normalize_rules(
         self,
-        rules: (m.Ldif.CategoryRules | Mapping[str, t.MetadataAttributeValue] | None),
+        rules: (m.Ldif.CategoryRules | Mapping[str, t.MetadataValue] | None),
     ) -> r[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):
@@ -555,7 +555,7 @@ class FlextLdifCategorization(
         self,
         entry: m.Ldif.Entry,
         rules: (
-            m.Ldif.CategoryRules | Mapping[str, t.MetadataAttributeValue] | None
+            m.Ldif.CategoryRules | Mapping[str, t.MetadataValue] | None
         ) = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
@@ -919,7 +919,7 @@ class FlextLdifCategorization(
         )
 
     @staticmethod
-    def _ensure_entry_model(value: t.GeneralValueType) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(value: t.ContainerValue) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):

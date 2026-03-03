@@ -20,12 +20,12 @@ type _TConvertedModel = (
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 )
 type _TSchemaConversionValue = (
-    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue
+    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | t.MetadataValue
 )
 type _MetadataMappingValue = (
-    t.MetadataAttributeValue
-    | Mapping[str, t.MetadataAttributeValue]
-    | Sequence[t.MetadataAttributeValue]
+    t.MetadataValue
+    | Mapping[str, t.MetadataValue]
+    | Sequence[t.MetadataValue]
 )
 
 logger = FlextLogger(__name__)
@@ -42,12 +42,12 @@ class FlextLdifConversion(
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
 
     @staticmethod
-    def _has_attr(obj: t.GeneralValueType, attr_name: str) -> bool:
+    def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: t.GeneralValueType,
+        obj: t.ContainerValue,
     ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -302,8 +302,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.GeneralValueType,
-    ) -> t.MetadataAttributeValue:
+        value: t.ContainerValue,
+    ) -> t.MetadataValue:
         """Normalize metadata value to proper type."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value if value is not None else ""
@@ -314,7 +314,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.GeneralValueType,
+        boolean_conversions: t.ContainerValue,
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
@@ -336,9 +336,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.GeneralValueType,
+        original_attribute_case: t.ContainerValue,
         target_server_type: str,
-    ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
+    ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -354,9 +354,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.GeneralValueType,
+        original_format_details: t.ContainerValue,
         target_server_type: str,
-    ) -> Mapping[str, Mapping[str, t.MetadataAttributeValue]]:
+    ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
         """Analyze DN spacing for target compatibility."""
         if isinstance(original_format_details, dict):
             spacing = u.take(original_format_details, "dn_spacing")
@@ -376,11 +376,11 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: (m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None),
         target_server_type: str,
-    ) -> Mapping[str, str | Mapping[str, str | t.MetadataAttributeValue]]:
+    ) -> Mapping[str, str | Mapping[str, str | t.MetadataValue]]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: dict[
             str,
-            str | dict[str, str | t.MetadataAttributeValue],
+            str | dict[str, str | t.MetadataValue],
         ] = {}
 
         if not source_metadata or not FlextLdifConversion._has_attr(
@@ -395,7 +395,7 @@ class FlextLdifConversion(
         get_format_details = u.mapper().prop("original_format_details")
 
         boolean_raw = get_boolean(source_metadata)
-        boolean_conversions: t.GeneralValueType = (
+        boolean_conversions: t.ContainerValue = (
             boolean_raw if isinstance(boolean_raw, dict) else {}
         )
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
@@ -403,7 +403,7 @@ class FlextLdifConversion(
             target_server_str,
         )
 
-        acc_typed: dict[str, str | dict[str, str | t.MetadataAttributeValue]] = {}
+        acc_typed: dict[str, str | dict[str, str | t.MetadataValue]] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
                 acc_typed[key] = value
@@ -481,7 +481,7 @@ class FlextLdifConversion(
 
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, t.GeneralValueType] = {
+            extensions_update: dict[str, t.ContainerValue] = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:
@@ -1249,10 +1249,10 @@ class FlextLdifConversion(
     def _get_extensions_dict(
         self,
         acl: m.Ldif.Acl,
-    ) -> Mapping[str, FlextTypes.GeneralValueType]:
+    ) -> Mapping[str, FlextTypes.ContainerValue]:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: t.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def to_general_value(value: t.ContainerValue) -> FlextTypes.ContainerValue:
             if value is None:
                 return None
             if isinstance(value, str):
@@ -1295,12 +1295,12 @@ class FlextLdifConversion(
     def _convert_to_metadata_attribute_value(
         self,
         value: _MetadataMappingValue,
-    ) -> t.MetadataAttributeValue:
+    ) -> t.MetadataValue:
         """Convert value to MetadataAttributeValue type."""
         if isinstance(value, (str, int, float, bool)) or value is None:
             return value
         if isinstance(value, (list, tuple)):
-            converted_list: list[str | int | float | bool | datetime | None] = []
+            converted_list: list[t.ScalarValue | None] = []
             for item in value:
                 if isinstance(item, (str, int, float, bool, datetime)) or item is None:
                     converted_list.append(item)
@@ -1358,12 +1358,12 @@ class FlextLdifConversion(
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
 
-        merged_ext_raw: dict[str, t.GeneralValueType] = {**orig_ext, **conv_ext}
+        merged_ext_raw: dict[str, t.ContainerValue] = {**orig_ext, **conv_ext}
 
         if not merged_ext_raw or not get_metadata(acl_step1) or not acl_step1.metadata:
             return acl_step1
 
-        dynamic_metadata_dict: dict[str, t.MetadataAttributeValue] = {}
+        dynamic_metadata_dict: dict[str, t.MetadataValue] = {}
         for key, value in merged_ext_raw.items():
             if isinstance(value, (str, int, float, bool, datetime)) or value is None:
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
@@ -1372,7 +1372,7 @@ class FlextLdifConversion(
                 continue
 
             if isinstance(value, Mapping):
-                normalized_mapping: dict[str, t.MetadataAttributeValue] = {
+                normalized_mapping: dict[str, t.MetadataValue] = {
                     str(k): FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in value.items()
                 }
@@ -1382,7 +1382,7 @@ class FlextLdifConversion(
                 continue
 
             if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: list[t.MetadataAttributeValue] = [
+                normalized_sequence: list[t.MetadataValue] = [
                     FlextLdifConversion._normalize_metadata_value(item)
                     for item in value
                 ]
@@ -1396,7 +1396,7 @@ class FlextLdifConversion(
             )
 
         if acl_step1.metadata:
-            metadata_kwargs: dict[str, t.MetadataAttributeValue] = dynamic_metadata_dict
+            metadata_kwargs: dict[str, t.MetadataValue] = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1547,12 +1547,12 @@ class FlextLdifConversion(
     def _write_attribute_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_attr: m.Ldif.SchemaAttribute | t.MetadataAttributeValue | str,
+        source_attr: m.Ldif.SchemaAttribute | t.MetadataValue | str,
     ) -> r[
         str
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
-        | t.MetadataAttributeValue
+        | t.MetadataValue
     ]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
@@ -1583,7 +1583,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _schema_passthrough_ok(
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
     ) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
@@ -1596,7 +1596,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        data: str | t.MetadataAttributeValue,
+        data: str | t.MetadataValue,
     ) -> r[_TSchemaConversionValue]:
         """Convert attribute from source to target quirk via write->parse pipeline."""
         try:
@@ -1667,7 +1667,7 @@ class FlextLdifConversion(
 
     def _write_target_attribute(
         self,
-        parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataAttributeValue,
+        parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataValue,
     ) -> r[_TSchemaConversionValue]:
         """Write target attribute to final format."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_attr)
@@ -1682,7 +1682,7 @@ class FlextLdifConversion(
     def _write_objectclass_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_oc: m.Ldif.SchemaObjectClass | t.MetadataAttributeValue | str,
+        source_oc: m.Ldif.SchemaObjectClass | t.MetadataValue | str,
     ) -> r[_TSchemaConversionValue]:
         """Write objectClass to RFC string representation."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(source_oc)
@@ -1712,7 +1712,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        data: str | t.MetadataAttributeValue,
+        data: str | t.MetadataValue,
     ) -> r[_TSchemaConversionValue]:
         """Convert objectClass from source to target quirk via write->parse pipeline."""
         try:
@@ -1833,7 +1833,7 @@ class FlextLdifConversion(
     def _write_target_objectclass(
         self,
         target: str | FlextLdifServersBase,
-        parsed_oc: m.Ldif.SchemaObjectClass | str | t.MetadataAttributeValue,
+        parsed_oc: m.Ldif.SchemaObjectClass | str | t.MetadataValue,
     ) -> r[_TSchemaConversionValue]:
         """Write target objectClass to final format."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_oc)
@@ -2097,7 +2097,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> t.GeneralValueType | None:
+    ) -> t.ContainerValue | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk,
@@ -2112,7 +2112,7 @@ class FlextLdifConversion(
                 return quirk
             return None
 
-        schema_quirk_raw: t.GeneralValueType | None = getattr(
+        schema_quirk_raw: t.ContainerValue | None = getattr(
             quirk,
             "schema_quirk",
             None,
@@ -2130,7 +2130,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: t.GeneralValueType,
+        quirk_schema: t.ContainerValue,
         test_attr_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -2161,7 +2161,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: t.GeneralValueType,
+        quirk_schema: t.ContainerValue,
         test_oc_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:

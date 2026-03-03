@@ -666,8 +666,8 @@ objectClass: person
 
         def create_configuration(
             self,
-            **kwargs: t.GeneralValueType,
-        ) -> dict[str, t.GeneralValueType]:
+            **kwargs: t.ContainerValue,
+        ) -> dict[str, t.ContainerValue]:
             """Create config."""
             return dict(kwargs)
 

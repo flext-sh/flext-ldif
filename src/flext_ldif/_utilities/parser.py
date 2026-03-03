@@ -26,7 +26,7 @@ class FlextLdifUtilitiesParser:
     ) -> Mapping[str, list[str]]:
         """Extract extension information from parsed metadata."""
 
-        def _as_str_list(value: t.MetadataAttributeValue) -> list[str] | None:
+        def _as_str_list(value: t.MetadataValue) -> list[str] | None:
             if isinstance(value, list):
                 normalized: list[str] = []
                 for item in value:
@@ -405,9 +405,9 @@ class FlextLdifUtilitiesParser:
         )
 
         if metadata_extensions:
-            extensions_typed: dict[str, t.MetadataAttributeValue] = {}
+            extensions_typed: dict[str, t.MetadataValue] = {}
             for key, val in metadata_extensions.items():
-                typed_val: t.MetadataAttributeValue = list(val)
+                typed_val: t.MetadataValue = list(val)
                 extensions_typed[key] = typed_val
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,

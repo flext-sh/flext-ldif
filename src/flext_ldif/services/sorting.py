@@ -61,7 +61,7 @@ class FlextLdifSorting(
         order: list[str] | None = None,
     ) -> Self:
         """Configure attribute sorting."""
-        update_dict: dict[str, t.GeneralValueType] = {}
+        update_dict: dict[str, t.ContainerValue] = {}
         if alphabetical is not None:
             update_dict["sort_attributes"] = alphabetical
             update_dict["attribute_order"] = None

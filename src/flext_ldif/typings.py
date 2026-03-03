@@ -45,26 +45,23 @@ class FlextLdifTypes(FlextTypes):
 
             ParseMethodArg: TypeAlias = str
             ParseMethodReturn: TypeAlias = FlextResult[
-                str | int | float | bool | list[str] | None
+                t.JsonPrimitive | list[str] | None
             ]
             ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
-            WriteMethodArg: TypeAlias = str | int | float | bool | list[str] | None
+            WriteMethodArg: TypeAlias = t.JsonPrimitive | list[str] | None
             WriteMethodReturn: TypeAlias = (
-                str
-                | int
-                | float
-                | bool
+                t.JsonPrimitive
                 | list[str]
                 | None
-                | FlextResult[str | int | float | bool | list[str] | None]
+                | FlextResult[t.JsonPrimitive | list[str] | None]
             )
             WriteMethod: TypeAlias = Callable[
                 [object, WriteMethodArg], WriteMethodReturn
             ]
             WriteMethodDecorator: TypeAlias = Callable[[WriteMethod], WriteMethod]
             SafeMethod: TypeAlias = Callable[
-                [object, ParseMethodArg], str | int | float | bool | list[str] | None
+                [object, ParseMethodArg], t.JsonPrimitive | list[str] | None
             ]
             SafeMethodDecorator: TypeAlias = Callable[[SafeMethod], SafeMethod]
 
@@ -75,7 +72,7 @@ class FlextLdifTypes(FlextTypes):
             AttributeDict: TypeAlias = Mapping[str, list[str]]
             AttributeDictGeneric: TypeAlias = Mapping[str, list[str] | str]
 
-        TemplateValue: TypeAlias = str | int | float | bool | None
+        TemplateValue: TypeAlias = t.JsonPrimitive | None
         T = TypeVar("T")
         TEntry = TypeVar("TEntry")
         TAttribute = TypeVar("TAttribute")

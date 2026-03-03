@@ -260,7 +260,7 @@ class FlextLdifResult[T]:
 
     def __matmul__(
         self,
-        metadata: Mapping[str, str | int | float | bool | list[str] | None],
+        metadata: Mapping[str, t.JsonPrimitive | list[str] | None],
     ) -> FlextLdifResult[T]:
         """Metadata operator: result @ metadata."""
         if self.is_failure:
@@ -356,7 +356,7 @@ class FlextLdifResult[T]:
         return self.is_success
 
     @override
-    def __eq__(self, other: t.GeneralValueType) -> bool:
+    def __eq__(self, other: t.ContainerValue) -> bool:
         """Check equality with another FlextLdifResult."""
         if not isinstance(other, FlextLdifResult):
             return NotImplemented

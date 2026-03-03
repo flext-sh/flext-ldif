@@ -30,10 +30,10 @@ class FlextLdifUtilitiesAttribute:
         server_type: str | None = None,
         parse_parts_hook: Callable[
             [str],
-            FlextResult[Mapping[str, FlextTypes.GeneralValueType]],
+            FlextResult[Mapping[str, FlextTypes.ContainerValue]],
         ]
         | None = None,
-    ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[Mapping[str, FlextTypes.ContainerValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
 

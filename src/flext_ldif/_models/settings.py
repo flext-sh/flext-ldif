@@ -1088,7 +1088,7 @@ class FlextLdifModelsSettings:
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, t.GeneralValueType] with type-safe Pydantic model.
+        Replaces dict[str, t.ContainerValue] with type-safe Pydantic model.
         """
 
         user_dn_patterns: list[str] = Field(
@@ -1244,7 +1244,7 @@ class FlextLdifModelsSettings:
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, t.GeneralValueType] with type-safe Pydantic model.
+        Replaces dict[str, t.ContainerValue] with type-safe Pydantic model.
         """
 
         blocked_objectclasses: list[str] = Field(
@@ -2174,7 +2174,7 @@ class FlextLdifModelsSettings:
         build_metadata_hook: (
             Callable[
                 [str, Mapping[str, list[str]]],
-                dict[str, t.MetadataAttributeValue] | None,
+                dict[str, t.MetadataValue] | None,
             ]
             | None
         ) = Field(

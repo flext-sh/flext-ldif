@@ -30,9 +30,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
-    def __init__(self, **kwargs: t.GeneralValueType) -> None:
+    def __init__(self, **kwargs: t.ContainerValue) -> None:
         """Initialize base quirk and its nested quirks."""
-        init_kwargs: dict[str, str | int | float | bool | None] = {}
+        init_kwargs: dict[str, t.JsonPrimitive | None] = {}
         for key, value in kwargs.items():
             if value is None:
                 init_kwargs[key] = None
@@ -181,13 +181,13 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def __new__(
         cls,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
 
         filtered_kwargs: dict[str, str | float | bool | None] = {}
-        execute_kwargs: dict[str, t.GeneralValueType] = {}
+        execute_kwargs: dict[str, t.ContainerValue] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)) or value is None:
@@ -212,7 +212,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: Mapping[str, t.GeneralValueType],
+        kwargs: Mapping[str, t.ContainerValue],
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:

@@ -26,8 +26,8 @@ class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
-    def _to_general(value: t.GeneralValueType) -> t.GeneralValueType:
-        """Normalize arbitrary values into GeneralValueType-compatible shape."""
+    def _to_general(value: t.ContainerValue) -> t.ContainerValue:
+        """Normalize arbitrary values into ContainerValue-compatible shape."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, datetime):
@@ -35,7 +35,7 @@ class FlextFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            model_mapping: dict[str, t.GeneralValueType] = {
+            model_mapping: dict[str, t.ContainerValue] = {
                 key: FlextFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
@@ -45,7 +45,7 @@ class FlextFunctional:
                     model_mapping[key] = FlextFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
-            normalized_mapping: dict[str, t.GeneralValueType] = {}
+            normalized_mapping: dict[str, t.ContainerValue] = {}
             for key, item in value.items():
                 if isinstance(key, str):
                     normalized_mapping[key] = FlextFunctional._to_general(item)
@@ -407,14 +407,11 @@ class FlextFunctional:
 
     it = is_type
     _ConvertibleType = (
-        str
-        | int
-        | float
-        | bool
-        | list[t.GeneralValueType]
-        | tuple[t.GeneralValueType, ...]
-        | set[t.GeneralValueType]
-        | dict[str, t.GeneralValueType]
+        t.JsonPrimitive
+        | list[t.ContainerValue]
+        | tuple[t.ContainerValue, ...]
+        | set[t.ContainerValue]
+        | dict[str, t.ContainerValue]
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
@@ -428,8 +425,8 @@ class FlextFunctional:
 
     @staticmethod
     def _convert_with_target(
-        value: t.GeneralValueType, target_type: type, default: t.GeneralValueType | None
-    ) -> t.GeneralValueType | None:
+        value: t.ContainerValue, target_type: type, default: t.ContainerValue | None
+    ) -> t.ContainerValue | None:
         """Execute type conversion using centralized Pydantic v2 models.
 
         Dispatches to the appropriate ConversionRequest model based on target_type
@@ -480,7 +477,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
         target: type[str] | Literal["str"],
         default: str | None = None,
@@ -490,7 +487,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
         target: type[bool] | Literal["bool"],
         default: bool | None = None,
@@ -500,7 +497,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
         target: type[int] | Literal["int"],
         default: int | None = None,
@@ -510,7 +507,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
         target: type[float] | Literal["float"],
         default: float | None = None,
@@ -520,40 +517,40 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
-        target: type[list[t.GeneralValueType]] | Literal["list"],
-        default: list[t.GeneralValueType] | None = None,
-    ) -> list[t.GeneralValueType] | None: ...
+        target: type[list[t.ContainerValue]] | Literal["list"],
+        default: list[t.ContainerValue] | None = None,
+    ) -> list[t.ContainerValue] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
-        target: type[tuple[t.GeneralValueType, ...]] | Literal["tuple"],
-        default: tuple[t.GeneralValueType, ...] | None = None,
-    ) -> tuple[t.GeneralValueType, ...] | None: ...
+        target: type[tuple[t.ContainerValue, ...]] | Literal["tuple"],
+        default: tuple[t.ContainerValue, ...] | None = None,
+    ) -> tuple[t.ContainerValue, ...] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
-        target: type[Mapping[str, t.GeneralValueType]] | Literal["dict"],
-        default: Mapping[str, t.GeneralValueType] | None = None,
-    ) -> Mapping[str, t.GeneralValueType] | None: ...
+        target: type[Mapping[str, t.ContainerValue]] | Literal["dict"],
+        default: Mapping[str, t.ContainerValue] | None = None,
+    ) -> Mapping[str, t.ContainerValue] | None: ...
 
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         *,
         target: type | str,
-        default: t.GeneralValueType | None = None,
-    ) -> t.GeneralValueType | None:
+        default: t.ContainerValue | None = None,
+    ) -> t.ContainerValue | None:
         """Safe cast (mnemonic: at)."""
         target_type: type | None = (
             cls._TYPE_MAP.get(target) if isinstance(target, str) else target
@@ -570,10 +567,10 @@ class FlextFunctional:
     at = as_type
 
     @classmethod
-    def prop(cls, key: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def prop(cls, key: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
         """Property accessor (mnemonic: pp)."""
 
-        def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
+        def getter(obj: t.ContainerValue) -> t.ContainerValue:
             """Get value from object by key."""
             if isinstance(obj, Mapping):
                 return FlextFunctional._to_general(obj.get(key))
@@ -588,12 +585,12 @@ class FlextFunctional:
     @classmethod
     def props(
         cls, *keys: str
-    ) -> Callable[[t.GeneralValueType], Mapping[str, t.GeneralValueType]]:
+    ) -> Callable[[t.ContainerValue], Mapping[str, t.ContainerValue]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.GeneralValueType) -> Mapping[str, t.GeneralValueType]:
+        def accessor(obj: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, t.GeneralValueType] = {}
+            result_dict: dict[str, t.ContainerValue] = {}
             for k in keys:
                 if isinstance(obj, Mapping):
                     result_dict[k] = FlextFunctional._to_general(obj.get(k))
@@ -608,13 +605,13 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path(cls, *keys: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def path(cls, *keys: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
         """Path accessor using chain() DSL (mnemonic: ph)."""
 
-        def make_getter(key: str) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+        def make_getter(key: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: t.GeneralValueType) -> t.GeneralValueType:
+            def getter_fn(obj: t.ContainerValue) -> t.ContainerValue:
                 """Get value from object by key."""
                 if obj is None:
                     return None
@@ -626,15 +623,15 @@ class FlextFunctional:
 
             return getter_fn
 
-        getters: list[Callable[[t.GeneralValueType], t.GeneralValueType]] = [
+        getters: list[Callable[[t.ContainerValue], t.ContainerValue]] = [
             make_getter(k) for k in keys
         ]
 
-        def path_getter(obj: t.GeneralValueType) -> t.GeneralValueType:
+        def path_getter(obj: t.ContainerValue) -> t.ContainerValue:
             """Get value at path."""
             if obj is None:
                 return None
-            result: t.GeneralValueType = obj
+            result: t.ContainerValue = obj
             for getter in getters:
                 if result is None:
                     return None

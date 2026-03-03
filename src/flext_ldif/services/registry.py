@@ -9,8 +9,8 @@ from flext_core import FlextRegistry, p
 
 from flext_ldif import t
 
-type FilterFactoryType = Callable[[], t.GeneralValueType]
-type CategorizationFactoryType = Callable[[str], t.GeneralValueType]
+type FilterFactoryType = Callable[[], t.ContainerValue]
+type CategorizationFactoryType = Callable[[str], t.ContainerValue]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
@@ -22,7 +22,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     def __init__(
         self,
         dispatcher: p.CommandBus | None = None,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data
