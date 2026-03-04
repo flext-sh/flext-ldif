@@ -22,7 +22,7 @@ from pydantic_settings import SettingsConfigDict
 from flext_ldif import FlextLdifShared, c
 
 
-@FlextSettings.auto_register("ldif")
+@FlextSettings.register_namespace("ldif", decorator=True)
 class FlextLdifSettings(FlextSettings):
     """Pydantic v2 configuration for LDIF operations (nested config pattern).
 

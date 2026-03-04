@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
 from typing import ClassVar, override
 
-from flext_core import m
+from flext_core import FlextModels
 from pydantic import ConfigDict, Field
 
 from flext_ldif import t
@@ -14,7 +14,7 @@ from flext_ldif import t
 class FlextLdifModelsMetadata:
     """LDIF metadata models container."""
 
-    class DynamicMetadata(m.Base.ArbitraryTypesModel):
+    class DynamicMetadata(FlextModels.ArbitraryTypesModel):
         """Model with extra='allow' for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -111,7 +111,7 @@ class FlextLdifModelsMetadata:
         def to_dict(self) -> Mapping[str, t.MetadataValue]:
             return dict(self.items())
 
-    class EntryMetadata(m.Base.ArbitraryTypesModel):
+    class EntryMetadata(FlextModels.ArbitraryTypesModel):
         """Entry metadata for tracking processing details."""
 
         model_config = ConfigDict(
@@ -137,7 +137,7 @@ class FlextLdifModelsMetadata:
         ) -> t.MetadataValue:
             return self._extra().get(key, default)
 
-    class TransformationInfo(m.Base.ArbitraryTypesModel):
+    class TransformationInfo(FlextModels.ArbitraryTypesModel):
         """Transformation step information stored in metadata."""
 
         model_config = ConfigDict(extra="forbid", validate_assignment=True)

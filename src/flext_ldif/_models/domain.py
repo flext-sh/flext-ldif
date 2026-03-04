@@ -30,13 +30,13 @@ from pydantic import (
 )
 
 from flext_ldif import FlextLdifShared, c, p, t
-from flext_ldif._models.base import (
-    AclElement,
-    FlextLdifModelsBase,
-    SchemaElement,
-)
+from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
+
+AclElement = FlextLdifModelsBases.AclElement
+FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
+SchemaElement = FlextLdifModelsBases.SchemaElement
 
 # Type aliases for clarity
 # Access types directly via composition - no aliases needed

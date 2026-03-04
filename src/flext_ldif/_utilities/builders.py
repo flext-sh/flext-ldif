@@ -7,17 +7,17 @@ from enum import StrEnum
 from typing import Literal, Self
 
 from flext_ldif import c
-from flext_ldif._models.settings import (
-    AclConversionConfig,
-    AttrNormalizationConfig,
-    DnNormalizationConfig,
-    FilterConfig,
-    MetadataConfig,
-    ProcessConfig,
-    TransformConfig,
-    ValidationConfig,
-    WriteConfig,
-)
+from flext_ldif.models import FlextLdifModels
+
+AclConversionConfig = FlextLdifModels.Ldif.AclConversionConfig
+AttrNormalizationConfig = FlextLdifModels.Ldif.AttrNormalizationConfig
+DnNormalizationConfig = FlextLdifModels.Ldif.DnNormalizationConfig
+FilterConfig = FlextLdifModels.Ldif.FilterConfig
+MetadataConfig = FlextLdifModels.Ldif.MetadataConfig
+ProcessConfig = FlextLdifModels.Ldif.ProcessConfig
+TransformConfig = FlextLdifModels.Ldif.TransformConfig
+ValidationConfig = FlextLdifModels.Ldif.ValidationConfig
+WriteConfig = FlextLdifModels.Ldif.WriteConfig
 
 # PROCESS CONFIG BUILDER
 

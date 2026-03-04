@@ -10,14 +10,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
-from flext_core import m, r
+from flext_core import FlextModels, r
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from flext_ldif import FlextLdifProtocols, c, t
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.base import FlextLdifModelsBases
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import FlextLdifModelsDomains
+
+FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
 
 
 # Configuration classes defined outside main class for type resolution
@@ -25,10 +29,10 @@ class FlextLdifModelsSettings:
     """LDIF configuration models container class.
 
     This class acts as a namespace container for LDIF configuration models.
-    All nested classes are accessed via m.* in the main models.py.
+    All nested classes are accessed via FlextModels.* in the main models.py.
     """
 
-    class DnNormalizationConfig(m.Value):
+    class DnNormalizationConfig(FlextModels.Value):
         """Configuration for DN normalization."""
 
         case_sensitive: bool = Field(default=False)
@@ -38,7 +42,7 @@ class FlextLdifModelsSettings:
         escape_handling: str | None = Field(default=None)
         validate_before: bool = Field(default=True)
 
-    class AttrNormalizationConfig(m.Value):
+    class AttrNormalizationConfig(FlextModels.Value):
         """Configuration for attribute normalization."""
 
         lowercase_keys: bool = Field(default=True)
@@ -49,28 +53,28 @@ class FlextLdifModelsSettings:
         trim_values: bool = Field(default=True)
         remove_empty: bool = Field(default=False)
 
-    class AclConversionConfig(m.Value):
+    class AclConversionConfig(FlextModels.Value):
         """Configuration for ACL conversion operations."""
 
         convert_aci: bool = Field(default=True)
         preserve_original_aci: bool = Field(default=False)
         map_server_specific: bool = Field(default=True)
 
-    class ValidationConfig(m.Value):
+    class ValidationConfig(FlextModels.Value):
         """Configuration for validation operations."""
 
         strict_mode: bool = Field(default=True)
         validate_schema: bool = Field(default=True)
         validate_acl: bool = Field(default=True)
 
-    class MetadataConfig(m.Value):
+    class MetadataConfig(FlextModels.Value):
         """Configuration for metadata operations."""
 
         include_timestamps: bool = Field(default=True)
         include_processing_stats: bool = Field(default=True)
         preserve_validation: bool = Field(default=False)
 
-    class ProcessConfig(m.Value):
+    class ProcessConfig(FlextModels.Value):
         """Configuration for processing operations."""
 
         batch_size: int = Field(default=100)
@@ -96,7 +100,7 @@ class FlextLdifModelsSettings:
             default=None
         )
 
-    class TransformConfig(m.Value):
+    class TransformConfig(FlextModels.Value):
         """Configuration for transformation operations."""
 
         fail_fast: bool = Field(default=False)
@@ -108,14 +112,14 @@ class FlextLdifModelsSettings:
             default=None
         )
 
-    class FilterConfig(m.Value):
+    class FilterConfig(FlextModels.Value):
         """Configuration for filtering operations."""
 
         mode: str = Field(default="include")
         case_sensitive: bool = Field(default=False)
         include_metadata_matches: bool = Field(default=False)
 
-    class WriteConfig(m.Value):
+    class WriteConfig(FlextModels.Value):
         """Configuration for write operations."""
 
         output_format: str = Field(default="ldif")
@@ -179,14 +183,14 @@ class FlextLdifModelsSettings:
     # UTILITY CONFIGURATION ALIASES (moved from _utilities/configs.py)
     # =========================================================================
 
-    class AclMetadataConfig(m.Value):
+    class AclMetadataConfig(FlextModels.Value):
         """Configuration for ACL metadata extensions.
 
         Consolidates parameters for build_metadata_extensions utility function.
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = m.AclMetadataConfig(
+            config = FlextModels.AclMetadataConfig(
                 line_breaks=[10, 20],
                 dn_spaces=True,
                 targetscope="subtree",
@@ -226,14 +230,14 @@ class FlextLdifModelsSettings:
             description="ACL action type (allow or deny) - for OUD deny rules support",
         )
 
-    class AciParserConfig(m.Value):
+    class AciParserConfig(FlextModels.Value):
         """Configuration for ACI parsing.
 
         Consolidates all parser parameters to enable generic utility methods.
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            parser_config = m.AciParserConfig(
+            parser_config = FlextModels.AciParserConfig(
                 server_type="oud",
                 aci_prefix="aci:",
                 version_acl_pattern=Constants.ACL_VERSION_ACL_PATTERN,
@@ -320,14 +324,14 @@ class FlextLdifModelsSettings:
             description="Special subject DN to (type, value) mapping",
         )
 
-    class AciWriterConfig(m.Value):
+    class AciWriterConfig(FlextModels.Value):
         """Configuration for ACI writing.
 
         Consolidates all writer parameters to enable generic utility methods.
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            writer_config = m.AciWriterConfig(
+            writer_config = FlextModels.AciWriterConfig(
                 aci_prefix="aci:",
                 version="3.0",
                 ...
@@ -380,7 +384,7 @@ class FlextLdifModelsSettings:
             description="Mapping of subject type to bind operator",
         )
 
-    class AciLineFormatConfig(m.Value):
+    class AciLineFormatConfig(FlextModels.Value):
         r"""Configuration for formatting ACI line.
 
         Consolidates parameters for format_aci_line utility function.
@@ -427,7 +431,7 @@ class FlextLdifModelsSettings:
             description="Prefix for ACI line",
         )
 
-    class ServerPatternsConfig(m.Value):
+    class ServerPatternsConfig(FlextModels.Value):
         """Configuration for server pattern matching.
 
         Consolidates parameters for matches_server_patterns utility function.
@@ -471,7 +475,7 @@ class FlextLdifModelsSettings:
             description="Keywords to search in attribute names",
         )
 
-    class AttributeDenormalizeConfig(m.Value):
+    class AttributeDenormalizeConfig(FlextModels.Value):
         """Configuration for attribute denormalization.
 
         Consolidates parameters for denormalize_attributes_batch utility function.
@@ -510,7 +514,7 @@ class FlextLdifModelsSettings:
             description="Per-attribute value mappings",
         )
 
-    class AttributeNormalizeConfig(m.Value):
+    class AttributeNormalizeConfig(FlextModels.Value):
         """Configuration for attribute normalization.
 
         Consolidates parameters for normalize_attributes_batch utility function.
@@ -554,7 +558,7 @@ class FlextLdifModelsSettings:
             description="Set of operational attribute names",
         )
 
-    class EntryCriteriaConfig(m.Value):
+    class EntryCriteriaConfig(FlextModels.Value):
         """Configuration for entry criteria matching.
 
         Consolidates parameters for matches_criteria utility function.
@@ -600,7 +604,7 @@ class FlextLdifModelsSettings:
             description="If set, entry must (True) or must not (False) be schema",
         )
 
-    class EntryTransformConfig(m.Value):
+    class EntryTransformConfig(FlextModels.Value):
         """Configuration for entry transformation.
 
         Consolidates parameters for transform_batch utility function.
@@ -650,7 +654,7 @@ class FlextLdifModelsSettings:
             description="Stop on first error",
         )
 
-    class EntryFilterConfig(m.Value):
+    class EntryFilterConfig(FlextModels.Value):
         """Configuration for entry filtering.
 
         Consolidates parameters for filter_batch utility function.
@@ -695,7 +699,7 @@ class FlextLdifModelsSettings:
             description="Convenience flag to exclude schema entries",
         )
 
-    class TransformationTrackingConfig(m.Value):
+    class TransformationTrackingConfig(FlextModels.Value):
         """Configuration for transformation tracking.
 
         Consolidates parameters for track_transformation utility function.
@@ -744,7 +748,7 @@ class FlextLdifModelsSettings:
             description="Human-readable explanation",
         )
 
-    class EntryParseMetadataConfig(m.Value):
+    class EntryParseMetadataConfig(FlextModels.Value):
         """Configuration for building entry parse metadata.
 
         Consolidates parameters for build_entry_parse_metadata utility function.
@@ -827,7 +831,7 @@ class FlextLdifModelsSettings:
             description="List of (attr, value) pairs parsed so far",
         )
 
-    class MetadataTransformationConfig(m.Value):
+    class MetadataTransformationConfig(FlextModels.Value):
         """Configuration for metadata transformation tracking.
 
         Consolidates parameters for _update_metadata_for_transformation.
@@ -869,14 +873,14 @@ class FlextLdifModelsSettings:
             description="Transformed attributes after transformation",
         )
 
-    class LogContextExtras(m.Value):
+    class LogContextExtras(FlextModels.Value):
         """Additional context fields for logging events.
 
         Replaces **extra_context: object pattern with typed Model.
         Eliminates use of object and Any types in logging functions.
 
         Example:
-            extras = m.LogContextExtras(
+            extras = FlextModels.LogContextExtras(
                 user_id="REDACTED_LDAP_BIND_PASSWORD",
                 session_id="abc123",
                 request_id="req-456",
@@ -923,7 +927,7 @@ class FlextLdifModelsSettings:
         )
         # Note: extra="allow" permits additional custom fields without declaring them
 
-    class CategoryRules(m.Rules):
+    class CategoryRules(FlextModels.Rules):
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
@@ -963,7 +967,7 @@ class FlextLdifModelsSettings:
             description="Attribute names containing ACL information",
         )
 
-    class MigrateOptions(m.Value):
+    class MigrateOptions(FlextModels.Value):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -974,7 +978,7 @@ class FlextLdifModelsSettings:
         - Categorized: Custom multi-file output (via categorization_rules)
         - Simple: Single output file (default)
 
-        Inherits from m.Value:
+        Inherits from FlextModels.Value:
         - Immutable (frozen=True)
         - Validates assignment
         - Extra fields forbidden
@@ -1036,7 +1040,7 @@ class FlextLdifModelsSettings:
             description="Sort entries by DN hierarchy depth then alphabetically",
         )
 
-    class FilterCriteria(m.ArbitraryTypesModel):
+    class FilterCriteria(FlextModels.ArbitraryTypesModel):
         """Criteria for filtering LDIF entries.
 
         Supports multiple filter types:
@@ -1079,7 +1083,7 @@ class FlextLdifModelsSettings:
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
-    class WhitelistRules(m.Rules):
+    class WhitelistRules(FlextModels.Rules):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
@@ -1123,7 +1127,7 @@ class FlextLdifModelsSettings:
             description="OID patterns for allowed ldapSyntaxes definitions",
         )
 
-    class EncodingRules(m.Value):
+    class EncodingRules(FlextModels.Value):
         """Generic encoding rules - server classes provide values."""
 
         default_encoding: Annotated[
@@ -1138,13 +1142,13 @@ class FlextLdifModelsSettings:
             default_factory=list,
         )
 
-    class DnCaseRules(m.Value):
+    class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""
 
         preserve_case: bool
         normalize_to: Literal["lower", "upper"] | None = Field(default=None)
 
-    class AclFormatRules(m.Value):
+    class AclFormatRules(FlextModels.Value):
         """Generic ACL format rules - server classes provide values."""
 
         format: str
@@ -1152,7 +1156,7 @@ class FlextLdifModelsSettings:
         requires_target: bool
         requires_subject: bool
 
-    class ServerValidationRules(m.Value):
+    class ServerValidationRules(FlextModels.Value):
         """Generic server validation rules - server classes provide values.
 
         No defaults - each server class must provide all values via Constants.
@@ -1168,7 +1172,7 @@ class FlextLdifModelsSettings:
         track_modifications: bool
         track_conversions: bool
 
-    class WriteFormatOptions(m.Value):
+    class WriteFormatOptions(FlextModels.Value):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -1440,7 +1444,7 @@ class FlextLdifModelsSettings:
             ),
         )
 
-    class WriteOutputOptions(m.ArbitraryTypesModel):
+    class WriteOutputOptions(FlextModels.ArbitraryTypesModel):
         """Output visibility options for attributes based on their marker status.
 
         This class controls how attributes are rendered in LDIF output based on
@@ -1508,7 +1512,7 @@ class FlextLdifModelsSettings:
             ),
         )
 
-    class MigrationConfig(m.Value):
+    class MigrationConfig(FlextModels.Value):
         """Configuration for migration pipeline from YAML or dict.
 
         Supports structured 6-file output (00-06) with flexible categorization,
@@ -1669,7 +1673,7 @@ class FlextLdifModelsSettings:
             ),
         )
 
-    class MigrationPipelineParams(m.Value):
+    class MigrationPipelineParams(FlextModels.Value):
         """Typed parameters for migration pipeline factory.
 
         Replaces dict-based parameter passing with type-safe Pydantic model.
@@ -1711,7 +1715,7 @@ class FlextLdifModelsSettings:
             description="If True, use lenient parsing for broken/non-compliant LDIF",
         )
 
-    class ParserParams(m.Value):
+    class ParserParams(FlextModels.Value):
         """Typed parameters for parser service factory.
 
         Provides type-safe configuration for LDIF parsing operations.
@@ -1750,7 +1754,7 @@ class FlextLdifModelsSettings:
             description="If True, validates entries against schema rules",
         )
 
-    class WriterParams(m.Value):
+    class WriterParams(FlextModels.Value):
         """Typed parameters for writer service factory.
 
         Provides type-safe configuration for LDIF writing operations.
@@ -1791,7 +1795,7 @@ class FlextLdifModelsSettings:
             description="If True, enforces strict RFC 2849 compliance",
         )
 
-    class ConfigInfo(m.Value):
+    class ConfigInfo(FlextModels.Value):
         """Configuration information for logging and introspection.
 
         Structured representation of FlextLdifSettings for reporting and diagnostics.
@@ -1828,7 +1832,7 @@ class FlextLdifModelsSettings:
             description="Whether relaxed parsing mode is enabled",
         )
 
-    class LdifContentParseConfig(m.Value):
+    class LdifContentParseConfig(FlextModels.Value):
         """Configuration for LDIF content parsing.
 
         Consolidates parameters for Content.parse method.
@@ -1891,7 +1895,7 @@ class FlextLdifModelsSettings:
             description="Optional custom LDIF parser",
         )
 
-    class EntryProcessingConfig(m.Value):
+    class EntryProcessingConfig(FlextModels.Value):
         """Configuration for entry processing.
 
         Consolidates parameters for Content.process_entries method.
@@ -1943,7 +1947,7 @@ class FlextLdifModelsSettings:
             description="Skip entries with no attributes",
         )
 
-    class ObjectClassParseConfig(m.Value):
+    class ObjectClassParseConfig(FlextModels.Value):
         """Configuration for objectClass definition parsing.
 
         Consolidates parameters for ObjectClass.parse method.
@@ -1983,7 +1987,7 @@ class FlextLdifModelsSettings:
             description="Optional metadata enrichment",
         )
 
-    class EntryParseConfig(m.Value):
+    class EntryParseConfig(FlextModels.Value):
         """Configuration for entry parsing.
 
         Consolidates parameters for Entry.parse method.
@@ -2037,7 +2041,7 @@ class FlextLdifModelsSettings:
             description="Optional attribute transformation",
         )
 
-    class EntryWriteConfig(m.Value):
+    class EntryWriteConfig(FlextModels.Value):
         """Configuration for entry writing.
 
         Consolidates parameters for Entry.write method.
@@ -2090,7 +2094,7 @@ class FlextLdifModelsSettings:
             description="Include metadata comments",
         )
 
-    class BatchWriteConfig(m.Value):
+    class BatchWriteConfig(FlextModels.Value):
         """Configuration for batch entry writing.
 
         Consolidates parameters for Batch.write method.
@@ -2128,7 +2132,7 @@ class FlextLdifModelsSettings:
             description="Separator between entries",
         )
 
-    class SortConfig(m.Value):
+    class SortConfig(FlextModels.Value):
         """Configuration for entry sorting.
 
         Consolidates parameters for FlextLdifSorting.sort method.
@@ -2178,7 +2182,7 @@ class FlextLdifModelsSettings:
             description="ACL attributes to sort",
         )
 
-    class SchemaConversionPipelineConfig(m.Value):
+    class SchemaConversionPipelineConfig(FlextModels.Value):
         """Configuration for schema conversion pipeline.
 
         Consolidates parameters for _process_schema_conversion_pipeline method.
@@ -2226,7 +2230,7 @@ class FlextLdifModelsSettings:
             description="Item name for error messages",
         )
 
-    class PermissionMappingConfig(m.Value):
+    class PermissionMappingConfig(FlextModels.Value):
         """Configuration for permission mapping during ACL conversion.
 
         Consolidates parameters for

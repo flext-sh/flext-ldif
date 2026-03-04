@@ -11,15 +11,16 @@ from typing import ClassVar, Literal, overload
 from flext_core import t, x
 from pydantic import BaseModel
 
-from flext_ldif._models.conversion import (
-    ConvertToBool,
-    ConvertToDict,
-    ConvertToFloat,
-    ConvertToInt,
-    ConvertToList,
-    ConvertToStr,
-    ConvertToTuple,
-)
+from flext_ldif._models.conversion import FlextLdifModelsConversions
+
+FlextLdifModelsConversions = FlextLdifModelsConversions.FlextLdifModelsConversions
+ConvertToBool = FlextLdifModelsConversions.ConvertToBool
+ConvertToDict = FlextLdifModelsConversions.ConvertToDict
+ConvertToFloat = FlextLdifModelsConversions.ConvertToFloat
+ConvertToInt = FlextLdifModelsConversions.ConvertToInt
+ConvertToList = FlextLdifModelsConversions.ConvertToList
+ConvertToStr = FlextLdifModelsConversions.ConvertToStr
+ConvertToTuple = FlextLdifModelsConversions.ConvertToTuple
 
 
 class FlextFunctional:

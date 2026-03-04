@@ -102,3 +102,26 @@ class AclElement(FlextModels.ArbitraryTypesModel):
     def has_server_quirks(self) -> bool:
         """Check if element uses server-specific quirks."""
         return self.server_type != "rfc"
+
+
+class FlextLdifModelsBases:
+    """Facade namespace for all FLEXT-LDIF base model classes.
+
+    Follows CLAUDE.md §2: each module organizes domain logic into
+    a single nested class hierarchy using MRO inheritance.
+
+    Usage::
+        from flext_ldif._models.base import FlextLdifModelsBases
+
+        FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
+    """
+
+    FlextLdifModelsBase = FlextLdifModelsBase
+    SchemaElement = SchemaElement
+    FrozenLdifModel = FrozenLdifModel
+    FrozenIgnoreLdifModel = FrozenIgnoreLdifModel
+    MutableIgnoreLdifModel = MutableIgnoreLdifModel
+    AclElement = AclElement
+
+
+__all__ = ["FlextLdifModelsBases"]

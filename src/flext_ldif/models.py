@@ -17,23 +17,15 @@ from flext_core import FlextModels
 from pydantic import Field
 
 from flext_ldif import c, p, t
+from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.processing import ProcessingResult
+from flext_ldif._models.processing import FlextLdifModelsProcessing
 from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._models.settings import (
-    AclConversionConfig,
-    AttrNormalizationConfig,
-    DnNormalizationConfig,
-    FilterConfig,
-    FlextLdifModelsSettings,
-    MetadataConfig,
-    ProcessConfig,
-    TransformConfig,
-    ValidationConfig,
-    WriteConfig,
-)
+from flext_ldif._models.settings import FlextLdifModelsSettings
+
+ProcessingResult = FlextLdifModelsProcessing.ProcessingResult
 
 
 class FlextLdifModels(FlextModels):
@@ -244,31 +236,31 @@ class FlextLdifModels(FlextModels):
         class WriteFormatOptions(FlextLdifModelsSettings.WriteFormatOptions):
             """Write format options."""
 
-        class DnNormalizationConfig(DnNormalizationConfig):
+        class DnNormalizationConfig(FlextLdifModelsSettings.DnNormalizationConfig):
             """DN normalization configuration."""
 
-        class AttrNormalizationConfig(AttrNormalizationConfig):
+        class AttrNormalizationConfig(FlextLdifModelsSettings.AttrNormalizationConfig):
             """Attribute normalization configuration."""
 
-        class AclConversionConfig(AclConversionConfig):
+        class AclConversionConfig(FlextLdifModelsSettings.AclConversionConfig):
             """ACL conversion configuration."""
 
-        class ValidationConfig(ValidationConfig):
+        class ValidationConfig(FlextLdifModelsSettings.ValidationConfig):
             """Validation configuration."""
 
-        class MetadataConfig(MetadataConfig):
+        class MetadataConfig(FlextLdifModelsSettings.MetadataConfig):
             """Metadata configuration."""
 
-        class ProcessConfig(ProcessConfig):
+        class ProcessConfig(FlextLdifModelsSettings.ProcessConfig):
             """Process configuration."""
 
-        class TransformConfig(TransformConfig):
+        class TransformConfig(FlextLdifModelsSettings.TransformConfig):
             """Transform configuration."""
 
-        class FilterConfig(FilterConfig):
+        class FilterConfig(FlextLdifModelsSettings.FilterConfig):
             """Filter configuration."""
 
-        class WriteConfig(WriteConfig):
+        class WriteConfig(FlextLdifModelsSettings.WriteConfig):
             """Write configuration."""
 
         # =================================================================
@@ -363,10 +355,10 @@ class FlextLdifModels(FlextModels):
         class EntryResult(FlextLdifModelsResults.EntryResult):
             """Entry result."""
 
-        class DynamicCounts(FlextLdifModelsResults.DynamicCounts):
+        class DynamicCounts(FlextLdifModelsCollections.DynamicCounts):
             """Dynamic counts."""
 
-        class FlexibleCategories(FlextLdifModelsResults.FlexibleCategories):
+        class FlexibleCategories(FlextLdifModelsCollections.FlexibleCategories):
             """Flexible categories."""
 
         class ClientStatus(FlextLdifModelsResults.ClientStatus):
@@ -384,17 +376,16 @@ class FlextLdifModels(FlextModels):
         class DictAccessibleValue(FlextLdifModelsResults.DictAccessibleValue):
             """Dict-accessible value."""
 
-        class BooleanFlags(FlextLdifModelsResults.BooleanFlags):
+        class BooleanFlags(FlextLdifModelsCollections.BooleanFlags):
             """Boolean flags."""
 
-        class ConfigSettings(FlextLdifModelsResults.ConfigSettings):
+        class ConfigSettings(FlextLdifModelsCollections.ConfigSettings):
             """Config settings."""
 
-        class CategoryPaths(FlextLdifModelsResults.CategoryPaths):
+        class CategoryPaths(FlextLdifModelsCollections.CategoryPaths):
             """Category paths."""
 
-        class EventType(FlextLdifModelsResults.EventType):
-            """Event type."""
+        EventType: TypeAlias = FlextLdifModelsResults.EventType
 
         class SyntaxServiceStatus(FlextLdifModelsResults.SyntaxServiceStatus):
             """Syntax service status."""
