@@ -10,6 +10,7 @@ from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.events import FlextLdifModelsEvents
 
 
 class FlextLdifModelsResults:
@@ -280,7 +281,7 @@ class FlextLdifModelsResults:
             self,
             other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
-            merged_reasons = dict(self.rejection_reasons)
+            merged_reasons: dict[str, int] = dict(self.rejection_reasons.items())
             for reason, count in other.rejection_reasons.items():
                 merged_reasons[reason] = merged_reasons.get(reason, 0) + count
             sum_fields = {
@@ -317,8 +318,12 @@ class FlextLdifModelsResults:
                 "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
                     **merged_reasons
                 ),
-                "events": [*self.events, *other.events],
             }
+            events_merged: list[FlextLdifModelsResults.EventType] = [
+                *self.events,
+                *other.events,
+            ]
+            updates["events"] = events_merged
             return self.model_copy(update=updates)
 
     class MigrationPipelineResult(FlextLdifModelsBases.FlextLdifModelsBase):
@@ -364,8 +369,8 @@ class FlextLdifModelsResults:
         model_config = ConfigDict(frozen=True, validate_default=True)
         status: str = Field()
         services: list[str] = Field(default_factory=list)
-        config: FlextLdifModelsResults.ConfigSettings = Field(
-            default_factory=FlextLdifModelsResults.ConfigSettings
+        config: FlextLdifModelsCollections.ConfigSettings = Field(
+            default_factory=FlextLdifModelsCollections.ConfigSettings
         )
 
     class ValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
@@ -413,7 +418,6 @@ class FlextLdifModelsResults:
         )
         rejection_rate: float = Field()
         rejection_count: int = Field()
-        rejection_reasons: list[str] = Field()
         written_counts: FlextLdifModelsCollections.DynamicCounts = Field(
             default_factory=FlextLdifModelsCollections.DynamicCounts
         )
@@ -431,6 +435,8 @@ class FlextLdifModelsResults:
         )
 
     class DictAccessibleValue(m.Value):
+        """Temporary wrapper for values accessed like dicts."""
+
         def _resolve_key(self, key: str) -> t.ContainerValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
@@ -463,7 +469,16 @@ class FlextLdifModelsResults:
             return list(self.model_fields_set)
 
         def items(self) -> list[tuple[str, t.Scalar]]:
-            return [(key, getattr(self, key)) for key in self.model_fields_set]
+            results: list[tuple[str, t.Scalar]] = []
+            for key in self.model_fields_set:
+                val = getattr(self, key)
+                if isinstance(val, str | int | float | bool):
+                    results.append((key, val))
+                elif val is None:
+                    continue
+                else:
+                    results.append((key, str(val)))
+            return results
 
     class ServiceStatus(DictAccessibleValue):
         service: str = Field()
@@ -496,6 +511,33 @@ class FlextLdifModelsResults:
         rfc_compliance: str = Field()
         validation_types: list[str] = Field()
 
+    class BatchValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
+        valid: bool = Field()
+        errors: list[str] = Field()
+        failed_entries: int = Field()
+
+    class ParsingSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+        total_parsed: int = Field()
+        total_failed: int = Field()
+        error_distribution: FlextLdifModelsCollections.DynamicCounts = Field(
+            default_factory=FlextLdifModelsCollections.DynamicCounts
+        )
+
+    class RdbmsTableSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+        table_name: str = Field()
+        row_count: int = Field()
+        columns: list[str] = Field()
+
+    class LdapConversionResult(FlextLdifModelsBases.FlextLdifModelsBase):
+        success: bool = Field()
+        errors: list[str] = Field()
+        converted_count: int = Field()
+
+    class RfcValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
+        is_valid: bool = Field()
+        violations: list[str] = Field()
+        validation_types: list[str] = Field()
+
     class ValidationBatchResult(FlextLdifModelsBases.FlextLdifModelsBase):
         results: FlextLdifModelsCollections.BooleanFlags = Field(
             default_factory=FlextLdifModelsCollections.BooleanFlags
@@ -516,7 +558,7 @@ class FlextLdifModelsResults:
 
     class AclResponse(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
-        acls: list[FlextLdifModelsDomains.Acl] = Field(default_factory=list)
+        acls: Sequence[FlextLdifModelsDomains.Acl] = Field(default_factory=list)
         statistics: FlextLdifModelsResults.Statistics = Field()
 
     class AclEvaluationResult(m.Value):
