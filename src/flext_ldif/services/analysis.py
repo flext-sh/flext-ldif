@@ -12,23 +12,23 @@ from flext_ldif import FlextLdifValidation, m, s, t, u
 
 
 class FlextLdifAnalysis(
-    s[m.Ldif.Results.EntryAnalysisResult],
+    s[m.Ldif.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation."""
 
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.Results.EntryAnalysisResult]:
+    ) -> r[m.Ldif.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class."""
-        return r[m.Ldif.Results.EntryAnalysisResult].fail(
+        return r[m.Ldif.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
     @staticmethod
     def analyze(
         entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.Results.EntryAnalysisResult]:
+    ) -> r[m.Ldif.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics."""
         total_entries = len(entries)
 
@@ -50,10 +50,10 @@ class FlextLdifAnalysis(
             with contextlib.suppress(Exception):
                 process_entry(entry)
 
-        return r[m.Ldif.Results.EntryAnalysisResult].ok(
-            m.Ldif.Results.EntryAnalysisResult(
+        return r[m.Ldif.EntryAnalysisResult].ok(
+            m.Ldif.EntryAnalysisResult(
                 total_entries=total_entries,
-                objectclass_distribution=m.Ldif.Results.DynamicCounts(
+                objectclass_distribution=m.Ldif.DynamicCounts(
                     **objectclass_distribution,
                 ),
                 patterns_detected=sorted(patterns_detected),
@@ -64,7 +64,7 @@ class FlextLdifAnalysis(
     def validate_entries(
         entries: list[m.Ldif.Entry],
         validation_service: FlextLdifValidation,
-    ) -> r[m.Ldif.Results.ValidationResult]:
+    ) -> r[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         errors: list[str] = []
         valid_count = 0
@@ -86,8 +86,8 @@ class FlextLdifAnalysis(
         total_entries = u.count(entries)
         invalid_count = total_entries - valid_count
 
-        return r[m.Ldif.Results.ValidationResult].ok(
-            m.Ldif.Results.ValidationResult(
+        return r[m.Ldif.ValidationResult].ok(
+            m.Ldif.ValidationResult(
                 is_valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,

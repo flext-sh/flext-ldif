@@ -10,310 +10,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
-from flext_core import m, r, t
+from flext_core import m, r
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from flext_ldif import FlextLdifProtocols, c
+from flext_ldif import FlextLdifProtocols, c, t
 from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.rfc_validation_types import Rfc4512Descriptor
-from flext_ldif._models.shared import SchemaObjectClass
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 # Configuration classes defined outside main class for type resolution
-class DnNormalizationConfig(m.Value):
-    """Configuration for DN normalization."""
-
-    case_sensitive: bool = Field(default=False)
-    remove_spaces: bool = Field(default=True)
-    case_fold: str | None = Field(default=None)
-    space_handling: str | None = Field(default=None)
-    escape_handling: str | None = Field(default=None)
-    validate_before: bool = Field(default=True)
-
-
-class AttrNormalizationConfig(m.Value):
-    """Configuration for attribute normalization."""
-
-    lowercase_keys: bool = Field(default=True)
-    sort_values: bool = Field(default=True)
-    sort_attributes: str | None = Field(default=None)
-    normalize_whitespace: bool = Field(default=True)
-    case_fold_names: bool = Field(default=True)
-    trim_values: bool = Field(default=True)
-    remove_empty: bool = Field(default=False)
-
-
-class AclConversionConfig(m.Value):
-    """Configuration for ACL conversion operations."""
-
-    convert_aci: bool = Field(default=True)
-    preserve_original_aci: bool = Field(default=False)
-    map_server_specific: bool = Field(default=True)
-
-
-class ValidationConfig(m.Value):
-    """Configuration for validation operations."""
-
-    strict_mode: bool = Field(default=True)
-    validate_schema: bool = Field(default=True)
-    validate_acl: bool = Field(default=True)
-
-
-class MetadataConfig(m.Value):
-    """Configuration for metadata operations."""
-
-    include_timestamps: bool = Field(default=True)
-    include_processing_stats: bool = Field(default=True)
-    preserve_validation: bool = Field(default=False)
-
-
-class ProcessConfig(m.Value):
-    """Configuration for processing operations."""
-
-    batch_size: int = Field(default=100)
-    timeout_seconds: int = Field(default=300)
-    max_retries: int = Field(default=3)
-
-    # Processing pipeline configuration
-    source_server: str | None = Field(default=None)
-    target_server: str | None = Field(default=None)
-    dn_config: DnNormalizationConfig | None = Field(default=None)
-    attr_config: AttrNormalizationConfig | None = Field(default=None)
-    acl_config: AclConversionConfig | None = Field(default=None)
-    validation_config: ValidationConfig | None = Field(default=None)
-    metadata_config: MetadataConfig | None = Field(default=None)
-
-
-class TransformConfig(m.Value):
-    """Configuration for transformation operations."""
-
-    fail_fast: bool = Field(default=False)
-    preserve_order: bool = Field(default=True)
-    track_changes: bool = Field(default=False)
-    normalize_dns: bool = Field(default=False)
-    normalize_attrs: bool = Field(default=False)
-    process_config: ProcessConfig | None = Field(default=None)
-
-
-class FilterConfig(m.Value):
-    """Configuration for filtering operations."""
-
-    mode: str = Field(default="include")
-    case_sensitive: bool = Field(default=False)
-    include_metadata_matches: bool = Field(default=False)
-
-
-class WriteConfig(m.Value):
-    """Configuration for write operations."""
-
-    output_format: str = Field(default="ldif")
-    format: str = Field(default="ldif")  # Alias for output_format
-    line_width: int | None = Field(default=None)
-    fold_lines: bool = Field(default=True)
-    base64_attrs: list[str] | None = Field(default=None)
-    sort_by: str | None = Field(default=None)
-    attr_order: list[str] | None = Field(default=None)
-    include_metadata: bool = Field(default=False)
-    server: str | None = Field(default=None)
-
-
-# =========================================================================
-# UTILITY CONFIGURATION MODELS (private)
-# Canonical definitions moved from _utilities/configs.py.
-# Accessed via FlextLdifModelsSettings.<Name> aliases.
-# =========================================================================
-
-
-class UtilMetadataPreserveConfig(BaseModel):
-    """Configuration for metadata preservation."""
-
-    model_config = ConfigDict(frozen=False)
-
-    original: bool = Field(default=False)
-    tracking: bool = Field(default=False)
-    validation: bool = Field(default=False)
-
-
-class UtilDnNormalizationConfig(BaseModel):
-    """DN (Distinguished Name) normalization configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    case_fold: c.Ldif.CaseFoldOption = Field(default=c.Ldif.CaseFoldOption.LOWER)
-    space_handling: c.Ldif.SpaceHandlingOption = Field(
-        default=c.Ldif.SpaceHandlingOption.PRESERVE,
-    )
-    validate_before: bool = Field(
-        default=True,
-        description="Validate DN before normalization",
-    )
-
-
-class UtilAttrNormalizationConfig(BaseModel):
-    """Attribute normalization configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    sort_values: bool = Field(default=True)
-    normalize_whitespace: bool = Field(default=True)
-    case_fold_names: bool = Field(default=True, description="Lowercase attribute names")
-    trim_values: bool = Field(default=True, description="Trim whitespace from values")
-    remove_empty: bool = Field(
-        default=False,
-        description="Remove empty attribute values",
-    )
-
-
-class UtilAclConversionConfig(BaseModel):
-    """ACL (Access Control List) conversion configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    convert_aci: bool = Field(default=True)
-    preserve_original_aci: bool = Field(default=False)
-    map_server_specific: bool = Field(default=True)
-
-
-class UtilMetadataConfig(BaseModel):
-    """Metadata preservation configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    preserve_original: bool = Field(default=True)
-    preserve_tracking: bool = Field(default=True)
-    preserve_validation: bool = Field(default=False)
-
-
-class UtilValidationConfig(BaseModel):
-    """Validation configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    strict_rfc: bool = Field(default=False)
-    allow_server_quirks: bool = Field(default=True)
-    validate_dn_format: bool = Field(default=True)
-
-
-class UtilFilterConfig(BaseModel):
-    """Entry filtering configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    filter_expression: str | None = Field(default=None)
-    exclude_filter: str | None = Field(default=None)
-    include_operational: bool = Field(default=False)
-    mode: Literal["all", "any"] = Field(
-        default="all",
-        description="Filter combination mode (all=AND, any=OR)",
-    )
-    case_sensitive: bool = Field(default=False, description="Case-sensitive matching")
-    include_metadata_matches: bool = Field(
-        default=False,
-        description="Match against metadata fields",
-    )
-
-
-class UtilProcessConfig(BaseModel):
-    """Main process configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    source_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
-    target_server: c.Ldif.ServerTypes = Field(default=c.Ldif.ServerTypes.RFC)
-    dn_config: UtilDnNormalizationConfig = Field(
-        default_factory=UtilDnNormalizationConfig,
-    )
-    attr_config: UtilAttrNormalizationConfig = Field(
-        default_factory=UtilAttrNormalizationConfig,
-    )
-    acl_config: UtilAclConversionConfig = Field(
-        default_factory=UtilAclConversionConfig,
-    )
-    validation_config: UtilValidationConfig = Field(
-        default_factory=UtilValidationConfig,
-    )
-    metadata_config: UtilMetadataConfig = Field(
-        default_factory=UtilMetadataConfig,
-    )
-
-
-class UtilTransformConfig(BaseModel):
-    """Transformation pipeline configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    process_config: UtilProcessConfig = Field(default_factory=UtilProcessConfig)
-    filter_config: UtilFilterConfig = Field(default_factory=UtilFilterConfig)
-    normalize_dns: bool = Field(default=True)
-    normalize_attrs: bool = Field(default=True)
-    convert_acls: bool = Field(default=True)
-    fail_fast: bool = Field(default=True, description="Stop on first error")
-    preserve_order: bool = Field(default=True, description="Preserve entry order")
-    track_changes: bool = Field(default=True, description="Track changes in metadata")
-
-
-class UtilWriteConfig(BaseModel):
-    """LDIF output/write configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    version: int = Field(default=1, ge=1)
-    wrap_lines: bool = Field(default=True)
-    line_length: int = Field(default=76, ge=10)
-    line_width: int = Field(default=76, ge=10, description="Alias for line_length")
-    fold_lines: bool = Field(default=True, description="Alias for wrap_lines")
-    base64_attrs: Sequence[str] | Literal["auto"] = Field(
-        default="auto",
-        description="Attributes to encode in base64",
-    )
-    attr_order: Sequence[str] | None = Field(
-        default=None,
-        description="Preferred attribute order",
-    )
-    include_metadata: bool = Field(
-        default=False,
-        description="Include metadata in output",
-    )
-
-
-class UtilLoadConfig(BaseModel):
-    """LDIF file loading configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    file_path: str = Field(default="")
-    encoding: str = Field(default="utf-8")
-    ignore_errors: bool = Field(default=False)
-    skip_comments: bool = Field(default=False)
-
-
-class UtilSchemaParseConfig(BaseModel):
-    """Schema parsing configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    parse_attributes: bool = Field(default=True)
-    parse_objectclasses: bool = Field(default=True)
-    parse_matching_rules: bool = Field(default=False)
-    parse_syntaxes: bool = Field(default=False)
-
-
-class UtilValidationRuleSet(BaseModel):
-    """Validation rule set configuration."""
-
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
-
-    name: str = Field(default="default")
-    strict_mode: bool = Field(default=False)
-    allow_undefined_attrs: bool = Field(default=True)
-    allow_undefined_ocs: bool = Field(default=True)
-
-
 class FlextLdifModelsSettings:
     """LDIF configuration models container class.
 
@@ -321,24 +28,156 @@ class FlextLdifModelsSettings:
     All nested classes are accessed via m.* in the main models.py.
     """
 
+    class DnNormalizationConfig(m.Value):
+        """Configuration for DN normalization."""
+
+        case_sensitive: bool = Field(default=False)
+        remove_spaces: bool = Field(default=True)
+        case_fold: str | None = Field(default=None)
+        space_handling: str | None = Field(default=None)
+        escape_handling: str | None = Field(default=None)
+        validate_before: bool = Field(default=True)
+
+    class AttrNormalizationConfig(m.Value):
+        """Configuration for attribute normalization."""
+
+        lowercase_keys: bool = Field(default=True)
+        sort_values: bool = Field(default=True)
+        sort_attributes: str | None = Field(default=None)
+        normalize_whitespace: bool = Field(default=True)
+        case_fold_names: bool = Field(default=True)
+        trim_values: bool = Field(default=True)
+        remove_empty: bool = Field(default=False)
+
+    class AclConversionConfig(m.Value):
+        """Configuration for ACL conversion operations."""
+
+        convert_aci: bool = Field(default=True)
+        preserve_original_aci: bool = Field(default=False)
+        map_server_specific: bool = Field(default=True)
+
+    class ValidationConfig(m.Value):
+        """Configuration for validation operations."""
+
+        strict_mode: bool = Field(default=True)
+        validate_schema: bool = Field(default=True)
+        validate_acl: bool = Field(default=True)
+
+    class MetadataConfig(m.Value):
+        """Configuration for metadata operations."""
+
+        include_timestamps: bool = Field(default=True)
+        include_processing_stats: bool = Field(default=True)
+        preserve_validation: bool = Field(default=False)
+
+    class ProcessConfig(m.Value):
+        """Configuration for processing operations."""
+
+        batch_size: int = Field(default=100)
+        timeout_seconds: int = Field(default=300)
+        max_retries: int = Field(default=3)
+
+        # Processing pipeline configuration
+        source_server: str | None = Field(default=None)
+        target_server: str | None = Field(default=None)
+        dn_config: FlextLdifModelsSettings.DnNormalizationConfig | None = Field(
+            default=None
+        )
+        attr_config: FlextLdifModelsSettings.AttrNormalizationConfig | None = Field(
+            default=None
+        )
+        acl_config: FlextLdifModelsSettings.AclConversionConfig | None = Field(
+            default=None
+        )
+        validation_config: FlextLdifModelsSettings.ValidationConfig | None = Field(
+            default=None
+        )
+        metadata_config: FlextLdifModelsSettings.MetadataConfig | None = Field(
+            default=None
+        )
+
+    class TransformConfig(m.Value):
+        """Configuration for transformation operations."""
+
+        fail_fast: bool = Field(default=False)
+        preserve_order: bool = Field(default=True)
+        track_changes: bool = Field(default=False)
+        normalize_dns: bool = Field(default=False)
+        normalize_attrs: bool = Field(default=False)
+        process_config: FlextLdifModelsSettings.ProcessConfig | None = Field(
+            default=None
+        )
+
+    class FilterConfig(m.Value):
+        """Configuration for filtering operations."""
+
+        mode: str = Field(default="include")
+        case_sensitive: bool = Field(default=False)
+        include_metadata_matches: bool = Field(default=False)
+
+    class WriteConfig(m.Value):
+        """Configuration for write operations."""
+
+        output_format: str = Field(default="ldif")
+        format: str = Field(default="ldif")  # Alias for output_format
+        line_width: int | None = Field(default=None)
+        fold_lines: bool = Field(default=True)
+        base64_attrs: list[str] | None = Field(default=None)
+        sort_by: str | None = Field(default=None)
+        attr_order: list[str] | None = Field(default=None)
+        include_metadata: bool = Field(default=False)
+        server: str | None = Field(default=None)
+
+    # =========================================================================
+    # UTILITY CONFIGURATION MODELS (private)
+    # Canonical definitions moved from _utilities/configs.py.
+    # Accessed via FlextLdifModelsSettings.<Name> aliases.
+    # =========================================================================
+
+    class MetadataPreserveConfig(BaseModel):
+        """Configuration for metadata preservation."""
+
+        model_config = ConfigDict(frozen=False)
+
+        original: bool = Field(default=False)
+        tracking: bool = Field(default=False)
+        validation: bool = Field(default=False)
+
+    class LoadConfig(BaseModel):
+        """LDIF file loading configuration."""
+
+        model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+        file_path: str = Field(default="")
+        encoding: str = Field(default="utf-8")
+        ignore_errors: bool = Field(default=False)
+        skip_comments: bool = Field(default=False)
+
+    class SchemaParseConfig(BaseModel):
+        """Schema parsing configuration."""
+
+        model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+        parse_attributes: bool = Field(default=True)
+        parse_objectclasses: bool = Field(default=True)
+        parse_matching_rules: bool = Field(default=False)
+        parse_syntaxes: bool = Field(default=False)
+
+    class ValidationRuleSet(BaseModel):
+        """Validation rule set configuration."""
+
+        model_config = ConfigDict(frozen=False, validate_assignment=True)
+
+        name: str = Field(default="default")
+        strict_mode: bool = Field(default=False)
+        allow_undefined_attrs: bool = Field(default=True)
+        allow_undefined_ocs: bool = Field(default=True)
+
     # Access configuration classes directly via composition - no aliases needed
 
     # =========================================================================
     # UTILITY CONFIGURATION ALIASES (moved from _utilities/configs.py)
     # =========================================================================
-    MetadataPreserveConfig = UtilMetadataPreserveConfig
-    DnNormalizationConfig = UtilDnNormalizationConfig
-    AttrNormalizationConfig = UtilAttrNormalizationConfig
-    AclConversionConfig = UtilAclConversionConfig
-    MetadataConfig = UtilMetadataConfig
-    UtilValidationConfig = UtilValidationConfig
-    UtilFilterConfig = UtilFilterConfig
-    UtilProcessConfig = UtilProcessConfig
-    UtilTransformConfig = UtilTransformConfig
-    UtilWriteConfig = UtilWriteConfig
-    LoadConfig = UtilLoadConfig
-    SchemaParseConfig = UtilSchemaParseConfig
-    ValidationRuleSet = UtilValidationRuleSet
 
     class AclMetadataConfig(m.Value):
         """Configuration for ACL metadata extensions.
@@ -956,13 +795,13 @@ class FlextLdifModelsSettings:
             description="Mapping of attribute names to original case",
         )
 
-    class RdnProcessingConfig(m.Config):
+    class RdnProcessingConfig(BaseModel):
         """Mutable configuration for RDN character processing.
 
         Consolidates parameters for _process_rdn_char and _advance_rdn_position.
         Reduces function signature from 7 parameters to 1 model.
 
-        Note: This inherits from Config (mutable) instead of Value (frozen)
+        Note: This inherits from ConfigMap (mutable) instead of Value (frozen)
         because the parsing logic mutates state during RDN processing.
         """
 
@@ -1146,7 +985,7 @@ class FlextLdifModelsSettings:
             default=None,
             description="Structured migration config with 6-file output and tracking",
         )
-        write_options: FlextLdifModelsSettings.UtilWriteConfig | None = Field(
+        write_options: FlextLdifModelsSettings.WriteConfig | None = Field(
             default=None,
             description="Write options for migration",
         )
@@ -1309,7 +1148,7 @@ class FlextLdifModelsSettings:
         """Generic ACL format rules - server classes provide values."""
 
         format: str
-        attribute_name: Rfc4512Descriptor
+        attribute_name: t.Ldif.Rfc.Rfc4512Descriptor
         requires_target: bool
         requires_subject: bool
 
@@ -2137,7 +1976,9 @@ class FlextLdifModelsSettings:
             default=None,
             description="Optional SUP transformation",
         )
-        enrich_metadata_hook: Callable[[SchemaObjectClass], None] | None = Field(
+        enrich_metadata_hook: (
+            Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None
+        ) = Field(
             default=None,
             description="Optional metadata enrichment",
         )

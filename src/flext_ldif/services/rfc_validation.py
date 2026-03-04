@@ -10,16 +10,11 @@ from flext_core import d, r, t
 from pydantic import Field
 
 from flext_ldif import FlextLdifServiceBase, c, m
-from flext_ldif._models.results import _BooleanFlags
-from flext_ldif._models.rfc_validation_types import (
-    is_valid_rfc2849_attribute_value,
-    is_valid_rfc4512_descriptor,
-    is_valid_rfc4514_dn_component,
-)
+from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[m.Ldif.Results.ValidationServiceStatus],
+    FlextLdifServiceBase[m.Ldif.ValidationServiceStatus],
 ):
     """FlextLdifValidation class."""
 
@@ -28,13 +23,12 @@ class FlextLdifValidation(
     max_attr_value_length: int | None = Field(default=None)
 
     @override
-    @d.log_operation("validation_service_check")
-    @d.track_performance()
+    @d.track_operation("validation_service_check")
     def execute(
         self,
-    ) -> r[m.Ldif.Results.ValidationServiceStatus]:
-        return r[m.Ldif.Results.ValidationServiceStatus].ok(
-            m.Ldif.Results.ValidationServiceStatus(
+    ) -> r[m.Ldif.ValidationServiceStatus]:
+        return r[m.Ldif.ValidationServiceStatus].ok(
+            m.Ldif.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
                 rfc_compliance="RFC 2849, RFC 4512",
@@ -63,7 +57,7 @@ class FlextLdifValidation(
         """With_max_attr_value_length method."""
         return self.model_copy(update={"max_attr_value_length": length})
 
-    @d.track_performance()
+    @d.track_operation()
     def build(self) -> m.Ldif.ValidationBatchResult:
         """Build method."""
         result: dict[str, bool] = {}
@@ -78,13 +72,15 @@ class FlextLdifValidation(
             if obj_result.is_success:
                 result[name] = obj_result.value
 
-        results_flags = _BooleanFlags(**result)
+        results_flags = m.Ldif.BooleanFlags(**result)
         return m.Ldif.ValidationBatchResult(results=results_flags)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""
         try:
-            return r[bool].ok(is_valid_rfc4512_descriptor(name))
+            return r[bool].ok(
+                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4512_descriptor(name),
+            )
         except (
             ValueError,
             KeyError,
@@ -116,7 +112,11 @@ class FlextLdifValidation(
             if len(value) > max_len:
                 return r[bool].ok(False)
 
-            return r[bool].ok(is_valid_rfc2849_attribute_value(value))
+            return r[bool].ok(
+                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc2849_attribute_value(
+                    value,
+                ),
+            )
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate attribute value: {e}")
 
@@ -129,10 +129,15 @@ class FlextLdifValidation(
         try:
             if not isinstance(value, str):
                 return r[bool].ok(False)
-            if not is_valid_rfc4512_descriptor(attr):
+            if not FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4512_descriptor(attr):
                 return r[bool].ok(False)
             dn_value = value.replace(",", r"\,")
-            return r[bool].ok(is_valid_rfc4514_dn_component(attr, dn_value))
+            return r[bool].ok(
+                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4514_dn_component(
+                    attr,
+                    dn_value,
+                ),
+            )
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate DN component: {e}")
 

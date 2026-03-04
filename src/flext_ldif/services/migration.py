@@ -15,7 +15,7 @@ logger: Final = FlextLogger(__name__)
 
 
 class FlextLdifMigrationPipeline(
-    s[m.Ldif.Results.MigrationPipelineResult],
+    s[m.Ldif.MigrationPipelineResult],
 ):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
@@ -152,11 +152,11 @@ class FlextLdifMigrationPipeline(
         self,
         input_file: Path,
         output_file: Path | None = None,
-    ) -> r[m.Ldif.Results.MigrationPipelineResult]:
+    ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate a single LDIF file."""
         try:
             if not input_file.exists():
-                return r[m.Ldif.Results.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
                 )
 
@@ -169,7 +169,7 @@ class FlextLdifMigrationPipeline(
             )
 
             if parse_result.is_failure:
-                return r[m.Ldif.Results.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Parse failed: {parse_result.error}",
                 )
 
@@ -182,7 +182,7 @@ class FlextLdifMigrationPipeline(
 
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.is_failure:
-                return r[m.Ldif.Results.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Migration failed: {migrate_result.error}",
                 )
 
@@ -191,7 +191,7 @@ class FlextLdifMigrationPipeline(
             if output_file is None:
                 out_dir = self.output_dir
                 if out_dir is None:
-                    return r[m.Ldif.Results.MigrationPipelineResult].fail(
+                    return r[m.Ldif.MigrationPipelineResult].fail(
                         "No output file or output_dir specified",
                     )
                 filename = self.output_filename or input_file.name
@@ -204,7 +204,7 @@ class FlextLdifMigrationPipeline(
             )
 
             if write_result.is_failure:
-                return r[m.Ldif.Results.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Write failed: {write_result.error}",
                 )
 
@@ -214,16 +214,16 @@ class FlextLdifMigrationPipeline(
 
             converted_entries: list[m.Ldif.Entry] = list(migrated)
 
-            result = m.Ldif.Results.MigrationPipelineResult(
+            result = m.Ldif.MigrationPipelineResult(
                 entries=converted_entries,
                 output_files=[str(output_file)],
-                stats=m.Ldif.Results.Statistics(
+                stats=m.Ldif.Statistics(
                     total_entries=len(entries_list),
                     processed_entries=len(migrated),
                 ),
             )
 
-            return r[m.Ldif.Results.MigrationPipelineResult].ok(result)
+            return r[m.Ldif.MigrationPipelineResult].ok(result)
 
         except (
             ValueError,
@@ -236,28 +236,28 @@ class FlextLdifMigrationPipeline(
                 "File migration failed",
                 input_file=str(input_file),
             )
-            return r[m.Ldif.Results.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 f"File migration failed: {e}",
             )
 
     @override
-    def execute(self) -> r[m.Ldif.Results.MigrationPipelineResult]:
+    def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir."""
         in_dir = self.input_dir
         out_dir = self.output_dir
 
         if in_dir is None:
-            return r[m.Ldif.Results.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 "No input_dir specified",
             )
 
         if out_dir is None:
-            return r[m.Ldif.Results.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 "No output_dir specified",
             )
 
         if not in_dir.exists():
-            return r[m.Ldif.Results.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Input directory not found: {in_dir}",
             )
 
@@ -292,16 +292,16 @@ class FlextLdifMigrationPipeline(
 
             converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
 
-            pipeline_result = m.Ldif.Results.MigrationPipelineResult(
+            pipeline_result = m.Ldif.MigrationPipelineResult(
                 entries=converted_all_entries,
                 output_files=output_files,
-                stats=m.Ldif.Results.Statistics(
+                stats=m.Ldif.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                 ),
             )
 
-            return r[m.Ldif.Results.MigrationPipelineResult].ok(pipeline_result)
+            return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
 
         except (
             ValueError,
@@ -311,7 +311,7 @@ class FlextLdifMigrationPipeline(
             struct.error,
         ) as e:
             logger.exception("Migration pipeline failed")
-            return r[m.Ldif.Results.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Migration pipeline failed: {e}",
             )
 

@@ -12,7 +12,7 @@ from flext_core import r
 from flext_ldif import FlextLdifServer, m, s, t, u
 
 
-class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
+class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     """Direct LDIF writing service using flext-core APIs."""
 
     _server: FlextLdifServer
@@ -107,11 +107,11 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         path: Path,
         server_type: str | None = None,
         format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
-    ) -> r[m.Ldif.Results.WriteResponse]:
+    ) -> r[m.Ldif.WriteResponse]:
         """Write entries to LDIF file."""
         string_result = self.write_to_string(entries, server_type, format_options)
         if string_result.is_failure:
-            return r[m.Ldif.Results.WriteResponse].fail(
+            return r[m.Ldif.WriteResponse].fail(
                 string_result.error or "Failed to generate LDIF content",
             )
 
@@ -120,26 +120,26 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            return r[m.Ldif.Results.WriteResponse].fail(
+            return r[m.Ldif.WriteResponse].fail(
                 f"Failed to create parent directories for {path}: {e}",
             )
 
         try:
             _ = path.write_text(ldif_content, encoding="utf-8")
         except (OSError, UnicodeEncodeError) as e:
-            return r[m.Ldif.Results.WriteResponse].fail(
+            return r[m.Ldif.WriteResponse].fail(
                 f"Failed to write LDIF file {path}: {e}",
             )
 
-        response = m.Ldif.Results.WriteResponse(
+        response = m.Ldif.WriteResponse(
             content=ldif_content,
-            statistics=m.Ldif.Results.Statistics(
+            statistics=m.Ldif.Statistics(
                 total_entries=u.count(entries),
                 processed_entries=u.count(entries),
             ),
         )
 
-        return r[m.Ldif.Results.WriteResponse].ok(response)
+        return r[m.Ldif.WriteResponse].ok(response)
 
     def write(
         self,
@@ -149,7 +149,7 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         output_path: Path | None = None,
         format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
         _template_data: Mapping[str, t.Ldif.TemplateValue] | None = None,
-    ) -> r[str | m.Ldif.Results.WriteResponse]:
+    ) -> r[str | m.Ldif.WriteResponse]:
         """Write entries to LDIF format (string or file)."""
         if output_path is not None:
             file_result = self.write_to_file(
@@ -159,10 +159,10 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
                 format_options,
             )
             if file_result.is_failure:
-                return r[str | m.Ldif.Results.WriteResponse].fail(
+                return r[str | m.Ldif.WriteResponse].fail(
                     file_result.error or "File write failed",
                 )
-            return r[str | m.Ldif.Results.WriteResponse].ok(file_result.value)
+            return r[str | m.Ldif.WriteResponse].ok(file_result.value)
 
         string_result = self.write_to_string(
             entries,
@@ -170,16 +170,16 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
             format_options,
         )
         if string_result.is_failure:
-            return r[str | m.Ldif.Results.WriteResponse].fail(
+            return r[str | m.Ldif.WriteResponse].fail(
                 string_result.error or "String write failed",
             )
-        return r[str | m.Ldif.Results.WriteResponse].ok(string_result.value)
+        return r[str | m.Ldif.WriteResponse].ok(string_result.value)
 
     @override
     def execute(
         self,
         params: Mapping[str, t.ContainerValue] | None = None,
-    ) -> r[m.Ldif.Results.WriteResponse]:
+    ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
         params = params or {}
         entries_raw = u.take(params, "entries", as_type=list, default=[])
@@ -242,17 +242,17 @@ class FlextLdifWriter(s[m.Ldif.Results.WriteResponse]):
         )
 
         if write_result.is_failure:
-            return r[m.Ldif.Results.WriteResponse].fail(write_result.error)
+            return r[m.Ldif.WriteResponse].fail(write_result.error)
 
         result_value = write_result.value
         with suppress(Exception):
-            result_response = m.Ldif.Results.WriteResponse.model_validate(result_value)
-            return r[m.Ldif.Results.WriteResponse].ok(result_response)
+            result_response = m.Ldif.WriteResponse.model_validate(result_value)
+            return r[m.Ldif.WriteResponse].ok(result_response)
 
-        return r[m.Ldif.Results.WriteResponse].ok(
-            m.Ldif.Results.WriteResponse(
+        return r[m.Ldif.WriteResponse].ok(
+            m.Ldif.WriteResponse(
                 content=str(result_value),
-                statistics=m.Ldif.Results.Statistics(
+                statistics=m.Ldif.Statistics(
                     total_entries=len(entries),
                     processed_entries=len(entries),
                 ),

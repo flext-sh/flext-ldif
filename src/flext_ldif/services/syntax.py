@@ -12,7 +12,7 @@ from flext_core import d, r
 from flext_ldif import FlextLdifServiceBase, c, m, u
 
 
-class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service."""
 
     @classmethod
@@ -51,7 +51,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
 
     @override
     @d.log_operation("syntax_service_check")
-    @d.track_performance()
+    @d.track_operation()
     def execute(
         self,
     ) -> r[m.Ldif.SyntaxServiceStatus]:
@@ -114,18 +114,18 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
         except (TypeError, KeyError) as e:
             return r[str].fail(f"Failed to lookup syntax name: {e}")
 
-    @d.track_performance()
+    @d.track_operation()
     def resolve_syntax(
         self,
         oid: str,
         name: str | None = None,
         desc: str | None = None,
         server_type: str = "rfc",
-    ) -> r[m.Ldif.Results.Syntax]:
+    ) -> r[m.Ldif.Syntax]:
         """Resolve OID to complete Syntax model with validation."""
         oid_valid = self.validate_oid(oid)
         if oid_valid.is_failure:
-            return r[m.Ldif.Results.Syntax].fail(
+            return r[m.Ldif.Syntax].fail(
                 f"Invalid OID format: {oid}",
             )
 
@@ -159,7 +159,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.Results.SyntaxServiceStatus]):
 
         return r[m.Ldif.Syntax].ok(syntax)
 
-    @d.track_performance()
+    @d.track_operation()
     def validate_value(
         self,
         value: str,

@@ -219,7 +219,7 @@ class FlextLdifConversion(
         items_converted = 1 if result.is_success else 0
         items_failed = 0 if result.is_success else 1
 
-        conversion_config = m.Ldif.Events.ConversionEventConfig(
+        conversion_config = m.Ldif.ConversionEventConfig(
             conversion_operation=conversion_operation,
             source_format=source_format,
             target_format=target_format,
@@ -228,10 +228,7 @@ class FlextLdifConversion(
             items_failed=items_failed,
             conversion_duration_ms=duration_ms,
             error_details=[
-                m.Ldif.ErrorDetail(
-                    item=model_type,
-                    error=result.error or "Unknown error",
-                ),
+                f"{model_type}: {result.error or 'Unknown error'}",
             ]
             if result.is_failure
             else [],
@@ -303,12 +300,13 @@ class FlextLdifConversion(
         value: t.ContainerValue,
     ) -> t.MetadataValue:
         """Normalize metadata value to proper type."""
-        if isinstance(value, (str, int, float, bool, type(None))):
-            return value if value is not None else ""
+        if value is None:
+            return ""
+        if isinstance(value, (str, int, float, bool)):
+            return value
         if isinstance(value, (list, tuple)):
             return list(value)
-        # Removed dict support - strict typing
-        return str(value) if value is not None else ""
+        return str(value)
 
     @staticmethod
     def _analyze_boolean_conversions(
@@ -388,9 +386,9 @@ class FlextLdifConversion(
             return conversion_analysis
 
         target_server_str = target_server_type
-        get_boolean = u.mapper().prop("boolean_conversions")
-        get_attr_case = u.mapper().prop("original_attribute_case")
-        get_format_details = u.mapper().prop("original_format_details")
+        get_boolean = u.Mapper.prop("boolean_conversions")
+        get_attr_case = u.Mapper.prop("original_attribute_case")
+        get_format_details = u.Mapper.prop("original_format_details")
 
         boolean_raw = get_boolean(source_metadata)
         boolean_conversions: t.ContainerValue = (
@@ -449,8 +447,8 @@ class FlextLdifConversion(
         source_quirk_name: str,
     ) -> m.Ldif.Entry:
         """Update entry metadata for conversion (internal helper)."""
-        get_metadata = u.mapper().prop("metadata")
-        get_extensions = u.mapper().prop("extensions")
+        get_metadata = u.Mapper.prop("metadata")
+        get_extensions = u.Mapper.prop("extensions")
 
         current_entry = entry
         if not get_metadata(current_entry):
@@ -529,7 +527,7 @@ class FlextLdifConversion(
 
             converted_entry = entry.model_copy(deep=True)
 
-            get_server_type = u.mapper().prop("server_type")
+            get_server_type = u.Mapper.prop("server_type")
             target_server_type_obj = get_server_type(target_quirk)
             target_server_type_raw = (
                 target_server_type_obj
@@ -621,7 +619,7 @@ class FlextLdifConversion(
                     try:
                         # dynamic dispatch to known method on OID quirk
                         entry_quirk = source_quirk.entry_quirk
-                        method = entry_quirk._convert_boolean_attributes_to_rfc
+                        method = entry_quirk._convert_boolean_attributes_to_rfc  # type: ignore[attr-defined]
                         (
                             converted_bools,
                             _,
@@ -635,7 +633,7 @@ class FlextLdifConversion(
                         UnicodeDecodeError,
                         struct.error,
                     ) as e:
-                        logger.warning("Boolean conversion failed: %s", e)
+                        logger.warning("Boolean conversion failed", error=str(e))
 
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
@@ -664,7 +662,7 @@ class FlextLdifConversion(
                     try:
                         # dynamic dispatch to known method on OID quirk
                         entry_quirk = target_quirk.entry_quirk
-                        method = entry_quirk._restore_boolean_values_to_oid
+                        method = entry_quirk._restore_boolean_values_to_oid  # type: ignore[attr-defined]
                         converted_entry = method(converted_entry)
                     except (
                         ValueError,
@@ -673,7 +671,7 @@ class FlextLdifConversion(
                         UnicodeDecodeError,
                         struct.error,
                     ) as e:
-                        logger.warning("Boolean restoration failed: %s", e)
+                        logger.warning("Boolean restoration failed", error=str(e))
 
                 if converted_entry.attributes and converted_entry.attributes.attributes:
                     current_attrs = dict(converted_entry.attributes.attributes)
@@ -899,7 +897,7 @@ class FlextLdifConversion(
             ) -> r[str]:
                 return write_attr(attribute)
 
-            config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
+            config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=_write_attribute_pipeline,
@@ -991,7 +989,7 @@ class FlextLdifConversion(
             ) -> r[str]:
                 return write_oc(objectclass)
 
-            config = m.Ldif.Configuration.SchemaConversionPipelineConfig(
+            config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 write_method=_write_objectclass_pipeline,
@@ -1227,9 +1225,9 @@ class FlextLdifConversion(
 
         logger.debug(
             "ACL permission preservation",
-            source_server_type=source_server_type,
-            target_server_type=target_server_type,
-            original_permissions=orig_perms_dict,
+            source_server_type=source_server_type or "",
+            target_server_type=target_server_type or "",
+            original_permissions=str(orig_perms_dict),
         )
 
         if orig_perms_dict:
@@ -1269,8 +1267,8 @@ class FlextLdifConversion(
                 return [to_general_value(item) for item in value]
             return str(value)
 
-        get_metadata = u.mapper().prop("metadata")
-        get_extensions = u.mapper().prop("extensions")
+        get_metadata = u.Mapper.prop("metadata")
+        get_extensions = u.Mapper.prop("extensions")
 
         if not get_metadata(acl) or not acl.metadata:
             return {}
@@ -1295,13 +1293,17 @@ class FlextLdifConversion(
         value: _MetadataMappingValue,
     ) -> t.MetadataValue:
         """Convert value to MetadataAttributeValue type."""
-        if isinstance(value, (str, int, float, bool)) or value is None:
+        if value is None:
+            return ""
+        if isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, (list, tuple)):
-            converted_list: list[t.Scalar | None] = []
+            converted_list: list[t.Scalar] = []
             for item in value:
-                if isinstance(item, (str, int, float, bool, datetime)) or item is None:
+                if isinstance(item, (str, int, float, bool, datetime)):
                     converted_list.append(item)
+                elif item is None:
+                    converted_list.append("")
                 else:
                     converted_list.append(str(item))
             return converted_list
@@ -1327,8 +1329,8 @@ class FlextLdifConversion(
             converted_has_permissions=converted_has_permissions,
         )
 
-        get_metadata = u.mapper().prop("metadata")
-        get_extensions = u.mapper().prop("extensions")
+        get_metadata = u.Mapper.prop("metadata")
+        get_extensions = u.Mapper.prop("extensions")
 
         acl_step1: m.Ldif.Acl = (
             converted_acl.model_copy(
@@ -1363,7 +1365,10 @@ class FlextLdifConversion(
 
         dynamic_metadata_dict: dict[str, t.MetadataValue] = {}
         for key, value in merged_ext_raw.items():
-            if isinstance(value, (str, int, float, bool, datetime)) or value is None:
+            if value is None:
+                dynamic_metadata_dict[key] = ""
+                continue
+            if isinstance(value, (str, int, float, bool, datetime)):
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
                     value,
                 )
@@ -1426,7 +1431,7 @@ class FlextLdifConversion(
             )
             entry_attributes = m.Ldif.Attributes(attributes={})
 
-            get_server_type = u.mapper().prop("server_type")
+            get_server_type = u.Mapper.prop("server_type")
             server_type_raw = get_server_type(source_quirk)
             server_type_attr = (
                 server_type_raw if isinstance(server_type_raw, str) else None
@@ -1462,8 +1467,8 @@ class FlextLdifConversion(
                     f"Entry conversion returned unexpected type: {type(converted_entry).__name__}",
                 )
 
-            get_metadata = u.mapper().prop("metadata")
-            get_acls = u.mapper().prop("acls")
+            get_metadata = u.Mapper.prop("metadata")
+            get_acls = u.Mapper.prop("acls")
             converted_metadata_raw = get_metadata(converted_entry)
 
             if not isinstance(
@@ -1486,13 +1491,13 @@ class FlextLdifConversion(
                     "Converted entry has no ACLs in metadata.acls",
                 )
 
-            if not u.Guards.is_list_non_empty(acls):
+            if not acls or len(acls) == 0:
                 return FlextResult.fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
 
             converted_acl: m.Ldif.Acl = domain_acl
 
-            get_server_type = u.mapper().prop("server_type")
+            get_server_type = u.Mapper.prop("server_type")
             target_server_raw = get_server_type(target_quirk)
             target_server_type_raw = (
                 target_server_raw if isinstance(target_server_raw, str) else "unknown"
@@ -1879,7 +1884,7 @@ class FlextLdifConversion(
         if isinstance(source, str):
             source_format: str = source
         else:
-            source_name_result = u.mapper().prop("server_name")(source)
+            source_name_result = u.Mapper.prop("server_name")(source)
             source_format = (
                 source_name_result if isinstance(source_name_result, str) else "unknown"
             )
@@ -1887,7 +1892,7 @@ class FlextLdifConversion(
         if isinstance(target, str):
             target_format: str = target
         else:
-            target_name_result = u.mapper().prop("server_name")(target)
+            target_name_result = u.Mapper.prop("server_name")(target)
             target_format = (
                 target_name_result if isinstance(target_name_result, str) else "unknown"
             )
@@ -1913,7 +1918,7 @@ class FlextLdifConversion(
                 | m.Ldif.Acl
             ] = []
             errors: list[str] = []
-            error_details: list[m.Ldif.ErrorDetail] = []
+            error_details: list[str] = []
 
             for idx, model_item in enumerate(model_list):
                 if not isinstance(
@@ -1928,10 +1933,7 @@ class FlextLdifConversion(
                     error_msg = f"Item {idx}: Expected convertible model, got {type(model_item).__name__}"
                     errors.append(error_msg)
                     error_details.append(
-                        m.Ldif.ErrorDetail.model_validate({
-                            "item": f"batch_item_{idx}",
-                            "error": error_msg,
-                        }),
+                        f"batch_item_{idx}: {error_msg}",
                     )
                     continue
                 result = self.convert(source, target, model_item)
@@ -1942,10 +1944,7 @@ class FlextLdifConversion(
                     error_msg = result.error or "Unknown error"
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(
-                        m.Ldif.ErrorDetail.model_validate({
-                            "item": f"batch_item_{idx}",
-                            "error": error_msg,
-                        }),
+                        f"batch_item_{idx}: {error_msg}",
                     )
 
             duration_ms = (time.perf_counter() - start_time) * 1000.0
@@ -1958,7 +1957,7 @@ class FlextLdifConversion(
             items_converted = u.count(converted_typed)
             items_failed = u.count(errors_typed)
 
-            conversion_config = m.Ldif.Results.Events.ConversionEventConfig(
+            conversion_config = m.Ldif.ConversionEventConfig(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,
@@ -2013,7 +2012,7 @@ class FlextLdifConversion(
 
             model_list_as_list: list[object] = list(model_list) if model_list else []
             items_count = u.count(model_list_as_list)
-            conversion_config = m.Ldif.Results.Events.ConversionEventConfig(
+            conversion_config = m.Ldif.ConversionEventConfig(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,
@@ -2022,10 +2021,7 @@ class FlextLdifConversion(
                 items_failed=items_count,
                 conversion_duration_ms=duration_ms,
                 error_details=[
-                    m.Ldif.ErrorDetail.model_validate({
-                        "item": "batch_conversion",
-                        "error": f"Batch conversion failed: {e}",
-                    }),
+                    f"batch_conversion: Batch conversion failed: {e}",
                 ],
             )
 
@@ -2178,7 +2174,7 @@ class FlextLdifConversion(
         if (
             FlextLdifConversion._has_attr(oc_result, "map_or")
             and callable(getattr(oc_result, "map_or", None))
-            and oc_result.map_or(None) is not None
+            and oc_result.map_or(None) is not None  # type: ignore[attr-defined]
         ):
             support["objectclass"] = 1
 

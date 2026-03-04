@@ -14,7 +14,7 @@ from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 
 
-class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
+class FlextLdifAcl(s[m.Ldif.AclResponse]):
     """Direct ACL processing service using flext-core APIs."""
 
     _server: FlextLdifServer
@@ -35,10 +35,10 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
-    ) -> m.Ldif.Results.AclResponse:
-        return m.Ldif.Results.AclResponse(
+    ) -> m.Ldif.AclResponse:
+        return m.Ldif.AclResponse(
             acls=list(acls),
-            statistics=m.Ldif.Results.Statistics(
+            statistics=m.Ldif.Statistics(
                 processed_entries=processed_entries,
                 acls_extracted=len(acls),
                 failed_entries=failed_entries,
@@ -103,12 +103,12 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         self,
         entry: m.Ldif.Entry,
         server_type: str,
-    ) -> r[m.Ldif.Results.AclResponse]:
+    ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
         acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
 
         if not acl_attr_name:
-            return r[m.Ldif.Results.AclResponse].ok(
+            return r[m.Ldif.AclResponse].ok(
                 self._build_acl_response([]),
             )
 
@@ -117,7 +117,7 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         )
 
         if not acl_values:
-            return r[m.Ldif.Results.AclResponse].ok(
+            return r[m.Ldif.AclResponse].ok(
                 self._build_acl_response([]),
             )
 
@@ -149,7 +149,7 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
             results_raw = batch_result.value.results
             acls.extend(item for item in results_raw if isinstance(item, m.Ldif.Acl))
 
-        return r[m.Ldif.Results.AclResponse].ok(
+        return r[m.Ldif.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),
         )
 
@@ -193,7 +193,7 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
     def evaluate_acl_context(
         acls: list[m.Ldif.Acl],
         required_permissions: m.Ldif.AclPermissions | Mapping[str, bool],
-    ) -> r[m.Ldif.Results.AclEvaluationResult]:
+    ) -> r[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):
             required = m.Ldif.AclPermissions(
@@ -208,8 +208,8 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
             required = required_permissions
 
         if not acls:
-            return r[m.Ldif.Results.AclEvaluationResult].ok(
-                m.Ldif.Results.AclEvaluationResult(
+            return r[m.Ldif.AclEvaluationResult].ok(
+                m.Ldif.AclEvaluationResult(
                     granted=False,
                     matched_acl=None,
                     message="No ACLs to evaluate - access denied by default",
@@ -220,8 +220,8 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         required_perms = [p for p in perm_names if getattr(required, p, False)]
 
         if not required_perms:
-            return r[m.Ldif.Results.AclEvaluationResult].ok(
-                m.Ldif.Results.AclEvaluationResult(
+            return r[m.Ldif.AclEvaluationResult].ok(
+                m.Ldif.AclEvaluationResult(
                     granted=True,
                     matched_acl=acls[0] if acls else None,
                     message="No permissions required - access granted trivially",
@@ -239,16 +239,16 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         found_raw = u.find(acls, predicate=predicate)
 
         if found_raw is not None:
-            return r[m.Ldif.Results.AclEvaluationResult].ok(
-                m.Ldif.Results.AclEvaluationResult(
+            return r[m.Ldif.AclEvaluationResult].ok(
+                m.Ldif.AclEvaluationResult(
                     granted=True,
                     matched_acl=found_raw,
                     message=f"ACL '{found_raw.name}' grants required permissions: {required_perms}",
                 ),
             )
 
-        return r[m.Ldif.Results.AclEvaluationResult].ok(
-            m.Ldif.Results.AclEvaluationResult(
+        return r[m.Ldif.AclEvaluationResult].ok(
+            m.Ldif.AclEvaluationResult(
                 granted=False,
                 matched_acl=None,
                 message=f"No ACL grants required permissions: {required_perms}",
@@ -256,12 +256,12 @@ class FlextLdifAcl(s[m.Ldif.Results.AclResponse]):
         )
 
     @override
-    def execute(self) -> r[m.Ldif.Results.AclResponse]:
+    def execute(self) -> r[m.Ldif.AclResponse]:
         """Execute ACL service health check."""
-        return r[m.Ldif.Results.AclResponse].ok(
-            m.Ldif.Results.AclResponse(
+        return r[m.Ldif.AclResponse].ok(
+            m.Ldif.AclResponse(
                 acls=[],
-                statistics=m.Ldif.Results.Statistics(),
+                statistics=m.Ldif.Statistics(),
             ),
         )
 

@@ -67,7 +67,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         overrides = cls._init_config_overrides
         if not overrides:
             return base_options
-        return base_options.model_copy(update={"config_overrides": dict(overrides)})
+
+        model_copy = getattr(base_options, "model_copy", None)
+        if model_copy:
+            return model_copy(update={"config_overrides": dict(overrides)})
+        return base_options
 
     @classmethod
     def get_instance(cls) -> FlextLdif:
@@ -113,7 +117,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         self._detector_service = None
         self._entries_service = None
         self._server_service = None
-        FlextLogger(__name__).info("FlextLdif facade initialized")
+        _ = FlextLogger(__name__).info("FlextLdif facade initialized")
 
     @property
     @computed_field
@@ -198,7 +202,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         target_server: str = "rfc",
         options: m.Ldif.MigrateOptions | None = None,
         **kwargs: str | float | bool | None,
-    ) -> r[m.Ldif.Results.MigrationPipelineResult]:
+    ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         if (
             options
@@ -206,13 +210,14 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             and options.write_options
         ):
             _ = kwargs.setdefault(
-                "fold_long_lines",
-                options.write_options.fold_long_lines,
+                "fold_lines",
+                options.write_options.fold_lines,
             )
-            _ = kwargs.setdefault(
-                "sort_attributes",
-                options.write_options.sort_attributes,
-            )
+            if options.write_options.attr_order:
+                _ = kwargs.setdefault(
+                    "attr_order",
+                    ",".join(options.write_options.attr_order),
+                )
 
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
@@ -253,7 +258,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def extract_acls(
         self,
         entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue],
-    ) -> r[m.Ldif.Results.AclResponse]:
+    ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
 
@@ -385,7 +390,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def detect_server_type(
         self,
         ldif_content: str | Path,
-    ) -> r[m.Ldif.Results.ServerDetectionResult]:
+    ) -> r[m.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF content."""
         content_str: str | None = None
         match ldif_content:
@@ -393,7 +398,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 try:
                     content_str = source_path.read_text(encoding="utf-8")
                 except OSError as e:
-                    return r[m.Ldif.Results.ServerDetectionResult].fail(
+                    return r[m.Ldif.ServerDetectionResult].fail(
                         f"Failed to read file: {e}",
                     )
             case str() as content:
@@ -458,7 +463,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def validate_entries(
         self,
         entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.Results.ValidationResult]:
+    ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         validation_service = FlextLdifValidation()
         return FlextLdifAnalysis.validate_entries(
@@ -499,13 +504,13 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         required_attrs: list[str] = list(attributes.keys()) if attributes else []
         filtered: list[m.Ldif.Entry] = []
         for entry in entries:
-            if not FlextLdifUtilitiesEntry.matches_criteria(
-                entry,
+            criteria = m.Ldif.EntryCriteriaConfig(
                 objectclasses=[objectclass] if objectclass else [],
                 objectclass_mode="any",
                 dn_pattern=dn_pattern,
                 required_attrs=required_attrs,
-            ):
+            )
+            if not FlextLdifUtilitiesEntry.matches_criteria(entry, config=criteria):
                 continue
 
             if attributes and entry.attributes is not None:
@@ -514,8 +519,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 for attr_name, expected in attributes.items():
                     expected_raw: t.JsonValue = expected
                     entry_values = attr_map.get(attr_name)
-                    if expected_raw is None:
-                        continue
                     if entry_values is None:
                         matches_values = False
                         break
@@ -538,7 +541,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def get_entry_statistics(
         self,
         _entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.Results.EntriesStatistics]:
+    ) -> r[m.Ldif.EntriesStatistics]:
         """Get statistics for list of entries."""
         stats_service = FlextLdifStatistics()
         return stats_service.calculate_for_entries(_entries)

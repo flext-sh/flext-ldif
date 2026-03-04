@@ -7,9 +7,12 @@ All model-based unions belong in consuming modules, NOT here.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
-from typing import Literal, TypeAlias, TypeVar
+from typing import Annotated, Literal, TypeAlias, TypeVar
 
 from flext_core import FlextResult, FlextTypes
+from pydantic import StringConstraints
+
+from flext_ldif import c
 
 
 class FlextLdifTypes(FlextTypes):
@@ -27,6 +30,38 @@ class FlextLdifTypes(FlextTypes):
         MetadataKey: TypeAlias = str
         ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
         ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
+
+        # Entry-level type aliases (moved from models.py Ldif namespace)
+        EntryAttributesDict: TypeAlias = dict[str, list[str]]
+        RawEntryDict: TypeAlias = dict[str, str | list[str] | set[str]]
+
+        class Rfc:
+            """RFC-compliant annotated types (moved from _models/rfc_validation_types.py)."""
+
+            type Rfc4512Descriptor = Annotated[
+                str,
+                StringConstraints(
+                    min_length=c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH,
+                    max_length=c.Ldif.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH,
+                    pattern=c.Ldif.LdifValidation.RFC4512_DESCRIPTOR_PATTERN,
+                    strip_whitespace=True,
+                ),
+            ]
+
+            type Rfc4514DnComponent = Annotated[
+                str,
+                StringConstraints(
+                    min_length=2,
+                    pattern=c.Ldif.LdifValidation.RFC4514_DN_COMPONENT_PATTERN,
+                ),
+            ]
+
+            type Rfc2849AttributeValue = Annotated[
+                str,
+                StringConstraints(
+                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH,
+                ),
+            ]
 
         class Extensions:
             """Extension-related type aliases for schema parsing."""

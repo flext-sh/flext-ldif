@@ -11,7 +11,7 @@ from pydantic import PrivateAttr
 from flext_ldif import FlextLdifServer, c, m, s, u
 
 
-class FlextLdifSchema(s[m.Ldif.Results.SchemaServiceStatus]):
+class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
     _registry: FlextLdifServer = PrivateAttr(
@@ -66,10 +66,10 @@ class FlextLdifSchema(s[m.Ldif.Results.SchemaServiceStatus]):
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.Results.SchemaServiceStatus]:
+    ) -> r[m.Ldif.SchemaServiceStatus]:
         """Execute schema service self-check."""
-        return r[m.Ldif.Results.SchemaServiceStatus].ok(
-            m.Ldif.Results.SchemaServiceStatus(
+        return r[m.Ldif.SchemaServiceStatus].ok(
+            m.Ldif.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
                 status="operational",

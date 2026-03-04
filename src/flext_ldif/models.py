@@ -1,4 +1,12 @@
-"""LDIF Domain Models - Unified Model Aggregation Layer."""
+"""LDIF Domain Models - Unified Model Aggregation Layer.
+
+Facade that groups all LDIF model classes for the ``FlextLdifModels``
+namespace.  Every nested class uses real MRO inheritance from its
+internal ``_models`` definition — no ``TypeAlias`` for classes.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,7 +16,7 @@ from typing import Final, TypeAlias
 from flext_core import FlextModels
 from pydantic import Field
 
-from flext_ldif import c, p
+from flext_ldif import c, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -27,43 +35,44 @@ from flext_ldif._models.settings import (
     WriteConfig,
 )
 
-# Circular dependency resolved via TYPE_CHECKING in settings.py
-
 
 class FlextLdifModels(FlextModels):
-    """LDIF domain models - DEPRECATED: Use FlextModels.Ldif instead."""
+    """LDIF domain models — flat façade with MRO class inheritance.
 
-    # TQ|    # ParseFormatOptions: Final = FlextLdifModelsSettings.ParseFormatOptions
+    Architecture: Domain layer helper
+    All nested classes inherit via MRO from their ``_models`` implementations.
+    Types live in ``typings.py``, constants in ``constants.py``.
+    """
 
     class Ldif:
         """LDIF namespace for cross-project access."""
 
-        EntryAttributesDict: TypeAlias = dict[str, list[str]]
-        RawEntryDict: TypeAlias = dict[str, str | list[str] | set[str]]
+        # =================================================================
+        # TYPE ALIASES — non-class types only (enums, unions, containers)
+        # Class-level types moved to FlextLdifTypes.Ldif in typings.py
+        # =================================================================
+
+        EntryAttributesDict: TypeAlias = t.Ldif.EntryAttributesDict
+        RawEntryDict: TypeAlias = t.Ldif.RawEntryDict
+
+        ServerType: TypeAlias = c.Ldif.ServerTypes
+        SpaceHandlingOption: TypeAlias = c.Ldif.SpaceHandlingOption
+        EscapeHandlingOption: TypeAlias = c.Ldif.EscapeHandlingOption
+        SortOption: TypeAlias = c.Ldif.SortOption
+        OutputFormat: TypeAlias = c.Ldif.Domain.OutputFormat
+
+        # =================================================================
+        # DOMAIN MODELS — MRO class inheritance (FlextLdifModelsDomains)
+        # =================================================================
 
         class AttributeTransformation(FlextLdifModelsDomains.AttributeTransformation):
             """Detailed tracking of attribute transformation operations."""
-
-        class DynamicMetadata(FlextLdifModelsMetadata.DynamicMetadata):
-            """Model with extra="allow" for dynamic field storage."""
-
-        class EntryMetadata(FlextLdifModelsMetadata.EntryMetadata):
-            """Model for entry processing metadata."""
-
-        class LogContextExtras(FlextLdifModelsSettings.LogContextExtras):
-            """Log context extras configuration."""
-
-        class AclMetadataConfig(FlextLdifModelsSettings.AclMetadataConfig):
-            """Configuration for ACL metadata extensions."""
-
-        class AciParserConfig(FlextLdifModelsSettings.AciParserConfig):
-            """ACI parser configuration."""
 
         class Entry(FlextLdifModelsDomains.Entry):
             """LDIF entry with DN and attributes."""
 
         class DN(FlextLdifModelsDomains.DN):
-            """DN model."""
+            """Distinguished Name model."""
 
         class DnRegistry(FlextLdifModelsDomains.DnRegistry):
             """DN registry model."""
@@ -89,157 +98,313 @@ class FlextLdifModels(FlextModels):
         class QuirkMetadata(FlextLdifModelsDomains.QuirkMetadata):
             """Quirk metadata model."""
 
-        SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute
-        SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass
-        Syntax: TypeAlias = FlextLdifModelsDomains.Syntax
-        Attributes: TypeAlias = FlextLdifModelsDomains.Attributes
-        ProcessingResult: TypeAlias = ProcessingResult
-        FormatDetails: TypeAlias = FlextLdifModelsDomains.FormatDetails
-        SchemaFormatDetails: TypeAlias = FlextLdifModelsDomains.SchemaFormatDetails
-        EntryStatistics: TypeAlias = FlextLdifModelsDomains.EntryStatistics
-        DNStatistics: TypeAlias = FlextLdifModelsDomains.DNStatistics
+        class SchemaAttribute(FlextLdifModelsDomains.SchemaAttribute):
+            """LDAP schema attribute definition."""
 
-        ServerType: TypeAlias = c.Ldif.ServerTypes
-        SpaceHandlingOption: TypeAlias = c.Ldif.SpaceHandlingOption
-        EscapeHandlingOption: TypeAlias = c.Ldif.EscapeHandlingOption
-        SortOption: TypeAlias = c.Ldif.SortOption
-        OutputFormat: TypeAlias = c.Ldif.Domain.OutputFormat
+        class SchemaObjectClass(FlextLdifModelsDomains.SchemaObjectClass):
+            """LDAP schema object class definition."""
 
-        DnNormalizationConfig: TypeAlias = DnNormalizationConfig
-        AttrNormalizationConfig: TypeAlias = AttrNormalizationConfig
-        AclConversionConfig: TypeAlias = AclConversionConfig
-        ValidationConfig: TypeAlias = ValidationConfig
-        MetadataConfig: TypeAlias = MetadataConfig
-        ProcessConfig: TypeAlias = ProcessConfig
-        TransformConfig: TypeAlias = TransformConfig
-        FilterConfig: TypeAlias = FilterConfig
-        ValidationBatchResult: TypeAlias = FlextLdifModelsResults.ValidationBatchResult
-        EntryResult: TypeAlias = FlextLdifModelsResults.EntryResult
-        ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
-        WriteOptions: TypeAlias = FlextLdifModelsDomains.WriteOptions
-        WriteOutputOptions: TypeAlias = FlextLdifModelsSettings.WriteOutputOptions
-        WriteFormatOptions: TypeAlias = FlextLdifModelsSettings.WriteFormatOptions
-        WriteConfig: TypeAlias = WriteConfig
+        class Syntax(FlextLdifModelsDomains.Syntax):
+            """LDAP attribute syntax definition."""
 
-        CategoryRules: TypeAlias = FlextLdifModelsSettings.CategoryRules
-        WhitelistRules: TypeAlias = FlextLdifModelsSettings.WhitelistRules
-        SortConfig: TypeAlias = FlextLdifModelsSettings.SortConfig
+        class Attributes(FlextLdifModelsDomains.Attributes):
+            """Dictionary-like container for LDIF attributes."""
 
-        ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
-        MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
-        PermissionMappingConfig: TypeAlias = (
-            FlextLdifModelsSettings.PermissionMappingConfig
-        )
+        class FormatDetails(FlextLdifModelsDomains.FormatDetails):
+            """Format details for entry output."""
 
-        MigrationPipelineResult: TypeAlias = (
-            FlextLdifModelsResults.MigrationPipelineResult
-        )
-        FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+        class SchemaFormatDetails(FlextLdifModelsDomains.SchemaFormatDetails):
+            """Schema format details."""
 
-        class Events:
-            """Extended event models namespace."""
+        class EntryStatistics(FlextLdifModelsDomains.EntryStatistics):
+            """Statistics for an LDIF entry."""
 
-            DnEvent: TypeAlias = FlextLdifModelsEvents.DnEvent
-            DnEventConfig: TypeAlias = FlextLdifModelsEvents.DnEventConfig
-            MigrationEvent: TypeAlias = FlextLdifModelsEvents.MigrationEvent
-            MigrationEventConfig: TypeAlias = FlextLdifModelsEvents.MigrationEventConfig
-            ConversionEvent: TypeAlias = FlextLdifModelsEvents.ConversionEvent
-            ConversionEventConfig: TypeAlias = (
-                FlextLdifModelsEvents.ConversionEventConfig
-            )
-            SchemaEvent: TypeAlias = FlextLdifModelsEvents.SchemaEvent
-            SchemaEventConfig: TypeAlias = FlextLdifModelsEvents.SchemaEventConfig
-            ParseEvent: TypeAlias = FlextLdifModelsEvents.ParseEvent
-            WriteEvent: TypeAlias = FlextLdifModelsEvents.WriteEvent
-            AclEvent: TypeAlias = FlextLdifModelsEvents.AclEvent
-            CategoryEvent: TypeAlias = FlextLdifModelsEvents.CategoryEvent
-            FilterEvent: TypeAlias = FlextLdifModelsEvents.FilterEvent
+        class DNStatistics(FlextLdifModelsDomains.DNStatistics):
+            """Statistics for a DN."""
 
-        class Configuration:
-            """Extended configuration models namespace."""
+        class WriteOptions(FlextLdifModelsDomains.WriteOptions):
+            """Write output options."""
 
-            EntryParseMetadataConfig: TypeAlias = (
-                FlextLdifModelsSettings.EntryParseMetadataConfig
-            )
-            EntryTransformConfig: TypeAlias = (
-                FlextLdifModelsSettings.EntryTransformConfig
-            )
-            EntryFilterConfig: TypeAlias = FlextLdifModelsSettings.EntryFilterConfig
-            EntryWriteConfig: TypeAlias = FlextLdifModelsSettings.EntryWriteConfig
-            ParseFormatOptions: TypeAlias = FlextLdifModelsSettings.ParseFormatOptions
-            BatchWriteConfig: TypeAlias = FlextLdifModelsSettings.BatchWriteConfig
-            AttributeNormalizeConfig: TypeAlias = (
-                FlextLdifModelsSettings.AttributeNormalizeConfig
-            )
-            RdnProcessingConfig: TypeAlias = FlextLdifModelsSettings.RdnProcessingConfig
-            DnCaseRules: TypeAlias = FlextLdifModelsSettings.DnCaseRules
-            EncodingRules: TypeAlias = FlextLdifModelsSettings.EncodingRules
-            AclFormatRules: TypeAlias = FlextLdifModelsSettings.AclFormatRules
-            ServerValidationRules: TypeAlias = (
-                FlextLdifModelsSettings.ServerValidationRules
-            )
-            ServerPatternsConfig: TypeAlias = (
-                FlextLdifModelsSettings.ServerPatternsConfig
-            )
-            AciLineFormatConfig: TypeAlias = FlextLdifModelsSettings.AciLineFormatConfig
-            FilterCriteria: TypeAlias = FlextLdifModelsSettings.FilterCriteria
-            MetadataTransformationConfig: TypeAlias = (
-                FlextLdifModelsSettings.MetadataTransformationConfig
-            )
-            PermissionMappingConfig: TypeAlias = (
-                FlextLdifModelsSettings.PermissionMappingConfig
-            )
-            SchemaConversionPipelineConfig: TypeAlias = (
-                FlextLdifModelsSettings.SchemaConversionPipelineConfig
-            )
-            MigrateOptions: TypeAlias = FlextLdifModelsSettings.MigrateOptions
+        class ProcessingResult(ProcessingResult):
+            """Processing result with DN and attributes."""
 
-        class Results:
-            """Extended results models namespace."""
+        # =================================================================
+        # METADATA MODELS — MRO class inheritance
+        # =================================================================
 
-            Statistics: TypeAlias = FlextLdifModelsResults.Statistics
-            StatisticsResult: TypeAlias = FlextLdifModelsResults.StatisticsResult
-            StatisticsSummary: TypeAlias = FlextLdifModelsResults.StatisticsSummary
-            EntriesStatistics: TypeAlias = FlextLdifModelsResults.EntriesStatistics
-            MigrationSummary: TypeAlias = FlextLdifModelsResults.MigrationSummary
+        class DynamicMetadata(FlextLdifModelsMetadata.DynamicMetadata):
+            """Model with extra='allow' for dynamic field storage."""
 
-            EntryAnalysisResult: TypeAlias = FlextLdifModelsResults.EntryAnalysisResult
-            ServerDetectionResult: TypeAlias = (
-                FlextLdifModelsResults.ServerDetectionResult
-            )
+        class EntryMetadata(FlextLdifModelsMetadata.EntryMetadata):
+            """Model for entry processing metadata."""
 
-            ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
-            WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
+        # =================================================================
+        # SETTINGS/CONFIG MODELS — MRO class inheritance
+        # =================================================================
 
-            AclResponse: TypeAlias = FlextLdifModelsResults.AclResponse
-            AclEvaluationResult: TypeAlias = FlextLdifModelsResults.AclEvaluationResult
+        class LogContextExtras(FlextLdifModelsSettings.LogContextExtras):
+            """Log context extras configuration."""
 
-            MigrationPipelineResult: TypeAlias = (
-                FlextLdifModelsResults.MigrationPipelineResult
-            )
+        class AclMetadataConfig(FlextLdifModelsSettings.AclMetadataConfig):
+            """Configuration for ACL metadata extensions."""
 
-            ValidationServiceStatus: TypeAlias = (
-                FlextLdifModelsResults.ValidationServiceStatus
-            )
-            ValidationBatchResult: TypeAlias = (
-                FlextLdifModelsResults.ValidationBatchResult
-            )
+        class AciParserConfig(FlextLdifModelsSettings.AciParserConfig):
+            """ACI parser configuration."""
 
-            DynamicCounts: Final = FlextLdifModelsResults.DynamicCounts
-            FlexibleCategories: TypeAlias = FlextLdifModelsResults.FlexibleCategories
+        class AciWriterConfig(FlextLdifModelsSettings.AciWriterConfig):
+            """ACI writer configuration."""
 
-            ClientStatus: Final = FlextLdifModelsResults.ClientStatus
-            ServiceStatus: Final = FlextLdifModelsResults.ServiceStatus
-            SchemaServiceStatus: Final = FlextLdifModelsResults.SchemaServiceStatus
-            StatisticsServiceStatus: Final = (
-                FlextLdifModelsResults.StatisticsServiceStatus
-            )
+        class AciLineFormatConfig(FlextLdifModelsSettings.AciLineFormatConfig):
+            """ACI line format configuration."""
 
-            DictAccessibleValue: Final = FlextLdifModelsResults.DictAccessibleValue
-            BooleanFlags: Final = FlextLdifModelsResults.BooleanFlags
-            ConfigSettings: Final = FlextLdifModelsResults.ConfigSettings
-            CategoryPaths: Final = FlextLdifModelsResults.CategoryPaths
-            EventType: Final = FlextLdifModelsResults.EventType
+        class ServerPatternsConfig(FlextLdifModelsSettings.ServerPatternsConfig):
+            """Server pattern matching configuration."""
+
+        class AttributeDenormalizeConfig(
+            FlextLdifModelsSettings.AttributeDenormalizeConfig,
+        ):
+            """Attribute denormalization configuration."""
+
+        class AttributeNormalizeConfig(
+            FlextLdifModelsSettings.AttributeNormalizeConfig,
+        ):
+            """Attribute normalization configuration."""
+
+        class EntryCriteriaConfig(FlextLdifModelsSettings.EntryCriteriaConfig):
+            """Entry criteria matching configuration."""
+
+        class EntryTransformConfig(FlextLdifModelsSettings.EntryTransformConfig):
+            """Entry transformation configuration."""
+
+        class EntryFilterConfig(FlextLdifModelsSettings.EntryFilterConfig):
+            """Entry filter configuration."""
+
+        class EntryWriteConfig(FlextLdifModelsSettings.EntryWriteConfig):
+            """Entry write configuration."""
+
+        class EntryParseMetadataConfig(
+            FlextLdifModelsSettings.EntryParseMetadataConfig,
+        ):
+            """Entry parse metadata configuration."""
+
+        class BatchWriteConfig(FlextLdifModelsSettings.BatchWriteConfig):
+            """Batch write configuration."""
+
+        class RdnProcessingConfig(FlextLdifModelsSettings.RdnProcessingConfig):
+            """RDN processing configuration."""
+
+        class DnCaseRules(FlextLdifModelsSettings.DnCaseRules):
+            """DN case rules configuration."""
+
+        class EncodingRules(FlextLdifModelsSettings.EncodingRules):
+            """Encoding rules configuration."""
+
+        class AclFormatRules(FlextLdifModelsSettings.AclFormatRules):
+            """ACL format rules configuration."""
+
+        class ServerValidationRules(FlextLdifModelsSettings.ServerValidationRules):
+            """Server validation rules configuration."""
+
+        class FilterCriteria(FlextLdifModelsSettings.FilterCriteria):
+            """Filter criteria configuration."""
+
+        class MetadataTransformationConfig(
+            FlextLdifModelsSettings.MetadataTransformationConfig,
+        ):
+            """Metadata transformation configuration."""
+
+        class PermissionMappingConfig(
+            FlextLdifModelsSettings.PermissionMappingConfig,
+        ):
+            """Permission mapping configuration."""
+
+        class SchemaConversionPipelineConfig(
+            FlextLdifModelsSettings.SchemaConversionPipelineConfig,
+        ):
+            """Schema conversion pipeline configuration."""
+
+        class CategoryRules(FlextLdifModelsSettings.CategoryRules):
+            """Category rules configuration."""
+
+        class WhitelistRules(FlextLdifModelsSettings.WhitelistRules):
+            """Whitelist rules configuration."""
+
+        class SortConfig(FlextLdifModelsSettings.SortConfig):
+            """Sort configuration."""
+
+        class ParseFormatOptions(FlextLdifModelsSettings.ParseFormatOptions):
+            """Parse format options."""
+
+        class MigrateOptions(FlextLdifModelsSettings.MigrateOptions):
+            """Migration options."""
+
+        class WriteOutputOptions(FlextLdifModelsSettings.WriteOutputOptions):
+            """Write output options."""
+
+        class WriteFormatOptions(FlextLdifModelsSettings.WriteFormatOptions):
+            """Write format options."""
+
+        class DnNormalizationConfig(DnNormalizationConfig):
+            """DN normalization configuration."""
+
+        class AttrNormalizationConfig(AttrNormalizationConfig):
+            """Attribute normalization configuration."""
+
+        class AclConversionConfig(AclConversionConfig):
+            """ACL conversion configuration."""
+
+        class ValidationConfig(ValidationConfig):
+            """Validation configuration."""
+
+        class MetadataConfig(MetadataConfig):
+            """Metadata configuration."""
+
+        class ProcessConfig(ProcessConfig):
+            """Process configuration."""
+
+        class TransformConfig(TransformConfig):
+            """Transform configuration."""
+
+        class FilterConfig(FilterConfig):
+            """Filter configuration."""
+
+        class WriteConfig(WriteConfig):
+            """Write configuration."""
+
+        # =================================================================
+        # EVENT MODELS — MRO class inheritance
+        # =================================================================
+
+        class DnEvent(FlextLdifModelsEvents.DnEvent):
+            """DN event."""
+
+        class DnEventConfig(FlextLdifModelsEvents.DnEventConfig):
+            """DN event configuration."""
+
+        class MigrationEvent(FlextLdifModelsEvents.MigrationEvent):
+            """Migration event."""
+
+        class MigrationEventConfig(FlextLdifModelsEvents.MigrationEventConfig):
+            """Migration event configuration."""
+
+        class ConversionEvent(FlextLdifModelsEvents.ConversionEvent):
+            """Conversion event."""
+
+        class ConversionEventConfig(FlextLdifModelsEvents.ConversionEventConfig):
+            """Conversion event configuration."""
+
+        class SchemaEvent(FlextLdifModelsEvents.SchemaEvent):
+            """Schema event."""
+
+        class SchemaEventConfig(FlextLdifModelsEvents.SchemaEventConfig):
+            """Schema event configuration."""
+
+        class ParseEvent(FlextLdifModelsEvents.ParseEvent):
+            """Parse event."""
+
+        class WriteEvent(FlextLdifModelsEvents.WriteEvent):
+            """Write event."""
+
+        class AclEvent(FlextLdifModelsEvents.AclEvent):
+            """ACL event."""
+
+        class CategoryEvent(FlextLdifModelsEvents.CategoryEvent):
+            """Category event."""
+
+        class FilterEvent(FlextLdifModelsEvents.FilterEvent):
+            """Filter event."""
+
+        # =================================================================
+        # RESULT MODELS — MRO class inheritance
+        # =================================================================
+
+        class Statistics(FlextLdifModelsResults.Statistics):
+            """Statistics result."""
+
+        class StatisticsResult(FlextLdifModelsResults.StatisticsResult):
+            """Statistics result container."""
+
+        class StatisticsSummary(FlextLdifModelsResults.StatisticsSummary):
+            """Statistics summary."""
+
+        class EntriesStatistics(FlextLdifModelsResults.EntriesStatistics):
+            """Entries statistics."""
+
+        class MigrationSummary(FlextLdifModelsResults.MigrationSummary):
+            """Migration summary."""
+
+        class EntryAnalysisResult(FlextLdifModelsResults.EntryAnalysisResult):
+            """Entry analysis result."""
+
+        class ServerDetectionResult(FlextLdifModelsResults.ServerDetectionResult):
+            """Server detection result."""
+
+        class ParseResponse(FlextLdifModelsResults.ParseResponse):
+            """Parse response."""
+
+        class WriteResponse(FlextLdifModelsResults.WriteResponse):
+            """Write response."""
+
+        class AclResponse(FlextLdifModelsResults.AclResponse):
+            """ACL response."""
+
+        class AclEvaluationResult(FlextLdifModelsResults.AclEvaluationResult):
+            """ACL evaluation result."""
+
+        class MigrationPipelineResult(FlextLdifModelsResults.MigrationPipelineResult):
+            """Migration pipeline result."""
+
+        class ValidationServiceStatus(FlextLdifModelsResults.ValidationServiceStatus):
+            """Validation service status."""
+
+        class ValidationBatchResult(FlextLdifModelsResults.ValidationBatchResult):
+            """Validation batch result."""
+
+        class EntryResult(FlextLdifModelsResults.EntryResult):
+            """Entry result."""
+
+        class DynamicCounts(FlextLdifModelsResults.DynamicCounts):
+            """Dynamic counts."""
+
+        class FlexibleCategories(FlextLdifModelsResults.FlexibleCategories):
+            """Flexible categories."""
+
+        class ClientStatus(FlextLdifModelsResults.ClientStatus):
+            """Client status."""
+
+        class ServiceStatus(FlextLdifModelsResults.ServiceStatus):
+            """Service status."""
+
+        class SchemaServiceStatus(FlextLdifModelsResults.SchemaServiceStatus):
+            """Schema service status."""
+
+        class StatisticsServiceStatus(FlextLdifModelsResults.StatisticsServiceStatus):
+            """Statistics service status."""
+
+        class DictAccessibleValue(FlextLdifModelsResults.DictAccessibleValue):
+            """Dict-accessible value."""
+
+        class BooleanFlags(FlextLdifModelsResults.BooleanFlags):
+            """Boolean flags."""
+
+        class ConfigSettings(FlextLdifModelsResults.ConfigSettings):
+            """Config settings."""
+
+        class CategoryPaths(FlextLdifModelsResults.CategoryPaths):
+            """Category paths."""
+
+        class EventType(FlextLdifModelsResults.EventType):
+            """Event type."""
+
+        class SyntaxServiceStatus(FlextLdifModelsResults.SyntaxServiceStatus):
+            """Syntax service status."""
+
+        class ValidationResult(FlextLdifModelsResults.ValidationResult):
+            """Validation result."""
+
+        # =================================================================
+        # COMPOSITE MODELS — defined here, not in _models
+        # =================================================================
 
         class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
             """Quirks by server dictionary model."""
@@ -269,6 +434,10 @@ class FlextLdifModels(FlextModels):
                 FlextLdifModels.Ldif.QuirksByServerDict,
             ] = Field(default_factory=dict)
             server_priorities: dict[str, int] = Field(default_factory=dict)
+
+        # =================================================================
+        # NON-CLASS TYPE ALIASES — type unions, protocol references
+        # =================================================================
 
         class Schema:
             """Schema element type with protocol references."""
@@ -301,6 +470,10 @@ class FlextLdifModels(FlextModels):
             EntryFilterConfig: Final = FlextLdifModelsSettings.EntryFilterConfig
             CaseFoldOption: Final = c.Ldif.CaseFoldOption
 
+
+# =========================================================================
+# MODULE ALIASES - Runtime access patterns
+# =========================================================================
 
 m = FlextLdifModels
 

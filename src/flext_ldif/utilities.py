@@ -1629,9 +1629,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return acc_dict
 
             dict_list = [
-                dict_item
-                for dict_item in dicts
-                if FlextUtilities.Guards.is_type(dict_item, dict)
+                dict_item for dict_item in dicts if isinstance(dict_item, dict)
             ]
             if dict_list:
                 result = cls.fold(
@@ -1719,7 +1717,7 @@ class FlextLdifUtilities(FlextUtilities):
             dict_list = [
                 dict_item
                 for dict_item in reversed(dicts)
-                if FlextUtilities.Guards.is_type(dict_item, dict)
+                if isinstance(dict_item, dict)
             ]
             if not dict_list:
                 return {}
@@ -1753,7 +1751,7 @@ class FlextLdifUtilities(FlextUtilities):
                         value = default
 
                 if as_type is not None and value is not None:
-                    if FlextUtilities.Guards.is_type(value, as_type):
+                    if FlextUtilities.Guards.is_type(value, as_type):  # type: ignore[arg-type]
                         return value
                     return default
                 return value
@@ -1964,7 +1962,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> Mapping[str, str]:
             """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
             str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
-            inverted = FlextUtilities.mapper().invert_dict(str_dict)
+            inverted = FlextUtilities.Mapper.invert_dict(str_dict)
             return dict(inverted)
 
         iv = invert

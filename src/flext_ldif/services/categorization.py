@@ -18,7 +18,7 @@ _MISSING_ATTR = object()
 
 
 class FlextLdifCategorization(
-    s[m.Ldif.Results.FlexibleCategories],
+    s[m.Ldif.FlexibleCategories],
 ):
     """LDIF Entry Categorization Service."""
 
@@ -149,9 +149,9 @@ class FlextLdifCategorization(
     @override
     def execute(
         self,
-    ) -> r[m.Ldif.Results.FlexibleCategories]:
+    ) -> r[m.Ldif.FlexibleCategories]:
         """Execute categorization pass (use individual methods for specific operations)."""
-        categories = m.Ldif.Results.FlexibleCategories()
+        categories = m.Ldif.FlexibleCategories()
         categories[c.Ldif.Category.SCHEMA] = []
         categories[c.Ldif.Category.HIERARCHY] = []
         categories[c.Ldif.Category.USERS] = []
@@ -159,7 +159,7 @@ class FlextLdifCategorization(
         categories[c.Ldif.Category.ACL] = []
         categories[c.Ldif.Category.REJECTED] = []
 
-        return r[m.Ldif.Results.FlexibleCategories].ok(categories)
+        return r[m.Ldif.FlexibleCategories].ok(categories)
 
     @property
     def rejection_tracker(self) -> Mapping[str, list[m.Ldif.Entry]]:
@@ -611,9 +611,9 @@ class FlextLdifCategorization(
     def categorize_entries(
         self,
         entries: list[m.Ldif.Entry],
-    ) -> r[m.Ldif.Results.FlexibleCategories]:
+    ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
-        categories = m.Ldif.Results.FlexibleCategories()
+        categories = m.Ldif.FlexibleCategories()
         categories[c.Ldif.Category.SCHEMA] = []
         categories[c.Ldif.Category.HIERARCHY] = []
         categories[c.Ldif.Category.USERS] = []
@@ -680,17 +680,17 @@ class FlextLdifCategorization(
                     entries_count=entries_count,
                 )
 
-        return r[m.Ldif.Results.FlexibleCategories].ok(categories)
+        return r[m.Ldif.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
         self,
-        categories: m.Ldif.Results.FlexibleCategories,
-    ) -> m.Ldif.Results.FlexibleCategories:
+        categories: m.Ldif.FlexibleCategories,
+    ) -> m.Ldif.FlexibleCategories:
         """Filter entries by base DN (if configured)."""
         if not self._base_dn:
             return categories
 
-        filtered = m.Ldif.Results.FlexibleCategories()
+        filtered = m.Ldif.FlexibleCategories()
 
         filtered[c.Ldif.Category.SCHEMA] = []
         filtered[c.Ldif.Category.HIERARCHY] = []
@@ -814,14 +814,14 @@ class FlextLdifCategorization(
 
     @staticmethod
     def filter_categories_by_base_dn(
-        categories: m.Ldif.Results.FlexibleCategories,
+        categories: m.Ldif.FlexibleCategories,
         base_dn: str,
-    ) -> m.Ldif.Results.FlexibleCategories:
+    ) -> m.Ldif.FlexibleCategories:
         """Filter categorized entries by base DN."""
         if not base_dn or not categories:
             return categories
 
-        filtered = m.Ldif.Results.FlexibleCategories()
+        filtered = m.Ldif.FlexibleCategories()
 
         excluded_entries: list[m.Ldif.Entry] = []
 

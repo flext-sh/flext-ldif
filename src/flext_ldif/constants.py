@@ -705,6 +705,12 @@ class FlextLdifConstants(FlextConstants):
 
             MIN_LDIF_LINE_PARTS: Final[int] = 2
 
+            # RFC validation patterns (moved from _models/rfc_validation_types.py)
+            RFC4512_DESCRIPTOR_PATTERN: Final[str] = r"^[A-Za-z][A-Za-z0-9-]{0,126}$"
+            RFC4514_DN_COMPONENT_PATTERN: Final[str] = (
+                r"^(?:[A-Za-z][A-Za-z0-9-]{0,126})=(?:[^\\,]|\\.)*$"
+            )
+
         class ObjectClasses:
             """LDAP object class name constants (RFC 4512 standard classes)."""
 
