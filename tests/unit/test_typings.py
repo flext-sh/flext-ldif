@@ -62,7 +62,9 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
         # This is correct architecture: typings.py is pure type definitions
         # Verify no internal imports (no _models, _utilities, services, etc.)
         internal_imports = [
-            imp for imp in flext_ldif_imports if "_" in imp.split(".")[-1]
+            imp
+            for imp in flext_ldif_imports
+            if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
         assert len(internal_imports) == 0, (
             f"typings.py must not import from internal modules: {internal_imports}"

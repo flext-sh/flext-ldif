@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Final, TypeAlias
 
 from flext_core import FlextModels
@@ -361,6 +361,24 @@ class FlextLdifModels(FlextModels):
         class FlexibleCategories(FlextLdifModelsCollections.FlexibleCategories):
             """Flexible categories."""
 
+            def get_entries(
+                self,
+                category: str,
+            ) -> Sequence[FlextLdifModelsDomains.Entry]:
+                """Backward-compatible accessor for category entries."""
+                return [
+                    FlextLdifModelsDomains.Entry.model_validate(value)
+                    for value in self.get(category)
+                ]
+
+            def set_entries(
+                self,
+                category: str,
+                entries: Sequence[FlextLdifModelsDomains.Entry],
+            ) -> None:
+                """Backward-compatible setter for full category replacement."""
+                self.categories[category] = list(entries)
+
         class ClientStatus(FlextLdifModelsResults.ClientStatus):
             """Client status."""
 
@@ -392,6 +410,19 @@ class FlextLdifModels(FlextModels):
 
         class ValidationResult(FlextLdifModelsResults.ValidationResult):
             """Validation result."""
+
+        class LdifResults:
+            """Backward-compatible results/settings namespace alias."""
+
+            ParseResponse = FlextLdifModelsResults.ParseResponse
+            WriteResponse = FlextLdifModelsResults.WriteResponse
+            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+            SchemaServiceStatus = FlextLdifModelsResults.SchemaServiceStatus
+            ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
+            ValidationResult = FlextLdifModelsResults.ValidationResult
+            EntryResult = FlextLdifModelsResults.EntryResult
+            WhitelistRules = FlextLdifModelsSettings.WhitelistRules
+            WriteFormatOptions = FlextLdifModelsSettings.WriteFormatOptions
 
         # =================================================================
         # COMPOSITE MODELS — defined here, not in _models

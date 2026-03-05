@@ -43,22 +43,52 @@ def _is_acl_subject_type(
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
+    _RFC_ACL_ATTRIBUTES: tuple[str, ...] = (
+        "aci",
+        "acl",
+        "olcAccess",
+        "aclRights",
+        "aclEntry",
+    )
+    _GENERIC_ACL_ATTRIBUTES: tuple[str, ...] = ("aci", "acl")
+    _OID_ACL_ATTRIBUTES: tuple[str, ...] = (
+        "orclaci",
+        "orclentrylevelaci",
+        "aci",
+        "acl",
+    )
+    _OUD_ACL_ATTRIBUTES: tuple[str, ...] = ("orclaci", "orclentrylevelaci", "aci")
+    _AD_ACL_ATTRIBUTES: tuple[str, ...] = ("nTSecurityDescriptor", "aci")
+
     @staticmethod
     def _is_metadata_scalar_or_container(value: t.ContainerValue) -> bool:
         """Check supported metadata extension value shape."""
         return value is None or value.__class__ in {str, int, float, bool, list, dict}
 
     @staticmethod
-    def get_acl_attributes() -> list[str]:
+    def get_acl_attributes(server_type: str | None = None) -> list[str]:
         """Get ACL attributes for a server type."""
-        return list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
+        if server_type is None:
+            return list(FlextLdifUtilitiesACL._RFC_ACL_ATTRIBUTES)
+
+        normalized = server_type.lower().strip()
+        if normalized == "rfc":
+            return list(FlextLdifUtilitiesACL._RFC_ACL_ATTRIBUTES)
+        if normalized == "oid":
+            return list(FlextLdifUtilitiesACL._OID_ACL_ATTRIBUTES)
+        if normalized == "oud":
+            return list(FlextLdifUtilitiesACL._OUD_ACL_ATTRIBUTES)
+        if normalized == "ad":
+            return list(FlextLdifUtilitiesACL._AD_ACL_ATTRIBUTES)
+        return list(FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES)
 
     @staticmethod
     def is_acl_attribute(
         attribute_name: str,
+        server_type: str | None = None,
     ) -> bool:
         """Check if attribute is an ACL attribute (case-insensitive)."""
-        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes()
+        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes(server_type)
         all_attrs_lower = {a.lower() for a in all_attrs}
         return attribute_name.lower() in all_attrs_lower
 

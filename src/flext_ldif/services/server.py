@@ -40,9 +40,7 @@ class FlextLdifServer(FlextRegistry):
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
-            k: v
-            for k, v in data.items()
-            if isinstance(v, (str, int, float, bool, type(None)))
+            k: v for k, v in data.items() if isinstance(v, (str, int, float, bool))
         }
         super().__init__(dispatcher=dispatcher, **filtered_data)
         if not type(self)._discovery_initialized:
@@ -74,7 +72,12 @@ class FlextLdifServer(FlextRegistry):
                     continue
 
                 if server_type and isinstance(server_type, str):
-                    self.register_class_plugin(self.SERVERS, server_type, instance)
+                    self.register_plugin(
+                        self.SERVERS,
+                        server_type,
+                        instance,
+                        scope="class",
+                    )
 
             except (TypeError, AttributeError):
                 continue
@@ -85,7 +88,7 @@ class FlextLdifServer(FlextRegistry):
             normalized = FlextLdifUtilitiesServer.normalize_server_type(server_type)
         except ValueError as e:
             return r[FlextLdifServersBase].fail(str(e))
-        result = self.get_class_plugin(self.SERVERS, normalized)
+        result = self.get_plugin(self.SERVERS, normalized, scope="class")
         if result.is_failure:
             return r[FlextLdifServersBase].fail(str(result.error))
 
@@ -99,40 +102,28 @@ class FlextLdifServer(FlextRegistry):
 
     def list_registered_servers(self) -> list[str]:
         """List all registered server types."""
-        return sorted(self.list_class_plugins(self.SERVERS).value or [])
+        return sorted(self.list_plugins(self.SERVERS, scope="class").value or [])
 
     def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
-        quirk = base.schema_quirk
-
-        if issubclass(quirk.__class__, FlextLdifServersBaseSchema):
-            return quirk
-        return None
+        return base.schema_quirk
 
     def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
         """Get ACL quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
-        quirk = base.acl_quirk
-
-        if issubclass(quirk.__class__, FlextLdifServersBaseSchemaAcl):
-            return quirk
-        return None
+        return base.acl_quirk
 
     def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
         """Get entry quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
-        quirk = base.entry_quirk
-
-        if issubclass(quirk.__class__, FlextLdifServersBaseEntry):
-            return quirk
-        return None
+        return base.entry_quirk
 
     def get_all_quirks(
         self,
@@ -179,9 +170,7 @@ class FlextLdifServer(FlextRegistry):
                 "acl": type(base.acl_quirk).__name__ if base.acl_quirk else None,
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
-            priorities[st] = (
-                base.priority if issubclass(base.priority.__class__, int) else 0
-            )
+            priorities[st] = base.priority
 
         return {
             "total_servers": len(servers),
@@ -196,11 +185,7 @@ class FlextLdifServer(FlextRegistry):
         """Get or create global registry instance."""
         if cls._global_instance is None:
             cls._global_instance = cls()
-        instance = cls._global_instance
-        if instance is None:
-            msg = "Global FlextLdifServer instance was not initialized"
-            raise RuntimeError(msg)
-        return instance
+        return cls._global_instance
 
 
 __all__ = ["FlextLdifServer"]

@@ -35,7 +35,7 @@ class TestsFlextLdifModels:
 
     # Root-level aliases for frequently used test models
     WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
-    StatisticsResult = FlextLdifModels.Ldif.Results.StatisticsResult
+    StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
 
     class Tests(FlextTestsModels.Tests):
         """Test fixture models namespace.
@@ -60,14 +60,14 @@ class TestsFlextLdifModels:
         WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
 
         # Service status models for testing
-        ValidationServiceStatus = FlextLdifModels.Ldif.Results.ValidationServiceStatus
-        SchemaServiceStatus = FlextLdifModels.Ldif.Results.SchemaServiceStatus
-        StatisticsServiceStatus = FlextLdifModels.Ldif.Results.StatisticsServiceStatus
+        ValidationServiceStatus = FlextLdifModels.Ldif.ValidationServiceStatus
+        SchemaServiceStatus = FlextLdifModels.Ldif.SchemaServiceStatus
+        StatisticsServiceStatus = FlextLdifModels.Ldif.StatisticsServiceStatus
 
         # Result models for testing
-        ValidationBatchResult = FlextLdifModels.Ldif.Results.ValidationBatchResult
+        ValidationBatchResult = FlextLdifModels.Ldif.ValidationBatchResult
         ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
-        StatisticsResult = FlextLdifModels.Ldif.Results.StatisticsResult
+        StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
 
         # Validation rules for testing
         ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules

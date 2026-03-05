@@ -25,6 +25,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         normalized = FlextLdifWriter._normalize_write_format(dumped)
         return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
+    @staticmethod
     def _normalize_write_format(
         d: Mapping[str, t.ContainerValue],
     ) -> Mapping[str, t.ContainerValue]:
@@ -59,14 +60,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         if format_options is None:
             result_raw = m.Ldif.WriteFormatOptions()
         elif isinstance(format_options, m.Ldif.WriteFormatOptions):
-            format_opts: m.Ldif.WriteFormatOptions = format_options
-            result_raw = m.Ldif.WriteFormatOptions.model_validate(format_opts)
-            # PP|        elif isinstance(format_options, m.Ldif.WriteOptions):
-            # ZN|            result_raw = m.Ldif.WriteFormatOptions.model_validate(
-            # QX|                format_options.model_dump(exclude_none=True)
-            # RK|            )
-            write_options = m.Ldif.WriteOptions.model_validate(format_options)
-            result_raw = FlextLdifWriter._extract_write_options(write_options)
+            result_raw = format_options
+        elif isinstance(format_options, m.Ldif.WriteOptions):
+            result_raw = FlextLdifWriter._to_format_options(format_options)
         else:
             result_raw = m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
         return m.Ldif.WriteFormatOptions.model_validate(result_raw)
@@ -178,11 +174,11 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     @override
     def execute(
         self,
-        params: Mapping[str, t.ContainerValue] | None = None,
+        params: t.ConfigurationMapping | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params = params or {}
-        entries_raw = u.take(params, "entries", as_type=list, default=[])
+        params_data: t.ConfigurationMapping = params if params is not None else {}
+        entries_raw = u.take(params_data, "entries")
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[object, ...] = ()
         with suppress(Exception):
@@ -194,7 +190,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             if validated_entry is not None:
                 entries.append(validated_entry)
         target_server_type_raw = u.take(
-            params,
+            params_data,
             "target_server_type",
             as_type=str,
             default="rfc",
@@ -207,7 +203,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             )
         except ValueError:
             target_server_type = None
-        output_path_raw = u.take(params, "output_path", as_type=Path)
+        output_path_raw = u.take(params_data, "output_path", as_type=Path)
 
         output_path: Path | None = None
         if output_path_raw is not None:
@@ -215,7 +211,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
                 output_path = Path(str(output_path_raw))
             except (TypeError, ValueError):
                 output_path = None
-        format_options_raw = u.take(params, "format_options")
+        format_options_raw = u.take(params_data, "format_options")
 
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None
         if format_options_raw is not None:
