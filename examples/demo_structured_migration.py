@@ -12,6 +12,8 @@ This example demonstrates the new structured migration feature that produces
 - Unlimited line width (no line folding)
 """
 
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
 
