@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from flext_ldif._models.conversion import FlextLdifModelsConversions
 
-FlextLdifModelsConversions = FlextLdifModelsConversions.FlextLdifModelsConversions
 ConvertToBool = FlextLdifModelsConversions.ConvertToBool
 ConvertToDict = FlextLdifModelsConversions.ConvertToDict
 ConvertToFloat = FlextLdifModelsConversions.ConvertToFloat

@@ -125,3 +125,17 @@ ConversionRequest = (
     | ConvertToDict
 )
 """Discriminated union of all conversion request types."""
+
+
+class FlextLdifModelsConversions:
+    ConvertToStr = ConvertToStr
+    ConvertToInt = ConvertToInt
+    ConvertToFloat = ConvertToFloat
+    ConvertToBool = ConvertToBool
+    ConvertToList = ConvertToList
+    ConvertToTuple = ConvertToTuple
+    ConvertToDict = ConvertToDict
+    ConversionRequest = ConversionRequest
+
+
+__all__ = ["FlextLdifModelsConversions"]
