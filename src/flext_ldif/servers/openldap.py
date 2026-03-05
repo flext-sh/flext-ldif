@@ -294,128 +294,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
             )
 
-        @override
-        def _write_acl(
-            self,
-            acl_data: FlextLdifModelsDomains.Acl,
-        ) -> FlextResult[str]:
-            """Write ACL data to RFC-compliant string format (internal)."""
-            try:
-                if acl_data.raw_acl:
-                    return FlextResult[str].ok(acl_data.raw_acl)
-
-                constants = FlextLdifServersOpenldap.Constants
-                what = (
-                    acl_data.target.target_dn
-                    if acl_data.target
-                    else constants.ACL_WILDCARD_TARGET
-                )
-                who = (
-                    acl_data.subject.subject_value
-                    if acl_data.subject
-                    else constants.ACL_WILDCARD_TARGET
-                )
-
-                acl_parts = [
-                    f"{constants.ACL_PREFIX_TO}{what}",
-                ]
-                acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
-
-                if acl_data.permissions:
-                    perms: list[str] = []
-                    if acl_data.permissions.read:
-                        perms.append("read")
-                    if acl_data.permissions.write:
-                        perms.append("write")
-                    if perms:
-                        acl_parts.append(",".join(perms))
-
-                acl_str = " ".join(acl_parts)
-                return FlextResult[str].ok(acl_str)
-
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
-                return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
-
-        def _strip_acl_prefix_and_index(self, acl_line: str) -> str:
-            """Remove olcAccess: prefix and {n} index from ACL line."""
-            acl_content = acl_line
-            if acl_line.startswith(
-                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
-            ):
-                acl_content = acl_line[
-                    len(
-                        FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":",
-                    ) :
-                ].strip()
-
-            index_match = re.match(
-                FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN,
-                acl_content,
-            )
-            if index_match:
-                acl_content = index_match.group(2)
-
-            return acl_content
-
-        def _parse_what_clause(self, acl_content: str) -> tuple[str | None, list[str]]:
-            """Parse "to <what>" clause and extract attributes."""
-            to_match = re.match(
-                FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
-                acl_content,
-                re.IGNORECASE,
-            )
-            if not to_match:
-                return None, []
-
-            what = to_match.group(1).strip()
-
-            attributes: list[str] = []
-            attrs_match = re.search(
-                FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
-                what,
-                re.IGNORECASE,
-            )
-            if attrs_match:
-                attr_string = attrs_match.group(1)
-                attributes = [
-                    attr.strip()
-                    for attr in attr_string.split(
-                        FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
-                    )
-                ]
-
-            return what, attributes
-
-        def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
-            """Parse "by <who> <access>" clauses."""
-            by_matches = list(
-                re.finditer(
-                    FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
-                    acl_content,
-                    re.IGNORECASE,
-                ),
-            )
-
-            subject_value = (
-                by_matches[0].group(1)
-                if by_matches
-                else FlextLdifServersOpenldap.Constants.ACL_SUBJECT_ANONYMOUS
-            )
-
-            access = (
-                by_matches[0].group(2)
-                if by_matches
-                else FlextLdifServersOpenldap.Constants.ACL_DEFAULT_ACCESS
-            )
-
-            return subject_value, access
-
         def _build_openldap_acl_model(
             self,
             what: str,
@@ -500,6 +378,128 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return FlextResult[m.Ldif.Acl].fail(
                     f"OpenLDAP 2.x ACL parsing failed: {e}",
                 )
+
+        def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
+            """Parse "by <who> <access>" clauses."""
+            by_matches = list(
+                re.finditer(
+                    FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
+                    acl_content,
+                    re.IGNORECASE,
+                ),
+            )
+
+            subject_value = (
+                by_matches[0].group(1)
+                if by_matches
+                else FlextLdifServersOpenldap.Constants.ACL_SUBJECT_ANONYMOUS
+            )
+
+            access = (
+                by_matches[0].group(2)
+                if by_matches
+                else FlextLdifServersOpenldap.Constants.ACL_DEFAULT_ACCESS
+            )
+
+            return subject_value, access
+
+        def _parse_what_clause(self, acl_content: str) -> tuple[str | None, list[str]]:
+            """Parse "to <what>" clause and extract attributes."""
+            to_match = re.match(
+                FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
+                acl_content,
+                re.IGNORECASE,
+            )
+            if not to_match:
+                return None, []
+
+            what = to_match.group(1).strip()
+
+            attributes: list[str] = []
+            attrs_match = re.search(
+                FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
+                what,
+                re.IGNORECASE,
+            )
+            if attrs_match:
+                attr_string = attrs_match.group(1)
+                attributes = [
+                    attr.strip()
+                    for attr in attr_string.split(
+                        FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
+                    )
+                ]
+
+            return what, attributes
+
+        def _strip_acl_prefix_and_index(self, acl_line: str) -> str:
+            """Remove olcAccess: prefix and {n} index from ACL line."""
+            acl_content = acl_line
+            if acl_line.startswith(
+                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
+            ):
+                acl_content = acl_line[
+                    len(
+                        FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":",
+                    ) :
+                ].strip()
+
+            index_match = re.match(
+                FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN,
+                acl_content,
+            )
+            if index_match:
+                acl_content = index_match.group(2)
+
+            return acl_content
+
+        @override
+        def _write_acl(
+            self,
+            acl_data: FlextLdifModelsDomains.Acl,
+        ) -> FlextResult[str]:
+            """Write ACL data to RFC-compliant string format (internal)."""
+            try:
+                if acl_data.raw_acl:
+                    return FlextResult[str].ok(acl_data.raw_acl)
+
+                constants = FlextLdifServersOpenldap.Constants
+                what = (
+                    acl_data.target.target_dn
+                    if acl_data.target
+                    else constants.ACL_WILDCARD_TARGET
+                )
+                who = (
+                    acl_data.subject.subject_value
+                    if acl_data.subject
+                    else constants.ACL_WILDCARD_TARGET
+                )
+
+                acl_parts = [
+                    f"{constants.ACL_PREFIX_TO}{what}",
+                ]
+                acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
+
+                if acl_data.permissions:
+                    perms: list[str] = []
+                    if acl_data.permissions.read:
+                        perms.append("read")
+                    if acl_data.permissions.write:
+                        perms.append("write")
+                    if perms:
+                        acl_parts.append(",".join(perms))
+
+                acl_str = " ".join(acl_parts)
+                return FlextResult[str].ok(acl_str)
+
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry quirk (nested)."""

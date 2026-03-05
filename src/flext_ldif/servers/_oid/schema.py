@@ -53,6 +53,71 @@ class FlextLdifServersOidSchema(
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
     @override
+    def extract_schemas_from_ldif(
+        self,
+        ldif_content: str,
+        *,
+        validate_dependencies: bool = False,
+    ) -> r[
+        Mapping[
+            str,
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
+        ]
+    ]:
+        """Extract and parse all schema definitions from LDIF content."""
+        return super().extract_schemas_from_ldif(
+            ldif_content,
+            validate_dependencies=validate_dependencies,
+        )
+
+    def _add_target_metadata(
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
+        target_values: Mapping[str, str | None],
+    ) -> None:
+        """Add target metadata to attribute."""
+        if not attr_data.metadata:
+            return
+
+        if target_values["syntax_oid"]:
+            attr_data.metadata.extensions[
+                c.Ldif.MetadataKeys.SCHEMA_TARGET_SYNTAX_OID
+            ] = target_values["syntax_oid"]
+        if target_values["name"]:
+            attr_data.metadata.extensions[
+                c.Ldif.MetadataKeys.SCHEMA_TARGET_ATTRIBUTE_NAME
+            ] = target_values["name"]
+
+        target_rules = {}
+        if target_values["equality"]:
+            target_rules["equality"] = target_values["equality"]
+        if target_values["substr"]:
+            target_rules["substr"] = target_values["substr"]
+        if target_values["ordering"]:
+            target_rules["ordering"] = target_values["ordering"]
+        if target_rules:
+            attr_data.metadata.extensions[
+                c.Ldif.MetadataKeys.SCHEMA_TARGET_MATCHING_RULES
+            ] = target_rules
+
+        attr_data.metadata.extensions[c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP] = (
+            u.Generators.generate_iso_timestamp()
+        )
+
+    def _capture_attribute_values(
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> Mapping[str, str | None]:
+        """Capture attribute values for metadata tracking."""
+        return {
+            "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
+            "equality": attr_data.equality,
+            "substr": attr_data.substr,
+            "ordering": attr_data.ordering,
+            "name": attr_data.name,
+        }
+
+    @override
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -166,110 +231,98 @@ class FlextLdifServersOidSchema(
                 f"OID post-parse objectclass hook failed: {e}",
             )
 
-    def _transform_case_ignore_substrings(
+    def _normalize_attribute_names(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
-        """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR."""
-        normalized_equality, normalized_substr = u.Ldif.Schema.normalize_matching_rules(
-            attr_data.equality,
-            attr_data.substr,
-            substr_rules_in_equality={
-                "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
-                "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
-            },
-        )
+        attr_list: list[str] | None,
+    ) -> list[str] | None:
+        """Normalize attribute names using OID case mappings."""
+        if not attr_list:
+            return attr_list
 
-        if (
-            normalized_equality != attr_data.equality
-            or normalized_substr != attr_data.substr
-        ):
-            logger.debug(
-                "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
-                attribute_name=attr_data.name,
-                original_equality=attr_data.equality,
-                normalized_substr=normalized_substr,
-            )
+        case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
+        return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
-            original_format: str | None = None
-
-            key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
-            if (
-                attr_data.metadata
-                and attr_data.metadata.extensions
-                and key in attr_data.metadata.extensions
-            ):
-                original_format_raw = attr_data.metadata.extensions.get(
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT,
+    def _normalize_auxiliary_typo(
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+        original_format_str: str,
+    ) -> str | None:
+        """Normalize AUXILLARY typo to AUXILIARY."""
+        kind = getattr(oc_data, "kind", None)
+        match (kind, original_format_str):
+            case (k, _) if k and k.upper() == "AUXILLARY":
+                logger.debug(
+                    "OID→RFC transform: AUXILLARY → AUXILIARY",
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
+                    original_kind=k,
+                    normalized_kind="AUXILIARY",
                 )
-                if original_format_raw is None or isinstance(original_format_raw, str):
-                    original_format = original_format_raw
-                else:
-                    msg = f"Expected str | None, got {type(original_format_raw)}"
-                    raise TypeError(msg)
+                return "AUXILIARY"
+            case (_, fmt) if fmt and "AUXILLARY" in fmt:
+                logger.debug(
+                    "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
+                    objectclass_name=getattr(oc_data, "name", None),
+                    objectclass_oid=getattr(oc_data, "oid", None),
+                    original_format_preview=fmt[
+                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                    ],
+                )
+                return "AUXILIARY"
+            case _:
+                return None
 
-            transformed = attr_data.model_copy(
-                update={
-                    "equality": normalized_equality,
-                    "substr": normalized_substr,
-                },
-            )
-
-            if original_format and transformed.metadata:
-                transformed.metadata.extensions[
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
-                ] = original_format
-
-            return transformed
-
-        return attr_data
-
-    def _capture_attribute_values(
+    def _normalize_sup_from_model(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> Mapping[str, str | None]:
-        """Capture attribute values for metadata tracking."""
-        return {
-            "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
-            "equality": attr_data.equality,
-            "substr": attr_data.substr,
-            "ordering": attr_data.ordering,
-            "name": attr_data.name,
-        }
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> str | (list[str] | None):
+        """Normalize SUP from objectClass model."""
+        if not oc_data.sup:
+            return None
 
-    def _add_target_metadata(
+        sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
+
+        match oc_data.sup:
+            case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
+                logger.debug(
+                    "OID→RFC transform: SUP normalization",
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
+                    original_sup=sup_clean,
+                    normalized_sup="top",
+                )
+                return "top"
+            case [sup_item] if (
+                sup_clean := str(sup_item).strip()
+            ) in sup_normalize_set:
+                logger.debug(
+                    "OID→RFC transform: SUP normalization (list)",
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
+                    original_sup=sup_clean,
+                    normalized_sup="top",
+                )
+                return "top"
+            case _:
+                return None
+
+    def _normalize_sup_from_original_format(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
-        target_values: Mapping[str, str | None],
-    ) -> None:
-        """Add target metadata to attribute."""
-        if not attr_data.metadata:
-            return
-
-        if target_values["syntax_oid"]:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_SYNTAX_OID
-            ] = target_values["syntax_oid"]
-        if target_values["name"]:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_ATTRIBUTE_NAME
-            ] = target_values["name"]
-
-        target_rules = {}
-        if target_values["equality"]:
-            target_rules["equality"] = target_values["equality"]
-        if target_values["substr"]:
-            target_rules["substr"] = target_values["substr"]
-        if target_values["ordering"]:
-            target_rules["ordering"] = target_values["ordering"]
-        if target_rules:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_MATCHING_RULES
-            ] = target_rules
-
-        attr_data.metadata.extensions[c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP] = (
-            u.Generators.generate_iso_timestamp()
-        )
+        original_format_str: str,
+    ) -> str | None:
+        """Normalize SUP from original_format string."""
+        sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
+        match original_format_str:
+            case s if any(pattern in s for pattern in sup_patterns):
+                logger.debug(
+                    "OID→RFC transform: SUP normalization (from original_format)",
+                    original_format_preview=s[
+                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                    ],
+                )
+                return "top"
+            case _:
+                return None
 
     @override
     def _parse_attribute(
@@ -326,178 +379,6 @@ class FlextLdifServersOidSchema(
             return r[m.Ldif.SchemaAttribute].fail(
                 f"OID attribute parsing failed: {e}",
             )
-
-    @override
-    def _write_attribute(
-        self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> r[str]:
-        """Write Oracle OID attribute definition (Phase 2: Denormalization)."""
-        attr_copy = attr_data.model_copy(deep=True)
-
-        source_rules = None
-        source_syntax = None
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            source_rules = attr_copy.metadata.extensions.get(
-                c.Ldif.MetadataKeys.SCHEMA_SOURCE_MATCHING_RULES,
-            )
-            source_syntax = attr_copy.metadata.extensions.get(
-                c.Ldif.MetadataKeys.SCHEMA_SOURCE_SYNTAX_OID,
-            )
-
-        if isinstance(source_rules, Mapping):
-            equality_raw = source_rules.get("equality", attr_copy.equality)
-            substr_raw = source_rules.get("substr", attr_copy.substr)
-            ordering_raw = source_rules.get("ordering", attr_copy.ordering)
-            oid_equality = (
-                equality_raw if isinstance(equality_raw, str) else attr_copy.equality
-            )
-            oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
-            oid_ordering = (
-                ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
-            )
-        else:
-            oid_equality, oid_substr = u.Ldif.Schema.normalize_matching_rules(
-                attr_copy.equality,
-                attr_copy.substr,
-                replacements=_OidConstants.MATCHING_RULE_RFC_TO_OID,
-                normalized_substr_values=_OidConstants.MATCHING_RULE_RFC_TO_OID,
-            )
-            oid_ordering = attr_copy.ordering
-            if attr_copy.ordering:
-                mapped = _OidConstants.MATCHING_RULE_RFC_TO_OID.get(
-                    attr_copy.ordering,
-                )
-                if mapped:
-                    oid_ordering = mapped
-
-        oid_syntax: str | None = None
-        if source_syntax:
-            oid_syntax = str(source_syntax) if source_syntax else None
-        else:
-            oid_syntax = str(attr_copy.syntax) if attr_copy.syntax else None
-
-        oid_metadata = attr_copy.metadata
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            keys_to_remove = {c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT}
-            new_extensions = {
-                k: v
-                for k, v in attr_copy.metadata.extensions.items()
-                if k not in keys_to_remove
-            }
-
-            oid_metadata = attr_copy.metadata.model_copy(
-                update={
-                    "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                        new_extensions,
-                    ),
-                },
-            )
-
-        attr_copy = attr_copy.model_copy(
-            update={
-                "equality": oid_equality,
-                "substr": oid_substr,
-                "ordering": oid_ordering,
-                "syntax": oid_syntax,
-                "metadata": oid_metadata,
-            },
-        )
-
-        return super()._write_attribute(attr_copy)
-
-    def _normalize_sup_from_model(
-        self,
-        oc_data: m.Ldif.SchemaObjectClass,
-    ) -> str | (list[str] | None):
-        """Normalize SUP from objectClass model."""
-        if not oc_data.sup:
-            return None
-
-        sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
-
-        match oc_data.sup:
-            case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
-                logger.debug(
-                    "OID→RFC transform: SUP normalization",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_sup=sup_clean,
-                    normalized_sup="top",
-                )
-                return "top"
-            case [sup_item] if (
-                sup_clean := str(sup_item).strip()
-            ) in sup_normalize_set:
-                logger.debug(
-                    "OID→RFC transform: SUP normalization (list)",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_sup=sup_clean,
-                    normalized_sup="top",
-                )
-                return "top"
-            case _:
-                return None
-
-    def _normalize_sup_from_original_format(
-        self,
-        original_format_str: str,
-    ) -> str | None:
-        """Normalize SUP from original_format string."""
-        sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
-        match original_format_str:
-            case s if any(pattern in s for pattern in sup_patterns):
-                logger.debug(
-                    "OID→RFC transform: SUP normalization (from original_format)",
-                    original_format_preview=s[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
-                    ],
-                )
-                return "top"
-            case _:
-                return None
-
-    def _normalize_auxiliary_typo(
-        self,
-        oc_data: m.Ldif.SchemaObjectClass,
-        original_format_str: str,
-    ) -> str | None:
-        """Normalize AUXILLARY typo to AUXILIARY."""
-        kind = getattr(oc_data, "kind", None)
-        match (kind, original_format_str):
-            case (k, _) if k and k.upper() == "AUXILLARY":
-                logger.debug(
-                    "OID→RFC transform: AUXILLARY → AUXILIARY",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_kind=k,
-                    normalized_kind="AUXILIARY",
-                )
-                return "AUXILIARY"
-            case (_, fmt) if fmt and "AUXILLARY" in fmt:
-                logger.debug(
-                    "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
-                    objectclass_name=getattr(oc_data, "name", None),
-                    objectclass_oid=getattr(oc_data, "oid", None),
-                    original_format_preview=fmt[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
-                    ],
-                )
-                return "AUXILIARY"
-            case _:
-                return None
-
-    def _normalize_attribute_names(
-        self,
-        attr_list: list[str] | None,
-    ) -> list[str] | None:
-        """Normalize attribute names using OID case mappings."""
-        if not attr_list:
-            return attr_list
-
-        case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
-        return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
     @override
     def _parse_objectclass(
@@ -615,23 +496,142 @@ class FlextLdifServersOidSchema(
             x_oid=attr_data.x_oid,
         )
 
-    @override
-    def extract_schemas_from_ldif(
+    def _transform_case_ignore_substrings(
         self,
-        ldif_content: str,
-        *,
-        validate_dependencies: bool = False,
-    ) -> r[
-        Mapping[
-            str,
-            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
-        ]
-    ]:
-        """Extract and parse all schema definitions from LDIF content."""
-        return super().extract_schemas_from_ldif(
-            ldif_content,
-            validate_dependencies=validate_dependencies,
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
+        """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR."""
+        normalized_equality, normalized_substr = u.Ldif.Schema.normalize_matching_rules(
+            attr_data.equality,
+            attr_data.substr,
+            substr_rules_in_equality={
+                "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
+                "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
+            },
         )
+
+        if (
+            normalized_equality != attr_data.equality
+            or normalized_substr != attr_data.substr
+        ):
+            logger.debug(
+                "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
+                attribute_name=attr_data.name,
+                original_equality=attr_data.equality,
+                normalized_substr=normalized_substr,
+            )
+
+            original_format: str | None = None
+
+            key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
+            if (
+                attr_data.metadata
+                and attr_data.metadata.extensions
+                and key in attr_data.metadata.extensions
+            ):
+                original_format_raw = attr_data.metadata.extensions.get(
+                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT,
+                )
+                if original_format_raw is None or isinstance(original_format_raw, str):
+                    original_format = original_format_raw
+                else:
+                    msg = f"Expected str | None, got {type(original_format_raw)}"
+                    raise TypeError(msg)
+
+            transformed = attr_data.model_copy(
+                update={
+                    "equality": normalized_equality,
+                    "substr": normalized_substr,
+                },
+            )
+
+            if original_format and transformed.metadata:
+                transformed.metadata.extensions[
+                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
+                ] = original_format
+
+            return transformed
+
+        return attr_data
+
+    @override
+    def _write_attribute(
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> r[str]:
+        """Write Oracle OID attribute definition (Phase 2: Denormalization)."""
+        attr_copy = attr_data.model_copy(deep=True)
+
+        source_rules = None
+        source_syntax = None
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            source_rules = attr_copy.metadata.extensions.get(
+                c.Ldif.MetadataKeys.SCHEMA_SOURCE_MATCHING_RULES,
+            )
+            source_syntax = attr_copy.metadata.extensions.get(
+                c.Ldif.MetadataKeys.SCHEMA_SOURCE_SYNTAX_OID,
+            )
+
+        if isinstance(source_rules, Mapping):
+            equality_raw = source_rules.get("equality", attr_copy.equality)
+            substr_raw = source_rules.get("substr", attr_copy.substr)
+            ordering_raw = source_rules.get("ordering", attr_copy.ordering)
+            oid_equality = (
+                equality_raw if isinstance(equality_raw, str) else attr_copy.equality
+            )
+            oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
+            oid_ordering = (
+                ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
+            )
+        else:
+            oid_equality, oid_substr = u.Ldif.Schema.normalize_matching_rules(
+                attr_copy.equality,
+                attr_copy.substr,
+                replacements=_OidConstants.MATCHING_RULE_RFC_TO_OID,
+                normalized_substr_values=_OidConstants.MATCHING_RULE_RFC_TO_OID,
+            )
+            oid_ordering = attr_copy.ordering
+            if attr_copy.ordering:
+                mapped = _OidConstants.MATCHING_RULE_RFC_TO_OID.get(
+                    attr_copy.ordering,
+                )
+                if mapped:
+                    oid_ordering = mapped
+
+        oid_syntax: str | None = None
+        if source_syntax:
+            oid_syntax = str(source_syntax) if source_syntax else None
+        else:
+            oid_syntax = str(attr_copy.syntax) if attr_copy.syntax else None
+
+        oid_metadata = attr_copy.metadata
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            keys_to_remove = {c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT}
+            new_extensions = {
+                k: v
+                for k, v in attr_copy.metadata.extensions.items()
+                if k not in keys_to_remove
+            }
+
+            oid_metadata = attr_copy.metadata.model_copy(
+                update={
+                    "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                        new_extensions,
+                    ),
+                },
+            )
+
+        attr_copy = attr_copy.model_copy(
+            update={
+                "equality": oid_equality,
+                "substr": oid_substr,
+                "ordering": oid_ordering,
+                "syntax": oid_syntax,
+                "metadata": oid_metadata,
+            },
+        )
+
+        return super()._write_attribute(attr_copy)
 
 
 """Oracle Internet Directory (OID) Quirks.

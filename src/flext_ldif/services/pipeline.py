@@ -24,6 +24,18 @@ class ProcessingPipeline:
         self._config = config or m.Ldif.TransformConfig()
         self._pipeline = self._build_pipeline()
 
+    @property
+    def config(self) -> m.Ldif.TransformConfig:
+        """Get the processing configuration."""
+        return self._config
+
+    def execute(
+        self,
+        entries: Sequence[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
+        """Execute the processing pipeline."""
+        return self._pipeline.execute(entries)
+
     def _build_pipeline(self) -> Pipeline:
         """Build the internal pipeline based on configuration."""
         pipeline = Pipeline()
@@ -84,15 +96,3 @@ class ProcessingPipeline:
             )
 
         return pipeline
-
-    def execute(
-        self,
-        entries: Sequence[m.Ldif.Entry],
-    ) -> r[list[m.Ldif.Entry]]:
-        """Execute the processing pipeline."""
-        return self._pipeline.execute(entries)
-
-    @property
-    def config(self) -> m.Ldif.TransformConfig:
-        """Get the processing configuration."""
-        return self._config

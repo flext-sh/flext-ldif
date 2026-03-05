@@ -36,6 +36,47 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         attr_lower = {k.lower(): v for k, v in attributes.items()}
         return "objectclass" in attr_lower
 
+    def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        """Validate RFC 2849 compliance."""
+        if not entry or not core_u.is_type(entry, m.Ldif.Entry):
+            return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
+
+        if not entry.dn or not core_u.has(entry.dn, "value"):
+            return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
+        if not entry.attributes or not core_u.is_type(entry.attributes, dict):
+            return r[m.Ldif.Entry].fail(
+                f"Invalid attributes in entry: {entry.attributes}",
+            )
+
+        return r[m.Ldif.Entry].ok(entry)
+
+    def _create_entry(
+        self,
+        dn: str,
+        attributes: Mapping[str, list[str]],
+    ) -> r[m.Ldif.Entry]:
+        """Create Entry from DN and attributes."""
+        if not dn or not core_u.is_type(dn, str):
+            return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
+        if not isinstance(attributes, dict):
+            return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
+        attributes_dict: dict[str, list[str]] = attributes
+
+        try:
+            entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=dn.strip()),
+                attributes=m.Ldif.Attributes(attributes=attributes_dict),
+            )
+            return r[m.Ldif.Entry].ok(entry)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
+
     @override
     def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
@@ -127,47 +168,6 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         entry.metadata.original_strings["dn_original"] = dn
 
         return FlextResult[m.Ldif.Entry].ok(entry)
-
-    def _create_entry(
-        self,
-        dn: str,
-        attributes: Mapping[str, list[str]],
-    ) -> r[m.Ldif.Entry]:
-        """Create Entry from DN and attributes."""
-        if not dn or not core_u.is_type(dn, str):
-            return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
-        if not isinstance(attributes, dict):
-            return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
-        attributes_dict: dict[str, list[str]] = attributes
-
-        try:
-            entry = m.Ldif.Entry(
-                dn=m.Ldif.DN(value=dn.strip()),
-                attributes=m.Ldif.Attributes(attributes=attributes_dict),
-            )
-            return r[m.Ldif.Entry].ok(entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
-
-    def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Validate RFC 2849 compliance."""
-        if not entry or not core_u.is_type(entry, m.Ldif.Entry):
-            return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
-
-        if not entry.dn or not core_u.has(entry.dn, "value"):
-            return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
-        if not entry.attributes or not core_u.is_type(entry.attributes, dict):
-            return r[m.Ldif.Entry].fail(
-                f"Invalid attributes in entry: {entry.attributes}",
-            )
-
-        return r[m.Ldif.Entry].ok(entry)
 
 
 __all__ = ["FlextLdifServersRfcEntry"]

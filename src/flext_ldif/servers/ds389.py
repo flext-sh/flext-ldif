@@ -256,6 +256,27 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
+        @staticmethod
+        def _resolve_acl_targetattr(
+            target: m.Ldif.AclTarget | FlextLdifModelsDomains.AclTarget | None,
+        ) -> str:
+            """Resolve target attributes to formatted string."""
+            if target and target.attributes:
+                separator = (
+                    FlextLdifServersDs389.Constants.ACL_TARGETATTR_SPACE_REPLACEMENT
+                )
+                return separator.join(target.attributes)
+            return FlextLdifServersDs389.Constants.ACL_WILDCARD_ATTRIBUTE
+
+        @staticmethod
+        def _resolve_acl_userdn(
+            subject: m.Ldif.AclSubject | FlextLdifModelsDomains.AclSubject | None,
+        ) -> str:
+            """Resolve subject to userdn string."""
+            if subject and subject.subject_value:
+                return subject.subject_value
+            return FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method)."""
@@ -292,6 +313,68 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 return normalized.lower().startswith("(version")
             return False
+
+        def _build_acl_string(
+            self,
+            acl_name: str,
+            permissions: list[str],
+            targetattr: str,
+            userdn: str,
+        ) -> FlextResult[str]:
+            """Build ACI string from components."""
+            version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
+            parts = [version_prefix, f'acl "{acl_name}"']
+
+            if permissions:
+                perms = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR.join(
+                    permissions,
+                )
+                parts.append(
+                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})",
+                )
+            if targetattr:
+                prefix = FlextLdifServersDs389.Constants.ACL_TARGETATTR_PREFIX
+                parts.append(f'{prefix} = "{targetattr}"')
+            if userdn:
+                parts.append(
+                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"',
+                )
+
+            acl_separator = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
+            acl_content = f"{acl_separator} ".join(parts) if parts else ""
+            acl_str = (
+                f"{FlextLdifServersDs389.Constants.ACL_ACI_PREFIX} {acl_content}"
+                if acl_content
+                else FlextLdifServersDs389.Constants.ACL_ACI_PREFIX
+            )
+
+            return FlextResult[str].ok(acl_str)
+
+        def _extract_acl_permissions(
+            self,
+            permissions_data: (
+                m.Ldif.AclPermissions | FlextLdifModelsDomains.AclPermissions | None
+            ),
+        ) -> list[str]:
+            """Extract permission names from Permissions model flags."""
+            permissions: list[str] = []
+            if not permissions_data:
+                return permissions
+
+            if permissions_data.read:
+                permissions.append("read")
+            if permissions_data.write:
+                permissions.append("write")
+            if permissions_data.add:
+                permissions.append("add")
+            if permissions_data.delete:
+                permissions.append("delete")
+            if permissions_data.search:
+                permissions.append("search")
+            if permissions_data.compare:
+                permissions.append("compare")
+
+            return permissions
 
         @override
         def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
@@ -449,89 +532,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         exc=exc,
                     ),
                 )
-
-        def _extract_acl_permissions(
-            self,
-            permissions_data: (
-                m.Ldif.AclPermissions | FlextLdifModelsDomains.AclPermissions | None
-            ),
-        ) -> list[str]:
-            """Extract permission names from Permissions model flags."""
-            permissions: list[str] = []
-            if not permissions_data:
-                return permissions
-
-            if permissions_data.read:
-                permissions.append("read")
-            if permissions_data.write:
-                permissions.append("write")
-            if permissions_data.add:
-                permissions.append("add")
-            if permissions_data.delete:
-                permissions.append("delete")
-            if permissions_data.search:
-                permissions.append("search")
-            if permissions_data.compare:
-                permissions.append("compare")
-
-            return permissions
-
-        @staticmethod
-        def _resolve_acl_targetattr(
-            target: m.Ldif.AclTarget | FlextLdifModelsDomains.AclTarget | None,
-        ) -> str:
-            """Resolve target attributes to formatted string."""
-            if target and target.attributes:
-                separator = (
-                    FlextLdifServersDs389.Constants.ACL_TARGETATTR_SPACE_REPLACEMENT
-                )
-                return separator.join(target.attributes)
-            return FlextLdifServersDs389.Constants.ACL_WILDCARD_ATTRIBUTE
-
-        @staticmethod
-        def _resolve_acl_userdn(
-            subject: m.Ldif.AclSubject | FlextLdifModelsDomains.AclSubject | None,
-        ) -> str:
-            """Resolve subject to userdn string."""
-            if subject and subject.subject_value:
-                return subject.subject_value
-            return FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
-
-        def _build_acl_string(
-            self,
-            acl_name: str,
-            permissions: list[str],
-            targetattr: str,
-            userdn: str,
-        ) -> FlextResult[str]:
-            """Build ACI string from components."""
-            version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
-            parts = [version_prefix, f'acl "{acl_name}"']
-
-            if permissions:
-                perms = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR.join(
-                    permissions,
-                )
-                parts.append(
-                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})",
-                )
-            if targetattr:
-                prefix = FlextLdifServersDs389.Constants.ACL_TARGETATTR_PREFIX
-                parts.append(f'{prefix} = "{targetattr}"')
-            if userdn:
-                parts.append(
-                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"',
-                )
-
-            acl_separator = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
-            acl_content = f"{acl_separator} ".join(parts) if parts else ""
-            acl_str = (
-                f"{FlextLdifServersDs389.Constants.ACL_ACI_PREFIX} {acl_content}"
-                if acl_content
-                else FlextLdifServersDs389.Constants.ACL_ACI_PREFIX
-            )
-
-            return FlextResult[str].ok(acl_str)
 
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for 389 Directory Server."""

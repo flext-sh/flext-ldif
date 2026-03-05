@@ -12,6 +12,14 @@ from flext_ldif.settings import FlextLdifSettings
 class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
     """Base class for LDIF services with typed config helper."""
 
+    @property
+    def ldif_config(self) -> FlextLdifSettings:
+        """Return the LDIF configuration namespace with proper typing."""
+        return FlextSettings.get_global().get_namespace(
+            "ldif",
+            FlextLdifSettings,
+        )
+
     @classmethod
     @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
@@ -22,14 +30,6 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
             return model_copy(update={"config_type": FlextLdifSettings})
         options.config_type = FlextLdifSettings
         return options
-
-    @property
-    def ldif_config(self) -> FlextLdifSettings:
-        """Return the LDIF configuration namespace with proper typing."""
-        return FlextSettings.get_global().get_namespace(
-            "ldif",
-            FlextLdifSettings,
-        )
 
 
 # Short alias for service base (s is FlextService from flext-core)

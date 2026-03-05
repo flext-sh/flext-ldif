@@ -36,206 +36,23 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         if schema_service is not None:
             object.__setattr__(self, "_schema_service", schema_service)
 
-    def _validate_attribute_oid(
-        self,
-        oid: str,
-    ) -> FlextResult[bool]:
-        """Validate attribute OID format for OUD."""
-        oid_validation_result = u.Ldif.OID.validate_format(oid)
-        if oid_validation_result.is_failure:
-            return FlextResult[bool].fail(
-                f"OID validation failed: {oid_validation_result.error}",
-            )
-
-        is_valid_basic_oid = oid_validation_result.value
-
-        is_valid_oud_oid = is_valid_basic_oid
-        if not is_valid_oud_oid and oid.endswith("-oid"):
-            base_oid = oid[:-4]
-            base_validation = u.Ldif.OID.validate_format(base_oid)
-            if base_validation.is_success:
-                is_valid_oud_oid = base_validation.value
-
-        if not is_valid_oud_oid:
-            return FlextResult[bool].fail(
-                f"Invalid OUD OID format: {oid} (must be numeric RFC OID or end with -oid suffix)",
-            )
-
-        return FlextResult[bool].ok(is_valid_oud_oid)
-
-    def _collect_attribute_extensions(
-        self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> list[str]:
-        """Collect OUD X-* extensions from attribute."""
-        extensions = []
-        if attr.x_origin:
-            extensions.append("X-ORIGIN")
-        if attr.x_file_ref:
-            extensions.append("X-FILE-REF")
-        if attr.x_name:
-            extensions.append("X-NAME")
-        if attr.x_alias:
-            extensions.append("X-ALIAS")
-        if attr.x_oid:
-            extensions.append("X-OID")
-        return extensions
-
     @override
-    def _hook_post_parse_attribute(
+    def extract_schemas_from_ldif(
         self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
-        """Hook: Validate OUD-specific attribute features after RFC parsing."""
-        if not attr or not attr.oid:
-            return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
-
-        oid = str(attr.oid)
-
-        oid_validation = self._validate_attribute_oid(oid)
-        if oid_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaAttribute].fail(
-                oid_validation.error or "OID validation failed",
-            )
-
-        is_valid_oud_oid = oid_validation.value
-
-        existing_metadata = attr.metadata
-        if not existing_metadata:
-            existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
-
-        current_extensions = (
-            dict(existing_metadata.extensions) if existing_metadata.extensions else {}
+        ldif_content: str,
+        *,
+        validate_dependencies: bool = True,
+    ) -> FlextResult[
+        Mapping[
+            str,
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
+        ]
+    ]:
+        """Extract and parse all schema definitions from LDIF content."""
+        return super().extract_schemas_from_ldif(
+            ldif_content,
+            validate_dependencies=validate_dependencies,
         )
-
-        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
-
-        if oid.endswith("-oid"):
-            current_extensions["oid_format_extension"] = True
-
-        attr = attr.model_copy(
-            update={
-                "metadata": existing_metadata.model_copy(
-                    update={"extensions": current_extensions},
-                ),
-            },
-        )
-
-        oud_extensions = self._collect_attribute_extensions(attr)
-        if oud_extensions:
-            logger.debug(
-                "Attribute has OUD X-* extensions",
-                attribute_name=attr.name,
-                attribute_oid=attr.oid,
-                extensions=oud_extensions,
-                extension_count=len(oud_extensions),
-            )
-
-        return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
-
-    def _validate_objectclass_sup(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[bool]:
-        """Validate objectClass SUP constraint for OUD."""
-        sup = oc.sup
-        if sup:
-            sup_str = str(sup)
-
-            if "$" in sup_str:
-                return FlextResult[bool].fail(
-                    f"OUD objectClass '{oc.name}' has multiple SUPs: "
-                    f"{sup_str}. "
-                    "OUD only allows single SUP (use AUXILIARY classes "
-                    "for additional features).",
-                )
-        return FlextResult[bool].ok(value=True)
-
-    def _validate_objectclass_oid_and_sup(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-        """Validate ObjectClass OID and SUP OID formats."""
-        if oc and oc.oid:
-            oid_str = str(oc.oid)
-            oid_validation = self._validate_attribute_oid(oid_str)
-            if oid_validation.is_failure:
-                return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                    f"ObjectClass OID validation failed: {oid_validation.error}",
-                )
-
-            is_valid_oud_oid = oid_validation.value
-
-            existing_oc_metadata = oc.metadata
-            if not existing_oc_metadata:
-                existing_oc_metadata = m.Ldif.QuirkMetadata.create_for(
-                    "oud",
-                )
-
-            oc_extensions = (
-                dict(existing_oc_metadata.extensions)
-                if existing_oc_metadata.extensions
-                else {}
-            )
-
-            oc_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
-
-            if oid_str.endswith("-oid"):
-                oc_extensions["oid_format_extension"] = True
-
-            oc = oc.model_copy(
-                update={
-                    "metadata": existing_oc_metadata.model_copy(
-                        update={"extensions": oc_extensions},
-                    ),
-                },
-            )
-
-        sup = oc.sup
-        if sup:
-            sup_str = str(sup)
-            if sup_str and "." in sup_str and sup_str[0].isdigit():
-                sup_validation = self._validate_attribute_oid(sup_str)
-                if sup_validation.is_failure:
-                    return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                        f"ObjectClass SUP OID validation failed: {sup_validation.error}",
-                    )
-
-        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
-
-    @override
-    def _hook_post_parse_objectclass(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
-        """Hook: Validate OUD-specific objectClass features after RFC parsing."""
-        if not oc:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                "ObjectClass is None or empty",
-            )
-
-        sup_validation = self._validate_objectclass_sup(oc)
-        if sup_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                sup_validation.error or "SUP validation failed",
-            )
-
-        oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
-        if oid_and_sup_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                oid_and_sup_validation.error or "OID validation failed",
-            )
-
-        oc = oid_and_sup_validation.value
-
-        logger.debug(
-            "ObjectClass validated: SingleSUP constraint OK",
-            objectclass_name=oc.name,
-            objectclass_oid=oc.oid,
-            sup_value=oc.sup,
-        )
-
-        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _apply_attribute_matching_rule_transforms(
         self,
@@ -321,6 +138,110 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             },
         )
 
+    def _collect_attribute_extensions(
+        self,
+        attr: m.Ldif.SchemaAttribute,
+    ) -> list[str]:
+        """Collect OUD X-* extensions from attribute."""
+        extensions = []
+        if attr.x_origin:
+            extensions.append("X-ORIGIN")
+        if attr.x_file_ref:
+            extensions.append("X-FILE-REF")
+        if attr.x_name:
+            extensions.append("X-NAME")
+        if attr.x_alias:
+            extensions.append("X-ALIAS")
+        if attr.x_oid:
+            extensions.append("X-OID")
+        return extensions
+
+    @override
+    def _hook_post_parse_attribute(
+        self,
+        attr: m.Ldif.SchemaAttribute,
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        """Hook: Validate OUD-specific attribute features after RFC parsing."""
+        if not attr or not attr.oid:
+            return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
+
+        oid = str(attr.oid)
+
+        oid_validation = self._validate_attribute_oid(oid)
+        if oid_validation.is_failure:
+            return FlextResult[m.Ldif.SchemaAttribute].fail(
+                oid_validation.error or "OID validation failed",
+            )
+
+        is_valid_oud_oid = oid_validation.value
+
+        existing_metadata = attr.metadata
+        if not existing_metadata:
+            existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+
+        current_extensions = (
+            dict(existing_metadata.extensions) if existing_metadata.extensions else {}
+        )
+
+        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+
+        if oid.endswith("-oid"):
+            current_extensions["oid_format_extension"] = True
+
+        attr = attr.model_copy(
+            update={
+                "metadata": existing_metadata.model_copy(
+                    update={"extensions": current_extensions},
+                ),
+            },
+        )
+
+        oud_extensions = self._collect_attribute_extensions(attr)
+        if oud_extensions:
+            logger.debug(
+                "Attribute has OUD X-* extensions",
+                attribute_name=attr.name,
+                attribute_oid=attr.oid,
+                extensions=oud_extensions,
+                extension_count=len(oud_extensions),
+            )
+
+        return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
+
+    @override
+    def _hook_post_parse_objectclass(
+        self,
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        """Hook: Validate OUD-specific objectClass features after RFC parsing."""
+        if not oc:
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                "ObjectClass is None or empty",
+            )
+
+        sup_validation = self._validate_objectclass_sup(oc)
+        if sup_validation.is_failure:
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                sup_validation.error or "SUP validation failed",
+            )
+
+        oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
+        if oid_and_sup_validation.is_failure:
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                oid_and_sup_validation.error or "OID validation failed",
+            )
+
+        oc = oid_and_sup_validation.value
+
+        logger.debug(
+            "ObjectClass validated: SingleSUP constraint OK",
+            objectclass_name=oc.name,
+            objectclass_oid=oc.oid,
+            sup_value=oc.sup,
+        )
+
+        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
+
     @override
     def _transform_attribute_for_write(
         self,
@@ -351,20 +272,99 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         return self._apply_attribute_oid_metadata(updated_attr)
 
-    @override
-    def extract_schemas_from_ldif(
+    def _validate_attribute_oid(
         self,
-        ldif_content: str,
-        *,
-        validate_dependencies: bool = True,
-    ) -> FlextResult[
-        Mapping[
-            str,
-            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
-        ]
-    ]:
-        """Extract and parse all schema definitions from LDIF content."""
-        return super().extract_schemas_from_ldif(
-            ldif_content,
-            validate_dependencies=validate_dependencies,
-        )
+        oid: str,
+    ) -> FlextResult[bool]:
+        """Validate attribute OID format for OUD."""
+        oid_validation_result = u.Ldif.OID.validate_format(oid)
+        if oid_validation_result.is_failure:
+            return FlextResult[bool].fail(
+                f"OID validation failed: {oid_validation_result.error}",
+            )
+
+        is_valid_basic_oid = oid_validation_result.value
+
+        is_valid_oud_oid = is_valid_basic_oid
+        if not is_valid_oud_oid and oid.endswith("-oid"):
+            base_oid = oid[:-4]
+            base_validation = u.Ldif.OID.validate_format(base_oid)
+            if base_validation.is_success:
+                is_valid_oud_oid = base_validation.value
+
+        if not is_valid_oud_oid:
+            return FlextResult[bool].fail(
+                f"Invalid OUD OID format: {oid} (must be numeric RFC OID or end with -oid suffix)",
+            )
+
+        return FlextResult[bool].ok(is_valid_oud_oid)
+
+    def _validate_objectclass_oid_and_sup(
+        self,
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        """Validate ObjectClass OID and SUP OID formats."""
+        if oc and oc.oid:
+            oid_str = str(oc.oid)
+            oid_validation = self._validate_attribute_oid(oid_str)
+            if oid_validation.is_failure:
+                return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                    f"ObjectClass OID validation failed: {oid_validation.error}",
+                )
+
+            is_valid_oud_oid = oid_validation.value
+
+            existing_oc_metadata = oc.metadata
+            if not existing_oc_metadata:
+                existing_oc_metadata = m.Ldif.QuirkMetadata.create_for(
+                    "oud",
+                )
+
+            oc_extensions = (
+                dict(existing_oc_metadata.extensions)
+                if existing_oc_metadata.extensions
+                else {}
+            )
+
+            oc_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+
+            if oid_str.endswith("-oid"):
+                oc_extensions["oid_format_extension"] = True
+
+            oc = oc.model_copy(
+                update={
+                    "metadata": existing_oc_metadata.model_copy(
+                        update={"extensions": oc_extensions},
+                    ),
+                },
+            )
+
+        sup = oc.sup
+        if sup:
+            sup_str = str(sup)
+            if sup_str and "." in sup_str and sup_str[0].isdigit():
+                sup_validation = self._validate_attribute_oid(sup_str)
+                if sup_validation.is_failure:
+                    return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                        f"ObjectClass SUP OID validation failed: {sup_validation.error}",
+                    )
+
+        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
+
+    def _validate_objectclass_sup(
+        self,
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> FlextResult[bool]:
+        """Validate objectClass SUP constraint for OUD."""
+        sup = oc.sup
+        if sup:
+            sup_str = str(sup)
+
+            if "$" in sup_str:
+                return FlextResult[bool].fail(
+                    f"OUD objectClass '{oc.name}' has multiple SUPs: "
+                    f"{sup_str}. "
+                    "OUD only allows single SUP (use AUXILIARY classes "
+                    "for additional features).",
+                )
+        return FlextResult[bool].ok(value=True)

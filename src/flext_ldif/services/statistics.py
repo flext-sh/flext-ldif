@@ -22,6 +22,39 @@ class FlextLdifStatistics(
         """Initialize statistics service."""
         super().__init__()
 
+    def calculate_for_entries(
+        self,
+        entries: Sequence[m.Ldif.Entry],
+    ) -> r[m.Ldif.EntriesStatistics]:
+        """Calculate general-purpose statistics for a list of Entry models."""
+        object_class_distribution: Counter[str] = Counter()
+        server_type_distribution: Counter[str] = Counter()
+
+        for entry in entries:
+            object_class_distribution.update(entry.get_objectclass_names())
+
+            metadata = entry.metadata
+            if metadata is not None and metadata.extensions is not None:
+                server_type_value = metadata.extensions.get("server_type")
+                if isinstance(server_type_value, str):
+                    server_type_distribution[server_type_value] += 1
+
+        obj_class_model = m.Ldif.DynamicCounts()
+        for class_name, count in object_class_distribution.items():
+            obj_class_model.set_count(class_name, count)
+
+        server_type_model = m.Ldif.DynamicCounts()
+        for server_type, count in server_type_distribution.items():
+            server_type_model.set_count(server_type, count)
+
+        entries_stats = m.Ldif.EntriesStatistics(
+            total_entries=len(entries),
+            object_class_distribution=obj_class_model,
+            server_type_distribution=server_type_model,
+        )
+
+        return r[m.Ldif.EntriesStatistics].ok(entries_stats)
+
     @override
     @d.log_operation("statistics_service_check")
     @d.track_operation()
@@ -105,39 +138,6 @@ class FlextLdifStatistics(
                 output_files=output_files_model,
             ),
         )
-
-    def calculate_for_entries(
-        self,
-        entries: Sequence[m.Ldif.Entry],
-    ) -> r[m.Ldif.EntriesStatistics]:
-        """Calculate general-purpose statistics for a list of Entry models."""
-        object_class_distribution: Counter[str] = Counter()
-        server_type_distribution: Counter[str] = Counter()
-
-        for entry in entries:
-            object_class_distribution.update(entry.get_objectclass_names())
-
-            metadata = entry.metadata
-            if metadata is not None and metadata.extensions is not None:
-                server_type_value = metadata.extensions.get("server_type")
-                if isinstance(server_type_value, str):
-                    server_type_distribution[server_type_value] += 1
-
-        obj_class_model = m.Ldif.DynamicCounts()
-        for class_name, count in object_class_distribution.items():
-            obj_class_model.set_count(class_name, count)
-
-        server_type_model = m.Ldif.DynamicCounts()
-        for server_type, count in server_type_distribution.items():
-            server_type_model.set_count(server_type, count)
-
-        entries_stats = m.Ldif.EntriesStatistics(
-            total_entries=len(entries),
-            object_class_distribution=obj_class_model,
-            server_type_distribution=server_type_model,
-        )
-
-        return r[m.Ldif.EntriesStatistics].ok(entries_stats)
 
     def _extract_rejection_reasons(
         self,

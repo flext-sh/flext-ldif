@@ -57,6 +57,33 @@ class FlextLdifUtilitiesDetection:
         """Mixin for regex pattern matching across different data types."""
 
         @staticmethod
+        def can_handle_in_set(
+            data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
+            items: frozenset[str],
+        ) -> bool:
+            """Check if data is in set (case-insensitive)."""
+            # String: direct match
+            if isinstance(data, str):
+                items_lower = {item.lower() for item in items}
+                return data.lower() in items_lower
+
+            # Model with name field
+            name = getattr(data, "name", None)
+            if name:
+                items_lower = {item.lower() for item in items}
+                return str(name).lower() in items_lower
+
+            # Try converting to string
+            try:
+                if data is not None:
+                    items_lower = {item.lower() for item in items}
+                    return str(data).lower() in items_lower
+            except (TypeError, AttributeError):
+                pass
+
+            return False
+
+        @staticmethod
         def can_handle_pattern(
             pattern: str,
             *,
@@ -93,35 +120,22 @@ class FlextLdifUtilitiesDetection:
             except (re.error, TypeError, AttributeError):
                 return False
 
-        @staticmethod
-        def can_handle_in_set(
-            data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None),
-            items: frozenset[str],
-        ) -> bool:
-            """Check if data is in set (case-insensitive)."""
-            # String: direct match
-            if isinstance(data, str):
-                items_lower = {item.lower() for item in items}
-                return data.lower() in items_lower
-
-            # Model with name field
-            name = getattr(data, "name", None)
-            if name:
-                items_lower = {item.lower() for item in items}
-                return str(name).lower() in items_lower
-
-            # Try converting to string
-            try:
-                if data is not None:
-                    items_lower = {item.lower() for item in items}
-                    return str(data).lower() in items_lower
-            except (TypeError, AttributeError):
-                pass
-
-            return False
-
     class OidPatternMixin(PatternDetectionMixin):
         """Mixin for OID-based pattern detection in Schema."""
+
+        def can_handle_attribute(
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
+        ) -> bool:
+            """Check if attribute matches OID detection pattern."""
+            return self._can_handle_schema_item_by_pattern(attr_definition)
+
+        def can_handle_objectclass(
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
+        ) -> bool:
+            """Check if objectClass matches OID detection pattern."""
+            return self._can_handle_schema_item_by_pattern(oc_definition)
 
         def _can_handle_schema_item_by_pattern(
             self,
@@ -137,20 +151,6 @@ class FlextLdifUtilitiesDetection:
                 return True  # No pattern = match all
             # can_handle_pattern accepts object and handles conversion internally
             return self.can_handle_pattern(pattern, data=schema_item)
-
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Check if attribute matches OID detection pattern."""
-            return self._can_handle_schema_item_by_pattern(attr_definition)
-
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Check if objectClass matches OID detection pattern."""
-            return self._can_handle_schema_item_by_pattern(oc_definition)
 
     class PrefixDetectionMixin(PatternDetectionMixin):
         """Mixin for attribute name prefix-based detection in Schema."""

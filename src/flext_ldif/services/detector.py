@@ -26,9 +26,85 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content."""
 
     @staticmethod
+    def _add_pattern_if_match(
+        *,
+        condition: bool,
+        description: str,
+        patterns: list[str],
+    ) -> None:
+        """Add pattern description if condition is met."""
+        if condition:
+            patterns.append(description)
+
+    @staticmethod
     def _get_all_server_types() -> list[str]:
         """Get all supported server types from constants."""
         return u.Ldif.Server.get_all_server_types()
+
+    @staticmethod
+    def _get_server_constants(
+        server_type: str,
+    ) -> type[ServerDetectionConstants] | None:
+        """Get server Constants class dynamically via FlextLdifServer registry."""
+        registry = FlextLdifDetector._get_server_registry()
+        server_quirk_result = registry.quirk(server_type)
+        if not server_quirk_result.is_success:
+            return None
+
+        server_quirk = server_quirk_result.value
+        quirk_class = type(server_quirk)
+        if not getattr(quirk_class, "Constants", None) is not None:
+            return None
+
+        constants = getattr(quirk_class, "Constants", None)
+        if constants is None:
+            return None
+
+        if (
+            issubclass(constants.__class__, type)
+            and getattr(constants, "DETECTION_WEIGHT", None) is not None
+            and getattr(constants, "DETECTION_ATTRIBUTES", None) is not None
+            and (
+                getattr(constants, "DETECTION_PATTERN", None) is not None
+                or getattr(constants, "DETECTION_OID_PATTERN", None) is not None
+            )
+        ):
+            return constants
+
+        return None
+
+    @staticmethod
+    def _get_server_registry() -> FlextLdifServer:
+        """Get server registry instance."""
+        return FlextLdifServer.get_global_instance()
+
+    @staticmethod
+    def resolve_from_config(
+        config: FlextLdifSettings,
+        target_server_type: str | None = None,
+    ) -> str:
+        """Determine effective server type based on a prioritized configuration hierarchy."""
+        if target_server_type:
+            return target_server_type
+
+        if getattr(
+            config,
+            "enable_relaxed_parsing",
+            getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
+        ):
+            return u.Ldif.Server.get_server_type_value("RELAXED")
+
+        if config.quirks_detection_mode == "manual":
+            if config.quirks_server_type is None:
+                return u.Ldif.Server.get_server_type_value("RFC")
+            if not config.quirks_server_type.strip():
+                return u.Ldif.Server.get_server_type_value("RFC")
+            return config.quirks_server_type
+
+        if config.quirks_detection_mode == "disabled":
+            return u.Ldif.Server.get_server_type_value("RFC")
+
+        return config.ldif_default_server_type
 
     def detect_server_type(
         self,
@@ -97,34 +173,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         )
         return r[m.Ldif.ClientStatus].ok(status_result)
 
-    @staticmethod
-    def resolve_from_config(
-        config: FlextLdifSettings,
-        target_server_type: str | None = None,
-    ) -> str:
-        """Determine effective server type based on a prioritized configuration hierarchy."""
-        if target_server_type:
-            return target_server_type
-
-        if getattr(
-            config,
-            "enable_relaxed_parsing",
-            getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
-        ):
-            return u.Ldif.Server.get_server_type_value("RELAXED")
-
-        if config.quirks_detection_mode == "manual":
-            if config.quirks_server_type is None:
-                return u.Ldif.Server.get_server_type_value("RFC")
-            if not config.quirks_server_type.strip():
-                return u.Ldif.Server.get_server_type_value("RFC")
-            return config.quirks_server_type
-
-        if config.quirks_detection_mode == "disabled":
-            return u.Ldif.Server.get_server_type_value("RFC")
-
-        return config.ldif_default_server_type
-
     def get_effective_server_type(
         self,
         ldif_path: Path | None = None,
@@ -142,81 +190,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                     return r[str].ok(result.detected_server_type)
 
         return r[str].ok("rfc")
-
-    def _update_server_scores(
-        self,
-        server_type: str,
-        pattern: str,
-        weight: int,
-        attributes: list[str] | frozenset[str],
-        content: str,
-        content_lower: str,
-        scores: MutableMapping[str, int],
-        *,
-        case_sensitive: bool = False,
-        objectclasses: list[str] | frozenset[str] | None = None,
-    ) -> None:
-        """Update scores for a server type based on pattern, attribute, and objectClass matches."""
-        search_content = content if case_sensitive else content_lower
-        if re.search(pattern, search_content) and server_type:
-            scores[server_type] += weight
-
-        score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
-        for item in (*attributes, *(objectclasses or [])):
-            server_type_lower = server_type.lower() if server_type else ""
-            item_lower = item.lower()
-            if server_type_lower in item_lower or item_lower in server_type_lower:
-                scores[server_type] += score_attr_match
-
-    def _process_server_with_oid_pattern(
-        self,
-        server_type: str,
-        constants: type[ServerDetectionConstants] | None,
-        content: str,
-        content_lower: str,
-        scores: MutableMapping[str, int],
-        *,
-        case_sensitive: bool = False,
-    ) -> None:
-        """Process server detection using OID pattern."""
-        pattern = (
-            getattr(constants, "DETECTION_OID_PATTERN", None) if constants else None
-        )
-        if not pattern or not issubclass(pattern.__class__, str):
-            return
-
-        self._update_server_scores(
-            server_type,
-            pattern,
-            getattr(constants, "DETECTION_WEIGHT", 10),
-            getattr(constants, "DETECTION_ATTRIBUTES", []),
-            content,
-            content_lower,
-            scores,
-            case_sensitive=case_sensitive,
-            objectclasses=getattr(constants, "DETECTION_OBJECTCLASS_NAMES", None),
-        )
-
-    def _process_server_with_pattern(
-        self,
-        server_type: str,
-        constants: type[ServerDetectionConstants] | None,
-        content_lower: str,
-        scores: MutableMapping[str, int],
-        *,
-        pattern_attr: str = "DETECTION_PATTERN",
-    ) -> None:
-        """Process server detection using pattern attribute."""
-        pattern = getattr(constants, pattern_attr, None) if constants else None
-        if not pattern:
-            return
-
-        weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
-        if issubclass(pattern.__class__, re.Pattern):
-            if pattern.search(content_lower):
-                scores[server_type] += weight
-        elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
-            scores[server_type] += weight
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type."""
@@ -369,17 +342,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
         detected: str = server_type_map.get(detected_key, "rfc")
         return detected, confidence
-
-    @staticmethod
-    def _add_pattern_if_match(
-        *,
-        condition: bool,
-        description: str,
-        patterns: list[str],
-    ) -> None:
-        """Add pattern description if condition is met."""
-        if condition:
-            patterns.append(description)
 
     def _extract_oid_patterns(
         self,
@@ -560,42 +522,80 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
         return patterns
 
-    @staticmethod
-    def _get_server_registry() -> FlextLdifServer:
-        """Get server registry instance."""
-        return FlextLdifServer.get_global_instance()
-
-    @staticmethod
-    def _get_server_constants(
+    def _process_server_with_oid_pattern(
+        self,
         server_type: str,
-    ) -> type[ServerDetectionConstants] | None:
-        """Get server Constants class dynamically via FlextLdifServer registry."""
-        registry = FlextLdifDetector._get_server_registry()
-        server_quirk_result = registry.quirk(server_type)
-        if not server_quirk_result.is_success:
-            return None
+        constants: type[ServerDetectionConstants] | None,
+        content: str,
+        content_lower: str,
+        scores: MutableMapping[str, int],
+        *,
+        case_sensitive: bool = False,
+    ) -> None:
+        """Process server detection using OID pattern."""
+        pattern = (
+            getattr(constants, "DETECTION_OID_PATTERN", None) if constants else None
+        )
+        if not pattern or not issubclass(pattern.__class__, str):
+            return
 
-        server_quirk = server_quirk_result.value
-        quirk_class = type(server_quirk)
-        if not getattr(quirk_class, "Constants", None) is not None:
-            return None
+        self._update_server_scores(
+            server_type,
+            pattern,
+            getattr(constants, "DETECTION_WEIGHT", 10),
+            getattr(constants, "DETECTION_ATTRIBUTES", []),
+            content,
+            content_lower,
+            scores,
+            case_sensitive=case_sensitive,
+            objectclasses=getattr(constants, "DETECTION_OBJECTCLASS_NAMES", None),
+        )
 
-        constants = getattr(quirk_class, "Constants", None)
-        if constants is None:
-            return None
+    def _process_server_with_pattern(
+        self,
+        server_type: str,
+        constants: type[ServerDetectionConstants] | None,
+        content_lower: str,
+        scores: MutableMapping[str, int],
+        *,
+        pattern_attr: str = "DETECTION_PATTERN",
+    ) -> None:
+        """Process server detection using pattern attribute."""
+        pattern = getattr(constants, pattern_attr, None) if constants else None
+        if not pattern:
+            return
 
-        if (
-            issubclass(constants.__class__, type)
-            and getattr(constants, "DETECTION_WEIGHT", None) is not None
-            and getattr(constants, "DETECTION_ATTRIBUTES", None) is not None
-            and (
-                getattr(constants, "DETECTION_PATTERN", None) is not None
-                or getattr(constants, "DETECTION_OID_PATTERN", None) is not None
-            )
-        ):
-            return constants
+        weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
+        if issubclass(pattern.__class__, re.Pattern):
+            if pattern.search(content_lower):
+                scores[server_type] += weight
+        elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
+            scores[server_type] += weight
 
-        return None
+    def _update_server_scores(
+        self,
+        server_type: str,
+        pattern: str,
+        weight: int,
+        attributes: list[str] | frozenset[str],
+        content: str,
+        content_lower: str,
+        scores: MutableMapping[str, int],
+        *,
+        case_sensitive: bool = False,
+        objectclasses: list[str] | frozenset[str] | None = None,
+    ) -> None:
+        """Update scores for a server type based on pattern, attribute, and objectClass matches."""
+        search_content = content if case_sensitive else content_lower
+        if re.search(pattern, search_content) and server_type:
+            scores[server_type] += weight
+
+        score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
+        for item in (*attributes, *(objectclasses or [])):
+            server_type_lower = server_type.lower() if server_type else ""
+            item_lower = item.lower()
+            if server_type_lower in item_lower or item_lower in server_type_lower:
+                scores[server_type] += score_attr_match
 
 
 __all__ = ["FlextLdifDetector"]

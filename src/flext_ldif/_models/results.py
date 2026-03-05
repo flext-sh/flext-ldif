@@ -69,6 +69,27 @@ class FlextLdifModelsResults:
             default_factory=FlextLdifModelsCollections.CategoryPaths
         )
 
+        @overload
+        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
+        @overload
+        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
+        def __getitem__(
+            self,
+            key: int | slice,
+        ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
+            return self.get_all_entries()[key]
+
+        def __len__(self) -> int:
+            return len(self.get_all_entries())
+
+        @property
+        def content(self) -> Sequence[FlextLdifModelsDomains.Entry]:
+            return self.get_all_entries()
+
+        @property
+        def entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
+            return self.get_all_entries()
+
         @field_validator("entries_by_category", mode="before")
         @classmethod
         def _convert_dict_to_categories(
@@ -83,41 +104,12 @@ class FlextLdifModelsResults:
                 return result
             return value
 
-        def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
-            all_entries: list[FlextLdifModelsDomains.Entry] = []
-            for entries in self.entries_by_category.values():
-                all_entries.extend(entries)
-            return all_entries
-
-        @property
-        def content(self) -> Sequence[FlextLdifModelsDomains.Entry]:
-            return self.get_all_entries()
-
-        @property
-        def entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
-            return self.get_all_entries()
-
-        def __len__(self) -> int:
-            return len(self.get_all_entries())
-
-        @overload
-        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
-        @overload
-        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
-        def __getitem__(
-            self,
-            key: int | slice,
-        ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
-            return self.get_all_entries()[key]
-
-        def get_category(
-            self,
-            category: str,
-            default: list[FlextLdifModelsDomains.Entry] | None = None,
-        ) -> list[FlextLdifModelsDomains.Entry]:
-            if category in self.entries_by_category:
-                return self.entries_by_category[category]
-            return default if default is not None else []
+        @classmethod
+        def empty(cls) -> FlextLdifModelsResults.EntryResult:
+            return cls(
+                entries_by_category=FlextLdifModelsCollections.FlexibleCategories(),
+                statistics=FlextLdifModelsResults.Statistics.for_pipeline(),
+            )
 
         @classmethod
         def from_entries(
@@ -134,12 +126,20 @@ class FlextLdifModelsResults:
             flex[category] = entry_list
             return cls(entries_by_category=flex, statistics=stats)
 
-        @classmethod
-        def empty(cls) -> FlextLdifModelsResults.EntryResult:
-            return cls(
-                entries_by_category=FlextLdifModelsCollections.FlexibleCategories(),
-                statistics=FlextLdifModelsResults.Statistics.for_pipeline(),
-            )
+        def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
+            all_entries: list[FlextLdifModelsDomains.Entry] = []
+            for entries in self.entries_by_category.values():
+                all_entries.extend(entries)
+            return all_entries
+
+        def get_category(
+            self,
+            category: str,
+            default: list[FlextLdifModelsDomains.Entry] | None = None,
+        ) -> list[FlextLdifModelsDomains.Entry]:
+            if category in self.entries_by_category:
+                return self.entries_by_category[category]
+            return default if default is not None else []
 
         def merge(
             self,
@@ -205,17 +205,6 @@ class FlextLdifModelsResults:
         )
         events: list[FlextLdifModelsResults.EventType] = Field(default_factory=list)
 
-        def _rate(self, numerator: int) -> float:
-            return (
-                round((numerator / self.total_entries) * 100, 2)
-                if self.total_entries
-                else 0.0
-            )
-
-        @computed_field
-        def success_rate(self) -> float:
-            return self._rate(self.processed_entries)
-
         @computed_field
         def failure_rate(self) -> float:
             return self._rate(self.failed_entries)
@@ -225,15 +214,12 @@ class FlextLdifModelsResults:
             return self._rate(self.rejected_entries)
 
         @computed_field
+        def success_rate(self) -> float:
+            return self._rate(self.processed_entries)
+
+        @computed_field
         def summary(self) -> FlextLdifModelsResults.StatisticsSummary:
             return self.to_summary()
-
-        def to_summary(self) -> FlextLdifModelsResults.StatisticsSummary:
-            fields = {
-                name: getattr(self, name)
-                for name in FlextLdifModelsResults.StatisticsSummary.model_fields
-            }
-            return FlextLdifModelsResults.StatisticsSummary(**fields)
 
         @classmethod
         def for_pipeline(
@@ -326,6 +312,20 @@ class FlextLdifModelsResults:
             updates["events"] = events_merged
             return self.model_copy(update=updates)
 
+        def to_summary(self) -> FlextLdifModelsResults.StatisticsSummary:
+            fields = {
+                name: getattr(self, name)
+                for name in FlextLdifModelsResults.StatisticsSummary.model_fields
+            }
+            return FlextLdifModelsResults.StatisticsSummary(**fields)
+
+        def _rate(self, numerator: int) -> float:
+            return (
+                round((numerator / self.total_entries) * 100, 2)
+                if self.total_entries
+                else 0.0
+            )
+
     class MigrationPipelineResult(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         migrated_schema: FlextLdifModelsCollections.SchemaContent = Field(
@@ -338,19 +338,15 @@ class FlextLdifModelsResults:
         output_files: list[str] = Field(default_factory=list)
 
         @computed_field
+        def entry_count(self) -> int:
+            return len(self.entries)
+
+        @computed_field
         def is_empty(self) -> bool:
             has_schema = (
                 self.stats.schema_attributes > 0 or self.stats.schema_objectclasses > 0
             )
             return not has_schema and self.stats.total_entries == 0
-
-        @computed_field
-        def entry_count(self) -> int:
-            return len(self.entries)
-
-        @computed_field
-        def output_file_count(self) -> int:
-            return len(self.output_files)
 
         @computed_field
         def migration_summary(self) -> FlextLdifModelsResults.MigrationSummary:
@@ -364,6 +360,10 @@ class FlextLdifModelsResults:
                 )
                 and self.stats.total_entries == 0,
             )
+
+        @computed_field
+        def output_file_count(self) -> int:
+            return len(self.output_files)
 
     class ClientStatus(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
@@ -437,14 +437,6 @@ class FlextLdifModelsResults:
     class DictAccessibleValue(m.Value):
         """Temporary wrapper for values accessed like dicts."""
 
-        def _resolve_key(self, key: str) -> t.ContainerValue:
-            if key in type(self).model_fields:
-                return getattr(self, key)
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                return extra[key]
-            raise KeyError(key)
-
         def __getitem__(self, key: str) -> t.Scalar | None:
             value = self._resolve_key(key)
             return str(value) if value is not None else None
@@ -465,9 +457,6 @@ class FlextLdifModelsResults:
             except KeyError:
                 return default
 
-        def keys(self) -> list[str]:
-            return list(self.model_fields_set)
-
         def items(self) -> list[tuple[str, t.Scalar]]:
             results: list[tuple[str, t.Scalar]] = []
             for key in self.model_fields_set:
@@ -479,6 +468,17 @@ class FlextLdifModelsResults:
                 else:
                     results.append((key, str(val)))
             return results
+
+        def keys(self) -> list[str]:
+            return list(self.model_fields_set)
+
+        def _resolve_key(self, key: str) -> t.ContainerValue:
+            if key in type(self).model_fields:
+                return getattr(self, key)
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                return extra[key]
+            raise KeyError(key)
 
     class ServiceStatus(DictAccessibleValue):
         service: str = Field()

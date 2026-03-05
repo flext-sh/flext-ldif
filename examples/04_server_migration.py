@@ -34,75 +34,95 @@ class ExampleServerMigration:
     """
 
     @staticmethod
-    def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
-        """Parallel migration between servers with comprehensive error handling."""
-        api = FlextLdif.get_instance()
+    def _create_test_data(source_dir: Path) -> None:
+        """Create and write test data files."""
 
-        # Create test directories
-        input_dir = Path("examples/migration_input")
-        output_dir = Path("examples/migration_output")
-        input_dir.mkdir(exist_ok=True, parents=True)
-        output_dir.mkdir(exist_ok=True, parents=True)
-
-        # Create diverse test data for different server types
-        oid_ldif = """dn: cn=OID User,ou=People,dc=example,dc=com
-objectClass: person
-objectClass: inetOrgPerson
-cn: OID User
-sn: Test
-mail: oid@example.com
-orclguid: 1234567890abcdef
+        def create_entry_data(i: int) -> str:
+            """Create entry data based on index."""
+            if i % 4 == 0:
+                # OU entries
+                return f"""dn: ou=Container{i},dc=example,dc=com
+objectClass: organizationalUnit
+ou: Container{i}
+description: Container {i}
 orclaci: access to * by * read
-
-dn: cn=OID Group,ou=Groups,dc=example,dc=com
-objectClass: groupOfUniqueNames
-cn: OID Group
-uniquemember: cn=OID User,ou=People,dc=example,dc=com
 """
-
-        oud_ldif = """dn: cn=OUD User,ou=People,dc=example,dc=com
+            if i % 2 == 0:
+                # Group entries with OID characteristics
+                return f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
+objectClass: groupOfUniqueNames
+cn: Group{i}
+uniquemember: cn=User{i},ou=People,dc=example,dc=com
+orclguid: group{i}guid123
+"""
+            # Person entries with mixed characteristics
+            return f"""dn: cn=User{i},ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
-cn: OUD User
-sn: Test
-mail: oud@example.com
-aci: (target="ldap:///cn=OUD User")(version 3.0; acl "Anonymous read"; allow (read,search,compare) userdn="ldap:///anyone";)
-
-dn: cn=OUD Group,ou=Groups,dc=example,dc=com
-objectClass: groupOfNames
-cn: OUD Group
-member: cn=OUD User,ou=People,dc=example,dc=com
+cn: User{i}
+sn: TestUser{i}
+mail: user{i}@example.com
+orclguid: user{i}guid456
+aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
 
-        # Write test files
-        (input_dir / "oid_data.ldif").write_text(oid_ldif)
-        (input_dir / "oud_data.ldif").write_text(oud_ldif)
+        batch_result = u.process(
+            list(range(20)),
+            create_entry_data,
+            on_error="skip",
+        )
+        source_data: list[str] = []
+        if batch_result.is_success:
+            value = batch_result.value
+            if isinstance(value, list):
+                source_data = value
 
-        # Parallel migration: OID → OUD with auto-detection
-        migration_result = api.migrate(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server="oid",  # Source server with specific quirks
-            target_server="oud",  # Target server with different quirks
-            options=m.Ldif.MigrateOptions(
-                # Enable parallel processing for large datasets
-                write_options=m.Ldif.LdifResults.WriteFormatOptions(
-                    fold_long_lines=False,
-                    sort_attributes=True,
-                ),
-            ),
+        def write_file(item: tuple[int, str]) -> None:
+            """Write entry to file."""
+            i, entry = item
+            (source_dir / f"data_{i:02d}.ldif").write_text(entry)
+
+        _ = u.process(
+            list(enumerate(source_data)),
+            write_file,
+            on_error="skip",
         )
 
-        if migration_result.is_failure:
-            return r.fail(f"Migration failed: {migration_result.error}")
+    @staticmethod
+    def _detect_server_type(
+        api: FlextLdif,
+        source_dir: Path,
+    ) -> tuple[str, dict[str, object]]:
+        """Detect server type from source data."""
+        sample_file = source_dir / "data_00.ldif"
+        detect_result = api.detect_server_type(ldif_content=sample_file)
+        detection_data: dict[str, object] = {}
+        if detect_result.is_success:
+            detection = detect_result.value
+            detection_data = {
+                "detected_server": detection.detected_server_type,
+                "detection_confidence": detection.confidence,
+            }
+            return detection.detected_server_type or "oid", detection_data
+        return "oid", detection_data
 
-        result = migration_result.value
+    @staticmethod
+    def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
+        """Setup migration directories."""
+        source_dir = base_dir / "source"
+        intermediate_dir = base_dir / "intermediate"
+        final_dir = base_dir / "final"
 
-        # Verify migration results (MigrationPipelineResult has entries, stats)
-        _ = len(result.entries)
-        _ = result.stats.processed_entries if result.stats else 0
+        def setup_dir(dir_path: Path) -> None:
+            """Setup directory."""
+            dir_path.mkdir(exist_ok=True, parents=True)
 
-        return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
+        _ = u.process(
+            [source_dir, intermediate_dir, final_dir],
+            setup_dir,
+            on_error="skip",
+        )
+        return source_dir, intermediate_dir, final_dir
 
     @staticmethod
     def auto_detection_migration_pipeline() -> r[dict[str, object]]:
@@ -247,97 +267,6 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         })
 
     @staticmethod
-    def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
-        """Setup migration directories."""
-        source_dir = base_dir / "source"
-        intermediate_dir = base_dir / "intermediate"
-        final_dir = base_dir / "final"
-
-        def setup_dir(dir_path: Path) -> None:
-            """Setup directory."""
-            dir_path.mkdir(exist_ok=True, parents=True)
-
-        _ = u.process(
-            [source_dir, intermediate_dir, final_dir],
-            setup_dir,
-            on_error="skip",
-        )
-        return source_dir, intermediate_dir, final_dir
-
-    @staticmethod
-    def _create_test_data(source_dir: Path) -> None:
-        """Create and write test data files."""
-
-        def create_entry_data(i: int) -> str:
-            """Create entry data based on index."""
-            if i % 4 == 0:
-                # OU entries
-                return f"""dn: ou=Container{i},dc=example,dc=com
-objectClass: organizationalUnit
-ou: Container{i}
-description: Container {i}
-orclaci: access to * by * read
-"""
-            if i % 2 == 0:
-                # Group entries with OID characteristics
-                return f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
-objectClass: groupOfUniqueNames
-cn: Group{i}
-uniquemember: cn=User{i},ou=People,dc=example,dc=com
-orclguid: group{i}guid123
-"""
-            # Person entries with mixed characteristics
-            return f"""dn: cn=User{i},ou=People,dc=example,dc=com
-objectClass: person
-objectClass: inetOrgPerson
-cn: User{i}
-sn: TestUser{i}
-mail: user{i}@example.com
-orclguid: user{i}guid456
-aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
-"""
-
-        batch_result = u.process(
-            list(range(20)),
-            create_entry_data,
-            on_error="skip",
-        )
-        source_data: list[str] = []
-        if batch_result.is_success:
-            value = batch_result.value
-            if isinstance(value, list):
-                source_data = value
-
-        def write_file(item: tuple[int, str]) -> None:
-            """Write entry to file."""
-            i, entry = item
-            (source_dir / f"data_{i:02d}.ldif").write_text(entry)
-
-        _ = u.process(
-            list(enumerate(source_data)),
-            write_file,
-            on_error="skip",
-        )
-
-    @staticmethod
-    def _detect_server_type(
-        api: FlextLdif,
-        source_dir: Path,
-    ) -> tuple[str, dict[str, object]]:
-        """Detect server type from source data."""
-        sample_file = source_dir / "data_00.ldif"
-        detect_result = api.detect_server_type(ldif_content=sample_file)
-        detection_data: dict[str, object] = {}
-        if detect_result.is_success:
-            detection = detect_result.value
-            detection_data = {
-                "detected_server": detection.detected_server_type,
-                "detection_confidence": detection.confidence,
-            }
-            return detection.detected_server_type or "oid", detection_data
-        return "oid", detection_data
-
-    @staticmethod
     def comprehensive_migration_workflow() -> r[dict[str, object]]:
         """Comprehensive migration workflow with parallel processing and validation."""
         api = FlextLdif.get_instance()
@@ -404,3 +333,74 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         }
 
         return r.ok(workflow_results)
+
+    @staticmethod
+    def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
+        """Parallel migration between servers with comprehensive error handling."""
+        api = FlextLdif.get_instance()
+
+        # Create test directories
+        input_dir = Path("examples/migration_input")
+        output_dir = Path("examples/migration_output")
+        input_dir.mkdir(exist_ok=True, parents=True)
+        output_dir.mkdir(exist_ok=True, parents=True)
+
+        # Create diverse test data for different server types
+        oid_ldif = """dn: cn=OID User,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: OID User
+sn: Test
+mail: oid@example.com
+orclguid: 1234567890abcdef
+orclaci: access to * by * read
+
+dn: cn=OID Group,ou=Groups,dc=example,dc=com
+objectClass: groupOfUniqueNames
+cn: OID Group
+uniquemember: cn=OID User,ou=People,dc=example,dc=com
+"""
+
+        oud_ldif = """dn: cn=OUD User,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: OUD User
+sn: Test
+mail: oud@example.com
+aci: (target="ldap:///cn=OUD User")(version 3.0; acl "Anonymous read"; allow (read,search,compare) userdn="ldap:///anyone";)
+
+dn: cn=OUD Group,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: OUD Group
+member: cn=OUD User,ou=People,dc=example,dc=com
+"""
+
+        # Write test files
+        (input_dir / "oid_data.ldif").write_text(oid_ldif)
+        (input_dir / "oud_data.ldif").write_text(oud_ldif)
+
+        # Parallel migration: OID → OUD with auto-detection
+        migration_result = api.migrate(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server="oid",  # Source server with specific quirks
+            target_server="oud",  # Target server with different quirks
+            options=m.Ldif.MigrateOptions(
+                # Enable parallel processing for large datasets
+                write_options=m.Ldif.LdifResults.WriteFormatOptions(
+                    fold_long_lines=False,
+                    sort_attributes=True,
+                ),
+            ),
+        )
+
+        if migration_result.is_failure:
+            return r.fail(f"Migration failed: {migration_result.error}")
+
+        result = migration_result.value
+
+        # Verify migration results (MigrationPipelineResult has entries, stats)
+        _ = len(result.entries)
+        _ = result.stats.processed_entries if result.stats else 0
+
+        return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)

@@ -52,11 +52,21 @@ class FlextLdifServersBaseQuirkHelpers:
     """Quirk helpers for server base (single class per module, no loose functions)."""
 
     @staticmethod
-    def get_server_type_from_utilities(
-        quirk_class: type[p.Ldif.SchemaQuirkProtocol],
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-        """Get server type from utilities using type-safe access pattern."""
-        return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
+    def get_parent_quirk_safe(
+        instance: p.Ldif.SchemaQuirkProtocol,
+    ) -> p.Ldif.SchemaQuirkProtocol | None:
+        """Get _parent_quirk attribute safely with type narrowing."""
+        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(
+            instance,
+            "_parent_quirk",
+            None,
+        )
+        if (
+            parent_raw is not None
+            and getattr(parent_raw, "_parent_quirk", None) is not None
+        ):
+            return parent_raw
+        return None
 
     @staticmethod
     def get_priority_from_parent(parent: p.Ldif.SchemaQuirkProtocol | None) -> int:
@@ -76,40 +86,30 @@ class FlextLdifServersBaseQuirkHelpers:
         return 100
 
     @staticmethod
-    def get_parent_quirk_safe(
-        instance: p.Ldif.SchemaQuirkProtocol,
-    ) -> p.Ldif.SchemaQuirkProtocol | None:
-        """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(
-            instance,
-            "_parent_quirk",
-            None,
-        )
-        if (
-            parent_raw is not None
-            and getattr(parent_raw, "_parent_quirk", None) is not None
-        ):
-            return parent_raw
-        return None
+    def get_server_type_from_utilities(
+        quirk_class: type[p.Ldif.SchemaQuirkProtocol],
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+        """Get server type from utilities using type-safe access pattern."""
+        return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
 
 class QuirkMethodsMixin:
     """Mixin providing common quirk methods for Schema, Acl, and Entry classes."""
 
-    def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-        """Get server_type from parent server class via __qualname__."""
-        return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
-            type(self),
-        )
+    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirkProtocol | None:
+        """Get _parent_quirk attribute safely with type narrowing."""
+        return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
 
     def _get_priority(self) -> int:
         """Get priority from parent server class Constants."""
         parent = self._get_parent_quirk_safe()
         return FlextLdifServersBaseQuirkHelpers.get_priority_from_parent(parent)
 
-    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirkProtocol | None:
-        """Get _parent_quirk attribute safely with type narrowing."""
-        return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
+    def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+        """Get server_type from parent server class via __qualname__."""
+        return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
+            type(self),
+        )
 
 
 __all__ = [

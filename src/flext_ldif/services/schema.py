@@ -41,6 +41,11 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         )
         object.__setattr__(self, "_server_type", server_type)
 
+    @override
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"FlextLdifSchema[{self._server_type}]"
+
     @property
     def server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get configured server type."""
@@ -51,17 +56,30 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         """Create fluent builder instance for method chaining."""
         return cls()
 
-    def with_server_type(
-        self,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
-    ) -> Self:
-        """Set server type for schema operations (fluent builder)."""
-        object.__setattr__(self, "_server_type", server_type)
-        return self
+    @staticmethod
+    def is_schema(entry: m.Ldif.Entry) -> bool:
+        """Check if entry is a schema definition."""
+        schema_attrs = {
+            "attributetypes",
+            "objectclasses",
+            "ldapsyntaxes",
+            "matchingrules",
+        }
+
+        if entry.attributes is None:
+            return False
+        entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
+        return bool(schema_attrs & entry_attrs)
 
     def build(self) -> Self:
         """Build configured schema service instance."""
         return self
+
+    def can_handle_attribute(self, attr_definition: str) -> bool:
+        """Check if attribute definition can be handled by this service."""
+        if not attr_definition or not attr_definition.strip():
+            return False
+        return "(" in attr_definition and ")" in attr_definition
 
     @override
     def execute(
@@ -265,6 +283,14 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             )
             return r[bool].fail(error_msg)
 
+    def with_server_type(
+        self,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+    ) -> Self:
+        """Set server type for schema operations (fluent builder)."""
+        object.__setattr__(self, "_server_type", server_type)
+        return self
+
     def write_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -316,32 +342,6 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                 error=str(e),
             )
             return r[str].fail(error_msg)
-
-    @staticmethod
-    def is_schema(entry: m.Ldif.Entry) -> bool:
-        """Check if entry is a schema definition."""
-        schema_attrs = {
-            "attributetypes",
-            "objectclasses",
-            "ldapsyntaxes",
-            "matchingrules",
-        }
-
-        if entry.attributes is None:
-            return False
-        entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
-        return bool(schema_attrs & entry_attrs)
-
-    def can_handle_attribute(self, attr_definition: str) -> bool:
-        """Check if attribute definition can be handled by this service."""
-        if not attr_definition or not attr_definition.strip():
-            return False
-        return "(" in attr_definition and ")" in attr_definition
-
-    @override
-    def __repr__(self) -> str:
-        """String representation."""
-        return f"FlextLdifSchema[{self._server_type}]"
 
 
 __all__ = [

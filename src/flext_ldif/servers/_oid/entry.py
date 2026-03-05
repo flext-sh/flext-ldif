@@ -26,36 +26,76 @@ logger = FlextLogger(__name__)
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     """Oracle Internet Directory (OID) Entry implementation."""
 
-    def _hook_transform_entry_raw(
+    def normalize_schema_strings_inline(
         self,
-        dn: str,
-        attrs: Mapping[str, list[str | bytes]],
-    ) -> FlextResult[tuple[str, Mapping[str, list[str | bytes]]]]:
-        """Transform OID-specific DN and attributes before RFC parsing."""
-        cleaned_dn, _ = FlextLdifUtilitiesDN.clean_dn_with_statistics(dn)
+        entry: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
+        """Normalize schema attribute strings (attributetypes, objectclasses)."""
+        if not entry.attributes:
+            return entry
 
-        normalized_dn = cleaned_dn
-        if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_QUIRK.lower():
-            normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
-            logger.debug(
-                "OID→RFC transform: Normalizing schema DN",
-                original_dn=cleaned_dn,
-                normalized_dn=normalized_dn,
+        schema_attrs = FlextLdifServersOidConstants.SCHEMA_FILTERABLE_FIELDS
+
+        if not any(
+            attr_name.lower() in schema_attrs
+            for attr_name in entry.attributes.attributes
+        ):
+            return entry
+
+        replacements = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC
+
+        new_attributes: dict[str, list[str]] = {
+            attr_name: (
+                [
+                    reduce(
+                        lambda val, pair: val.replace(pair[0], pair[1]),
+                        replacements.items(),
+                        value,
+                    )
+                    for value in attr_values
+                ]
+                if attr_name.lower() in schema_attrs
+                else attr_values
             )
+            for attr_name, attr_values in entry.attributes.attributes.items()
+        }
 
-        return FlextResult.ok((normalized_dn, attrs))
+        if new_attributes == entry.attributes.attributes:
+            return entry
 
-    @override
-    def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize OID attribute names to RFC-canonical format."""
-        match attr_name.lower():
-            case attr_lower if attr_lower in {
-                FlextLdifServersOidConstants.ORCLACI.lower(),
-                FlextLdifServersOidConstants.ORCLENTRYLEVELACI.lower(),
-            }:
-                return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
-            case _:
-                return super()._normalize_attribute_name(attr_name)
+        return entry.model_copy(
+            update={"attributes": m.Ldif.Attributes(attributes=new_attributes)},
+        )
+
+    def _build_json_serialized_metadata(
+        self,
+        rfc_violations: list[str],
+        attribute_conflicts: list[Mapping[str, str | list[str]]],
+        boolean_conversions: Mapping[str, Mapping[str, str | list[str]]],
+        converted_attributes: Mapping[str, list[str]],
+        original_entry: m.Ldif.Entry,
+    ) -> tuple[str | None, str | None, str | None, str | None, str | None]:
+        """Serialize complex metadata to JSON strings for MetadataAttributeValue."""
+        rfc_violations_str = json.dumps(rfc_violations) if rfc_violations else None
+        attribute_conflicts_str = (
+            json.dumps(attribute_conflicts) if attribute_conflicts else None
+        )
+        boolean_conversions_str = (
+            json.dumps(boolean_conversions) if boolean_conversions else None
+        )
+        converted_attributes_str = (
+            json.dumps(converted_attributes) if converted_attributes else None
+        )
+        original_entry_str = (
+            json.dumps(original_entry.model_dump()) if original_entry else None
+        )
+        return (
+            rfc_violations_str,
+            attribute_conflicts_str,
+            boolean_conversions_str,
+            converted_attributes_str,
+            original_entry_str,
+        )
 
     def _convert_boolean_attributes_to_rfc(
         self,
@@ -117,266 +157,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         return converted_attributes, converted_attrs, boolean_conversions
 
-    def _detect_entry_acl_transformations(
-        self,
-        entry_attrs: Mapping[str, list[str]],
-        converted_attributes: Mapping[str, list[str]],
-    ) -> Mapping[str, m.Ldif.AttributeTransformation]:
-        """Detect ACL attribute transformations (orclaci→aci)."""
-        original_attr_names: dict[str, str] = {
-            normalized.lower(): str(raw_attr_name)
-            for raw_attr_name in entry_attrs
-            if (
-                normalized := self._normalize_attribute_name(str(raw_attr_name))
-            ).lower()
-            != str(raw_attr_name).lower()
-        }
-
-        acl_transformations: dict[str, m.Ldif.AttributeTransformation] = {
-            original_name: m.Ldif.AttributeTransformation(
-                original_name=original_name,
-                target_name=attr_name,
-                original_values=attr_values,
-                target_values=attr_values,
-                transformation_type="renamed",
-                reason=f"OID ACL ({original_name}) → RFC 2256 (aci)",
-            )
-            for attr_name, attr_values in converted_attributes.items()
-            if attr_name.lower() in original_attr_names
-            and (original_name := original_attr_names[attr_name.lower()]).lower()
-            in {"orclaci", "orclentrylevelaci"}
-        }
-
-        return acl_transformations
-
-    def _detect_rfc_violations(
-        self,
-        converted_attributes: Mapping[str, list[str]],
-    ) -> tuple[list[str], list[Mapping[str, str | list[str]]]]:
-        """Detect RFC compliance violations in entry."""
-        object_classes_raw = converted_attributes.get("objectClass", [])
-        object_classes: list[str] = [str(oc) for oc in object_classes_raw]
-        object_classes_lower = {oc.lower() for oc in object_classes}
-
-        structural_classes = {
-            "domain",
-            "organization",
-            "organizationalunit",
-            "person",
-            "groupofuniquenames",
-            "groupofnames",
-            "orclsubscriber",
-            "orclgroup",
-            "customsistemas",
-            "customuser",
-        }
-        found_structural = object_classes_lower & structural_classes
-
-        structural_str = ", ".join(sorted(found_structural))
-        rfc_violations: list[str] = (
-            [f"Multiple structural objectClasses: {structural_str}"]
-            if len(found_structural) > 1
-            else []
-        )
-
-        domain_invalid_attrs = {
-            "cn",
-            "uniquemember",
-            "member",
-            "orclsubscriberfullname",
-            "orclversion",
-            "orclgroupcreatedate",
-        }
-        attribute_conflicts: list[Mapping[str, str | list[str]]] = [
-            {
-                "attribute": attr_name,
-                "values": converted_attributes[attr_name],
-                "reason": f"'{attr_name}' not allowed by RFC 4519 domain",
-                "conflicting_objectclass": "domain",
-            }
-            for attr_name in converted_attributes
-            if "domain" in object_classes_lower
-            and attr_name.lower() in domain_invalid_attrs
-        ]
-
-        return rfc_violations, attribute_conflicts
-
-    def normalize_schema_strings_inline(
-        self,
-        entry: m.Ldif.Entry,
-    ) -> m.Ldif.Entry:
-        """Normalize schema attribute strings (attributetypes, objectclasses)."""
-        if not entry.attributes:
-            return entry
-
-        schema_attrs = FlextLdifServersOidConstants.SCHEMA_FILTERABLE_FIELDS
-
-        if not any(
-            attr_name.lower() in schema_attrs
-            for attr_name in entry.attributes.attributes
-        ):
-            return entry
-
-        replacements = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC
-
-        new_attributes: dict[str, list[str]] = {
-            attr_name: (
-                [
-                    reduce(
-                        lambda val, pair: val.replace(pair[0], pair[1]),
-                        replacements.items(),
-                        value,
-                    )
-                    for value in attr_values
-                ]
-                if attr_name.lower() in schema_attrs
-                else attr_values
-            )
-            for attr_name, attr_values in entry.attributes.attributes.items()
-        }
-
-        if new_attributes == entry.attributes.attributes:
-            return entry
-
-        return entry.model_copy(
-            update={"attributes": m.Ldif.Attributes(attributes=new_attributes)},
-        )
-
-    def _restore_single_attribute(
-        self,
-        attr_name: str,
-        attr_values: list[str],
-        original_attrs: Mapping[str, list[str]] | None,
-    ) -> tuple[str, list[str]]:
-        """Restore attribute from metadata or apply denormalization."""
-        if original_attrs:
-            for orig_name, orig_values in original_attrs.items():
-                if self._normalize_attribute_name(str(orig_name)) == attr_name:
-                    restored_values = [str(v) for v in orig_values]
-                    return str(orig_name), restored_values
-
-        denorm_name = (
-            FlextLdifServersOidConstants.ORCLACI
-            if attr_name.lower()
-            == FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME.lower()
-            else attr_name
-        )
-        return denorm_name, attr_values
-
-    def _denormalize_oid_attributes_for_output(
-        self,
-        attrs: Mapping[str, list[str]],
-        metadata: m.Ldif.QuirkMetadata | None,
-    ) -> Mapping[str, list[str]]:
-        """Denormalize RFC attributes to OID format."""
-        mk = c.Ldif.MetadataKeys
-        original_attrs_raw = (
-            metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
-            if metadata and metadata.extensions
-            else None
-        )
-
-        original_attrs: dict[str, list[str]] | None = None
-        if isinstance(original_attrs_raw, Mapping):
-            result_attrs: dict[str, list[str]] = {}
-            for k, v in original_attrs_raw.items():
-                if isinstance(k, str):
-                    if isinstance(v, list):
-                        result_attrs[k] = [str(item) for item in v]
-                    else:
-                        result_attrs[k] = [str(v)]
-            original_attrs = result_attrs
-        denormalized: dict[str, list[str]] = {}
-        for attr_name, attr_values in attrs.items():
-            restored_name, restored_values = self._restore_single_attribute(
-                attr_name,
-                attr_values,
-                original_attrs,
-            )
-            denormalized[restored_name] = restored_values
-        return denormalized
-
-    def _extract_boolean_conversions_from_metadata(
-        self,
-        entry_data: m.Ldif.Entry,
-    ) -> Mapping[str, Mapping[str, str | list[str]]]:
-        """Extract boolean conversions from entry metadata."""
-        mk = c.Ldif.MetadataKeys
-        boolean_conversions: dict[str, dict[str, str | list[str]]] = {}
-
-        if not (entry_data.metadata and entry_data.metadata.extensions):
-            return boolean_conversions
-
-        converted_attrs_data = (
-            entry_data.metadata.extensions.get(mk.CONVERTED_ATTRIBUTES)
-            if entry_data.metadata and entry_data.metadata.extensions
-            else None
-        )
-
-        if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: t.ContainerValue = converted_attrs_data.get(
-                mk.CONVERSION_BOOLEAN_CONVERSIONS,
-                {},
-            )
-
-            if isinstance(boolean_conversions_obj, Mapping):
-                for key, value in boolean_conversions_obj.items():
-                    if isinstance(key, str) and isinstance(value, Mapping):
-                        typed_dict: dict[str, str | list[str]] = {}
-                        for k, v in value.items():
-                            if isinstance(k, str):
-                                if isinstance(v, str):
-                                    typed_dict[k] = v
-                                elif isinstance(v, list):
-                                    typed_dict[k] = [str(item) for item in v]
-                        boolean_conversions[key] = typed_dict
-
-        return boolean_conversions
-
-    def _restore_boolean_attribute_from_metadata(
-        self,
-        attr_name: str,
-        conv_data: Mapping[str, list[str] | str],
-        restored_attrs: dict[str, list[str]],
-    ) -> bool:
-        """Restore single boolean attribute from conversion metadata."""
-        mk = c.Ldif.MetadataKeys
-
-        converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
-        converted_val_list: list[str]
-        if isinstance(converted_val, str):
-            converted_val_list = [converted_val]
-        elif isinstance(converted_val, list):
-            converted_val_list = [str(item) for item in converted_val]
-        else:
-            converted_val_list = []
-
-        if not converted_val_list:
-            return False
-
-        rfc_value = converted_val_list[0] if converted_val_list else ""
-        oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(
-            rfc_value,
-            rfc_value,
-        )
-        restored_attrs[attr_name] = [oid_value]
-        logger.debug(
-            "Restored OID boolean format from metadata",
-            attribute_name=attr_name,
-            rfc_value=rfc_value,
-            oid_value=oid_value,
-            operation="_restore_boolean_values_to_oid",
-        )
-        return True
-
-    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
-        """Convert single RFC boolean value to OID format."""
-        if value == "TRUE":
-            return FlextLdifServersOidConstants.ONE_OID, True
-        if value == "FALSE":
-            return FlextLdifServersOidConstants.ZERO_OID, True
-        return value, False
-
     def _convert_boolean_values_to_oid(
         self,
         attr_name: str,
@@ -394,122 +174,43 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if changed:
             restored_attrs[attr_name] = new_values
 
-    def _restore_boolean_values_to_oid(
-        self,
-        entry_data: m.Ldif.Entry,
-    ) -> m.Ldif.Entry:
-        """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1)."""
-        if not entry_data.attributes:
-            return entry_data
+    def _convert_line_acl_to_oid(self, original_line: str) -> str:
+        """Convert RFC ACL attribute name (aci) to OID format (orclaci)."""
+        if ":" not in original_line:
+            return original_line
+        parts = original_line.split(":", 1)
+        attr_lower = parts[0].strip().lower()
 
-        boolean_conversions = self._extract_boolean_conversions_from_metadata(
-            entry_data,
-        )
+        if attr_lower == "aci":
+            logger.debug("Converting aci to orclaci", line=original_line)
 
-        boolean_attr_names = {
-            attr.lower() for attr in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
-        }
+            value_part = parts[1]
+            return f"orclaci:{value_part}"
 
-        restored_attrs = dict(entry_data.attributes.attributes)
-        for attr_name in list(restored_attrs.keys()):
-            if attr_name.lower() not in boolean_attr_names:
-                continue
+        return original_line
 
-            conv_data = boolean_conversions.get(attr_name, {})
-            if core_u.is_type(conv_data, dict) and conv_data:
-                self._restore_boolean_attribute_from_metadata(
-                    attr_name,
-                    conv_data,
-                    restored_attrs,
-                )
-                continue
+    def _convert_line_boolean_to_oid(self, original_line: str) -> str:
+        """Convert RFC boolean values in line to OID format."""
+        if ":" not in original_line:
+            return original_line
+        parts = original_line.split(":", 1)
+        attr_lower = parts[0].strip().lower()
+        if attr_lower not in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES:
+            return original_line
+        value_part = parts[1].strip() if len(parts) > 1 else ""
+        if value_part == "TRUE":
+            return f"{parts[0]}: {FlextLdifServersOidConstants.ONE_OID}"
+        if value_part == "FALSE":
+            return f"{parts[0]}: {FlextLdifServersOidConstants.ZERO_OID}"
+        return original_line
 
-            self._convert_boolean_values_to_oid(
-                attr_name,
-                restored_attrs[attr_name],
-                restored_attrs,
-            )
-
-        if restored_attrs == entry_data.attributes.attributes:
-            return entry_data
-
-        entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None
-        if entry_data.attributes and entry_data.attributes.metadata:
-            entry_metadata = entry_data.attributes.metadata
-
-        return entry_data.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes(
-                    attributes=restored_attrs,
-                    attribute_metadata=(
-                        entry_data.attributes.attribute_metadata
-                        if entry_data.attributes
-                        else {}
-                    ),
-                    metadata=entry_metadata,
-                ),
-            },
-        )
-
-    def _restore_entry_from_metadata(
-        self,
-        entry_data: m.Ldif.Entry,
-    ) -> m.Ldif.Entry:
-        """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
-        return self._restore_boolean_values_to_oid(entry_data)
-
-    def _extract_original_extensions(
-        self,
-        original_entry: m.Ldif.Entry,
-    ) -> Mapping[str, str | int | bool | list[str]]:
-        """Extract compatible extensions from original entry metadata."""
-        original_extensions: dict[str, str | int | bool | list[str]] = {}
-        if not (original_entry.metadata and original_entry.metadata.extensions):
-            return original_extensions
-        ext = original_entry.metadata.extensions
-        for k, v in ext.items():
-            if isinstance(k, str) and isinstance(v, (str, int, bool)):
-                original_extensions[k] = v
-            elif isinstance(k, str) and isinstance(v, list):
-                if all(isinstance(item, str) for item in v):
-                    original_extensions[k] = [str(item) for item in v]
-                elif all(
-                    isinstance(item, (str, int, float, bool, type(None))) for item in v
-                ):
-                    original_extensions[k] = [
-                        str(item) for item in v if item is not None
-                    ]
-        return original_extensions
-
-    def _build_json_serialized_metadata(
-        self,
-        rfc_violations: list[str],
-        attribute_conflicts: list[Mapping[str, str | list[str]]],
-        boolean_conversions: Mapping[str, Mapping[str, str | list[str]]],
-        converted_attributes: Mapping[str, list[str]],
-        original_entry: m.Ldif.Entry,
-    ) -> tuple[str | None, str | None, str | None, str | None, str | None]:
-        """Serialize complex metadata to JSON strings for MetadataAttributeValue."""
-        rfc_violations_str = json.dumps(rfc_violations) if rfc_violations else None
-        attribute_conflicts_str = (
-            json.dumps(attribute_conflicts) if attribute_conflicts else None
-        )
-        boolean_conversions_str = (
-            json.dumps(boolean_conversions) if boolean_conversions else None
-        )
-        converted_attributes_str = (
-            json.dumps(converted_attributes) if converted_attributes else None
-        )
-        original_entry_str = (
-            json.dumps(original_entry.model_dump()) if original_entry else None
-        )
-        return (
-            rfc_violations_str,
-            attribute_conflicts_str,
-            boolean_conversions_str,
-            converted_attributes_str,
-            original_entry_str,
-        )
+    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
+        """Convert single RFC boolean value to OID format."""
+        if value == "TRUE":
+            return FlextLdifServersOidConstants.ONE_OID, True
+        if value == "FALSE":
+            return FlextLdifServersOidConstants.ZERO_OID, True
+        return value, False
 
     def _create_entry_result_with_metadata(
         self,
@@ -814,71 +515,122 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             ),
         )
 
-    @override
-    def _hook_post_parse_entry(
+    def _denormalize_oid_attributes_for_output(
         self,
-        entry: m.Ldif.Entry,
-    ) -> FlextResult[m.Ldif.Entry]:
-        """Hook: Transform parsed entry using OID-specific enhancements."""
-        try:
-            if not entry.attributes or not entry.dn:
-                return FlextResult.ok(entry)
+        attrs: Mapping[str, list[str]],
+        metadata: m.Ldif.QuirkMetadata | None,
+    ) -> Mapping[str, list[str]]:
+        """Denormalize RFC attributes to OID format."""
+        mk = c.Ldif.MetadataKeys
+        original_attrs_raw = (
+            metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
+            if metadata and metadata.extensions
+            else None
+        )
 
-            logger.debug(
-                "_hook_post_parse_entry attributes",
-                attributes=",".join(entry.attributes.attributes.keys()),
+        original_attrs: dict[str, list[str]] | None = None
+        if isinstance(original_attrs_raw, Mapping):
+            result_attrs: dict[str, list[str]] = {}
+            for k, v in original_attrs_raw.items():
+                if isinstance(k, str):
+                    if isinstance(v, list):
+                        result_attrs[k] = [str(item) for item in v]
+                    else:
+                        result_attrs[k] = [str(v)]
+            original_attrs = result_attrs
+        denormalized: dict[str, list[str]] = {}
+        for attr_name, attr_values in attrs.items():
+            restored_name, restored_values = self._restore_single_attribute(
+                attr_name,
+                attr_values,
+                original_attrs,
             )
-            converted_attributes, converted_attrs, boolean_conversions = (
-                self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
+            denormalized[restored_name] = restored_values
+        return denormalized
+
+    def _detect_entry_acl_transformations(
+        self,
+        entry_attrs: Mapping[str, list[str]],
+        converted_attributes: Mapping[str, list[str]],
+    ) -> Mapping[str, m.Ldif.AttributeTransformation]:
+        """Detect ACL attribute transformations (orclaci→aci)."""
+        original_attr_names: dict[str, str] = {
+            normalized.lower(): str(raw_attr_name)
+            for raw_attr_name in entry_attrs
+            if (
+                normalized := self._normalize_attribute_name(str(raw_attr_name))
+            ).lower()
+            != str(raw_attr_name).lower()
+        }
+
+        acl_transformations: dict[str, m.Ldif.AttributeTransformation] = {
+            original_name: m.Ldif.AttributeTransformation(
+                original_name=original_name,
+                target_name=attr_name,
+                original_values=attr_values,
+                target_values=attr_values,
+                transformation_type="renamed",
+                reason=f"OID ACL ({original_name}) → RFC 2256 (aci)",
             )
-            logger.debug("converted_attrs", attrs=",".join(converted_attrs))
-            logger.debug("boolean_conversions", count=len(boolean_conversions))
+            for attr_name, attr_values in converted_attributes.items()
+            if attr_name.lower() in original_attr_names
+            and (original_name := original_attr_names[attr_name.lower()]).lower()
+            in {"orclaci", "orclentrylevelaci"}
+        }
 
-            normalized_attributes: dict[str, list[str]] = {}
-            for attr_name, attr_values in converted_attributes.items():
-                normalized_name = self._normalize_attribute_name(attr_name)
-                normalized_attributes[normalized_name] = attr_values
+        return acl_transformations
 
-            entry.attributes.attributes = normalized_attributes
+    def _detect_rfc_violations(
+        self,
+        converted_attributes: Mapping[str, list[str]],
+    ) -> tuple[list[str], list[Mapping[str, str | list[str]]]]:
+        """Detect RFC compliance violations in entry."""
+        object_classes_raw = converted_attributes.get("objectClass", [])
+        object_classes: list[str] = [str(oc) for oc in object_classes_raw]
+        object_classes_lower = {oc.lower() for oc in object_classes}
 
-            mk = c.Ldif.MetadataKeys
-            if entry.metadata:
-                if not entry.metadata.extensions:
-                    entry.metadata.extensions = (
-                        FlextLdifModelsMetadata.DynamicMetadata()
-                    )
+        structural_classes = {
+            "domain",
+            "organization",
+            "organizationalunit",
+            "person",
+            "groupofuniquenames",
+            "groupofnames",
+            "orclsubscriber",
+            "orclgroup",
+            "customsistemas",
+            "customuser",
+        }
+        found_structural = object_classes_lower & structural_classes
 
-                converted_attrs_list: list[str] = list(converted_attrs)
-                if boolean_conversions:
-                    boolean_conversions_dict: dict[str, dict[str, str | list[str]]] = {
-                        attr_name: dict(conversion_data)
-                        for attr_name, conversion_data in boolean_conversions.items()
-                    }
-                    conv_data: dict[
-                        str,
-                        dict[str, dict[str, str | list[str]]] | list[str],
-                    ] = {
-                        mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_list,
-                        mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
-                    }
+        structural_str = ", ".join(sorted(found_structural))
+        rfc_violations: list[str] = (
+            [f"Multiple structural objectClasses: {structural_str}"]
+            if len(found_structural) > 1
+            else []
+        )
 
-                    conv_data_str: str = json.dumps(conv_data)
-                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = conv_data_str
-                else:
-                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
-                        converted_attrs_list
-                    )
+        domain_invalid_attrs = {
+            "cn",
+            "uniquemember",
+            "member",
+            "orclsubscriberfullname",
+            "orclversion",
+            "orclgroupcreatedate",
+        }
+        attribute_conflicts: list[Mapping[str, str | list[str]]] = [
+            {
+                "attribute": attr_name,
+                "values": converted_attributes[attr_name],
+                "reason": f"'{attr_name}' not allowed by RFC 4519 domain",
+                "conflicting_objectclass": "domain",
+            }
+            for attr_name in converted_attributes
+            if "domain" in object_classes_lower
+            and attr_name.lower() in domain_invalid_attrs
+        ]
 
-            return FlextResult.ok(entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("OID post-parse entry hook failed")
-            return FlextResult.fail(f"OID post-parse entry hook failed: {e}")
+        return rfc_violations, attribute_conflicts
 
     def _extract_acl_metadata_from_string(
         self,
@@ -924,74 +676,82 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 constrain_to_added
             )
 
-    def _merge_parsed_acl_extensions(
+    def _extract_boolean_conversions_from_metadata(
         self,
-        acl_quirk: p.Ldif.AclQuirkProtocol | object,
-        acl_value: str,
-        current_extensions: dict[str, t.MetadataValue],
-    ) -> None:
-        """Parse ACL and merge additional extensions from parsed model."""
-        if not hasattr(acl_quirk, "parse"):
-            return
-        try:
-            parse_method = getattr(acl_quirk, "parse", None)
-            if parse_method is None or not callable(parse_method):
-                return
-            acl_result_raw = parse_method(acl_value)
+        entry_data: m.Ldif.Entry,
+    ) -> Mapping[str, Mapping[str, str | list[str]]]:
+        """Extract boolean conversions from entry metadata."""
+        mk = c.Ldif.MetadataKeys
+        boolean_conversions: dict[str, dict[str, str | list[str]]] = {}
 
-            if not isinstance(acl_result_raw, FlextResult):
-                return
-            acl_result: FlextResult[object] = acl_result_raw
-            if not acl_result.is_success:
-                return
-            acl_model = m.Ldif.Acl.model_validate(acl_result.value)
-            if not (acl_model.metadata and acl_model.metadata.extensions):
-                return
-            acl_extensions = (
-                acl_model.metadata.extensions.model_dump()
-                if core_u.has(acl_model.metadata.extensions, "model_dump")
-                else dict(acl_model.metadata.extensions)
-            )
+        if not (entry_data.metadata and entry_data.metadata.extensions):
+            return boolean_conversions
 
-            key_mapping = {
-                "bindmode": c.Ldif.MetadataKeys.ACL_BINDMODE,
-                "deny_group_override": c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
-            }
-            for key, value in acl_extensions.items():
-                mapped_key = key_mapping.get(key)
-                if mapped_key and not current_extensions.get(mapped_key):
-                    current_extensions[mapped_key] = value
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            logger.debug("Failed to parse ACL extension metadata", exc_info=True)
-
-    def _process_orclaci_values(
-        self,
-        orclaci_values: list[str] | str | None,
-        current_extensions: dict[str, t.MetadataValue],
-    ) -> None:
-        """Process orclaci values and extract ACL metadata."""
-        if not orclaci_values:
-            return
-
-        parent = self._get_parent_quirk_safe()
-        acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
-
-        acl_list = (
-            list(orclaci_values)
-            if core_u.is_type(orclaci_values, (list, tuple))
-            else [str(orclaci_values)]
+        converted_attrs_data = (
+            entry_data.metadata.extensions.get(mk.CONVERTED_ATTRIBUTES)
+            if entry_data.metadata and entry_data.metadata.extensions
+            else None
         )
 
-        for acl_value in acl_list:
-            if not core_u.is_type(acl_value, str):
-                continue
-            self._extract_acl_metadata_from_string(acl_value, current_extensions)
-            if acl_quirk is not None:
-                self._merge_parsed_acl_extensions(
-                    acl_quirk,
-                    acl_value,
-                    current_extensions,
-                )
+        if isinstance(converted_attrs_data, Mapping):
+            boolean_conversions_obj: t.ContainerValue = converted_attrs_data.get(
+                mk.CONVERSION_BOOLEAN_CONVERSIONS,
+                {},
+            )
+
+            if isinstance(boolean_conversions_obj, Mapping):
+                for key, value in boolean_conversions_obj.items():
+                    if isinstance(key, str) and isinstance(value, Mapping):
+                        typed_dict: dict[str, str | list[str]] = {}
+                        for k, v in value.items():
+                            if isinstance(k, str):
+                                if isinstance(v, str):
+                                    typed_dict[k] = v
+                                elif isinstance(v, list):
+                                    typed_dict[k] = [str(item) for item in v]
+                        boolean_conversions[key] = typed_dict
+
+        return boolean_conversions
+
+    def _extract_original_extensions(
+        self,
+        original_entry: m.Ldif.Entry,
+    ) -> Mapping[str, str | int | bool | list[str]]:
+        """Extract compatible extensions from original entry metadata."""
+        original_extensions: dict[str, str | int | bool | list[str]] = {}
+        if not (original_entry.metadata and original_entry.metadata.extensions):
+            return original_extensions
+        ext = original_entry.metadata.extensions
+        for k, v in ext.items():
+            if isinstance(k, str) and isinstance(v, (str, int, bool)):
+                original_extensions[k] = v
+            elif isinstance(k, str) and isinstance(v, list):
+                if all(isinstance(item, str) for item in v):
+                    original_extensions[k] = [str(item) for item in v]
+                elif all(
+                    isinstance(item, (str, int, float, bool, type(None))) for item in v
+                ):
+                    original_extensions[k] = [
+                        str(item) for item in v if item is not None
+                    ]
+        return original_extensions
+
+    def _get_current_attrs_with_acl_equivalence(
+        self,
+        entry_data: m.Ldif.Entry,
+    ) -> set[str]:
+        """Get current attribute names with OID ACL equivalence."""
+        current_attrs: set[str] = set()
+        if entry_data.attributes and entry_data.attributes.attributes:
+            current_attrs = {
+                attr_name.lower() for attr_name in entry_data.attributes.attributes
+            }
+
+            if "aci" in current_attrs:
+                current_attrs.add("orclaci")
+            if "orclaci" in current_attrs:
+                current_attrs.add("aci")
+        return current_attrs
 
     def _hook_finalize_entry_parse(
         self,
@@ -1076,6 +836,143 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return FlextResult.ok(entry)
 
     @override
+    def _hook_post_parse_entry(
+        self,
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
+        """Hook: Transform parsed entry using OID-specific enhancements."""
+        try:
+            if not entry.attributes or not entry.dn:
+                return FlextResult.ok(entry)
+
+            logger.debug(
+                "_hook_post_parse_entry attributes",
+                attributes=",".join(entry.attributes.attributes.keys()),
+            )
+            converted_attributes, converted_attrs, boolean_conversions = (
+                self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
+            )
+            logger.debug("converted_attrs", attrs=",".join(converted_attrs))
+            logger.debug("boolean_conversions", count=len(boolean_conversions))
+
+            normalized_attributes: dict[str, list[str]] = {}
+            for attr_name, attr_values in converted_attributes.items():
+                normalized_name = self._normalize_attribute_name(attr_name)
+                normalized_attributes[normalized_name] = attr_values
+
+            entry.attributes.attributes = normalized_attributes
+
+            mk = c.Ldif.MetadataKeys
+            if entry.metadata:
+                if not entry.metadata.extensions:
+                    entry.metadata.extensions = (
+                        FlextLdifModelsMetadata.DynamicMetadata()
+                    )
+
+                converted_attrs_list: list[str] = list(converted_attrs)
+                if boolean_conversions:
+                    boolean_conversions_dict: dict[str, dict[str, str | list[str]]] = {
+                        attr_name: dict(conversion_data)
+                        for attr_name, conversion_data in boolean_conversions.items()
+                    }
+                    conv_data: dict[
+                        str,
+                        dict[str, dict[str, str | list[str]]] | list[str],
+                    ] = {
+                        mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_list,
+                        mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
+                    }
+
+                    conv_data_str: str = json.dumps(conv_data)
+                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = conv_data_str
+                else:
+                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
+                        converted_attrs_list
+                    )
+
+            return FlextResult.ok(entry)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            logger.exception("OID post-parse entry hook failed")
+            return FlextResult.fail(f"OID post-parse entry hook failed: {e}")
+
+    def _hook_transform_entry_raw(
+        self,
+        dn: str,
+        attrs: Mapping[str, list[str | bytes]],
+    ) -> FlextResult[tuple[str, Mapping[str, list[str | bytes]]]]:
+        """Transform OID-specific DN and attributes before RFC parsing."""
+        cleaned_dn, _ = FlextLdifUtilitiesDN.clean_dn_with_statistics(dn)
+
+        normalized_dn = cleaned_dn
+        if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_QUIRK.lower():
+            normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
+            logger.debug(
+                "OID→RFC transform: Normalizing schema DN",
+                original_dn=cleaned_dn,
+                normalized_dn=normalized_dn,
+            )
+
+        return FlextResult.ok((normalized_dn, attrs))
+
+    def _merge_parsed_acl_extensions(
+        self,
+        acl_quirk: p.Ldif.AclQuirkProtocol | object,
+        acl_value: str,
+        current_extensions: dict[str, t.MetadataValue],
+    ) -> None:
+        """Parse ACL and merge additional extensions from parsed model."""
+        if not hasattr(acl_quirk, "parse"):
+            return
+        try:
+            parse_method = getattr(acl_quirk, "parse", None)
+            if parse_method is None or not callable(parse_method):
+                return
+            acl_result_raw = parse_method(acl_value)
+
+            if not isinstance(acl_result_raw, FlextResult):
+                return
+            acl_result: FlextResult[object] = acl_result_raw
+            if not acl_result.is_success:
+                return
+            acl_model = m.Ldif.Acl.model_validate(acl_result.value)
+            if not (acl_model.metadata and acl_model.metadata.extensions):
+                return
+            acl_extensions = (
+                acl_model.metadata.extensions.model_dump()
+                if core_u.has(acl_model.metadata.extensions, "model_dump")
+                else dict(acl_model.metadata.extensions)
+            )
+
+            key_mapping = {
+                "bindmode": c.Ldif.MetadataKeys.ACL_BINDMODE,
+                "deny_group_override": c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+            }
+            for key, value in acl_extensions.items():
+                mapped_key = key_mapping.get(key)
+                if mapped_key and not current_extensions.get(mapped_key):
+                    current_extensions[mapped_key] = value
+        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+            logger.debug("Failed to parse ACL extension metadata", exc_info=True)
+
+    @override
+    def _normalize_attribute_name(self, attr_name: str) -> str:
+        """Normalize OID attribute names to RFC-canonical format."""
+        match attr_name.lower():
+            case attr_lower if attr_lower in {
+                FlextLdifServersOidConstants.ORCLACI.lower(),
+                FlextLdifServersOidConstants.ORCLENTRYLEVELACI.lower(),
+            }:
+                return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
+            case _:
+                return super()._normalize_attribute_name(attr_name)
+
+    @override
     def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
         """Parse entry from LDIF lines and finalize with OID metadata (original_dn_complete)."""
         result = super()._parse_entry_from_lines(lines)
@@ -1086,22 +983,155 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_attrs = dict(entry.attributes.attributes) if entry.attributes else {}
         return self._hook_finalize_entry_parse(entry, original_dn, original_attrs)
 
-    def _get_current_attrs_with_acl_equivalence(
+    def _process_orclaci_values(
+        self,
+        orclaci_values: list[str] | str | None,
+        current_extensions: dict[str, t.MetadataValue],
+    ) -> None:
+        """Process orclaci values and extract ACL metadata."""
+        if not orclaci_values:
+            return
+
+        parent = self._get_parent_quirk_safe()
+        acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
+
+        acl_list = (
+            list(orclaci_values)
+            if core_u.is_type(orclaci_values, (list, tuple))
+            else [str(orclaci_values)]
+        )
+
+        for acl_value in acl_list:
+            if not core_u.is_type(acl_value, str):
+                continue
+            self._extract_acl_metadata_from_string(acl_value, current_extensions)
+            if acl_quirk is not None:
+                self._merge_parsed_acl_extensions(
+                    acl_quirk,
+                    acl_value,
+                    current_extensions,
+                )
+
+    def _restore_boolean_attribute_from_metadata(
+        self,
+        attr_name: str,
+        conv_data: Mapping[str, list[str] | str],
+        restored_attrs: dict[str, list[str]],
+    ) -> bool:
+        """Restore single boolean attribute from conversion metadata."""
+        mk = c.Ldif.MetadataKeys
+
+        converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
+        converted_val_list: list[str]
+        if isinstance(converted_val, str):
+            converted_val_list = [converted_val]
+        elif isinstance(converted_val, list):
+            converted_val_list = [str(item) for item in converted_val]
+        else:
+            converted_val_list = []
+
+        if not converted_val_list:
+            return False
+
+        rfc_value = converted_val_list[0] if converted_val_list else ""
+        oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(
+            rfc_value,
+            rfc_value,
+        )
+        restored_attrs[attr_name] = [oid_value]
+        logger.debug(
+            "Restored OID boolean format from metadata",
+            attribute_name=attr_name,
+            rfc_value=rfc_value,
+            oid_value=oid_value,
+            operation="_restore_boolean_values_to_oid",
+        )
+        return True
+
+    def _restore_boolean_values_to_oid(
         self,
         entry_data: m.Ldif.Entry,
-    ) -> set[str]:
-        """Get current attribute names with OID ACL equivalence."""
-        current_attrs: set[str] = set()
-        if entry_data.attributes and entry_data.attributes.attributes:
-            current_attrs = {
-                attr_name.lower() for attr_name in entry_data.attributes.attributes
-            }
+    ) -> m.Ldif.Entry:
+        """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1)."""
+        if not entry_data.attributes:
+            return entry_data
 
-            if "aci" in current_attrs:
-                current_attrs.add("orclaci")
-            if "orclaci" in current_attrs:
-                current_attrs.add("aci")
-        return current_attrs
+        boolean_conversions = self._extract_boolean_conversions_from_metadata(
+            entry_data,
+        )
+
+        boolean_attr_names = {
+            attr.lower() for attr in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+        }
+
+        restored_attrs = dict(entry_data.attributes.attributes)
+        for attr_name in list(restored_attrs.keys()):
+            if attr_name.lower() not in boolean_attr_names:
+                continue
+
+            conv_data = boolean_conversions.get(attr_name, {})
+            if core_u.is_type(conv_data, dict) and conv_data:
+                self._restore_boolean_attribute_from_metadata(
+                    attr_name,
+                    conv_data,
+                    restored_attrs,
+                )
+                continue
+
+            self._convert_boolean_values_to_oid(
+                attr_name,
+                restored_attrs[attr_name],
+                restored_attrs,
+            )
+
+        if restored_attrs == entry_data.attributes.attributes:
+            return entry_data
+
+        entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None
+        if entry_data.attributes and entry_data.attributes.metadata:
+            entry_metadata = entry_data.attributes.metadata
+
+        return entry_data.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes(
+                    attributes=restored_attrs,
+                    attribute_metadata=(
+                        entry_data.attributes.attribute_metadata
+                        if entry_data.attributes
+                        else {}
+                    ),
+                    metadata=entry_metadata,
+                ),
+            },
+        )
+
+    def _restore_entry_from_metadata(
+        self,
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
+        """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
+        return self._restore_boolean_values_to_oid(entry_data)
+
+    def _restore_single_attribute(
+        self,
+        attr_name: str,
+        attr_values: list[str],
+        original_attrs: Mapping[str, list[str]] | None,
+    ) -> tuple[str, list[str]]:
+        """Restore attribute from metadata or apply denormalization."""
+        if original_attrs:
+            for orig_name, orig_values in original_attrs.items():
+                if self._normalize_attribute_name(str(orig_name)) == attr_name:
+                    restored_values = [str(v) for v in orig_values]
+                    return str(orig_name), restored_values
+
+        denorm_name = (
+            FlextLdifServersOidConstants.ORCLACI
+            if attr_name.lower()
+            == FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME.lower()
+            else attr_name
+        )
+        return denorm_name, attr_values
 
     def _should_skip_original_line(
         self,
@@ -1132,36 +1162,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if current_attrs and attr_name_part not in current_attrs:
                 return True
         return False
-
-    def _convert_line_boolean_to_oid(self, original_line: str) -> str:
-        """Convert RFC boolean values in line to OID format."""
-        if ":" not in original_line:
-            return original_line
-        parts = original_line.split(":", 1)
-        attr_lower = parts[0].strip().lower()
-        if attr_lower not in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES:
-            return original_line
-        value_part = parts[1].strip() if len(parts) > 1 else ""
-        if value_part == "TRUE":
-            return f"{parts[0]}: {FlextLdifServersOidConstants.ONE_OID}"
-        if value_part == "FALSE":
-            return f"{parts[0]}: {FlextLdifServersOidConstants.ZERO_OID}"
-        return original_line
-
-    def _convert_line_acl_to_oid(self, original_line: str) -> str:
-        """Convert RFC ACL attribute name (aci) to OID format (orclaci)."""
-        if ":" not in original_line:
-            return original_line
-        parts = original_line.split(":", 1)
-        attr_lower = parts[0].strip().lower()
-
-        if attr_lower == "aci":
-            logger.debug("Converting aci to orclaci", line=original_line)
-
-            value_part = parts[1]
-            return f"orclaci:{value_part}"
-
-        return original_line
 
     def _write_original_attr_lines(
         self,

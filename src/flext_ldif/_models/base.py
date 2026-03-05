@@ -31,6 +31,15 @@ class SchemaElement(FlextLdifModelsBase):
         return metadata is not None
 
     @computed_field
+    def has_server_extensions(self) -> bool:
+        """Check if element has server-specific extensions."""
+        metadata = getattr(self, "metadata", None)
+        if metadata is None:
+            return False
+        extensions = getattr(metadata, "extensions", None)
+        return bool(extensions)
+
+    @computed_field
     def server_type(self) -> str:
         """Get server type from metadata, default to RFC."""
         metadata = getattr(self, "metadata", None)
@@ -42,15 +51,6 @@ class SchemaElement(FlextLdifModelsBase):
                 except ValueError:
                     pass
         return "rfc"
-
-    @computed_field
-    def has_server_extensions(self) -> bool:
-        """Check if element has server-specific extensions."""
-        metadata = getattr(self, "metadata", None)
-        if metadata is None:
-            return False
-        extensions = getattr(metadata, "extensions", None)
-        return bool(extensions)
 
 
 class FrozenLdifModel(FlextLdifModelsBase):
@@ -94,14 +94,14 @@ class AclElement(FlextModels.ArbitraryTypesModel):
     )
 
     @computed_field
-    def is_valid(self) -> bool:
-        """Check if ACL element passed validation."""
-        return len(self.validation_violations) == 0
-
-    @computed_field
     def has_server_quirks(self) -> bool:
         """Check if element uses server-specific quirks."""
         return self.server_type != "rfc"
+
+    @computed_field
+    def is_valid(self) -> bool:
+        """Check if ACL element passed validation."""
+        return len(self.validation_violations) == 0
 
 
 class FlextLdifModelsBases:

@@ -19,138 +19,6 @@ logger = FlextLogger(__name__)
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     """LDAP ACL Quirk - Base Implementation."""
 
-    @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this quirk can handle the ACL definition."""
-        _ = acl_line
-        return True
-
-    @override
-    def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature."""
-        return super()._supports_feature(_feature_id)
-
-    def _normalize_permission(
-        self,
-        permission: str,
-        _metadata: Mapping[str, t.MetadataValue],
-    ) -> tuple[str, str | None]:
-        """Normalize a server-specific permission to RFC standard."""
-        return permission, None
-
-    def _denormalize_permission(
-        self,
-        permission: str,
-        _feature_id: str | None,
-        _metadata: Mapping[str, t.MetadataValue],
-    ) -> str:
-        """Convert RFC permission back to server-specific format."""
-        return permission
-
-    @override
-    def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature."""
-        return super()._get_feature_fallback(_feature_id)
-
-    def _preserve_unsupported_feature(
-        self,
-        feature_id: str,
-        original_value: str,
-        metadata: m.Ldif.DynamicMetadata,
-    ) -> None:
-        """Preserve unsupported feature in metadata for round-trip."""
-        base_key = "unsupported_feature"
-        metadata[f"{base_key}_{feature_id}"] = original_value
-
-    @override
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
-        """Parse RFC-compliant ACL line (implements abstract method)."""
-        if not acl_line or not acl_line.strip():
-            return FlextResult.fail("ACL line must be a non-empty string.")
-
-        server_type_str = self._get_server_type()
-
-        server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
-            server_type_str,
-        )
-
-        extensions_meta = m.Ldif.DynamicMetadata.model_construct(
-            _fields_set={"original_format"},
-            original_format=acl_line,
-        )
-        acl_model = m.Ldif.Acl(
-            raw_acl=acl_line,
-            server_type=server_type_value,
-            metadata=m.Ldif.QuirkMetadata(
-                quirk_type=server_type_value,
-                extensions=extensions_meta,
-            ),
-        )
-        return FlextResult.ok(acl_model)
-
-    @override
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
-        """Write ACL to RFC-compliant string format (internal)."""
-        if acl_data.raw_acl and acl_data.raw_acl.strip():
-            return FlextResult[str].ok(acl_data.raw_acl)
-
-        if acl_data.name and u.Guards.is_string_non_empty(acl_data.name):
-            return FlextResult[str].ok(f"{acl_data.name}:")
-
-        return FlextResult[str].fail("ACL has no raw_acl or name to write")
-
-    @override
-    def can_handle_attribute(
-        self,
-        attribute: m.Ldif.SchemaAttribute,
-    ) -> bool:
-        """Check if quirk handles schema attributes."""
-        _ = attribute
-        return False
-
-    @override
-    def can_handle_objectclass(
-        self,
-        objectclass: m.Ldif.SchemaObjectClass,
-    ) -> bool:
-        """Check if quirk handles objectclasses."""
-        _ = objectclass
-        return False
-
-    @overload
-    def __call__(
-        self,
-        data: str,
-        *,
-        operation: str | None = None,
-    ) -> m.Ldif.Acl: ...
-
-    @overload
-    def __call__(
-        self,
-        data: m.Ldif.Acl,
-        *,
-        operation: str | None = None,
-    ) -> str: ...
-
-    @overload
-    def __call__(
-        self,
-        data: str | m.Ldif.Acl | None = None,
-        *,
-        operation: str | None = None,
-    ) -> m.Ldif.Acl | str: ...
-
-    def __call__(
-        self,
-        data: str | m.Ldif.Acl | None = None,
-        *,
-        operation: str | None = None,
-    ) -> m.Ldif.Acl | str:
-        """Callable interface - automatic polymorphic processor."""
-        result = self.execute(data=data, operation=operation)
-        return result.value
-
     def __new__(
         cls,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
@@ -221,3 +89,135 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
         if parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", parent_quirk)
+
+    @overload
+    def __call__(
+        self,
+        data: str,
+        *,
+        operation: str | None = None,
+    ) -> m.Ldif.Acl: ...
+
+    @overload
+    def __call__(
+        self,
+        data: m.Ldif.Acl,
+        *,
+        operation: str | None = None,
+    ) -> str: ...
+
+    @overload
+    def __call__(
+        self,
+        data: str | m.Ldif.Acl | None = None,
+        *,
+        operation: str | None = None,
+    ) -> m.Ldif.Acl | str: ...
+
+    def __call__(
+        self,
+        data: str | m.Ldif.Acl | None = None,
+        *,
+        operation: str | None = None,
+    ) -> m.Ldif.Acl | str:
+        """Callable interface - automatic polymorphic processor."""
+        result = self.execute(data=data, operation=operation)
+        return result.value
+
+    @override
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        """Check if this quirk can handle the ACL definition."""
+        _ = acl_line
+        return True
+
+    @override
+    def can_handle_attribute(
+        self,
+        attribute: m.Ldif.SchemaAttribute,
+    ) -> bool:
+        """Check if quirk handles schema attributes."""
+        _ = attribute
+        return False
+
+    @override
+    def can_handle_objectclass(
+        self,
+        objectclass: m.Ldif.SchemaObjectClass,
+    ) -> bool:
+        """Check if quirk handles objectclasses."""
+        _ = objectclass
+        return False
+
+    def _denormalize_permission(
+        self,
+        permission: str,
+        _feature_id: str | None,
+        _metadata: Mapping[str, t.MetadataValue],
+    ) -> str:
+        """Convert RFC permission back to server-specific format."""
+        return permission
+
+    @override
+    def _get_feature_fallback(self, _feature_id: str) -> str | None:
+        """Get RFC fallback value for unsupported vendor feature."""
+        return super()._get_feature_fallback(_feature_id)
+
+    def _normalize_permission(
+        self,
+        permission: str,
+        _metadata: Mapping[str, t.MetadataValue],
+    ) -> tuple[str, str | None]:
+        """Normalize a server-specific permission to RFC standard."""
+        return permission, None
+
+    @override
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        """Parse RFC-compliant ACL line (implements abstract method)."""
+        if not acl_line or not acl_line.strip():
+            return FlextResult.fail("ACL line must be a non-empty string.")
+
+        server_type_str = self._get_server_type()
+
+        server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
+            server_type_str,
+        )
+
+        extensions_meta = m.Ldif.DynamicMetadata.model_construct(
+            _fields_set={"original_format"},
+            original_format=acl_line,
+        )
+        acl_model = m.Ldif.Acl(
+            raw_acl=acl_line,
+            server_type=server_type_value,
+            metadata=m.Ldif.QuirkMetadata(
+                quirk_type=server_type_value,
+                extensions=extensions_meta,
+            ),
+        )
+        return FlextResult.ok(acl_model)
+
+    def _preserve_unsupported_feature(
+        self,
+        feature_id: str,
+        original_value: str,
+        metadata: m.Ldif.DynamicMetadata,
+    ) -> None:
+        """Preserve unsupported feature in metadata for round-trip."""
+        base_key = "unsupported_feature"
+        metadata[f"{base_key}_{feature_id}"] = original_value
+
+    @override
+    def _supports_feature(self, _feature_id: str) -> bool:
+        """Check if this server supports a specific feature."""
+        return super()._supports_feature(_feature_id)
+
+    @override
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        """Write ACL to RFC-compliant string format (internal)."""
+        if acl_data.raw_acl and acl_data.raw_acl.strip():
+            return FlextResult[str].ok(acl_data.raw_acl)
+
+        if acl_data.name and u.Guards.is_string_non_empty(acl_data.name):
+            return FlextResult[str].ok(f"{acl_data.name}:")
+
+        return FlextResult[str].fail("ACL has no raw_acl or name to write")

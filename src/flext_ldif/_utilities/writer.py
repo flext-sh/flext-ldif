@@ -24,119 +24,73 @@ class FlextLdifUtilitiesWriter:
     """Pure LDIF Formatting Operations - No Models, No Side Effects."""
 
     @staticmethod
-    def fold(
+    def _add_changetype_lines(
+        ldif_lines: list[str],
+        *,
+        format_type: str,
+        changetype_config: Mapping[str, t.ContainerValue],
+    ) -> None:
+        """Add changetype lines based on format."""
+        include_changetype = bool(
+            u.get(changetype_config, "include_changetype"),
+        )
+        changetype_value = u.get(changetype_config, "changetype_value")
+        fold_long_lines = bool(
+            u.get(changetype_config, "fold_long_lines", default=True),
+        )
+        width_raw = u.get(changetype_config, "width", default=76)
+        width = int(width_raw)
+
+        if format_type == "modify":
+            changetype_line = "changetype: modify"
+            FlextLdifUtilitiesWriter._add_line_with_folding(
+                ldif_lines,
+                changetype_line,
+                fold_long_lines=fold_long_lines,
+                width=width,
+            )
+        elif include_changetype and changetype_value:
+            changetype_line = f"changetype: {changetype_value}"
+            FlextLdifUtilitiesWriter._add_line_with_folding(
+                ldif_lines,
+                changetype_line,
+                fold_long_lines=fold_long_lines,
+                width=width,
+            )
+
+    @staticmethod
+    def _add_line_with_folding(
+        ldif_lines: list[str],
         line: str,
-        width: int = c.Ldif.Format.LINE_FOLD_WIDTH,
-    ) -> list[str]:
-        """Fold long LDIF line according to RFC 2849 §3."""
-        if not line:
-            return [line]
-
-        line_bytes = line.encode("utf-8")
-        if len(line_bytes) <= width:
-            return [line]
-
-        folded: list[str] = []
-        pos = 0
-
-        while pos < len(line_bytes):
-            if not folded:
-                chunk_end = min(pos + width, len(line_bytes))
-            else:
-                chunk_end = min(pos + width - 1, len(line_bytes))
-
-            while chunk_end > pos:
-                try:
-                    chunk = line_bytes[pos:chunk_end].decode("utf-8")
-                    break
-                except UnicodeDecodeError:
-                    chunk_end -= 1
-            else:
-                chunk_end = pos + 1
-                chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
-
-            if folded:
-                folded.append(
-                    c.Ldif.Format.LINE_CONTINUATION_SPACE + chunk,
-                )
-            else:
-                folded.append(chunk)
-
-            pos = chunk_end
-
-        return folded
-
-    @staticmethod
-    def write_file(
-        content: str,
-        file_path: Path,
-        encoding: str = "utf-8",
-    ) -> FlextResult[Mapping[str, str | int]]:
-        """Write content to file (pure I/O operation)."""
-        try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            _ = file_path.write_text(content, encoding=encoding)
-            stats: dict[str, str | int] = {
-                "bytes_written": len(content.encode(encoding)),
-                "path": str(file_path),
-                "encoding": encoding,
-            }
-            return FlextResult[dict[str, str | int]].ok(stats)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception(
-                "File write failed",
-                file_path=str(file_path),
-            )
-            return FlextResult[dict[str, str | int]].fail(
-                f"File write failed: {e}",
-            )
-
-    @staticmethod
-    def add_attribute_matching_rules(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
-        parts: list[str],
+        *,
+        fold_long_lines: bool,
+        width: int,
     ) -> None:
-        """Add matching rules to attribute parts list."""
-        if attr_data.equality:
-            parts.append(f"EQUALITY {attr_data.equality}")
-        if attr_data.ordering:
-            parts.append(f"ORDERING {attr_data.ordering}")
-        if attr_data.substr:
-            parts.append(f"SUBSTR {attr_data.substr}")
+        """Add line with optional folding."""
+        if fold_long_lines and not line.startswith("dn:: "):
+            ldif_lines.extend(FlextLdifUtilitiesWriter.fold(line, width=width))
+        else:
+            ldif_lines.append(line)
 
     @staticmethod
-    def add_attribute_syntax(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+    def _add_oc_must_may(
         parts: list[str],
+        attr_list: str | list[str] | None,
+        keyword: str,
     ) -> None:
-        """Add syntax and length to attribute parts list."""
-        if attr_data.syntax:
-            syntax_str = str(attr_data.syntax)
-            if attr_data.length is not None:
-                syntax_str += f"{{{attr_data.length}}}"
-            parts.append(f"SYNTAX {syntax_str}")
+        """Add MUST or MAY clause to objectClass definition parts."""
+        if not attr_list:
+            return
 
-    @staticmethod
-    def add_attribute_flags(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
-        parts: list[str],
-    ) -> None:
-        """Add flags to attribute parts list."""
-        if attr_data.single_value:
-            parts.append("SINGLE-VALUE")
-        if attr_data.metadata and u.get(
-            attr_data.metadata.extensions,
-            c.Ldif.MetadataKeys.COLLECTIVE,
-        ):
-            parts.append("COLLECTIVE")
-        if attr_data.no_user_modification:
-            parts.append("NO-USER-MODIFICATION")
+        if issubclass(attr_list.__class__, list):
+            attr_list_str: list[str] = [str(item) for item in attr_list]
+            if len(attr_list_str) == 1:
+                parts.append(f"{keyword} {attr_list_str[0]}")
+            else:
+                attrs_str = " $ ".join(attr_list_str)
+                parts.append(f"{keyword} ( {attrs_str} )")
+        else:
+            parts.append(f"{keyword} {attr_list}")
 
     @staticmethod
     def _build_attribute_parts(
@@ -177,42 +131,6 @@ class FlextLdifUtilitiesWriter:
 
         parts.append(")")
         return parts
-
-    @staticmethod
-    def write_rfc_attribute(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
-    ) -> FlextResult[str]:
-        """Write attribute data to RFC 4512 format."""
-        try:
-            if not attr_data.oid:
-                return FlextResult.fail("RFC attribute writing failed: missing OID")
-
-            parts = FlextLdifUtilitiesWriter._build_attribute_parts(attr_data)
-            return FlextResult.ok(" ".join(parts))
-
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC attribute writing exception")
-            return FlextResult.fail(f"RFC attribute writing failed: {e}")
-
-    @staticmethod
-    def _add_oc_must_may(
-        parts: list[str],
-        attr_list: str | list[str] | None,
-        keyword: str,
-    ) -> None:
-        """Add MUST or MAY clause to objectClass definition parts."""
-        if not attr_list:
-            return
-
-        if issubclass(attr_list.__class__, list):
-            attr_list_str: list[str] = [str(item) for item in attr_list]
-            if len(attr_list_str) == 1:
-                parts.append(f"{keyword} {attr_list_str[0]}")
-            else:
-                attrs_str = " $ ".join(attr_list_str)
-                parts.append(f"{keyword} ( {attrs_str} )")
-        else:
-            parts.append(f"{keyword} {attr_list}")
 
     @staticmethod
     def _build_objectclass_parts(
@@ -258,20 +176,169 @@ class FlextLdifUtilitiesWriter:
         return parts
 
     @staticmethod
-    def write_rfc_objectclass(
-        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> FlextResult[str]:
-        """Write objectClass data to RFC 4512 format."""
-        try:
-            if not objectclass.oid:
-                return FlextResult.fail("RFC objectClass writing failed: missing OID")
+    def _handle_attribute_status(
+        attr_name: str,
+        attr_values: list[str],
+        status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
+        output_options: FlextLdifModelsSettings.WriteOutputOptions,
+    ) -> tuple[str, list[str]] | None:
+        """Handle attribute based on status (extracted to reduce complexity)."""
+        operational_value: str = (
+            "operational"  # c.Ldif.AttributeMarkerStatus.OPERATIONAL.value
+        )
+        filtered_value: str = "filtered"  # c.Ldif.AttributeMarkerStatus.FILTERED.value
+        marked_for_removal_value: str = "marked_for_removal"  # c.Ldif.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value
+        hidden_value: str = "hidden"  # c.Ldif.AttributeMarkerStatus.HIDDEN.value
+        show_operational_str: str = output_options.show_operational_attributes
+        show_filtered_str: str = output_options.show_filtered_attributes
+        show_removed_str: str = output_options.show_removed_attributes
+        show_operational: bool = show_operational_str == "show"
+        show_filtered: bool = show_filtered_str == "show"
+        show_removed: bool = show_removed_str == "show"
+        operational_handler: tuple[bool, str | None] = (show_operational, attr_name)
+        filtered_handler: tuple[bool, str | None] = (show_filtered, f"# {attr_name}")
+        marked_for_removal_handler: tuple[bool, str | None] = (
+            show_removed,
+            f"# {attr_name}",
+        )
+        hidden_handler: tuple[bool, str | None] = (False, None)
+        status_handlers: dict[str, tuple[bool, str | None]] = {
+            operational_value: operational_handler,
+            filtered_value: filtered_handler,
+            marked_for_removal_value: marked_for_removal_handler,
+            hidden_value: hidden_handler,
+        }
 
-            parts = FlextLdifUtilitiesWriter._build_objectclass_parts(objectclass)
-            return FlextResult.ok(" ".join(parts))
+        handler_config = status_handlers.get(status)
+        if handler_config is None:
+            return (attr_name, attr_values)
 
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC objectClass writing exception")
-            return FlextResult.fail(f"RFC objectClass writing failed: {e}")
+        show_flag, name_format = handler_config
+        if not show_flag or name_format is None:
+            return None
+        return (name_format, attr_values)
+
+    @staticmethod
+    def _handle_removed_attribute(
+        attr_name: str,
+        attr_values: list[str],
+        output_options: FlextLdifModelsSettings.WriteOutputOptions,
+    ) -> tuple[str, list[str]] | None:
+        """Handle already-removed attributes (extracted to reduce complexity)."""
+        if output_options.show_removed_attributes:
+            return (f"# {attr_name}", attr_values)
+        return None
+
+    @staticmethod
+    def _process_add_attributes(
+        attributes: m.Ldif.EntryAttributesDict,
+        hidden: set[str],
+        *,
+        fold_long_lines: bool,
+        width: int,
+    ) -> list[str]:
+        """Process attributes in ADD format."""
+        lines: list[str] = []
+        for attr_name, values in attributes.items():
+            if not values or attr_name in hidden:
+                continue
+            for value in values:
+                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                    attr_name,
+                    value,
+                )
+                FlextLdifUtilitiesWriter._add_line_with_folding(
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
+                )
+        return lines
+
+    @staticmethod
+    def _process_modify_attributes(
+        attributes: m.Ldif.EntryAttributesDict,
+        hidden: set[str],
+        modify_operation: str,
+        *,
+        fold_long_lines: bool,
+        width: int,
+    ) -> list[str]:
+        """Process attributes in MODIFY format."""
+        lines: list[str] = []
+        first_attr = True
+        for attr_name, values in attributes.items():
+            if not values or attr_name in hidden:
+                continue
+
+            if not first_attr:
+                lines.append("-")
+            first_attr = False
+
+            op_line = f"{modify_operation}: {attr_name}"
+            FlextLdifUtilitiesWriter._add_line_with_folding(
+                lines,
+                op_line,
+                fold_long_lines=fold_long_lines,
+                width=width,
+            )
+
+            for value in values:
+                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                    attr_name,
+                    value,
+                )
+                FlextLdifUtilitiesWriter._add_line_with_folding(
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
+                )
+
+        if lines and lines[-1] != "-":
+            lines.append("-")
+        return lines
+
+    @staticmethod
+    def add_attribute_flags(
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        parts: list[str],
+    ) -> None:
+        """Add flags to attribute parts list."""
+        if attr_data.single_value:
+            parts.append("SINGLE-VALUE")
+        if attr_data.metadata and u.get(
+            attr_data.metadata.extensions,
+            c.Ldif.MetadataKeys.COLLECTIVE,
+        ):
+            parts.append("COLLECTIVE")
+        if attr_data.no_user_modification:
+            parts.append("NO-USER-MODIFICATION")
+
+    @staticmethod
+    def add_attribute_matching_rules(
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        parts: list[str],
+    ) -> None:
+        """Add matching rules to attribute parts list."""
+        if attr_data.equality:
+            parts.append(f"EQUALITY {attr_data.equality}")
+        if attr_data.ordering:
+            parts.append(f"ORDERING {attr_data.ordering}")
+        if attr_data.substr:
+            parts.append(f"SUBSTR {attr_data.substr}")
+
+    @staticmethod
+    def add_attribute_syntax(
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        parts: list[str],
+    ) -> None:
+        """Add syntax and length to attribute parts list."""
+        if attr_data.syntax:
+            syntax_str = str(attr_data.syntax)
+            if attr_data.length is not None:
+                syntax_str += f"{{{attr_data.length}}}"
+            parts.append(f"SYNTAX {syntax_str}")
 
     @staticmethod
     def determine_attribute_order(
@@ -312,6 +379,94 @@ class FlextLdifUtilitiesWriter:
             if key in entry_data and key not in skip_keys:
                 result.append((key, entry_data[key]))
         return result
+
+    @staticmethod
+    def encode_attribute_value(
+        attr_name: str,
+        value: bytes | str,
+    ) -> str:
+        """Encode a single attribute value for LDIF output (RFC 2849)."""
+        if isinstance(value, bytes):
+            encoded_value = base64.b64encode(value).decode("ascii")
+            return f"{attr_name}:: {encoded_value}"
+
+        str_value: str = value
+
+        try:
+            _ = str_value.encode("utf-8")
+        except UnicodeEncodeError:
+            str_value = str_value.encode("utf-8", errors="replace").decode(
+                "utf-8",
+                errors="replace",
+            )
+            logger.debug(
+                "Corrected invalid UTF-8 in attribute: attribute_name=%s, value_length=%s",
+                attr_name,
+                len(value),
+            )
+
+        is_binary_attr = (
+            attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
+        )
+        needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
+            str_value,
+        )
+
+        if needs_base64:
+            encoded_value = base64.b64encode(str_value.encode("utf-8")).decode("ascii")
+            return f"{attr_name}:: {encoded_value}"
+        return f"{attr_name}: {str_value}"
+
+    @staticmethod
+    def finalize_ldif_text(ldif_lines: list[str]) -> str:
+        """Join LDIF lines and ensure proper trailing newline."""
+        ldif_text = "\n".join(ldif_lines)
+        if ldif_text and not ldif_text.endswith("\n"):
+            ldif_text += "\n"
+        return ldif_text
+
+    @staticmethod
+    def fold(
+        line: str,
+        width: int = c.Ldif.Format.LINE_FOLD_WIDTH,
+    ) -> list[str]:
+        """Fold long LDIF line according to RFC 2849 §3."""
+        if not line:
+            return [line]
+
+        line_bytes = line.encode("utf-8")
+        if len(line_bytes) <= width:
+            return [line]
+
+        folded: list[str] = []
+        pos = 0
+
+        while pos < len(line_bytes):
+            if not folded:
+                chunk_end = min(pos + width, len(line_bytes))
+            else:
+                chunk_end = min(pos + width - 1, len(line_bytes))
+
+            while chunk_end > pos:
+                try:
+                    chunk = line_bytes[pos:chunk_end].decode("utf-8")
+                    break
+                except UnicodeDecodeError:
+                    chunk_end -= 1
+            else:
+                chunk_end = pos + 1
+                chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
+
+            if folded:
+                folded.append(
+                    c.Ldif.Format.LINE_CONTINUATION_SPACE + chunk,
+                )
+            else:
+                folded.append(chunk)
+
+            pos = chunk_end
+
+        return folded
 
     @staticmethod
     def is_safe_char(char: str) -> bool:
@@ -377,222 +532,67 @@ class FlextLdifUtilitiesWriter:
         return False
 
     @staticmethod
-    def _handle_removed_attribute(
-        attr_name: str,
-        attr_values: list[str],
-        output_options: FlextLdifModelsSettings.WriteOutputOptions,
-    ) -> tuple[str, list[str]] | None:
-        """Handle already-removed attributes (extracted to reduce complexity)."""
-        if output_options.show_removed_attributes:
-            return (f"# {attr_name}", attr_values)
-        return None
-
-    @staticmethod
-    def _handle_attribute_status(
-        attr_name: str,
-        attr_values: list[str],
-        status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
-        output_options: FlextLdifModelsSettings.WriteOutputOptions,
-    ) -> tuple[str, list[str]] | None:
-        """Handle attribute based on status (extracted to reduce complexity)."""
-        operational_value: str = (
-            "operational"  # c.Ldif.AttributeMarkerStatus.OPERATIONAL.value
-        )
-        filtered_value: str = "filtered"  # c.Ldif.AttributeMarkerStatus.FILTERED.value
-        marked_for_removal_value: str = "marked_for_removal"  # c.Ldif.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value
-        hidden_value: str = "hidden"  # c.Ldif.AttributeMarkerStatus.HIDDEN.value
-        show_operational_str: str = output_options.show_operational_attributes
-        show_filtered_str: str = output_options.show_filtered_attributes
-        show_removed_str: str = output_options.show_removed_attributes
-        show_operational: bool = show_operational_str == "show"
-        show_filtered: bool = show_filtered_str == "show"
-        show_removed: bool = show_removed_str == "show"
-        operational_handler: tuple[bool, str | None] = (show_operational, attr_name)
-        filtered_handler: tuple[bool, str | None] = (show_filtered, f"# {attr_name}")
-        marked_for_removal_handler: tuple[bool, str | None] = (
-            show_removed,
-            f"# {attr_name}",
-        )
-        hidden_handler: tuple[bool, str | None] = (False, None)
-        status_handlers: dict[str, tuple[bool, str | None]] = {
-            operational_value: operational_handler,
-            filtered_value: filtered_handler,
-            marked_for_removal_value: marked_for_removal_handler,
-            hidden_value: hidden_handler,
-        }
-
-        handler_config = status_handlers.get(status)
-        if handler_config is None:
-            return (attr_name, attr_values)
-
-        show_flag, name_format = handler_config
-        if not show_flag or name_format is None:
-            return None
-        return (name_format, attr_values)
-
-    @staticmethod
-    def encode_attribute_value(
-        attr_name: str,
-        value: bytes | str,
-    ) -> str:
-        """Encode a single attribute value for LDIF output (RFC 2849)."""
-        if isinstance(value, bytes):
-            encoded_value = base64.b64encode(value).decode("ascii")
-            return f"{attr_name}:: {encoded_value}"
-
-        str_value: str = value
-
+    def write_file(
+        content: str,
+        file_path: Path,
+        encoding: str = "utf-8",
+    ) -> FlextResult[Mapping[str, str | int]]:
+        """Write content to file (pure I/O operation)."""
         try:
-            _ = str_value.encode("utf-8")
-        except UnicodeEncodeError:
-            str_value = str_value.encode("utf-8", errors="replace").decode(
-                "utf-8",
-                errors="replace",
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            _ = file_path.write_text(content, encoding=encoding)
+            stats: dict[str, str | int] = {
+                "bytes_written": len(content.encode(encoding)),
+                "path": str(file_path),
+                "encoding": encoding,
+            }
+            return FlextResult[dict[str, str | int]].ok(stats)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            logger.exception(
+                "File write failed",
+                file_path=str(file_path),
             )
-            logger.debug(
-                "Corrected invalid UTF-8 in attribute: attribute_name=%s, value_length=%s",
-                attr_name,
-                len(value),
-            )
-
-        is_binary_attr = (
-            attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
-        )
-        needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
-            str_value,
-        )
-
-        if needs_base64:
-            encoded_value = base64.b64encode(str_value.encode("utf-8")).decode("ascii")
-            return f"{attr_name}:: {encoded_value}"
-        return f"{attr_name}: {str_value}"
-
-    @staticmethod
-    def _add_line_with_folding(
-        ldif_lines: list[str],
-        line: str,
-        *,
-        fold_long_lines: bool,
-        width: int,
-    ) -> None:
-        """Add line with optional folding."""
-        if fold_long_lines and not line.startswith("dn:: "):
-            ldif_lines.extend(FlextLdifUtilitiesWriter.fold(line, width=width))
-        else:
-            ldif_lines.append(line)
-
-    @staticmethod
-    def _process_modify_attributes(
-        attributes: m.Ldif.EntryAttributesDict,
-        hidden: set[str],
-        modify_operation: str,
-        *,
-        fold_long_lines: bool,
-        width: int,
-    ) -> list[str]:
-        """Process attributes in MODIFY format."""
-        lines: list[str] = []
-        first_attr = True
-        for attr_name, values in attributes.items():
-            if not values or attr_name in hidden:
-                continue
-
-            if not first_attr:
-                lines.append("-")
-            first_attr = False
-
-            op_line = f"{modify_operation}: {attr_name}"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                lines,
-                op_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
-            )
-
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines,
-                    attr_line,
-                    fold_long_lines=fold_long_lines,
-                    width=width,
-                )
-
-        if lines and lines[-1] != "-":
-            lines.append("-")
-        return lines
-
-    @staticmethod
-    def _process_add_attributes(
-        attributes: m.Ldif.EntryAttributesDict,
-        hidden: set[str],
-        *,
-        fold_long_lines: bool,
-        width: int,
-    ) -> list[str]:
-        """Process attributes in ADD format."""
-        lines: list[str] = []
-        for attr_name, values in attributes.items():
-            if not values or attr_name in hidden:
-                continue
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines,
-                    attr_line,
-                    fold_long_lines=fold_long_lines,
-                    width=width,
-                )
-        return lines
-
-    @staticmethod
-    def _add_changetype_lines(
-        ldif_lines: list[str],
-        *,
-        format_type: str,
-        changetype_config: Mapping[str, t.ContainerValue],
-    ) -> None:
-        """Add changetype lines based on format."""
-        include_changetype = bool(
-            u.get(changetype_config, "include_changetype"),
-        )
-        changetype_value = u.get(changetype_config, "changetype_value")
-        fold_long_lines = bool(
-            u.get(changetype_config, "fold_long_lines", default=True),
-        )
-        width_raw = u.get(changetype_config, "width", default=76)
-        width = int(width_raw)
-
-        if format_type == "modify":
-            changetype_line = "changetype: modify"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                ldif_lines,
-                changetype_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
-            )
-        elif include_changetype and changetype_value:
-            changetype_line = f"changetype: {changetype_value}"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                ldif_lines,
-                changetype_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
+            return FlextResult[dict[str, str | int]].fail(
+                f"File write failed: {e}",
             )
 
     @staticmethod
-    def finalize_ldif_text(ldif_lines: list[str]) -> str:
-        """Join LDIF lines and ensure proper trailing newline."""
-        ldif_text = "\n".join(ldif_lines)
-        if ldif_text and not ldif_text.endswith("\n"):
-            ldif_text += "\n"
-        return ldif_text
+    def write_rfc_attribute(
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+    ) -> FlextResult[str]:
+        """Write attribute data to RFC 4512 format."""
+        try:
+            if not attr_data.oid:
+                return FlextResult.fail("RFC attribute writing failed: missing OID")
+
+            parts = FlextLdifUtilitiesWriter._build_attribute_parts(attr_data)
+            return FlextResult.ok(" ".join(parts))
+
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.exception("RFC attribute writing exception")
+            return FlextResult.fail(f"RFC attribute writing failed: {e}")
+
+    @staticmethod
+    def write_rfc_objectclass(
+        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+    ) -> FlextResult[str]:
+        """Write objectClass data to RFC 4512 format."""
+        try:
+            if not objectclass.oid:
+                return FlextResult.fail("RFC objectClass writing failed: missing OID")
+
+            parts = FlextLdifUtilitiesWriter._build_objectclass_parts(objectclass)
+            return FlextResult.ok(" ".join(parts))
+
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.exception("RFC objectClass writing exception")
+            return FlextResult.fail(f"RFC objectClass writing failed: {e}")
 
 
 __all__ = [

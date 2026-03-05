@@ -22,40 +22,10 @@ class FlextLdifValidation(
     objectclass_names: list[str] = Field(default_factory=list)
     max_attr_value_length: int | None = Field(default=None)
 
-    @override
-    @d.track_operation("validation_service_check")
-    def execute(
-        self,
-    ) -> r[m.Ldif.ValidationServiceStatus]:
-        return r[m.Ldif.ValidationServiceStatus].ok(
-            m.Ldif.ValidationServiceStatus(
-                service="ValidationService",
-                status="operational",
-                rfc_compliance="RFC 2849, RFC 4512",
-                validation_types=[
-                    "attribute_name",
-                    "objectclass_name",
-                    "attribute_value",
-                ],
-            ),
-        )
-
     @classmethod
     def builder(cls) -> Self:
         """Builder method."""
         return cls()
-
-    def with_attribute_names(self, names: list[str]) -> Self:
-        """With_attribute_names method."""
-        return self.model_copy(update={"attribute_names": names})
-
-    def with_objectclass_names(self, names: list[str]) -> Self:
-        """With_objectclass_names method."""
-        return self.model_copy(update={"objectclass_names": names})
-
-    def with_max_attr_value_length(self, length: int) -> Self:
-        """With_max_attr_value_length method."""
-        return self.model_copy(update={"max_attr_value_length": length})
 
     @d.track_operation()
     def build(self) -> m.Ldif.ValidationBatchResult:
@@ -75,6 +45,24 @@ class FlextLdifValidation(
         results_flags = m.Ldif.BooleanFlags(**result)
         return m.Ldif.ValidationBatchResult(results=results_flags)
 
+    @override
+    @d.track_operation("validation_service_check")
+    def execute(
+        self,
+    ) -> r[m.Ldif.ValidationServiceStatus]:
+        return r[m.Ldif.ValidationServiceStatus].ok(
+            m.Ldif.ValidationServiceStatus(
+                service="ValidationService",
+                status="operational",
+                rfc_compliance="RFC 2849, RFC 4512",
+                validation_types=[
+                    "attribute_name",
+                    "objectclass_name",
+                    "attribute_value",
+                ],
+            ),
+        )
+
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""
         try:
@@ -90,9 +78,26 @@ class FlextLdifValidation(
         ) as e:
             return r[bool].fail(f"Failed to validate attribute name: {e}")
 
-    def validate_objectclass_name(self, name: str) -> r[bool]:
-        """Validate_objectclass_name method."""
-        return self.validate_attribute_name(name)
+    def validate_attribute_names(
+        self,
+        names: list[str],
+    ) -> r[Mapping[str, bool]]:
+        """Validate_attribute_names method."""
+        try:
+            validated_names: dict[str, bool] = {}
+
+            for name in names:
+                result = self.validate_attribute_name(name)
+                if result.is_success:
+                    validated_names[name] = result.value
+                else:
+                    validated_names[name] = False
+
+            return r[dict[str, bool]].ok(validated_names)
+        except (ValueError, TypeError, AttributeError) as e:
+            return r[dict[str, bool]].fail(
+                f"Failed to batch validate attribute names: {e}",
+            )
 
     def validate_attribute_value(
         self,
@@ -141,26 +146,21 @@ class FlextLdifValidation(
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate DN component: {e}")
 
-    def validate_attribute_names(
-        self,
-        names: list[str],
-    ) -> r[Mapping[str, bool]]:
-        """Validate_attribute_names method."""
-        try:
-            validated_names: dict[str, bool] = {}
+    def validate_objectclass_name(self, name: str) -> r[bool]:
+        """Validate_objectclass_name method."""
+        return self.validate_attribute_name(name)
 
-            for name in names:
-                result = self.validate_attribute_name(name)
-                if result.is_success:
-                    validated_names[name] = result.value
-                else:
-                    validated_names[name] = False
+    def with_attribute_names(self, names: list[str]) -> Self:
+        """With_attribute_names method."""
+        return self.model_copy(update={"attribute_names": names})
 
-            return r[dict[str, bool]].ok(validated_names)
-        except (ValueError, TypeError, AttributeError) as e:
-            return r[dict[str, bool]].fail(
-                f"Failed to batch validate attribute names: {e}",
-            )
+    def with_max_attr_value_length(self, length: int) -> Self:
+        """With_max_attr_value_length method."""
+        return self.model_copy(update={"max_attr_value_length": length})
+
+    def with_objectclass_names(self, names: list[str]) -> Self:
+        """With_objectclass_names method."""
+        return self.model_copy(update={"objectclass_names": names})
 
 
 __all__ = ["FlextLdifValidation"]

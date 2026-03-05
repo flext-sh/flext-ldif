@@ -244,6 +244,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
+        @staticmethod
+        def splitacl_line(acl_line: str) -> tuple[str, str]:
+            """Split an ACL line into attribute name and payload."""
+            attr_name, _, remainder = acl_line.partition(":")
+            return attr_name.strip(), remainder.strip()
+
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is a Novell eDirectory ACL."""
@@ -275,6 +281,30 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
                 )
             return False
+
+        def _build_novell_permissions_from_rights(
+            self,
+            rights: list[str],
+            permission_name_map: Mapping[str, str],
+        ) -> Mapping[str, bool]:
+            """Build AclPermissions dict from parsed rights list."""
+            reverse_map: dict[str, str] = {v: k for k, v in permission_name_map.items()}
+
+            perms_dict: dict[str, bool] = {
+                "read": False,
+                "write": False,
+                "add": False,
+                "delete": False,
+                "search": False,
+                "compare": False,
+            }
+
+            for right in rights:
+                if right in reverse_map:
+                    canonical_name = reverse_map[right]
+                    if canonical_name in perms_dict:
+                        perms_dict[canonical_name] = True
+            return perms_dict
 
         @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
@@ -382,30 +412,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     f"Novell eDirectory ACL parsing failed: {exc}",
                 )
 
-        def _build_novell_permissions_from_rights(
-            self,
-            rights: list[str],
-            permission_name_map: Mapping[str, str],
-        ) -> Mapping[str, bool]:
-            """Build AclPermissions dict from parsed rights list."""
-            reverse_map: dict[str, str] = {v: k for k, v in permission_name_map.items()}
-
-            perms_dict: dict[str, bool] = {
-                "read": False,
-                "write": False,
-                "add": False,
-                "delete": False,
-                "search": False,
-                "compare": False,
-            }
-
-            for right in rights:
-                if right in reverse_map:
-                    canonical_name = reverse_map[right]
-                    if canonical_name in perms_dict:
-                        perms_dict[canonical_name] = True
-            return perms_dict
-
         @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
@@ -457,18 +463,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     f"Novell eDirectory ACL write failed: {exc}",
                 )
 
-        @staticmethod
-        def splitacl_line(acl_line: str) -> tuple[str, str]:
-            """Split an ACL line into attribute name and payload."""
-            attr_name, _, remainder = acl_line.partition(":")
-            return attr_name.strip(), remainder.strip()
-
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
-
-        @override
-        def model_post_init(self, _context: t.ContainerValue, /) -> None:
-            """Initialize eDirectory entry quirk."""
 
         @override
         def can_handle(
@@ -503,6 +499,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     for oc in object_classes
                 ),
             )
+
+        @override
+        def model_post_init(self, _context: t.ContainerValue, /) -> None:
+            """Initialize eDirectory entry quirk."""
 
         def process_entry(
             self,

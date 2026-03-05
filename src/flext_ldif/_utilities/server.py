@@ -34,28 +34,48 @@ class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
 
     @staticmethod
-    def _is_valid_server_type_literal(
-        value: str,
-    ) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
-        return value in _VALID_SERVER_TYPES
+    def _check_name_patterns(
+        name_lower: str,
+        detection_names: frozenset[str],
+        detection_string: str | None,
+        *,
+        use_prefix_match: bool = False,
+    ) -> bool:
+        """Check if name matches detection patterns (helper to reduce complexity)."""
+        if detection_string and detection_string in name_lower:
+            return True
+        if name_lower in detection_names:
+            return True
+        if use_prefix_match:
+            return any(name_lower.startswith(prefix) for prefix in detection_names)
+        return any(marker in name_lower for marker in detection_names)
 
     @staticmethod
-    def extract_server_type_from_constants(
-        cls_with_constants: type[object] | None,
+    def _extract_server_name(name_without_prefix: str) -> str | None:
+        """Extract server name from class name suffix."""
+        for suffix in _CLASS_SUFFIXES:
+            if name_without_prefix.endswith(suffix):
+                return name_without_prefix[: -len(suffix)] or None
+        return None
+
+    @staticmethod
+    def _get_type_from_independent_class(
+        target_cls: type[object],
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
-        """Extract server type from a class's Constants.SERVER_TYPE."""
-        if cls_with_constants is None:
+        """Extract server type from independent class naming pattern."""
+        class_name = target_cls.__name__
+        if not class_name.startswith("FlextLdifServers"):
             return None
-        constants_obj: type | None = vars(cls_with_constants).get("Constants")
-        if not isinstance(constants_obj, type):
+        name_without_prefix = class_name[len("FlextLdifServers") :]
+        server_name = FlextLdifUtilitiesServer._extract_server_name(name_without_prefix)
+        if not server_name:
             return None
-        server_type_raw: str | None = vars(constants_obj).get("SERVER_TYPE")
-        if (
-            server_type_raw is not None
-            and isinstance(server_type_raw, str)
-            and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
-        ):
-            return server_type_raw
+        server_type_lower = server_name.lower()
+
+        # Validate against known server types (No dynamic import)
+        # Use TypeGuard to narrow to ServerTypeLiteral
+        if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
+            return server_type_lower
         return None
 
     @staticmethod
@@ -91,32 +111,34 @@ class FlextLdifUtilitiesServer:
         return None
 
     @staticmethod
-    def _get_type_from_independent_class(
-        target_cls: type[object],
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
-        """Extract server type from independent class naming pattern."""
-        class_name = target_cls.__name__
-        if not class_name.startswith("FlextLdifServers"):
-            return None
-        name_without_prefix = class_name[len("FlextLdifServers") :]
-        server_name = FlextLdifUtilitiesServer._extract_server_name(name_without_prefix)
-        if not server_name:
-            return None
-        server_type_lower = server_name.lower()
+    def _is_valid_server_type_literal(
+        value: str,
+    ) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
+        return value in _VALID_SERVER_TYPES
 
-        # Validate against known server types (No dynamic import)
-        # Use TypeGuard to narrow to ServerTypeLiteral
-        if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
-            return server_type_lower
+    @staticmethod
+    def extract_server_type_from_constants(
+        cls_with_constants: type[object] | None,
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+        """Extract server type from a class's Constants.SERVER_TYPE."""
+        if cls_with_constants is None:
+            return None
+        constants_obj: type | None = vars(cls_with_constants).get("Constants")
+        if not isinstance(constants_obj, type):
+            return None
+        server_type_raw: str | None = vars(constants_obj).get("SERVER_TYPE")
+        if (
+            server_type_raw is not None
+            and isinstance(server_type_raw, str)
+            and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
+        ):
+            return server_type_raw
         return None
 
     @staticmethod
-    def _extract_server_name(name_without_prefix: str) -> str | None:
-        """Extract server name from class name suffix."""
-        for suffix in _CLASS_SUFFIXES:
-            if name_without_prefix.endswith(suffix):
-                return name_without_prefix[: -len(suffix)] or None
-        return None
+    def get_all_server_types() -> list[str]:
+        """Get all supported server type values."""
+        return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
     @staticmethod
     def get_parent_server_type(
@@ -141,21 +163,52 @@ class FlextLdifUtilitiesServer:
         raise AttributeError(msg)
 
     @staticmethod
-    def _check_name_patterns(
-        name_lower: str,
-        detection_names: frozenset[str],
-        detection_string: str | None,
-        *,
-        use_prefix_match: bool = False,
-    ) -> bool:
-        """Check if name matches detection patterns (helper to reduce complexity)."""
-        if detection_string and detection_string in name_lower:
-            return True
-        if name_lower in detection_names:
-            return True
-        if use_prefix_match:
-            return any(name_lower.startswith(prefix) for prefix in detection_names)
-        return any(marker in name_lower for marker in detection_names)
+    def get_server_detection_attribute_match_score() -> int:
+        """Get attribute match score for server detection."""
+        return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
+
+    @staticmethod
+    def get_server_detection_confidence_threshold() -> float:
+        """Get confidence threshold for server detection."""
+        return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
+
+    @staticmethod
+    def get_server_detection_default_max_lines() -> int:
+        """Get default max lines for server detection."""
+        return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
+
+    @staticmethod
+    def get_server_type_value(server_type: str) -> str:
+        """Get server type enum value by name."""
+        server_enum = c.Ldif.ServerTypes.__members__.get(server_type.upper())
+        if server_enum is None:
+            error_msg = f"Server type {server_type} not found"
+            raise AttributeError(error_msg)
+        return server_enum.value
+
+    @staticmethod
+    def get_sort_strategy_value(name: str) -> str:
+        """Get sort strategy enum value by name."""
+        sort_strategy_enum = c.Ldif.SortStrategy.__members__.get(name.upper())
+        if sort_strategy_enum is None:
+            error_msg = f"Sort strategy {name} not found"
+            raise AttributeError(error_msg)
+        return sort_strategy_enum.value
+
+    @staticmethod
+    def get_sort_target_value(name: str) -> str:
+        """Get sort target enum value by name."""
+        sort_target_enum = c.Ldif.SortTarget.__members__.get(name.upper())
+        if sort_target_enum is None:
+            error_msg = f"Sort target {name} not found"
+            raise AttributeError(error_msg)
+        return sort_target_enum.value
+
+    @staticmethod
+    def matches(server_type: str, *allowed_types: str) -> bool:
+        """Check if a server type matches any of the allowed types."""
+        normalized = server_type.lower().strip()
+        return normalized in [t.lower().strip() for t in allowed_types]
 
     @staticmethod
     def matches_server_patterns(
@@ -266,56 +319,3 @@ class FlextLdifUtilitiesServer:
         valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
         msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
         raise ValueError(msg)
-
-    @staticmethod
-    def get_all_server_types() -> list[str]:
-        """Get all supported server type values."""
-        return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
-
-    @staticmethod
-    def get_server_type_value(server_type: str) -> str:
-        """Get server type enum value by name."""
-        server_enum = c.Ldif.ServerTypes.__members__.get(server_type.upper())
-        if server_enum is None:
-            error_msg = f"Server type {server_type} not found"
-            raise AttributeError(error_msg)
-        return server_enum.value
-
-    @staticmethod
-    def get_server_detection_default_max_lines() -> int:
-        """Get default max lines for server detection."""
-        return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
-
-    @staticmethod
-    def get_server_detection_confidence_threshold() -> float:
-        """Get confidence threshold for server detection."""
-        return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
-
-    @staticmethod
-    def get_server_detection_attribute_match_score() -> int:
-        """Get attribute match score for server detection."""
-        return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
-
-    @staticmethod
-    def get_sort_target_value(name: str) -> str:
-        """Get sort target enum value by name."""
-        sort_target_enum = c.Ldif.SortTarget.__members__.get(name.upper())
-        if sort_target_enum is None:
-            error_msg = f"Sort target {name} not found"
-            raise AttributeError(error_msg)
-        return sort_target_enum.value
-
-    @staticmethod
-    def get_sort_strategy_value(name: str) -> str:
-        """Get sort strategy enum value by name."""
-        sort_strategy_enum = c.Ldif.SortStrategy.__members__.get(name.upper())
-        if sort_strategy_enum is None:
-            error_msg = f"Sort strategy {name} not found"
-            raise AttributeError(error_msg)
-        return sort_strategy_enum.value
-
-    @staticmethod
-    def matches(server_type: str, *allowed_types: str) -> bool:
-        """Check if a server type matches any of the allowed types."""
-        normalized = server_type.lower().strip()
-        return normalized in [t.lower().strip() for t in allowed_types]

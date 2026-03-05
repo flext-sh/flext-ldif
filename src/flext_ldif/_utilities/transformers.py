@@ -65,20 +65,6 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
         return r[bool].ok(value=True)  # Validation passed
 
-    def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
-        """Helper: Apply case folding and space handling."""
-        if self._case == "lower":
-            normalized_dn = normalized_dn.lower()
-        elif self._case == "upper":
-            normalized_dn = normalized_dn.upper()
-
-        if self._spaces == "trim":
-            normalized_dn = normalized_dn.strip()
-        elif self._spaces == "normalize":
-            parts = normalized_dn.split(",")
-            normalized_dn = ",".join(p.strip() for p in parts)
-        return normalized_dn
-
     @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry."""
@@ -112,6 +98,20 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         updated_entry = item.model_copy(update=update_dict)
 
         return r[m.Ldif.Entry].ok(updated_entry)
+
+    def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
+        """Helper: Apply case folding and space handling."""
+        if self._case == "lower":
+            normalized_dn = normalized_dn.lower()
+        elif self._case == "upper":
+            normalized_dn = normalized_dn.upper()
+
+        if self._spaces == "trim":
+            normalized_dn = normalized_dn.strip()
+        elif self._spaces == "normalize":
+            parts = normalized_dn.split(",")
+            normalized_dn = ",".join(p.strip() for p in parts)
+        return normalized_dn
 
 
 class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -184,16 +184,6 @@ class Normalize:
     __slots__ = ()
 
     @staticmethod
-    def dn(
-        *,
-        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
-        spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
-        validate: bool = True,
-    ) -> NormalizeDnTransformer:
-        """Create a DN normalization transformer."""
-        return NormalizeDnTransformer(case=case, spaces=spaces, validate=validate)
-
-    @staticmethod
     def attrs(
         *,
         case_fold_names: bool = True,
@@ -206,6 +196,16 @@ class Normalize:
             trim_values=trim_values,
             remove_empty=remove_empty,
         )
+
+    @staticmethod
+    def dn(
+        *,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
+        spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
+        validate: bool = True,
+    ) -> NormalizeDnTransformer:
+        """Create a DN normalization transformer."""
+        return NormalizeDnTransformer(case=case, spaces=spaces, validate=validate)
 
 
 class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
@@ -405,20 +405,6 @@ class Transform:
     __slots__ = ()
 
     @staticmethod
-    def replace_base(
-        old_base: str,
-        new_base: str,
-        *,
-        case_insensitive: bool = True,
-    ) -> ReplaceBaseDnTransformer:
-        """Create a base DN replacement transformer."""
-        return ReplaceBaseDnTransformer(
-            old_base,
-            new_base,
-            case_insensitive=case_insensitive,
-        )
-
-    @staticmethod
     def convert_booleans(
         boolean_format: str = "TRUE/FALSE",
         *,
@@ -426,6 +412,16 @@ class Transform:
     ) -> ConvertBooleansTransformer:
         """Create a boolean conversion transformer."""
         return ConvertBooleansTransformer(boolean_format, attributes=attributes)
+
+    @staticmethod
+    def custom(
+        func: Callable[
+            [m.Ldif.Entry],
+            m.Ldif.Entry | r[m.Ldif.Entry],
+        ],
+    ) -> CustomTransformer:
+        """Create a custom transformer from a function."""
+        return CustomTransformer(func)
 
     @staticmethod
     def filter_attrs(
@@ -442,14 +438,18 @@ class Transform:
         return RemoveAttrsTransformer(*attributes)
 
     @staticmethod
-    def custom(
-        func: Callable[
-            [m.Ldif.Entry],
-            m.Ldif.Entry | r[m.Ldif.Entry],
-        ],
-    ) -> CustomTransformer:
-        """Create a custom transformer from a function."""
-        return CustomTransformer(func)
+    def replace_base(
+        old_base: str,
+        new_base: str,
+        *,
+        case_insensitive: bool = True,
+    ) -> ReplaceBaseDnTransformer:
+        """Create a base DN replacement transformer."""
+        return ReplaceBaseDnTransformer(
+            old_base,
+            new_base,
+            case_insensitive=case_insensitive,
+        )
 
 
 __all__ = [

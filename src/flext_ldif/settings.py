@@ -489,6 +489,55 @@ class FlextLdifSettings(FlextSettings):
         ),
     )
 
+    @field_validator("ldif_default_server_type", mode="after")
+    @classmethod
+    def validate_ldif_default_server_type(
+        cls,
+        v: str,
+        info: ValidationInfo | None = None,
+    ) -> str:
+        """Validate ldif_default_server_type is a recognized server.
+
+        Ensures ldif_default_server_type is one of the supported server types.
+
+        Args:
+            v: Server type string to validate
+
+        Returns:
+            Validated server type string
+
+        Raises:
+            ValueError: If server_type is not recognized
+
+        """
+        # Use same validation logic as server_type field
+        valid_servers = [
+            c.Ldif.ServerTypes.RFC,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OUD,
+            c.Ldif.ServerTypes.OPENLDAP,
+            c.Ldif.ServerTypes.OPENLDAP1,
+            c.Ldif.ServerTypes.OPENLDAP2,
+            c.Ldif.ServerTypes.AD,
+            c.Ldif.ServerTypes.DS389,
+            c.Ldif.ServerTypes.APACHE,
+            c.Ldif.ServerTypes.NOVELL,
+            c.Ldif.ServerTypes.IBM_TIVOLI,
+            c.Ldif.ServerTypes.RELAXED,
+            c.Ldif.ServerTypes.GENERIC,
+        ]
+        if v not in valid_servers:
+            field_name = info.field_name if info else "unknown"
+            msg = (
+                f"Invalid ldif_default_server_type '{v}' in field "
+                f"'{field_name}'.\n"
+                f"Valid options: {', '.join(valid_servers)}\n"
+                f"Suggestion: Use '{c.Ldif.ServerTypes.RFC}' "
+                f"for RFC compliance"
+            )
+            raise ValueError(msg)
+        return v
+
     # =========================================================================
     # FIELD VALIDATORS - Pydantic v2 Advanced Usage
     # =========================================================================
@@ -523,61 +572,6 @@ class FlextLdifSettings(FlextSettings):
             )
             raise ValueError(msg) from e
         return v
-
-    @field_validator("server_type", mode="before")
-    @classmethod
-    def validate_server_type(cls, v: str, info: ValidationInfo | None = None) -> str:
-        """Validate server_type is a recognized LDAP server.
-
-        Ensures server_type is one of the supported server types defined in
-        c.Ldif.ServerTypes. Accepts both canonical forms and
-        common aliases.
-
-        Args:
-            v: Server type string to validate (canonical or alias)
-
-        Returns:
-            Normalized/validated server type string (canonical form)
-
-        Raises:
-            ValueError: If server_type is not recognized
-
-        """
-        normalized = FlextLdifShared.normalize_server_type(v)
-
-        valid_servers = [
-            c.Ldif.ServerTypes.RFC,
-            c.Ldif.ServerTypes.OID,
-            c.Ldif.ServerTypes.OUD,
-            c.Ldif.ServerTypes.OPENLDAP,
-            c.Ldif.ServerTypes.OPENLDAP1,
-            c.Ldif.ServerTypes.OPENLDAP2,
-            c.Ldif.ServerTypes.AD,
-            c.Ldif.ServerTypes.DS389,
-            c.Ldif.ServerTypes.APACHE,
-            c.Ldif.ServerTypes.NOVELL,
-            c.Ldif.ServerTypes.IBM_TIVOLI,
-            # Fixed: IBM_TIVOLI not TIVOLI
-            c.Ldif.ServerTypes.RELAXED,
-            c.Ldif.ServerTypes.GENERIC,
-            # Use constant instead of hardcoded
-        ]
-        if normalized not in valid_servers:
-            # Suggest most common/useful server types
-            common_servers = [
-                c.Ldif.ServerTypes.RFC,
-                c.Ldif.ServerTypes.OUD,
-                c.Ldif.ServerTypes.OID,
-                c.Ldif.ServerTypes.OPENLDAP,
-            ]
-            field_name = info.field_name if info else "unknown"
-            msg = (
-                f"Invalid server_type '{v}' in field '{field_name}'.\n"
-                f"Valid options: {', '.join(valid_servers)}\n"
-                f"Common choices: {', '.join(common_servers)}"
-            )
-            raise ValueError(msg)
-        return normalized  # Return normalized form
 
     @field_validator("ldif_line_separator", mode="after")
     @classmethod
@@ -726,28 +720,27 @@ class FlextLdifSettings(FlextSettings):
             raise ValueError(msg)
         return normalized  # Return normalized form
 
-    @field_validator("ldif_default_server_type", mode="after")
+    @field_validator("server_type", mode="before")
     @classmethod
-    def validate_ldif_default_server_type(
-        cls,
-        v: str,
-        info: ValidationInfo | None = None,
-    ) -> str:
-        """Validate ldif_default_server_type is a recognized server.
+    def validate_server_type(cls, v: str, info: ValidationInfo | None = None) -> str:
+        """Validate server_type is a recognized LDAP server.
 
-        Ensures ldif_default_server_type is one of the supported server types.
+        Ensures server_type is one of the supported server types defined in
+        c.Ldif.ServerTypes. Accepts both canonical forms and
+        common aliases.
 
         Args:
-            v: Server type string to validate
+            v: Server type string to validate (canonical or alias)
 
         Returns:
-            Validated server type string
+            Normalized/validated server type string (canonical form)
 
         Raises:
             ValueError: If server_type is not recognized
 
         """
-        # Use same validation logic as server_type field
+        normalized = FlextLdifShared.normalize_server_type(v)
+
         valid_servers = [
             c.Ldif.ServerTypes.RFC,
             c.Ldif.ServerTypes.OID,
@@ -760,20 +753,43 @@ class FlextLdifSettings(FlextSettings):
             c.Ldif.ServerTypes.APACHE,
             c.Ldif.ServerTypes.NOVELL,
             c.Ldif.ServerTypes.IBM_TIVOLI,
+            # Fixed: IBM_TIVOLI not TIVOLI
             c.Ldif.ServerTypes.RELAXED,
             c.Ldif.ServerTypes.GENERIC,
+            # Use constant instead of hardcoded
         ]
-        if v not in valid_servers:
+        if normalized not in valid_servers:
+            # Suggest most common/useful server types
+            common_servers = [
+                c.Ldif.ServerTypes.RFC,
+                c.Ldif.ServerTypes.OUD,
+                c.Ldif.ServerTypes.OID,
+                c.Ldif.ServerTypes.OPENLDAP,
+            ]
             field_name = info.field_name if info else "unknown"
             msg = (
-                f"Invalid ldif_default_server_type '{v}' in field "
-                f"'{field_name}'.\n"
+                f"Invalid server_type '{v}' in field '{field_name}'.\n"
                 f"Valid options: {', '.join(valid_servers)}\n"
-                f"Suggestion: Use '{c.Ldif.ServerTypes.RFC}' "
-                f"for RFC compliance"
+                f"Common choices: {', '.join(common_servers)}"
             )
             raise ValueError(msg)
-        return v
+        return normalized  # Return normalized form
+
+    # =========================================================================
+    # UTILITY METHODS - Enhanced with FlextSettings integration
+    # =========================================================================
+
+    def get_effective_encoding(self) -> str:
+        """Get effective encoding, considering environment and server type.
+
+        Returns:
+        Effective character encoding to use
+
+        """
+        # Server-specific encoding preferences
+        if self.server_type == c.Ldif.ServerTypes.AD.value:
+            return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
+        return self.ldif_encoding
 
     # =========================================================================
     # MODEL VALIDATOR - Cross-Field Validation
@@ -813,22 +829,6 @@ class FlextLdifSettings(FlextSettings):
             raise ValueError(msg)
 
         return self
-
-    # =========================================================================
-    # UTILITY METHODS - Enhanced with FlextSettings integration
-    # =========================================================================
-
-    def get_effective_encoding(self) -> str:
-        """Get effective encoding, considering environment and server type.
-
-        Returns:
-        Effective character encoding to use
-
-        """
-        # Server-specific encoding preferences
-        if self.server_type == c.Ldif.ServerTypes.AD.value:
-            return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
-        return self.ldif_encoding
 
     # =========================================================================
     # PUBLIC API - Direct access to models (no wrappers)

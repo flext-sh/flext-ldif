@@ -28,11 +28,6 @@ class FlextLdifServiceRegistry(FlextRegistry):
         _ = data
         super().__init__(dispatcher=dispatcher)
 
-    def reset(self) -> None:
-        """Reset registry (for testing only)."""
-        _ = self.unregister_class_plugin(self.FACTORIES, "filter")
-        _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
-
     @classmethod
     def get_global(cls) -> FlextLdifServiceRegistry:
         """Get or create global registry instance."""
@@ -46,6 +41,11 @@ class FlextLdifServiceRegistry(FlextRegistry):
         if cls._global_instance is not None:
             cls._global_instance.reset()
         cls._global_instance = None
+
+    def reset(self) -> None:
+        """Reset registry (for testing only)."""
+        _ = self.unregister_class_plugin(self.FACTORIES, "filter")
+        _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
 
 
 __all__ = [

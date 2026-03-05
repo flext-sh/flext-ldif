@@ -70,6 +70,87 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return True
             return bool(attr_definition.strip())
 
+        @override
+        def can_handle_objectclass(
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
+        ) -> bool:
+            """Accept any objectClass definition in relaxed mode."""
+            if not isinstance(oc_definition, str):
+                return True
+            return bool(oc_definition.strip())
+
+        def _enhance_objectclass_metadata(
+            self,
+            objectclass: m.Ldif.SchemaObjectClass,
+            original_definition: str,
+        ) -> m.Ldif.SchemaObjectClass:
+            """Enhance objectClass metadata to indicate relaxed mode parsing."""
+            if not objectclass.metadata:
+                objectclass.metadata = m.Ldif.QuirkMetadata(
+                    quirk_type=self._get_server_type(),
+                    extensions=m.Ldif.DynamicMetadata(
+                        original_format=original_definition.strip(),
+                        schema_source_server="relaxed",
+                    ),
+                )
+            else:
+                if not objectclass.metadata.extensions:
+                    objectclass.metadata.extensions = m.Ldif.DynamicMetadata()
+                objectclass.metadata.quirk_type = self._get_server_type()
+
+                if not objectclass.metadata.extensions.get("original_format"):
+                    objectclass.metadata.extensions["original_format"] = (
+                        original_definition.strip()
+                    )
+                objectclass.metadata.extensions["schema_source_server"] = "relaxed"
+            return objectclass
+
+        def _extract_must_may_from_objectclass(
+            self,
+            oc_definition: str,
+        ) -> tuple[list[str] | None, list[str] | None]:
+            """Extract MUST and MAY fields from objectClass definition."""
+            must = None
+            must_match = re.search(
+                r"\bMUST\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
+                oc_definition,
+            )
+            if must_match:
+                if must_match.group(1):
+                    must_value = must_match.group(1).strip()
+                elif must_match.group(2):
+                    must_value = must_match.group(2).strip()
+                else:
+                    must_value = ""
+                must = [
+                    m.strip()
+                    for m in must_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
+                    )
+                ]
+
+            may = None
+            may_match = re.search(
+                r"\bMAY\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
+                oc_definition,
+            )
+            if may_match:
+                if may_match.group(1):
+                    may_value = may_match.group(1).strip()
+                elif may_match.group(2):
+                    may_value = may_match.group(2).strip()
+                else:
+                    may_value = ""
+                may = [
+                    m.strip()
+                    for m in may_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MAY_SEPARATOR,
+                    )
+                ]
+
+            return (must, may)
+
         def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
             """Extract OID from attribute definition using multiple strategies."""
             oid = u.Ldif.LdifParser.extract_oid(attr_definition)
@@ -98,6 +179,66 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return oid_match.group(1)
 
             return None
+
+        def _extract_oid_with_fallback_patterns(
+            self,
+            definition: str,
+        ) -> str | None:
+            """Extract OID using multiple fallback patterns for relaxed mode."""
+            oid = u.Ldif.LdifParser.extract_oid(definition)
+            if oid:
+                return oid
+
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            return None
+
+        def _extract_sup_from_objectclass(
+            self,
+            oc_definition: str,
+        ) -> str | None:
+            """Extract SUP (superior) field from objectClass definition."""
+            sup_match = re.search(
+                r"\bSUP\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
+                oc_definition,
+            )
+            if not sup_match:
+                return None
+
+            if sup_match.group(1):
+                sup_value = sup_match.group(1).strip()
+            elif sup_match.group(2):
+                sup_value = sup_match.group(2).strip()
+            else:
+                sup_value = ""
+
+            if FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR in sup_value:
+                return next(
+                    s.strip()
+                    for s in sup_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
+                    )
+                )
+            return sup_value
 
         @override
         def _parse_attribute(
@@ -201,145 +342,28 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
         @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Accept any objectClass definition in relaxed mode."""
-            if not isinstance(oc_definition, str):
-                return True
-            return bool(oc_definition.strip())
-
-        def _enhance_objectclass_metadata(
-            self,
-            objectclass: m.Ldif.SchemaObjectClass,
-            original_definition: str,
-        ) -> m.Ldif.SchemaObjectClass:
-            """Enhance objectClass metadata to indicate relaxed mode parsing."""
-            if not objectclass.metadata:
-                objectclass.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(
-                        original_format=original_definition.strip(),
-                        schema_source_server="relaxed",
-                    ),
-                )
-            else:
-                if not objectclass.metadata.extensions:
-                    objectclass.metadata.extensions = m.Ldif.DynamicMetadata()
-                objectclass.metadata.quirk_type = self._get_server_type()
-
-                if not objectclass.metadata.extensions.get("original_format"):
-                    objectclass.metadata.extensions["original_format"] = (
-                        original_definition.strip()
-                    )
-                objectclass.metadata.extensions["schema_source_server"] = "relaxed"
-            return objectclass
-
-        def _extract_oid_with_fallback_patterns(
-            self,
-            definition: str,
-        ) -> str | None:
-            """Extract OID using multiple fallback patterns for relaxed mode."""
-            oid = u.Ldif.LdifParser.extract_oid(definition)
-            if oid:
-                return oid
-
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
-                definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
-                definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
-                definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-
-            return None
-
-        def _extract_sup_from_objectclass(
+        def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> str | None:
-            """Extract SUP (superior) field from objectClass definition."""
-            sup_match = re.search(
-                r"\bSUP\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
-                oc_definition,
-            )
-            if not sup_match:
-                return None
-
-            if sup_match.group(1):
-                sup_value = sup_match.group(1).strip()
-            elif sup_match.group(2):
-                sup_value = sup_match.group(2).strip()
-            else:
-                sup_value = ""
-
-            if FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR in sup_value:
-                return next(
-                    s.strip()
-                    for s in sup_value.split(
-                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
-                    )
+        ) -> r[m.Ldif.SchemaObjectClass]:
+            """Parse objectClass with best-effort approach using RFC baseline."""
+            if not oc_definition or not oc_definition.strip():
+                return r[m.Ldif.SchemaObjectClass].fail(
+                    "ObjectClass definition cannot be empty",
                 )
-            return sup_value
 
-        def _extract_must_may_from_objectclass(
-            self,
-            oc_definition: str,
-        ) -> tuple[list[str] | None, list[str] | None]:
-            """Extract MUST and MAY fields from objectClass definition."""
-            must = None
-            must_match = re.search(
-                r"\bMUST\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
-                oc_definition,
+            parent_result = super()._parse_objectclass(oc_definition)
+            if parent_result.is_success:
+                objectclass = parent_result.value
+                return r[m.Ldif.SchemaObjectClass].ok(
+                    self._enhance_objectclass_metadata(objectclass, oc_definition),
+                )
+
+            logger.debug(
+                "RFC parser failed, using best-effort parsing",
+                error=str(parent_result.error),
             )
-            if must_match:
-                if must_match.group(1):
-                    must_value = must_match.group(1).strip()
-                elif must_match.group(2):
-                    must_value = must_match.group(2).strip()
-                else:
-                    must_value = ""
-                must = [
-                    m.strip()
-                    for m in must_value.split(
-                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
-                    )
-                ]
-
-            may = None
-            may_match = re.search(
-                r"\bMAY\s+(?:\(\s*([^)]+)\s*\)|(\w+))\b",
-                oc_definition,
-            )
-            if may_match:
-                if may_match.group(1):
-                    may_value = may_match.group(1).strip()
-                elif may_match.group(2):
-                    may_value = may_match.group(2).strip()
-                else:
-                    may_value = ""
-                may = [
-                    m.strip()
-                    for m in may_value.split(
-                        FlextLdifServersRelaxed.Constants.SCHEMA_MAY_SEPARATOR,
-                    )
-                ]
-
-            return (must, may)
+            return self._parse_objectclass_relaxed(oc_definition)
 
         def _parse_objectclass_relaxed(
             self,
@@ -398,30 +422,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     metadata=metadata,
                 ),
             )
-
-        @override
-        def _parse_objectclass(
-            self,
-            oc_definition: str,
-        ) -> r[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass with best-effort approach using RFC baseline."""
-            if not oc_definition or not oc_definition.strip():
-                return r[m.Ldif.SchemaObjectClass].fail(
-                    "ObjectClass definition cannot be empty",
-                )
-
-            parent_result = super()._parse_objectclass(oc_definition)
-            if parent_result.is_success:
-                objectclass = parent_result.value
-                return r[m.Ldif.SchemaObjectClass].ok(
-                    self._enhance_objectclass_metadata(objectclass, oc_definition),
-                )
-
-            logger.debug(
-                "RFC parser failed, using best-effort parsing",
-                error=str(parent_result.error),
-            )
-            return self._parse_objectclass_relaxed(oc_definition)
 
         @override
         def _write_attribute(
@@ -522,6 +522,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return True
 
         @override
+        def can_handle_attribute(
+            self,
+            attribute: m.Ldif.SchemaAttribute,
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific attribute definition."""
+            _ = attribute
+            return True
+
+        @override
+        def can_handle_objectclass(
+            self,
+            objectclass: m.Ldif.SchemaObjectClass,
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific objectClass definition."""
+            _ = objectclass
+            return True
+
+        @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse ACL with best-effort approach."""
             if not acl_line or not acl_line.strip():
@@ -611,33 +629,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"{FlextLdifServersRelaxed.Constants.ACL_WRITE_PREFIX}{acl_name}",
             )
 
-        @override
-        def can_handle_attribute(
-            self,
-            attribute: m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Check if this ACL quirk should be aware of a specific attribute definition."""
-            _ = attribute
-            return True
-
-        @override
-        def can_handle_objectclass(
-            self,
-            objectclass: m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Check if this ACL quirk should be aware of a specific objectClass definition."""
-            _ = objectclass
-            return True
-
     class Entry(FlextLdifServersRfc.Entry):
         """Relaxed entry quirk for lenient LDIF processing."""
-
-        def process_entry(
-            self,
-            entry: m.Ldif.Entry,
-        ) -> r[m.Ldif.Entry]:
-            """Process entry for relaxed mode."""
-            return r[m.Ldif.Entry].ok(entry)
 
         @override
         def can_handle(
@@ -649,6 +642,115 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = entry_dn
             _ = attributes
             return True
+
+        @override
+        def can_handle_attribute(
+            self,
+            attribute: m.Ldif.SchemaAttribute,
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an attribute definition."""
+            _ = attribute
+            return True
+
+        @override
+        def can_handle_objectclass(
+            self,
+            objectclass: m.Ldif.SchemaObjectClass,
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an objectClass definition."""
+            _ = objectclass
+            return True
+
+        def normalize_dn(self, dn: str) -> r[str]:
+            """Normalize DN using RFC 4514 compliant utility."""
+            if not dn or not dn.strip():
+                return r[str].fail("DN cannot be empty")
+            try:
+                norm_result = u.Ldif.DN.norm(dn)
+                if norm_result.is_success:
+                    return r[str].ok(norm_result.value)
+
+                return r[str].fail(
+                    f"DN normalization failed for DN: {dn}: {norm_result.error}",
+                )
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                logger.debug(
+                    "DN normalization exception",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
+                return r[str].fail(f"DN normalization failed: {e}")
+
+        def process_entry(
+            self,
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry]:
+            """Process entry for relaxed mode."""
+            return r[m.Ldif.Entry].ok(entry)
+
+        def _adapted_parse_entry_relaxed(
+            self,
+            entry_content: str,
+        ) -> r[m.Ldif.Entry]:
+            """Parse entry content in relaxed mode (extracted from _parse_content)."""
+            dn: str = ""
+            attrs: dict[str, list[str | bytes]] = {}
+            for raw_line in entry_content.split("\n"):
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                if line.startswith(" ") and attrs:
+                    last_key = list(attrs.keys())[-1]
+                    if attrs[last_key]:
+                        attrs[last_key][-1] = str(attrs[last_key][-1]) + line[1:]
+                    continue
+                if ":" not in line:
+                    continue
+                key, _, value = line.partition(":")
+                key = key.strip()
+                value = value.strip()
+                if key.lower() == "dn":
+                    dn = value
+                else:
+                    if key not in attrs:
+                        attrs[key] = []
+                    attrs[key].append(value)
+            if not dn:
+                return r[m.Ldif.Entry].fail(
+                    "No DN found in entry",
+                )
+            return self._parse_entry(dn, attrs)
+
+        @override
+        def _parse_content(
+            self,
+            ldif_content: str,
+        ) -> r[list[m.Ldif.Entry]]:
+            """Parse raw LDIF content string into Entry models (internal)."""
+            parent_result = super()._parse_content(ldif_content)
+            if parent_result.is_success:
+                return parent_result
+
+            logger.debug(
+                "RFC parser failed, using relaxed mode",
+                error=str(parent_result.error) if parent_result.error else None,
+                error_type=type(parent_result.error).__name__
+                if parent_result.error
+                else None,
+            )
+
+            return u.Ldif.Parsers.Content.parse(
+                ldif_content=ldif_content,
+                server_type=self._get_server_type(),
+                parse_entry_hook=self._adapted_parse_entry_relaxed,
+            )
 
         def _parse_entry(
             self,
@@ -731,64 +833,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
         @override
-        def _parse_content(
-            self,
-            ldif_content: str,
-        ) -> r[list[m.Ldif.Entry]]:
-            """Parse raw LDIF content string into Entry models (internal)."""
-            parent_result = super()._parse_content(ldif_content)
-            if parent_result.is_success:
-                return parent_result
-
-            logger.debug(
-                "RFC parser failed, using relaxed mode",
-                error=str(parent_result.error) if parent_result.error else None,
-                error_type=type(parent_result.error).__name__
-                if parent_result.error
-                else None,
-            )
-
-            return u.Ldif.Parsers.Content.parse(
-                ldif_content=ldif_content,
-                server_type=self._get_server_type(),
-                parse_entry_hook=self._adapted_parse_entry_relaxed,
-            )
-
-        def _adapted_parse_entry_relaxed(
-            self,
-            entry_content: str,
-        ) -> r[m.Ldif.Entry]:
-            """Parse entry content in relaxed mode (extracted from _parse_content)."""
-            dn: str = ""
-            attrs: dict[str, list[str | bytes]] = {}
-            for raw_line in entry_content.split("\n"):
-                line = raw_line.strip()
-                if not line or line.startswith("#"):
-                    continue
-
-                if line.startswith(" ") and attrs:
-                    last_key = list(attrs.keys())[-1]
-                    if attrs[last_key]:
-                        attrs[last_key][-1] = str(attrs[last_key][-1]) + line[1:]
-                    continue
-                if ":" not in line:
-                    continue
-                key, _, value = line.partition(":")
-                key = key.strip()
-                value = value.strip()
-                if key.lower() == "dn":
-                    dn = value
-                else:
-                    if key not in attrs:
-                        attrs[key] = []
-                    attrs[key].append(value)
-            if not dn:
-                return r[m.Ldif.Entry].fail(
-                    "No DN found in entry",
-                )
-            return self._parse_entry(dn, attrs)
-
-        @override
         def _write_entry(
             self,
             entry_data: m.Ldif.Entry,
@@ -847,50 +891,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     error_type=type(e).__name__,
                 )
                 return r[str].fail(f"Failed to write entry: {e}")
-
-        @override
-        def can_handle_attribute(
-            self,
-            attribute: m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Check if this Entry quirk has special handling for an attribute definition."""
-            _ = attribute
-            return True
-
-        @override
-        def can_handle_objectclass(
-            self,
-            objectclass: m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Check if this Entry quirk has special handling for an objectClass definition."""
-            _ = objectclass
-            return True
-
-        def normalize_dn(self, dn: str) -> r[str]:
-            """Normalize DN using RFC 4514 compliant utility."""
-            if not dn or not dn.strip():
-                return r[str].fail("DN cannot be empty")
-            try:
-                norm_result = u.Ldif.DN.norm(dn)
-                if norm_result.is_success:
-                    return r[str].ok(norm_result.value)
-
-                return r[str].fail(
-                    f"DN normalization failed for DN: {dn}: {norm_result.error}",
-                )
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
-                logger.debug(
-                    "DN normalization exception",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
-                return r[str].fail(f"DN normalization failed: {e}")
 
 
 __all__ = [

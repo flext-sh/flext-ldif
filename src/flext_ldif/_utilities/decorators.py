@@ -27,24 +27,6 @@ class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
 
     @staticmethod
-    def _get_server_type_from_class(
-        obj: t.ContainerValue,
-    ) -> str | None:
-        """Extract SERVER_TYPE from class Constants via MRO traversal."""
-        if not getattr(obj, "__class__", None) is not None:
-            return None
-
-        for cls in obj.__class__.__mro__:
-            constants_obj = getattr(cls, "Constants", None)
-            if (
-                constants_obj is not None
-                and getattr(constants_obj, "SERVER_TYPE", None) is not None
-            ):
-                return str(constants_obj.SERVER_TYPE)
-
-        return None
-
-    @staticmethod
     def _attach_metadata_if_present(
         result_value: t.ContainerValue | None,
         quirk_type: str,
@@ -81,6 +63,55 @@ class FlextLdifUtilitiesDecorators:
             struct.error,
         ) as e:
             logger.debug("Failed to attach metadata", error=str(e))
+
+    @staticmethod
+    def _get_server_type_from_class(
+        obj: t.ContainerValue,
+    ) -> str | None:
+        """Extract SERVER_TYPE from class Constants via MRO traversal."""
+        if not getattr(obj, "__class__", None) is not None:
+            return None
+
+        for cls in obj.__class__.__mro__:
+            constants_obj = getattr(cls, "Constants", None)
+            if (
+                constants_obj is not None
+                and getattr(constants_obj, "SERVER_TYPE", None) is not None
+            ):
+                return str(constants_obj.SERVER_TYPE)
+
+        return None
+
+    @staticmethod
+    def _safe_operation(
+        operation_name: str,
+    ) -> t.Ldif.Decorators.ParseMethodDecorator:
+        """Generic decorator to wrap methods with standardized error handling."""
+
+        def decorator(
+            func: t.Ldif.Decorators.ParseMethod,
+        ) -> t.Ldif.Decorators.ParseMethod:
+            @wraps(func)
+            def wrapper(
+                self: t.ContainerValue,
+                arg: t.Ldif.Decorators.ParseMethodArg,
+            ) -> t.Ldif.Decorators.ParseMethodReturn:
+                try:
+                    return func(self, arg)
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
+                    error_msg = f"{operation_name} failed: {e}"
+                    logger.exception(error_msg, operation_name=operation_name)
+                    return FlextResult.fail(error_msg)
+
+            return wrapper
+
+        return decorator
 
     @staticmethod
     def attach_parse_metadata(
@@ -147,37 +178,6 @@ class FlextLdifUtilitiesDecorators:
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
-
-            return wrapper
-
-        return decorator
-
-    @staticmethod
-    def _safe_operation(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
-        """Generic decorator to wrap methods with standardized error handling."""
-
-        def decorator(
-            func: t.Ldif.Decorators.ParseMethod,
-        ) -> t.Ldif.Decorators.ParseMethod:
-            @wraps(func)
-            def wrapper(
-                self: t.ContainerValue,
-                arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> t.Ldif.Decorators.ParseMethodReturn:
-                try:
-                    return func(self, arg)
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ) as e:
-                    error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg, operation_name=operation_name)
-                    return FlextResult.fail(error_msg)
 
             return wrapper
 

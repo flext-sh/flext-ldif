@@ -366,18 +366,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """IBM Tivoli DS entry quirk."""
 
-        def normalize_dn(self, entry_dn: str) -> str:
-            """Normalize DN for Tivoli DS."""
-            norm_result = u.Ldif.DN.norm(entry_dn)
-            if norm_result.is_success:
-                return norm_result.value
-
-            return entry_dn.lower()
-
-        def normalize_attribute_name(self, attr_name: str) -> str:
-            """Normalize attribute name for Tivoli DS."""
-            return attr_name.lower()
-
         @override
         def can_handle(
             self,
@@ -414,6 +402,18 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for oc in object_classes
                 ),
             )
+
+        def normalize_attribute_name(self, attr_name: str) -> str:
+            """Normalize attribute name for Tivoli DS."""
+            return attr_name.lower()
+
+        def normalize_dn(self, entry_dn: str) -> str:
+            """Normalize DN for Tivoli DS."""
+            norm_result = u.Ldif.DN.norm(entry_dn)
+            if norm_result.is_success:
+                return norm_result.value
+
+            return entry_dn.lower()
 
         def process_entry(
             self,

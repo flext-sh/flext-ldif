@@ -17,19 +17,6 @@ class FlextLdifFilters:
     """LDIF entry filtering service."""
 
     @classmethod
-    def _extract_allowed_oids(
-        cls,
-        allowed_oids: Mapping[str, frozenset[str]],
-    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
-        """Extract allowed OID sets from mapping."""
-        return (
-            allowed_oids.get("allowed_attribute_oids", frozenset()),
-            allowed_oids.get("allowed_objectclass_oids", frozenset()),
-            allowed_oids.get("allowed_matchingrule_oids", frozenset()),
-            allowed_oids.get("allowed_matchingruleuse_oids", frozenset()),
-        )
-
-    @classmethod
     def _check_schema_oid(
         cls,
         attrs: Mapping[str, list[str]],
@@ -46,6 +33,41 @@ class FlextLdifFilters:
             return True, False
 
         return True, True
+
+    @classmethod
+    def _extract_allowed_oids(
+        cls,
+        allowed_oids: Mapping[str, frozenset[str]],
+    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
+        """Extract allowed OID sets from mapping."""
+        return (
+            allowed_oids.get("allowed_attribute_oids", frozenset()),
+            allowed_oids.get("allowed_objectclass_oids", frozenset()),
+            allowed_oids.get("allowed_matchingrule_oids", frozenset()),
+            allowed_oids.get("allowed_matchingruleuse_oids", frozenset()),
+        )
+
+    @classmethod
+    def _extract_oid_from_schema_attr(
+        cls,
+        values: list[str],
+    ) -> str | None:
+        """Extract OID from schema attribute value."""
+        if not values:
+            return None
+
+        value = values[0] if values else ""
+
+        value = value.strip()
+        if value.startswith("("):
+            parts = value[1:].strip().split()
+            if parts:
+                oid = parts[0]
+
+                if oid and oid[0].isdigit():
+                    return oid
+
+        return None
 
     @classmethod
     def _should_include_entry(
@@ -136,28 +158,6 @@ class FlextLdifFilters:
         ) as e:
             logger.exception("Failed to filter schema entries by OIDs")
             return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
-
-    @classmethod
-    def _extract_oid_from_schema_attr(
-        cls,
-        values: list[str],
-    ) -> str | None:
-        """Extract OID from schema attribute value."""
-        if not values:
-            return None
-
-        value = values[0] if values else ""
-
-        value = value.strip()
-        if value.startswith("("):
-            parts = value[1:].strip().split()
-            if parts:
-                oid = parts[0]
-
-                if oid and oid[0].isdigit():
-                    return oid
-
-        return None
 
 
 __all__ = ["FlextLdifFilters"]

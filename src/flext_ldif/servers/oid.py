@@ -20,14 +20,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     """Oracle OID server quirks - implements object."""
 
     @classmethod
-    def get_schema_filterable_fields(cls) -> frozenset[str]:
-        """Get schema fields that support OID filtering."""
-        return cls.Constants.SCHEMA_FILTERABLE_FIELDS
-
-    @classmethod
     def get_schema_dn(cls) -> str:
         """Get the RFC-normalized schema DN (RFC 4512 standard)."""
         return FlextLdifServersRfc.Constants.SCHEMA_DN
+
+    @classmethod
+    def get_schema_filterable_fields(cls) -> frozenset[str]:
+        """Get schema fields that support OID filtering."""
+        return cls.Constants.SCHEMA_FILTERABLE_FIELDS
 
     def extract_schemas_from_ldif(
         self,

@@ -62,6 +62,11 @@ class FlextLdifMigrationPipeline(
         return getattr(self, "_output_dir", None)
 
     @property
+    def output_filename(self) -> str | None:
+        """Get output filename override."""
+        return getattr(self, "_output_filename", None)
+
+    @property
     def source_server_type(self) -> c.Ldif.ServerTypes:
         """Get source server type."""
         val = getattr(self, "_source_server", c.Ldif.ServerTypes.RFC)
@@ -93,36 +98,80 @@ class FlextLdifMigrationPipeline(
                     return member
             return c.Ldif.ServerTypes.RFC
 
-    @property
-    def output_filename(self) -> str | None:
-        """Get output filename override."""
-        return getattr(self, "_output_filename", None)
+    @override
+    def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
+        """Execute migration pipeline for all files in input_dir."""
+        in_dir = self.input_dir
+        out_dir = self.output_dir
 
-    def _get_processing_pipeline(self) -> ProcessingPipeline:
-        """Get or create processing pipeline instance."""
-        pipeline = getattr(self, "_processing_pipeline", None)
-        if pipeline is None:
-            source_type = m.Ldif.ServerType(self.source_server_type)
-            target_type = m.Ldif.ServerType(self.target_server_type)
-
-            logger.debug(
-                "Creating processing pipeline",
-                source=source_type,
-                target=target_type,
+        if in_dir is None:
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                "No input_dir specified",
             )
 
-            config_base = m.Ldif.ProcessConfig()
-            process_config = config_base.model_copy(
-                update={
-                    "source_server": source_type,
-                    "target_server": target_type,
-                },
+        if out_dir is None:
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                "No output_dir specified",
             )
 
-            config = m.Ldif.TransformConfig(process_config=process_config)
-            pipeline = ProcessingPipeline(config)
-            object.__setattr__(self, "_processing_pipeline", pipeline)
-        return pipeline
+        if not in_dir.exists():
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                f"Input directory not found: {in_dir}",
+            )
+
+        try:
+            total_processed = 0
+            total_migrated = 0
+            all_entries: list[m.Ldif.Entry] = []
+            output_files: list[str] = []
+
+            for input_file in in_dir.glob("*.ldif"):
+                logger.debug("Processing input file: %s", input_file)
+                result = self.migrate_file(input_file)
+                if result.is_success:
+                    res = result.value
+                    total_processed += res.stats.total_entries
+                    total_migrated += res.stats.processed_entries
+
+                    converted_res_entries: list[m.Ldif.Entry] = [
+                        e
+                        if isinstance(e, m.Ldif.Entry)
+                        else m.Ldif.Entry.model_validate(e)
+                        for e in res.entries
+                    ]
+                    all_entries.extend(converted_res_entries)
+                    output_files.extend(res.output_files)
+                else:
+                    logger.warning(
+                        "File migration failed",
+                        file=str(input_file),
+                        error=str(result.error),
+                    )
+
+            converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
+
+            pipeline_result = m.Ldif.MigrationPipelineResult(
+                entries=converted_all_entries,
+                output_files=output_files,
+                stats=m.Ldif.Statistics(
+                    total_entries=total_processed,
+                    processed_entries=total_migrated,
+                ),
+            )
+
+            return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
+
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            logger.exception("Migration pipeline failed")
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                f"Migration pipeline failed: {e}",
+            )
 
     def migrate_entries(
         self,
@@ -240,80 +289,31 @@ class FlextLdifMigrationPipeline(
                 f"File migration failed: {e}",
             )
 
-    @override
-    def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
-        """Execute migration pipeline for all files in input_dir."""
-        in_dir = self.input_dir
-        out_dir = self.output_dir
+    def _get_processing_pipeline(self) -> ProcessingPipeline:
+        """Get or create processing pipeline instance."""
+        pipeline = getattr(self, "_processing_pipeline", None)
+        if pipeline is None:
+            source_type = m.Ldif.ServerType(self.source_server_type)
+            target_type = m.Ldif.ServerType(self.target_server_type)
 
-        if in_dir is None:
-            return r[m.Ldif.MigrationPipelineResult].fail(
-                "No input_dir specified",
+            logger.debug(
+                "Creating processing pipeline",
+                source=source_type,
+                target=target_type,
             )
 
-        if out_dir is None:
-            return r[m.Ldif.MigrationPipelineResult].fail(
-                "No output_dir specified",
+            config_base = m.Ldif.ProcessConfig()
+            process_config = config_base.model_copy(
+                update={
+                    "source_server": source_type,
+                    "target_server": target_type,
+                },
             )
 
-        if not in_dir.exists():
-            return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Input directory not found: {in_dir}",
-            )
-
-        try:
-            total_processed = 0
-            total_migrated = 0
-            all_entries: list[m.Ldif.Entry] = []
-            output_files: list[str] = []
-
-            for input_file in in_dir.glob("*.ldif"):
-                logger.debug("Processing input file: %s", input_file)
-                result = self.migrate_file(input_file)
-                if result.is_success:
-                    res = result.value
-                    total_processed += res.stats.total_entries
-                    total_migrated += res.stats.processed_entries
-
-                    converted_res_entries: list[m.Ldif.Entry] = [
-                        e
-                        if isinstance(e, m.Ldif.Entry)
-                        else m.Ldif.Entry.model_validate(e)
-                        for e in res.entries
-                    ]
-                    all_entries.extend(converted_res_entries)
-                    output_files.extend(res.output_files)
-                else:
-                    logger.warning(
-                        "File migration failed",
-                        file=str(input_file),
-                        error=str(result.error),
-                    )
-
-            converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
-
-            pipeline_result = m.Ldif.MigrationPipelineResult(
-                entries=converted_all_entries,
-                output_files=output_files,
-                stats=m.Ldif.Statistics(
-                    total_entries=total_processed,
-                    processed_entries=total_migrated,
-                ),
-            )
-
-            return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
-
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("Migration pipeline failed")
-            return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Migration pipeline failed: {e}",
-            )
+            config = m.Ldif.TransformConfig(process_config=process_config)
+            pipeline = ProcessingPipeline(config)
+            object.__setattr__(self, "_processing_pipeline", pipeline)
+        return pipeline
 
 
 __all__ = ["FlextLdifMigrationPipeline"]

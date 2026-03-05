@@ -84,170 +84,282 @@ class FlextLdifUtilitiesDN:
     MIN_DN_LENGTH: int = c.Ldif.Format.MIN_DN_LENGTH
 
     @staticmethod
-    def is_lutf1_char(char: str) -> bool:
-        """Check if char is valid LUTF1 (lead char) per RFC 4514."""
-        if not char or len(char) != 1:
-            return False
-        code = ord(char)
-        rfc_format = c.Ldif.Format
-        safe_min = rfc_format.SAFE_CHAR_MIN
-        safe_max = rfc_format.SAFE_CHAR_MAX
-        if code < safe_min or code > safe_max:
-            return False
-        return code not in c.Ldif.Format.DN_LUTF1_EXCLUDE
-
-    @staticmethod
-    def is_tutf1_char(char: str) -> bool:
-        """Check if char is valid TUTF1 (trail char) per RFC 4514."""
-        if not char or len(char) != 1:
-            return False
-        code = ord(char)
-        rfc_format = c.Ldif.Format
-        safe_min = rfc_format.SAFE_CHAR_MIN
-        safe_max = rfc_format.SAFE_CHAR_MAX
-        if code < safe_min or code > safe_max:
-            return False
-        return code not in c.Ldif.Format.DN_TUTF1_EXCLUDE
-
-    @staticmethod
-    def is_sutf1_char(char: str) -> bool:
-        """Check if char is valid SUTF1 (string char) per RFC 4514."""
-        if not char or len(char) != 1:
-            return False
-        code = ord(char)
-        rfc_format = c.Ldif.Format
-        safe_min = rfc_format.SAFE_CHAR_MIN
-        safe_max = rfc_format.SAFE_CHAR_MAX
-        if code < safe_min or code > safe_max:
-            return False
-        return code not in c.Ldif.Format.DN_SUTF1_EXCLUDE
-
-    @staticmethod
-    def is_valid_dn_string(
-        value: str,
-        *,
-        strict: bool = True,
-    ) -> tuple[bool, list[str]]:
-        """Validate DN attribute value per RFC 4514 string production."""
-        errors: list[str] = []
-
-        if not value:
-            return True, errors  # Empty string is valid
-
-        if len(value) == 1:
-            if not FlextLdifUtilitiesDN.is_lutf1_char(value) and strict:
-                errors.append(f"Invalid lead character: {value!r}")
-            return len(errors) == 0, errors
-
-        is_escaped_lead = value[0] == "\\" and len(value) > 1
-        is_bad_lead = (
-            not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and not is_escaped_lead
+    def _advance_rdn_position(
+        char: str,
+        rdn: str,
+        position: int,
+        config: FlextLdifModelsSettings.RdnProcessingConfig,
+    ) -> tuple[str, str, bool, int]:
+        """Advance position during RDN parsing and return new state."""
+        result = FlextLdifUtilitiesDN._process_rdn_char(
+            char,
+            rdn,
+            position,
+            config,
         )
-        if is_bad_lead and strict:
-            errors.append(f"Invalid lead character: {value[0]!r}")
+        attr, val, in_val, next_pos, _ = result
+        return (attr, val, in_val, next_pos)
 
-        min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
-        is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
-        is_bad_trail = (
-            not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and not is_escaped_trail
+    @staticmethod
+    def _apply_dn_transformations(
+        original_dn: str,
+    ) -> tuple[str, list[str], Mapping[str, bool | str | list[str]]]:
+        """Apply DN transformations and collect flags."""
+        transformations: list[str] = []
+        flags: dict[str, bool | str | list[str]] = {
+            "had_tab_chars": False,
+            "had_trailing_spaces": False,
+            "had_leading_spaces": False,
+            "had_extra_spaces": False,
+            "was_base64_encoded": False,
+            "had_utf8_chars": False,
+            "had_escape_sequences": False,
+            "validation_status": "",
+            "validation_warnings": [],
+            "validation_errors": [],
+        }
+        result = original_dn
+
+        transform_rules: list[tuple[str, str, str, str, str]] = [
+            (
+                r"[\t\r\n\x0b\x0c]",
+                r"[\t\r\n\x0b\x0c]",
+                " ",
+                c.Ldif.TransformationType.TAB_NORMALIZED,
+                "had_tab_chars",
+            ),
+            (
+                r"\s+=",
+                r"\s+=",
+                "=",
+                c.Ldif.TransformationType.SPACE_CLEANED,
+                "had_leading_spaces",
+            ),
+            (
+                r"\s+,",
+                r"\s+,",
+                ",",
+                c.Ldif.TransformationType.SPACE_CLEANED,
+                "had_trailing_spaces",
+            ),
+            (
+                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
+                "had_escape_sequences",
+            ),
+            (
+                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.TransformationType.SPACE_CLEANED,
+                "",
+            ),
+            (
+                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                r"\1",
+                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
+                "",
+            ),
+            (
+                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
+                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
+                " ",
+                c.Ldif.TransformationType.SPACE_CLEANED,
+                "had_extra_spaces",
+            ),
+        ]
+
+        for (
+            detect_pattern,
+            replace_pattern,
+            replacement,
+            transform_type,
+            flag_name,
+        ) in transform_rules:
+            if re.search(detect_pattern, result):
+                result = re.sub(replace_pattern, replacement, result)
+                transformations.append(transform_type)
+                if flag_name:
+                    flags[flag_name] = True
+
+        return result, transformations, flags
+
+    @staticmethod
+    def _get_changed_attr_names(
+        original: Mapping[str, list[str]],
+        transformed: Mapping[str, list[str]],
+        dn_attributes: set[str],
+    ) -> list[str]:
+        """Get list of attribute names that changed using dict comprehension."""
+        return [
+            k
+            for k, v in transformed.items()
+            if k.lower() in dn_attributes and v != original.get(k, [])
+        ]
+
+    @staticmethod
+    def _has_double_unescaped_commas(dn_str: str) -> bool:
+        """Check for consecutive unescaped commas in DN string."""
+        i = 0
+        while i < len(dn_str) - 1:
+            if (
+                dn_str[i] == ","
+                and dn_str[i + 1] == ","
+                and (i == 0 or dn_str[i - 1] != "\\")
+            ):
+                return True
+            i += 1
+        return False
+
+    @staticmethod
+    def _normalize_dns_for_comparison(
+        dn1: str,
+        dn2: str,
+    ) -> r[tuple[str, str]]:
+        """Normalize both DNs for comparison."""
+        norm1_result = FlextLdifUtilitiesDN.norm(dn1)
+        if not norm1_result.is_success:
+            return r[tuple[str, str]].fail(
+                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
+            )
+
+        norm2_result = FlextLdifUtilitiesDN.norm(dn2)
+        if not norm2_result.is_success:
+            return r[tuple[str, str]].fail(
+                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
+            )
+
+        return r[tuple[str, str]].ok((
+            norm1_result.value.lower(),
+            norm2_result.value.lower(),
+        ))
+
+    @staticmethod
+    def _process_rdn_char(
+        char: str,
+        rdn: str,
+        i: int,
+        config: FlextLdifModelsSettings.RdnProcessingConfig,
+    ) -> tuple[str, str, bool, int, bool]:
+        """Process single character in RDN parsing."""
+        current_attr = config.current_attr
+        current_val = config.current_val
+        in_value = config.in_value
+
+        if char == "\\" and i + 1 < len(rdn):
+            current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
+                rdn,
+                i,
+                config.current_val,
+            )
+            config.current_val = current_val
+            return current_attr, current_val, in_value, next_i, True
+
+        if char == "=" and not in_value:
+            current_attr = current_attr.strip().lower()
+            config.current_attr = current_attr
+            config.in_value = True
+            return current_attr, current_val, True, i + 1, True
+
+        if char == "+" and in_value:
+            current_val = current_val.strip()
+            if current_attr:
+                config.pairs.append((current_attr, current_val))
+            config.current_attr = ""
+            config.current_val = ""
+            config.in_value = False
+            return "", "", False, i + 1, True
+
+        if in_value:
+            current_val += char
+            config.current_val = current_val
+        else:
+            current_attr += char
+            config.current_attr = current_attr
+
+        return current_attr, current_val, in_value, i + 1, False
+
+    @staticmethod
+    def _process_rdn_escape(rdn: str, i: int, current_val: str) -> tuple[str, int]:
+        """Process escape sequence in RDN parsing (extracted to reduce complexity)."""
+        if i + 1 < len(rdn):
+            next_char = rdn[i + 1]
+            if i + 2 < len(rdn) and all(
+                c in string.hexdigits for c in rdn[i + 1 : i + 3]
+            ):
+                return current_val + rdn[i : i + 3], i + 3
+            return current_val + next_char, i + 2
+        return current_val, i + 1
+
+    @staticmethod
+    def _transform_attrs_with_dn(
+        attrs: dict[str, list[str]],
+        dn_attributes: set[str],
+        source_dn: str,
+        target_dn: str,
+    ) -> dict[str, list[str]]:
+        """Transform DN-valued attributes using u.map()."""
+        return {
+            k: [
+                FlextLdifUtilitiesDN.transform_dn_attribute(
+                    val,
+                    source_dn,
+                    target_dn,
+                )
+                for val in v
+            ]
+            if k.lower() in dn_attributes
+            else v
+            for k, v in attrs.items()
+        }
+
+    @staticmethod
+    def _update_metadata_for_transformation(
+        metadata: m.Ldif.QuirkMetadata,
+        config: FlextLdifModelsSettings.MetadataTransformationConfig,
+    ) -> None:
+        """Update metadata with transformation tracking."""
+        if config.transformed_dn != config.original_dn:
+            _ = metadata.track_dn_transformation(
+                original_dn=config.original_dn,
+                transformed_dn=config.transformed_dn,
+                transformation_type="basedn_transform",
+            )
+
+        def track_attr(attr_name: str) -> None:
+            """Track single attribute transformation."""
+            _ = metadata.track_attribute_transformation(
+                original_name=attr_name,
+                new_name=attr_name,
+                transformation_type="modified",
+                original_values=list(config.original_attrs.get(attr_name, [])),
+                new_values=config.transformed_attrs[attr_name],
+                reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
+            )
+
+        _ = u.Collection.process(
+            config.transformed_attr_names,
+            processor=track_attr,
+            on_error="skip",
         )
-        if is_bad_trail and strict:
-            errors.append(f"Invalid trail character: {value[-1]!r}")
-
-        for i, char in enumerate(value[1:-1], start=1):
-            if FlextLdifUtilitiesDN.is_sutf1_char(char):
-                continue
-            is_escape_char = char == "\\"
-            is_after_escape = i > 0 and value[i - 1] == "\\"
-            if not is_escape_char and not is_after_escape and strict:
-                errors.append(f"Invalid character at position {i}: {char!r}")
-
-        return len(errors) == 0, errors
-
-    @staticmethod
-    def get_dn_value(
-        dn: m.Ldif.DN | FlextLdifModelsDomains.DN | str,
-    ) -> str:
-        """Extract DN string value from DN model or string (public utility method)."""
-        if isinstance(dn, str):
-            return dn
-        return dn.value
-
-    @overload
-    @staticmethod
-    def split(dn: str) -> list[str]: ...
-
-    @overload
-    @staticmethod
-    def split(dn: m.Ldif.DN) -> list[str]: ...
-
-    @staticmethod
-    def split(dn: str | m.Ldif.DN) -> list[str]:
-        r"""Split DN string into individual RDN components per RFC 4514.
-
-        RFC 4514 Section 2 ABNF:
-        ========================
-        distinguishedName = [ relativeDistinguishedName
-                             *( COMMA relativeDistinguishedName ) ]
-        COMMA = %x2C  ; comma (",")
-
-        Properly handles escaped commas (\\,) and other special characters.
-        Does NOT treat escaped commas as component separators.
-        """
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str:
-            return []
-
-        def split_components() -> Generator[str]:
-            """Generator that yields DN components respecting RFC 4514 escapes."""
-            current = ""
-            chars = iter(dn_str)
-
-            for char in chars:
-                if char == "\\":
-                    try:
-                        next_char = next(chars)
-                        current += char + next_char
-                    except StopIteration:
-                        current += char  # Trailing backslash
-                elif char == ",":
-                    if current.strip():
-                        yield current.strip()
-                        current = ""
-                else:
-                    current += char
-
-            if current.strip():
-                yield current.strip()
-
-        return list(split_components())
-
-    @staticmethod
-    def norm_component(component: str) -> str:
-        """Normalize single DN component (e.g., 'cn = John' → 'cn=John')."""
-        if "=" not in component:
-            return component
-        parts = component.split("=", 1)
-        return f"{parts[0].strip()}={parts[1].strip()}"
-
-    @overload
-    @staticmethod
-    def norm_string(dn: str) -> str: ...
-
-    @overload
-    @staticmethod
-    def norm_string(dn: m.Ldif.DN) -> str: ...
-
-    @staticmethod
-    def norm_string(dn: str | m.Ldif.DN) -> str:
-        """Normalize full DN to RFC 4514 format."""
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        components = FlextLdifUtilitiesDN.split(dn_str)
-        normalized = u.Collection.map(
-            components,
-            mapper=FlextLdifUtilitiesDN.norm_component,
+        _ = metadata.add_conversion_note(
+            operation="basedn_transform",
+            description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
         )
-        return ",".join(normalized)
+        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
+            config.original_dn
+        )
+        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
+            config.transformed_dn
+        )
+
+    @staticmethod
+    def _validate_basic_format(dn_str: str) -> bool:
+        """Validate basic DN format requirements."""
+        return bool(dn_str and "=" in dn_str)
 
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
@@ -262,11 +374,6 @@ class FlextLdifUtilitiesDN:
 
         filtered = u.Collection.filter(components, is_valid_component)
         return len(filtered) == len(components)
-
-    @staticmethod
-    def _validate_basic_format(dn_str: str) -> bool:
-        """Validate basic DN format requirements."""
-        return bool(dn_str and "=" in dn_str)
 
     @staticmethod
     def _validate_dn_structure(dn_str: str) -> bool:
@@ -286,44 +393,6 @@ class FlextLdifUtilitiesDN:
             ),
         ]
         return all(check() for check in checks)
-
-    @staticmethod
-    def validate(dn: str | m.Ldif.DN) -> bool:
-        r"""Validate DN format according to RFC 4514.
-
-        Properly handles escaped characters. Checks for:
-        - No double unescaped commas
-        - No leading/trailing unescaped commas
-        - All components have attr=value format
-        - Valid hex escape sequences (\XX where X is hex digit)
-        """
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not FlextLdifUtilitiesDN._validate_basic_format(dn_str):
-            return False
-        if not FlextLdifUtilitiesDN._validate_dn_structure(dn_str):
-            return False
-
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-            return bool(
-                components and FlextLdifUtilitiesDN._validate_components(components),
-            )
-        except (ValueError, TypeError):
-            return False
-
-    @staticmethod
-    def _has_double_unescaped_commas(dn_str: str) -> bool:
-        """Check for consecutive unescaped commas in DN string."""
-        i = 0
-        while i < len(dn_str) - 1:
-            if (
-                dn_str[i] == ","
-                and dn_str[i + 1] == ","
-                and (i == 0 or dn_str[i - 1] != "\\")
-            ):
-                return True
-            i += 1
-        return False
 
     @staticmethod
     def _validate_escape_sequences(dn_str: str) -> bool:
@@ -366,131 +435,6 @@ class FlextLdifUtilitiesDN:
                 return False
             i += 1
         return True
-
-    @overload
-    @staticmethod
-    def parse(dn: str) -> r[list[tuple[str, str]]]: ...
-
-    @overload
-    @staticmethod
-    def parse(
-        dn: m.Ldif.DN,
-    ) -> r[list[tuple[str, str]]]: ...
-
-    @staticmethod
-    def parse(
-        dn: str | m.Ldif.DN | None,
-    ) -> r[list[tuple[str, str]]]:
-        """Parse DN into RFC 4514 components (attr, value pairs)."""
-        if dn is None:
-            return r[list[tuple[str, str]]].fail("DN cannot be None")
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            error_msg = (
-                "DN string is empty"
-                if not dn_str
-                else f"Invalid DN format: missing '=' separator in '{dn_str}'"
-            )
-            return r[list[tuple[str, str]]].fail(error_msg)
-
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-
-            def parse_component(comp: str) -> tuple[str, str] | None:
-                """Parse single component into (attr, value) tuple."""
-                if "=" not in comp:
-                    return None
-                attr, _, value = comp.partition("=")
-                return (attr.strip(), value.strip())
-
-            result = [
-                parsed
-                for comp in components
-                if "=" in comp
-                for parsed in [parse_component(comp)]
-                if parsed is not None
-            ]
-            return (
-                r.ok(result)
-                if result
-                else r.fail(f"Failed to parse DN components from '{dn_str}'")
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[list[tuple[str, str]]].fail(f"DN parsing error: {e}")
-
-    @overload
-    @staticmethod
-    def norm(dn: str) -> r[str]: ...
-
-    @overload
-    @staticmethod
-    def norm(dn: m.Ldif.DN) -> r[str]: ...
-
-    @staticmethod
-    def norm(
-        dn: str | m.Ldif.DN | None,
-    ) -> r[str]:
-        """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
-        if dn is None:
-            return r[str].fail("DN cannot be None")
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            error_msg = (
-                "Failed to normalize DN: DN string is empty"
-                if not dn_str
-                else f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
-            )
-            return r[str].fail(error_msg)
-
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-
-            def normalize_component(comp: str) -> str | None:
-                """Normalize single component."""
-                if "=" not in comp:
-                    return None
-                attr, _, value = comp.partition("=")
-                return f"{attr.strip().lower()}={value.strip()}"
-
-            process_result = u.Collection.process(
-                components,
-                processor=normalize_component,
-                predicate=lambda comp: "=" in comp,
-                on_error="skip",
-            )
-            if process_result.is_failure:
-                return r[str].fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'",
-                )
-            normalized_list = process_result.value
-            filtered_str = u.Collection.filter(
-                normalized_list,
-                predicate=lambda x: isinstance(x, str),
-            )
-            normalized: list[str] = [
-                str(item) for item in filtered_str if item is not None
-            ]
-            return (
-                r.ok(",".join(normalized))
-                if normalized
-                else r.fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'",
-                )
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"DN normalization error: {e}")
 
     @overload
     @staticmethod
@@ -605,91 +549,30 @@ class FlextLdifUtilitiesDN:
         return result, stats_domain
 
     @staticmethod
-    def _apply_dn_transformations(
-        original_dn: str,
-    ) -> tuple[str, list[str], Mapping[str, bool | str | list[str]]]:
-        """Apply DN transformations and collect flags."""
-        transformations: list[str] = []
-        flags: dict[str, bool | str | list[str]] = {
-            "had_tab_chars": False,
-            "had_trailing_spaces": False,
-            "had_leading_spaces": False,
-            "had_extra_spaces": False,
-            "was_base64_encoded": False,
-            "had_utf8_chars": False,
-            "had_escape_sequences": False,
-            "validation_status": "",
-            "validation_warnings": [],
-            "validation_errors": [],
-        }
-        result = original_dn
+    def compare_dns(
+        dn1: str | None,
+        dn2: str | None,
+    ) -> r[int]:
+        """Compare two DNs per RFC 4514 (case-insensitive)."""
+        try:
+            if not dn1 or not dn2:
+                return r[int].fail("Both DNs must be provided for comparison")
 
-        transform_rules: list[tuple[str, str, str, str, str]] = [
-            (
-                r"[\t\r\n\x0b\x0c]",
-                r"[\t\r\n\x0b\x0c]",
-                " ",
-                c.Ldif.TransformationType.TAB_NORMALIZED,
-                "had_tab_chars",
-            ),
-            (
-                r"\s+=",
-                r"\s+=",
-                "=",
-                c.Ldif.TransformationType.SPACE_CLEANED,
-                "had_leading_spaces",
-            ),
-            (
-                r"\s+,",
-                r"\s+,",
-                ",",
-                c.Ldif.TransformationType.SPACE_CLEANED,
-                "had_trailing_spaces",
-            ),
-            (
-                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.Ldif.DnPatterns.DN_COMMA,
-                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
-                "had_escape_sequences",
-            ),
-            (
-                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.Ldif.DnPatterns.DN_COMMA,
-                c.Ldif.TransformationType.SPACE_CLEANED,
-                "",
-            ),
-            (
-                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                r"\1",
-                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
-                "",
-            ),
-            (
-                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
-                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
-                " ",
-                c.Ldif.TransformationType.SPACE_CLEANED,
-                "had_extra_spaces",
-            ),
-        ]
+            norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
+            if not norm_result.is_success:
+                return r[int].fail(norm_result.error or "Normalization failed")
 
-        for (
-            detect_pattern,
-            replace_pattern,
-            replacement,
-            transform_type,
-            flag_name,
-        ) in transform_rules:
-            if re.search(detect_pattern, result):
-                result = re.sub(replace_pattern, replacement, result)
-                transformations.append(transform_type)
-                if flag_name:
-                    flags[flag_name] = True
-
-        return result, transformations, flags
+            norm1_lower, norm2_lower = norm_result.value
+            comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
+            return r[int].ok(comparison)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[int].fail(f"DN comparison error: {e}")
 
     @staticmethod
     def esc(value: str) -> str:
@@ -730,84 +613,20 @@ class FlextLdifUtilitiesDN:
         return "".join(mapped_result)
 
     @staticmethod
-    def unesc(value: str) -> str:
-        r"""Unescape special characters in DN value per RFC 4514 Section 3.
-
-        RFC 4514 Unescaping Requirements:
-        =================================
-        - \\XX where XX is hex digits -> character with that code
-        - \\<special> -> the literal special character
-        - Escape sequences: \\", \\+, \\,, \\;, \\<, \\>, \\\\
-
-        Args:
-            value: The escaped DN attribute value.
-
-        Returns:
-            The unescaped value string.
-
-        """
-        if not value or "\\" not in value:
-            return value
-
-        result: list[str] = []
-        i = 0
-        while i < len(value):
-            if value[i] == "\\" and i + 1 < len(value):
-                if i + 2 < len(value) and all(
-                    c in string.hexdigits for c in value[i + 1 : i + 3]
-                ):
-                    hex_code = value[i + 1 : i + 3]
-                    result.append(chr(int(hex_code, 16)))
-                    i += 3
-                else:
-                    result.append(value[i + 1])
-                    i += 2
-            else:
-                result.append(value[i])
-                i += 1
-
-        return "".join(result)
-
-    @staticmethod
-    def _normalize_dns_for_comparison(
-        dn1: str,
-        dn2: str,
-    ) -> r[tuple[str, str]]:
-        """Normalize both DNs for comparison."""
-        norm1_result = FlextLdifUtilitiesDN.norm(dn1)
-        if not norm1_result.is_success:
-            return r[tuple[str, str]].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
+    def extract_parent_dn(dn: str) -> r[str]:
+        """Extract parent DN (remove leftmost RDN)."""
+        if not dn or "=" not in dn:
+            return r[str].fail(
+                f"Invalid DN format: missing '=' separator in '{dn}'",
             )
 
-        norm2_result = FlextLdifUtilitiesDN.norm(dn2)
-        if not norm2_result.is_success:
-            return r[tuple[str, str]].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
-            )
-
-        return r[tuple[str, str]].ok((
-            norm1_result.value.lower(),
-            norm2_result.value.lower(),
-        ))
-
-    @staticmethod
-    def compare_dns(
-        dn1: str | None,
-        dn2: str | None,
-    ) -> r[int]:
-        """Compare two DNs per RFC 4514 (case-insensitive)."""
         try:
-            if not dn1 or not dn2:
-                return r[int].fail("Both DNs must be provided for comparison")
-
-            norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
-            if not norm_result.is_success:
-                return r[int].fail(norm_result.error or "Normalization failed")
-
-            norm1_lower, norm2_lower = norm_result.value
-            comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
-            return r[int].ok(comparison)
+            components = FlextLdifUtilitiesDN.split(dn)
+            if len(components) <= 1:
+                return r[str].fail(
+                    f"Cannot extract parent DN: DN has only one component '{dn}'",
+                )
+            return r[str].ok(",".join(components[1:]))
         except (
             ValueError,
             KeyError,
@@ -815,81 +634,390 @@ class FlextLdifUtilitiesDN:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            return r[int].fail(f"DN comparison error: {e}")
+            return r[str].fail(f"Parent DN extraction error: {e}")
 
     @staticmethod
-    def _process_rdn_escape(rdn: str, i: int, current_val: str) -> tuple[str, int]:
-        """Process escape sequence in RDN parsing (extracted to reduce complexity)."""
-        if i + 1 < len(rdn):
-            next_char = rdn[i + 1]
-            if i + 2 < len(rdn) and all(
-                c in string.hexdigits for c in rdn[i + 1 : i + 3]
-            ):
-                return current_val + rdn[i : i + 3], i + 3
-            return current_val + next_char, i + 2
-        return current_val, i + 1
-
-    @staticmethod
-    def _process_rdn_char(
-        char: str,
-        rdn: str,
-        i: int,
-        config: FlextLdifModelsSettings.RdnProcessingConfig,
-    ) -> tuple[str, str, bool, int, bool]:
-        """Process single character in RDN parsing."""
-        current_attr = config.current_attr
-        current_val = config.current_val
-        in_value = config.in_value
-
-        if char == "\\" and i + 1 < len(rdn):
-            current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
-                rdn,
-                i,
-                config.current_val,
+    def extract_rdn(dn: str) -> r[str]:
+        """Extract leftmost RDN from DN."""
+        if not dn or "=" not in dn:
+            return r[str].fail(
+                f"Invalid DN format: missing '=' separator in '{dn}'",
             )
-            config.current_val = current_val
-            return current_attr, current_val, in_value, next_i, True
 
-        if char == "=" and not in_value:
-            current_attr = current_attr.strip().lower()
-            config.current_attr = current_attr
-            config.in_value = True
-            return current_attr, current_val, True, i + 1, True
-
-        if char == "+" and in_value:
-            current_val = current_val.strip()
-            if current_attr:
-                config.pairs.append((current_attr, current_val))
-            config.current_attr = ""
-            config.current_val = ""
-            config.in_value = False
-            return "", "", False, i + 1, True
-
-        if in_value:
-            current_val += char
-            config.current_val = current_val
-        else:
-            current_attr += char
-            config.current_attr = current_attr
-
-        return current_attr, current_val, in_value, i + 1, False
+        try:
+            components = FlextLdifUtilitiesDN.split(dn)
+            if not components:
+                return r[str].fail(
+                    f"Failed to extract RDN: no components found in '{dn}'",
+                )
+            return r[str].ok(components[0])
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[str].fail(f"RDN extraction error: {e}")
 
     @staticmethod
-    def _advance_rdn_position(
-        char: str,
-        rdn: str,
-        position: int,
-        config: FlextLdifModelsSettings.RdnProcessingConfig,
-    ) -> tuple[str, str, bool, int]:
-        """Advance position during RDN parsing and return new state."""
-        result = FlextLdifUtilitiesDN._process_rdn_char(
-            char,
-            rdn,
-            position,
-            config,
+    def get_dn_value(
+        dn: m.Ldif.DN | FlextLdifModelsDomains.DN | str,
+    ) -> str:
+        """Extract DN string value from DN model or string (public utility method)."""
+        if isinstance(dn, str):
+            return dn
+        return dn.value
+
+    @staticmethod
+    def is_config_dn(dn: str) -> bool:
+        """Check if DN is in cn=config tree (OpenLDAP dynamic config)."""
+        if not dn:
+            return False
+        return "cn=config" in dn.lower()
+
+    @staticmethod
+    def is_lutf1_char(char: str) -> bool:
+        """Check if char is valid LUTF1 (lead char) per RFC 4514."""
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in c.Ldif.Format.DN_LUTF1_EXCLUDE
+
+    @staticmethod
+    def is_sutf1_char(char: str) -> bool:
+        """Check if char is valid SUTF1 (string char) per RFC 4514."""
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in c.Ldif.Format.DN_SUTF1_EXCLUDE
+
+    @staticmethod
+    def is_tutf1_char(char: str) -> bool:
+        """Check if char is valid TUTF1 (trail char) per RFC 4514."""
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        rfc_format = c.Ldif.Format
+        safe_min = rfc_format.SAFE_CHAR_MIN
+        safe_max = rfc_format.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in c.Ldif.Format.DN_TUTF1_EXCLUDE
+
+    @staticmethod
+    def is_under_base(
+        dn: str | None,
+        base_dn: str | None,
+    ) -> bool:
+        """Check if DN is under base DN (hierarchical check)."""
+        if not dn or not base_dn:
+            return False
+
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        base_dn_str = FlextLdifUtilitiesDN.get_dn_value(base_dn)
+
+        if not dn_str or not base_dn_str:
+            return False
+
+        dn_lower = dn_str.lower().strip()
+        base_dn_lower = base_dn_str.lower().strip()
+
+        return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
+
+    @staticmethod
+    def is_valid_dn_string(
+        value: str,
+        *,
+        strict: bool = True,
+    ) -> tuple[bool, list[str]]:
+        """Validate DN attribute value per RFC 4514 string production."""
+        errors: list[str] = []
+
+        if not value:
+            return True, errors  # Empty string is valid
+
+        if len(value) == 1:
+            if not FlextLdifUtilitiesDN.is_lutf1_char(value) and strict:
+                errors.append(f"Invalid lead character: {value!r}")
+            return len(errors) == 0, errors
+
+        is_escaped_lead = value[0] == "\\" and len(value) > 1
+        is_bad_lead = (
+            not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and not is_escaped_lead
         )
-        attr, val, in_val, next_pos, _ = result
-        return (attr, val, in_val, next_pos)
+        if is_bad_lead and strict:
+            errors.append(f"Invalid lead character: {value[0]!r}")
+
+        min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
+        is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
+        is_bad_trail = (
+            not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and not is_escaped_trail
+        )
+        if is_bad_trail and strict:
+            errors.append(f"Invalid trail character: {value[-1]!r}")
+
+        for i, char in enumerate(value[1:-1], start=1):
+            if FlextLdifUtilitiesDN.is_sutf1_char(char):
+                continue
+            is_escape_char = char == "\\"
+            is_after_escape = i > 0 and value[i - 1] == "\\"
+            if not is_escape_char and not is_after_escape and strict:
+                errors.append(f"Invalid character at position {i}: {char!r}")
+
+        return len(errors) == 0, errors
+
+    @overload
+    @staticmethod
+    def norm(dn: str) -> r[str]: ...
+
+    @overload
+    @staticmethod
+    def norm(dn: m.Ldif.DN) -> r[str]: ...
+
+    @staticmethod
+    def norm(
+        dn: str | m.Ldif.DN | None,
+    ) -> r[str]:
+        """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
+        if dn is None:
+            return r[str].fail("DN cannot be None")
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            error_msg = (
+                "Failed to normalize DN: DN string is empty"
+                if not dn_str
+                else f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
+            )
+            return r[str].fail(error_msg)
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn_str)
+
+            def normalize_component(comp: str) -> str | None:
+                """Normalize single component."""
+                if "=" not in comp:
+                    return None
+                attr, _, value = comp.partition("=")
+                return f"{attr.strip().lower()}={value.strip()}"
+
+            process_result = u.Collection.process(
+                components,
+                processor=normalize_component,
+                predicate=lambda comp: "=" in comp,
+                on_error="skip",
+            )
+            if process_result.is_failure:
+                return r[str].fail(
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
+                )
+            normalized_list = process_result.value
+            filtered_str = u.Collection.filter(
+                normalized_list,
+                predicate=lambda x: isinstance(x, str),
+            )
+            normalized: list[str] = [
+                str(item) for item in filtered_str if item is not None
+            ]
+            return (
+                r.ok(",".join(normalized))
+                if normalized
+                else r.fail(
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
+                )
+            )
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[str].fail(f"DN normalization error: {e}")
+
+    @staticmethod
+    def norm_batch(
+        dns: Sequence[str],
+        *,
+        fallback: Literal["lower", "upper", "original", "skip"] = "lower",
+        fail_fast: bool = False,
+    ) -> r[list[str]]:
+        """Normalize multiple DNs in one call."""
+
+        def normalize_dn(dn: str) -> r[str]:
+            """Normalize single DN with fallback."""
+            result = FlextLdifUtilitiesDN.norm(dn)
+            if result.is_success:
+                return result
+            if fallback == "skip":
+                return r[str].fail("Skipped")
+            if fallback == "lower":
+                return r[str].ok(dn.lower())
+            if fallback == "upper":
+                return r[str].ok(dn.upper())
+            return r[str].ok(dn)
+
+        normalized_results: list[str] = []
+
+        if fail_fast:
+            for dn in dns:
+                result = normalize_dn(dn)
+                if result.is_failure:
+                    return r[list[str]].fail(
+                        result.error or f"Failed to normalize DN: {dn}",
+                    )
+                normalized_results.append(result.value)
+            return r[list[str]].ok(normalized_results)
+
+        for dn in dns:
+            result = normalize_dn(dn)
+            if result.is_success:
+                normalized_results.append(result.value)
+
+        return r[list[str]].ok(normalized_results)
+
+    @staticmethod
+    def norm_component(component: str) -> str:
+        """Normalize single DN component (e.g., 'cn = John' → 'cn=John')."""
+        if "=" not in component:
+            return component
+        parts = component.split("=", 1)
+        return f"{parts[0].strip()}={parts[1].strip()}"
+
+    @staticmethod
+    def norm_or_fallback(
+        dn: str | None,
+        *,
+        fallback: Literal["lower", "upper", "original"] = "lower",
+    ) -> str:
+        r"""Normalize DN or return fallback if normalization fails.
+
+        Replaces the common 3-line pattern:
+            norm_result = FlextLdifUtilitiesDN.norm(dn)
+            normalized = norm_result.value if norm_result.is_success else dn.lower()
+
+        With a single call:
+            normalized = FlextLdifUtilitiesDN.norm_or_fallback(dn)
+
+        Args:
+            dn: DN string to normalize (or None)
+            fallback: Fallback strategy if normalization fails:
+                - "lower": Return dn.lower()
+                - "upper": Return dn.upper()
+                - "original": Return dn unchanged
+
+        Returns:
+            Normalized DN string, or fallback if normalization fails
+
+        Examples:
+            >>> FlextLdifUtilitiesDN.norm_or_fallback("CN=Test,DC=Example")
+            'cn=test,dc=example'
+            >>> FlextLdifUtilitiesDN.norm_or_fallback(None)
+            ''
+            >>> FlextLdifUtilitiesDN.norm_or_fallback(
+            ...     "invalid\\\\dn", fallback="original"
+            ... )
+            'invalid\\\\dn'
+
+        """
+        if dn is None:
+            return ""
+
+        result = FlextLdifUtilitiesDN.norm(dn)
+        if result.is_success:
+            return result.value
+
+        if fallback == "lower":
+            return dn.lower()
+        if fallback == "upper":
+            return dn.upper()
+        return dn
+
+    @overload
+    @staticmethod
+    def norm_string(dn: str) -> str: ...
+
+    @overload
+    @staticmethod
+    def norm_string(dn: m.Ldif.DN) -> str: ...
+
+    @staticmethod
+    def norm_string(dn: str | m.Ldif.DN) -> str:
+        """Normalize full DN to RFC 4514 format."""
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        components = FlextLdifUtilitiesDN.split(dn_str)
+        normalized = u.Collection.map(
+            components,
+            mapper=FlextLdifUtilitiesDN.norm_component,
+        )
+        return ",".join(normalized)
+
+    @overload
+    @staticmethod
+    def parse(dn: str) -> r[list[tuple[str, str]]]: ...
+
+    @overload
+    @staticmethod
+    def parse(
+        dn: m.Ldif.DN,
+    ) -> r[list[tuple[str, str]]]: ...
+
+    @staticmethod
+    def parse(
+        dn: str | m.Ldif.DN | None,
+    ) -> r[list[tuple[str, str]]]:
+        """Parse DN into RFC 4514 components (attr, value pairs)."""
+        if dn is None:
+            return r[list[tuple[str, str]]].fail("DN cannot be None")
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            error_msg = (
+                "DN string is empty"
+                if not dn_str
+                else f"Invalid DN format: missing '=' separator in '{dn_str}'"
+            )
+            return r[list[tuple[str, str]]].fail(error_msg)
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn_str)
+
+            def parse_component(comp: str) -> tuple[str, str] | None:
+                """Parse single component into (attr, value) tuple."""
+                if "=" not in comp:
+                    return None
+                attr, _, value = comp.partition("=")
+                return (attr.strip(), value.strip())
+
+            result = [
+                parsed
+                for comp in components
+                if "=" in comp
+                for parsed in [parse_component(comp)]
+                if parsed is not None
+            ]
+            return (
+                r.ok(result)
+                if result
+                else r.fail(f"Failed to parse DN components from '{dn_str}'")
+            )
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[list[tuple[str, str]]].fail(f"DN parsing error: {e}")
 
     @staticmethod
     def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
@@ -958,128 +1086,98 @@ class FlextLdifUtilitiesDN:
             return r[list[tuple[str, str]]].fail(f"RDN parsing error: {e}")
 
     @staticmethod
-    def extract_rdn(dn: str) -> r[str]:
-        """Extract leftmost RDN from DN."""
-        if not dn or "=" not in dn:
-            return r[str].fail(
-                f"Invalid DN format: missing '=' separator in '{dn}'",
-            )
+    def process_complete(
+        dn: str,
+        *,
+        clean: bool = True,
+        validate: bool = True,
+        normalize: bool = True,
+        parse: bool = False,
+    ) -> r[str | list[tuple[str, str]]]:
+        """Complete DN processing pipeline in one call."""
+        current_dn = dn
 
-        try:
-            components = FlextLdifUtilitiesDN.split(dn)
-            if not components:
-                return r[str].fail(
-                    f"Failed to extract RDN: no components found in '{dn}'",
+        if clean:
+            try:
+                current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as exc:
+                return r[str | list[tuple[str, str]]].fail(f"Clean failed: {exc}")
+
+        if validate:
+            is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
+            if not is_valid:
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Validation failed: {', '.join(errors)}",
                 )
-            return r[str].ok(components[0])
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"RDN extraction error: {e}")
 
-    @staticmethod
-    def extract_parent_dn(dn: str) -> r[str]:
-        """Extract parent DN (remove leftmost RDN)."""
-        if not dn or "=" not in dn:
-            return r[str].fail(
-                f"Invalid DN format: missing '=' separator in '{dn}'",
-            )
-
-        try:
-            components = FlextLdifUtilitiesDN.split(dn)
-            if len(components) <= 1:
-                return r[str].fail(
-                    f"Cannot extract parent DN: DN has only one component '{dn}'",
+        if normalize:
+            norm_result = FlextLdifUtilitiesDN.norm(current_dn)
+            if norm_result.is_failure:
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Normalization failed: {norm_result.error}",
                 )
-            return r[str].ok(",".join(components[1:]))
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"Parent DN extraction error: {e}")
+            current_dn = norm_result.value
+
+        if parse:
+            parse_result = FlextLdifUtilitiesDN.parse(current_dn)
+            if parse_result.is_failure:
+                return r[str | list[tuple[str, str]]].fail(
+                    f"Parse failed: {parse_result.error}",
+                )
+            return r[str | list[tuple[str, str]]].ok(parse_result.value)
+
+        return r[str | list[tuple[str, str]]].ok(current_dn)
 
     @staticmethod
-    def is_config_dn(dn: str) -> bool:
-        """Check if DN is in cn=config tree (OpenLDAP dynamic config)."""
-        if not dn:
-            return False
-        return "cn=config" in dn.lower()
+    def replace_base_batch(
+        dns: Sequence[str],
+        old_base: str,
+        new_base: str,
+        *,
+        fail_fast: bool = False,
+    ) -> r[list[str]]:
+        """Replace base DN in multiple DNs."""
+        old_base_lower = old_base.lower()
 
-    @staticmethod
-    def is_under_base(
-        dn: str | None,
-        base_dn: str | None,
-    ) -> bool:
-        """Check if DN is under base DN (hierarchical check)."""
-        if not dn or not base_dn:
-            return False
+        def replace_dn(dn: str) -> str:
+            """Replace base DN in single DN."""
+            try:
+                dn_lower = dn.lower()
+                if dn_lower.endswith(old_base_lower):
+                    prefix = dn[: len(dn) - len(old_base)]
+                    return prefix + new_base
+                return dn
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
+                if fail_fast:
+                    raise
+                return dn
 
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        base_dn_str = FlextLdifUtilitiesDN.get_dn_value(base_dn)
-
-        if not dn_str or not base_dn_str:
-            return False
-
-        dn_lower = dn_str.lower().strip()
-        base_dn_lower = base_dn_str.lower().strip()
-
-        return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
-
-    @overload
-    @staticmethod
-    def transform_dn_attribute(
-        value: str,
-        source_dn: str,
-        target_dn: str,
-    ) -> str: ...
-
-    @overload
-    @staticmethod
-    def transform_dn_attribute(
-        value: m.Ldif.DN,
-        source_dn: str,
-        target_dn: str,
-    ) -> str: ...
-
-    @staticmethod
-    def transform_dn_attribute(
-        value: str | m.Ldif.DN,
-        source_dn: str,
-        target_dn: str,
-    ) -> str:
-        """Transform a single DN attribute value by replacing base DN."""
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(value)
-        if not dn_str or not source_dn or not target_dn:
-            return dn_str
-
-        norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-        normalized_dn = norm_result.map_or(dn_str)
-
-        source_escaped = re.escape(source_dn)
-
-        result = re.sub(
-            f",{source_escaped}$",
-            f",{target_dn}",
-            normalized_dn,
-            flags=re.IGNORECASE,
-        )
-
-        if result == normalized_dn:
-            result = re.sub(
-                f"^{source_escaped}$",
-                target_dn,
-                normalized_dn,
-                flags=re.IGNORECASE,
-            )
-
-        return result
+        results: list[str] = []
+        for dn in dns:
+            try:
+                results.append(replace_dn(dn))
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as exc:
+                if fail_fast:
+                    return r[list[str]].fail(f"Base replacement failed: {exc}")
+        return r[list[str]].ok(results)
 
     @staticmethod
     def replace_base_dn(
@@ -1135,80 +1233,103 @@ class FlextLdifUtilitiesDN:
                 transformed.append(result)
         return transformed
 
+    @overload
     @staticmethod
-    def _transform_attrs_with_dn(
-        attrs: dict[str, list[str]],
-        dn_attributes: set[str],
+    def split(dn: str) -> list[str]: ...
+
+    @overload
+    @staticmethod
+    def split(dn: m.Ldif.DN) -> list[str]: ...
+
+    @staticmethod
+    def split(dn: str | m.Ldif.DN) -> list[str]:
+        r"""Split DN string into individual RDN components per RFC 4514.
+
+        RFC 4514 Section 2 ABNF:
+        ========================
+        distinguishedName = [ relativeDistinguishedName
+                             *( COMMA relativeDistinguishedName ) ]
+        COMMA = %x2C  ; comma (",")
+
+        Properly handles escaped commas (\\,) and other special characters.
+        Does NOT treat escaped commas as component separators.
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not dn_str:
+            return []
+
+        def split_components() -> Generator[str]:
+            """Generator that yields DN components respecting RFC 4514 escapes."""
+            current = ""
+            chars = iter(dn_str)
+
+            for char in chars:
+                if char == "\\":
+                    try:
+                        next_char = next(chars)
+                        current += char + next_char
+                    except StopIteration:
+                        current += char  # Trailing backslash
+                elif char == ",":
+                    if current.strip():
+                        yield current.strip()
+                        current = ""
+                else:
+                    current += char
+
+            if current.strip():
+                yield current.strip()
+
+        return list(split_components())
+
+    @overload
+    @staticmethod
+    def transform_dn_attribute(
+        value: str,
         source_dn: str,
         target_dn: str,
-    ) -> dict[str, list[str]]:
-        """Transform DN-valued attributes using u.map()."""
-        return {
-            k: [
-                FlextLdifUtilitiesDN.transform_dn_attribute(
-                    val,
-                    source_dn,
-                    target_dn,
-                )
-                for val in v
-            ]
-            if k.lower() in dn_attributes
-            else v
-            for k, v in attrs.items()
-        }
+    ) -> str: ...
+
+    @overload
+    @staticmethod
+    def transform_dn_attribute(
+        value: m.Ldif.DN,
+        source_dn: str,
+        target_dn: str,
+    ) -> str: ...
 
     @staticmethod
-    def _get_changed_attr_names(
-        original: Mapping[str, list[str]],
-        transformed: Mapping[str, list[str]],
-        dn_attributes: set[str],
-    ) -> list[str]:
-        """Get list of attribute names that changed using dict comprehension."""
-        return [
-            k
-            for k, v in transformed.items()
-            if k.lower() in dn_attributes and v != original.get(k, [])
-        ]
+    def transform_dn_attribute(
+        value: str | m.Ldif.DN,
+        source_dn: str,
+        target_dn: str,
+    ) -> str:
+        """Transform a single DN attribute value by replacing base DN."""
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(value)
+        if not dn_str or not source_dn or not target_dn:
+            return dn_str
 
-    @staticmethod
-    def _update_metadata_for_transformation(
-        metadata: m.Ldif.QuirkMetadata,
-        config: FlextLdifModelsSettings.MetadataTransformationConfig,
-    ) -> None:
-        """Update metadata with transformation tracking."""
-        if config.transformed_dn != config.original_dn:
-            _ = metadata.track_dn_transformation(
-                original_dn=config.original_dn,
-                transformed_dn=config.transformed_dn,
-                transformation_type="basedn_transform",
+        norm_result = FlextLdifUtilitiesDN.norm(dn_str)
+        normalized_dn = norm_result.map_or(dn_str)
+
+        source_escaped = re.escape(source_dn)
+
+        result = re.sub(
+            f",{source_escaped}$",
+            f",{target_dn}",
+            normalized_dn,
+            flags=re.IGNORECASE,
+        )
+
+        if result == normalized_dn:
+            result = re.sub(
+                f"^{source_escaped}$",
+                target_dn,
+                normalized_dn,
+                flags=re.IGNORECASE,
             )
 
-        def track_attr(attr_name: str) -> None:
-            """Track single attribute transformation."""
-            _ = metadata.track_attribute_transformation(
-                original_name=attr_name,
-                new_name=attr_name,
-                transformation_type="modified",
-                original_values=list(config.original_attrs.get(attr_name, [])),
-                new_values=config.transformed_attrs[attr_name],
-                reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
-            )
-
-        _ = u.Collection.process(
-            config.transformed_attr_names,
-            processor=track_attr,
-            on_error="skip",
-        )
-        _ = metadata.add_conversion_note(
-            operation="basedn_transform",
-            description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
-        )
-        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
-            config.original_dn
-        )
-        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
-            config.transformed_dn
-        )
+        return result
 
     @staticmethod
     def transform_dn_with_metadata(
@@ -1282,94 +1403,67 @@ class FlextLdifUtilitiesDN:
         )
 
     @staticmethod
-    def norm_or_fallback(
-        dn: str | None,
-        *,
-        fallback: Literal["lower", "upper", "original"] = "lower",
-    ) -> str:
-        r"""Normalize DN or return fallback if normalization fails.
+    def unesc(value: str) -> str:
+        r"""Unescape special characters in DN value per RFC 4514 Section 3.
 
-        Replaces the common 3-line pattern:
-            norm_result = FlextLdifUtilitiesDN.norm(dn)
-            normalized = norm_result.value if norm_result.is_success else dn.lower()
-
-        With a single call:
-            normalized = FlextLdifUtilitiesDN.norm_or_fallback(dn)
+        RFC 4514 Unescaping Requirements:
+        =================================
+        - \\XX where XX is hex digits -> character with that code
+        - \\<special> -> the literal special character
+        - Escape sequences: \\", \\+, \\,, \\;, \\<, \\>, \\\\
 
         Args:
-            dn: DN string to normalize (or None)
-            fallback: Fallback strategy if normalization fails:
-                - "lower": Return dn.lower()
-                - "upper": Return dn.upper()
-                - "original": Return dn unchanged
+            value: The escaped DN attribute value.
 
         Returns:
-            Normalized DN string, or fallback if normalization fails
-
-        Examples:
-            >>> FlextLdifUtilitiesDN.norm_or_fallback("CN=Test,DC=Example")
-            'cn=test,dc=example'
-            >>> FlextLdifUtilitiesDN.norm_or_fallback(None)
-            ''
-            >>> FlextLdifUtilitiesDN.norm_or_fallback(
-            ...     "invalid\\\\dn", fallback="original"
-            ... )
-            'invalid\\\\dn'
+            The unescaped value string.
 
         """
-        if dn is None:
-            return ""
+        if not value or "\\" not in value:
+            return value
 
-        result = FlextLdifUtilitiesDN.norm(dn)
-        if result.is_success:
-            return result.value
+        result: list[str] = []
+        i = 0
+        while i < len(value):
+            if value[i] == "\\" and i + 1 < len(value):
+                if i + 2 < len(value) and all(
+                    c in string.hexdigits for c in value[i + 1 : i + 3]
+                ):
+                    hex_code = value[i + 1 : i + 3]
+                    result.append(chr(int(hex_code, 16)))
+                    i += 3
+                else:
+                    result.append(value[i + 1])
+                    i += 2
+            else:
+                result.append(value[i])
+                i += 1
 
-        if fallback == "lower":
-            return dn.lower()
-        if fallback == "upper":
-            return dn.upper()
-        return dn
+        return "".join(result)
 
     @staticmethod
-    def norm_batch(
-        dns: Sequence[str],
-        *,
-        fallback: Literal["lower", "upper", "original", "skip"] = "lower",
-        fail_fast: bool = False,
-    ) -> r[list[str]]:
-        """Normalize multiple DNs in one call."""
+    def validate(dn: str | m.Ldif.DN) -> bool:
+        r"""Validate DN format according to RFC 4514.
 
-        def normalize_dn(dn: str) -> r[str]:
-            """Normalize single DN with fallback."""
-            result = FlextLdifUtilitiesDN.norm(dn)
-            if result.is_success:
-                return result
-            if fallback == "skip":
-                return r[str].fail("Skipped")
-            if fallback == "lower":
-                return r[str].ok(dn.lower())
-            if fallback == "upper":
-                return r[str].ok(dn.upper())
-            return r[str].ok(dn)
+        Properly handles escaped characters. Checks for:
+        - No double unescaped commas
+        - No leading/trailing unescaped commas
+        - All components have attr=value format
+        - Valid hex escape sequences (\XX where X is hex digit)
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not FlextLdifUtilitiesDN._validate_basic_format(dn_str):
+            return False
+        if not FlextLdifUtilitiesDN._validate_dn_structure(dn_str):
+            return False
 
-        normalized_results: list[str] = []
-
-        if fail_fast:
-            for dn in dns:
-                result = normalize_dn(dn)
-                if result.is_failure:
-                    return r[list[str]].fail(
-                        result.error or f"Failed to normalize DN: {dn}",
-                    )
-                normalized_results.append(result.value)
-            return r[list[str]].ok(normalized_results)
-
-        for dn in dns:
-            result = normalize_dn(dn)
-            if result.is_success:
-                normalized_results.append(result.value)
-
-        return r[list[str]].ok(normalized_results)
+        try:
+            components = FlextLdifUtilitiesDN.split(dn_str)
+            return bool(
+                components and FlextLdifUtilitiesDN._validate_components(components),
+            )
+        except (ValueError, TypeError):
+            return False
 
     @staticmethod
     def validate_batch(
@@ -1395,100 +1489,6 @@ class FlextLdifUtilitiesDN:
             if invalid_results:
                 results = results[: results.index(invalid_results[0]) + 1]
         return r[list[tuple[str, bool, list[str]]]].ok(results)
-
-    @staticmethod
-    def replace_base_batch(
-        dns: Sequence[str],
-        old_base: str,
-        new_base: str,
-        *,
-        fail_fast: bool = False,
-    ) -> r[list[str]]:
-        """Replace base DN in multiple DNs."""
-        old_base_lower = old_base.lower()
-
-        def replace_dn(dn: str) -> str:
-            """Replace base DN in single DN."""
-            try:
-                dn_lower = dn.lower()
-                if dn_lower.endswith(old_base_lower):
-                    prefix = dn[: len(dn) - len(old_base)]
-                    return prefix + new_base
-                return dn
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                if fail_fast:
-                    raise
-                return dn
-
-        results: list[str] = []
-        for dn in dns:
-            try:
-                results.append(replace_dn(dn))
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as exc:
-                if fail_fast:
-                    return r[list[str]].fail(f"Base replacement failed: {exc}")
-        return r[list[str]].ok(results)
-
-    @staticmethod
-    def process_complete(
-        dn: str,
-        *,
-        clean: bool = True,
-        validate: bool = True,
-        normalize: bool = True,
-        parse: bool = False,
-    ) -> r[str | list[tuple[str, str]]]:
-        """Complete DN processing pipeline in one call."""
-        current_dn = dn
-
-        if clean:
-            try:
-                current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as exc:
-                return r[str | list[tuple[str, str]]].fail(f"Clean failed: {exc}")
-
-        if validate:
-            is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
-            if not is_valid:
-                return r[str | list[tuple[str, str]]].fail(
-                    f"Validation failed: {', '.join(errors)}",
-                )
-
-        if normalize:
-            norm_result = FlextLdifUtilitiesDN.norm(current_dn)
-            if norm_result.is_failure:
-                return r[str | list[tuple[str, str]]].fail(
-                    f"Normalization failed: {norm_result.error}",
-                )
-            current_dn = norm_result.value
-
-        if parse:
-            parse_result = FlextLdifUtilitiesDN.parse(current_dn)
-            if parse_result.is_failure:
-                return r[str | list[tuple[str, str]]].fail(
-                    f"Parse failed: {parse_result.error}",
-                )
-            return r[str | list[tuple[str, str]]].ok(parse_result.value)
-
-        return r[str | list[tuple[str, str]]].ok(current_dn)
 
 
 __all__ = [

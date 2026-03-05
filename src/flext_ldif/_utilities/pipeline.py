@@ -107,26 +107,6 @@ class Pipeline:
         self._steps.append((step_name, wrapped_transformer))
         return self
 
-    def filter(
-        self,
-        entry_filter: EntryFilter[m.Ldif.Entry],
-        *,
-        name: str | None = None,
-    ) -> Self:
-        """Add a filter to the pipeline."""
-        step_name = name or entry_filter.__class__.__name__
-
-        def filter_func(
-            entry: m.Ldif.Entry,
-        ) -> r[m.Ldif.Entry | _Filtered]:
-            if entry_filter.matches(entry):
-                return r[m.Ldif.Entry | _Filtered].ok(entry)
-            # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
-            return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
-
-        self._steps.append((step_name, filter_func))
-        return self
-
     def custom(
         self,
         func: Callable[
@@ -158,32 +138,6 @@ class Pipeline:
 
         self._steps.append((name, wrapped_func))
         return self
-
-    def execute_one(
-        self,
-        entry: m.Ldif.Entry,
-    ) -> r[m.Ldif.Entry | _Filtered]:
-        """Execute pipeline on a single entry."""
-        current: m.Ldif.Entry | _Filtered = entry
-
-        for step_name, step_func in self._steps:
-            if isinstance(current, _Filtered):
-                # Entry was filtered out in previous step
-                return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
-
-            # Type narrowing: current is Entry when not _Filtered
-            result = step_func(current)
-            if result.is_failure:
-                return r[m.Ldif.Entry | _Filtered].fail(
-                    f"Step '{step_name}' failed: {result.error}",
-                )
-
-            unwrapped = result.value
-            # Business Rule: FILTERED sentinel indicates entry was filtered out
-            # Type narrowing: unwrapped is Entry | FILTERED
-            current = unwrapped
-
-        return r[m.Ldif.Entry | _Filtered].ok(current)
 
     def execute(
         self,
@@ -227,6 +181,52 @@ class Pipeline:
             results.append(process_result.value)
         return r[list[m.Ldif.Entry]].ok(results)
 
+    def execute_one(
+        self,
+        entry: m.Ldif.Entry,
+    ) -> r[m.Ldif.Entry | _Filtered]:
+        """Execute pipeline on a single entry."""
+        current: m.Ldif.Entry | _Filtered = entry
+
+        for step_name, step_func in self._steps:
+            if isinstance(current, _Filtered):
+                # Entry was filtered out in previous step
+                return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
+
+            # Type narrowing: current is Entry when not _Filtered
+            result = step_func(current)
+            if result.is_failure:
+                return r[m.Ldif.Entry | _Filtered].fail(
+                    f"Step '{step_name}' failed: {result.error}",
+                )
+
+            unwrapped = result.value
+            # Business Rule: FILTERED sentinel indicates entry was filtered out
+            # Type narrowing: unwrapped is Entry | FILTERED
+            current = unwrapped
+
+        return r[m.Ldif.Entry | _Filtered].ok(current)
+
+    def filter(
+        self,
+        entry_filter: EntryFilter[m.Ldif.Entry],
+        *,
+        name: str | None = None,
+    ) -> Self:
+        """Add a filter to the pipeline."""
+        step_name = name or entry_filter.__class__.__name__
+
+        def filter_func(
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry | _Filtered]:
+            if entry_filter.matches(entry):
+                return r[m.Ldif.Entry | _Filtered].ok(entry)
+            # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
+            return r[m.Ldif.Entry | _Filtered].ok(FILTERED)
+
+        self._steps.append((step_name, filter_func))
+        return self
+
 
 # VALIDATION PIPELINE
 
@@ -248,6 +248,35 @@ class ValidationPipeline:
         self._strict = strict
         self._collect_all = collect_all
         self._max_errors = max_errors
+
+    def validate(
+        self,
+        entries: Sequence[m.Ldif.Entry],
+    ) -> r[list[ValidationResult]]:
+        """Validate a sequence of entries."""
+        results: list[ValidationResult] = []
+        total_errors = 0
+
+        # Business Rule: Validate multiple entries and collect all validation results
+        # Returns list of ValidationResult objects, one per entry
+        # Stops early if max_errors threshold is reached (fail-fast pattern)
+        for entry in entries:
+            validation_result = self.validate_one(entry)
+            if validation_result.is_failure:
+                # Convert r[ValidationResult] failure to r[list[ValidationResult]] failure
+                return r[list[ValidationResult]].fail(validation_result.error)
+
+            validation = validation_result.value
+            results.append(validation)
+
+            total_errors += len(validation.errors)
+            if self._max_errors > 0 and total_errors >= self._max_errors:
+                break
+
+            if not self._collect_all and not validation.is_valid:
+                break
+
+        return r[list[ValidationResult]].ok(results)
 
     def validate_one(
         self,
@@ -307,35 +336,6 @@ class ValidationPipeline:
             ),
         )
 
-    def validate(
-        self,
-        entries: Sequence[m.Ldif.Entry],
-    ) -> r[list[ValidationResult]]:
-        """Validate a sequence of entries."""
-        results: list[ValidationResult] = []
-        total_errors = 0
-
-        # Business Rule: Validate multiple entries and collect all validation results
-        # Returns list of ValidationResult objects, one per entry
-        # Stops early if max_errors threshold is reached (fail-fast pattern)
-        for entry in entries:
-            validation_result = self.validate_one(entry)
-            if validation_result.is_failure:
-                # Convert r[ValidationResult] failure to r[list[ValidationResult]] failure
-                return r[list[ValidationResult]].fail(validation_result.error)
-
-            validation = validation_result.value
-            results.append(validation)
-
-            total_errors += len(validation.errors)
-            if self._max_errors > 0 and total_errors >= self._max_errors:
-                break
-
-            if not self._collect_all and not validation.is_valid:
-                break
-
-        return r[list[ValidationResult]].ok(results)
-
 
 # VALIDATION RESULT
 
@@ -358,10 +358,11 @@ class ValidationResult:
         self._errors = errors or []
         self._warnings = warnings or []
 
-    @property
-    def is_valid(self) -> bool:
-        """Check if validation passed."""
-        return self._is_valid
+    @override
+    def __repr__(self) -> str:
+        """Return string representation."""
+        status = "valid" if self._is_valid else "invalid"
+        return f"ValidationResult({status}, errors={len(self._errors)}, warnings={len(self._warnings)})"
 
     @property
     def errors(self) -> list[str]:
@@ -369,15 +370,14 @@ class ValidationResult:
         return self._errors
 
     @property
+    def is_valid(self) -> bool:
+        """Check if validation passed."""
+        return self._is_valid
+
+    @property
     def warnings(self) -> list[str]:
         """Get list of warning messages."""
         return self._warnings
-
-    @override
-    def __repr__(self) -> str:
-        """Return string representation."""
-        status = "valid" if self._is_valid else "invalid"
-        return f"ValidationResult({status}, errors={len(self._errors)}, warnings={len(self._warnings)})"
 
 
 __all__ = [

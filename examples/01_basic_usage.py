@@ -46,42 +46,40 @@ sn: Smith
 mail: jane.smith@example.com
 """
 
-    def process_pipeline(self) -> r[list[m.Ldif.Entry]]:
-        """DRY railway: detect → parse → validate → parallel process.
-
-        Python 3.13+ Features:
-        - Advanced type narrowing with structural pattern matching
-        - Type-safe result handling with Railway pattern
-        - PEP 695 type aliases for better readability
-
-        Returns:
-            r with parsed and validated entries or error.
-
-        """
+    @staticmethod
+    def batch_transform() -> r[list[m.Ldif.Entry]]:
+        """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
 
-        # Railway pattern with advanced type narrowing (PEP 742 ready)
-        server_type = "rfc"  # Default value
-        detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
-        if detect_result.is_success and detect_result.value.detected_server_type:
-            server_type = detect_result.value.detected_server_type
-        elif detect_result.is_failure:
-            return r.fail(detect_result.error or "Detection failed")
+        # Create entries efficiently (DRY)
+        entries = []
+        for i in range(10):
+            result = api.create_entry(
+                dn=f"cn=User{i},ou=People,dc=example,dc=com",
+                attributes={
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "cn": [f"User{i}"],
+                    "sn": [f"Name{i}"],
+                    "mail": [f"user{i}@example.com"],
+                },
+            )
+            if result.is_success:
+                entries.append(result.value)
 
-        # Chain operations with Railway pattern
-        parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
-        if parse_result.is_failure:
-            return r.fail(parse_result.error or "Parse failed")
-        entries = parse_result.value
-        validate_result = api.validate_entries(entries)
-        if validate_result.is_failure:
-            return r.fail(validate_result.error or "Validation failed")
+        if not entries:
+            return r.fail("Failed to create entries")
 
-        # Process returns transformed data, but we want entries
-        process_result = api.process("transform", entries, parallel=True, max_workers=4)
-        if process_result.is_success:
-            return r[list[m.Ldif.Entry]].ok(entries)
-        return r.fail(process_result.error or "Process failed")
+        # Transform and return entries (not processing results)
+        transform_result = api.process(
+            "transform",
+            entries,
+            parallel=True,
+            max_workers=6,
+        )
+        if transform_result.is_failure:
+            return r.fail(transform_result.error or "Transform failed")
+
+        return r.ok(entries)
 
     @staticmethod
     def file_pipeline() -> r[str]:
@@ -151,37 +149,39 @@ mail: jane.smith@example.com
 
             return r.ok(parse_result.value)
 
-    @staticmethod
-    def batch_transform() -> r[list[m.Ldif.Entry]]:
-        """DRY batch transformation - returns created entries."""
+    def process_pipeline(self) -> r[list[m.Ldif.Entry]]:
+        """DRY railway: detect → parse → validate → parallel process.
+
+        Python 3.13+ Features:
+        - Advanced type narrowing with structural pattern matching
+        - Type-safe result handling with Railway pattern
+        - PEP 695 type aliases for better readability
+
+        Returns:
+            r with parsed and validated entries or error.
+
+        """
         api = FlextLdif.get_instance()
 
-        # Create entries efficiently (DRY)
-        entries = []
-        for i in range(10):
-            result = api.create_entry(
-                dn=f"cn=User{i},ou=People,dc=example,dc=com",
-                attributes={
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "cn": [f"User{i}"],
-                    "sn": [f"Name{i}"],
-                    "mail": [f"user{i}@example.com"],
-                },
-            )
-            if result.is_success:
-                entries.append(result.value)
+        # Railway pattern with advanced type narrowing (PEP 742 ready)
+        server_type = "rfc"  # Default value
+        detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
+        if detect_result.is_success and detect_result.value.detected_server_type:
+            server_type = detect_result.value.detected_server_type
+        elif detect_result.is_failure:
+            return r.fail(detect_result.error or "Detection failed")
 
-        if not entries:
-            return r.fail("Failed to create entries")
+        # Chain operations with Railway pattern
+        parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
+        if parse_result.is_failure:
+            return r.fail(parse_result.error or "Parse failed")
+        entries = parse_result.value
+        validate_result = api.validate_entries(entries)
+        if validate_result.is_failure:
+            return r.fail(validate_result.error or "Validation failed")
 
-        # Transform and return entries (not processing results)
-        transform_result = api.process(
-            "transform",
-            entries,
-            parallel=True,
-            max_workers=6,
-        )
-        if transform_result.is_failure:
-            return r.fail(transform_result.error or "Transform failed")
-
-        return r.ok(entries)
+        # Process returns transformed data, but we want entries
+        process_result = api.process("transform", entries, parallel=True, max_workers=4)
+        if process_result.is_success:
+            return r[list[m.Ldif.Entry]].ok(entries)
+        return r.fail(process_result.error or "Process failed")

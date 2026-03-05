@@ -79,103 +79,6 @@ class FlextLdifUtilitiesOID:
         return schema_obj.oid
 
     @staticmethod
-    def matches_pattern(
-        definition: str,
-        oid_pattern: re.Pattern[str],
-    ) -> bool:
-        r"""Check if schema definition string matches server's OID pattern.
-
-        Generic method for checking if a schema definition matches an OID pattern.
-        Works with raw definition strings BEFORE parsing.
-
-        This is a pure utility function with no dependencies on quirks or services.
-
-        Example:
-            # Check if attribute matches Oracle OID pattern
-            if FlextLdifUtilitiesOID.matches_pattern(
-                attr_definition,  # Raw string: "( 2.16.840.1.113894.1.1.1 ...)"
-                re.compile(r'2\.16\.840\.1\.113894\..*')  # Oracle OID pattern
-            ):
-                # Handle Oracle-specific attribute
-
-        Args:
-            definition: Raw attribute or objectClass definition string
-            oid_pattern: Compiled regex pattern to match OID (e.g., re.compile(r'2\\.16\\.840\\..*'))
-
-        Returns:
-            True if OID matches pattern, False otherwise
-
-        """
-        # Extract OID from definition string
-        oid = FlextLdifUtilitiesOID.extract_from_definition(definition)
-        if not oid:
-            return False
-
-        # Check if OID matches server's pattern
-        return bool(oid_pattern.match(oid))
-
-    @staticmethod
-    def validate_format(oid: str) -> FlextResult[bool]:
-        """Validate OID format compliance with LDAP OID syntax."""
-        if not oid:
-            return FlextResult[bool].ok(False)
-
-        # OID pattern: numeric.numeric.numeric... (no leading zeros)
-        oid_pattern = r"^[0-2](\.[0-9]+)*$"
-
-        try:
-            is_valid = bool(re.match(oid_pattern, oid))
-            return FlextResult[bool].ok(is_valid)
-        except (TypeError, re.error) as e:
-            return FlextResult[bool].fail(
-                f"Failed to validate OID format: {e}",
-            )
-
-    @staticmethod
-    def is_oracle_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches Oracle Internet Directory pattern."""
-        if not definition_or_oid:
-            return False
-
-        # Try as raw definition first
-        if definition_or_oid.startswith("("):
-            return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid,
-                FlextLdifUtilitiesOID.ORACLE_OID_PATTERN,
-            )
-
-        # Try as extracted OID
-        return bool(FlextLdifUtilitiesOID.ORACLE_OID_PATTERN.match(definition_or_oid))
-
-    @staticmethod
-    def is_microsoft_ad_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches Microsoft Active Directory pattern."""
-        if not definition_or_oid:
-            return False
-
-        if definition_or_oid.startswith("("):
-            return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid,
-                FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN,
-            )
-
-        return bool(FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN.match(definition_or_oid))
-
-    @staticmethod
-    def is_openldap_oid(definition_or_oid: str) -> bool:
-        """Check if definition/OID matches OpenLDAP pattern."""
-        if not definition_or_oid:
-            return False
-
-        if definition_or_oid.startswith("("):
-            return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid,
-                FlextLdifUtilitiesOID.OPENLDAP_PATTERN,
-            )
-
-        return bool(FlextLdifUtilitiesOID.OPENLDAP_PATTERN.match(definition_or_oid))
-
-    @staticmethod
     def get_server_type_from_oid(definition_or_oid: str) -> str | None:
         """Detect server type from OID pattern."""
         # Early checks for common patterns
@@ -213,12 +116,109 @@ class FlextLdifUtilitiesOID:
         return None
 
     @staticmethod
+    def is_microsoft_ad_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches Microsoft Active Directory pattern."""
+        if not definition_or_oid:
+            return False
+
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN,
+            )
+
+        return bool(FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def is_openldap_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches OpenLDAP pattern."""
+        if not definition_or_oid:
+            return False
+
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.OPENLDAP_PATTERN,
+            )
+
+        return bool(FlextLdifUtilitiesOID.OPENLDAP_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def is_oracle_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches Oracle Internet Directory pattern."""
+        if not definition_or_oid:
+            return False
+
+        # Try as raw definition first
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.ORACLE_OID_PATTERN,
+            )
+
+        # Try as extracted OID
+        return bool(FlextLdifUtilitiesOID.ORACLE_OID_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def matches_pattern(
+        definition: str,
+        oid_pattern: re.Pattern[str],
+    ) -> bool:
+        r"""Check if schema definition string matches server's OID pattern.
+
+        Generic method for checking if a schema definition matches an OID pattern.
+        Works with raw definition strings BEFORE parsing.
+
+        This is a pure utility function with no dependencies on quirks or services.
+
+        Example:
+            # Check if attribute matches Oracle OID pattern
+            if FlextLdifUtilitiesOID.matches_pattern(
+                attr_definition,  # Raw string: "( 2.16.840.1.113894.1.1.1 ...)"
+                re.compile(r'2\.16\.840\.1\.113894\..*')  # Oracle OID pattern
+            ):
+                # Handle Oracle-specific attribute
+
+        Args:
+            definition: Raw attribute or objectClass definition string
+            oid_pattern: Compiled regex pattern to match OID (e.g., re.compile(r'2\\.16\\.840\\..*'))
+
+        Returns:
+            True if OID matches pattern, False otherwise
+
+        """
+        # Extract OID from definition string
+        oid = FlextLdifUtilitiesOID.extract_from_definition(definition)
+        if not oid:
+            return False
+
+        # Check if OID matches server's pattern
+        return bool(oid_pattern.match(oid))
+
+    @staticmethod
     def parse_to_tuple(oid: str) -> tuple[int, ...] | None:
         """Parse OID string to tuple of integers for numeric sorting."""
         try:
             return tuple(int(x) for x in oid.split("."))
         except ValueError:
             return None
+
+    @staticmethod
+    def validate_format(oid: str) -> FlextResult[bool]:
+        """Validate OID format compliance with LDAP OID syntax."""
+        if not oid:
+            return FlextResult[bool].ok(False)
+
+        # OID pattern: numeric.numeric.numeric... (no leading zeros)
+        oid_pattern = r"^[0-2](\.[0-9]+)*$"
+
+        try:
+            is_valid = bool(re.match(oid_pattern, oid))
+            return FlextResult[bool].ok(is_valid)
+        except (TypeError, re.error) as e:
+            return FlextResult[bool].fail(
+                f"Failed to validate OID format: {e}",
+            )
 
     # Pre-compiled OID patterns for common LDAP servers
     # These eliminate the need for repeated re.compile() calls in server code

@@ -97,19 +97,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for schema conversion pipeline configuration objects."""
 
             @property
-            def write_method(self) -> Callable[..., FlextResult[str]]:
-                """Method to write schema object to LDIF."""
-                ...
-
-            @property
-            def source_schema(
-                self,
-            ) -> (
-                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-            ):
-                """Source schema object to convert."""
+            def item_name(self) -> str:
+                """Name of the schema item being converted."""
                 ...
 
             @property
@@ -126,6 +115,17 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
+            def source_schema(
+                self,
+            ) -> (
+                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
+            ):
+                """Source schema object to convert."""
+                ...
+
+            @property
             def target_schema(
                 self,
             ) -> (
@@ -137,8 +137,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def item_name(self) -> str:
-                """Name of the schema item being converted."""
+            def write_method(self) -> Callable[..., FlextResult[str]]:
+                """Method to write schema object to LDIF."""
                 ...
 
         @runtime_checkable
@@ -167,6 +167,20 @@ class FlextLdifProtocols(FlextProtocols):
                 """Parse schema definition."""
                 ...
 
+            def parse_attribute(
+                self,
+                attr_definition: str,
+            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaAttributeProtocol]:
+                """Parse individual attribute definition."""
+                ...
+
+            def parse_objectclass(
+                self,
+                oc_definition: str,
+            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaObjectClassProtocol]:
+                """Parse individual objectClass definition."""
+                ...
+
             def write(
                 self,
                 model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
@@ -175,25 +189,11 @@ class FlextLdifProtocols(FlextProtocols):
                 """Write schema definition."""
                 ...
 
-            def parse_attribute(
-                self,
-                attr_definition: str,
-            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaAttributeProtocol]:
-                """Parse individual attribute definition."""
-                ...
-
             def write_attribute(
                 self,
                 attribute: FlextLdifProtocols.Ldif.SchemaAttributeProtocol,
             ) -> FlextResult[str]:
                 """Write individual attribute definition."""
-                ...
-
-            def parse_objectclass(
-                self,
-                oc_definition: str,
-            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaObjectClassProtocol]:
-                """Parse individual objectClass definition."""
                 ...
 
             def write_objectclass(
@@ -304,15 +304,15 @@ class FlextLdifProtocols(FlextProtocols):
         class FilterProtocol[T](Protocol):
             """Protocol for filters in pipelines."""
 
-            def matches(self, item: T) -> bool:
-                """Check if item matches filter criteria."""
-                ...
-
             def __and__(
                 self,
                 other: FlextLdifProtocols.Ldif.FilterProtocol[T],
             ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
                 """AND combination."""
+                ...
+
+            def __invert__(self) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                """NOT negation."""
                 ...
 
             def __or__(
@@ -322,8 +322,8 @@ class FlextLdifProtocols(FlextProtocols):
                 """OR combination."""
                 ...
 
-            def __invert__(self) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
-                """NOT negation."""
+            def matches(self, item: T) -> bool:
+                """Check if item matches filter criteria."""
                 ...
 
         @runtime_checkable

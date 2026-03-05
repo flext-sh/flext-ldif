@@ -104,30 +104,6 @@ class FlextLdifUtilitiesWriters:
             return str(dn) if dn else ""
 
         @staticmethod
-        def write_entry_parts(
-            entry: FlextLdifModelsDomains.Entry,
-            config: FlextLdifModelsSettings.EntryWriteConfig,
-            lines: list[str],
-        ) -> None:
-            """Write entry parts (comments, DN, attributes)."""
-            # entry is Entry which satisfies EntryProtocol structurally (Protocols are structural)
-            # Write comments if hook provided and enabled
-            if config.include_comments and config.write_comments_hook:
-                # config.write_comments_hook expects EntryProtocol, entry satisfies it structurally
-                config.write_comments_hook(entry, lines)
-
-            # Write DN
-            dn_str = FlextLdifUtilitiesWriters.Entry.get_dn_string(entry)
-            if config.write_dn_hook:
-                config.write_dn_hook(dn_str, lines)
-            else:
-                lines.append(f"dn: {dn_str}")
-
-            # Write attributes using hook
-            # config.write_attributes_hook expects EntryProtocol, entry satisfies it structurally
-            config.write_attributes_hook(entry, lines)
-
-        @staticmethod
         def write(
             *,
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
@@ -185,6 +161,30 @@ class FlextLdifUtilitiesWriters:
                     dn=dn_error,
                 )
                 return r[str].fail(f"Failed to write entry: {e}")
+
+        @staticmethod
+        def write_entry_parts(
+            entry: FlextLdifModelsDomains.Entry,
+            config: FlextLdifModelsSettings.EntryWriteConfig,
+            lines: list[str],
+        ) -> None:
+            """Write entry parts (comments, DN, attributes)."""
+            # entry is Entry which satisfies EntryProtocol structurally (Protocols are structural)
+            # Write comments if hook provided and enabled
+            if config.include_comments and config.write_comments_hook:
+                # config.write_comments_hook expects EntryProtocol, entry satisfies it structurally
+                config.write_comments_hook(entry, lines)
+
+            # Write DN
+            dn_str = FlextLdifUtilitiesWriters.Entry.get_dn_string(entry)
+            if config.write_dn_hook:
+                config.write_dn_hook(dn_str, lines)
+            else:
+                lines.append(f"dn: {dn_str}")
+
+            # Write attributes using hook
+            # config.write_attributes_hook expects EntryProtocol, entry satisfies it structurally
+            config.write_attributes_hook(entry, lines)
 
     # ATTRIBUTE WRITER - Write attribute type definitions
 
@@ -371,26 +371,6 @@ class FlextLdifUtilitiesWriters:
             return str(dn_attr)[:50] if dn_attr else None
 
         @staticmethod
-        def write_single_entry_with_stats(
-            entry: FlextLdifModelsDomains.Entry,
-            write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
-            stats: Stats,
-        ) -> str | None:
-            """Write single entry with stats tracking."""
-            result = write_entry_hook(entry)
-            if result.is_success:
-                stats.successful += 1
-                return result.value
-            stats.failed += 1
-            dn_str = FlextLdifUtilitiesWriters.Content.get_entry_dn_for_error(entry)
-            logger.error(
-                "Failed to write entry",
-                dn=dn_str,
-                error=str(result.error),
-            )
-            return None
-
-        @staticmethod
         def write(
             *,
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
@@ -447,3 +427,23 @@ class FlextLdifUtilitiesWriters:
                     server_type=config.server_type,
                 )
                 return r[str].fail(f"Failed to write content: {e}")
+
+        @staticmethod
+        def write_single_entry_with_stats(
+            entry: FlextLdifModelsDomains.Entry,
+            write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
+            stats: Stats,
+        ) -> str | None:
+            """Write single entry with stats tracking."""
+            result = write_entry_hook(entry)
+            if result.is_success:
+                stats.successful += 1
+                return result.value
+            stats.failed += 1
+            dn_str = FlextLdifUtilitiesWriters.Content.get_entry_dn_for_error(entry)
+            logger.error(
+                "Failed to write entry",
+                dn=dn_str,
+                error=str(result.error),
+            )
+            return None

@@ -40,6 +40,25 @@ class FlextLdifConversion(
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
 
     @staticmethod
+    def _get_schema_from_attribute(
+        quirk: FlextLdifServersBase,
+    ) -> p.Ldif.SchemaQuirkProtocol:
+        if FlextLdifConversion._has_attr(quirk, "schema_quirk"):
+            schema = quirk.schema_quirk
+            if FlextLdifConversion._is_schema_quirk_protocol(schema):
+                return schema
+            msg = f"Expected Schema quirk, got {type(schema)}"
+            raise TypeError(msg)
+        msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
+        raise TypeError(msg)
+
+    @staticmethod
+    def _get_schema_quirk(
+        quirk: FlextLdifServersBase,
+    ) -> p.Ldif.SchemaQuirkProtocol:
+        return FlextLdifConversion._get_schema_from_attribute(quirk)
+
+    @staticmethod
     def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
@@ -52,12 +71,6 @@ class FlextLdifConversion(
             and FlextLdifConversion._has_attr(obj, "write")
             and FlextLdifConversion._has_attr(obj, "write_attribute")
         )
-
-    @staticmethod
-    def _get_schema_quirk(
-        quirk: FlextLdifServersBase,
-    ) -> p.Ldif.SchemaQuirkProtocol:
-        return FlextLdifConversion._get_schema_from_attribute(quirk)
 
     @staticmethod
     def _validate_schema_quirk(
@@ -73,19 +86,6 @@ class FlextLdifConversion(
             msg = f"Quirk {type(quirk)} doesn't satisfy SchemaQuirkProtocol"
             raise TypeError(msg)
         return quirk
-
-    @staticmethod
-    def _get_schema_from_attribute(
-        quirk: FlextLdifServersBase,
-    ) -> p.Ldif.SchemaQuirkProtocol:
-        if FlextLdifConversion._has_attr(quirk, "schema_quirk"):
-            schema = quirk.schema_quirk
-            if FlextLdifConversion._is_schema_quirk_protocol(schema):
-                return schema
-            msg = f"Expected Schema quirk, got {type(schema)}"
-            raise TypeError(msg)
-        msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
-        raise TypeError(msg)
 
     _PERMISSION_KEY_MAPPING: ClassVar[Mapping[str, str]] = {
         "read": "read",
@@ -124,189 +124,22 @@ class FlextLdifConversion(
         super().__init__()
 
     @staticmethod
-    def _resolve_quirk(
-        quirk_or_type: str | FlextLdifServersBase,
-    ) -> FlextLdifServersBase:
-        """Resolve server quirk instance from string type or return instance."""
-        if isinstance(quirk_or_type, str):
-            server = FlextLdifServer.get_global_instance()
-
-            server_type_str: str = quirk_or_type
-            resolved_result = server.quirk(server_type_str)
-
-            resolved = resolved_result.map_or(None)
-            if resolved is None:
-                error_msg = f"Unknown server type: {quirk_or_type}"
-                raise ValueError(error_msg)
-
-            return resolved
-
-        return quirk_or_type
-
-    @override
-    def execute(
-        self,
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Execute conversion service health check."""
-        try:
-            empty_entry = m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=health-check"),
-                attributes=m.Ldif.Attributes(attributes={}),
-            )
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].ok(empty_entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(
-                f"Conversion service health check failed: {e}",
-            )
-
-    def convert(
-        self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        model_instance: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ),
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Convert a model from a source server format to a target server format."""
-        start_time = time.perf_counter()
-
-        if isinstance(source, str):
-            source_format = source
-        else:
-            source_format = str(getattr(source, "server_type", "unknown"))
-        if isinstance(target, str):
-            target_format = target
-        else:
-            target_format = str(getattr(target, "server_type", "unknown"))
-
-        model_type = type(model_instance).__name__
-        conversion_operation = f"convert_{model_type}"
-
-        self.logger.debug(
-            "Converting model",
-            source_format=str(source_format),
-            target_format=str(target_format),
-            model_type=model_type,
-        )
-
-        result = self._convert_model(source, target, model_instance)
-
-        duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-        items_converted = 1 if result.is_success else 0
-        items_failed = 0 if result.is_success else 1
-
-        conversion_config = m.Ldif.ConversionEventConfig(
-            conversion_operation=conversion_operation,
-            source_format=source_format,
-            target_format=target_format,
-            items_processed=1,
-            items_converted=items_converted,
-            items_failed=items_failed,
-            conversion_duration_ms=duration_ms,
-            error_details=[
-                f"{model_type}: {result.error or 'Unknown error'}",
-            ]
-            if result.is_failure
-            else [],
-        )
-
-        _ = u.Ldif.Events.log_and_emit_conversion_event(
-            logger=logger,
-            config=conversion_config,
-            log_level="info" if result.is_success else "error",
-        )
-
-        return result
-
-    def _convert_model(
-        self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        model_instance: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ),
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Convert model between source and target server formats via write->parse pipeline."""
-        try:
-            source_quirk = self._resolve_quirk(source)
-            target_quirk = self._resolve_quirk(target)
-
-            if isinstance(model_instance, m.Ldif.Entry):
-                return self._convert_entry(source_quirk, target_quirk, model_instance)
-            if isinstance(model_instance, m.Ldif.SchemaAttribute):
-                return FlextLdifConversion._convert_schema_attribute(
-                    source_quirk,
-                    target_quirk,
-                    model_instance,
-                )
-            if isinstance(model_instance, m.Ldif.SchemaObjectClass):
-                return FlextLdifConversion._convert_schema_objectclass(
-                    source_quirk,
-                    target_quirk,
-                    model_instance,
-                )
-            if isinstance(model_instance, m.Ldif.Acl):
-                return self._convert_acl(source_quirk, target_quirk, model_instance)
-
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(
-                f"Unsupported model type for conversion: {type(model_instance).__name__}",
-            )
-
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return FlextResult.fail(f"Model conversion failed: {e}")
-
-    @staticmethod
-    def _normalize_metadata_value(
-        value: t.ContainerValue,
-    ) -> t.MetadataValue:
-        """Normalize metadata value to proper type."""
-        if value is None:
-            return ""
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, (list, tuple)):
-            return list(value)
-        return str(value)
+    def _analyze_attribute_case(
+        original_attribute_case: t.ContainerValue,
+        target_server_type: str,
+    ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
+        """Analyze attribute case for target compatibility."""
+        if bool(original_attribute_case):
+            return {
+                "attribute_case": {
+                    "source_case": FlextLdifConversion._normalize_metadata_value(
+                        original_attribute_case,
+                    ),
+                    "target_server": str(target_server_type),
+                    "action": "apply_target_conventions",
+                },
+            }
+        return {}
 
     @staticmethod
     def _analyze_boolean_conversions(
@@ -329,24 +162,6 @@ class FlextLdifConversion(
                 "action": "convert_to_target_format",
             }
         return result
-
-    @staticmethod
-    def _analyze_attribute_case(
-        original_attribute_case: t.ContainerValue,
-        target_server_type: str,
-    ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
-        """Analyze attribute case for target compatibility."""
-        if bool(original_attribute_case):
-            return {
-                "attribute_case": {
-                    "source_case": FlextLdifConversion._normalize_metadata_value(
-                        original_attribute_case,
-                    ),
-                    "target_server": str(target_server_type),
-                    "action": "apply_target_conventions",
-                },
-            }
-        return {}
 
     @staticmethod
     def _analyze_dn_format(
@@ -439,68 +254,1207 @@ class FlextLdifConversion(
 
         return acc_typed
 
-    def _update_entry_metadata(
-        self,
-        entry: m.Ldif.Entry,
-        validated_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
-        conversion_analysis: str | None,
-        source_quirk_name: str,
-    ) -> m.Ldif.Entry:
-        """Update entry metadata for conversion (internal helper)."""
-        get_metadata = u.Mapper.prop("metadata")
-        get_extensions = u.Mapper.prop("extensions")
+    @staticmethod
+    def _apply_oid_to_oud_mapping(
+        orig_perms_dict: Mapping[str, bool],
+        converted_acl: m.Ldif.Acl,
+        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
+    ) -> m.Ldif.Acl:
+        """Apply OID to OUD permission mapping."""
+        normalized_orig_perms: dict[str, bool] = {
+            FlextLdifConversion._normalize_permission_key(k): v
+            for k, v in orig_perms_dict.items()
+            if isinstance(v, bool)
+        }
+        mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(
+            normalized_orig_perms,
+        )
+        oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
+        perms_model = perms_to_model(oid_to_oud_perms)
 
-        current_entry = entry
-        if not get_metadata(current_entry):
-            metadata_obj = m.Ldif.QuirkMetadata(quirk_type=validated_quirk_type)
+        return converted_acl.model_copy(
+            update={"permissions": perms_model},
+            deep=True,
+        )
 
-            current_entry = current_entry.model_copy(
-                update={"metadata": metadata_obj},
-                deep=True,
+    @staticmethod
+    def _apply_oud_to_oid_mapping(
+        orig_perms_dict: Mapping[str, bool],
+        converted_acl: m.Ldif.Acl,
+        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
+    ) -> m.Ldif.Acl:
+        """Apply OUD to OID permission mapping."""
+        mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
+            orig_perms_dict,
+        )
+        oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
+        perms_model = perms_to_model(oud_to_oid_perms)
+
+        return converted_acl.model_copy(
+            update={"permissions": perms_model},
+            deep=True,
+        )
+
+    @staticmethod
+    def _build_permissions_dict(
+        mapped_perms: Mapping[str, bool],
+    ) -> Mapping[str, bool | None]:
+        """Build permissions dict with standard keys."""
+        result: dict[str, bool | None] = {}
+        for (
+            source_key,
+            mapped_key,
+        ) in FlextLdifConversion._PERMISSION_KEY_MAPPING.items():
+            if not isinstance(mapped_key, str):
+                continue
+            value = mapped_perms.get(mapped_key)
+            result[source_key] = value if isinstance(value, bool) else None
+        return result
+
+    @staticmethod
+    def _convert_schema_attribute(
+        source_quirk: FlextLdifServersBase,
+        target_quirk: FlextLdifServersBase,
+        attribute: m.Ldif.SchemaAttribute,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Convert SchemaAttribute model via write_attribute->parse_attribute pipeline."""
+        try:
+            source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
+                source_quirk,
+                "Source",
+            )
+            source_schema = source_schema_result.map_or(None)
+            if source_schema is None:
+                return FlextResult.fail(
+                    source_schema_result.error or "Source schema not available",
+                )
+
+            target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
+                target_quirk,
+                "Target",
+            )
+            target_schema = target_schema_result.map_or(None)
+            if target_schema is None:
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail(
+                    target_schema_result.error
+                    or "Target schema quirk error: Schema not available",
+                )
+
+            if not (
+                FlextLdifConversion._has_attr(source_schema, "write_attribute")
+                and FlextLdifConversion._has_attr(target_schema, "parse_attribute")
+            ):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Schema quirks missing attribute conversion methods")
+
+            write_attr = source_schema.write_attribute
+            parse_attr = target_schema.parse_attribute
+
+            def _parse_attribute_pipeline(
+                _target_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+                ldif: str,
+            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
+                parse_result = parse_attr(ldif)
+                if parse_result.is_failure:
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail(parse_result.error or "Failed to parse attribute")
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
+                ].ok(parse_result.value)
+
+            def _write_attribute_pipeline(
+                _source_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+            ) -> r[str]:
+                return write_attr(attribute)
+
+            config = m.Ldif.SchemaConversionPipelineConfig(
+                source_schema=source_schema,
+                target_schema=target_schema,
+                write_method=_write_attribute_pipeline,
+                parse_method=_parse_attribute_pipeline,
+                item_name="attribute",
+            )
+            return FlextLdifConversion._process_schema_conversion_pipeline(config)
+
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail(
+                f"SchemaAttribute conversion failed: {e}",
             )
 
-        entry_metadata = current_entry.metadata
-        if (
-            entry_metadata
-            and get_metadata(current_entry)
-            and not get_extensions(entry_metadata)
+    @staticmethod
+    def _convert_schema_objectclass(
+        source_quirk: FlextLdifServersBase,
+        target_quirk: FlextLdifServersBase,
+        objectclass: m.Ldif.SchemaObjectClass,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Convert SchemaObjectClass model via write_objectclass->parse_objectclass pipeline."""
+        try:
+            source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
+                source_quirk,
+                "Source",
+            )
+            source_schema = source_schema_result.map_or(None)
+            if source_schema is None:
+                return FlextResult.fail(
+                    source_schema_result.error or "Source schema not available",
+                )
+
+            target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
+                target_quirk,
+                "Target",
+            )
+            target_schema = target_schema_result.map_or(None)
+            if target_schema is None:
+                return FlextResult.fail(
+                    target_schema_result.error or "Target schema not available",
+                )
+
+            if not (
+                FlextLdifConversion._has_attr(source_schema, "write_objectclass")
+                and FlextLdifConversion._has_attr(target_schema, "parse_objectclass")
+            ):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Schema quirks missing objectclass conversion methods")
+
+            write_oc = source_schema.write_objectclass
+            parse_oc = target_schema.parse_objectclass
+
+            def _parse_objectclass_pipeline(
+                _target_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+                ldif: str,
+            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
+                parse_result = parse_oc(ldif)
+                if parse_result.is_failure:
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail(parse_result.error or "Failed to parse objectclass")
+                return r[
+                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
+                ].ok(parse_result.value)
+
+            def _write_objectclass_pipeline(
+                _source_schema: p.Ldif.SchemaAttributeProtocol
+                | p.Ldif.SchemaObjectClassProtocol
+                | p.Ldif.SchemaQuirkProtocol,
+            ) -> r[str]:
+                return write_oc(objectclass)
+
+            config = m.Ldif.SchemaConversionPipelineConfig(
+                source_schema=source_schema,
+                target_schema=target_schema,
+                write_method=_write_objectclass_pipeline,
+                parse_method=_parse_objectclass_pipeline,
+                item_name="objectclass",
+            )
+            return FlextLdifConversion._process_schema_conversion_pipeline(config)
+
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail(
+                f"SchemaObjectClass conversion failed: {e}",
+            )
+
+    @staticmethod
+    def _get_schema_quirk_safe(
+        quirk: FlextLdifServersBase,
+        quirk_type: str,
+    ) -> r[p.Ldif.SchemaQuirkProtocol]:
+        """Get schema quirk safely with error handling."""
+        result = u.try_(
+            lambda: FlextLdifConversion._get_schema_quirk(quirk),
+            default=None,
+        )
+        if result is None:
+            return r[p.Ldif.SchemaQuirkProtocol].fail(
+                f"{quirk_type} quirk error: Schema not available",
+            )
+
+        return r[p.Ldif.SchemaQuirkProtocol].ok(result)
+
+    @staticmethod
+    def _normalize_metadata_value(
+        value: t.ContainerValue,
+    ) -> t.MetadataValue:
+        """Normalize metadata value to proper type."""
+        if value is None:
+            return ""
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, (list, tuple)):
+            return list(value)
+        return str(value)
+
+    @staticmethod
+    def _normalize_permission_key(key: str) -> str:
+        """Normalize permission key for mapping."""
+        normalized = {"self_write": "selfwrite"}.get(key, key)
+        return normalized if isinstance(normalized, str) else key
+
+    @staticmethod
+    def _parse_attribute_with_schema(
+        schema: p.Ldif.SchemaQuirkProtocol,
+        value: str,
+        *,
+        parse_error_message: str,
+    ) -> r[m.Ldif.SchemaAttribute]:
+        parse_result = schema.parse_attribute(value)
+        if parse_result.is_failure:
+            return r[m.Ldif.SchemaAttribute].fail(
+                parse_result.error or parse_error_message,
+            )
+        parsed_value = parse_result.value
+        if not isinstance(parsed_value, m.Ldif.SchemaAttribute):
+            return r[m.Ldif.SchemaAttribute].fail(
+                f"Expected SchemaAttribute, got {type(parsed_value).__name__}",
+            )
+        return r[m.Ldif.SchemaAttribute].ok(parsed_value)
+
+    @staticmethod
+    def _parse_objectclass_with_schema(
+        schema: p.Ldif.SchemaQuirkProtocol,
+        value: str,
+        *,
+        parse_error_message: str,
+    ) -> r[m.Ldif.SchemaObjectClass]:
+        parse_result = schema.parse_objectclass(value)
+        if parse_result.is_failure:
+            return r[m.Ldif.SchemaObjectClass].fail(
+                parse_result.error or parse_error_message,
+            )
+        parsed_value = parse_result.value
+        if not isinstance(parsed_value, m.Ldif.SchemaObjectClass):
+            return r[m.Ldif.SchemaObjectClass].fail(
+                f"Expected SchemaObjectClass, got {type(parsed_value).__name__}",
+            )
+        return r[m.Ldif.SchemaObjectClass].ok(parsed_value)
+
+    @staticmethod
+    def _perms_dict_to_model(
+        perms_dict: Mapping[str, bool | None],
+    ) -> m.Ldif.AclPermissions:
+        """Convert permissions dict to AclPermissions model."""
+        clean_dict: dict[str, bool] = {
+            k: v for k, v in perms_dict.items() if v is not None
+        }
+
+        return m.Ldif.AclPermissions.model_validate(clean_dict)
+
+    @staticmethod
+    def _process_schema_conversion_pipeline(
+        config: p.Ldif.SchemaConversionPipelineConfigProtocol,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Process schema conversion pipeline (write->parse)."""
+        if not (
+            FlextLdifConversion._has_attr(config, "write_method")
+            and FlextLdifConversion._has_attr(config, "source_schema")
         ):
-            updated_metadata = entry_metadata.model_copy(
-                update={"extensions": m.Ldif.DynamicMetadata()},
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail("Invalid config: missing write_method or source_schema")
+        write_result = config.write_method(config.source_schema)
+        write_value = write_result.map_or(None)
+        item_name = getattr(config, "item_name", "item")
+        if write_value is None:
+            return FlextResult.fail(
+                f"Failed to write {item_name} in source format: {write_result.error}",
+            )
+
+        ldif_result = FlextLdifConversion._validate_ldif_string(
+            write_value,
+            item_name,
+        )
+        ldif_string = ldif_result.map_or(None)
+        if ldif_string is None:
+            return FlextResult.fail(ldif_result.error or "LDIF validation failed")
+
+        parse_method = getattr(config, "parse_method", None)
+        target_schema = getattr(config, "target_schema", None)
+        if parse_method is None or target_schema is None:
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail("Invalid config: missing parse_method or target_schema")
+        parse_result = parse_method(target_schema, ldif_string)
+        parsed_value = parse_result.map_or(None)
+        if parsed_value is None:
+            item_name = getattr(config, "item_name", "unknown")
+            return FlextResult.fail(
+                f"Failed to parse {item_name} in target format: {u.err(parse_result)}",
+            )
+
+        return r[
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ].ok(parsed_value)
+
+    @staticmethod
+    def _resolve_quirk(
+        quirk_or_type: str | FlextLdifServersBase,
+    ) -> FlextLdifServersBase:
+        """Resolve server quirk instance from string type or return instance."""
+        if isinstance(quirk_or_type, str):
+            server = FlextLdifServer.get_global_instance()
+
+            server_type_str: str = quirk_or_type
+            resolved_result = server.quirk(server_type_str)
+
+            resolved = resolved_result.map_or(None)
+            if resolved is None:
+                error_msg = f"Unknown server type: {quirk_or_type}"
+                raise ValueError(error_msg)
+
+            return resolved
+
+        return quirk_or_type
+
+    @staticmethod
+    def _schema_conversion_fail(
+        error: str | None,
+        fallback: str,
+    ) -> r[_TSchemaConversionValue]:
+        return r[_TSchemaConversionValue].fail(error or fallback)
+
+    @staticmethod
+    def _schema_conversion_ok(
+        value: _TSchemaConversionValue,
+    ) -> r[_TSchemaConversionValue]:
+        return r[_TSchemaConversionValue].ok(value)
+
+    @staticmethod
+    def _schema_passthrough_ok(
+        value: t.ContainerValue,
+    ) -> r[_TSchemaConversionValue] | None:
+        if isinstance(value, str):
+            return FlextLdifConversion._schema_conversion_ok(value)
+        if isinstance(value, dict):
+            # Dict not supported in strict _TSchemaConversionValue, convert to string
+            return FlextLdifConversion._schema_conversion_ok(str(value))
+        return None
+
+    @staticmethod
+    def _validate_ldif_string(ldif_string: str, operation: str) -> r[str]:
+        """Validate LDIF string is not empty."""
+        if u.Guards.is_string_non_empty(ldif_string):
+            return FlextResult.ok(ldif_string)
+        return FlextResult.fail(f"Write operation returned empty {operation} LDIF")
+
+    def batch_convert(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        model_list: Sequence[
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ],
+    ) -> r[
+        list[
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ]
+    ]:
+        """Convert multiple models from source to target quirk via RFC."""
+        start_time = time.perf_counter()
+
+        if isinstance(source, str):
+            source_format: str = source
+        else:
+            source_name_result = u.Mapper.prop("server_name")(source)
+            source_format = (
+                source_name_result if isinstance(source_name_result, str) else "unknown"
+            )
+
+        if isinstance(target, str):
+            target_format: str = target
+        else:
+            target_name_result = u.Mapper.prop("server_name")(target)
+            target_format = (
+                target_name_result if isinstance(target_name_result, str) else "unknown"
+            )
+
+        if not model_list:
+            return r[
+                list[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ]
+            ].ok([])
+
+        model_type = type(model_list[0]).__name__
+        conversion_operation = f"batch_convert_{model_type}"
+
+        try:
+            converted: list[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ] = []
+            errors: list[str] = []
+            error_details: list[str] = []
+
+            for idx, model_item in enumerate(model_list):
+                if not isinstance(
+                    model_item,
+                    (
+                        m.Ldif.Entry,
+                        m.Ldif.SchemaAttribute,
+                        m.Ldif.SchemaObjectClass,
+                        m.Ldif.Acl,
+                    ),
+                ):
+                    error_msg = f"Item {idx}: Expected convertible model, got {type(model_item).__name__}"
+                    errors.append(error_msg)
+                    error_details.append(
+                        f"batch_item_{idx}: {error_msg}",
+                    )
+                    continue
+                result = self.convert(source, target, model_item)
+                unwrapped = result.map_or(None)
+                if unwrapped is not None:
+                    converted.append(unwrapped)
+                else:
+                    error_msg = result.error or "Unknown error"
+                    errors.append(f"Item {idx}: {error_msg}")
+                    error_details.append(
+                        f"batch_item_{idx}: {error_msg}",
+                    )
+
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+            model_list_typed: list[object] = list(model_list)
+            converted_typed: list[object] = list(converted)
+
+            errors_typed: list[str] = errors if isinstance(errors, list) else []
+            items_processed = u.count(model_list_typed)
+            items_converted = u.count(converted_typed)
+            items_failed = u.count(errors_typed)
+
+            conversion_config = m.Ldif.ConversionEventConfig(
+                conversion_operation=conversion_operation,
+                source_format=source_format,
+                target_format=target_format,
+                items_processed=items_processed,
+                items_converted=items_converted,
+                items_failed=items_failed,
+                conversion_duration_ms=duration_ms,
+                error_details=error_details or None,
+            )
+
+            if FlextLdifConversion._has_attr(logger, "bind") and callable(
+                getattr(logger, "bind", None),
+            ):
+                _ = u.Ldif.Events.log_and_emit_conversion_event(
+                    logger=logger,
+                    config=conversion_config,
+                    log_level="warning" if errors else "info",
+                )
+
+            if errors:
+                error_count = u.count(errors)
+                error_msg = (
+                    f"Batch conversion completed with {error_count} errors:\n"
+                    + "\n".join(errors[: self.MAX_ERRORS_TO_SHOW])
+                )
+                if error_count > self.MAX_ERRORS_TO_SHOW:
+                    error_msg += (
+                        f"\n... and {error_count - self.MAX_ERRORS_TO_SHOW} more errors"
+                    )
+                return r[
+                    list[
+                        m.Ldif.Entry
+                        | m.Ldif.SchemaAttribute
+                        | m.Ldif.SchemaObjectClass
+                        | m.Ldif.Acl
+                    ]
+                ].fail(
+                    error_msg,
+                )
+
+            return r[
+                list[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ]
+            ].ok(converted)
+
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+            model_list_as_list: list[object] = list(model_list) if model_list else []
+            items_count = u.count(model_list_as_list)
+            conversion_config = m.Ldif.ConversionEventConfig(
+                conversion_operation=conversion_operation,
+                source_format=source_format,
+                target_format=target_format,
+                items_processed=items_count,
+                items_converted=0,
+                items_failed=items_count,
+                conversion_duration_ms=duration_ms,
+                error_details=[
+                    f"batch_conversion: Batch conversion failed: {e}",
+                ],
+            )
+
+            if FlextLdifConversion._has_attr(logger, "bind") and callable(
+                getattr(logger, "bind", None),
+            ):
+                _ = u.Ldif.Events.log_and_emit_conversion_event(
+                    logger=logger,
+                    config=conversion_config,
+                    log_level="error",
+                )
+
+            return r[
+                list[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ]
+            ].fail(
+                f"Batch conversion failed: {e}",
+            )
+
+    def convert(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        model_instance: (
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ),
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Convert a model from a source server format to a target server format."""
+        start_time = time.perf_counter()
+
+        if isinstance(source, str):
+            source_format = source
+        else:
+            source_format = str(getattr(source, "server_type", "unknown"))
+        if isinstance(target, str):
+            target_format = target
+        else:
+            target_format = str(getattr(target, "server_type", "unknown"))
+
+        model_type = type(model_instance).__name__
+        conversion_operation = f"convert_{model_type}"
+
+        self.logger.debug(
+            "Converting model",
+            source_format=str(source_format),
+            target_format=str(target_format),
+            model_type=model_type,
+        )
+
+        result = self._convert_model(source, target, model_instance)
+
+        duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+        items_converted = 1 if result.is_success else 0
+        items_failed = 0 if result.is_success else 1
+
+        conversion_config = m.Ldif.ConversionEventConfig(
+            conversion_operation=conversion_operation,
+            source_format=source_format,
+            target_format=target_format,
+            items_processed=1,
+            items_converted=items_converted,
+            items_failed=items_failed,
+            conversion_duration_ms=duration_ms,
+            error_details=[
+                f"{model_type}: {result.error or 'Unknown error'}",
+            ]
+            if result.is_failure
+            else [],
+        )
+
+        _ = u.Ldif.Events.log_and_emit_conversion_event(
+            logger=logger,
+            config=conversion_config,
+            log_level="info" if result.is_success else "error",
+        )
+
+        return result
+
+    @override
+    def execute(
+        self,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Execute conversion service health check."""
+        try:
+            empty_entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=health-check"),
+                attributes=m.Ldif.Attributes(attributes={}),
+            )
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].ok(empty_entry)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail(
+                f"Conversion service health check failed: {e}",
+            )
+
+    def get_supported_conversions(
+        self,
+        quirk: FlextLdifServersBase,
+    ) -> Mapping[str, bool]:
+        """Check which data types a quirk supports for conversion."""
+        support: t.Ldif.CommonDict.DistributionDict = {
+            "attribute": 0,
+            "objectclass": 0,
+            "acl": 0,
+            "entry": 0,
+        }
+
+        support = self._check_schema_support(quirk, support)
+
+        support = self._check_acl_support(quirk, support)
+
+        support = self._check_entry_support(quirk, support)
+
+        return {
+            "attribute": bool(support.get("attribute", 0)),
+            "objectClass": bool(
+                support.get("objectclass", 0),
+            ),
+            "objectclass": bool(
+                support.get("objectclass", 0),
+            ),
+            "acl": bool(support.get("acl", 0)),
+            "entry": bool(support.get("entry", 0)),
+        }
+
+    def reset_dn_registry(self) -> None:
+        """Clear DN registry for new conversion session."""
+        self.dn_registry.clear()
+
+    def validate_oud_conversion(self) -> r[bool]:
+        """Validate DN case consistency for OUD target conversion."""
+        return self.dn_registry.validate_oud_consistency()
+
+    def _apply_permission_mapping(
+        self,
+        config: m.Ldif.PermissionMappingConfig | None = None,
+        *,
+        original_acl: m.Ldif.Acl | None = None,
+        converted_acl: m.Ldif.Acl | None = None,
+        orig_perms_dict: Mapping[str, bool] | None = None,
+        source_server_type: str | None = None,
+        target_server_type: str | None = None,
+        converted_has_permissions: bool = False,
+    ) -> m.Ldif.Acl:
+        """Apply permission mapping based on server types."""
+        if config is None:
+            if original_acl is None or converted_acl is None:
+                if converted_acl is not None:
+                    return converted_acl
+                if original_acl is not None:
+                    return original_acl
+
+                return m.Ldif.Acl(name="")
+            config = m.Ldif.PermissionMappingConfig(
+                original_acl=original_acl,
+                converted_acl=converted_acl,
+                orig_perms_dict=dict(orig_perms_dict or {}),
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
+                converted_has_permissions=converted_has_permissions,
+            )
+
+        normalized_source = (
+            u.Ldif.Server.normalize_server_type(config.source_server_type)
+            if isinstance(config.source_server_type, str)
+            else config.source_server_type
+        )
+        normalized_target = (
+            u.Ldif.Server.normalize_server_type(config.target_server_type)
+            if isinstance(config.target_server_type, str)
+            else config.target_server_type
+        )
+
+        mapping_type = "none"
+        pair = (normalized_source, normalized_target)
+        if pair == ("oid", "oud"):
+            mapping_type = "oid_to_oud"
+        elif pair == ("oud", "oid"):
+            mapping_type = "oud_to_oid"
+        elif (
+            not config.converted_has_permissions
+            and config.original_acl.permissions is not None
+        ):
+            mapping_type = "preserve_original"
+
+        logger.debug(
+            "ACL mapping decision",
+            mapping_type=str(mapping_type),
+            normalized_source=str(normalized_source),
+            normalized_target=str(normalized_target),
+        )
+
+        if not isinstance(config.converted_acl, m.Ldif.Acl):
+            return m.Ldif.Acl()
+        converted_acl_typed: m.Ldif.Acl = config.converted_acl
+        if mapping_type == "oid_to_oud":
+            return FlextLdifConversion._apply_oid_to_oud_mapping(
+                config.orig_perms_dict,
+                converted_acl_typed,
+                self._perms_dict_to_model,
+            )
+        if mapping_type == "oud_to_oid":
+            return FlextLdifConversion._apply_oud_to_oid_mapping(
+                config.orig_perms_dict,
+                converted_acl_typed,
+                self._perms_dict_to_model,
+            )
+        if mapping_type == "preserve_original":
+            if not isinstance(config.original_acl, m.Ldif.Acl):
+                return converted_acl_typed
+            original_acl_typed: m.Ldif.Acl = config.original_acl
+            return converted_acl_typed.model_copy(
+                update={
+                    "permissions": (
+                        original_acl_typed.permissions.model_copy(deep=True)
+                        if original_acl_typed.permissions
+                        and FlextLdifConversion._has_attr(
+                            original_acl_typed.permissions,
+                            "model_copy",
+                        )
+                        else None
+                    ),
+                },
+                deep=True,
+            )
+        return converted_acl_typed
+
+    def _check_acl_support(
+        self,
+        quirk: FlextLdifServersBase,
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
+        """Check ACL support."""
+        acl = getattr(quirk, "acl_quirk", None)
+        if acl is None:
+            acl = getattr(quirk, "_acl_quirk", None)
+        test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
+        if acl and callable(getattr(acl, "parse", None)):
+            acl_result = acl.parse(test_acl_def)
+            if acl_result.map_or(None) is not None:
+                support["acl"] = 1
+        return support
+
+    def _check_attribute_support(
+        self,
+        quirk_schema: t.ContainerValue,
+        test_attr_def: str,
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
+        """Check attribute support for schema quirk."""
+        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
+            return support
+        if not FlextLdifConversion._has_attr(quirk_schema, "parse_attribute"):
+            return support
+
+        can_handle_attr = getattr(quirk_schema, "can_handle_attribute", None)
+        if can_handle_attr is None or not callable(can_handle_attr):
+            return support
+        if not can_handle_attr(test_attr_def):
+            return support
+
+        parse_attr = getattr(quirk_schema, "parse_attribute", None)
+        if parse_attr is None or not callable(parse_attr):
+            return support
+
+        attr_result = parse_attr(test_attr_def)
+
+        if FlextLdifConversion._has_attr(attr_result, "is_success") and bool(
+            getattr(attr_result, "is_success", False),
+        ):
+            support["attribute"] = 1
+
+        return support
+
+    def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
+        """Check if converted ACL has any permissions set."""
+        permission_fields = (
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "self_write",
+            "proxy",
+            "browse",
+            "auth",
+            "all",
+        )
+        return bool(
+            converted_acl.permissions
+            and any(
+                getattr(converted_acl.permissions, field, False)
+                for field in permission_fields
+            ),
+        )
+
+    def _check_entry_support(
+        self,
+        quirk: FlextLdifServersBase,
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
+        """Check Entry support."""
+        entry = getattr(quirk, "entry_quirk", None)
+        if entry is None:
+            entry = getattr(quirk, "_entry_quirk", None)
+        if (
+            entry is None
+            and FlextLdifConversion._has_attr(quirk, "parse")
+            and FlextLdifConversion._has_attr(quirk, "can_handle_entry")
+        ):
+            entry = quirk
+        if entry is not None and callable(getattr(entry, "parse", None)):
+            support["entry"] = 1
+        return support
+
+    def _check_objectclass_support(
+        self,
+        quirk_schema: t.ContainerValue,
+        test_oc_def: str,
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
+        """Check objectClass support for schema quirk."""
+        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
+            return support
+        if not FlextLdifConversion._has_attr(quirk_schema, "parse_objectclass"):
+            return support
+
+        can_handle_oc = getattr(quirk_schema, "can_handle_objectclass", None)
+        if can_handle_oc is None or not callable(can_handle_oc):
+            return support
+        if not can_handle_oc(test_oc_def):
+            return support
+
+        parse_oc = getattr(quirk_schema, "parse_objectclass", None)
+        if parse_oc is None or not callable(parse_oc):
+            return support
+
+        oc_result = parse_oc(test_oc_def)
+        if (
+            FlextLdifConversion._has_attr(oc_result, "map_or")
+            and callable(getattr(oc_result, "map_or", None))
+            and oc_result.map_or(None) is not None  # type: ignore[attr-defined]
+        ):
+            support["objectclass"] = 1
+
+        return support
+
+    def _check_schema_support(
+        self,
+        quirk: FlextLdifServersBase,
+        support: t.Ldif.CommonDict.DistributionDict,
+    ) -> t.Ldif.CommonDict.DistributionDict:
+        """Check schema (attribute and objectClass) support."""
+        quirk_schema = self._get_schema_quirk_for_support_check(quirk)
+        if quirk_schema is None:
+            return support
+
+        test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        test_oc_def = (
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
+        )
+
+        support = self._check_attribute_support(quirk_schema, test_attr_def, support)
+
+        return self._check_objectclass_support(quirk_schema, test_oc_def, support)
+
+    def _convert_acl(
+        self,
+        source_quirk: FlextLdifServersBase,
+        target_quirk: FlextLdifServersBase,
+        acl: m.Ldif.Acl,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Convert Acl model via Entry RFC + Metadata pipeline."""
+        try:
+            acl = acl.model_copy(deep=True)
+
+            entry_dn = m.Ldif.DN(
+                value="cn=acl-conversion,dc=example,dc=com",
+            )
+            entry_attributes = m.Ldif.Attributes(attributes={})
+
+            get_server_type = u.Mapper.prop("server_type")
+            server_type_raw = get_server_type(source_quirk)
+            server_type_attr = (
+                server_type_raw if isinstance(server_type_raw, str) else None
+            )
+
+            source_server_type: str | None = u.try_(
+                lambda: (
+                    u.Ldif.Server.normalize_server_type(str(server_type_attr))
+                    if isinstance(server_type_attr, str)
+                    else None
+                ),
+                default=None,
+            )
+
+            entry_metadata = m.Ldif.QuirkMetadata.create_for(
+                source_server_type,
+                extensions=None,
+            )
+            entry_metadata.acls = [acl]
+
+            rfc_entry = m.Ldif.Entry.model_validate({
+                "dn": entry_dn,
+                "attributes": entry_attributes,
+                "metadata": entry_metadata,
+            })
+
+            entry_result = self._convert_entry(source_quirk, target_quirk, rfc_entry)
+            converted_entry = entry_result.map_or(None)
+            if converted_entry is None:
+                return entry_result
+            if not isinstance(converted_entry, m.Ldif.Entry):
+                return FlextResult.fail(
+                    f"Entry conversion returned unexpected type: {type(converted_entry).__name__}",
+                )
+
+            get_metadata = u.Mapper.prop("metadata")
+            get_acls = u.Mapper.prop("acls")
+            converted_metadata_raw = get_metadata(converted_entry)
+
+            if not isinstance(
+                converted_metadata_raw,
+                (m.Ldif.QuirkMetadata, type(None)),
+            ):
+                return FlextResult.fail(
+                    f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
+                )
+
+            converted_metadata: m.Ldif.QuirkMetadata | None = converted_metadata_raw
+
+            acls_raw = get_acls(converted_metadata) if converted_metadata else None
+            acls: list[m.Ldif.Acl] | None = None
+            if acls_raw is not None and isinstance(acls_raw, list):
+                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
+
+            if not acls:
+                return FlextResult.fail(
+                    "Converted entry has no ACLs in metadata.acls",
+                )
+
+            if not acls or len(acls) == 0:
+                return FlextResult.fail("No ACL found in converted entry metadata")
+            domain_acl = acls[0]
+
+            converted_acl: m.Ldif.Acl = domain_acl
+
+            get_server_type = u.Mapper.prop("server_type")
+            target_server_raw = get_server_type(target_quirk)
+            target_server_type_raw = (
+                target_server_raw if isinstance(target_server_raw, str) else "unknown"
+            )
+
+            target_server_type: str | None = u.try_(
+                lambda: (
+                    u.Ldif.Server.normalize_server_type(target_server_type_raw)
+                    if isinstance(target_server_type_raw, str)
+                    and target_server_type_raw != "unknown"
+                    else None
+                ),
+                default=None,
+            )
+
+            converted_acl = self._preserve_acl_metadata(
+                acl,
+                converted_acl,
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
+            )
+
+            converted_acl = converted_acl.model_copy(
+                update={"server_type": target_server_type},
                 deep=True,
             )
 
-            current_entry = current_entry.model_copy(
-                update={"metadata": updated_metadata},
-                deep=True,
+            return r[_TConvertedModel].ok(converted_acl)
+
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            logger.exception(
+                "Failed to convert ACL model",
+                error=str(e),
+            )
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail(
+                f"Acl conversion failed: {e}",
             )
 
-        entry_metadata = current_entry.metadata
-        if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, t.ContainerValue] = {
-                "converted_from_server": source_quirk_name,
-            }
-            if conversion_analysis:
-                extensions_update["conversion_analysis"] = conversion_analysis
+    def _convert_attribute(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        data: str | t.MetadataValue,
+    ) -> r[_TSchemaConversionValue]:
+        """Convert attribute from source to target quirk via write->parse pipeline."""
+        try:
+            if not isinstance(data, str):
+                return FlextResult.fail("Attribute conversion requires string data")
 
-            updated_extensions = (
-                entry_metadata.extensions or m.Ldif.DynamicMetadata()
-            ).model_copy(
-                update=extensions_update,
-                deep=True,
+            source_schema_result = self._resolve_schema_quirk(source, role="Source")
+            if source_schema_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    source_schema_result.error,
+                    "Source schema not available",
+                )
+
+            parse_result = self._parse_attribute_with_schema(
+                source_schema_result.value,
+                data,
+                parse_error_message="Failed to parse attribute",
+            )
+            parsed_attr = parse_result.map_or(None)
+            if parsed_attr is None:
+                return FlextLdifConversion._schema_conversion_fail(
+                    parse_result.error,
+                    "Failed to parse source attribute",
+                )
+
+            rfc_result = self._write_attribute_to_rfc(source, parsed_attr)
+            rfc_value = rfc_result.map_or(None)
+            if rfc_value is None:
+                return rfc_result
+
+            if not isinstance(rfc_value, str):
+                return FlextLdifConversion._schema_conversion_ok(rfc_value)
+
+            target_schema_result = self._resolve_schema_quirk(target, role="Target")
+            if target_schema_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    target_schema_result.error,
+                    "Target schema not available",
+                )
+
+            target_parse_result = self._parse_attribute_with_schema(
+                target_schema_result.value,
+                rfc_value,
+                parse_error_message="Failed to parse target attribute",
             )
 
-            updated_metadata = entry_metadata.model_copy(
-                update={"extensions": updated_extensions},
-                deep=True,
-            )
+            if target_parse_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    target_parse_result.error,
+                    "Failed to parse target attribute",
+                )
 
-            current_entry = current_entry.model_copy(
-                update={"metadata": updated_metadata},
-                deep=True,
-            )
+            parsed_value: m.Ldif.SchemaAttribute = target_parse_result.value
 
-        return current_entry
+            return self._write_target_attribute(parsed_value)
+
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return FlextLdifConversion._schema_conversion_fail(
+                f"Attribute conversion failed: {e}",
+                "Attribute conversion failed",
+            )
 
     def _convert_entry(
         self,
@@ -743,168 +1697,49 @@ class FlextLdifConversion(
                 f"Entry conversion failed: {e}",
             )
 
-    @staticmethod
-    def _get_schema_quirk_safe(
-        quirk: FlextLdifServersBase,
-        quirk_type: str,
-    ) -> r[p.Ldif.SchemaQuirkProtocol]:
-        """Get schema quirk safely with error handling."""
-        result = u.try_(
-            lambda: FlextLdifConversion._get_schema_quirk(quirk),
-            default=None,
-        )
-        if result is None:
-            return r[p.Ldif.SchemaQuirkProtocol].fail(
-                f"{quirk_type} quirk error: Schema not available",
-            )
-
-        return r[p.Ldif.SchemaQuirkProtocol].ok(result)
-
-    @staticmethod
-    def _validate_ldif_string(ldif_string: str, operation: str) -> r[str]:
-        """Validate LDIF string is not empty."""
-        if u.Guards.is_string_non_empty(ldif_string):
-            return FlextResult.ok(ldif_string)
-        return FlextResult.fail(f"Write operation returned empty {operation} LDIF")
-
-    @staticmethod
-    def _process_schema_conversion_pipeline(
-        config: p.Ldif.SchemaConversionPipelineConfigProtocol,
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Process schema conversion pipeline (write->parse)."""
-        if not (
-            FlextLdifConversion._has_attr(config, "write_method")
-            and FlextLdifConversion._has_attr(config, "source_schema")
-        ):
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail("Invalid config: missing write_method or source_schema")
-        write_result = config.write_method(config.source_schema)
-        write_value = write_result.map_or(None)
-        item_name = getattr(config, "item_name", "item")
-        if write_value is None:
-            return FlextResult.fail(
-                f"Failed to write {item_name} in source format: {write_result.error}",
-            )
-
-        ldif_result = FlextLdifConversion._validate_ldif_string(
-            write_value,
-            item_name,
-        )
-        ldif_string = ldif_result.map_or(None)
-        if ldif_string is None:
-            return FlextResult.fail(ldif_result.error or "LDIF validation failed")
-
-        parse_method = getattr(config, "parse_method", None)
-        target_schema = getattr(config, "target_schema", None)
-        if parse_method is None or target_schema is None:
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail("Invalid config: missing parse_method or target_schema")
-        parse_result = parse_method(target_schema, ldif_string)
-        parsed_value = parse_result.map_or(None)
-        if parsed_value is None:
-            item_name = getattr(config, "item_name", "unknown")
-            return FlextResult.fail(
-                f"Failed to parse {item_name} in target format: {u.err(parse_result)}",
-            )
-
-        return r[
+    def _convert_model(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        model_instance: (
             m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass
             | m.Ldif.Acl
-        ].ok(parsed_value)
-
-    @staticmethod
-    def _convert_schema_attribute(
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        attribute: m.Ldif.SchemaAttribute,
+        ),
     ) -> r[
         m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
     ]:
-        """Convert SchemaAttribute model via write_attribute->parse_attribute pipeline."""
+        """Convert model between source and target server formats via write->parse pipeline."""
         try:
-            source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
-                source_quirk,
-                "Source",
-            )
-            source_schema = source_schema_result.map_or(None)
-            if source_schema is None:
-                return FlextResult.fail(
-                    source_schema_result.error or "Source schema not available",
+            source_quirk = self._resolve_quirk(source)
+            target_quirk = self._resolve_quirk(target)
+
+            if isinstance(model_instance, m.Ldif.Entry):
+                return self._convert_entry(source_quirk, target_quirk, model_instance)
+            if isinstance(model_instance, m.Ldif.SchemaAttribute):
+                return FlextLdifConversion._convert_schema_attribute(
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
-
-            target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
-                target_quirk,
-                "Target",
-            )
-            target_schema = target_schema_result.map_or(None)
-            if target_schema is None:
-                return r[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ].fail(
-                    target_schema_result.error
-                    or "Target schema quirk error: Schema not available",
+            if isinstance(model_instance, m.Ldif.SchemaObjectClass):
+                return FlextLdifConversion._convert_schema_objectclass(
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
+            if isinstance(model_instance, m.Ldif.Acl):
+                return self._convert_acl(source_quirk, target_quirk, model_instance)
 
-            if not (
-                FlextLdifConversion._has_attr(source_schema, "write_attribute")
-                and FlextLdifConversion._has_attr(target_schema, "parse_attribute")
-            ):
-                return r[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ].fail("Schema quirks missing attribute conversion methods")
-
-            write_attr = source_schema.write_attribute
-            parse_attr = target_schema.parse_attribute
-
-            def _parse_attribute_pipeline(
-                _target_schema: p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.SchemaQuirkProtocol,
-                ldif: str,
-            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
-                parse_result = parse_attr(ldif)
-                if parse_result.is_failure:
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail(parse_result.error or "Failed to parse attribute")
-                return r[
-                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].ok(parse_result.value)
-
-            def _write_attribute_pipeline(
-                _source_schema: p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.SchemaQuirkProtocol,
-            ) -> r[str]:
-                return write_attr(attribute)
-
-            config = m.Ldif.SchemaConversionPipelineConfig(
-                source_schema=source_schema,
-                target_schema=target_schema,
-                write_method=_write_attribute_pipeline,
-                parse_method=_parse_attribute_pipeline,
-                item_name="attribute",
+            return r[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ].fail(
+                f"Unsupported model type for conversion: {type(model_instance).__name__}",
             )
-            return FlextLdifConversion._process_schema_conversion_pipeline(config)
 
         except (
             ValueError,
@@ -913,90 +1748,66 @@ class FlextLdifConversion(
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(
-                f"SchemaAttribute conversion failed: {e}",
-            )
+            return FlextResult.fail(f"Model conversion failed: {e}")
 
-    @staticmethod
-    def _convert_schema_objectclass(
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        objectclass: m.Ldif.SchemaObjectClass,
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Convert SchemaObjectClass model via write_objectclass->parse_objectclass pipeline."""
+    def _convert_objectclass(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        data: str | t.MetadataValue,
+    ) -> r[_TSchemaConversionValue]:
+        """Convert objectClass from source to target quirk via write->parse pipeline."""
         try:
-            source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
-                source_quirk,
-                "Source",
-            )
-            source_schema = source_schema_result.map_or(None)
-            if source_schema is None:
-                return FlextResult.fail(
-                    source_schema_result.error or "Source schema not available",
+            if not isinstance(data, str):
+                return FlextResult.fail("ObjectClass conversion requires string data")
+
+            source_schema_result = self._resolve_schema_quirk(source, role="Source")
+            if source_schema_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    source_schema_result.error,
+                    "Source schema not available",
                 )
 
-            target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
-                target_quirk,
-                "Target",
+            parse_result = self._parse_objectclass_with_schema(
+                source_schema_result.value,
+                data,
+                parse_error_message="Failed to parse objectClass",
             )
-            target_schema = target_schema_result.map_or(None)
-            if target_schema is None:
-                return FlextResult.fail(
-                    target_schema_result.error or "Target schema not available",
+            parsed_oc = parse_result.map_or(None)
+            if parsed_oc is None:
+                return FlextLdifConversion._schema_conversion_fail(
+                    parse_result.error,
+                    "Failed to parse source objectClass",
                 )
 
-            if not (
-                FlextLdifConversion._has_attr(source_schema, "write_objectclass")
-                and FlextLdifConversion._has_attr(target_schema, "parse_objectclass")
-            ):
-                return r[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ].fail("Schema quirks missing objectclass conversion methods")
+            write_result = self._write_objectclass_to_rfc(source, parsed_oc)
+            rfc_value = write_result.map_or(None)
+            if rfc_value is None:
+                return write_result
+            if not isinstance(rfc_value, str):
+                return FlextLdifConversion._schema_conversion_ok(rfc_value)
 
-            write_oc = source_schema.write_objectclass
-            parse_oc = target_schema.parse_objectclass
+            target_schema_result = self._resolve_schema_quirk(target, role="Target")
+            if target_schema_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    target_schema_result.error,
+                    "Target schema not available",
+                )
 
-            def _parse_objectclass_pipeline(
-                _target_schema: p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.SchemaQuirkProtocol,
-                ldif: str,
-            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
-                parse_result = parse_oc(ldif)
-                if parse_result.is_failure:
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail(parse_result.error or "Failed to parse objectclass")
-                return r[
-                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].ok(parse_result.value)
-
-            def _write_objectclass_pipeline(
-                _source_schema: p.Ldif.SchemaAttributeProtocol
-                | p.Ldif.SchemaObjectClassProtocol
-                | p.Ldif.SchemaQuirkProtocol,
-            ) -> r[str]:
-                return write_oc(objectclass)
-
-            config = m.Ldif.SchemaConversionPipelineConfig(
-                source_schema=source_schema,
-                target_schema=target_schema,
-                write_method=_write_objectclass_pipeline,
-                parse_method=_parse_objectclass_pipeline,
-                item_name="objectclass",
+            target_result = self._parse_objectclass_with_schema(
+                target_schema_result.value,
+                rfc_value,
+                parse_error_message="Failed to parse target objectClass",
             )
-            return FlextLdifConversion._process_schema_conversion_pipeline(config)
+
+            if target_result.is_failure:
+                return FlextLdifConversion._schema_conversion_fail(
+                    target_result.error,
+                    "Failed to parse target objectClass",
+                )
+            parsed_value = target_result.value
+
+            return self._write_target_objectclass(target, parsed_value)
 
         except (
             ValueError,
@@ -1005,242 +1816,34 @@ class FlextLdifConversion(
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(
-                f"SchemaObjectClass conversion failed: {e}",
+            return FlextLdifConversion._schema_conversion_fail(
+                f"ObjectClass conversion failed: {e}",
+                "ObjectClass conversion failed",
             )
 
-    @staticmethod
-    def _perms_dict_to_model(
-        perms_dict: Mapping[str, bool | None],
-    ) -> m.Ldif.AclPermissions:
-        """Convert permissions dict to AclPermissions model."""
-        clean_dict: dict[str, bool] = {
-            k: v for k, v in perms_dict.items() if v is not None
-        }
-
-        return m.Ldif.AclPermissions.model_validate(clean_dict)
-
-    @staticmethod
-    def _normalize_permission_key(key: str) -> str:
-        """Normalize permission key for mapping."""
-        normalized = {"self_write": "selfwrite"}.get(key, key)
-        return normalized if isinstance(normalized, str) else key
-
-    @staticmethod
-    def _build_permissions_dict(
-        mapped_perms: Mapping[str, bool],
-    ) -> Mapping[str, bool | None]:
-        """Build permissions dict with standard keys."""
-        result: dict[str, bool | None] = {}
-        for (
-            source_key,
-            mapped_key,
-        ) in FlextLdifConversion._PERMISSION_KEY_MAPPING.items():
-            if not isinstance(mapped_key, str):
-                continue
-            value = mapped_perms.get(mapped_key)
-            result[source_key] = value if isinstance(value, bool) else None
-        return result
-
-    @staticmethod
-    def _apply_oid_to_oud_mapping(
-        orig_perms_dict: Mapping[str, bool],
-        converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
-    ) -> m.Ldif.Acl:
-        """Apply OID to OUD permission mapping."""
-        normalized_orig_perms: dict[str, bool] = {
-            FlextLdifConversion._normalize_permission_key(k): v
-            for k, v in orig_perms_dict.items()
-            if isinstance(v, bool)
-        }
-        mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(
-            normalized_orig_perms,
-        )
-        oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
-        perms_model = perms_to_model(oid_to_oud_perms)
-
-        return converted_acl.model_copy(
-            update={"permissions": perms_model},
-            deep=True,
-        )
-
-    @staticmethod
-    def _apply_oud_to_oid_mapping(
-        orig_perms_dict: Mapping[str, bool],
-        converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
-    ) -> m.Ldif.Acl:
-        """Apply OUD to OID permission mapping."""
-        mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(
-            orig_perms_dict,
-        )
-        oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
-        perms_model = perms_to_model(oud_to_oid_perms)
-
-        return converted_acl.model_copy(
-            update={"permissions": perms_model},
-            deep=True,
-        )
-
-    def _apply_permission_mapping(
+    def _convert_to_metadata_attribute_value(
         self,
-        config: m.Ldif.PermissionMappingConfig | None = None,
-        *,
-        original_acl: m.Ldif.Acl | None = None,
-        converted_acl: m.Ldif.Acl | None = None,
-        orig_perms_dict: Mapping[str, bool] | None = None,
-        source_server_type: str | None = None,
-        target_server_type: str | None = None,
-        converted_has_permissions: bool = False,
-    ) -> m.Ldif.Acl:
-        """Apply permission mapping based on server types."""
-        if config is None:
-            if original_acl is None or converted_acl is None:
-                if converted_acl is not None:
-                    return converted_acl
-                if original_acl is not None:
-                    return original_acl
-
-                return m.Ldif.Acl(name="")
-            config = m.Ldif.PermissionMappingConfig(
-                original_acl=original_acl,
-                converted_acl=converted_acl,
-                orig_perms_dict=dict(orig_perms_dict or {}),
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
-                converted_has_permissions=converted_has_permissions,
-            )
-
-        normalized_source = (
-            u.Ldif.Server.normalize_server_type(config.source_server_type)
-            if isinstance(config.source_server_type, str)
-            else config.source_server_type
-        )
-        normalized_target = (
-            u.Ldif.Server.normalize_server_type(config.target_server_type)
-            if isinstance(config.target_server_type, str)
-            else config.target_server_type
-        )
-
-        mapping_type = "none"
-        pair = (normalized_source, normalized_target)
-        if pair == ("oid", "oud"):
-            mapping_type = "oid_to_oud"
-        elif pair == ("oud", "oid"):
-            mapping_type = "oud_to_oid"
-        elif (
-            not config.converted_has_permissions
-            and config.original_acl.permissions is not None
-        ):
-            mapping_type = "preserve_original"
-
-        logger.debug(
-            "ACL mapping decision",
-            mapping_type=str(mapping_type),
-            normalized_source=str(normalized_source),
-            normalized_target=str(normalized_target),
-        )
-
-        if not isinstance(config.converted_acl, m.Ldif.Acl):
-            return m.Ldif.Acl()
-        converted_acl_typed: m.Ldif.Acl = config.converted_acl
-        if mapping_type == "oid_to_oud":
-            return FlextLdifConversion._apply_oid_to_oud_mapping(
-                config.orig_perms_dict,
-                converted_acl_typed,
-                self._perms_dict_to_model,
-            )
-        if mapping_type == "oud_to_oid":
-            return FlextLdifConversion._apply_oud_to_oid_mapping(
-                config.orig_perms_dict,
-                converted_acl_typed,
-                self._perms_dict_to_model,
-            )
-        if mapping_type == "preserve_original":
-            if not isinstance(config.original_acl, m.Ldif.Acl):
-                return converted_acl_typed
-            original_acl_typed: m.Ldif.Acl = config.original_acl
-            return converted_acl_typed.model_copy(
-                update={
-                    "permissions": (
-                        original_acl_typed.permissions.model_copy(deep=True)
-                        if original_acl_typed.permissions
-                        and FlextLdifConversion._has_attr(
-                            original_acl_typed.permissions,
-                            "model_copy",
-                        )
-                        else None
-                    ),
-                },
-                deep=True,
-            )
-        return converted_acl_typed
-
-    def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
-        """Check if converted ACL has any permissions set."""
-        permission_fields = (
-            "read",
-            "write",
-            "add",
-            "delete",
-            "search",
-            "compare",
-            "self_write",
-            "proxy",
-            "browse",
-            "auth",
-            "all",
-        )
-        return bool(
-            converted_acl.permissions
-            and any(
-                getattr(converted_acl.permissions, field, False)
-                for field in permission_fields
-            ),
-        )
-
-    def _preserve_permissions(
-        self,
-        original_acl: m.Ldif.Acl,
-        converted_acl: m.Ldif.Acl,
-        source_server_type: str | None,
-        target_server_type: str | None,
-        *,
-        converted_has_permissions: bool,
-    ) -> m.Ldif.Acl:
-        """Preserve permissions from original ACL."""
-        if not original_acl.permissions:
-            return converted_acl
-
-        orig_perms_dict_raw = original_acl.permissions.model_dump(exclude_unset=True)
-        orig_perms_dict: dict[str, bool] = {
-            k: v for k, v in orig_perms_dict_raw.items() if v is True
-        }
-
-        logger.debug(
-            "ACL permission preservation",
-            source_server_type=source_server_type or "",
-            target_server_type=target_server_type or "",
-            original_permissions=str(orig_perms_dict),
-        )
-
-        if orig_perms_dict:
-            return self._apply_permission_mapping(
-                original_acl=original_acl,
-                converted_acl=converted_acl,
-                orig_perms_dict=orig_perms_dict,
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
-                converted_has_permissions=converted_has_permissions,
-            )
-
-        return converted_acl
+        value: _MetadataMappingValue,
+    ) -> t.MetadataValue:
+        """Convert value to MetadataAttributeValue type."""
+        if value is None:
+            return ""
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, (list, tuple)):
+            converted_list: list[t.Scalar] = []
+            for item in value:
+                if isinstance(item, (str, int, float, bool, datetime)):
+                    converted_list.append(item)
+                elif item is None:
+                    converted_list.append("")
+                else:
+                    converted_list.append(str(item))
+            return converted_list
+        if isinstance(value, dict):
+            # Dict not supported in strict MetadataAttributeValue, convert to string
+            return str(value)
+        return str(value)
 
     def _get_extensions_dict(
         self,
@@ -1288,29 +1891,39 @@ class FlextLdifConversion(
 
         return {}
 
-    def _convert_to_metadata_attribute_value(
+    def _get_schema_quirk_for_support_check(
         self,
-        value: _MetadataMappingValue,
-    ) -> t.MetadataValue:
-        """Convert value to MetadataAttributeValue type."""
-        if value is None:
-            return ""
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, (list, tuple)):
-            converted_list: list[t.Scalar] = []
-            for item in value:
-                if isinstance(item, (str, int, float, bool, datetime)):
-                    converted_list.append(item)
-                elif item is None:
-                    converted_list.append("")
-                else:
-                    converted_list.append(str(item))
-            return converted_list
-        if isinstance(value, dict):
-            # Dict not supported in strict MetadataAttributeValue, convert to string
-            return str(value)
-        return str(value)
+        quirk: FlextLdifServersBase,
+    ) -> t.ContainerValue | None:
+        """Get schema quirk from base quirk for support checking."""
+        if FlextLdifConversion._has_attr(
+            quirk,
+            "parse_attribute",
+        ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
+            required_methods = ("parse", "write")
+            if all(
+                FlextLdifConversion._has_attr(quirk, method)
+                and callable(getattr(quirk, method))
+                for method in required_methods
+            ):
+                return quirk
+            return None
+
+        schema_quirk_raw: t.ContainerValue | None = getattr(
+            quirk,
+            "schema_quirk",
+            None,
+        )
+        if schema_quirk_raw is not None:
+            required_methods = ("parse", "write")
+            if all(
+                FlextLdifConversion._has_attr(schema_quirk_raw, method)
+                and callable(getattr(schema_quirk_raw, method))
+                for method in required_methods
+            ):
+                return schema_quirk_raw
+            return None
+        return None
 
     def _preserve_acl_metadata(
         self,
@@ -1414,138 +2027,118 @@ class FlextLdifConversion(
             )
         return acl_step1
 
-    def _convert_acl(
+    def _preserve_permissions(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        acl: m.Ldif.Acl,
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Convert Acl model via Entry RFC + Metadata pipeline."""
-        try:
-            acl = acl.model_copy(deep=True)
+        original_acl: m.Ldif.Acl,
+        converted_acl: m.Ldif.Acl,
+        source_server_type: str | None,
+        target_server_type: str | None,
+        *,
+        converted_has_permissions: bool,
+    ) -> m.Ldif.Acl:
+        """Preserve permissions from original ACL."""
+        if not original_acl.permissions:
+            return converted_acl
 
-            entry_dn = m.Ldif.DN(
-                value="cn=acl-conversion,dc=example,dc=com",
-            )
-            entry_attributes = m.Ldif.Attributes(attributes={})
+        orig_perms_dict_raw = original_acl.permissions.model_dump(exclude_unset=True)
+        orig_perms_dict: dict[str, bool] = {
+            k: v for k, v in orig_perms_dict_raw.items() if v is True
+        }
 
-            get_server_type = u.Mapper.prop("server_type")
-            server_type_raw = get_server_type(source_quirk)
-            server_type_attr = (
-                server_type_raw if isinstance(server_type_raw, str) else None
-            )
+        logger.debug(
+            "ACL permission preservation",
+            source_server_type=source_server_type or "",
+            target_server_type=target_server_type or "",
+            original_permissions=str(orig_perms_dict),
+        )
 
-            source_server_type: str | None = u.try_(
-                lambda: (
-                    u.Ldif.Server.normalize_server_type(str(server_type_attr))
-                    if isinstance(server_type_attr, str)
-                    else None
-                ),
-                default=None,
-            )
-
-            entry_metadata = m.Ldif.QuirkMetadata.create_for(
-                source_server_type,
-                extensions=None,
-            )
-            entry_metadata.acls = [acl]
-
-            rfc_entry = m.Ldif.Entry.model_validate({
-                "dn": entry_dn,
-                "attributes": entry_attributes,
-                "metadata": entry_metadata,
-            })
-
-            entry_result = self._convert_entry(source_quirk, target_quirk, rfc_entry)
-            converted_entry = entry_result.map_or(None)
-            if converted_entry is None:
-                return entry_result
-            if not isinstance(converted_entry, m.Ldif.Entry):
-                return FlextResult.fail(
-                    f"Entry conversion returned unexpected type: {type(converted_entry).__name__}",
-                )
-
-            get_metadata = u.Mapper.prop("metadata")
-            get_acls = u.Mapper.prop("acls")
-            converted_metadata_raw = get_metadata(converted_entry)
-
-            if not isinstance(
-                converted_metadata_raw,
-                (m.Ldif.QuirkMetadata, type(None)),
-            ):
-                return FlextResult.fail(
-                    f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
-                )
-
-            converted_metadata: m.Ldif.QuirkMetadata | None = converted_metadata_raw
-
-            acls_raw = get_acls(converted_metadata) if converted_metadata else None
-            acls: list[m.Ldif.Acl] | None = None
-            if acls_raw is not None and isinstance(acls_raw, list):
-                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
-
-            if not acls:
-                return FlextResult.fail(
-                    "Converted entry has no ACLs in metadata.acls",
-                )
-
-            if not acls or len(acls) == 0:
-                return FlextResult.fail("No ACL found in converted entry metadata")
-            domain_acl = acls[0]
-
-            converted_acl: m.Ldif.Acl = domain_acl
-
-            get_server_type = u.Mapper.prop("server_type")
-            target_server_raw = get_server_type(target_quirk)
-            target_server_type_raw = (
-                target_server_raw if isinstance(target_server_raw, str) else "unknown"
-            )
-
-            target_server_type: str | None = u.try_(
-                lambda: (
-                    u.Ldif.Server.normalize_server_type(target_server_type_raw)
-                    if isinstance(target_server_type_raw, str)
-                    and target_server_type_raw != "unknown"
-                    else None
-                ),
-                default=None,
-            )
-
-            converted_acl = self._preserve_acl_metadata(
-                acl,
-                converted_acl,
+        if orig_perms_dict:
+            return self._apply_permission_mapping(
+                original_acl=original_acl,
+                converted_acl=converted_acl,
+                orig_perms_dict=orig_perms_dict,
                 source_server_type=source_server_type,
                 target_server_type=target_server_type,
+                converted_has_permissions=converted_has_permissions,
             )
 
-            converted_acl = converted_acl.model_copy(
-                update={"server_type": target_server_type},
+        return converted_acl
+
+    def _resolve_schema_quirk(
+        self,
+        quirk_or_type: str | FlextLdifServersBase,
+        *,
+        role: str,
+    ) -> r[p.Ldif.SchemaQuirkProtocol]:
+        quirk = self._resolve_quirk(quirk_or_type)
+        try:
+            schema = FlextLdifConversion._get_schema_quirk(quirk)
+            return r[p.Ldif.SchemaQuirkProtocol].ok(schema)
+        except TypeError as e:
+            return r[p.Ldif.SchemaQuirkProtocol].fail(f"{role} quirk error: {e}")
+
+    def _update_entry_metadata(
+        self,
+        entry: m.Ldif.Entry,
+        validated_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        conversion_analysis: str | None,
+        source_quirk_name: str,
+    ) -> m.Ldif.Entry:
+        """Update entry metadata for conversion (internal helper)."""
+        get_metadata = u.Mapper.prop("metadata")
+        get_extensions = u.Mapper.prop("extensions")
+
+        current_entry = entry
+        if not get_metadata(current_entry):
+            metadata_obj = m.Ldif.QuirkMetadata(quirk_type=validated_quirk_type)
+
+            current_entry = current_entry.model_copy(
+                update={"metadata": metadata_obj},
                 deep=True,
             )
 
-            return r[_TConvertedModel].ok(converted_acl)
+        entry_metadata = current_entry.metadata
+        if (
+            entry_metadata
+            and get_metadata(current_entry)
+            and not get_extensions(entry_metadata)
+        ):
+            updated_metadata = entry_metadata.model_copy(
+                update={"extensions": m.Ldif.DynamicMetadata()},
+                deep=True,
+            )
 
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception(
-                "Failed to convert ACL model",
-                error=str(e),
+            current_entry = current_entry.model_copy(
+                update={"metadata": updated_metadata},
+                deep=True,
             )
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(
-                f"Acl conversion failed: {e}",
+
+        entry_metadata = current_entry.metadata
+        if entry_metadata and get_metadata(current_entry):
+            extensions_update: dict[str, t.ContainerValue] = {
+                "converted_from_server": source_quirk_name,
+            }
+            if conversion_analysis:
+                extensions_update["conversion_analysis"] = conversion_analysis
+
+            updated_extensions = (
+                entry_metadata.extensions or m.Ldif.DynamicMetadata()
+            ).model_copy(
+                update=extensions_update,
+                deep=True,
             )
+
+            updated_metadata = entry_metadata.model_copy(
+                update={"extensions": updated_extensions},
+                deep=True,
+            )
+
+            current_entry = current_entry.model_copy(
+                update={"metadata": updated_metadata},
+                deep=True,
+            )
+
+        return current_entry
 
     def _write_attribute_to_rfc(
         self,
@@ -1565,117 +2158,6 @@ class FlextLdifConversion(
             return r[str].ok(source_attr)
 
         return r.ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
-
-    @staticmethod
-    def _schema_conversion_fail(
-        error: str | None,
-        fallback: str,
-    ) -> r[_TSchemaConversionValue]:
-        return r[_TSchemaConversionValue].fail(error or fallback)
-
-    @staticmethod
-    def _schema_conversion_ok(
-        value: _TSchemaConversionValue,
-    ) -> r[_TSchemaConversionValue]:
-        return r[_TSchemaConversionValue].ok(value)
-
-    @staticmethod
-    def _schema_passthrough_ok(
-        value: t.ContainerValue,
-    ) -> r[_TSchemaConversionValue] | None:
-        if isinstance(value, str):
-            return FlextLdifConversion._schema_conversion_ok(value)
-        if isinstance(value, dict):
-            # Dict not supported in strict _TSchemaConversionValue, convert to string
-            return FlextLdifConversion._schema_conversion_ok(str(value))
-        return None
-
-    def _convert_attribute(
-        self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        data: str | t.MetadataValue,
-    ) -> r[_TSchemaConversionValue]:
-        """Convert attribute from source to target quirk via write->parse pipeline."""
-        try:
-            if not isinstance(data, str):
-                return FlextResult.fail("Attribute conversion requires string data")
-
-            source_schema_result = self._resolve_schema_quirk(source, role="Source")
-            if source_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    source_schema_result.error,
-                    "Source schema not available",
-                )
-
-            parse_result = self._parse_attribute_with_schema(
-                source_schema_result.value,
-                data,
-                parse_error_message="Failed to parse attribute",
-            )
-            parsed_attr = parse_result.map_or(None)
-            if parsed_attr is None:
-                return FlextLdifConversion._schema_conversion_fail(
-                    parse_result.error,
-                    "Failed to parse source attribute",
-                )
-
-            rfc_result = self._write_attribute_to_rfc(source, parsed_attr)
-            rfc_value = rfc_result.map_or(None)
-            if rfc_value is None:
-                return rfc_result
-
-            if not isinstance(rfc_value, str):
-                return FlextLdifConversion._schema_conversion_ok(rfc_value)
-
-            target_schema_result = self._resolve_schema_quirk(target, role="Target")
-            if target_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_schema_result.error,
-                    "Target schema not available",
-                )
-
-            target_parse_result = self._parse_attribute_with_schema(
-                target_schema_result.value,
-                rfc_value,
-                parse_error_message="Failed to parse target attribute",
-            )
-
-            if target_parse_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_parse_result.error,
-                    "Failed to parse target attribute",
-                )
-
-            parsed_value: m.Ldif.SchemaAttribute = target_parse_result.value
-
-            return self._write_target_attribute(parsed_value)
-
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return FlextLdifConversion._schema_conversion_fail(
-                f"Attribute conversion failed: {e}",
-                "Attribute conversion failed",
-            )
-
-    def _write_target_attribute(
-        self,
-        parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataValue,
-    ) -> r[_TSchemaConversionValue]:
-        """Write target attribute to final format."""
-        passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_attr)
-        if passthrough is not None:
-            return passthrough
-        if isinstance(parsed_attr, m.Ldif.SchemaAttribute):
-            return FlextLdifConversion._schema_conversion_ok(parsed_attr)
-
-        msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
-        raise TypeError(msg)
 
     def _write_objectclass_to_rfc(
         self,
@@ -1706,127 +2188,19 @@ class FlextLdifConversion(
 
         return write_result
 
-    def _convert_objectclass(
+    def _write_target_attribute(
         self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        data: str | t.MetadataValue,
+        parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataValue,
     ) -> r[_TSchemaConversionValue]:
-        """Convert objectClass from source to target quirk via write->parse pipeline."""
-        try:
-            if not isinstance(data, str):
-                return FlextResult.fail("ObjectClass conversion requires string data")
+        """Write target attribute to final format."""
+        passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_attr)
+        if passthrough is not None:
+            return passthrough
+        if isinstance(parsed_attr, m.Ldif.SchemaAttribute):
+            return FlextLdifConversion._schema_conversion_ok(parsed_attr)
 
-            source_schema_result = self._resolve_schema_quirk(source, role="Source")
-            if source_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    source_schema_result.error,
-                    "Source schema not available",
-                )
-
-            parse_result = self._parse_objectclass_with_schema(
-                source_schema_result.value,
-                data,
-                parse_error_message="Failed to parse objectClass",
-            )
-            parsed_oc = parse_result.map_or(None)
-            if parsed_oc is None:
-                return FlextLdifConversion._schema_conversion_fail(
-                    parse_result.error,
-                    "Failed to parse source objectClass",
-                )
-
-            write_result = self._write_objectclass_to_rfc(source, parsed_oc)
-            rfc_value = write_result.map_or(None)
-            if rfc_value is None:
-                return write_result
-            if not isinstance(rfc_value, str):
-                return FlextLdifConversion._schema_conversion_ok(rfc_value)
-
-            target_schema_result = self._resolve_schema_quirk(target, role="Target")
-            if target_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_schema_result.error,
-                    "Target schema not available",
-                )
-
-            target_result = self._parse_objectclass_with_schema(
-                target_schema_result.value,
-                rfc_value,
-                parse_error_message="Failed to parse target objectClass",
-            )
-
-            if target_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_result.error,
-                    "Failed to parse target objectClass",
-                )
-            parsed_value = target_result.value
-
-            return self._write_target_objectclass(target, parsed_value)
-
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return FlextLdifConversion._schema_conversion_fail(
-                f"ObjectClass conversion failed: {e}",
-                "ObjectClass conversion failed",
-            )
-
-    def _resolve_schema_quirk(
-        self,
-        quirk_or_type: str | FlextLdifServersBase,
-        *,
-        role: str,
-    ) -> r[p.Ldif.SchemaQuirkProtocol]:
-        quirk = self._resolve_quirk(quirk_or_type)
-        try:
-            schema = FlextLdifConversion._get_schema_quirk(quirk)
-            return r[p.Ldif.SchemaQuirkProtocol].ok(schema)
-        except TypeError as e:
-            return r[p.Ldif.SchemaQuirkProtocol].fail(f"{role} quirk error: {e}")
-
-    @staticmethod
-    def _parse_attribute_with_schema(
-        schema: p.Ldif.SchemaQuirkProtocol,
-        value: str,
-        *,
-        parse_error_message: str,
-    ) -> r[m.Ldif.SchemaAttribute]:
-        parse_result = schema.parse_attribute(value)
-        if parse_result.is_failure:
-            return r[m.Ldif.SchemaAttribute].fail(
-                parse_result.error or parse_error_message,
-            )
-        parsed_value = parse_result.value
-        if not isinstance(parsed_value, m.Ldif.SchemaAttribute):
-            return r[m.Ldif.SchemaAttribute].fail(
-                f"Expected SchemaAttribute, got {type(parsed_value).__name__}",
-            )
-        return r[m.Ldif.SchemaAttribute].ok(parsed_value)
-
-    @staticmethod
-    def _parse_objectclass_with_schema(
-        schema: p.Ldif.SchemaQuirkProtocol,
-        value: str,
-        *,
-        parse_error_message: str,
-    ) -> r[m.Ldif.SchemaObjectClass]:
-        parse_result = schema.parse_objectclass(value)
-        if parse_result.is_failure:
-            return r[m.Ldif.SchemaObjectClass].fail(
-                parse_result.error or parse_error_message,
-            )
-        parsed_value = parse_result.value
-        if not isinstance(parsed_value, m.Ldif.SchemaObjectClass):
-            return r[m.Ldif.SchemaObjectClass].fail(
-                f"Expected SchemaObjectClass, got {type(parsed_value).__name__}",
-            )
-        return r[m.Ldif.SchemaObjectClass].ok(parsed_value)
+        msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
+        raise TypeError(msg)
 
     def _write_target_objectclass(
         self,
@@ -1859,380 +2233,6 @@ class FlextLdifConversion(
             error_msg,
             "Failed to write objectClass",
         )
-
-    def batch_convert(
-        self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        model_list: Sequence[
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ],
-    ) -> r[
-        list[
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ]
-    ]:
-        """Convert multiple models from source to target quirk via RFC."""
-        start_time = time.perf_counter()
-
-        if isinstance(source, str):
-            source_format: str = source
-        else:
-            source_name_result = u.Mapper.prop("server_name")(source)
-            source_format = (
-                source_name_result if isinstance(source_name_result, str) else "unknown"
-            )
-
-        if isinstance(target, str):
-            target_format: str = target
-        else:
-            target_name_result = u.Mapper.prop("server_name")(target)
-            target_format = (
-                target_name_result if isinstance(target_name_result, str) else "unknown"
-            )
-
-        if not model_list:
-            return r[
-                list[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ]
-            ].ok([])
-
-        model_type = type(model_list[0]).__name__
-        conversion_operation = f"batch_convert_{model_type}"
-
-        try:
-            converted: list[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ] = []
-            errors: list[str] = []
-            error_details: list[str] = []
-
-            for idx, model_item in enumerate(model_list):
-                if not isinstance(
-                    model_item,
-                    (
-                        m.Ldif.Entry,
-                        m.Ldif.SchemaAttribute,
-                        m.Ldif.SchemaObjectClass,
-                        m.Ldif.Acl,
-                    ),
-                ):
-                    error_msg = f"Item {idx}: Expected convertible model, got {type(model_item).__name__}"
-                    errors.append(error_msg)
-                    error_details.append(
-                        f"batch_item_{idx}: {error_msg}",
-                    )
-                    continue
-                result = self.convert(source, target, model_item)
-                unwrapped = result.map_or(None)
-                if unwrapped is not None:
-                    converted.append(unwrapped)
-                else:
-                    error_msg = result.error or "Unknown error"
-                    errors.append(f"Item {idx}: {error_msg}")
-                    error_details.append(
-                        f"batch_item_{idx}: {error_msg}",
-                    )
-
-            duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-            model_list_typed: list[object] = list(model_list)
-            converted_typed: list[object] = list(converted)
-
-            errors_typed: list[str] = errors if isinstance(errors, list) else []
-            items_processed = u.count(model_list_typed)
-            items_converted = u.count(converted_typed)
-            items_failed = u.count(errors_typed)
-
-            conversion_config = m.Ldif.ConversionEventConfig(
-                conversion_operation=conversion_operation,
-                source_format=source_format,
-                target_format=target_format,
-                items_processed=items_processed,
-                items_converted=items_converted,
-                items_failed=items_failed,
-                conversion_duration_ms=duration_ms,
-                error_details=error_details or None,
-            )
-
-            if FlextLdifConversion._has_attr(logger, "bind") and callable(
-                getattr(logger, "bind", None),
-            ):
-                _ = u.Ldif.Events.log_and_emit_conversion_event(
-                    logger=logger,
-                    config=conversion_config,
-                    log_level="warning" if errors else "info",
-                )
-
-            if errors:
-                error_count = u.count(errors)
-                error_msg = (
-                    f"Batch conversion completed with {error_count} errors:\n"
-                    + "\n".join(errors[: self.MAX_ERRORS_TO_SHOW])
-                )
-                if error_count > self.MAX_ERRORS_TO_SHOW:
-                    error_msg += (
-                        f"\n... and {error_count - self.MAX_ERRORS_TO_SHOW} more errors"
-                    )
-                return r[
-                    list[
-                        m.Ldif.Entry
-                        | m.Ldif.SchemaAttribute
-                        | m.Ldif.SchemaObjectClass
-                        | m.Ldif.Acl
-                    ]
-                ].fail(
-                    error_msg,
-                )
-
-            return r[
-                list[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ]
-            ].ok(converted)
-
-        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
-            duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-            model_list_as_list: list[object] = list(model_list) if model_list else []
-            items_count = u.count(model_list_as_list)
-            conversion_config = m.Ldif.ConversionEventConfig(
-                conversion_operation=conversion_operation,
-                source_format=source_format,
-                target_format=target_format,
-                items_processed=items_count,
-                items_converted=0,
-                items_failed=items_count,
-                conversion_duration_ms=duration_ms,
-                error_details=[
-                    f"batch_conversion: Batch conversion failed: {e}",
-                ],
-            )
-
-            if FlextLdifConversion._has_attr(logger, "bind") and callable(
-                getattr(logger, "bind", None),
-            ):
-                _ = u.Ldif.Events.log_and_emit_conversion_event(
-                    logger=logger,
-                    config=conversion_config,
-                    log_level="error",
-                )
-
-            return r[
-                list[
-                    m.Ldif.Entry
-                    | m.Ldif.SchemaAttribute
-                    | m.Ldif.SchemaObjectClass
-                    | m.Ldif.Acl
-                ]
-            ].fail(
-                f"Batch conversion failed: {e}",
-            )
-
-    def validate_oud_conversion(self) -> r[bool]:
-        """Validate DN case consistency for OUD target conversion."""
-        return self.dn_registry.validate_oud_consistency()
-
-    def reset_dn_registry(self) -> None:
-        """Clear DN registry for new conversion session."""
-        self.dn_registry.clear()
-
-    def get_supported_conversions(
-        self,
-        quirk: FlextLdifServersBase,
-    ) -> Mapping[str, bool]:
-        """Check which data types a quirk supports for conversion."""
-        support: t.Ldif.CommonDict.DistributionDict = {
-            "attribute": 0,
-            "objectclass": 0,
-            "acl": 0,
-            "entry": 0,
-        }
-
-        support = self._check_schema_support(quirk, support)
-
-        support = self._check_acl_support(quirk, support)
-
-        support = self._check_entry_support(quirk, support)
-
-        return {
-            "attribute": bool(support.get("attribute", 0)),
-            "objectClass": bool(
-                support.get("objectclass", 0),
-            ),
-            "objectclass": bool(
-                support.get("objectclass", 0),
-            ),
-            "acl": bool(support.get("acl", 0)),
-            "entry": bool(support.get("entry", 0)),
-        }
-
-    def _get_schema_quirk_for_support_check(
-        self,
-        quirk: FlextLdifServersBase,
-    ) -> t.ContainerValue | None:
-        """Get schema quirk from base quirk for support checking."""
-        if FlextLdifConversion._has_attr(
-            quirk,
-            "parse_attribute",
-        ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
-            required_methods = ("parse", "write")
-            if all(
-                FlextLdifConversion._has_attr(quirk, method)
-                and callable(getattr(quirk, method))
-                for method in required_methods
-            ):
-                return quirk
-            return None
-
-        schema_quirk_raw: t.ContainerValue | None = getattr(
-            quirk,
-            "schema_quirk",
-            None,
-        )
-        if schema_quirk_raw is not None:
-            required_methods = ("parse", "write")
-            if all(
-                FlextLdifConversion._has_attr(schema_quirk_raw, method)
-                and callable(getattr(schema_quirk_raw, method))
-                for method in required_methods
-            ):
-                return schema_quirk_raw
-            return None
-        return None
-
-    def _check_attribute_support(
-        self,
-        quirk_schema: t.ContainerValue,
-        test_attr_def: str,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
-        """Check attribute support for schema quirk."""
-        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
-            return support
-        if not FlextLdifConversion._has_attr(quirk_schema, "parse_attribute"):
-            return support
-
-        can_handle_attr = getattr(quirk_schema, "can_handle_attribute", None)
-        if can_handle_attr is None or not callable(can_handle_attr):
-            return support
-        if not can_handle_attr(test_attr_def):
-            return support
-
-        parse_attr = getattr(quirk_schema, "parse_attribute", None)
-        if parse_attr is None or not callable(parse_attr):
-            return support
-
-        attr_result = parse_attr(test_attr_def)
-
-        if FlextLdifConversion._has_attr(attr_result, "is_success") and bool(
-            getattr(attr_result, "is_success", False),
-        ):
-            support["attribute"] = 1
-
-        return support
-
-    def _check_objectclass_support(
-        self,
-        quirk_schema: t.ContainerValue,
-        test_oc_def: str,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
-        """Check objectClass support for schema quirk."""
-        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
-            return support
-        if not FlextLdifConversion._has_attr(quirk_schema, "parse_objectclass"):
-            return support
-
-        can_handle_oc = getattr(quirk_schema, "can_handle_objectclass", None)
-        if can_handle_oc is None or not callable(can_handle_oc):
-            return support
-        if not can_handle_oc(test_oc_def):
-            return support
-
-        parse_oc = getattr(quirk_schema, "parse_objectclass", None)
-        if parse_oc is None or not callable(parse_oc):
-            return support
-
-        oc_result = parse_oc(test_oc_def)
-        if (
-            FlextLdifConversion._has_attr(oc_result, "map_or")
-            and callable(getattr(oc_result, "map_or", None))
-            and oc_result.map_or(None) is not None  # type: ignore[attr-defined]
-        ):
-            support["objectclass"] = 1
-
-        return support
-
-    def _check_schema_support(
-        self,
-        quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
-        """Check schema (attribute and objectClass) support."""
-        quirk_schema = self._get_schema_quirk_for_support_check(quirk)
-        if quirk_schema is None:
-            return support
-
-        test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        test_oc_def = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
-        )
-
-        support = self._check_attribute_support(quirk_schema, test_attr_def, support)
-
-        return self._check_objectclass_support(quirk_schema, test_oc_def, support)
-
-    def _check_acl_support(
-        self,
-        quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
-        """Check ACL support."""
-        acl = getattr(quirk, "acl_quirk", None)
-        if acl is None:
-            acl = getattr(quirk, "_acl_quirk", None)
-        test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        if acl and callable(getattr(acl, "parse", None)):
-            acl_result = acl.parse(test_acl_def)
-            if acl_result.map_or(None) is not None:
-                support["acl"] = 1
-        return support
-
-    def _check_entry_support(
-        self,
-        quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
-        """Check Entry support."""
-        entry = getattr(quirk, "entry_quirk", None)
-        if entry is None:
-            entry = getattr(quirk, "_entry_quirk", None)
-        if (
-            entry is None
-            and FlextLdifConversion._has_attr(quirk, "parse")
-            and FlextLdifConversion._has_attr(quirk, "can_handle_entry")
-        ):
-            entry = quirk
-        if entry is not None and callable(getattr(entry, "parse", None)):
-            support["entry"] = 1
-        return support
 
 
 __all__ = ["FlextLdifConversion"]

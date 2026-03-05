@@ -24,38 +24,6 @@ class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
-        """DRY intelligent builders: auto-detect types from attributes."""
-        api = FlextLdif.get_instance()
-
-        # DRY: Single list comprehension creates all entries
-        return r.ok([
-            api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).value
-            for name, surname, email, phone in [
-                ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
-                ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
-                ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
-            ]
-            if api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).is_success
-        ])
-
-    @staticmethod
     def advanced_filtering() -> r[list[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
@@ -101,3 +69,35 @@ class DRYEntryOperations:
                 lambda results: [r.model_dump() for r in results],
             ),
         )
+
+    @staticmethod
+    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
+        """DRY intelligent builders: auto-detect types from attributes."""
+        api = FlextLdif.get_instance()
+
+        # DRY: Single list comprehension creates all entries
+        return r.ok([
+            api.create_entry(
+                dn=f"cn={name},ou=People,dc=example,dc=com",
+                attributes={
+                    "cn": name,
+                    "sn": surname,
+                    "mail": email,
+                    "telephoneNumber": phone,
+                },
+            ).value
+            for name, surname, email, phone in [
+                ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
+                ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
+                ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
+            ]
+            if api.create_entry(
+                dn=f"cn={name},ou=People,dc=example,dc=com",
+                attributes={
+                    "cn": name,
+                    "sn": surname,
+                    "mail": email,
+                    "telephoneNumber": phone,
+                },
+            ).is_success
+        ])

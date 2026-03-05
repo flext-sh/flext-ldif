@@ -15,6 +15,22 @@ from flext_ldif import FlextLdifServiceBase, c, m, u
 class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service."""
 
+    def __init__(self) -> None:
+        """Initialize Syntax service."""
+        super().__init__()
+
+        self._oid_to_name = (
+            dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
+            if getattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items", None) is not None
+            else {}
+        )
+        self._name_to_oid = (
+            dict(c.Ldif.RfcSyntaxOids.NAME_TO_OID)
+            if getattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items", None) is not None
+            else {}
+        )
+        self._common_syntaxes = c.Ldif.RfcSyntaxOids.COMMON_SYNTAXES
+
     @classmethod
     def _build_validator_map(cls) -> Mapping[str, Callable[[str], r[bool]]]:
         """Build syntax validator map from constants."""
@@ -33,22 +49,6 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             "binary": lambda _: r[bool].ok(value=True),
         }
 
-    def __init__(self) -> None:
-        """Initialize Syntax service."""
-        super().__init__()
-
-        self._oid_to_name = (
-            dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
-            if getattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items", None) is not None
-            else {}
-        )
-        self._name_to_oid = (
-            dict(c.Ldif.RfcSyntaxOids.NAME_TO_OID)
-            if getattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items", None) is not None
-            else {}
-        )
-        self._common_syntaxes = c.Ldif.RfcSyntaxOids.COMMON_SYNTAXES
-
     @override
     @d.log_operation("syntax_service_check")
     @d.track_operation()
@@ -66,15 +66,15 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             ),
         )
 
-    def validate_oid(self, oid: str) -> r[bool]:
-        """Validate OID format compliance with LDAP OID syntax."""
-        if not oid:
-            return r[bool].ok(False)
+    def get_syntax_category(self, oid: str) -> r[str]:
+        """Get type category for a syntax OID."""
+        resolve_result = self.resolve_syntax(oid)
+        if resolve_result.is_failure:
+            return r[str].fail(
+                f"Cannot determine category - unknown syntax OID: {oid}",
+            )
 
-        try:
-            return r[bool].ok(bool(re.match(r"^[0-2](\.[0-9]+)*$", oid)))
-        except (TypeError, re.error) as e:
-            return r[bool].fail(f"Failed to validate OID format: {e}")
+        return r[str].ok(resolve_result.value.type_category)
 
     def is_rfc4517_standard(self, oid: str) -> r[bool]:
         """Check if OID is a standard RFC 4517 syntax OID."""
@@ -86,19 +86,12 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         except (TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to check RFC 4517 standard: {e}")
 
-    def lookup_oid(self, oid: str) -> r[str]:
-        """Look up syntax name for a given OID."""
-        if not oid:
-            return r[str].fail("OID cannot be empty")
-
+    def list_common_syntaxes(self) -> r[list[str]]:
+        """List all supported RFC 4517 syntax OIDs."""
         try:
-            name_raw = u.Mapper.get(self._oid_to_name, oid, default="")
-
-            if name_raw:
-                return r[str].ok(name_raw)
-            return r[str].fail(f"Syntax name not found for OID: {oid}")
-        except (TypeError, KeyError) as e:
-            return r[str].fail(f"Failed to lookup OID: {e}")
+            return r[list[str]].ok(sorted(self._common_syntaxes))
+        except (TypeError, AttributeError) as e:
+            return r[list[str]].fail(f"Failed to list common syntaxes: {e}")
 
     def lookup_name(self, name: str) -> r[str]:
         """Look up OID for a given syntax name."""
@@ -113,6 +106,20 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return r[str].fail(f"OID not found for syntax name: {name}")
         except (TypeError, KeyError) as e:
             return r[str].fail(f"Failed to lookup syntax name: {e}")
+
+    def lookup_oid(self, oid: str) -> r[str]:
+        """Look up syntax name for a given OID."""
+        if not oid:
+            return r[str].fail("OID cannot be empty")
+
+        try:
+            name_raw = u.Mapper.get(self._oid_to_name, oid, default="")
+
+            if name_raw:
+                return r[str].ok(name_raw)
+            return r[str].fail(f"Syntax name not found for OID: {oid}")
+        except (TypeError, KeyError) as e:
+            return r[str].fail(f"Failed to lookup OID: {e}")
 
     @d.track_operation()
     def resolve_syntax(
@@ -159,6 +166,16 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
 
         return r[m.Ldif.Syntax].ok(syntax)
 
+    def validate_oid(self, oid: str) -> r[bool]:
+        """Validate OID format compliance with LDAP OID syntax."""
+        if not oid:
+            return r[bool].ok(False)
+
+        try:
+            return r[bool].ok(bool(re.match(r"^[0-2](\.[0-9]+)*$", oid)))
+        except (TypeError, re.error) as e:
+            return r[bool].fail(f"Failed to validate OID format: {e}")
+
     @d.track_operation()
     def validate_value(
         self,
@@ -193,23 +210,6 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return validator(value)
 
         return r[bool].ok(value=True)
-
-    def get_syntax_category(self, oid: str) -> r[str]:
-        """Get type category for a syntax OID."""
-        resolve_result = self.resolve_syntax(oid)
-        if resolve_result.is_failure:
-            return r[str].fail(
-                f"Cannot determine category - unknown syntax OID: {oid}",
-            )
-
-        return r[str].ok(resolve_result.value.type_category)
-
-    def list_common_syntaxes(self) -> r[list[str]]:
-        """List all supported RFC 4517 syntax OIDs."""
-        try:
-            return r[list[str]].ok(sorted(self._common_syntaxes))
-        except (TypeError, AttributeError) as e:
-            return r[list[str]].fail(f"Failed to list common syntaxes: {e}")
 
 
 __all__ = ["FlextLdifSyntax"]

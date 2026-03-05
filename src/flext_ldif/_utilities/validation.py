@@ -37,6 +37,14 @@ class FlextLdifUtilitiesValidation(FlextUtilities):
         )
 
         @classmethod
+        def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
+            try:
+                _ = cls._ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
+                return True
+            except ValidationError:
+                return False
+
+        @classmethod
         def is_valid_rfc4512_descriptor(cls, value: str) -> bool:
             try:
                 _ = cls._DESCRIPTOR_ADAPTER.validate_python(value)
@@ -50,14 +58,6 @@ class FlextLdifUtilitiesValidation(FlextUtilities):
                 _ = cls._DN_COMPONENT_ADAPTER.validate_python(
                     f"{attribute_name}={value}",
                 )
-                return True
-            except ValidationError:
-                return False
-
-        @classmethod
-        def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
-            try:
-                _ = cls._ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
                 return True
             except ValidationError:
                 return False

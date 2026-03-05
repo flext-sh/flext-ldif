@@ -84,6 +84,11 @@ class FlextLdifModelsDomains:
             re.IGNORECASE,
         )
 
+        @override
+        def __str__(self) -> str:
+            """Return DN value as string for str() conversion."""
+            return self.value
+
         # NOTE: DN validation moved to Entry.validate_entry_rfc_compliance()
         # DN is a frozen Value Object and cannot be modified
         # after construction
@@ -128,6 +133,32 @@ class FlextLdifModelsDomains:
             if not self.metadata:
                 return False
             return getattr(self.metadata, "original_format", None) == "base64"
+
+        @classmethod
+        def from_value(cls, dn: str | Self | None) -> Self:
+            """Create DN from string or existing instance.
+
+            Factory method that normalizes DN input to DN object.
+            Uses Self for proper facade compatibility (models.py exposure).
+
+            Args:
+                dn: DN as string or DN object
+
+            Returns:
+                DN instance (new or existing)
+
+            Raises:
+                ValueError: If dn is None
+
+            Note:
+                Lenient processing: Empty DN is accepted.
+                Validation at Entry level via validate_entry_rfc_compliance().
+
+            """
+            if dn is None:
+                msg = "dn cannot be None"
+                raise ValueError(msg)
+            return cls(value=str(dn))
 
         def create_statistics(
             self,
@@ -181,37 +212,6 @@ class FlextLdifModelsDomains:
                 transformations=transformations if transformations is not None else [],
                 **flags,
             )
-
-        @classmethod
-        def from_value(cls, dn: str | Self | None) -> Self:
-            """Create DN from string or existing instance.
-
-            Factory method that normalizes DN input to DN object.
-            Uses Self for proper facade compatibility (models.py exposure).
-
-            Args:
-                dn: DN as string or DN object
-
-            Returns:
-                DN instance (new or existing)
-
-            Raises:
-                ValueError: If dn is None
-
-            Note:
-                Lenient processing: Empty DN is accepted.
-                Validation at Entry level via validate_entry_rfc_compliance().
-
-            """
-            if dn is None:
-                msg = "dn cannot be None"
-                raise ValueError(msg)
-            return cls(value=str(dn))
-
-        @override
-        def __str__(self) -> str:
-            """Return DN value as string for str() conversion."""
-            return self.value
 
     class ExclusionInfo(m.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
@@ -438,15 +438,6 @@ class FlextLdifModelsDomains:
             description="Server-specific quirk metadata",
         )
 
-        @field_validator("oid")
-        @classmethod
-        def validate_oid(cls, v: str) -> str:
-            """Validate that OID is not empty."""
-            if not v or not v.strip():
-                msg = "OID cannot be empty"
-                raise ValueError(msg)
-            return v
-
         @computed_field
         def is_rfc4517_standard(self) -> bool:
             """Check if this is a standard RFC 4517 syntax OID."""
@@ -543,6 +534,15 @@ class FlextLdifModelsDomains:
                 # This prevents the model from being invalid due to service failures
                 return None
 
+        @field_validator("oid")
+        @classmethod
+        def validate_oid(cls, v: str) -> str:
+            """Validate that OID is not empty."""
+            if not v or not v.strip():
+                msg = "OID cannot be empty"
+                raise ValueError(msg)
+            return v
+
     class SchemaObjectClass(SchemaElement):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
@@ -584,28 +584,6 @@ class FlextLdifModelsDomains:
         )
 
         @computed_field
-        def is_structural(self) -> bool:
-            """Check if this is a structural object class."""
-            return self.kind.upper() == "STRUCTURAL"
-
-        @computed_field
-        def is_auxiliary(self) -> bool:
-            """Check if this is an auxiliary object class."""
-            return self.kind.upper() == "AUXILIARY"
-
-        @computed_field
-        def is_abstract(self) -> bool:
-            """Check if this is an abstract object class."""
-            return self.kind.upper() == "ABSTRACT"
-
-        @computed_field
-        def total_attributes(self) -> int:
-            """Total number of attributes (required + optional)."""
-            must_count = len(self.must) if self.must else 0
-            may_count = len(self.may) if self.may else 0
-            return must_count + may_count
-
-        @computed_field
         def attribute_summary(self) -> Mapping[str, int]:
             """Get summary of required and optional attributes."""
             must_count = len(self.must) if self.must else 0
@@ -615,6 +593,28 @@ class FlextLdifModelsDomains:
                 "optional": may_count,
                 "total": must_count + may_count,
             }
+
+        @computed_field
+        def is_abstract(self) -> bool:
+            """Check if this is an abstract object class."""
+            return self.kind.upper() == "ABSTRACT"
+
+        @computed_field
+        def is_auxiliary(self) -> bool:
+            """Check if this is an auxiliary object class."""
+            return self.kind.upper() == "AUXILIARY"
+
+        @computed_field
+        def is_structural(self) -> bool:
+            """Check if this is a structural object class."""
+            return self.kind.upper() == "STRUCTURAL"
+
+        @computed_field
+        def total_attributes(self) -> int:
+            """Total number of attributes (required + optional)."""
+            must_count = len(self.must) if self.must else 0
+            may_count = len(self.may) if self.may else 0
+            return must_count + may_count
 
     class ParsedObjectClass(BaseModel):
         """Typed payload for parsed objectClass definitions.
@@ -656,13 +656,6 @@ class FlextLdifModelsDomains:
             description="Metadata for preserving ordering and formats",
         )
 
-        # NOTE: Attribute name validation moved to Entry.validate_entry_rfc_compliance()
-        # Attributes uses validate_assignment=True for mutable dict-like operations
-
-        def __len__(self) -> int:
-            """Return the number of attributes."""
-            return len(self.attributes)
-
         def __getitem__(self, key: str) -> list[str]:
             """Get attribute values by name (case-sensitive LDAP).
 
@@ -688,134 +681,16 @@ class FlextLdifModelsDomains:
             """
             self.attributes[key] = value
 
+        # NOTE: Attribute name validation moved to Entry.validate_entry_rfc_compliance()
+        # Attributes uses validate_assignment=True for mutable dict-like operations
+
+        def __len__(self) -> int:
+            """Return the number of attributes."""
+            return len(self.attributes)
+
         def __contains__(self, key: str) -> bool:
             """Check if attribute exists."""
             return key in self.attributes
-
-        # Use: entry.attributes.keys() for iteration over attribute names
-        # Use: entry.model_dump() for Pydantic default iteration behavior
-
-        def get(self, key: str, default: list[str] | None = None) -> list[str]:
-            """Get attribute values with optional default.
-
-            Args:
-                key: Attribute name
-                default: Default list if not found
-                (defaults to empty list if not provided)
-
-            Returns:
-                List of values or default (empty list if not found and no default)
-
-            """
-            if default is not None:
-                return self.attributes.get(key, default)
-            if key in self.attributes:
-                return self.attributes[key]
-            # Return empty list by default (lenient processing)
-            return []
-
-        def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
-            """Get attribute values as a list (same as get()).
-
-            Args:
-                key: Attribute name
-                default: Default list if not found
-
-            Returns:
-                List of attribute values, or default if not found
-
-            """
-            return self.get(key, default)
-
-        def has_attribute(self, key: str) -> bool:
-            """Check if attribute exists.
-
-            Args:
-                key: Attribute name
-
-            Returns:
-                True if attribute exists
-
-            """
-            return key in self.attributes
-
-        def iter_attributes(self) -> list[str]:
-            """Get list of all attribute names.
-
-            Returns:
-                List of attribute names
-
-            """
-            return list(self.attributes.keys())
-
-        def items(self) -> list[tuple[str, list[str]]]:
-            """Get attribute name-values pairs.
-
-            Returns:
-                List of (name, values) tuples
-
-            """
-            return list(self.attributes.items())
-
-        def keys(self) -> KeysView[str]:
-            """Get attribute names."""
-            return self.attributes.keys()
-
-        def values(self) -> ValuesView[list[str]]:
-            """Get attribute values lists."""
-            return self.attributes.values()
-
-        def add_attribute(self, key: str, values: list[str]) -> Self:
-            """Add or update an attribute with values.
-
-            Args:
-                key: Attribute name
-                values: List of values
-
-            Returns:
-                Self for method chaining
-
-            """
-            self.attributes[key] = values
-            return self
-
-        def add_attribute_value(self, key: str, value: str) -> Self:
-            """Add or update an attribute from a single value."""
-            self.attributes[key] = [value]
-            return self
-
-        def remove_attribute(self, key: str) -> Self:
-            """Remove an attribute if it exists.
-
-            Args:
-                key: Attribute name
-
-            Returns:
-                Self for method chaining
-
-            """
-            _ = self.attributes.pop(key, None)
-            return self
-
-        def to_ldap3(
-            self,
-            exclude: list[str] | None = None,
-        ) -> Mapping[str, list[str]]:
-            """Convert to ldap3-compatible attributes dict.
-
-            Args:
-                exclude: List of attribute names to exclude from output
-
-            Returns:
-                Dict compatible with ldap3 library format
-
-            """
-            exclude_set = set(exclude if exclude is not None else [])
-            return {
-                attr_name: values
-                for attr_name, values in self.attributes.items()
-                if attr_name not in exclude_set
-            }
 
         @classmethod
         def create(
@@ -855,47 +730,46 @@ class FlextLdifModelsDomains:
                     f"Failed to create Attributes: {e}",
                 )
 
-        def mark_as_deleted(
-            self,
-            attribute_name: str,
-            reason: str,
-            deleted_by: str,
-        ) -> None:
-            """Mark attribute as soft-deleted with audit trail.
-
-            HIGH COMPLEXITY: Uses UTC timestamp, tracks deletion metadata,
-            preserves original values for compliance/rollback.
-
-            Uses existing attribute_metadata dict to track deletion.
-            Attribute stays in self.attributes but is marked.
+        def add_attribute(self, key: str, values: list[str]) -> Self:
+            """Add or update an attribute with values.
 
             Args:
-                attribute_name: Name of attribute to mark deleted
-                reason: Reason for deletion (e.g., "migration", "obsolete")
-                deleted_by: Server/quirk that deleted it (e.g., "oid", "oud")
+                key: Attribute name
+                values: List of values
 
-            Raises:
-                ValueError: If attribute not found in attributes
+            Returns:
+                Self for method chaining
 
             """
-            if attribute_name not in self.attributes:
-                msg = f"Attribute '{attribute_name}' not found in attributes"
-                raise ValueError(msg)
+            self.attributes[key] = values
+            return self
 
-            def _to_str(value: str) -> str:
-                """Convert str to str, handling byte representation if necessary."""
-                return value
+        def add_attribute_value(self, key: str, value: str) -> Self:
+            """Add or update an attribute from a single value."""
+            self.attributes[key] = [value]
+            return self
 
-            # Store metadata as typed dict
-            self.attribute_metadata[str(attribute_name)] = {
-                "status": "deleted",
-                "deleted_at": u.Generators.generate_iso_timestamp(),
-                "deleted_reason": reason,
-                "deleted_by": deleted_by,
-                "original_values": [
-                    _to_str(v) for v in self.attributes[attribute_name]
-                ],
-            }
+        # Use: entry.attributes.keys() for iteration over attribute names
+        # Use: entry.model_dump() for Pydantic default iteration behavior
+
+        def get(self, key: str, default: list[str] | None = None) -> list[str]:
+            """Get attribute values with optional default.
+
+            Args:
+                key: Attribute name
+                default: Default list if not found
+                (defaults to empty list if not provided)
+
+            Returns:
+                List of values or default (empty list if not found and no default)
+
+            """
+            if default is not None:
+                return self.attributes.get(key, default)
+            if key in self.attributes:
+                return self.attributes[key]
+            # Return empty list by default (lenient processing)
+            return []
 
         def get_active_attributes(self) -> Mapping[str, list[str]]:
             """Get only active attributes (exclude deleted/hidden).
@@ -949,6 +823,132 @@ class FlextLdifModelsDomains:
                 for name, meta in self.attribute_metadata.items()
                 if meta.get("status") == "deleted"
             }
+
+        def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
+            """Get attribute values as a list (same as get()).
+
+            Args:
+                key: Attribute name
+                default: Default list if not found
+
+            Returns:
+                List of attribute values, or default if not found
+
+            """
+            return self.get(key, default)
+
+        def has_attribute(self, key: str) -> bool:
+            """Check if attribute exists.
+
+            Args:
+                key: Attribute name
+
+            Returns:
+                True if attribute exists
+
+            """
+            return key in self.attributes
+
+        def items(self) -> list[tuple[str, list[str]]]:
+            """Get attribute name-values pairs.
+
+            Returns:
+                List of (name, values) tuples
+
+            """
+            return list(self.attributes.items())
+
+        def iter_attributes(self) -> list[str]:
+            """Get list of all attribute names.
+
+            Returns:
+                List of attribute names
+
+            """
+            return list(self.attributes.keys())
+
+        def keys(self) -> KeysView[str]:
+            """Get attribute names."""
+            return self.attributes.keys()
+
+        def mark_as_deleted(
+            self,
+            attribute_name: str,
+            reason: str,
+            deleted_by: str,
+        ) -> None:
+            """Mark attribute as soft-deleted with audit trail.
+
+            HIGH COMPLEXITY: Uses UTC timestamp, tracks deletion metadata,
+            preserves original values for compliance/rollback.
+
+            Uses existing attribute_metadata dict to track deletion.
+            Attribute stays in self.attributes but is marked.
+
+            Args:
+                attribute_name: Name of attribute to mark deleted
+                reason: Reason for deletion (e.g., "migration", "obsolete")
+                deleted_by: Server/quirk that deleted it (e.g., "oid", "oud")
+
+            Raises:
+                ValueError: If attribute not found in attributes
+
+            """
+            if attribute_name not in self.attributes:
+                msg = f"Attribute '{attribute_name}' not found in attributes"
+                raise ValueError(msg)
+
+            def _to_str(value: str) -> str:
+                """Convert str to str, handling byte representation if necessary."""
+                return value
+
+            # Store metadata as typed dict
+            self.attribute_metadata[str(attribute_name)] = {
+                "status": "deleted",
+                "deleted_at": u.Generators.generate_iso_timestamp(),
+                "deleted_reason": reason,
+                "deleted_by": deleted_by,
+                "original_values": [
+                    _to_str(v) for v in self.attributes[attribute_name]
+                ],
+            }
+
+        def remove_attribute(self, key: str) -> Self:
+            """Remove an attribute if it exists.
+
+            Args:
+                key: Attribute name
+
+            Returns:
+                Self for method chaining
+
+            """
+            _ = self.attributes.pop(key, None)
+            return self
+
+        def to_ldap3(
+            self,
+            exclude: list[str] | None = None,
+        ) -> Mapping[str, list[str]]:
+            """Convert to ldap3-compatible attributes dict.
+
+            Args:
+                exclude: List of attribute names to exclude from output
+
+            Returns:
+                Dict compatible with ldap3 library format
+
+            """
+            exclude_set = set(exclude if exclude is not None else [])
+            return {
+                attr_name: values
+                for attr_name, values in self.attributes.items()
+                if attr_name not in exclude_set
+            }
+
+        def values(self) -> ValuesView[list[str]]:
+            """Get attribute values lists."""
+            return self.attributes.values()
 
     class ErrorDetail(m.FrozenStrictModel):
         """Error detail information for failed operations."""
@@ -1030,31 +1030,10 @@ class FlextLdifModelsDomains:
             # Simple normalization: lowercase + remove spaces
             return dn.lower().replace(" ", "")
 
-        def register_dn(self, dn: str, *, force: bool = False) -> str:
-            """Register DN and return its canonical case.
-
-            Args:
-                dn: Distinguished Name to register
-                force: If True, override existing canonical case
-
-            Returns:
-                Canonical case DN string
-
-            Example:
-                canonical = registry.register_dn("CN=Admin,DC=Com")
-
-            """
-            normalized = self._normalize_dn(dn)
-
-            if normalized not in self._case_variants:
-                self._case_variants[normalized] = set()
-            self._case_variants[normalized].add(dn)
-
-            if normalized not in self._registry or force:
-                self._registry[normalized] = dn
-
-            value = self._registry[normalized]
-            return str(value) if value is not None else dn
+        def clear(self) -> None:
+            """Clear all DN registrations."""
+            self._registry.clear()
+            self._case_variants.clear()
 
         def get_canonical_dn(self, dn: str) -> str | None:
             """Get canonical case for a DN (case-insensitive lookup).
@@ -1072,19 +1051,6 @@ class FlextLdifModelsDomains:
                 return None
             return str(value)
 
-        def has_dn(self, dn: str) -> bool:
-            """Check if DN is registered (case-insensitive).
-
-            Args:
-                dn: Distinguished Name to check
-
-            Returns:
-                True if DN is registered, False otherwise
-
-            """
-            normalized = self._normalize_dn(dn)
-            return normalized in self._registry
-
         def get_case_variants(self, dn: str) -> set[str]:
             """Get all case variants seen for a DN.
 
@@ -1098,37 +1064,38 @@ class FlextLdifModelsDomains:
             normalized = self._normalize_dn(dn)
             return self._case_variants.get(normalized, set())
 
-        def validate_oud_consistency(self) -> FlextResult[bool]:
-            """Validate DN case consistency for server conversion.
+        def get_stats(self) -> Mapping[str, int]:
+            """Get registry statistics.
 
             Returns:
-                FlextResult[bool]: True if consistent, False with warnings if not
+                Dictionary with registry statistics
 
             """
-            inconsistencies: list[dict[str, str | int | list[str]]] = []
+            total_variants = sum(
+                len(variants) for variants in self._case_variants.values()
+            )
+            multiple_variants = sum(
+                1 for variants in self._case_variants.values() if len(variants) > 1
+            )
 
-            for normalized_dn, variants in self._case_variants.items():
-                if len(variants) > 1:
-                    canonical_value = self._registry.get(normalized_dn)
-                    canonical = (
-                        str(canonical_value)
-                        if canonical_value is not None
-                        else normalized_dn
-                    )
-                    inconsistencies.append(
-                        {
-                            "normalized_dn": normalized_dn,
-                            "canonical_case": canonical,
-                            "variants": list(variants),
-                            "variant_count": len(variants),
-                        },
-                    )
+            return {
+                "total_dns": len(self._registry),
+                "total_variants": total_variants,
+                "dns_with_multiple_variants": multiple_variants,
+            }
 
-            if inconsistencies:
-                # Return False with warning (metadata not supported in FlextResult)
-                return FlextResult[bool].ok(False)
+        def has_dn(self, dn: str) -> bool:
+            """Check if DN is registered (case-insensitive).
 
-            return FlextResult[bool].ok(True)
+            Args:
+                dn: Distinguished Name to check
+
+            Returns:
+                True if DN is registered, False otherwise
+
+            """
+            normalized = self._normalize_dn(dn)
+            return normalized in self._registry
 
         def normalize_dn_references(
             self,
@@ -1188,6 +1155,76 @@ class FlextLdifModelsDomains:
                     f"Failed to normalize DN references: {e}",
                 )
 
+        def register_dn(self, dn: str, *, force: bool = False) -> str:
+            """Register DN and return its canonical case.
+
+            Args:
+                dn: Distinguished Name to register
+                force: If True, override existing canonical case
+
+            Returns:
+                Canonical case DN string
+
+            Example:
+                canonical = registry.register_dn("CN=Admin,DC=Com")
+
+            """
+            normalized = self._normalize_dn(dn)
+
+            if normalized not in self._case_variants:
+                self._case_variants[normalized] = set()
+            self._case_variants[normalized].add(dn)
+
+            if normalized not in self._registry or force:
+                self._registry[normalized] = dn
+
+            value = self._registry[normalized]
+            return str(value) if value is not None else dn
+
+        def validate_oud_consistency(self) -> FlextResult[bool]:
+            """Validate DN case consistency for server conversion.
+
+            Returns:
+                FlextResult[bool]: True if consistent, False with warnings if not
+
+            """
+            inconsistencies: list[dict[str, str | int | list[str]]] = []
+
+            for normalized_dn, variants in self._case_variants.items():
+                if len(variants) > 1:
+                    canonical_value = self._registry.get(normalized_dn)
+                    canonical = (
+                        str(canonical_value)
+                        if canonical_value is not None
+                        else normalized_dn
+                    )
+                    inconsistencies.append(
+                        {
+                            "normalized_dn": normalized_dn,
+                            "canonical_case": canonical,
+                            "variants": list(variants),
+                            "variant_count": len(variants),
+                        },
+                    )
+
+            if inconsistencies:
+                # Return False with warning (metadata not supported in FlextResult)
+                return FlextResult[bool].ok(False)
+
+            return FlextResult[bool].ok(True)
+
+        def _normalize_dn_list(self, dn_list: list[str]) -> list[str]:
+            """Normalize a list of DN values.
+
+            Args:
+                dn_list: List of DN strings
+
+            Returns:
+                List with DN strings normalized
+
+            """
+            return [self._normalize_single_dn(item) for item in dn_list]
+
         def _normalize_single_dn(self, dn: str) -> str:
             """Normalize a single DN string to canonical case.
 
@@ -1203,43 +1240,6 @@ class FlextLdifModelsDomains:
                 return canonical
             # Not registered, use internal _normalize_dn (no circular dependencies)
             return self._normalize_dn(dn)
-
-        def _normalize_dn_list(self, dn_list: list[str]) -> list[str]:
-            """Normalize a list of DN values.
-
-            Args:
-                dn_list: List of DN strings
-
-            Returns:
-                List with DN strings normalized
-
-            """
-            return [self._normalize_single_dn(item) for item in dn_list]
-
-        def clear(self) -> None:
-            """Clear all DN registrations."""
-            self._registry.clear()
-            self._case_variants.clear()
-
-        def get_stats(self) -> Mapping[str, int]:
-            """Get registry statistics.
-
-            Returns:
-                Dictionary with registry statistics
-
-            """
-            total_variants = sum(
-                len(variants) for variants in self._case_variants.values()
-            )
-            multiple_variants = sum(
-                1 for variants in self._case_variants.values() if len(variants) > 1
-            )
-
-            return {
-                "total_dns": len(self._registry),
-                "total_variants": total_variants,
-                "dns_with_multiple_variants": multiple_variants,
-            }
 
     class QuirkCollection(m.Value):
         """Collection of all quirks (Schema, ACL, Entry) for a single server type.
@@ -1431,6 +1431,32 @@ class FlextLdifModelsDomains:
             description="Quirk-specific metadata for ACL processing",
         )
 
+        @classmethod
+        def get_acl_format(cls) -> str:
+            """Get ACL format for this server type.
+
+            Business Rule: This method doesn't use instance state, only class constants.
+            Implication: Can be a class method for better clarity and allows override in subclasses.
+
+            Returns:
+                Default ACL format string from constants.
+
+            """
+            return c.Ldif.AclFormats.DEFAULT_ACL_FORMAT
+
+        def get_acl_type(self) -> str:
+            """Get ACL type identifier for this server.
+
+            #YB|            Uses FROM_LONG mapping to normalize long-form identifiers
+            (e.g., "oracle_oid" → "oid") to short-form canonical identifiers.
+            """
+            # Normalize to short form using FROM_LONG dict
+            short_server_type = c.Ldif.ServerTypesMappings.FROM_LONG.get(
+                self.server_type,
+                self.server_type,
+            )
+            return f"{short_server_type}_acl"
+
         @model_validator(mode="after")
         def validate_acl_format(self) -> Self:
             """Validate ACL format - capture violations in metadata, DON'T reject.
@@ -1479,32 +1505,6 @@ class FlextLdifModelsDomains:
 
             # Return existing instance when no violations are present
             return self
-
-        @classmethod
-        def get_acl_format(cls) -> str:
-            """Get ACL format for this server type.
-
-            Business Rule: This method doesn't use instance state, only class constants.
-            Implication: Can be a class method for better clarity and allows override in subclasses.
-
-            Returns:
-                Default ACL format string from constants.
-
-            """
-            return c.Ldif.AclFormats.DEFAULT_ACL_FORMAT
-
-        def get_acl_type(self) -> str:
-            """Get ACL type identifier for this server.
-
-            #YB|            Uses FROM_LONG mapping to normalize long-form identifiers
-            (e.g., "oracle_oid" → "oid") to short-form canonical identifiers.
-            """
-            # Normalize to short form using FROM_LONG dict
-            short_server_type = c.Ldif.ServerTypesMappings.FROM_LONG.get(
-                self.server_type,
-                self.server_type,
-            )
-            return f"{short_server_type}_acl"
 
     class AclWriteMetadata(FlextLdifModelsBase):
         """Metadata for ACL write formatting operations.
@@ -1638,6 +1638,30 @@ class FlextLdifModelsDomains:
             description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
         )
 
+        @field_validator("attributes", mode="before")
+        @classmethod
+        def coerce_attributes_from_dict(
+            cls,
+            value: FlextLdifModelsDomains.Attributes | Mapping[str, t.JsonValue] | None,
+        ) -> FlextLdifModelsDomains.Attributes | None:
+            """Convert dict to Attributes instance.
+
+            Allows None to pass through for violation capture in model_validator.
+            RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
+            """
+            if value is None:
+                # Allow None to pass through for RFC violation capture
+                return None
+
+            if isinstance(value, FlextLdifModelsDomains.Attributes):
+                return value
+
+            wrapped_value: Mapping[str, t.JsonValue] = value
+            if "attributes" not in value:
+                wrapped_value = {"attributes": value}
+
+            return FlextLdifModelsDomains.Attributes.model_validate(wrapped_value)
+
         # PROTOCOL COMPLIANCE: Entry FULLY satisfies p.Ldif.Entry.EntryProtocol
         # Field validators coerce inputs to proper types BEFORE Pydantic validation:
         # - dn: Accepts str | DN via field validator
@@ -1666,30 +1690,6 @@ class FlextLdifModelsDomains:
 
             return FlextLdifModelsDomains.DN(value=str(value))
 
-        @field_validator("attributes", mode="before")
-        @classmethod
-        def coerce_attributes_from_dict(
-            cls,
-            value: FlextLdifModelsDomains.Attributes | Mapping[str, t.JsonValue] | None,
-        ) -> FlextLdifModelsDomains.Attributes | None:
-            """Convert dict to Attributes instance.
-
-            Allows None to pass through for violation capture in model_validator.
-            RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
-            """
-            if value is None:
-                # Allow None to pass through for RFC violation capture
-                return None
-
-            if isinstance(value, FlextLdifModelsDomains.Attributes):
-                return value
-
-            wrapped_value: Mapping[str, t.JsonValue] = value
-            if "attributes" not in value:
-                wrapped_value = {"attributes": value}
-
-            return FlextLdifModelsDomains.Attributes.model_validate(wrapped_value)
-
         # ===================================================================
         # REMAINING FIELDS
         # ===================================================================
@@ -1703,6 +1703,42 @@ class FlextLdifModelsDomains:
             default=None,
             description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
         )
+
+        @computed_field
+        def attributes_dict(self) -> Mapping[str, list[str]]:
+            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires attributes: dict[str, list[str]].
+
+            Returns the attributes as a dict for protocol compatibility.
+            """
+            if self.attributes is None:
+                return {}
+            return self.attributes.attributes
+
+        @computed_field
+        def dn_str(self) -> str:
+            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires dn: str.
+
+            Returns the DN as a string for protocol compatibility.
+            """
+            if self.dn is None:
+                return ""
+            return self.dn.value
+
+        @computed_field
+        def unconverted_attributes(
+            self,
+        ) -> Mapping[str, str | list[str] | bytes]:
+            """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
+            if self.metadata is None:
+                return {}
+            # Access Pydantic extra fields directly
+            extra = self.metadata.extensions.__pydantic_extra__
+            if extra is None:
+                return {}
+            result = extra.get("unconverted_attributes")
+            if result is not None and result.__class__ is dict:
+                return result
+            return {}
 
         @model_validator(mode="before")
         @classmethod
@@ -1771,59 +1807,46 @@ class FlextLdifModelsDomains:
 
             return data_dict
 
-        @computed_field
-        def dn_str(self) -> str:
-            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires dn: str.
-
-            Returns the DN as a string for protocol compatibility.
-            """
-            if self.dn is None:
-                return ""
-            return self.dn.value
-
-        @computed_field
-        def attributes_dict(self) -> Mapping[str, list[str]]:
-            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires attributes: dict[str, list[str]].
-
-            Returns the attributes as a dict for protocol compatibility.
-            """
-            if self.attributes is None:
-                return {}
-            return self.attributes.attributes
-
-        @override
-        def model_post_init(self, _context: t.ContainerValue, /) -> None:
-            """Post-init hook to ensure metadata is always initialized.
-
-            Properly initialized before any code tries to access it.
-            Uses self.__dict__ assignment to bypass validate_assignment=True
-            and prevent infinite re-validation recursion (Pydantic v2 pattern).
-            """
-            if self.metadata is None:
-                self.__dict__["metadata"] = (
-                    FlextLdifModelsDomains.QuirkMetadata.create_for()
-                )
-
-        @model_validator(mode="after")
-        def validate_entry_consistency(self) -> Self:
-            """Validate cross-field consistency in Entry model.
-
-            Notes:
-            - ObjectClass validation is optional - downstream code handles
-              entries without objectClass via rejection or warnings.
-            - Schema entries (dn: cn=schema) are allowed without objectClass
-              as they contain schema definitions, not directory objects.
-
-            Returns:
-            Self (for method chaining)
-
-            """
-            # Allow entries without objectClass to pass through validation.
-            # Downstream code (migration, quirks, etc.) will handle:
-            # - Rejection of entries without required objectClass
-            # - Logging of warnings for malformed entries
-            # - Optional transformation or filtering based on application rules
-            return self
+        @staticmethod
+        def _parse_validation_rules(
+            validation_rules: t.MetadataValue,
+        ) -> FlextLdifModelsSettings.ServerValidationRules | None:
+            """Normalize dynamic validation_rules payload to ServerValidationRules."""
+            if isinstance(
+                validation_rules,
+                FlextLdifModelsSettings.ServerValidationRules,
+            ):
+                return validation_rules
+            if isinstance(validation_rules, str):
+                try:
+                    parsed_rules = ast.literal_eval(validation_rules)
+                except (ValueError, SyntaxError):
+                    return None
+                if not isinstance(parsed_rules, dict):
+                    return None
+                try:
+                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                        parsed_rules,
+                    )
+                except ValidationError as exc:
+                    logger.warning(
+                        "Failed to validate server rules from parsed dict",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
+                    return None
+            if isinstance(validation_rules, Mapping):
+                try:
+                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                        dict(validation_rules),
+                    )
+                except ValidationError as exc:
+                    logger.warning(
+                        "Failed to validate server rules from mapping",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
+            return None
 
         @staticmethod
         def _validate_dn(dn_value: str) -> list[str]:
@@ -1864,184 +1887,39 @@ class FlextLdifModelsDomains:
                     )
             return violations
 
-        def _validate_attributes_required(self) -> list[str]:
-            """Validate that entry has at least one attribute per RFC 2849 § 2.
+        @override
+        def model_post_init(self, _context: t.ContainerValue, /) -> None:
+            """Post-init hook to ensure metadata is always initialized.
 
-            Note: self.attributes may be None when using model_construct (bypasses validation).
+            Properly initialized before any code tries to access it.
+            Uses self.__dict__ assignment to bypass validate_assignment=True
+            and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
-            violations: list[str] = []
-            if self.attributes is None:
-                violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (missing)",
+            if self.metadata is None:
+                self.__dict__["metadata"] = (
+                    FlextLdifModelsDomains.QuirkMetadata.create_for()
                 )
-                return violations
-            if not self.attributes:
-                violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (empty)",
-                )
-            return violations
 
-        def _validate_attribute_descriptions(self) -> list[str]:
-            """Validate attribute descriptions per RFC 4512 § 2.5.
+        @model_validator(mode="after")
+        def validate_entry_consistency(self) -> Self:
+            """Validate cross-field consistency in Entry model.
 
-            Note: self.attributes may be None when using model_construct (bypasses validation).
+            Notes:
+            - ObjectClass validation is optional - downstream code handles
+              entries without objectClass via rejection or warnings.
+            - Schema entries (dn: cn=schema) are allowed without objectClass
+              as they contain schema definitions, not directory objects.
+
+            Returns:
+            Self (for method chaining)
+
             """
-            violations: list[str] = []
-            if self.attributes is None or not self.attributes:
-                return violations
-
-            for attr_desc in self.attributes.attributes:
-                # Split base and options
-                if ";" in attr_desc:
-                    base_attr, options_str = attr_desc.split(";", 1)
-                    options = [
-                        opt.strip() for opt in options_str.split(";") if opt.strip()
-                    ]
-                else:
-                    base_attr = attr_desc
-                    options: list[str] = []
-
-                # Validate base attribute
-                if not base_attr or not base_attr[0].isalpha():
-                    violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter",
-                    )
-                elif not all(c.isalnum() or c == "-" for c in base_attr):
-                    violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
-                    )
-
-                # Validate options
-                for option in options:
-                    if not option or not option[0].isalpha():
-                        violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' must start with letter",
-                        )
-                    elif not all(c.isalnum() or c in {"-", "_"} for c in option):
-                        violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' has invalid characters",
-                        )
-            return violations
-
-        def _validate_objectclass(self, dn_value: str) -> list[str]:
-            """Validate objectClass presence per RFC 4512 § 2.4.1.
-
-            Note: self.attributes may be None when using model_construct (bypasses validation).
-            """
-            violations: list[str] = []
-            # Schema entries exempt from objectClass requirement
-            is_schema_entry = dn_value.lower().startswith(
-                "cn=schema",
-            ) or dn_value.lower().startswith("cn=subschema")
-            if self.attributes is None or is_schema_entry or not self.attributes:
-                return violations
-
-            has_objectclass = any(
-                attr_name.lower() == "objectclass"
-                for attr_name in self.attributes.attributes
-            )
-            if not has_objectclass:
-                violations.append(
-                    f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
-                )
-            return violations
-
-        def _validate_naming_attribute(self, dn_value: str) -> list[str]:
-            """Validate naming attribute presence per RFC 4512 § 2.3.
-
-            Note: self.attributes may be None when using model_construct (bypasses validation).
-            """
-            violations: list[str] = []
-            if not dn_value or self.attributes is None or not self.attributes:
-                return violations
-
-            first_rdn = (
-                dn_value.split(",", maxsplit=1)[0].strip()
-                if "," in dn_value
-                else dn_value.strip()
-            )
-            if "=" not in first_rdn:
-                return violations
-
-            naming_attr = first_rdn.split("=")[0].strip().lower()
-            has_naming_attr = any(
-                attr_name.lower() == naming_attr
-                for attr_name in self.attributes.attributes
-            )
-            if not has_naming_attr:
-                violations.append(
-                    f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
-                )
-            return violations
-
-        def _validate_binary_options(self) -> list[str]:
-            """Validate binary attribute options per RFC 2849 § 5.2.
-
-            Note: self.attributes may be None when using model_construct (bypasses validation).
-            """
-            violations: list[str] = []
-            if self.attributes is None or not self.attributes:
-                return violations
-
-            for attr_name, attr_values in self.attributes.items():
-                if ";binary" in attr_name.lower():
-                    continue
-                for value in attr_values:
-                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
-                    has_binary = any(
-                        (
-                            ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
-                            and char not in "\t\n\r"
-                        )
-                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
-                        for char in value
-                    )
-                    if has_binary:
-                        violations.append(
-                            f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
-                        )
-                        break
-            return violations
-
-        def _validate_attribute_syntax(self) -> list[str]:
-            """Validate attribute name/option syntax per RFC 4512 § 2.5.1-2.5.2.
-
-            Note: self.attributes may be None when using model_construct (bypasses validation).
-            """
-            violations: list[str] = []
-            if self.attributes is None or not self.attributes:
-                return violations
-
-            attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
-            for attr_desc in self.attributes.attributes:
-                parts = attr_desc.split(";")
-                base_name = parts[0]
-
-                if not attr_name_pattern.match(base_name):
-                    violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")
-
-                if len(parts) > 1:
-                    invalid_options = [
-                        f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
-                        for option in parts[1:]
-                        if option and not attr_name_pattern.match(option)
-                    ]
-                    violations.extend(invalid_options)
-            return violations
-
-        def _validate_changetype(self) -> list[str]:
-            """Validate changetype field per RFC 2849 § 5.7."""
-            violations: list[str] = []
-            # RFC Compliance: changetype is now a direct field on Entry
-            if not self.changetype:
-                return violations
-
-            valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
-            if str(self.changetype).lower() not in valid_changetypes:
-                violations.append(
-                    f"RFC 2849 § 5.7: changetype '{self.changetype}' invalid",
-                )
-            return violations
+            # Allow entries without objectClass to pass through validation.
+            # Downstream code (migration, quirks, etc.) will handle:
+            # - Rejection of entries without required objectClass
+            # - Logging of warnings for malformed entries
+            # - Optional transformation or filtering based on application rules
+            return self
 
         @model_validator(mode="after")
         def validate_entry_rfc_compliance(self) -> Self:
@@ -2094,126 +1972,6 @@ class FlextLdifModelsDomains:
                 )
 
             return self
-
-        def _check_objectclass_rule(
-            self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
-            dn_value: str,
-        ) -> list[str]:
-            """Check objectClass requirement from server rules."""
-            violations: list[str] = []
-            if not rules.requires_objectclass:
-                return violations
-
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
-            has_objectclass = (
-                any(
-                    attr_name.lower() == "objectclass"
-                    for attr_name in self.attributes.attributes
-                )
-                if self.attributes
-                else False
-            )
-
-            is_schema_entry = dn_value and (
-                dn_value.lower().startswith("cn=schema")
-                or dn_value.lower().startswith("cn=subschema")
-            )
-
-            if not has_objectclass and not is_schema_entry:
-                violations.append("Server requires objectClass attribute")
-            return violations
-
-        def _check_naming_attr_rule(
-            self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
-            dn_value: str,
-        ) -> list[str]:
-            """Check naming attribute requirement from server rules."""
-            violations: list[str] = []
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
-            if not rules.requires_naming_attr or not dn_value or not self.attributes:
-                return violations
-
-            first_rdn = dn_value.split(",", maxsplit=1)[0].strip()
-            if "=" not in first_rdn:
-                return violations
-
-            naming_attr = first_rdn.split("=")[0].strip().lower()
-            has_naming_attr = any(
-                attr_name.lower() == naming_attr
-                for attr_name in self.attributes.attributes
-            )
-            if not has_naming_attr:
-                violations.append(f"Server requires naming attribute '{naming_attr}'")
-            return violations
-
-        def _check_binary_option_rule(
-            self,
-            rules: FlextLdifModelsSettings.ServerValidationRules,
-        ) -> list[str]:
-            """Check binary attribute option requirement from server rules."""
-            violations: list[str] = []
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
-            if not rules.requires_binary_option or not self.attributes:
-                return violations
-
-            for attr_name, attr_values in self.attributes.items():
-                if ";binary" in attr_name.lower():
-                    continue
-                for value in attr_values:
-                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
-                    if any(
-                        ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
-                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
-                        for char in value
-                    ):
-                        violations.append(
-                            f"Server requires ';binary' option for '{attr_name}'",
-                        )
-                        break
-            return violations
-
-        @staticmethod
-        def _parse_validation_rules(
-            validation_rules: t.MetadataValue,
-        ) -> FlextLdifModelsSettings.ServerValidationRules | None:
-            """Normalize dynamic validation_rules payload to ServerValidationRules."""
-            if isinstance(
-                validation_rules,
-                FlextLdifModelsSettings.ServerValidationRules,
-            ):
-                return validation_rules
-            if isinstance(validation_rules, str):
-                try:
-                    parsed_rules = ast.literal_eval(validation_rules)
-                except (ValueError, SyntaxError):
-                    return None
-                if not isinstance(parsed_rules, dict):
-                    return None
-                try:
-                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        parsed_rules,
-                    )
-                except ValidationError as exc:
-                    logger.warning(
-                        "Failed to validate server rules from parsed dict",
-                        error=str(exc),
-                        error_type=type(exc).__name__,
-                    )
-                    return None
-            if isinstance(validation_rules, Mapping):
-                try:
-                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        dict(validation_rules),
-                    )
-                except ValidationError as exc:
-                    logger.warning(
-                        "Failed to validate server rules from mapping",
-                        error=str(exc),
-                        error_type=type(exc).__name__,
-                    )
-            return None
 
         @model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
@@ -2278,21 +2036,263 @@ class FlextLdifModelsDomains:
 
             return self
 
-        @computed_field
-        def unconverted_attributes(
+        def _check_binary_option_rule(
             self,
-        ) -> Mapping[str, str | list[str] | bytes]:
-            """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
-            if self.metadata is None:
-                return {}
-            # Access Pydantic extra fields directly
-            extra = self.metadata.extensions.__pydantic_extra__
-            if extra is None:
-                return {}
-            result = extra.get("unconverted_attributes")
-            if result is not None and result.__class__ is dict:
-                return result
-            return {}
+            rules: FlextLdifModelsSettings.ServerValidationRules,
+        ) -> list[str]:
+            """Check binary attribute option requirement from server rules."""
+            violations: list[str] = []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if not rules.requires_binary_option or not self.attributes:
+                return violations
+
+            for attr_name, attr_values in self.attributes.items():
+                if ";binary" in attr_name.lower():
+                    continue
+                for value in attr_values:
+                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
+                    if any(
+                        ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
+                        for char in value
+                    ):
+                        violations.append(
+                            f"Server requires ';binary' option for '{attr_name}'",
+                        )
+                        break
+            return violations
+
+        def _check_naming_attr_rule(
+            self,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
+            dn_value: str,
+        ) -> list[str]:
+            """Check naming attribute requirement from server rules."""
+            violations: list[str] = []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if not rules.requires_naming_attr or not dn_value or not self.attributes:
+                return violations
+
+            first_rdn = dn_value.split(",", maxsplit=1)[0].strip()
+            if "=" not in first_rdn:
+                return violations
+
+            naming_attr = first_rdn.split("=")[0].strip().lower()
+            has_naming_attr = any(
+                attr_name.lower() == naming_attr
+                for attr_name in self.attributes.attributes
+            )
+            if not has_naming_attr:
+                violations.append(f"Server requires naming attribute '{naming_attr}'")
+            return violations
+
+        def _check_objectclass_rule(
+            self,
+            rules: FlextLdifModelsSettings.ServerValidationRules,
+            dn_value: str,
+        ) -> list[str]:
+            """Check objectClass requirement from server rules."""
+            violations: list[str] = []
+            if not rules.requires_objectclass:
+                return violations
+
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            has_objectclass = (
+                any(
+                    attr_name.lower() == "objectclass"
+                    for attr_name in self.attributes.attributes
+                )
+                if self.attributes
+                else False
+            )
+
+            is_schema_entry = dn_value and (
+                dn_value.lower().startswith("cn=schema")
+                or dn_value.lower().startswith("cn=subschema")
+            )
+
+            if not has_objectclass and not is_schema_entry:
+                violations.append("Server requires objectClass attribute")
+            return violations
+
+        def _validate_attribute_descriptions(self) -> list[str]:
+            """Validate attribute descriptions per RFC 4512 § 2.5.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            if self.attributes is None or not self.attributes:
+                return violations
+
+            for attr_desc in self.attributes.attributes:
+                # Split base and options
+                if ";" in attr_desc:
+                    base_attr, options_str = attr_desc.split(";", 1)
+                    options = [
+                        opt.strip() for opt in options_str.split(";") if opt.strip()
+                    ]
+                else:
+                    base_attr = attr_desc
+                    options: list[str] = []
+
+                # Validate base attribute
+                if not base_attr or not base_attr[0].isalpha():
+                    violations.append(
+                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter",
+                    )
+                elif not all(c.isalnum() or c == "-" for c in base_attr):
+                    violations.append(
+                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
+                    )
+
+                # Validate options
+                for option in options:
+                    if not option or not option[0].isalpha():
+                        violations.append(
+                            f"RFC 4512 § 2.5: option '{option}' must start with letter",
+                        )
+                    elif not all(c.isalnum() or c in {"-", "_"} for c in option):
+                        violations.append(
+                            f"RFC 4512 § 2.5: option '{option}' has invalid characters",
+                        )
+            return violations
+
+        def _validate_attribute_syntax(self) -> list[str]:
+            """Validate attribute name/option syntax per RFC 4512 § 2.5.1-2.5.2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            if self.attributes is None or not self.attributes:
+                return violations
+
+            attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+            for attr_desc in self.attributes.attributes:
+                parts = attr_desc.split(";")
+                base_name = parts[0]
+
+                if not attr_name_pattern.match(base_name):
+                    violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")
+
+                if len(parts) > 1:
+                    invalid_options = [
+                        f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
+                        for option in parts[1:]
+                        if option and not attr_name_pattern.match(option)
+                    ]
+                    violations.extend(invalid_options)
+            return violations
+
+        def _validate_attributes_required(self) -> list[str]:
+            """Validate that entry has at least one attribute per RFC 2849 § 2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            if self.attributes is None:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (missing)",
+                )
+                return violations
+            if not self.attributes:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (empty)",
+                )
+            return violations
+
+        def _validate_binary_options(self) -> list[str]:
+            """Validate binary attribute options per RFC 2849 § 5.2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            if self.attributes is None or not self.attributes:
+                return violations
+
+            for attr_name, attr_values in self.attributes.items():
+                if ";binary" in attr_name.lower():
+                    continue
+                for value in attr_values:
+                    # ASCII_SPACE_CHAR and ASCII_TILDE_CHAR are in LdifProcessing, not Format.Rfc
+                    has_binary = any(
+                        (
+                            ord(char) < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                            and char not in "\t\n\r"
+                        )
+                        or ord(char) > c.Ldif.LdifProcessing.ASCII_TILDE_CHAR
+                        for char in value
+                    )
+                    if has_binary:
+                        violations.append(
+                            f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
+                        )
+                        break
+            return violations
+
+        def _validate_changetype(self) -> list[str]:
+            """Validate changetype field per RFC 2849 § 5.7."""
+            violations: list[str] = []
+            # RFC Compliance: changetype is now a direct field on Entry
+            if not self.changetype:
+                return violations
+
+            valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
+            if str(self.changetype).lower() not in valid_changetypes:
+                violations.append(
+                    f"RFC 2849 § 5.7: changetype '{self.changetype}' invalid",
+                )
+            return violations
+
+        def _validate_naming_attribute(self, dn_value: str) -> list[str]:
+            """Validate naming attribute presence per RFC 4512 § 2.3.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            if not dn_value or self.attributes is None or not self.attributes:
+                return violations
+
+            first_rdn = (
+                dn_value.split(",", maxsplit=1)[0].strip()
+                if "," in dn_value
+                else dn_value.strip()
+            )
+            if "=" not in first_rdn:
+                return violations
+
+            naming_attr = first_rdn.split("=")[0].strip().lower()
+            has_naming_attr = any(
+                attr_name.lower() == naming_attr
+                for attr_name in self.attributes.attributes
+            )
+            if not has_naming_attr:
+                violations.append(
+                    f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
+                )
+            return violations
+
+        def _validate_objectclass(self, dn_value: str) -> list[str]:
+            """Validate objectClass presence per RFC 4512 § 2.4.1.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
+            violations: list[str] = []
+            # Schema entries exempt from objectClass requirement
+            is_schema_entry = dn_value.lower().startswith(
+                "cn=schema",
+            ) or dn_value.lower().startswith("cn=subschema")
+            if self.attributes is None or is_schema_entry or not self.attributes:
+                return violations
+
+            has_objectclass = any(
+                attr_name.lower() == "objectclass"
+                for attr_name in self.attributes.attributes
+            )
+            if not has_objectclass:
+                violations.append(
+                    f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
+                )
+            return violations
 
         class Builder:
             """Builder pattern for Entry creation (reduces complexity, improves readability)."""
@@ -2329,11 +2329,11 @@ class FlextLdifModelsDomains:
                     FlextLdifModelsMetadata.DynamicMetadata | None
                 ) = None
 
-            def dn(
+            def acls(
                 self,
-                dn: str | FlextLdifModelsDomains.DN,
+                acls: list[FlextLdifModelsDomains.Acl],
             ) -> Self:
-                self._dn = dn
+                self._acls = acls
                 return self
 
             def attributes(
@@ -2344,60 +2344,11 @@ class FlextLdifModelsDomains:
                 self._attributes = attributes
                 return self
 
-            def metadata(
-                self,
-                metadata: FlextLdifModelsDomains.QuirkMetadata,
-            ) -> Self:
-                self._metadata = metadata
-                return self
-
-            def acls(
-                self,
-                acls: list[FlextLdifModelsDomains.Acl],
-            ) -> Self:
-                self._acls = acls
-                return self
-
-            def objectclasses(
-                self,
-                objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass],
-            ) -> Self:
-                self._objectclasses = objectclasses
-                return self
-
             def attributes_schema(
                 self,
                 attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute],
             ) -> Self:
                 self._attributes_schema = attributes_schema
-                return self
-
-            def entry_metadata(
-                self,
-                entry_metadata: FlextLdifModelsMetadata.EntryMetadata,
-            ) -> Self:
-                self._entry_metadata = entry_metadata
-                return self
-
-            def server_type(
-                self,
-                server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
-            ) -> Self:
-                self._server_type = server_type
-                return self
-
-            def source_entry(
-                self,
-                source_entry: str,
-            ) -> Self:
-                self._source_entry = source_entry
-                return self
-
-            def unconverted_attributes(
-                self,
-                unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata,
-            ) -> Self:
-                self._unconverted_attributes = unconverted_attributes
                 return self
 
             def build(self) -> FlextResult[FlextLdifModelsDomains.Entry]:
@@ -2421,83 +2372,95 @@ class FlextLdifModelsDomains:
                     unconverted_attributes=self._unconverted_attributes,
                 )
 
-        @classmethod
-        def builder(cls) -> Builder:
-            """Create a new Entry builder instance."""
-            return cls.Builder(outer_cls=cls)
+            def dn(
+                self,
+                dn: str | FlextLdifModelsDomains.DN,
+            ) -> Self:
+                self._dn = dn
+                return self
 
-        @classmethod
-        def create(
-            cls,
-            dn: str | FlextLdifModelsDomains.DN,
-            attributes: (
-                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
-            ),
-            metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
-            acls: list[FlextLdifModelsDomains.Acl] | None = None,
-            objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] | None = None,
-            attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute]
-            | None = None,
-            entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
-            validation_metadata: FlextLdifModelsDomains.ValidationMetadata
-            | None = None,
-            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
-            | None = None,  # New parameter
-            source_entry: str | None = None,  # New parameter
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
-            | None = None,  # New parameter
-            statistics: FlextLdifModelsDomains.EntryStatistics
-            | None = None,  # New parameter
-        ) -> FlextResult[Self]:
-            return cls._create_entry(
-                dn=dn,
-                attributes=attributes,
-                metadata=metadata,
-                acls=acls,
-                objectclasses=objectclasses,
-                attributes_schema=attributes_schema,
-                entry_metadata=entry_metadata,
-                validation_metadata=validation_metadata,
-                server_type=server_type,
-                source_entry=source_entry,
-                unconverted_attributes=unconverted_attributes,
-                statistics=statistics,
-            )
+            def entry_metadata(
+                self,
+                entry_metadata: FlextLdifModelsMetadata.EntryMetadata,
+            ) -> Self:
+                self._entry_metadata = entry_metadata
+                return self
 
-        @classmethod
-        def _normalize_attributes(
-            cls,
-            attributes: (
-                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
-            ),
-        ) -> FlextLdifModelsDomains.Attributes:
-            """Normalize attributes to Attributes object.
+            def metadata(
+                self,
+                metadata: FlextLdifModelsDomains.QuirkMetadata,
+            ) -> Self:
+                self._metadata = metadata
+                return self
 
-            Args:
-                attributes: Attributes as dict or Attributes object
+            def objectclasses(
+                self,
+                objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass],
+            ) -> Self:
+                self._objectclasses = objectclasses
+                return self
+
+            def server_type(
+                self,
+                server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+            ) -> Self:
+                self._server_type = server_type
+                return self
+
+            def source_entry(
+                self,
+                source_entry: str,
+            ) -> Self:
+                self._source_entry = source_entry
+                return self
+
+            def unconverted_attributes(
+                self,
+                unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata,
+            ) -> Self:
+                self._unconverted_attributes = unconverted_attributes
+                return self
+
+        @computed_field
+        def has_validation_errors(self) -> bool:
+            """Check if entry has validation errors.
 
             Returns:
-                Attributes object with normalized values
-
-            Note:
-                Lenient processing: Empty attributes dict is accepted and will be captured
-                in validation_metadata as RFC violation.
+            True if entry has validation errors in validation_metadata, False otherwise
 
             """
-            if isinstance(attributes, FlextLdifModelsDomains.Attributes):
-                return attributes
+            if self.metadata is None:
+                return False
+            if self.metadata.validation_results is None:
+                return False
+            return bool(self.metadata.validation_results.errors)
 
-            # Lenient processing: Accept empty dict (violation captured in validation_metadata)
-            attrs_dict: dict[str, list[str]] = {}
-            for attr_name, attr_values in attributes.items():
-                if attr_values.__class__ is str:
-                    values_list: list[str] = [str(attr_values)]
-                elif attr_values.__class__ is list:
-                    values_list = [str(v) for v in attr_values]
-                else:
-                    values_list = [str(attr_values)]
-                attrs_dict[attr_name] = values_list
-            return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
+        @computed_field
+        def is_acl_entry(self) -> bool:
+            """Check if entry has Access Control Lists.
+
+            Returns:
+            True if entry has ACLs, False otherwise
+
+            """
+            if self.metadata is None:
+                return False
+            return bool(self.metadata.acls)
+
+        @computed_field
+        def is_schema_entry(self) -> bool:
+            """Check if entry is a schema definition entry.
+
+            Schema entries contain objectClass definitions and are typically
+            found in the schema naming context.
+
+            Returns:
+            True if entry has objectClasses, False otherwise
+
+            """
+            if self.metadata is None:
+                return False
+            return bool(self.metadata.objectclasses)
 
         @classmethod
         def _build_extension_kwargs(
@@ -2518,25 +2481,6 @@ class FlextLdifModelsDomains:
                 unconverted_typed: t.MetadataValue = unconverted_dump
                 ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
-
-        @classmethod
-        def _update_existing_metadata(
-            cls,
-            metadata: FlextLdifModelsDomains.QuirkMetadata,
-            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
-            source_entry: str | None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> None:
-            """Update existing metadata extensions in place."""
-            if server_type:
-                metadata.extensions["server_type"] = server_type
-            if source_entry:
-                metadata.extensions["source_entry"] = source_entry
-            if unconverted_attributes:
-                extra = unconverted_attributes.__pydantic_extra__
-                if extra:
-                    for key, value in extra.items():
-                        metadata.extensions[f"unconverted_{key}"] = str(value)
 
         @classmethod
         def _build_metadata(
@@ -2678,6 +2622,103 @@ class FlextLdifModelsDomains:
                 )
 
         @classmethod
+        def _normalize_attributes(
+            cls,
+            attributes: (
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
+            ),
+        ) -> FlextLdifModelsDomains.Attributes:
+            """Normalize attributes to Attributes object.
+
+            Args:
+                attributes: Attributes as dict or Attributes object
+
+            Returns:
+                Attributes object with normalized values
+
+            Note:
+                Lenient processing: Empty attributes dict is accepted and will be captured
+                in validation_metadata as RFC violation.
+
+            """
+            if isinstance(attributes, FlextLdifModelsDomains.Attributes):
+                return attributes
+
+            # Lenient processing: Accept empty dict (violation captured in validation_metadata)
+            attrs_dict: dict[str, list[str]] = {}
+            for attr_name, attr_values in attributes.items():
+                if attr_values.__class__ is str:
+                    values_list: list[str] = [str(attr_values)]
+                elif attr_values.__class__ is list:
+                    values_list = [str(v) for v in attr_values]
+                else:
+                    values_list = [str(attr_values)]
+                attrs_dict[attr_name] = values_list
+            return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
+
+        @classmethod
+        def _update_existing_metadata(
+            cls,
+            metadata: FlextLdifModelsDomains.QuirkMetadata,
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
+            source_entry: str | None,
+            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
+        ) -> None:
+            """Update existing metadata extensions in place."""
+            if server_type:
+                metadata.extensions["server_type"] = server_type
+            if source_entry:
+                metadata.extensions["source_entry"] = source_entry
+            if unconverted_attributes:
+                extra = unconverted_attributes.__pydantic_extra__
+                if extra:
+                    for key, value in extra.items():
+                        metadata.extensions[f"unconverted_{key}"] = str(value)
+
+        @classmethod
+        def builder(cls) -> Builder:
+            """Create a new Entry builder instance."""
+            return cls.Builder(outer_cls=cls)
+
+        @classmethod
+        def create(
+            cls,
+            dn: str | FlextLdifModelsDomains.DN,
+            attributes: (
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes
+            ),
+            metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
+            acls: list[FlextLdifModelsDomains.Acl] | None = None,
+            objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] | None = None,
+            attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute]
+            | None = None,
+            entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
+            validation_metadata: FlextLdifModelsDomains.ValidationMetadata
+            | None = None,
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+            | None = None,  # New parameter
+            source_entry: str | None = None,  # New parameter
+            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
+            | None = None,  # New parameter
+            statistics: FlextLdifModelsDomains.EntryStatistics
+            | None = None,  # New parameter
+        ) -> FlextResult[Self]:
+            return cls._create_entry(
+                dn=dn,
+                attributes=attributes,
+                metadata=metadata,
+                acls=acls,
+                objectclasses=objectclasses,
+                attributes_schema=attributes_schema,
+                entry_metadata=entry_metadata,
+                validation_metadata=validation_metadata,
+                server_type=server_type,
+                source_entry=source_entry,
+                unconverted_attributes=unconverted_attributes,
+                statistics=statistics,
+            )
+
+        @classmethod
         def from_ldap3(
             cls,
             ldap3_entry: Mapping[str, t.JsonValue],
@@ -2730,6 +2771,50 @@ class FlextLdifModelsDomains:
                     f"Failed to create Entry from ldap3: {e}",
                 )
 
+        def clone(self) -> Self:
+            """Create an immutable copy of the entry.
+
+            Returns:
+            New Entry instance with same values (shallow copy of attributes)
+
+            """
+            # Use model_copy to create a copy - all metadata fields are in metadata
+            # Entry only has: dn, attributes, changetype, metadata
+            return self.model_copy(deep=True)
+
+        def count_attributes(self) -> int:
+            """Count the number of attributes in the entry.
+
+            Returns:
+            Number of attributes (including multivalued attributes count as 1)
+
+            """
+            if self.attributes is None:
+                return 0
+            return len(self.attributes)
+
+        def get_all_attribute_names(self) -> list[str]:
+            """Get list of all attribute names in the entry.
+
+            Returns:
+            List of attribute names (case as stored in entry)
+
+            """
+            if self.attributes is None:
+                return []
+            return list(self.attributes.keys())
+
+        def get_all_attributes(self) -> Mapping[str, list[str]]:
+            """Get all attributes as dictionary.
+
+            Returns:
+            Dictionary of attribute_name -> list[str] (deep copy)
+
+            """
+            if self.attributes is None:
+                return {}
+            return dict(self.attributes.attributes)
+
         def get_attribute_values(self, attribute_name: str) -> list[str]:
             """Get all values for a specific attribute.
 
@@ -2755,6 +2840,32 @@ class FlextLdifModelsDomains:
                 if stored_name.lower() == attr_name_lower:
                     return attr_values
             return []
+
+        def get_dn_components(self) -> list[str]:
+            """Get DN components (RDN parts) from the entry's DN.
+
+            Returns:
+            List of DN components (e.g., ["cn=REDACTED_LDAP_BIND_PASSWORD", "dc=example", "dc=com"])
+
+            """
+            # Note: self.dn is guaranteed to be non-None since it's a required field
+            if self.dn is None:
+                return []
+            return [comp.strip() for comp in self.dn.value.split(",") if comp.strip()]
+
+        def get_entries(self) -> list[Self]:
+            """Get this entry as a list for unified protocol.
+
+            Returns:
+                List containing this entry
+
+            """
+            # Return list containing self (no conversion needed)
+            return [self]
+
+        def get_objectclass_names(self) -> list[str]:
+            """Get list of objectClass attribute values from entry."""
+            return self.get_attribute_values(c.Ldif.DictKeys.OBJECTCLASS)
 
         def has_attribute(self, attribute_name: str) -> bool:
             """Check if entry has a specific attribute.
@@ -2783,51 +2894,6 @@ class FlextLdifModelsDomains:
             return object_class in self.get_attribute_values(
                 c.Ldif.DictKeys.OBJECTCLASS,
             )
-
-        def get_all_attribute_names(self) -> list[str]:
-            """Get list of all attribute names in the entry.
-
-            Returns:
-            List of attribute names (case as stored in entry)
-
-            """
-            if self.attributes is None:
-                return []
-            return list(self.attributes.keys())
-
-        def get_all_attributes(self) -> Mapping[str, list[str]]:
-            """Get all attributes as dictionary.
-
-            Returns:
-            Dictionary of attribute_name -> list[str] (deep copy)
-
-            """
-            if self.attributes is None:
-                return {}
-            return dict(self.attributes.attributes)
-
-        def count_attributes(self) -> int:
-            """Count the number of attributes in the entry.
-
-            Returns:
-            Number of attributes (including multivalued attributes count as 1)
-
-            """
-            if self.attributes is None:
-                return 0
-            return len(self.attributes)
-
-        def get_dn_components(self) -> list[str]:
-            """Get DN components (RDN parts) from the entry's DN.
-
-            Returns:
-            List of DN components (e.g., ["cn=REDACTED_LDAP_BIND_PASSWORD", "dc=example", "dc=com"])
-
-            """
-            # Note: self.dn is guaranteed to be non-None since it's a required field
-            if self.dn is None:
-                return []
-            return [comp.strip() for comp in self.dn.value.split(",") if comp.strip()]
 
         def matches_filter(
             self,
@@ -2858,72 +2924,6 @@ class FlextLdifModelsDomains:
                 struct.error,
             ):
                 return False
-
-        def clone(self) -> Self:
-            """Create an immutable copy of the entry.
-
-            Returns:
-            New Entry instance with same values (shallow copy of attributes)
-
-            """
-            # Use model_copy to create a copy - all metadata fields are in metadata
-            # Entry only has: dn, attributes, changetype, metadata
-            return self.model_copy(deep=True)
-
-        @computed_field
-        def is_schema_entry(self) -> bool:
-            """Check if entry is a schema definition entry.
-
-            Schema entries contain objectClass definitions and are typically
-            found in the schema naming context.
-
-            Returns:
-            True if entry has objectClasses, False otherwise
-
-            """
-            if self.metadata is None:
-                return False
-            return bool(self.metadata.objectclasses)
-
-        @computed_field
-        def is_acl_entry(self) -> bool:
-            """Check if entry has Access Control Lists.
-
-            Returns:
-            True if entry has ACLs, False otherwise
-
-            """
-            if self.metadata is None:
-                return False
-            return bool(self.metadata.acls)
-
-        @computed_field
-        def has_validation_errors(self) -> bool:
-            """Check if entry has validation errors.
-
-            Returns:
-            True if entry has validation errors in validation_metadata, False otherwise
-
-            """
-            if self.metadata is None:
-                return False
-            if self.metadata.validation_results is None:
-                return False
-            return bool(self.metadata.validation_results.errors)
-
-        def get_objectclass_names(self) -> list[str]:
-            """Get list of objectClass attribute values from entry."""
-            return self.get_attribute_values(c.Ldif.DictKeys.OBJECTCLASS)
-
-        def get_entries(self) -> list[Self]:
-            """Get this entry as a list for unified protocol.
-
-            Returns:
-                List containing this entry
-
-            """
-            # Return list containing self (no conversion needed)
-            return [self]
 
     class AttributeTransformation(FlextLdifModelsBase):
         """Detailed tracking of attribute transformation operations.
@@ -3080,29 +3080,10 @@ class FlextLdifModelsDomains:
             description="Fatal validation errors",
         )
 
-        @field_validator("transformations", mode="after")
-        @classmethod
-        def deduplicate_transformations(cls, v: list[str]) -> list[str]:
-            """Remove duplicate transformations while preserving order."""
-            seen: set[str] = set()
-            result: list[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return result
-
         @computed_field
-        def was_transformed(self) -> bool:
-            """Check if any transformations were applied."""
-            return (
-                self.original_dn != self.normalized_dn or len(self.transformations) > 0
-            )
-
-        @computed_field
-        def transformation_count(self) -> int:
-            """Count of unique transformations applied."""
-            return len(self.transformations)
+        def has_errors(self) -> bool:
+            """Check if any validation errors exist."""
+            return len(self.validation_errors) > 0
 
         @computed_field
         def has_warnings(self) -> bool:
@@ -3110,9 +3091,16 @@ class FlextLdifModelsDomains:
             return len(self.validation_warnings) > 0
 
         @computed_field
-        def has_errors(self) -> bool:
-            """Check if any validation errors exist."""
-            return len(self.validation_errors) > 0
+        def transformation_count(self) -> int:
+            """Count of unique transformations applied."""
+            return len(self.transformations)
+
+        @computed_field
+        def was_transformed(self) -> bool:
+            """Check if any transformations were applied."""
+            return (
+                self.original_dn != self.normalized_dn or len(self.transformations) > 0
+            )
 
         @classmethod
         def create_minimal(
@@ -3152,6 +3140,18 @@ class FlextLdifModelsDomains:
                 transformations=transformations if transformations is not None else [],
                 **flags,
             )
+
+        @field_validator("transformations", mode="after")
+        @classmethod
+        def deduplicate_transformations(cls, v: list[str]) -> list[str]:
+            """Remove duplicate transformations while preserving order."""
+            seen: set[str] = set()
+            result: list[str] = []
+            for item in v:
+                if item not in seen:
+                    seen.add(item)
+                    result.append(item)
+            return result
 
     class EntryStatistics(FlextLdifModelsBase):
         """Statistics tracking for entry-level transformations and validation.
@@ -3279,13 +3279,11 @@ class FlextLdifModelsDomains:
         )
 
         @computed_field
-        def total_attribute_changes(self) -> int:
-            """Total count of attribute modifications."""
-            return (
-                len(self.attributes_added)
-                + len(self.attributes_removed)
-                + len(self.attributes_modified)
-            )
+        def dn_was_transformed(self) -> bool:
+            """Check if DN underwent transformation."""
+            if self.dn_statistics is None:
+                return False
+            return bool(self.dn_statistics.was_transformed)
 
         @computed_field
         def had_errors(self) -> bool:
@@ -3303,11 +3301,31 @@ class FlextLdifModelsDomains:
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
         @computed_field
-        def dn_was_transformed(self) -> bool:
-            """Check if DN underwent transformation."""
-            if self.dn_statistics is None:
-                return False
-            return bool(self.dn_statistics.was_transformed)
+        def total_attribute_changes(self) -> int:
+            """Total count of attribute modifications."""
+            return (
+                len(self.attributes_added)
+                + len(self.attributes_removed)
+                + len(self.attributes_modified)
+            )
+
+        @classmethod
+        def create_minimal(
+            cls,
+        ) -> Self:
+            """Create minimal statistics for newly parsed entry."""
+            return cls(was_parsed=True)
+
+        @classmethod
+        def create_with_dn_stats(
+            cls,
+            dn_statistics: FlextLdifModelsDomains.DNStatistics,
+        ) -> Self:
+            """Create statistics with DN transformation details."""
+            return cls(
+                was_parsed=True,
+                dn_statistics=dn_statistics,
+            )
 
         @field_validator("filters_applied", mode="after")
         @classmethod
@@ -3333,30 +3351,37 @@ class FlextLdifModelsDomains:
                     result.append(item)
             return result
 
-        @classmethod
-        def create_minimal(
-            cls,
-        ) -> Self:
-            """Create minimal statistics for newly parsed entry."""
-            return cls(was_parsed=True)
+        def add_error(self, error: str) -> Self:
+            """Add error message.
 
-        @classmethod
-        def create_with_dn_stats(
-            cls,
-            dn_statistics: FlextLdifModelsDomains.DNStatistics,
-        ) -> Self:
-            """Create statistics with DN transformation details."""
-            return cls(
-                was_parsed=True,
-                dn_statistics=dn_statistics,
-            )
-
-        def mark_validated(self) -> Self:
-            """Mark entry as validated.
-
-            Returns new instance with was_validated=True (frozen model).
+            Returns new instance with error added (frozen model).
             """
-            return self.model_copy(update={"was_validated": True})
+            errors = [*self.errors, error]
+            return self.model_copy(update={"errors": errors})
+
+        def add_warning(self, warning: str) -> Self:
+            """Add warning message.
+
+            Returns new instance with warning added (frozen model).
+            """
+            warnings = [*self.warnings, warning]
+            return self.model_copy(update={"warnings": warnings})
+
+        def apply_quirk(
+            self,
+            quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        ) -> Self:
+            """Record quirk application.
+
+            Returns new instance with quirk recorded (frozen model).
+            """
+            quirks_applied = [*self.quirks_applied, quirk_type]
+            return self.model_copy(
+                update={
+                    "quirks_applied": quirks_applied,
+                    "quirk_transformations": self.quirk_transformations + 1,
+                },
+            )
 
         def mark_filtered(
             self,
@@ -3400,21 +3425,12 @@ class FlextLdifModelsDomains:
                 },
             )
 
-        def add_error(self, error: str) -> Self:
-            """Add error message.
+        def mark_validated(self) -> Self:
+            """Mark entry as validated.
 
-            Returns new instance with error added (frozen model).
+            Returns new instance with was_validated=True (frozen model).
             """
-            errors = [*self.errors, error]
-            return self.model_copy(update={"errors": errors})
-
-        def add_warning(self, warning: str) -> Self:
-            """Add warning message.
-
-            Returns new instance with warning added (frozen model).
-            """
-            warnings = [*self.warnings, warning]
-            return self.model_copy(update={"warnings": warnings})
+            return self.model_copy(update={"was_validated": True})
 
         def track_attribute_change(
             self,
@@ -3444,22 +3460,6 @@ class FlextLdifModelsDomains:
                     update={"attributes_filtered": attributes_filtered},
                 )
             return self  # No change for unknown type
-
-        def apply_quirk(
-            self,
-            quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
-        ) -> Self:
-            """Record quirk application.
-
-            Returns new instance with quirk recorded (frozen model).
-            """
-            quirks_applied = [*self.quirks_applied, quirk_type]
-            return self.model_copy(
-                update={
-                    "quirks_applied": quirks_applied,
-                    "quirk_transformations": self.quirk_transformations + 1,
-                },
-            )
 
     class ValidationMetadata(FlextLdifModelsBase):
         """Validation results and error tracking metadata.
@@ -3879,6 +3879,132 @@ class FlextLdifModelsDomains:
                 extensions=extensions_model,
             )
 
+        def add_conversion_note(
+            self,
+            operation: str,
+            description: str,
+        ) -> Self:
+            """Add a conversion note to the audit trail.
+
+            Args:
+                operation: Operation identifier (e.g., "oid_to_oud", "schema_normalize")
+                description: Human-readable description of the operation
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.add_conversion_note(
+                ...     operation="oid_to_rfc",
+                ...     description="Converted OID ACL format to RFC 4515 filter",
+                ... )
+
+            """
+            self.conversion_notes[operation] = description
+            return self
+
+        def record_original_format(
+            self,
+            original_ldif: str,
+            attribute_case: FlextLdifModelsMetadata.DynamicMetadata | None = None,
+        ) -> Self:
+            r"""Record original LDIF format for round-trip conversion.
+
+            RFC Compliance: Preserves ALL original formatting details.
+
+            Args:
+                original_ldif: Complete original LDIF string
+                attribute_case: Map of normalized→original attribute case
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.record_original_format(
+                ...     original_ldif="dn: CN=test\\nCN: test\\n",
+                ...     attribute_case={"cn": "CN"},
+                ... )
+
+            """
+            self.original_strings["entry_original_ldif"] = original_ldif
+            if attribute_case:
+                # DynamicMetadata is a BaseModel with extra="allow", update via __setitem__
+                for key, value in attribute_case.items():
+                    self.original_attribute_case[key] = value
+            return self
+
+        def set_server_context(
+            self,
+            source_server: c.Ldif.LiteralTypes.ServerTypeLiteral,
+            target_server: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+        ) -> Self:
+            """Set source and target server context.
+
+            Args:
+                source_server: Source LDAP server type (oid, oud, openldap, etc.)
+                target_server: Target LDAP server type (optional)
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.set_server_context(
+                ...     source_server="oid", target_server="oud"
+                ... )
+
+            """
+            # Direct assignment - parameters are already ServerTypeLiteral
+            self.original_server_type = source_server
+            if target_server:
+                self.target_server_type = target_server
+
+            # Also store in extensions for generic access
+            # Use getattr to access nested constants - helps MyPy understand the structure
+            rfc_format = c.Ldif.Format
+            self.extensions[rfc_format.META_TRANSFORMATION_SOURCE] = source_server
+            if target_server:
+                self.extensions[rfc_format.META_TRANSFORMATION_TARGET] = target_server
+
+            return self
+
+        def track_attribute_removal(
+            self,
+            attribute_name: str,
+            values: Sequence[str],
+            reason: str | None = None,
+        ) -> Self:
+            """Track an attribute removal in metadata.
+
+            RFC Compliance: Preserves removed attribute data for round-trip conversions.
+            Uses c.Ldif.MetadataKeys.SKIPPED_ATTRIBUTES tracking.
+
+            Args:
+                attribute_name: Name of removed attribute
+                values: Values that were removed
+                reason: Human-readable reason for removal
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.track_attribute_removal(
+                ...     attribute_name="orclLastAppliedChangeNumber",
+                ...     values=["12345"],
+                ...     reason="OID-specific operational attribute",
+                ... )
+
+            """
+            # Convert to MetadataAttributeValue type for DynamicMetadata
+            values_typed: t.MetadataValue = list(values)
+            self.removed_attributes[attribute_name] = values_typed
+            return self.track_attribute_transformation(
+                original_name=attribute_name,
+                new_name=None,
+                transformation_type="attribute_removed",
+                original_values=values,
+                reason=reason,
+            )
+
         def track_attribute_transformation(
             self,
             original_name: str,
@@ -3930,44 +4056,6 @@ class FlextLdifModelsDomains:
             )
 
             return self
-
-        def track_attribute_removal(
-            self,
-            attribute_name: str,
-            values: Sequence[str],
-            reason: str | None = None,
-        ) -> Self:
-            """Track an attribute removal in metadata.
-
-            RFC Compliance: Preserves removed attribute data for round-trip conversions.
-            Uses c.Ldif.MetadataKeys.SKIPPED_ATTRIBUTES tracking.
-
-            Args:
-                attribute_name: Name of removed attribute
-                values: Values that were removed
-                reason: Human-readable reason for removal
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.track_attribute_removal(
-                ...     attribute_name="orclLastAppliedChangeNumber",
-                ...     values=["12345"],
-                ...     reason="OID-specific operational attribute",
-                ... )
-
-            """
-            # Convert to MetadataAttributeValue type for DynamicMetadata
-            values_typed: t.MetadataValue = list(values)
-            self.removed_attributes[attribute_name] = values_typed
-            return self.track_attribute_transformation(
-                original_name=attribute_name,
-                new_name=None,
-                transformation_type="attribute_removed",
-                original_values=values,
-                reason=reason,
-            )
 
         def track_dn_transformation(
             self,
@@ -4046,94 +4134,6 @@ class FlextLdifModelsDomains:
                 self.rfc_warnings.append(violation)
             else:
                 self.rfc_violations.append(violation)
-            return self
-
-        def add_conversion_note(
-            self,
-            operation: str,
-            description: str,
-        ) -> Self:
-            """Add a conversion note to the audit trail.
-
-            Args:
-                operation: Operation identifier (e.g., "oid_to_oud", "schema_normalize")
-                description: Human-readable description of the operation
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.add_conversion_note(
-                ...     operation="oid_to_rfc",
-                ...     description="Converted OID ACL format to RFC 4515 filter",
-                ... )
-
-            """
-            self.conversion_notes[operation] = description
-            return self
-
-        def set_server_context(
-            self,
-            source_server: c.Ldif.LiteralTypes.ServerTypeLiteral,
-            target_server: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
-        ) -> Self:
-            """Set source and target server context.
-
-            Args:
-                source_server: Source LDAP server type (oid, oud, openldap, etc.)
-                target_server: Target LDAP server type (optional)
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.set_server_context(
-                ...     source_server="oid", target_server="oud"
-                ... )
-
-            """
-            # Direct assignment - parameters are already ServerTypeLiteral
-            self.original_server_type = source_server
-            if target_server:
-                self.target_server_type = target_server
-
-            # Also store in extensions for generic access
-            # Use getattr to access nested constants - helps MyPy understand the structure
-            rfc_format = c.Ldif.Format
-            self.extensions[rfc_format.META_TRANSFORMATION_SOURCE] = source_server
-            if target_server:
-                self.extensions[rfc_format.META_TRANSFORMATION_TARGET] = target_server
-
-            return self
-
-        def record_original_format(
-            self,
-            original_ldif: str,
-            attribute_case: FlextLdifModelsMetadata.DynamicMetadata | None = None,
-        ) -> Self:
-            r"""Record original LDIF format for round-trip conversion.
-
-            RFC Compliance: Preserves ALL original formatting details.
-
-            Args:
-                original_ldif: Complete original LDIF string
-                attribute_case: Map of normalized→original attribute case
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.record_original_format(
-                ...     original_ldif="dn: CN=test\\nCN: test\\n",
-                ...     attribute_case={"cn": "CN"},
-                ... )
-
-            """
-            self.original_strings["entry_original_ldif"] = original_ldif
-            if attribute_case:
-                # DynamicMetadata is a BaseModel with extra="allow", update via __setitem__
-                for key, value in attribute_case.items():
-                    self.original_attribute_case[key] = value
             return self
 
     # Classes are already defined above

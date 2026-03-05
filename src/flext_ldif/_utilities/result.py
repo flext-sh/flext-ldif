@@ -23,10 +23,6 @@ class FlextLdifResult[T]:
 
     __slots__ = ("_inner",)
 
-    def __hash__(self) -> int:
-        """Hash implementation for FlextLdifResult."""
-        return hash(self._inner)
-
     def __init__(self, inner: FlextResult[T] | FlextRuntime.RuntimeResult[T]) -> None:
         """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult."""
         super().__init__()
@@ -45,69 +41,71 @@ class FlextLdifResult[T]:
             inner_result = r[T].fail(error_msg)
         self._inner = inner_result
 
-    # FACTORY METHODS - Create new results
+    # SPECIAL METHODS
 
-    @classmethod
-    def ok(cls, value: T) -> FlextLdifResult[T]:
-        """Create a successful result with the given value."""
-        return cls(r[T].ok(value))
+    @override
+    def __repr__(self) -> str:
+        """Return string representation."""
+        if self.is_success:
+            return f"FlextLdifResult.ok({self.value!r})"
+        return f"FlextLdifResult.fail({self.error!r})"
 
-    @classmethod
-    def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
-        """Create a failed result with the given error."""
-        error_msg = str(error) if isinstance(error, Exception) else error
-        return cls(r.fail(error_msg))
+    @override
+    def __eq__(self, other: t.ContainerValue) -> bool:
+        """Check equality with another FlextLdifResult."""
+        if not isinstance(other, FlextLdifResult):
+            return NotImplemented
+        if self.is_success != other.is_success:
+            return False
+        if self.is_success:
+            return bool(self.value == other.value)
+        return self.error == other.error
 
-    @classmethod
-    def from_result(cls, result: FlextResult[T]) -> FlextLdifResult[T]:
-        """Wrap an existing FlextResult in FlextLdifResult."""
-        return cls(result)
+    def __hash__(self) -> int:
+        """Hash implementation for FlextLdifResult."""
+        return hash(self._inner)
 
-    # PROPERTIES - Delegate to inner FlextResult
+    def __bool__(self) -> bool:
+        """Return True if result is success."""
+        return self.is_success
 
-    @property
-    def is_success(self) -> bool:
-        """Check if the result is a success."""
-        return self._inner.is_success
+    def __and__(self, other: FlextLdifResult[T]) -> FlextLdifResult[list[T]]:
+        """Combine operator: result1 & result2."""
+        if self.is_failure:
+            return FlextLdifResult.fail(self.error)
+        if other.is_failure:
+            return FlextLdifResult.fail(other.error)
 
-    @property
-    def is_failure(self) -> bool:
-        """Check if the result is a failure."""
-        return self._inner.is_failure
+        return FlextLdifResult.ok([self.value, other.value])
 
-    @property
-    def value(self) -> T:
-        """Get the success value. Raises if result is a failure."""
-        return self._inner.value
+    def __matmul__(
+        self,
+        metadata: Mapping[str, t.Scalar | list[str] | None],
+    ) -> FlextLdifResult[T]:
+        """Metadata operator: result @ metadata."""
+        if self.is_failure:
+            return FlextLdifResult.fail(self.error)
 
-    @property
-    def error(self) -> str:
-        """Get the error message."""
-        error_msg = self._inner.error
-        # Ensure we return str, not str | None
-        return error_msg if error_msg is not None else "Unknown error"
+        # Import here to avoid circular dependency
 
-    # CORE METHODS - Delegate to inner FlextResult
+        value = self.value
 
-    def unwrap(self) -> T:
-        """Unwrap the success value or raise an exception."""
-        return self._inner.value
+        # Business Rule: Attach metadata to entries for audit trail and transformation tracking
+        # Metadata is stored in entry.metadata field for round-trip conversions
+        # Note: attach_metadata method needs implementation in FlextLdifUtilitiesMetadata
+        # For now, return error indicating method needs implementation
+        # Handle sequence of entries
+        if isinstance(value, Sequence) and not isinstance(value, str):
+            # Note: Metadata attachment for sequence of entries needs implementation
+            return FlextLdifResult.fail(
+                "attach_metadata not yet implemented for sequences",
+            )
 
-    def unwrap_or(self, default: T) -> T:
-        """Unwrap the success value or return a default."""
-        return self._inner.unwrap_or(default)
-
-    def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
-        """Map a function over the success value."""
-        # map may return RuntimeResult, convert to FlextResult
-        mapped_result = self._inner.map(func)
-        return FlextLdifResult(mapped_result)
-
-    def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextLdifResult[U]:
-        """Flat map a function that returns FlextResult."""
-        # flat_map may return RuntimeResult, convert to FlextResult
-        mapped_result = self._inner.flat_map(func)
-        return FlextLdifResult(mapped_result)
+        # Handle single entry
+        # Note: Metadata attachment for single entry needs implementation
+        return FlextLdifResult.fail(
+            "attach_metadata not yet implemented for single entry",
+        )
 
     # DSL OPERATORS - LDIF-specific pipeline operations
 
@@ -191,37 +189,54 @@ class FlextLdifResult[T]:
 
         return FlextLdifResult.ok(ldif_content)
 
+    @property
+    def error(self) -> str:
+        """Get the error message."""
+        error_msg = self._inner.error
+        # Ensure we return str, not str | None
+        return error_msg if error_msg is not None else "Unknown error"
+
+    @property
+    def is_failure(self) -> bool:
+        """Check if the result is a failure."""
+        return self._inner.is_failure
+
+    # PROPERTIES - Delegate to inner FlextResult
+
+    @property
+    def is_success(self) -> bool:
+        """Check if the result is a success."""
+        return self._inner.is_success
+
+    @property
+    def value(self) -> T:
+        """Get the success value. Raises if result is a failure."""
+        return self._inner.value
+
+    @classmethod
+    def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
+        """Create a failed result with the given error."""
+        error_msg = str(error) if isinstance(error, Exception) else error
+        return cls(r.fail(error_msg))
+
+    @classmethod
+    def from_result(cls, result: FlextResult[T]) -> FlextLdifResult[T]:
+        """Wrap an existing FlextResult in FlextLdifResult."""
+        return cls(result)
+
+    # FACTORY METHODS - Create new results
+
+    @classmethod
+    def ok(cls, value: T) -> FlextLdifResult[T]:
+        """Create a successful result with the given value."""
+        return cls(r[T].ok(value))
+
     @staticmethod
     def _encode_dn_line(dn_value: str) -> str:
         if FlextLdifUtilitiesWriter.needs_base64_encoding(dn_value):
             encoded_dn = base64.b64encode(dn_value.encode("utf-8")).decode("ascii")
             return f"dn:: {encoded_dn}"
         return f"dn: {dn_value}"
-
-    @staticmethod
-    def _serialize_single_entry(entry: m.Ldif.Entry) -> FlextResult[list[str]]:
-        if entry.dn is None:
-            return r[list[str]].fail("Entry serialization failed: missing DN")
-
-        dn_value = entry.dn.value
-        if not dn_value:
-            return r[list[str]].fail("Entry serialization failed: empty DN")
-
-        lines: list[str] = [FlextLdifResult._encode_dn_line(dn_value)]
-
-        entry_attributes: dict[str, list[str]] = (
-            entry.attributes.attributes if entry.attributes else {}
-        )
-        for attr_name, values in entry_attributes.items():
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
-
-        lines.append("")
-        return r[list[str]].ok(lines)
 
     @staticmethod
     def _serialize_entries_to_ldif(
@@ -258,43 +273,30 @@ class FlextLdifResult[T]:
             ldif_text += "\n"
         return r[str].ok(ldif_text)
 
-    def __matmul__(
-        self,
-        metadata: Mapping[str, t.Scalar | list[str] | None],
-    ) -> FlextLdifResult[T]:
-        """Metadata operator: result @ metadata."""
-        if self.is_failure:
-            return FlextLdifResult.fail(self.error)
+    @staticmethod
+    def _serialize_single_entry(entry: m.Ldif.Entry) -> FlextResult[list[str]]:
+        if entry.dn is None:
+            return r[list[str]].fail("Entry serialization failed: missing DN")
 
-        # Import here to avoid circular dependency
+        dn_value = entry.dn.value
+        if not dn_value:
+            return r[list[str]].fail("Entry serialization failed: empty DN")
 
-        value = self.value
+        lines: list[str] = [FlextLdifResult._encode_dn_line(dn_value)]
 
-        # Business Rule: Attach metadata to entries for audit trail and transformation tracking
-        # Metadata is stored in entry.metadata field for round-trip conversions
-        # Note: attach_metadata method needs implementation in FlextLdifUtilitiesMetadata
-        # For now, return error indicating method needs implementation
-        # Handle sequence of entries
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            # Note: Metadata attachment for sequence of entries needs implementation
-            return FlextLdifResult.fail(
-                "attach_metadata not yet implemented for sequences",
-            )
-
-        # Handle single entry
-        # Note: Metadata attachment for single entry needs implementation
-        return FlextLdifResult.fail(
-            "attach_metadata not yet implemented for single entry",
+        entry_attributes: dict[str, list[str]] = (
+            entry.attributes.attributes if entry.attributes else {}
         )
+        for attr_name, values in entry_attributes.items():
+            for value in values:
+                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                    attr_name,
+                    value,
+                )
+                lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
 
-    def __and__(self, other: FlextLdifResult[T]) -> FlextLdifResult[list[T]]:
-        """Combine operator: result1 & result2."""
-        if self.is_failure:
-            return FlextLdifResult.fail(self.error)
-        if other.is_failure:
-            return FlextLdifResult.fail(other.error)
-
-        return FlextLdifResult.ok([self.value, other.value])
+        lines.append("")
+        return r[list[str]].ok(lines)
 
     # UTILITY METHODS
 
@@ -330,11 +332,17 @@ class FlextLdifResult[T]:
 
         return FlextLdifResult.fail("Value did not match filter predicate")
 
-    def on_success(self, func: Callable[[T], None]) -> Self:
-        """Execute a function on success value without changing result."""
-        if self.is_success:
-            func(self.value)
-        return self
+    def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextLdifResult[U]:
+        """Flat map a function that returns FlextResult."""
+        # flat_map may return RuntimeResult, convert to FlextResult
+        mapped_result = self._inner.flat_map(func)
+        return FlextLdifResult(mapped_result)
+
+    def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
+        """Map a function over the success value."""
+        # map may return RuntimeResult, convert to FlextResult
+        mapped_result = self._inner.map(func)
+        return FlextLdifResult(mapped_result)
 
     def on_failure(self, func: Callable[[str], None]) -> Self:
         """Execute a function on error without changing result."""
@@ -342,29 +350,21 @@ class FlextLdifResult[T]:
             func(self.error)
         return self
 
-    # SPECIAL METHODS
-
-    @override
-    def __repr__(self) -> str:
-        """Return string representation."""
+    def on_success(self, func: Callable[[T], None]) -> Self:
+        """Execute a function on success value without changing result."""
         if self.is_success:
-            return f"FlextLdifResult.ok({self.value!r})"
-        return f"FlextLdifResult.fail({self.error!r})"
+            func(self.value)
+        return self
 
-    def __bool__(self) -> bool:
-        """Return True if result is success."""
-        return self.is_success
+    # CORE METHODS - Delegate to inner FlextResult
 
-    @override
-    def __eq__(self, other: t.ContainerValue) -> bool:
-        """Check equality with another FlextLdifResult."""
-        if not isinstance(other, FlextLdifResult):
-            return NotImplemented
-        if self.is_success != other.is_success:
-            return False
-        if self.is_success:
-            return bool(self.value == other.value)
-        return self.error == other.error
+    def unwrap(self) -> T:
+        """Unwrap the success value or raise an exception."""
+        return self._inner.value
+
+    def unwrap_or(self, default: T) -> T:
+        """Unwrap the success value or return a default."""
+        return self._inner.unwrap_or(default)
 
 
 __all__ = ["FlextLdifResult"]

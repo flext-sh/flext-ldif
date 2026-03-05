@@ -19,26 +19,26 @@ class EntryFilter[T](ABC):
 
     __slots__ = ()
 
-    @abstractmethod
-    def matches(self, item: T) -> bool:
-        """Check if an item matches the filter criteria."""
-        ...
-
     def __and__(self, other: EntryFilter[T]) -> AndFilter[T]:
         """AND combination: filter1 & filter2."""
         return AndFilter(self, other)
-
-    def __or__(self, other: EntryFilter[T]) -> OrFilter[T]:
-        """OR combination: filter1 | filter2."""
-        return OrFilter(self, other)
 
     def __invert__(self) -> NotFilter[T]:
         """NOT negation: ~filter."""
         return NotFilter(self)
 
+    def __or__(self, other: EntryFilter[T]) -> OrFilter[T]:
+        """OR combination: filter1 | filter2."""
+        return OrFilter(self, other)
+
     def filter(self, items: Sequence[T]) -> list[T]:
         """Filter a sequence of items."""
         return [item for item in items if self.matches(item)]
+
+    @abstractmethod
+    def matches(self, item: T) -> bool:
+        """Check if an item matches the filter criteria."""
+        ...
 
 
 # COMPOSITE FILTERS - AND, OR, NOT
@@ -387,6 +387,15 @@ class Filter:
     __slots__ = ()
 
     @staticmethod
+    def by_attrs(
+        *attrs: str,
+        mode: Literal["any", "all"] = "any",
+        case_insensitive: bool = True,
+    ) -> ByAttrsFilter:
+        """Create an attribute presence filter."""
+        return ByAttrsFilter(*attrs, mode=mode, case_insensitive=case_insensitive)
+
+    @staticmethod
     def by_dn(
         pattern: str | Pattern[str],
         *,
@@ -418,25 +427,16 @@ class Filter:
         )
 
     @staticmethod
-    def by_attrs(
-        *attrs: str,
-        mode: Literal["any", "all"] = "any",
-        case_insensitive: bool = True,
-    ) -> ByAttrsFilter:
-        """Create an attribute presence filter."""
-        return ByAttrsFilter(*attrs, mode=mode, case_insensitive=case_insensitive)
-
-    @staticmethod
-    def is_schema(*, is_schema: bool = True) -> IsSchemaEntryFilter:
-        """Create a schema entry filter."""
-        return IsSchemaEntryFilter(is_schema=is_schema)
-
-    @staticmethod
     def custom(
         predicate: Callable[[m.Ldif.Entry], bool],
     ) -> CustomFilter:
         """Create a custom filter from a predicate function."""
         return CustomFilter(predicate)
+
+    @staticmethod
+    def is_schema(*, is_schema: bool = True) -> IsSchemaEntryFilter:
+        """Create a schema entry filter."""
+        return IsSchemaEntryFilter(is_schema=is_schema)
 
 
 __all__ = [

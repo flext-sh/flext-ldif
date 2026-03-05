@@ -44,14 +44,33 @@ class FlextLdifUtilitiesObjectClass:
     """RFC 4512 ObjectClass Validation and Correction Utilities."""
 
     @staticmethod
-    def fix_missing_sup(
+    def align_kind_with_superior(
         schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        superior_kind: str | None,
     ) -> None:
-        """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
+        """Align ObjectClass kind with its superior class kind."""
+        # Only align if:
+        # - schema_oc has a SUP defined
+        # - schema_oc.kind is not empty (falsy check - empty string means undefined)
+        # - superior_kind is provided
+        # - current kind differs from superior_kind
+        if (
+            schema_oc.sup
+            and schema_oc.kind
+            and superior_kind
+            and schema_oc.kind != superior_kind
+        ):
+            schema_oc.kind = superior_kind
+
+    @staticmethod
+    def ensure_sup_for_auxiliary(
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        default_sup: str = "top",
+    ) -> None:
+        """Ensure AUXILIARY ObjectClass has SUP attribute."""
         schema_constants = _SchemaConstants.get_instance()
-        # Only fix AUXILIARY classes - STRUCTURAL classes are left unchanged
         if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
-            schema_oc.sup = "top"
+            schema_oc.sup = default_sup
 
     @staticmethod
     def fix_kind_mismatch(
@@ -95,33 +114,14 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.kind = schema_constants.auxiliary
 
     @staticmethod
-    def ensure_sup_for_auxiliary(
+    def fix_missing_sup(
         schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-        default_sup: str = "top",
     ) -> None:
-        """Ensure AUXILIARY ObjectClass has SUP attribute."""
+        """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = _SchemaConstants.get_instance()
+        # Only fix AUXILIARY classes - STRUCTURAL classes are left unchanged
         if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
-            schema_oc.sup = default_sup
-
-    @staticmethod
-    def align_kind_with_superior(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-        superior_kind: str | None,
-    ) -> None:
-        """Align ObjectClass kind with its superior class kind."""
-        # Only align if:
-        # - schema_oc has a SUP defined
-        # - schema_oc.kind is not empty (falsy check - empty string means undefined)
-        # - superior_kind is provided
-        # - current kind differs from superior_kind
-        if (
-            schema_oc.sup
-            and schema_oc.kind
-            and superior_kind
-            and schema_oc.kind != superior_kind
-        ):
-            schema_oc.kind = superior_kind
+            schema_oc.sup = "top"
 
     @staticmethod
     def parse(

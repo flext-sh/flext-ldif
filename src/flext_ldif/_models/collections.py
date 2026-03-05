@@ -27,46 +27,6 @@ class FlextLdifModelsCollections:
             str_strip_whitespace=True,
         )
 
-        def set_count(self, key: str, value: int) -> None:
-            setattr(self, key, value)
-
-        @staticmethod
-        def _to_count(value: t.MetadataValue) -> int:
-            if isinstance(value, int | float):
-                return int(value)
-            if isinstance(value, str):
-                try:
-                    return int(float(value))
-                except (ValueError, TypeError):
-                    return 0
-            return 0
-
-        def __getitem__(self, key: str) -> int:
-            extra = self._extra()
-            if key in extra:
-                return self._to_count(extra[key])
-            msg = f"Key {key!r} not found"
-            raise KeyError(msg)
-
-        def _extra(self) -> dict[str, t.MetadataValue]:
-            return self.__pydantic_extra__ or {}
-
-        def get(self, key: str, default: int | None = None) -> int | None:
-            extra = self._extra()
-            if key in extra:
-                return self._to_count(extra[key])
-            return default
-
-        def __contains__(self, key: str) -> bool:
-            return key in self._extra()
-
-        def __len__(self) -> int:
-            return len(self._extra())
-
-        def items(self) -> list[tuple[str, int]]:
-            extra = self._extra()
-            return [(k, self._to_count(v)) for k, v in extra.items()]
-
         @override
         def __eq__(self, other: object) -> bool:
             if other.__class__ is dict:
@@ -84,11 +44,51 @@ class FlextLdifModelsCollections:
         def __hash__(self) -> int:
             return hash(id(self))
 
+        def __getitem__(self, key: str) -> int:
+            extra = self._extra()
+            if key in extra:
+                return self._to_count(extra[key])
+            msg = f"Key {key!r} not found"
+            raise KeyError(msg)
+
+        def __len__(self) -> int:
+            return len(self._extra())
+
+        def __contains__(self, key: str) -> bool:
+            return key in self._extra()
+
+        @staticmethod
+        def _to_count(value: t.MetadataValue) -> int:
+            if isinstance(value, int | float):
+                return int(value)
+            if isinstance(value, str):
+                try:
+                    return int(float(value))
+                except (ValueError, TypeError):
+                    return 0
+            return 0
+
+        def get(self, key: str, default: int | None = None) -> int | None:
+            extra = self._extra()
+            if key in extra:
+                return self._to_count(extra[key])
+            return default
+
+        def items(self) -> list[tuple[str, int]]:
+            extra = self._extra()
+            return [(k, self._to_count(v)) for k, v in extra.items()]
+
         def max_key(self) -> str | None:
             extra = self._extra()
             if not extra:
                 return None
             return max(extra, key=lambda k: self._to_count(extra.get(k, 0)))
+
+        def set_count(self, key: str, value: int) -> None:
+            setattr(self, key, value)
+
+        def _extra(self) -> dict[str, t.MetadataValue]:
+            return self.__pydantic_extra__ or {}
 
     class SchemaContent(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
@@ -114,13 +114,6 @@ class FlextLdifModelsCollections:
             str_strip_whitespace=True,
         )
 
-        def __getitem__(self, key: str) -> bool:
-            extra = self.__pydantic_extra__
-            if extra is None or key not in extra:
-                msg = f"Key '{key}' not found in flags"
-                raise KeyError(msg)
-            return bool(extra[key])
-
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
@@ -136,12 +129,15 @@ class FlextLdifModelsCollections:
                 return hash(())
             return hash(tuple(sorted(extra.items())))
 
+        def __getitem__(self, key: str) -> bool:
+            extra = self.__pydantic_extra__
+            if extra is None or key not in extra:
+                msg = f"Key '{key}' not found in flags"
+                raise KeyError(msg)
+            return bool(extra[key])
+
     class FlexibleCategories(m.Categories):
         model_config = ConfigDict(extra="allow", frozen=False)
-
-        def __hash__(self) -> int:
-            msg = f"{self.__class__.__name__} is unhashable"
-            raise TypeError(msg)
 
         @override
         def __eq__(self, other: object) -> bool:
@@ -151,22 +147,9 @@ class FlextLdifModelsCollections:
                 return self.categories == other
             return False
 
-        def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
-            for category, values in self.categories.items():
-                yield (
-                    category,
-                    [FlextLdifModelsDomains.Entry.model_validate(v) for v in values],
-                )
-
-        def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-            for values in self.categories.values():
-                yield [FlextLdifModelsDomains.Entry.model_validate(v) for v in values]
-
-        def keys(self) -> Iterator[str]:
-            return iter(self.categories.keys())
-
-        def __contains__(self, category: str) -> bool:
-            return category in self.categories
+        def __hash__(self) -> int:
+            msg = f"{self.__class__.__name__} is unhashable"
+            raise TypeError(msg)
 
         def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
             return [
@@ -180,3 +163,20 @@ class FlextLdifModelsCollections:
             entries: Sequence[FlextLdifModelsDomains.Entry],
         ) -> None:
             self.categories[category] = list(entries)
+
+        def __contains__(self, category: str) -> bool:
+            return category in self.categories
+
+        def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
+            for category, values in self.categories.items():
+                yield (
+                    category,
+                    [FlextLdifModelsDomains.Entry.model_validate(v) for v in values],
+                )
+
+        def keys(self) -> Iterator[str]:
+            return iter(self.categories.keys())
+
+        def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
+            for values in self.categories.values():
+                yield [FlextLdifModelsDomains.Entry.model_validate(v) for v in values]

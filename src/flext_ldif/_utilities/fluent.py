@@ -31,30 +31,22 @@ class DnOps:
         self._dn: str = dn
         self._error: str | None = None
 
-    def normalize(
-        self,
-        *,
-        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
-    ) -> Self:
-        """Normalize the DN."""
+    @property
+    def has_error(self) -> bool:
+        """Check if an error occurred during operations."""
+        return self._error is not None
+
+    @property
+    def value(self) -> str:
+        """Get current DN value (may have errors)."""
+        return self._dn
+
+    def build(self) -> FlextResult[str]:
+        """Build and return the final DN."""
         if self._error:
-            return self
+            return FlextResult.fail(self._error)
 
-        result = FlextLdifUtilitiesDN.norm(self._dn)
-        if result.is_failure:
-            self._error = result.error
-            return self
-
-        normalized = result.value
-
-        if case == "lower":
-            self._dn = normalized.lower()
-        elif case == "upper":
-            self._dn = normalized.upper()
-        else:
-            self._dn = normalized
-
-        return self
+        return FlextResult.ok(self._dn)
 
     def clean(
         self,
@@ -78,6 +70,63 @@ class DnOps:
             struct.error,
         ) as e:
             self._error = str(e)
+
+        return self
+
+    def compare(self, other: str, *, _ignore_case: bool = True) -> bool:
+        """Compare with another DN."""
+        if self._error:
+            return False
+
+        compare_result = FlextLdifUtilitiesDN.compare_dns(self._dn, other)
+        if compare_result.is_failure:
+            return False
+        # compare_dns returns int: 0 = equal, <0 = less, >0 = greater
+        return compare_result.value == 0
+
+    def extract_parent(self) -> FlextResult[str]:
+        """Extract the parent DN."""
+        if self._error:
+            return FlextResult.fail(self._error)
+
+        return FlextLdifUtilitiesDN.extract_parent_dn(self._dn)
+
+    def extract_rdn(self) -> FlextResult[str]:
+        """Extract the RDN (Relative Distinguished Name)."""
+        if self._error:
+            return FlextResult.fail(self._error)
+
+        return FlextLdifUtilitiesDN.extract_rdn(self._dn)
+
+    def is_under(self, base: str) -> bool:
+        """Check if DN is under a base DN."""
+        if self._error:
+            return False
+
+        return FlextLdifUtilitiesDN.is_under_base(self._dn, base)
+
+    def normalize(
+        self,
+        *,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
+    ) -> Self:
+        """Normalize the DN."""
+        if self._error:
+            return self
+
+        result = FlextLdifUtilitiesDN.norm(self._dn)
+        if result.is_failure:
+            self._error = result.error
+            return self
+
+        normalized = result.value
+
+        if case == "lower":
+            self._dn = normalized.lower()
+        elif case == "upper":
+            self._dn = normalized.upper()
+        else:
+            self._dn = normalized
 
         return self
 
@@ -107,20 +156,6 @@ class DnOps:
 
         return self
 
-    def extract_rdn(self) -> FlextResult[str]:
-        """Extract the RDN (Relative Distinguished Name)."""
-        if self._error:
-            return FlextResult.fail(self._error)
-
-        return FlextLdifUtilitiesDN.extract_rdn(self._dn)
-
-    def extract_parent(self) -> FlextResult[str]:
-        """Extract the parent DN."""
-        if self._error:
-            return FlextResult.fail(self._error)
-
-        return FlextLdifUtilitiesDN.extract_parent_dn(self._dn)
-
     def split(self) -> FlextResult[list[str]]:
         """Split DN into RDN components."""
         if self._error:
@@ -129,24 +164,6 @@ class DnOps:
         # split() returns list[str] directly, wrap in FlextResult
         rdn_components = FlextLdifUtilitiesDN.split(self._dn)
         return FlextResult.ok(rdn_components)
-
-    def is_under(self, base: str) -> bool:
-        """Check if DN is under a base DN."""
-        if self._error:
-            return False
-
-        return FlextLdifUtilitiesDN.is_under_base(self._dn, base)
-
-    def compare(self, other: str, *, _ignore_case: bool = True) -> bool:
-        """Compare with another DN."""
-        if self._error:
-            return False
-
-        compare_result = FlextLdifUtilitiesDN.compare_dns(self._dn, other)
-        if compare_result.is_failure:
-            return False
-        # compare_dns returns int: 0 = equal, <0 = less, >0 = greater
-        return compare_result.value == 0
 
     def validate(self, *, strict: bool = True) -> FlextResult[bool]:
         """Validate the DN."""
@@ -174,23 +191,6 @@ class DnOps:
 
         return FlextResult.ok(True)
 
-    def build(self) -> FlextResult[str]:
-        """Build and return the final DN."""
-        if self._error:
-            return FlextResult.fail(self._error)
-
-        return FlextResult.ok(self._dn)
-
-    @property
-    def value(self) -> str:
-        """Get current DN value (may have errors)."""
-        return self._dn
-
-    @property
-    def has_error(self) -> bool:
-        """Check if an error occurred during operations."""
-        return self._error is not None
-
 
 # ENTRY FLUENT OPERATIONS
 
@@ -206,51 +206,15 @@ class EntryOps:
         self._entry = entry
         self._error: str | None = None
 
-    def normalize_dn(
-        self,
-        *,
-        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
-        validate: bool = True,
-    ) -> Self:
-        """Normalize the entry's DN."""
-        if self._error:
-            return self
+    @property
+    def entry(self) -> m.Ldif.Entry:
+        """Get current entry (may have errors)."""
+        return self._entry
 
-        transformer = Normalize.dn(case=case, validate=validate)
-        result = transformer.apply(self._entry)
-
-        if result.is_failure:
-            self._error = result.error
-            return self
-
-        # result.value returns Entry (m.Ldif.Entry), which matches self._entry type
-        self._entry = result.value
-        return self
-
-    def normalize_attrs(
-        self,
-        *,
-        case_fold_names: bool = True,
-        trim_values: bool = True,
-        remove_empty: bool = False,
-    ) -> Self:
-        """Normalize the entry's attributes."""
-        if self._error:
-            return self
-
-        transformer = Normalize.attrs(
-            case_fold_names=case_fold_names,
-            trim_values=trim_values,
-            remove_empty=remove_empty,
-        )
-        result = transformer.apply(self._entry)
-
-        if result.is_failure:
-            self._error = result.error
-            return self
-
-        self._entry = result.value
-        return self
+    @property
+    def has_error(self) -> bool:
+        """Check if an error occurred during operations."""
+        return self._error is not None
 
     def add_attr(self, name: str, *values: str) -> Self:
         """Add an attribute with values."""
@@ -279,18 +243,50 @@ class EntryOps:
 
         return self
 
-    def remove_attr(self, name: str) -> Self:
-        """Remove an attribute."""
+    def attach_metadata(self) -> Self:
+        """Attach metadata to the entry."""
         if self._error:
             return self
 
-        # Business Rule: Remove specified attributes from entry for data sanitization
-        # remove_attributes expects m.Ldif.Entry, which is what Entry TypeAlias is
-        self._entry = FlextLdifUtilitiesEntry.remove_attributes(
-            self._entry,
-            [name],
-        )
+        metadata = self._entry.metadata
+        if metadata is None:
+            metadata = m.Ldif.QuirkMetadata.create_for()
 
+        extensions_map = dict(metadata.extensions.items())
+        extensions_map["fluent_metadata_attached"] = True
+        extensions_map["fluent_metadata_method"] = "EntryOps.attach_metadata"
+
+        updated_extensions = m.Ldif.DynamicMetadata.from_dict(extensions_map)
+        updated_metadata = metadata.model_copy(
+            update={"extensions": updated_extensions},
+        )
+        self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
+
+        return self
+
+    def build(self) -> FlextResult[m.Ldif.Entry]:
+        """Build and return the final entry."""
+        if self._error:
+            return FlextResult.fail(self._error)
+
+        return FlextResult.ok(self._entry)
+
+    def convert_booleans(
+        self,
+        format_str: Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"] = "TRUE/FALSE",
+    ) -> Self:
+        """Convert boolean attribute values."""
+        if self._error:
+            return self
+
+        transformer = Transform.convert_booleans(boolean_format=format_str)
+        result = transformer.apply(self._entry)
+
+        if result.is_failure:
+            self._error = result.error
+            return self
+
+        self._entry = result.value
         return self
 
     def filter_attrs(
@@ -333,15 +329,22 @@ class EntryOps:
             FlextLdifUtilitiesEntry.has_objectclass(self._entry, cls) for cls in classes
         )
 
-    def convert_booleans(
+    def normalize_attrs(
         self,
-        format_str: Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"] = "TRUE/FALSE",
+        *,
+        case_fold_names: bool = True,
+        trim_values: bool = True,
+        remove_empty: bool = False,
     ) -> Self:
-        """Convert boolean attribute values."""
+        """Normalize the entry's attributes."""
         if self._error:
             return self
 
-        transformer = Transform.convert_booleans(boolean_format=format_str)
+        transformer = Normalize.attrs(
+            case_fold_names=case_fold_names,
+            trim_values=trim_values,
+            remove_empty=remove_empty,
+        )
         result = transformer.apply(self._entry)
 
         if result.is_failure:
@@ -351,24 +354,38 @@ class EntryOps:
         self._entry = result.value
         return self
 
-    def attach_metadata(self) -> Self:
-        """Attach metadata to the entry."""
+    def normalize_dn(
+        self,
+        *,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
+        validate: bool = True,
+    ) -> Self:
+        """Normalize the entry's DN."""
         if self._error:
             return self
 
-        metadata = self._entry.metadata
-        if metadata is None:
-            metadata = m.Ldif.QuirkMetadata.create_for()
+        transformer = Normalize.dn(case=case, validate=validate)
+        result = transformer.apply(self._entry)
 
-        extensions_map = dict(metadata.extensions.items())
-        extensions_map["fluent_metadata_attached"] = True
-        extensions_map["fluent_metadata_method"] = "EntryOps.attach_metadata"
+        if result.is_failure:
+            self._error = result.error
+            return self
 
-        updated_extensions = m.Ldif.DynamicMetadata.from_dict(extensions_map)
-        updated_metadata = metadata.model_copy(
-            update={"extensions": updated_extensions},
+        # result.value returns Entry (m.Ldif.Entry), which matches self._entry type
+        self._entry = result.value
+        return self
+
+    def remove_attr(self, name: str) -> Self:
+        """Remove an attribute."""
+        if self._error:
+            return self
+
+        # Business Rule: Remove specified attributes from entry for data sanitization
+        # remove_attributes expects m.Ldif.Entry, which is what Entry TypeAlias is
+        self._entry = FlextLdifUtilitiesEntry.remove_attributes(
+            self._entry,
+            [name],
         )
-        self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
 
         return self
 
@@ -414,23 +431,6 @@ class EntryOps:
             return FlextResult.fail(f"Invalid DN: {', '.join(all_errors)}")
 
         return FlextResult.ok(True)
-
-    def build(self) -> FlextResult[m.Ldif.Entry]:
-        """Build and return the final entry."""
-        if self._error:
-            return FlextResult.fail(self._error)
-
-        return FlextResult.ok(self._entry)
-
-    @property
-    def entry(self) -> m.Ldif.Entry:
-        """Get current entry (may have errors)."""
-        return self._entry
-
-    @property
-    def has_error(self) -> bool:
-        """Check if an error occurred during operations."""
-        return self._error is not None
 
 
 __all__ = [

@@ -256,14 +256,6 @@ class FlextFunctional:
 
     pf = process_flatten
 
-    @staticmethod
-    def build[T](value: T, ops: Mapping[str, Callable[[T], T]]) -> T:
-        """Build value using operations dict."""
-        result = value
-        for op in ops.values():
-            result = op(result)
-        return result
-
     @classmethod
     def normalize_list[T](
         cls,
@@ -287,6 +279,14 @@ class FlextFunctional:
         if predicate is not None:
             return [item for item in items if predicate(item)]
         return items
+
+    @staticmethod
+    def build[T](value: T, ops: Mapping[str, Callable[[T], T]]) -> T:
+        """Build value using operations dict."""
+        result = value
+        for op in ops.values():
+            result = op(result)
+        return result
 
     nl = normalize_list
 
@@ -423,56 +423,6 @@ class FlextFunctional:
         "float": float,
     }
 
-    @staticmethod
-    def _convert_with_target(
-        value: t.ContainerValue, target_type: type, default: t.ContainerValue | None
-    ) -> t.ContainerValue | None:
-        """Execute type conversion using centralized Pydantic v2 models.
-
-        Dispatches to the appropriate ConversionRequest model based on target_type
-        using a discriminated union for type safety and centralized validation.
-
-        Args:
-            value: Value to convert
-            target_type: Target type (str, int, float, bool, list, tuple, dict)
-            default: Default value if conversion fails
-
-        Returns:
-            Converted value or default if conversion fails
-
-        """
-        conversion_model: (
-            ConvertToStr
-            | ConvertToInt
-            | ConvertToFloat
-            | ConvertToBool
-            | ConvertToList
-            | ConvertToTuple
-            | ConvertToDict
-            | None
-        ) = None
-        if target_type is str:
-            conversion_model = ConvertToStr(value=value, default=default)
-        elif target_type is int:
-            conversion_model = ConvertToInt(value=value, default=default)
-        elif target_type is float:
-            conversion_model = ConvertToFloat(value=value, default=default)
-        elif target_type is bool:
-            conversion_model = ConvertToBool(value=value, default=default)
-        elif target_type is list:
-            conversion_model = ConvertToList(value=value, default=default)
-        elif target_type is tuple:
-            conversion_model = ConvertToTuple(value=value, default=default)
-        elif target_type is dict:
-            conversion_model = ConvertToDict(value=value, default=default)
-        if conversion_model is None:
-            return default
-        try:
-            converted = conversion_model.convert()
-            return FlextFunctional._to_general(converted)
-        except (TypeError, ValueError):
-            return default
-
     @overload
     @classmethod
     def as_type(
@@ -561,6 +511,56 @@ class FlextFunctional:
             return FlextFunctional._to_general(value)
         try:
             return cls._convert_with_target(value, target_type, default)
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def _convert_with_target(
+        value: t.ContainerValue, target_type: type, default: t.ContainerValue | None
+    ) -> t.ContainerValue | None:
+        """Execute type conversion using centralized Pydantic v2 models.
+
+        Dispatches to the appropriate ConversionRequest model based on target_type
+        using a discriminated union for type safety and centralized validation.
+
+        Args:
+            value: Value to convert
+            target_type: Target type (str, int, float, bool, list, tuple, dict)
+            default: Default value if conversion fails
+
+        Returns:
+            Converted value or default if conversion fails
+
+        """
+        conversion_model: (
+            ConvertToStr
+            | ConvertToInt
+            | ConvertToFloat
+            | ConvertToBool
+            | ConvertToList
+            | ConvertToTuple
+            | ConvertToDict
+            | None
+        ) = None
+        if target_type is str:
+            conversion_model = ConvertToStr(value=value, default=default)
+        elif target_type is int:
+            conversion_model = ConvertToInt(value=value, default=default)
+        elif target_type is float:
+            conversion_model = ConvertToFloat(value=value, default=default)
+        elif target_type is bool:
+            conversion_model = ConvertToBool(value=value, default=default)
+        elif target_type is list:
+            conversion_model = ConvertToList(value=value, default=default)
+        elif target_type is tuple:
+            conversion_model = ConvertToTuple(value=value, default=default)
+        elif target_type is dict:
+            conversion_model = ConvertToDict(value=value, default=default)
+        if conversion_model is None:
+            return default
+        try:
+            converted = conversion_model.convert()
+            return FlextFunctional._to_general(converted)
         except (TypeError, ValueError):
             return default
 

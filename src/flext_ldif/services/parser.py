@@ -26,6 +26,67 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             (server if server is not None else FlextLdifServer.get_global_instance()),
         )
 
+    @override
+    def execute(self) -> r[m.Ldif.ParseResponse]:
+        """Guard against invoking the service without input data."""
+        return r[m.Ldif.ParseResponse].fail(
+            "FlextLdifParser requires input data to parse. "
+            "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
+        )
+
+    def parse(
+        self,
+        source: str | Path,
+        server_type: str | None = None,
+    ) -> r[m.Ldif.ParseResponse]:
+        """Parse LDIF from either raw text or a filesystem path."""
+        if isinstance(source, Path):
+            return self.parse_ldif_file(source, server_type)
+
+        return self.parse_string(source, server_type)
+
+    def parse_ldap3_results(
+        self,
+        results: list[tuple[str, Mapping[str, list[str]]]],
+        server_type: str | None = None,
+    ) -> r[m.Ldif.ParseResponse]:
+        """Parse ldap3 search results by converting them to LDIF text first."""
+        ldif_lines: list[str] = []
+
+        def convert_entry(dn_attrs: tuple[str, Mapping[str, list[str]]]) -> list[str]:
+            """Convert single entry to LDIF lines."""
+            dn, attrs = dn_attrs
+            entry_lines: list[str] = [f"dn: {dn}"]
+            for attr_name, values in attrs.items():
+                attr_lines: list[str] = [f"{attr_name}: {value}" for value in values]
+                entry_lines.extend(attr_lines)
+            entry_lines.append("")
+            return entry_lines
+
+        for dn_attrs in results:
+            entry_lines = convert_entry(dn_attrs)
+            ldif_lines.extend(entry_lines)
+
+        content = "\n".join(ldif_lines)
+
+        return self.parse_string(content, server_type)
+
+    def parse_ldif_file(
+        self,
+        path: Path,
+        server_type: str | None = None,
+        encoding: str = "utf-8",
+    ) -> r[m.Ldif.ParseResponse]:
+        """Parse LDIF content from a file path with optional encoding override."""
+        try:
+            content = path.read_text(encoding=encoding)
+        except (OSError, UnicodeDecodeError) as e:
+            return r[m.Ldif.ParseResponse].fail(
+                f"Failed to read LDIF file {path}: {e}",
+            )
+
+        return self.parse_string(content, server_type)
+
     def parse_string(
         self,
         content: str,
@@ -94,67 +155,6 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
         )
 
         return r[m.Ldif.ParseResponse].ok(response)
-
-    def parse_ldif_file(
-        self,
-        path: Path,
-        server_type: str | None = None,
-        encoding: str = "utf-8",
-    ) -> r[m.Ldif.ParseResponse]:
-        """Parse LDIF content from a file path with optional encoding override."""
-        try:
-            content = path.read_text(encoding=encoding)
-        except (OSError, UnicodeDecodeError) as e:
-            return r[m.Ldif.ParseResponse].fail(
-                f"Failed to read LDIF file {path}: {e}",
-            )
-
-        return self.parse_string(content, server_type)
-
-    def parse_ldap3_results(
-        self,
-        results: list[tuple[str, Mapping[str, list[str]]]],
-        server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
-        """Parse ldap3 search results by converting them to LDIF text first."""
-        ldif_lines: list[str] = []
-
-        def convert_entry(dn_attrs: tuple[str, Mapping[str, list[str]]]) -> list[str]:
-            """Convert single entry to LDIF lines."""
-            dn, attrs = dn_attrs
-            entry_lines: list[str] = [f"dn: {dn}"]
-            for attr_name, values in attrs.items():
-                attr_lines: list[str] = [f"{attr_name}: {value}" for value in values]
-                entry_lines.extend(attr_lines)
-            entry_lines.append("")
-            return entry_lines
-
-        for dn_attrs in results:
-            entry_lines = convert_entry(dn_attrs)
-            ldif_lines.extend(entry_lines)
-
-        content = "\n".join(ldif_lines)
-
-        return self.parse_string(content, server_type)
-
-    def parse(
-        self,
-        source: str | Path,
-        server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
-        """Parse LDIF from either raw text or a filesystem path."""
-        if isinstance(source, Path):
-            return self.parse_ldif_file(source, server_type)
-
-        return self.parse_string(source, server_type)
-
-    @override
-    def execute(self) -> r[m.Ldif.ParseResponse]:
-        """Guard against invoking the service without input data."""
-        return r[m.Ldif.ParseResponse].fail(
-            "FlextLdifParser requires input data to parse. "
-            "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
-        )
 
 
 __all__ = ["FlextLdifParser"]
