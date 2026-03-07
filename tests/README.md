@@ -455,4 +455,4 @@ When adding new tests:
 
 - **[API Documentation](../docs/api/API.md)** - Complete API reference for testing
 - **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system design for testing
-- **[Development Guide](../CLAUDE.md)** - Development patterns and practices
+- **[Development Guide](../AGENTS.md)** - Development patterns and practices

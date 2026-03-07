@@ -1370,7 +1370,7 @@ This API reference provides complete coverage of FLEXT-LDIF functionality, inclu
 
 - [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
 - [flext-ldap Operations](https://github.com/organization/flext/tree/main/flext-ldap/docs/api-reference.md) - LDAP operations API
-- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/CLAUDE.md) - Data integration and ELT orchestration
+- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/AGENTS.md) - Data integration and ELT orchestration
 
 **External Resources**:
 

@@ -303,7 +303,7 @@ top -p $(pgrep -f python)
 
 ## Integration with FLEXT Ecosystem
 
-For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/CLAUDE.md). FLEXT-LDIF follows standard patterns for:
+For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/AGENTS.md). FLEXT-LDIF follows standard patterns for:
 
 - FlextResult error handling
 - FlextContainer dependency injection

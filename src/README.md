@@ -188,4 +188,4 @@ When contributing to the source code:
 - **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Detailed architectural patterns
 - **[API Documentation](../docs/api/API.md)** - Complete API reference
 - **[Module Organization](../docs/standards/python-module-organization.md)** - Detailed module standards
-- **[Development Guide](../CLAUDE.md)** - Development patterns and practices
+- **[Development Guide](../AGENTS.md)** - Development patterns and practices

@@ -1,7 +1,7 @@
 # flext-ldif - FLEXT LDIF Processing
 
 **Hierarchy**: PROJECT
-**Parent**: [../CLAUDE.md](../CLAUDE.md) - Workspace standards
+**Parent**: [../AGENTS.md](../AGENTS.md) - Workspace standards
 **Last Update**: 2025-12-09
 **Architecture Refactoring**: Applied strict layering rules - removed prohibited imports, enforced namespace consistency
 
@@ -114,14 +114,14 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 # If violations found: Do NOT commit, fix architecture first
 ```
 
-**See [Ecosystem Standards](../CLAUDE.md) for complete prohibited patterns and remediation examples.**
+**See [Ecosystem Standards](../AGENTS.md) for complete prohibited patterns and remediation examples.**
 
 ______________________________________________________________________
 
 ## Regra 0 — Alinhamento Cruzado
 
-- Este arquivo espelha o `../CLAUDE.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `CLAUDE.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `flext-oud-mig/`.
-- Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `CLAUDE.md` raiz antes de codar.
+- Este arquivo espelha o `../AGENTS.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `AGENTS.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `flext-oud-mig/`.
+- Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `AGENTS.md` raiz antes de codar.
 
 ## Project Overview
 
@@ -619,7 +619,7 @@ ______________________________________________________________________
 
 ## Automated Fix Scripts
 
-For batch corrections (missing imports, undefined names), use `/tmp/fix_*.sh` scripts with 4 modes: `dry-run`, `backup`, `exec`, `rollback`. **See [../CLAUDE.md](../CLAUDE.md#automated-fix-scripts-batch-corrections)** for template and rules.
+For batch corrections (missing imports, undefined names), use `/tmp/fix_*.sh` scripts with 4 modes: `dry-run`, `backup`, `exec`, `rollback`. **See [../AGENTS.md](../AGENTS.md#automated-fix-scripts-batch-corrections)** for template and rules.
 
 ______________________________________________________________________
 
@@ -882,6 +882,6 @@ ______________________________________________________________________
 
 **See Also**:
 
-- [Workspace Standards](../CLAUDE.md)
-- [flext-core Patterns](../flext-core/CLAUDE.md)
-- [flext-ldap Patterns](../flext-ldap/CLAUDE.md)
+- [Workspace Standards](../AGENTS.md)
+- [flext-core Patterns](../flext-core/AGENTS.md)
+- [flext-ldap Patterns](../flext-ldap/AGENTS.md)

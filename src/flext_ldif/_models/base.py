@@ -107,7 +107,7 @@ class AclElement(FlextModels.ArbitraryTypesModel):
 class FlextLdifModelsBases:
     """Facade namespace for all FLEXT-LDIF base model classes.
 
-    Follows CLAUDE.md §2: each module organizes domain logic into
+    Follows AGENTS.md §2: each module organizes domain logic into
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
