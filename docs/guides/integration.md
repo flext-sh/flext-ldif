@@ -6,7 +6,7 @@
   - [Core LDIF Operations with FlextResult](#core-ldif-operations-with-flextresult)
   - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
 - [Enterprise Directory Migration Integration](#enterprise-directory-migration-integration)
-  - [client-a Oracle Unified Directory Migration](#client-a-oracle-unified-directory-migration)
+  - [FLEXT Oracle Unified Directory Migration](#flext-oracle-unified-directory-migration)
 - [LDIF-Specific Service Integration](#ldif-specific-service-integration)
   - [LDIF API Service Integration](#ldif-api-service-integration)
   - [LDIF CLI Service Integration](#ldif-cli-service-integration)
