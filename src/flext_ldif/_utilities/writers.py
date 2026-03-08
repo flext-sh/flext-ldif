@@ -7,7 +7,6 @@ from collections.abc import Callable
 from typing import Protocol
 
 from flext_core import FlextLogger, r, t
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import m
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -73,23 +72,6 @@ class FlextLdifUtilitiesWriters:
             def __call__(self, dn: str, lines: list[str]) -> None: ...
 
         # ===== NESTED STATISTICS MODEL =====
-
-        class Stats(BaseModel):
-            """Statistics for entry writing."""
-
-            model_config = ConfigDict(extra="forbid")
-
-            total_entries: int = Field(default=0, description="Total entries written")
-            successful: int = Field(
-                default=0,
-                description="Successfully written entries",
-            )
-            failed: int = Field(default=0, description="Failed entries")
-            total_attributes: int = Field(
-                default=0,
-                description="Total attributes written",
-            )
-            folded_lines: int = Field(default=0, description="Folded lines")
 
         # ===== STATIC METHODS =====
 
@@ -343,18 +325,6 @@ class FlextLdifUtilitiesWriters:
             def __call__(self) -> str: ...
 
         # ===== NESTED STATISTICS MODEL =====
-
-        class Stats(BaseModel):
-            """Statistics for content writing."""
-
-            model_config = ConfigDict(extra="forbid")
-
-            total_entries: int = Field(default=0, description="Total entries written")
-            successful: int = Field(
-                default=0,
-                description="Successfully written entries",
-            )
-            failed: int = Field(default=0, description="Failed entries")
 
         # ===== STATIC METHODS =====
 

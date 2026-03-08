@@ -7,7 +7,6 @@ from collections.abc import Mapping
 from typing import Protocol
 
 from flext_core import FlextLogger, FlextResult, r
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import m
 
@@ -59,23 +58,6 @@ class FlextLdifUtilitiesParsers:
             def __call__(self, line: str) -> str | None: ...
 
         # ===== NESTED STATISTICS MODEL =====
-
-        class Stats(BaseModel):
-            """Statistics for entry parsing."""
-
-            model_config = ConfigDict(extra="forbid")
-
-            total_entries: int = Field(default=0, description="Total entries parsed")
-            successful: int = Field(
-                default=0,
-                description="Successfully parsed entries",
-            )
-            failed: int = Field(default=0, description="Failed entries")
-            total_attributes: int = Field(
-                default=0,
-                description="Total attributes parsed",
-            )
-            base64_values: int = Field(default=0, description="Base64-encoded values")
 
         # ===== STATIC METHODS =====
 
@@ -335,18 +317,6 @@ class FlextLdifUtilitiesParsers:
             def __call__(self, header: str) -> Mapping[str, str]: ...
 
         # ===== NESTED STATISTICS MODEL =====
-
-        class Stats(BaseModel):
-            """Statistics for content parsing."""
-
-            model_config = ConfigDict(extra="forbid")
-
-            total_entries: int = Field(default=0, description="Total entries parsed")
-            successful: int = Field(
-                default=0,
-                description="Successfully parsed entries",
-            )
-            failed: int = Field(default=0, description="Failed entries")
 
         # ===== STATIC METHODS =====
 

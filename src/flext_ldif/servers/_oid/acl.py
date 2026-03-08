@@ -9,7 +9,6 @@ from collections.abc import Mapping
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, FlextResult
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -45,38 +44,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def get_acl_attributes(self) -> list[str]:
         """Get RFC + OID extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
-
-    class OidAclMetadataConfig(BaseModel):
-        """Configuration for building OID ACL metadata."""
-
-        model_config = ConfigDict(frozen=True, extra="forbid")
-
-        acl_line: str = Field(description="ACL line content")
-        oid_subject_type: str = Field(description="OID subject type")
-        rfc_subject_type: str = Field(description="RFC subject type")
-        oid_subject_value: str = Field(description="OID subject value")
-        target_dn: str = Field(description="Target DN")
-        perms_dict: Mapping[str, bool] = Field(description="Permissions dictionary")
-        target_attrs: list[str] | None = Field(
-            default=None,
-            description="Target attributes",
-        )
-        acl_filter: str | None = Field(default=None, description="ACL filter")
-        acl_constraint: str | None = Field(default=None, description="ACL constraint")
-        bindmode: str | None = Field(default=None, description="Bind mode")
-        deny_group_override: bool | None = Field(
-            default=None,
-            description="Deny group override flag",
-        )
-        append_to_all: bool | None = Field(
-            default=None,
-            description="Append to all flag",
-        )
-        bind_ip_filter: str | None = Field(default=None, description="Bind IP filter")
-        constrain_to_added_object: str | None = Field(
-            default=None,
-            description="Constrain to added object",
-        )
 
     @staticmethod
     def _detect_oid_subject(content: str) -> str | None:
