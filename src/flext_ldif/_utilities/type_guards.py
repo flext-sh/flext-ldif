@@ -44,7 +44,6 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
         """
         if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
             return False
-        # Check if all items are Entry-like (have dn and attributes)
         return all(
             getattr(item, "dn", None) is not None
             and getattr(item, "attributes", None) is not None

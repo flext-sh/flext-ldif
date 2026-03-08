@@ -19,7 +19,9 @@ class FlextLdifTypeHelpers:
         obj: t.ContainerValue,
     ) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
-        return isinstance(obj, ABCSequence) and not isinstance(obj, str | bytes | dict)
+        return isinstance(obj, ABCSequence) and (
+            not isinstance(obj, str | bytes | dict)
+        )
 
     @staticmethod
     def is_mapping_of_scalars(
@@ -35,7 +37,7 @@ class FlextLdifTypeHelpers:
         obj: t.ContainerValue,
     ) -> TypeGuard[ABCMapping[str, t.ContainerValue]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
-        return isinstance(obj, ABCMapping) and not isinstance(obj, str | bytes)
+        return isinstance(obj, ABCMapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(

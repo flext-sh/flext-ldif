@@ -21,10 +21,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 class FlextLdifModelsCollections:
     class DynamicCounts(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(
-            frozen=False,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
+            frozen=False, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )
 
         @override
@@ -93,10 +90,10 @@ class FlextLdifModelsCollections:
     class SchemaContent(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
         attributes: Sequence[FlextLdifModelsDomains.SchemaAttribute] = Field(
-            default_factory=list,
+            default_factory=list
         )
         object_classes: Sequence[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-            default_factory=list,
+            default_factory=list
         )
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
@@ -108,10 +105,7 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(
-            frozen=True,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
+            frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )
 
         @override
@@ -158,9 +152,7 @@ class FlextLdifModelsCollections:
             ]
 
         def __setitem__(
-            self,
-            category: str,
-            entries: Sequence[FlextLdifModelsDomains.Entry],
+            self, category: str, entries: Sequence[FlextLdifModelsDomains.Entry]
         ) -> None:
             self.categories[category] = list(entries)
 

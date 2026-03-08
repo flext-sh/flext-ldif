@@ -18,20 +18,12 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests import c, s
 
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-
 
 class OidTestConstants:
     """Constants for OID boolean conversion tests."""
 
-    RFC_TO_OID_BOOLEAN: Final[dict[str, str]] = {
-        "TRUE": "1",
-        "FALSE": "0",
-    }
-    OID_TO_RFC_BOOLEAN: Final[dict[str, str]] = {
-        "1": "TRUE",
-        "0": "FALSE",
-    }
+    RFC_TO_OID_BOOLEAN: Final[dict[str, str]] = {"TRUE": "1", "FALSE": "0"}
+    OID_TO_RFC_BOOLEAN: Final[dict[str, str]] = {"1": "TRUE", "0": "FALSE"}
 
 
 class TestsFlextLdifMigrationPipelineQuirks(s):
@@ -43,25 +35,12 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create OID LDIF with boolean attributes
-        # Use constants for attribute names and values
         attr_enabled = "orclIsEnabled"
         attr_locked = "orclAccountLocked"
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["TRUE"]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["FALSE"]
-
-        ldif_content = f"""dn: {c.DNs.TEST_USER}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: {c.Names.PERSON}
-{c.Names.OBJECTCLASS}: orcluser
-{c.Names.CN}: test
-{c.Names.SN}: test
-{attr_enabled}: {val_true_oid}
-{attr_locked}: {val_false_oid}
-"""
+        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.OBJECTCLASS}: orcluser\n{c.Names.CN}: test\n{c.Names.SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -70,24 +49,15 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             source_server=lib_c.Ldif.ServerTypes.OID,
             target_server=lib_c.Ldif.ServerTypes.RFC,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
-        # Verify output file content
         output_file = output_dir / "migrated.ldif"
-
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
-
-        # Should be converted to RFC format
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
-
-        # Pipeline lowercases attribute names
         assert f"{attr_enabled.lower()}: {val_true_rfc}" in content
         assert f"{attr_locked.lower()}: {val_false_rfc}" in content
-        # Check original values are NOT present (using lowercase key to be sure)
         assert f"{attr_enabled.lower()}: {val_true_oid}" not in content
         assert f"{attr_locked.lower()}: {val_false_oid}" not in content
 
@@ -97,24 +67,12 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create RFC LDIF with boolean attributes
         attr_enabled = "orclIsEnabled"
         attr_locked = "orclAccountLocked"
         val_true_rfc = "TRUE"
         val_false_rfc = "FALSE"
-
-        ldif_content = f"""dn: {c.DNs.TEST_USER}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: {c.Names.PERSON}
-{c.Names.OBJECTCLASS}: orcluser
-{c.Names.CN}: test
-{c.Names.SN}: test
-{attr_enabled}: {val_true_rfc}
-{attr_locked}: {val_false_rfc}
-"""
+        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.OBJECTCLASS}: orcluser\n{c.Names.CN}: test\n{c.Names.SN}: test\n{attr_enabled}: {val_true_rfc}\n{attr_locked}: {val_false_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -123,21 +81,13 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             source_server=lib_c.Ldif.ServerTypes.RFC,
             target_server=lib_c.Ldif.ServerTypes.OID,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
-        # Verify output file content
         output_file = output_dir / "migrated.ldif"
-
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
-
-        # Should be converted to OID format
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
-
-        # Pipeline lowercases attribute names
         assert f"{attr_enabled.lower()}: {val_true_oid}" in content
         assert f"{attr_locked.lower()}: {val_false_oid}" in content
         assert f"{attr_enabled.lower()}: {val_true_rfc}" not in content
@@ -149,18 +99,9 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create OID LDIF with orclaci
         acl_val = "access to entry by * (read)"
-        ldif_content = f"""dn: {c.DNs.TEST_USER}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: {c.Names.PERSON}
-{c.Names.CN}: test
-{c.Names.SN}: test
-{FlextLdifServersOidConstants.ORCLACI}: {acl_val}
-"""
+        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{c.Names.SN}: test\n{FlextLdifServersOidConstants.ORCLACI}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -169,17 +110,11 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             source_server=lib_c.Ldif.ServerTypes.OID,
             target_server=lib_c.Ldif.ServerTypes.RFC,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
-        # Verify output file content
         output_file = output_dir / "migrated.ldif"
-
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
-
-        # Should be converted to RFC format (aci)
         assert (
             f"{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}" in content
         )
@@ -191,18 +126,9 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create RFC LDIF with aci
         acl_val = "access to entry by * (read)"
-        ldif_content = f"""dn: {c.DNs.TEST_USER}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: {c.Names.PERSON}
-{c.Names.CN}: test
-{c.Names.SN}: test
-{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}
-"""
+        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{c.Names.SN}: test\n{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -211,21 +137,13 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             source_server=lib_c.Ldif.ServerTypes.RFC,
             target_server=lib_c.Ldif.ServerTypes.OID,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
-        # Verify output file content
         output_file = output_dir / "migrated.ldif"
-
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
-
-        # Should be converted to OID format (orclaci)
         assert f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content
-        # Check that standalone 'aci:' is not present (use line-start pattern)
-        # Note: 'orclaci:' contains 'aci:', so we check for '\naci:' or start-of-content
-        assert not re.search(r"(^|\n)aci:", content), (
+        assert not re.search("(^|\\n)aci:", content), (
             "Should not have standalone 'aci:' attribute"
         )
 
@@ -235,15 +153,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create OID LDIF with schema DN
-        ldif_content = f"""dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: subschema
-{c.Names.CN}: subschemasubentry
-"""
+        ldif_content = f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: subschema\n{c.Names.CN}: subschemasubentry\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -252,17 +163,11 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             source_server=lib_c.Ldif.ServerTypes.OID,
             target_server=lib_c.Ldif.ServerTypes.RFC,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
-        # Verify output file content
         output_file = output_dir / "migrated.ldif"
-
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
-
-        # Should be converted to RFC format (cn=schema)
         assert f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content
         assert f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content
 
@@ -272,35 +177,21 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Input that looks like RFC (TRUE/FALSE) but we say it's OID
         attr_enabled = "orclIsEnabled"
         val_true_rfc = "TRUE"
-
-        ldif_content = f"""dn: {c.DNs.TEST_USER}
-{c.Names.OBJECTCLASS}: {c.Names.TOP}
-{c.Names.OBJECTCLASS}: {c.Names.PERSON}
-{c.Names.CN}: test
-{attr_enabled}: {val_true_rfc}
-"""
+        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{attr_enabled}: {val_true_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
-
-        # Round trip: OID -> RFC -> OID
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.RFC,  # Treat input as RFC to parse "TRUE" correctly
-            target_server=lib_c.Ldif.ServerTypes.OID,  # Target OID to enforce "1"
+            source_server=lib_c.Ldif.ServerTypes.RFC,
+            target_server=lib_c.Ldif.ServerTypes.OID,
         )
-
         result = pipeline.execute()
         tm.ok(result)
-
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
-
-        # Writer must output "1" for OID, even if input was "TRUE"
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         assert f"{attr_enabled.lower()}: {val_true_oid}" in content

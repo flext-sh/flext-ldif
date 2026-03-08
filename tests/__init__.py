@@ -44,8 +44,6 @@ if TYPE_CHECKING:
     )
     from tests.typings import GenericFieldsDict, TestsFlextLdifTypes as t
     from tests.utilities import TestsFlextLdifUtilities as u
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Filters": ("tests.constants", "Filters"),
     "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
@@ -64,7 +62,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tv": ("tests.test_helpers", "TestsFlextLdifValidators"),
     "u": ("tests.utilities", "TestsFlextLdifUtilities"),
 }
-
 __all__ = [
     "Filters",
     "GenericFieldsDict",
@@ -85,7 +82,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

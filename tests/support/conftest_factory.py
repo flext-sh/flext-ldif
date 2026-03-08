@@ -40,13 +40,11 @@ class FlextLdifTestConftest:
     Reduces conftest.py from 1400+ lines to ~20 lines using DRY principles.
     """
 
-    # Pre-built test data for performance
     _TEST_USERS: ClassVar[list[dict[str, str]]] = [
         {"name": "Test User 1", "email": "user1@example.com"},
         {"name": "Test User 2", "email": "user2@example.com"},
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
-
     _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, Collection[str]] | str]]] = [
         {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
@@ -54,11 +52,9 @@ class FlextLdifTestConftest:
                 "objectclass": ["inetOrgPerson", "person"],
                 "cn": [user.get("name", "Test User")],
                 "sn": [
-                    (
-                        user.get("name", "User").split()[-1]
-                        if " " in user.get("name", "")
-                        else "User"
-                    ),
+                    user.get("name", "User").split()[-1]
+                    if " " in user.get("name", "")
+                    else "User"
                 ],
                 "mail": [user.get("email", f"test{i}@example.com")],
                 "uid": [f"testuser{i}"],
@@ -77,7 +73,7 @@ class FlextLdifTestConftest:
                     for i, user in enumerate(_TEST_USERS)
                 ],
             },
-        },
+        }
     ]
 
     def docker_control(self) -> FlextTestsDocker:
@@ -99,10 +95,7 @@ class FlextLdifTestConftest:
         return str(int(time.time() * 1000))
 
     def unique_dn_suffix(
-        self,
-        worker_id: str,
-        session_id: str,
-        request: pytest.FixtureRequest,
+        self, worker_id: str, session_id: str, request: pytest.FixtureRequest
     ) -> str:
         """Generate unique DN suffix using factory pattern."""
         test_name = request.node.name if hasattr(request, "node") else "unknown"
@@ -114,9 +107,7 @@ class FlextLdifTestConftest:
         return f"{worker_id}-{session_id}-{test_name_clean}-{test_id}"
 
     def make_user_dn(
-        self,
-        unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        self, unique_dn_suffix: str, ldap_container: dict[str, object]
     ) -> Callable[[str], str]:
         """Factory for unique user DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -127,9 +118,7 @@ class FlextLdifTestConftest:
         return _make
 
     def make_group_dn(
-        self,
-        unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        self, unique_dn_suffix: str, ldap_container: dict[str, object]
     ) -> Callable[[str], str]:
         """Factory for unique group DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -140,9 +129,7 @@ class FlextLdifTestConftest:
         return _make
 
     def make_test_base_dn(
-        self,
-        unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        self, unique_dn_suffix: str, ldap_container: dict[str, object]
     ) -> Callable[[str], str]:
         """Factory for unique base DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -163,7 +150,6 @@ class FlextLdifTestConftest:
     def set_test_environment(self) -> Generator[None]:
         """Set test environment variables."""
         yield
-        # Reset global config for test isolation
         FlextSettings.reset_global_instance()
 
     def reset_flextldif_singleton(self) -> Generator[None]:
@@ -172,13 +158,11 @@ class FlextLdifTestConftest:
         Note: FlextLdif may not have _reset_instance method (Pydantic models).
         Use getattr with noop fallback to handle missing method gracefully.
         """
-        # Safe reset - method may not exist
         reset_fn = getattr(FlextLdif, "_reset_instance", lambda: None)
         reset_fn()
         yield
         reset_fn()
 
-    # LDAP container constants (matches docker/docker-compose.openldap.yml)
     LDAP_CONTAINER_NAME = "flext-openldap-test"
     LDAP_COMPOSE_FILE = "docker/docker-compose.openldap.yml"
     LDAP_SERVICE_NAME = "openldap"
@@ -198,9 +182,7 @@ class FlextLdifTestConftest:
         )
 
     def ldap_container(
-        self,
-        docker_control: FlextTestsDocker,
-        worker_id: str,
+        self, docker_control: FlextTestsDocker, worker_id: str
     ) -> dict[str, object]:
         """Session-scoped LDAP container configuration.
 
@@ -214,51 +196,32 @@ class FlextLdifTestConftest:
         """
         logger = FlextLogger(__name__)
         container_name = self.LDAP_CONTAINER_NAME
-
-        # Check if container is dirty - warn but don't kill other sessions
         if docker_control.is_container_dirty(container_name):
             logger.warning(
-                "Container %s is marked dirty but will NOT be recreated "
-                "to avoid killing other sessions. Run 'docker compose down -v && "
-                "docker compose up -d' manually if needed.",
+                "Container %s is marked dirty but will NOT be recreated to avoid killing other sessions. Run 'docker compose down -v && docker compose up -d' manually if needed.",
                 container_name,
             )
-
-        # Try to start existing container (does NOT use compose_down)
         start_result = docker_control.start_existing_container(container_name)
         if start_result.is_failure:
             pytest.skip(
-                f"Container {container_name} not found. "
-                f"Start it manually with: cd {Path(__file__).resolve().parents[4] / 'docker'} && "
-                f"docker compose -f docker-compose.openldap.yml up -d",
+                f"Container {container_name} not found. Start it manually with: cd {Path(__file__).resolve().parents[4] / 'docker'} && docker compose -f docker-compose.openldap.yml up -d"
             )
-
-        # Wait for container readiness
         port_ready = docker_control.wait_for_port_ready(
-            "localhost",
-            self.LDAP_PORT,
-            max_wait=30,
+            "localhost", self.LDAP_PORT, max_wait=30
         )
         if port_ready.is_failure or not port_ready.value:
             pytest.skip(f"Container port {self.LDAP_PORT} not ready within 30s")
-
-        # Verify LDAP is functional
         max_wait = 30.0
         wait_interval = 0.5
         waited = 0.0
-
         active_bind_dn = self.LDAP_ADMIN_DN
         active_password = self.LDAP_ADMIN_PASSWORD
-
         while waited < max_wait:
             try:
                 server = Server(f"ldap://localhost:{self.LDAP_PORT}", get_info=ALL)
                 for bind_dn, password in self._ldap_bind_candidates():
                     conn = Connection(
-                        server,
-                        user=bind_dn,
-                        password=password,
-                        auto_bind=False,
+                        server, user=bind_dn, password=password, auto_bind=False
                     )
                     if conn.bind():
                         conn.unbind()
@@ -274,13 +237,10 @@ class FlextLdifTestConftest:
                 break
             except Exception:
                 pass
-
             time.sleep(wait_interval)
             waited += wait_interval
-
         if waited >= max_wait:
             pytest.skip("Container did not become ready within 30s")
-
         return {
             "server_url": f"ldap://localhost:{self.LDAP_PORT}",
             "host": "localhost",
@@ -298,8 +258,7 @@ class FlextLdifTestConftest:
         return str(ldap_container.get("server_url", default_url))
 
     def ldap_connection(
-        self,
-        ldap_container: dict[str, object],
+        self, ldap_container: dict[str, object]
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
@@ -307,33 +266,24 @@ class FlextLdifTestConftest:
         port = raw_port if isinstance(raw_port, int) else self.LDAP_PORT
         bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
         password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
-
         server = Server(f"ldap://{host}:{port}", get_info=ALL)
         conn = Connection(server, user=bind_dn, password=password)
-
         try:
             if not conn.bind():
                 pytest.skip(f"LDAP server not available at {host}:{port}")
         except Exception as e:
             pytest.skip(f"LDAP server not available: {e}")
-
         yield conn
         conn.unbind()
 
     def clean_test_ou(
-        self,
-        ldap_connection: Connection,
-        make_test_base_dn: Callable[[str], str],
+        self, ldap_connection: Connection, make_test_base_dn: Callable[[str], str]
     ) -> Generator[str]:
         """Create and clean isolated test OU."""
         test_ou_dn = make_test_base_dn("FlextLdifTests")
-
-        # Clean existing entries
         try:
             ldap_connection.search(
-                test_ou_dn,
-                "(objectClass=*)",
-                search_scope="SUBTREE",
+                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE"
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -342,23 +292,14 @@ class FlextLdifTestConftest:
                         ldap_connection.delete(dn)
         except Exception:
             pass
-
-        # Create test OU
         with contextlib.suppress(Exception):
             ldap_connection.add(
-                test_ou_dn,
-                ["organizationalUnit"],
-                {"ou": "FlextLdifTests"},
+                test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
             )
-
         yield test_ou_dn
-
-        # Cleanup
         try:
             ldap_connection.search(
-                test_ou_dn,
-                "(objectClass=*)",
-                search_scope="SUBTREE",
+                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE"
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -368,7 +309,6 @@ class FlextLdifTestConftest:
         except Exception:
             pass
 
-    # LDIF processing fixtures
     def ldif_processor_config(self) -> dict[str, object]:
         """LDIF processor configuration."""
         return {
@@ -430,9 +370,7 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_changes_file(
-        self,
-        test_ldif_dir: Path,
-        sample_ldif_with_changes: str,
+        self, test_ldif_dir: Path, sample_ldif_with_changes: str
     ) -> Path:
         """LDIF changes file."""
         ldif_file = test_ldif_dir / "test_changes.ldif"
@@ -440,9 +378,7 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_binary_file(
-        self,
-        test_ldif_dir: Path,
-        sample_ldif_with_binary: str,
+        self, test_ldif_dir: Path, sample_ldif_with_binary: str
     ) -> Path:
         """LDIF binary file."""
         ldif_file = test_ldif_dir / "test_binary.ldif"
@@ -469,15 +405,11 @@ class FlextLdifTestConftest:
         """Integration services."""
         return FlextLdifTestFactory.services_for_integration_test()
 
-    def assert_result_success(
-        self,
-    ) -> Callable[[FlextResult[object]], None]:
+    def assert_result_success(self) -> Callable[[FlextResult[object]], None]:
         """Result success assertion."""
         return self._assert_result_success
 
-    def assert_result_failure(
-        self,
-    ) -> Callable[[FlextResult[object]], None]:
+    def assert_result_failure(self) -> Callable[[FlextResult[object]], None]:
         """Result failure assertion."""
         return self._assert_result_failure
 
@@ -543,7 +475,6 @@ class FlextLdifTestConftest:
 
         return helper
 
-    # Schema and other fixtures
     def ldap_schema_config(self) -> dict[str, object]:
         """LDAP schema config."""
         return {
@@ -575,17 +506,13 @@ class FlextLdifTestConftest:
         def _transform_cn(x: str | float | None) -> str:
             return str(x).title() if x else ""
 
-        # value_transformations contains callables - they are objects in Python
         return {
             "attribute_mappings": {
                 "telephoneNumber": "phone",
                 "employeeNumber": "employee_id",
                 "departmentNumber": "department",
             },
-            "value_transformations": {
-                "mail": _transform_mail,
-                "cn": _transform_cn,
-            },
+            "value_transformations": {"mail": _transform_mail, "cn": _transform_cn},
             "dn_transformations": {
                 "base_dn": "dc=newdomain,dc=com",
                 "ou_mappings": {"people": "users", "groups": "groups"},
@@ -594,13 +521,12 @@ class FlextLdifTestConftest:
 
     def ldif_filters(self) -> dict[str, object]:
         """LDIF filters."""
-        # attribute_filters contains mixed types - all are objects in Python
         return {
             "include_object_classes": ["inetOrgPerson", "groupOfNames"],
             "exclude_attributes": ["userPassword", "pwdHistory"],
             "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
             "attribute_filters": {
-                "mail": r".*@example\.com$",
+                "mail": ".*@example\\.com$",
                 "departmentNumber": ["IT", "HR", "Finance"],
             },
         }
@@ -611,31 +537,13 @@ class FlextLdifTestConftest:
             "total_entries": 4,
             "successful_entries": 4,
             "failed_entries": 0,
-            "object_class_counts": {
-                "inetOrgPerson": 2,
-                "groupOfNames": 2,
-            },
-            "attribute_counts": {
-                "uid": 2,
-                "cn": 4,
-                "mail": 2,
-            },
+            "object_class_counts": {"inetOrgPerson": 2, "groupOfNames": 2},
+            "attribute_counts": {"uid": 2, "cn": 4, "mail": 2},
         }
 
     def invalid_ldif_data(self) -> str:
         """Invalid LDIF data."""
-        return """dn: invalid-dn-format
-objectClass: nonExistentClass
-invalidAttribute: value without proper formatting
-# Missing required attributes
-
-dn:
-objectClass: person
-# Empty DN
-
-dn: uid=test,ou=people,dc=example,dc=com
-objectClass: person
-# Missing required attributes for person class"""
+        return "dn: invalid-dn-format\nobjectClass: nonExistentClass\ninvalidAttribute: value without proper formatting\n# Missing required attributes\n\ndn:\nobjectClass: person\n# Empty DN\n\ndn: uid=test,ou=people,dc=example,dc=com\nobjectClass: person\n# Missing required attributes for person class"
 
     def large_ldif_config(self) -> dict[str, object]:
         """Large LDIF config."""
@@ -647,7 +555,6 @@ objectClass: person
             "max_workers": 4,
         }
 
-    # Local test utilities
     class LocalTestMatchers:
         """Local test matchers."""
 
@@ -665,8 +572,7 @@ objectClass: person
         """Local test domains."""
 
         def create_configuration(
-            self,
-            **kwargs: t.ContainerValue,
+            self, **kwargs: t.ContainerValue
         ) -> dict[str, t.ContainerValue]:
             """Create config."""
             return dict(kwargs)
@@ -681,18 +587,15 @@ objectClass: person
 
     def ldif_test_entries(self) -> list[dict[str, dict[str, list[str]] | str]]:
         """LDIF test entries."""
-        # Convert Collection[str] to list[str] for type compatibility
         entries = copy.deepcopy(self._LDIF_TEST_ENTRIES)
         return [
             {
-                key: (
-                    {
-                        k: list(v) if isinstance(v, Collection) else v
-                        for k, v in value.items()
-                    }
-                    if isinstance(value, dict)
-                    else value
-                )
+                key: {
+                    k: list(v) if isinstance(v, Collection) else v
+                    for k, v in value.items()
+                }
+                if isinstance(value, dict)
+                else value
                 for key, value in entry.items()
             }
             for entry in entries
@@ -701,20 +604,17 @@ objectClass: person
     def ldif_test_content(self, ldif_test_entries: list[dict[str, object]]) -> str:
         """Generate LDIF content."""
         content_lines: list[str] = []
-
         for entry in ldif_test_entries:
             dn = entry.get("dn", "")
             content_lines.append(f"dn: {dn}")
             attributes = entry.get("attributes")
             assert isinstance(attributes, dict)
-
             for attr_key, attr_values in attributes.items():
                 attr_name: str = str(attr_key)
                 content_lines.extend(
                     f"{attr_name}: {value_item!s}" for value_item in attr_values
                 )
             content_lines.append("")
-
         return "\n".join(content_lines)
 
     def ldif_error_scenarios(self) -> dict[str, str]:
@@ -724,24 +624,15 @@ objectClass: person
             "missing_dn": "objectClass: person\ncn: Test User\n",
             "empty_content": "",
             "malformed_attribute": "dn: cn=test,dc=example,dc=com\ninvalid-attribute-line\n",
-            "circular_reference": (
-                "dn: cn=group1,dc=example,dc=com\n"
-                "member: cn=group2,dc=example,dc=com\n\n"
-                "dn: cn=group2,dc=example,dc=com\n"
-                "member: cn=group1,dc=example,dc=com\n"
-            ),
+            "circular_reference": "dn: cn=group1,dc=example,dc=com\nmember: cn=group2,dc=example,dc=com\n\ndn: cn=group2,dc=example,dc=com\nmember: cn=group1,dc=example,dc=com\n",
         }
 
     def ldif_performance_config(
-        self,
-        flext_domains: LocalTestDomains,
+        self, flext_domains: LocalTestDomains
     ) -> dict[str, object]:
         """Performance config."""
         config = flext_domains.create_configuration(
-            batch_size=1000,
-            memory_limit="50MB",
-            timeout=30,
-            max_workers=2,
+            batch_size=1000, memory_limit="50MB", timeout=30, max_workers=2
         )
         return {
             "large_entry_count": 5000,
@@ -750,7 +641,6 @@ objectClass: person
             **config,
         }
 
-    # Pytest markers
     def pytest_configure(self, config: pytest.Config) -> None:
         """Configure pytest markers."""
         config.addinivalue_line("markers", "unit: Unit tests")
@@ -764,19 +654,15 @@ objectClass: person
         config.addinivalue_line("markers", "performance: Performance tests")
         config.addinivalue_line("markers", "slow: Slow tests")
         config.addinivalue_line(
-            "markers",
-            "docker: Tests requiring Docker OpenLDAP container",
+            "markers", "docker: Tests requiring Docker OpenLDAP container"
         )
         config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
         config.addinivalue_line(
-            "markers",
-            "flext_tests: Tests using FlextTests utilities",
+            "markers", "flext_tests: Tests using FlextTests utilities"
         )
 
     def pytest_collection_modifyitems(
-        self,
-        config: pytest.Config,
-        items: list[pytest.Item],
+        self, config: pytest.Config, items: list[pytest.Item]
     ) -> None:
         """Filter test items."""
         filtered_items = []
@@ -788,25 +674,20 @@ objectClass: person
                     if test_class and getattr(test_class, "__test__", True) is False:
                         continue
             filtered_items.append(item)
-
         items[:] = filtered_items
 
-    # Test constants
     class LDIFTestConstants:
         """Test constants."""
 
         SAMPLE_LDIF_FILE = "tests/fixtures/sample_basic.ldif"
         COMPLEX_LDIF_FILE = "tests/fixtures/sample_complex.ldif"
         INVALID_LDIF_FILE = "tests/fixtures/sample_invalid.ldif"
-
         SAMPLE_DN = "cn=test,ou=users,dc=example,dc=com"
         SAMPLE_ATTRIBUTE = "cn"
         SAMPLE_VALUE = "test user"
-
         MAX_TEST_ENTRIES = 100
         MAX_TEST_ATTRIBUTES = 50
         MAX_TEST_VALUES = 20
-
         DEFAULT_TIMEOUT_MS = 5000
         MAX_PARSE_TIME_PER_ENTRY = 1000
 
@@ -814,7 +695,6 @@ objectClass: person
         """Test constants."""
         return self.LDIFTestConstants()
 
-    # Server fixtures
     def fixtures_loader(self) -> FlextLdifFixtures.Loader:
         """Generic fixture loader."""
         return FlextLdifFixtures.Loader()

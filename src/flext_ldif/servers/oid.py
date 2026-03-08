@@ -30,13 +30,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         return cls.Constants.SCHEMA_FILTERABLE_FIELDS
 
     def extract_schemas_from_ldif(
-        self,
-        ldif_content: str,
+        self, ldif_content: str
     ) -> FlextResult[
-        dict[
-            str,
-            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
-        ]
+        dict[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
         schema_class = getattr(type(self), "Schema", None)
@@ -46,19 +42,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     str,
                     list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
-            ].fail(
-                "Schema nested class not available",
-            )
-
+            ].fail("Schema nested class not available")
         schema_quirk = schema_class()
         result = schema_quirk.extract_schemas_from_ldif(ldif_content)
-
         if result.is_success:
             data = result.value
-
             converted_data: dict[
-                str,
-                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
+                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int
             ] = {
                 "attributes": data.get("attributes", []),
                 "objectclasses": data.get("objectclasses", []),
@@ -73,12 +63,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ].ok(converted_data)
         return FlextResult[
             dict[
-                str,
-                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
+                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int
             ]
-        ].fail(
-            result.error or "Failed to extract schemas",
-        )
+        ].fail(result.error or "Failed to extract schemas")
 
     class Constants(FlextLdifServersOidConstants):
         """OID server constants."""

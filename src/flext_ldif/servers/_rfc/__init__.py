@@ -11,8 +11,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
     "FlextLdifServersRfcConstants": (
@@ -28,7 +26,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServersRfcSchema",
     ),
 }
-
 __all__ = [
     "FlextLdifServersRfcAcl",
     "FlextLdifServersRfcConstants",
@@ -37,7 +34,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

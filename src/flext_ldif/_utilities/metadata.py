@@ -34,7 +34,7 @@ class FlextLdifUtilitiesMetadata:
             for key, inner_value in item_data.items():
                 if isinstance(inner_value, list):
                     merged_value[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        inner_value,
+                        inner_value
                     )
                 elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
                     merged_value[key] = inner_value
@@ -53,7 +53,7 @@ class FlextLdifUtilitiesMetadata:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
         normalized_item = FlextLdifUtilitiesMetadata._normalize_metadata_list_item(
-            item_data,
+            item_data
         )
         if isinstance(value, list):
             value.append(normalized_item)
@@ -63,35 +63,28 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_category_update(
-        stats: m.Ldif.EntryStatistics,
-        category: str,
+        stats: m.Ldif.EntryStatistics, category: str
     ) -> m.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
         return stats.model_copy(update={"category_assigned": category})
 
     @staticmethod
     def _apply_filter_update(
-        stats: m.Ldif.EntryStatistics,
-        filter_type: str,
-        *,
-        passed: bool,
+        stats: m.Ldif.EntryStatistics, filter_type: str, *, passed: bool
     ) -> m.Ldif.EntryStatistics:
         """Apply filter marking to stats."""
         return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
-        stats: m.Ldif.EntryStatistics,
-        rejection_category: str,
-        reason: str,
+        stats: m.Ldif.EntryStatistics, rejection_category: str, reason: str
     ) -> m.Ldif.EntryStatistics:
         """Apply rejection marking to stats."""
         return stats.mark_rejected(rejection_category, reason)
 
     @staticmethod
     def _build_schema_format_model(
-        definition: str,
-        combined: Mapping[str, t.MetadataValue],
+        definition: str, combined: Mapping[str, t.MetadataValue]
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -103,7 +96,7 @@ class FlextLdifUtilitiesMetadata:
             "x_ordered",
         }
         known_field_values: dict[str, t.MetadataValue] = {
-            "original_string_complete": definition,
+            "original_string_complete": definition
         }
         extension_kwargs: dict[str, t.MetadataValue] = {}
         for key, value in combined.items():
@@ -112,14 +105,12 @@ class FlextLdifUtilitiesMetadata:
             else:
                 extension_kwargs[key] = value
         extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            extension_kwargs,
+            extension_kwargs
         )
-        return m.Ldif.SchemaFormatDetails.model_validate(
-            {
-                **known_field_values,
-                "extensions": extensions,
-            },
-        )
+        return m.Ldif.SchemaFormatDetails.model_validate({
+            **known_field_values,
+            "extensions": extensions,
+        })
 
     @staticmethod
     def _convert_transformation_to_metadata_value() -> Mapping[str, t.Scalar]:
@@ -140,16 +131,13 @@ class FlextLdifUtilitiesMetadata:
         ]:
             if violation_key in source_attributes:
                 target_attributes[violation_key] = source_attributes[violation_key]
-
         if "validation_context" in source_attributes:
             target_attributes["validation_context"] = source_attributes[
                 "validation_context"
             ]
 
     @staticmethod
-    def _extract_all_schema_details(
-        definition: str,
-    ) -> Mapping[str, t.MetadataValue]:
+    def _extract_all_schema_details(definition: str) -> Mapping[str, t.MetadataValue]:
         """Extract all schema formatting details into combined dict."""
         combined: dict[str, t.MetadataValue] = {}
         extractors = [
@@ -172,14 +160,14 @@ class FlextLdifUtilitiesMetadata:
                     combined[key] = value
                 elif isinstance(value, list):
                     combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        value,
+                        value
                     )
                 elif isinstance(value, Mapping):
                     combined[key] = str(value)
                 else:
                     combined[key] = str(value)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
-            definition,
+            definition
         )
         field_order_typed: t.MetadataValue = list(field_order)
         field_positions_typed: t.MetadataValue = dict(field_positions)
@@ -190,17 +178,17 @@ class FlextLdifUtilitiesMetadata:
             field_order,
             field_positions,
             {
-                "OID": r"\(\s*([0-9.]+)",
-                "NAME": r"NAME",
-                "DESC": r"DESC",
-                "EQUALITY": r"EQUALITY",
-                "SUBSTR": r"SUBSTR",
-                "ORDERING": r"ORDERING",
-                "SYNTAX": r"SYNTAX",
-                "SUP": r"SUP",
-                "SINGLE-VALUE": r"SINGLE-VALUE",
-                "OBSOLETE": r"OBSOLETE",
-                "X-ORIGIN": r"X-ORIGIN",
+                "OID": "\\(\\s*([0-9.]+)",
+                "NAME": "NAME",
+                "DESC": "DESC",
+                "EQUALITY": "EQUALITY",
+                "SUBSTR": "SUBSTR",
+                "ORDERING": "ORDERING",
+                "SYNTAX": "SYNTAX",
+                "SUP": "SUP",
+                "SINGLE-VALUE": "SINGLE-VALUE",
+                "OBSOLETE": "OBSOLETE",
+                "X-ORIGIN": "X-ORIGIN",
             },
         )
         spacing_typed: t.MetadataValue = dict(spacing_result)
@@ -212,9 +200,7 @@ class FlextLdifUtilitiesMetadata:
         """Extract DESC details."""
         details: dict[str, str | bool] = {}
         desc_match = re.search(
-            r"DESC\s+([\"']?)([^\"']+)([\"']?)",
-            definition,
-            re.IGNORECASE,
+            "DESC\\s+([\\\"']?)([^\\\"']+)([\\\"']?)", definition, re.IGNORECASE
         )
         if desc_match:
             details["desc_presence"] = True
@@ -223,7 +209,7 @@ class FlextLdifUtilitiesMetadata:
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
                 before_desc = definition[:desc_pos]
-                before_match = re.search(r"(\s+)$", before_desc)
+                before_match = re.search("(\\s+)$", before_desc)
                 details["desc_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -235,17 +221,17 @@ class FlextLdifUtilitiesMetadata:
     def _extract_field_order(definition: str) -> tuple[list[str], Mapping[str, int]]:
         """Extract field order and positions."""
         field_patterns = {
-            "OID": r"\(\s*([0-9.]+)",
-            "NAME": r"NAME",
-            "DESC": r"DESC",
-            "EQUALITY": r"EQUALITY",
-            "SUBSTR": r"SUBSTR",
-            "ORDERING": r"ORDERING",
-            "SYNTAX": r"SYNTAX",
-            "SUP": r"SUP",
-            "SINGLE-VALUE": r"SINGLE-VALUE",
-            "OBSOLETE": r"OBSOLETE",
-            "X-ORIGIN": r"X-ORIGIN",
+            "OID": "\\(\\s*([0-9.]+)",
+            "NAME": "NAME",
+            "DESC": "DESC",
+            "EQUALITY": "EQUALITY",
+            "SUBSTR": "SUBSTR",
+            "ORDERING": "ORDERING",
+            "SYNTAX": "SYNTAX",
+            "SUP": "SUP",
+            "SINGLE-VALUE": "SINGLE-VALUE",
+            "OBSOLETE": "OBSOLETE",
+            "X-ORIGIN": "X-ORIGIN",
         }
         field_order: list[str] = []
         field_positions: dict[str, int] = {}
@@ -260,11 +246,11 @@ class FlextLdifUtilitiesMetadata:
     def _extract_leading_trailing_spaces(definition: str) -> Mapping[str, str]:
         """Extract leading and trailing spaces."""
         details: dict[str, str] = {}
-        trailing_match = re.search(r"\)\s*$", definition)
+        trailing_match = re.search("\\)\\s*$", definition)
         details["trailing_spaces"] = (
             definition[trailing_match.end() :] if trailing_match else ""
         )
-        leading_match = re.search(r"^\s*\(", definition)
+        leading_match = re.search("^\\s*\\(", definition)
         details["leading_spaces"] = leading_match.group(0)[:-1] if leading_match else ""
         return details
 
@@ -272,43 +258,36 @@ class FlextLdifUtilitiesMetadata:
     def _extract_matching_rule_details(definition: str) -> Mapping[str, bool | str]:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
         details: dict[str, bool | str] = {}
-
-        # EQUALITY
-        equality_match = re.search(r"\bEQUALITY\b", definition, re.IGNORECASE)
+        equality_match = re.search("\\bEQUALITY\\b", definition, re.IGNORECASE)
         if equality_match:
             details["equality_presence"] = True
             before_rule = definition[: equality_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = re.search("(\\s+)$", before_rule)
             details["equality_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["equality_presence"] = False
-
-        # SUBSTR
-        substr_match = re.search(r"\bSUBSTR\b", definition, re.IGNORECASE)
+        substr_match = re.search("\\bSUBSTR\\b", definition, re.IGNORECASE)
         if substr_match:
             details["substr_presence"] = True
             before_rule = definition[: substr_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = re.search("(\\s+)$", before_rule)
             details["substr_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["substr_presence"] = False
-
-        # ORDERING
-        ordering_match = re.search(r"\bORDERING\b", definition, re.IGNORECASE)
+        ordering_match = re.search("\\bORDERING\\b", definition, re.IGNORECASE)
         if ordering_match:
             details["ordering_presence"] = True
             before_rule = definition[: ordering_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = re.search("(\\s+)$", before_rule)
             details["ordering_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["ordering_presence"] = False
-
         return details
 
     @staticmethod
@@ -316,8 +295,7 @@ class FlextLdifUtilitiesMetadata:
         """Extract NAME format details."""
         details: dict[str, str | list[str]] = {}
         name_match = re.search(
-            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
-            definition,
+            "NAME\\s+(\\()?\\s*([\\\"']?)([^\\\"'()]+)([\\\"']?)(\\s*\\))?", definition
         )
         if name_match:
             has_parens = bool(name_match.group(1))
@@ -325,13 +303,13 @@ class FlextLdifUtilitiesMetadata:
             name_value = name_match.group(3)
             name_quote_end = name_match.group(4) or ""
             multiple_match = re.search(
-                r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
+                "NAME\\s+\\(\\s*([\\\"'])([^\\\"']+)([\\\"'])\\s+([\\\"'])([^\\\"']+)([\\\"'])",
                 definition,
             )
             if multiple_match or (has_parens and " " in name_value):
                 details["name_format"] = "multiple"
                 all_name_matches = re.findall(
-                    r"([\"'])([^\"']+)([\"'])",
+                    "([\\\"'])([^\\\"']+)([\\\"'])",
                     definition[name_match.start() : name_match.end() + 50],
                 )
                 details["name_values"] = [m[1] for m in all_name_matches]
@@ -340,7 +318,7 @@ class FlextLdifUtilitiesMetadata:
                 )
                 details["name_quotes"] = name_quotes_list
                 name_section = definition[name_match.start() : name_match.end() + 50]
-                name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
+                name_spacing = re.findall("[\\\"']\\s+([\\\"'])", name_section)
                 details["name_spacing_between"] = name_spacing
             else:
                 details["name_format"] = "single"
@@ -351,7 +329,7 @@ class FlextLdifUtilitiesMetadata:
             name_pos = definition.find("NAME")
             if name_pos >= 0:
                 before_name = definition[:name_pos]
-                before_match = re.search(r"(\s+)$", before_name)
+                before_match = re.search("(\\s+)$", before_name)
                 details["name_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -363,12 +341,12 @@ class FlextLdifUtilitiesMetadata:
     ) -> Mapping[str, bool | int | str | None]:
         """Extract OBSOLETE details."""
         details: dict[str, bool | int | str | None] = {}
-        obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
+        obsolete_match = re.search("\\bOBSOLETE\\b", definition, re.IGNORECASE)
         if obsolete_match:
             details["obsolete_presence"] = True
             details["obsolete_position"] = obsolete_match.start()
             before_obsolete = definition[: obsolete_match.start()]
-            before_match = re.search(r"(\s+)$", before_obsolete)
+            before_match = re.search("(\\s+)$", before_obsolete)
             details["obsolete_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -381,7 +359,7 @@ class FlextLdifUtilitiesMetadata:
     def _extract_oid_details(definition: str) -> Mapping[str, str]:
         """Extract OID and spacing details."""
         details: dict[str, str] = {}
-        oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
+        oid_match = re.search("\\(\\s*([0-9.]+)(\\s*)", definition)
         if oid_match:
             details["oid_value"] = oid_match.group(1)
             details["oid_spacing_after"] = oid_match.group(2)
@@ -393,30 +371,26 @@ class FlextLdifUtilitiesMetadata:
         details: dict[str, str] = {}
         if "attributetypes:" in definition.lower():
             attr_match = re.search(
-                r"(attributetypes|attributeTypes):",
-                definition,
-                re.IGNORECASE,
+                r"(attributetypes|attributeTypes):", definition, re.IGNORECASE
             )
             if attr_match:
                 details["attribute_case"] = attr_match.group(1)
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
+                    spacing_match = re.match("(\\s*)", after_colon)
                     if spacing_match:
                         details["attribute_prefix_spacing"] = spacing_match.group(1)
         if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
             oc_match = re.search(
-                r"(objectclasses|objectClasses):",
-                definition,
-                re.IGNORECASE,
+                r"(objectclasses|objectClasses):", definition, re.IGNORECASE
             )
             if oc_match:
                 details["objectclass_case"] = oc_match.group(1)
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
+                    spacing_match = re.match("(\\s*)", after_colon)
                     if spacing_match:
                         details["objectclass_prefix_spacing"] = spacing_match.group(1)
         return details
@@ -429,7 +403,7 @@ class FlextLdifUtilitiesMetadata:
         if single_value_match:
             details["single_value_presence"] = True
             before_sv = definition[: single_value_match.start()]
-            before_match = re.search(r"(\s+)$", before_sv)
+            before_match = re.search("(\\s+)$", before_sv)
             details["single_value_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -445,12 +419,10 @@ class FlextLdifUtilitiesMetadata:
         source_metadata_obj = getattr(model, "validation_metadata", None)
         if source_metadata_obj is None:
             return None
-
         if not isinstance(source_metadata_obj, m.Metadata):
             return None
-
         return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            source_metadata_obj.attributes,
+            source_metadata_obj.attributes
         )
 
     @staticmethod
@@ -469,9 +441,7 @@ class FlextLdifUtilitiesMetadata:
             pos2 = field_positions.get(field2)
             if pos1 is not None and pos2 is not None:
                 field1_end_match = re.search(
-                    field_patterns[field1],
-                    definition[pos1:],
-                    re.IGNORECASE,
+                    field_patterns[field1], definition[pos1:], re.IGNORECASE
                 )
                 if field1_end_match:
                     field1_end = pos1 + field1_end_match.end()
@@ -483,14 +453,14 @@ class FlextLdifUtilitiesMetadata:
     def _extract_sup_details(definition: str) -> Mapping[str, bool | str]:
         """Extract SUP details."""
         details: dict[str, bool | str] = {}
-        sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
+        sup_match = re.search("SUP\\s+([^\\s]+)", definition, re.IGNORECASE)
         if sup_match:
             details["sup_presence"] = True
             details["sup_value"] = sup_match.group(1)
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
                 before_sup = definition[:sup_pos]
-                before_match = re.search(r"(\s+)$", before_sup)
+                before_match = re.search("(\\s+)$", before_sup)
                 details["sup_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -499,19 +469,17 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_syntax_details(
-        definition: str,
-    ) -> Mapping[str, bool | str | None]:
+    def _extract_syntax_details(definition: str) -> Mapping[str, bool | str | None]:
         """Extract SYNTAX formatting details."""
         details: dict[str, bool | str | None] = {}
         syntax_match = re.search(
-            r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
+            "SYNTAX\\s*([\\\"']?)([0-9.]+)([\\\"']?)(\\{[0-9]+\\})?",
             definition,
             re.IGNORECASE,
         )
         if syntax_match:
             details["syntax_quotes"] = bool(
-                syntax_match.group(1) or syntax_match.group(3),
+                syntax_match.group(1) or syntax_match.group(3)
             )
             details["syntax_quote_char"] = (
                 syntax_match.group(1) or syntax_match.group(3) or ""
@@ -521,11 +489,11 @@ class FlextLdifUtilitiesMetadata:
             syntax_pos = definition.find("SYNTAX")
             if syntax_pos >= 0:
                 after_syntax = definition[syntax_pos + 6 :]
-                spacing_match = re.match(r"(\s*)", after_syntax)
+                spacing_match = re.match("(\\s*)", after_syntax)
                 if spacing_match:
                     details["syntax_spacing"] = spacing_match.group(1)
                 before_syntax = definition[:syntax_pos]
-                before_match = re.search(r"(\s+)$", before_syntax)
+                before_match = re.search("(\\s+)$", before_syntax)
                 details["syntax_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -536,9 +504,7 @@ class FlextLdifUtilitiesMetadata:
         """Extract X-ORIGIN details."""
         details: dict[str, str | bool | None] = {}
         x_origin_match = re.search(
-            r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
-            definition,
-            re.IGNORECASE,
+            "X-ORIGIN\\s+([\\\"']?)([^\\\"']+)([\\\"']?)", definition, re.IGNORECASE
         )
         if x_origin_match:
             details["x_origin_presence"] = True
@@ -549,7 +515,7 @@ class FlextLdifUtilitiesMetadata:
             x_origin_pos = definition.find("X-ORIGIN")
             if x_origin_pos >= 0:
                 before_x_origin = definition[:x_origin_pos]
-                before_match = re.search(r"(\s+)$", before_x_origin)
+                before_match = re.search("(\\s+)$", before_x_origin)
                 details["x_origin_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -559,8 +525,6 @@ class FlextLdifUtilitiesMetadata:
             details["x_origin_quotes"] = ""
         return details
 
-    # UNIFIED PARAMETERIZED METADATA TRACKER
-
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
@@ -569,7 +533,6 @@ class FlextLdifUtilitiesMetadata:
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
             metadata_obj = m.Metadata(attributes={})
-
         if isinstance(metadata_obj, m.Metadata):
             return dict(metadata_obj.attributes)
         return {}
@@ -581,13 +544,11 @@ class FlextLdifUtilitiesMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
         if target_metadata_obj is None or not isinstance(
-            target_metadata_obj,
-            m.Metadata,
+            target_metadata_obj, m.Metadata
         ):
             target_metadata_obj = m.Metadata(attributes={})
-
         return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            target_metadata_obj.attributes,
+            target_metadata_obj.attributes
         )
 
     @staticmethod
@@ -601,9 +562,7 @@ class FlextLdifUtilitiesMetadata:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
-    def _normalize_dict_list(
-        values: Sequence[object],
-    ) -> list[t.Scalar | None]:
+    def _normalize_dict_list(values: Sequence[object]) -> list[t.Scalar | None]:
         normalized: list[t.Scalar | None] = []
         for item in values:
             if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
@@ -613,9 +572,7 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_mapping_list(
-        values: Sequence[object],
-    ) -> list[t.Scalar | None]:
+    def _normalize_mapping_list(values: Sequence[object]) -> list[t.Scalar | None]:
         normalized: list[t.Scalar | None] = [
             item
             for item in values
@@ -624,9 +581,7 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(
-        item: t.MetadataValue,
-    ) -> t.Scalar | None:
+    def _normalize_metadata_list_item(item: t.MetadataValue) -> t.Scalar | None:
         if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
             return item
         return str(item)
@@ -639,10 +594,7 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: dict[
-                str,
-                t.Scalar | list[str] | None,
-            ] = {}
+            normalized_metadata: dict[str, t.Scalar | list[str] | None] = {}
             for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)) or value is None:
                     normalized_metadata[key] = value
@@ -665,50 +617,41 @@ class FlextLdifUtilitiesMetadata:
     ) -> p.Ldif.ModelWithValidationMetadataProtocol:
         """Generic helper to track items in model validation_metadata."""
         metadata = FlextLdifUtilitiesMetadata._get_metadata_dict(model)
-
         if metadata_key not in metadata:
             metadata[metadata_key] = [] if append_to_list else {}
-
         if append_to_list:
             FlextLdifUtilitiesMetadata._add_to_list_metadata(
-                metadata,
-                metadata_key,
-                item_data,
+                metadata, metadata_key, item_data
             )
         else:
             FlextLdifUtilitiesMetadata._add_to_dict_metadata(
-                metadata,
-                metadata_key,
-                item_data,
+                metadata, metadata_key, item_data
             )
-
         if update_conversion_path:
             FlextLdifUtilitiesMetadata._update_conversion_path(
-                metadata,
-                update_conversion_path,
+                metadata, update_conversion_path
             )
-
         metadata_typed = {
             key: u.normalize_to_metadata_value(value) for key, value in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            metadata_typed,
+            metadata_typed
         )
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
         return model
 
     @staticmethod
     def _update_conversion_path(
-        metadata: dict[str, t.MetadataValue],
-        update_conversion_path: str,
+        metadata: dict[str, t.MetadataValue], update_conversion_path: str
     ) -> None:
         """Update conversion_path in metadata."""
         if "conversion_path" not in metadata:
             metadata["conversion_path"] = update_conversion_path
         else:
             current_path_obj = metadata["conversion_path"]
-            if isinstance(current_path_obj, str) and (
-                update_conversion_path not in current_path_obj
+            if (
+                isinstance(current_path_obj, str)
+                and update_conversion_path not in current_path_obj
             ):
                 metadata["conversion_path"] = (
                     f"{current_path_obj}->{update_conversion_path}"
@@ -716,15 +659,14 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_entry_with_stats(
-        entry: m.Ldif.Entry,
-        updated_stats: m.Ldif.EntryStatistics,
+        entry: m.Ldif.Entry, updated_stats: m.Ldif.EntryStatistics
     ) -> m.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
         if entry.metadata is None:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 FlextLdifUtilitiesServer.normalize_server_type(
-                    c.Ldif.ServerTypes.RFC.value,
-                ),
+                    c.Ldif.ServerTypes.RFC.value
+                )
             )
         update_dict: dict[str, t.ContainerValue] = {"processing_stats": updated_stats}
         updated_metadata = entry.metadata.model_copy(update=update_dict)
@@ -732,9 +674,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def analyze_minimal_differences(
-        original: str,
-        converted: str | None,
-        context: str = "entry",
+        original: str, converted: str | None, context: str = "entry"
     ) -> Mapping[str, t.MetadataValue]:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif.MetadataKeys
@@ -747,39 +687,30 @@ class FlextLdifUtilitiesMetadata:
             "original_length": len(original),
             "converted_length": len(converted) if converted else len(original),
         }
-
         if converted is None or original == converted:
             return differences
-
         differences[mk.HAS_DIFFERENCES] = True
         return differences
 
     @staticmethod
-    def analyze_schema_formatting(
-        definition: str,
-    ) -> m.Ldif.SchemaFormatDetails:
+    def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
         preview_len = c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
-            definition_preview=(
-                definition[:preview_len] + "..."
-                if len(definition) > preview_len
-                else definition
-            ),
+            definition_preview=definition[:preview_len] + "..."
+            if len(definition) > preview_len
+            else definition,
             fields_captured=len(combined),
         )
         return FlextLdifUtilitiesMetadata._build_schema_format_model(
-            definition,
-            combined,
+            definition, combined
         )
 
     @staticmethod
     def build_acl_metadata_complete(
-        quirk_type: str,
-        _original_acl_format: str | None = None,
-        **extra: t.Scalar,
+        quirk_type: str, _original_acl_format: str | None = None, **extra: t.Scalar
     ) -> Mapping[str, str | int | bool]:
         """Build metadata for ACL parsing as a dictionary."""
         result: dict[str, str | int | bool] = {
@@ -798,10 +729,7 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
     ) -> Mapping[str, t.MetadataValue]:
         """Build metadata extensions for entry as a dictionary."""
-        return {
-            "quirk_type": quirk_type,
-            "source_server": quirk_type,
-        }
+        return {"quirk_type": quirk_type, "source_server": quirk_type}
 
     @staticmethod
     def build_entry_parse_metadata(
@@ -815,70 +743,53 @@ class FlextLdifUtilitiesMetadata:
         server_data_dict["original_entry_dn"] = dn_typed
         server_data_dict["cleaned_dn"] = cleaned_typed
         server_data_dict["dn_was_base64"] = base64_typed
-
         if config.original_dn_line:
             dn_line_typed: t.MetadataValue = config.original_dn_line
             server_data_dict["original_dn_line"] = dn_line_typed
-
         if config.original_attr_lines:
-            attr_lines_typed: t.MetadataValue = list(
-                config.original_attr_lines,
-            )
+            attr_lines_typed: t.MetadataValue = list(config.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_typed
-
         if config.original_attribute_case:
-            attr_case_typed: t.MetadataValue = dict(
-                config.original_attribute_case,
-            )
+            attr_case_typed: t.MetadataValue = dict(config.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_typed
-
         server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
-            server_data_dict,
+            server_data_dict
         )
-
         original_ldif_parts: list[str] = []
         if config.original_dn_line:
             original_ldif_parts.append(config.original_dn_line)
         if config.original_attr_lines:
             original_ldif_parts.extend(config.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-
         extensions_dict: dict[str, t.MetadataValue] = {}
         mk = c.Ldif.MetadataKeys
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
-
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            extensions_dict,
+            extensions_dict
         )
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=config.quirk_type,
             server_specific_data=server_data,
             extensions=dynamic_extensions,
         )
-
         if original_ldif:
             metadata.original_strings["entry_original_ldif"] = original_ldif
-
         return metadata
 
     @staticmethod
     def build_original_format_details(
-        quirk_type: str,
-        **extra: t.Scalar,
+        quirk_type: str, **extra: t.Scalar
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
-
         return m.Ldif.FormatDetails(
-            dn_line=dn_line,
-            trailing_info=f"server={quirk_type}",
+            dn_line=dn_line, trailing_info=f"server={quirk_type}"
         )
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        quirk_type: str,
-        **extra: t.ContainerValue,
+        quirk_type: str, **extra: t.ContainerValue
     ) -> Mapping[str, str | bool | list[str] | Mapping[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary."""
         result: dict[str, str | bool | list[str] | dict[str, str | list[str]]] = {
@@ -887,16 +798,14 @@ class FlextLdifUtilitiesMetadata:
         }
         if "rfc_violations" in extra:
             violations = extra["rfc_violations"]
-            if isinstance(violations, Sequence) and not isinstance(
-                violations,
-                (str, bytes),
+            if isinstance(violations, Sequence) and (
+                not isinstance(violations, (str, bytes))
             ):
                 result["rfc_violations"] = [str(v) for v in violations]
         if "attribute_conflicts" in extra:
             conflicts = extra["attribute_conflicts"]
-            if isinstance(conflicts, Sequence) and not isinstance(
-                conflicts,
-                (str, bytes),
+            if isinstance(conflicts, Sequence) and (
+                not isinstance(conflicts, (str, bytes))
             ):
                 result["has_attribute_conflicts"] = len(conflicts) > 0
         return result
@@ -922,15 +831,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
-        definition: str,
+        metadata: FlextLdifModelsDomains.QuirkMetadata, definition: str
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
-            definition,
+            definition
         )
         metadata.schema_format_details = formatting_details
-
         logger.debug(
             "Schema formatting preserved in metadata",
             quirk_type=metadata.quirk_type,
@@ -939,8 +846,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
-        **extra: t.Scalar,
+        metadata: FlextLdifModelsDomains.QuirkMetadata, **extra: t.Scalar
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
 
@@ -963,7 +869,6 @@ class FlextLdifUtilitiesMetadata:
             metadata.boolean_conversions[key] = original_value
             key_target = f"{attr_name}:oid_value"
             metadata.boolean_conversions[key_target] = converted_value
-
         logger.debug(
             "Boolean conversion tracked",
             attr_name=attr_name,
@@ -981,35 +886,24 @@ class FlextLdifUtilitiesMetadata:
         """Update entry processing statistics using FlextLdifUtilities."""
         if not entry.metadata:
             return entry
-
         processing_stats = entry.metadata.processing_stats
         if not processing_stats:
             return entry
-
         updated_stats = processing_stats.model_copy()
-
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
-                updated_stats,
-                category,
+                updated_stats, category
             )
-
         if mark_filtered is not None:
             filter_type, passed = mark_filtered
             updated_stats = FlextLdifUtilitiesMetadata._apply_filter_update(
-                updated_stats,
-                filter_type,
-                passed=passed,
+                updated_stats, filter_type, passed=passed
             )
-
         if mark_rejected is not None:
             rejection_category, reason = mark_rejected
             updated_stats = FlextLdifUtilitiesMetadata._apply_rejection_update(
-                updated_stats,
-                rejection_category,
-                reason,
+                updated_stats, rejection_category, reason
             )
-
         return FlextLdifUtilitiesMetadata._update_entry_with_stats(entry, updated_stats)
 
 

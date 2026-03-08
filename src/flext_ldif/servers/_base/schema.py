@@ -23,46 +23,20 @@ logger = FlextLogger(__name__)
 
 class FlextLdifServersBaseSchema(
     QuirkMethodsMixin,
-    FlextService[(m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)],
+    FlextService[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str],
 ):
     """Base class for schema quirks - FlextService V2 with enhanced usability."""
 
     server_type: str = "rfc"
-    """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."""
-
+    "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."
     priority: int = 0
-    """Quirk priority (lower number = higher priority).
-
-        **STANDARDIZED CONSTANTS REQUIRED**: Each Schema implementation MUST define
-        a Constants nested class with:
-        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
-        - ALIASES: All valid names for this server including canonical
-        - PRIORITY: Selection priority (lower = higher priority)
-        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
-        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
-
-        **Protocol Compliance**: All implementations MUST satisfy
-        p.Ldif.SchemaQuirkProtocol through structural typing.
-        This means all public methods must match protocol signatures exactly.
-
-        **Validation**: Use protocol-compliant quirk interfaces for runtime
-        structural checks.
-
-        Common schema extension patterns:
-        - Vendor-specific prefixes (e.g., vendor prefix + attribute name)
-        - Enhanced schema features beyond RFC baseline
-        - Configuration-specific attributes
-        - Vendor-specific schema extensions
-        - RFC 4512 compliant baseline (no extensions)
-        """
-
+    'Quirk priority (lower number = higher priority).\n\n        **STANDARDIZED CONSTANTS REQUIRED**: Each Schema implementation MUST define\n        a Constants nested class with:\n        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")\n        - ALIASES: All valid names for this server including canonical\n        - PRIORITY: Selection priority (lower = higher priority)\n        - CAN_NORMALIZE_FROM: What source types this quirk can normalize\n        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to\n\n        **Protocol Compliance**: All implementations MUST satisfy\n        p.Ldif.SchemaQuirkProtocol through structural typing.\n        This means all public methods must match protocol signatures exactly.\n\n        **Validation**: Use protocol-compliant quirk interfaces for runtime\n        structural checks.\n\n        Common schema extension patterns:\n        - Vendor-specific prefixes (e.g., vendor prefix + attribute name)\n        - Enhanced schema features beyond RFC baseline\n        - Configuration-specific attributes\n        - Vendor-specific schema extensions\n        - RFC 4512 compliant baseline (no extensions)\n        '
     parent_quirk: Self | None = Field(
         default=None,
         exclude=True,
         repr=False,
-        description=("Reference to parent quirk instance for server-level access"),
+        description="Reference to parent quirk instance for server-level access",
     )
-
     attr_definition: str | None = Field(
         default=None,
         exclude=True,
@@ -102,12 +76,9 @@ class FlextLdifServersBaseSchema(
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to FlextService."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-
         instance = super().__new__(cls, **filtered_kwargs)
-
         if _parent_quirk is not None:
             object.__setattr__(instance, "_parent_quirk", _parent_quirk)
-
         return instance
 
     def __init__(
@@ -119,21 +90,17 @@ class FlextLdifServersBaseSchema(
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: dict[
-            str,
-            FlextTypes.ScalarValue | m.ConfigMap | Sequence[FlextTypes.ScalarValue],
+            str, FlextTypes.ScalarValue | m.ConfigMap | Sequence[FlextTypes.ScalarValue]
         ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, (str, int, float, bool, datetime)) or value is None:
                 service_kwargs[key] = value
                 continue
-
             if isinstance(value, m.ConfigMap):
                 service_kwargs[key] = value
                 continue
-
-            if isinstance(value, Sequence) and not isinstance(
-                value,
-                (str, bytes, bytearray),
+            if isinstance(value, Sequence) and (
+                not isinstance(value, (str, bytes, bytearray))
             ):
                 scalar_values: list[FlextTypes.ScalarValue] = []
                 for item in value:
@@ -147,10 +114,8 @@ class FlextLdifServersBaseSchema(
                         break
                 else:
                     service_kwargs[key] = scalar_values
-
         super().__init__()
         self._schema_service = _schema_service
-
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
@@ -182,8 +147,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def _preserve_formatting(
-        metadata: m.Ldif.QuirkMetadata,
-        attr_definition: str,
+        metadata: m.Ldif.QuirkMetadata, attr_definition: str
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
         metadata_util = FlextLdifUtilitiesMetadata
@@ -192,13 +156,10 @@ class FlextLdifServersBaseSchema(
             _ = preserve_method(metadata, attr_definition)
 
     @staticmethod
-    def _resolve_quirk_type(
-        server_type: str | None,
-    ) -> c.Ldif.ServerTypes:
+    def _resolve_quirk_type(server_type: str | None) -> c.Ldif.ServerTypes:
         """Resolve server type to valid StrEnum, defaulting to GENERIC."""
         if not server_type:
             return c.Ldif.ServerTypes.RFC
-
         type_map: dict[str, c.Ldif.ServerTypes] = {
             "rfc": c.Ldif.ServerTypes.RFC,
             "oid": c.Ldif.ServerTypes.OID,
@@ -230,18 +191,14 @@ class FlextLdifServersBaseSchema(
     ) -> m.Ldif.QuirkMetadata | None:
         """Build metadata for attribute including extensions and OID validation."""
         metadata_extensions = FlextLdifServersBaseSchema._extract_metadata_extensions(
-            attr_definition,
+            attr_definition
         )
-
         if syntax:
             metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = syntax_validation_error
-
         FlextLdifServersBaseSchema.validate_and_track_oid(
-            metadata_extensions,
-            attribute_oid,
-            "attribute",
+            metadata_extensions, attribute_oid, "attribute"
         )
         for rule_name, rule_oid in [
             ("equality matching rule", equality_oid),
@@ -249,21 +206,14 @@ class FlextLdifServersBaseSchema(
             ("substring matching rule", substr_oid),
         ]:
             FlextLdifServersBaseSchema.validate_and_track_oid(
-                metadata_extensions,
-                rule_oid,
-                rule_name,
+                metadata_extensions, rule_oid, rule_name
             )
         FlextLdifServersBaseSchema.validate_and_track_oid(
-            metadata_extensions,
-            sup_oid,
-            "SUP",
+            metadata_extensions, sup_oid, "SUP"
         )
-
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
-
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-
         extensions_typed: dict[str, t.MetadataValue] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
@@ -274,14 +224,12 @@ class FlextLdifServersBaseSchema(
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions_typed,
+                extensions_typed
             )
             if extensions_typed
             else FlextLdifModelsMetadata.DynamicMetadata(),
         )
-
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
-
         preview_len = 100
         logger.debug(
             "Preserved schema formatting details",
@@ -289,7 +237,6 @@ class FlextLdifServersBaseSchema(
             if len(attr_definition) > preview_len
             else attr_definition,
         )
-
         return (
             metadata if metadata_extensions or metadata.schema_format_details else None
         )
@@ -303,7 +250,6 @@ class FlextLdifServersBaseSchema(
         """Validate OID and track result in metadata extensions."""
         if not oid_value:
             return
-
         oid_util = FlextLdifUtilitiesOID
         oid_validate_result: FlextResult[bool]
         validate_method = getattr(oid_util, "validate_format", None)
@@ -311,12 +257,10 @@ class FlextLdifServersBaseSchema(
             validate_result_raw = validate_method(oid_value)
             if isinstance(validate_result_raw, FlextResult):
                 if validate_result_raw.is_failure:
-                    oid_validate_result = FlextResult.fail(
-                        validate_result_raw.error,
-                    )
+                    oid_validate_result = FlextResult.fail(validate_result_raw.error)
                 else:
                     oid_validate_result = FlextResult.ok(
-                        bool(validate_result_raw.value),
+                        bool(validate_result_raw.value)
                     )
             else:
                 oid_validate_result = FlextResult.ok(bool(validate_result_raw))
@@ -329,24 +273,21 @@ class FlextLdifServersBaseSchema(
             metadata_extensions["syntax_oid_valid"] = False
         elif not oid_validate_result.value:
             metadata_extensions["syntax_validation_error"] = (
-                f"Invalid {oid_name} OID format: {oid_value} "
-                f"(must be numeric dot-separated format)"
+                f"Invalid {oid_name} OID format: {oid_value} (must be numeric dot-separated format)"
             )
             metadata_extensions["syntax_oid_valid"] = False
         else:
             metadata_extensions["syntax_oid_valid"] = True
 
     def can_handle_attribute(
-        self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        self, attr_definition: str | m.Ldif.SchemaAttribute
     ) -> bool:
         """Check if this quirk can handle the attribute definition."""
         _ = attr_definition
         return False
 
     def can_handle_objectclass(
-        self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        self, oc_definition: str | m.Ldif.SchemaObjectClass
     ) -> bool:
         """Check if this quirk can handle the objectClass definition."""
         _ = oc_definition
@@ -356,7 +297,7 @@ class FlextLdifServersBaseSchema(
     def execute(
         self,
         *,
-        data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None) = None,
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
         **kwargs: t.ContainerValue,
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
@@ -386,10 +327,8 @@ class FlextLdifServersBaseSchema(
                     struct.error,
                 ):
                     data = None
-
         if operation is None:
             operation_raw = kwargs.get("operation")
-
             operation_typed: str | None = None
             if isinstance(operation_raw, str):
                 if operation_raw == "parse":
@@ -397,15 +336,11 @@ class FlextLdifServersBaseSchema(
                 elif operation_raw == "write":
                     operation_typed = "write"
             operation = operation_typed
-
         if data is None:
             empty_str: str = ""
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-            ].ok(
-                empty_str,
-            )
-
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            ].ok(empty_str)
         operation_final: str | None = None
         if operation.__class__ is str and operation in {"parse", "write"}:
             operation_final = "parse" if operation == "parse" else "write"
@@ -413,29 +348,25 @@ class FlextLdifServersBaseSchema(
         return self._route_operation(data, detected_op)
 
     def parse(
-        self,
-        definition: str,
+        self, definition: str
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse schema definition (attribute or objectClass)."""
         return self.route_parse(definition)
 
     def parse_attribute(
-        self,
-        attr_definition: str,
+        self, attr_definition: str
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""
         return self._parse_attribute(attr_definition)
 
     def parse_objectclass(
-        self,
-        oc_definition: str,
+        self, oc_definition: str
     ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition (public API)."""
         return self._parse_objectclass(oc_definition)
 
     def route_parse(
-        self,
-        definition: str,
+        self, definition: str
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route schema definition to appropriate parse method."""
         schema_util = FlextLdifUtilitiesSchema
@@ -448,66 +379,50 @@ class FlextLdifServersBaseSchema(
             oc_result = self._parse_objectclass(definition)
             if oc_result.is_failure:
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass)
-                ].fail(
-                    oc_result.error or "Parse failed",
-                )
-            return FlextResult[(m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass)].ok(
-                oc_result.value,
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+                ].fail(oc_result.error or "Parse failed")
+            return FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
+                oc_result.value
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.is_failure:
-            return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass)
-            ].fail(
-                attr_result.error or "Parse failed",
+            return FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
+                attr_result.error or "Parse failed"
             )
-        return FlextResult[(m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass)].ok(
-            attr_result.value,
+        return FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
+            attr_result.value
         )
 
     def write(
-        self,
-        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        self, model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
     ) -> FlextResult[str]:
         """Write schema model to string format."""
         if isinstance(model, m.Ldif.SchemaAttribute):
             return self.write_attribute(model)
-
         return self.write_objectclass(model)
 
-    def write_attribute(
-        self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> FlextResult[str]:
+    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> FlextResult[str]:
         """Write attribute to RFC-compliant string format (public API)."""
         return self._write_attribute(attr_data)
 
-    def write_objectclass(
-        self,
-        oc_data: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[str]:
+    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> FlextResult[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
         return self._write_objectclass(oc_data)
 
     def _auto_detect_operation(
         self,
-        data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str | None,
     ) -> str:
         """Auto-detect operation from data type."""
         if operation is not None:
             return operation
-
         if isinstance(data, str):
             return "parse"
-
         return "write"
 
     def _handle_parse_operation(
-        self,
-        attr_definition: str | None,
-        oc_definition: str | None,
+        self, attr_definition: str | None, oc_definition: str | None
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Handle parse operation for schema quirk."""
         if attr_definition:
@@ -515,36 +430,26 @@ class FlextLdifServersBaseSchema(
             if attr_result.is_success:
                 parsed_attr: m.Ldif.SchemaAttribute = attr_result.value
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-                ].ok(
-                    parsed_attr,
-                )
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                ].ok(parsed_attr)
             error_msg: str = attr_result.error or "Parse attribute failed"
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-            ].fail(
-                error_msg,
-            )
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            ].fail(error_msg)
         if oc_definition:
             oc_result = self.parse_objectclass(oc_definition)
             if oc_result.is_success:
                 parsed_oc: m.Ldif.SchemaObjectClass = oc_result.value
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-                ].ok(
-                    parsed_oc,
-                )
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                ].ok(parsed_oc)
             error_msg = oc_result.error or "Parse objectclass failed"
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-            ].fail(
-                error_msg,
-            )
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            ].fail(error_msg)
         return FlextResult[
-            (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-        ].fail(
-            "No parse parameter provided",
-        )
+            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+        ].fail("No parse parameter provided")
 
     def _handle_write_operation(
         self,
@@ -557,55 +462,41 @@ class FlextLdifServersBaseSchema(
             if write_result.is_success:
                 written_text: str = write_result.value
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-                ].ok(
-                    written_text,
-                )
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                ].ok(written_text)
             error_msg: str = write_result.error or "Write attribute failed"
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-            ].fail(
-                error_msg,
-            )
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            ].fail(error_msg)
         if oc_model:
             write_oc_result = self.write_objectclass(oc_model)
             if write_oc_result.is_success:
                 written_text = write_oc_result.value
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-                ].ok(
-                    written_text,
-                )
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+                ].ok(written_text)
             error_msg = write_oc_result.error or "Write objectclass failed"
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-            ].fail(
-                error_msg,
-            )
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+            ].fail(error_msg)
         return FlextResult[
-            (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
-        ].fail(
-            "No write parameter provided",
-        )
+            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+        ].fail("No write parameter provided")
 
     def _hook_post_parse_attribute(
-        self,
-        attr: m.Ldif.SchemaAttribute,
+        self, attr: m.Ldif.SchemaAttribute
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Hook called after parsing an attribute definition."""
         return FlextResult.ok(attr)
 
     def _hook_post_parse_objectclass(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
+        self, oc: m.Ldif.SchemaObjectClass
     ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Hook called after parsing an objectClass definition."""
         return FlextResult.ok(oc)
 
     def _hook_validate_attributes(
-        self,
-        attributes: list[m.Ldif.SchemaAttribute],
-        available_attrs: set[str],
+        self, attributes: list[m.Ldif.SchemaAttribute], available_attrs: set[str]
     ) -> FlextResult[bool]:
         """Hook for server-specific attribute validation during schema extraction."""
         _ = attributes
@@ -613,16 +504,14 @@ class FlextLdifServersBaseSchema(
         return FlextResult[bool].ok(value=True)
 
     def _parse_attribute(
-        self,
-        attr_definition: str,
+        self, attr_definition: str
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
         return FlextResult.fail("Must be implemented by subclass")
 
     def _parse_objectclass(
-        self,
-        oc_definition: str,
+        self, oc_definition: str
     ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
@@ -630,16 +519,15 @@ class FlextLdifServersBaseSchema(
 
     def _route_operation(
         self,
-        data: (str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str,
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Route data to appropriate parse or write handler."""
         if operation == "parse":
             if not isinstance(data, str):
                 return FlextResult[
-                    (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
                 ].fail(f"parse operation requires str, got {type(data).__name__}")
-
             schema_util = FlextLdifUtilitiesSchema
             detect_method = getattr(schema_util, "detect_schema_type", None)
             if detect_method is not None and callable(detect_method):
@@ -648,14 +536,11 @@ class FlextLdifServersBaseSchema(
                 schema_type = "attribute"
             if schema_type == "objectClass":
                 return self._handle_parse_operation(
-                    attr_definition=None,
-                    oc_definition=data,
+                    attr_definition=None, oc_definition=data
                 )
             return self._handle_parse_operation(
-                attr_definition=data,
-                oc_definition=None,
+                attr_definition=data, oc_definition=None
             )
-
         if operation == "write":
             try:
                 attr_model = m.Ldif.SchemaAttribute.model_validate(data)
@@ -669,8 +554,7 @@ class FlextLdifServersBaseSchema(
                 attr_model = None
             if attr_model is not None:
                 return self._handle_write_operation(
-                    attr_model=attr_model,
-                    oc_model=None,
+                    attr_model=attr_model, oc_model=None
                 )
             try:
                 oc_model = m.Ldif.SchemaObjectClass.model_validate(data)
@@ -685,28 +569,19 @@ class FlextLdifServersBaseSchema(
             if oc_model is not None:
                 return self._handle_write_operation(attr_model=None, oc_model=oc_model)
             return FlextResult[
-                (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str)
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
             ].fail(
-                f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
+                f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}"
             )
-
         msg = f"Unknown operation: {operation}"
         raise AssertionError(msg)
 
-    def _write_attribute(
-        self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
         _ = attr_data
-        return FlextResult.fail(
-            "Must be implemented by subclass",
-        )
+        return FlextResult.fail("Must be implemented by subclass")
 
-    def _write_objectclass(
-        self,
-        oc_data: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format (internal)."""
         _ = oc_data
         return FlextResult.fail("Must be implemented by subclass")

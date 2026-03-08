@@ -31,27 +31,12 @@ from flext_ldif import FlextLdif, m
 class DRYRailwayExample:
     """DRY railway pattern: auto-detect → parse → validate → process."""
 
-    SAMPLE_LDIF = """dn: cn=John Doe,ou=People,dc=example,dc=com
-objectClass: person
-objectClass: inetOrgPerson
-cn: John Doe
-sn: Doe
-mail: john.doe@example.com
-
-dn: cn=Jane Smith,ou=People,dc=example,dc=com
-objectClass: person
-objectClass: inetOrgPerson
-cn: Jane Smith
-sn: Smith
-mail: jane.smith@example.com
-"""
+    SAMPLE_LDIF = "dn: cn=John Doe,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
 
     @staticmethod
     def batch_transform() -> r[list[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
-
-        # Create entries efficiently (DRY)
         entries = []
         for i in range(10):
             result = api.create_entry(
@@ -65,20 +50,13 @@ mail: jane.smith@example.com
             )
             if result.is_success:
                 entries.append(result.value)
-
         if not entries:
             return r.fail("Failed to create entries")
-
-        # Transform and return entries (not processing results)
         transform_result = api.process(
-            "transform",
-            entries,
-            parallel=True,
-            max_workers=6,
+            "transform", entries, parallel=True, max_workers=6
         )
         if transform_result.is_failure:
             return r.fail(transform_result.error or "Transform failed")
-
         return r.ok(entries)
 
     @staticmethod
@@ -91,33 +69,25 @@ mail: jane.smith@example.com
         """
         api = FlextLdif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
-
         if not sample_file.exists():
             return r.fail("Sample file not found")
-
         ldif_content = sample_file.read_text(encoding="utf-8")
         detect_result = api.detect_server_type(ldif_content=ldif_content)
         if detect_result.is_failure:
             return r.fail(detect_result.error or "Server detection failed")
-
         detected = detect_result.value
         server_type = detected.detected_server_type or "rfc"
-
         parse_result = api.parse(sample_file, server_type=server_type)
         if parse_result.is_failure:
             return r.fail(parse_result.error or "Parse failed")
-
         validate_result = api.validate_entries(parse_result.value)
         if validate_result.is_failure:
             return r.fail(validate_result.error or "Validation failed")
-
         write_result = api.write_file(
-            parse_result.value,
-            Path("examples/output_dry.ldif"),
+            parse_result.value, Path("examples/output_dry.ldif")
         )
         if write_result.is_failure:
             return r.fail(write_result.error or "Write failed")
-
         return r.ok("File processing complete")
 
     def context_pipeline(self) -> r[list[m.Ldif.Entry]]:
@@ -128,25 +98,18 @@ mail: jane.smith@example.com
 
         """
         api = FlextLdif.get_instance()
-
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
-                return r.fail(
-                    server_result.error or "Server detection failed",
-                )
-
+                return r.fail(server_result.error or "Server detection failed")
             parse_result = api.parse(
-                self.SAMPLE_LDIF[:100],
-                server_type=server_result.value,
+                self.SAMPLE_LDIF[:100], server_type=server_result.value
             )
             if parse_result.is_failure:
                 return parse_result
-
             validate_result = api.validate_entries(parse_result.value)
             if validate_result.is_failure:
                 return r.fail(validate_result.error or "Validation failed")
-
             return r.ok(parse_result.value)
 
     def process_pipeline(self) -> r[list[m.Ldif.Entry]]:
@@ -162,16 +125,12 @@ mail: jane.smith@example.com
 
         """
         api = FlextLdif.get_instance()
-
-        # Railway pattern with advanced type narrowing (PEP 742 ready)
-        server_type = "rfc"  # Default value
+        server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
         if detect_result.is_success and detect_result.value.detected_server_type:
             server_type = detect_result.value.detected_server_type
         elif detect_result.is_failure:
             return r.fail(detect_result.error or "Detection failed")
-
-        # Chain operations with Railway pattern
         parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
         if parse_result.is_failure:
             return r.fail(parse_result.error or "Parse failed")
@@ -179,8 +138,6 @@ mail: jane.smith@example.com
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r.fail(validate_result.error or "Validation failed")
-
-        # Process returns transformed data, but we want entries
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
         if process_result.is_success:
             return r[list[m.Ldif.Entry]].ok(entries)

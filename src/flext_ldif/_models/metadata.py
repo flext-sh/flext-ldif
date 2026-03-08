@@ -19,7 +19,6 @@ class FlextLdifModelsMetadata:
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
         __hash__: ClassVar[None] = None
-
         transformations: list[t.Scalar] | None = Field(default=None)
         original_format: str | None = Field(default=None)
         schema_source_server: str | None = Field(default=None)
@@ -41,7 +40,7 @@ class FlextLdifModelsMetadata:
             setattr(self, key, value)
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, t.MetadataValue]]:  # type: ignore[override]
+        def __iter__(self) -> Iterator[tuple[str, t.MetadataValue]]:
             yield from self._extra().items()
 
         def __len__(self) -> int:
@@ -52,8 +51,7 @@ class FlextLdifModelsMetadata:
 
         @classmethod
         def from_dict(
-            cls,
-            data: Mapping[str, t.MetadataValue] | None = None,
+            cls, data: Mapping[str, t.MetadataValue] | None = None
         ) -> FlextLdifModelsMetadata.DynamicMetadata:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
@@ -61,9 +59,7 @@ class FlextLdifModelsMetadata:
             return cls.model_validate(dict(data))
 
         @staticmethod
-        def coerce_metadata_value(
-            value: t.MetadataValue,
-        ) -> t.MetadataValue:
+        def coerce_metadata_value(value: t.MetadataValue) -> t.MetadataValue:
             """Identity coercion — value already typed by MetadataAttributeValue."""
             return value
 
@@ -72,11 +68,7 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def get(
-            self,
-            key: str,
-            default: t.MetadataValue = None,
-        ) -> t.MetadataValue:
+        def get(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 return getattr(self, key)
@@ -88,11 +80,7 @@ class FlextLdifModelsMetadata:
         def keys(self) -> KeysView[str]:
             return self._extra().keys()
 
-        def pop(
-            self,
-            key: str,
-            default: t.MetadataValue = None,
-        ) -> t.MetadataValue:
+        def pop(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 return extra.pop(key)
@@ -115,10 +103,7 @@ class FlextLdifModelsMetadata:
         """Entry metadata for tracking processing details."""
 
         model_config = ConfigDict(
-            frozen=True,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
+            frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )
 
         def __getitem__(self, key: str) -> t.MetadataValue:
@@ -127,11 +112,7 @@ class FlextLdifModelsMetadata:
         def __contains__(self, key: str) -> bool:
             return key in self._extra()
 
-        def get(
-            self,
-            key: str,
-            default: t.MetadataValue = None,
-        ) -> t.MetadataValue:
+        def get(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
             return self._extra().get(key, default)
 
         def _extra(self) -> dict[str, t.MetadataValue]:
@@ -141,7 +122,6 @@ class FlextLdifModelsMetadata:
         """Transformation step information stored in metadata."""
 
         model_config = ConfigDict(extra="forbid", validate_assignment=True)
-
         step: str | None = None
         server: str | None = None
         changes: ClassVar[list[str]] = []

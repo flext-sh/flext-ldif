@@ -19,29 +19,22 @@ class FlextLdifServersBaseConstants(ABC):
 
     SERVER_TYPE: ClassVar[str]
     PRIORITY: ClassVar[int]
-
     CANONICAL_NAME: ClassVar[str] = ""
     ALIASES: ClassVar[frozenset[str]] = frozenset()
-
     CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset()
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset()
-
     ACL_FORMAT: ClassVar[str] = ""
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ""
-
     SCHEMA_DN: ClassVar[str] = ""
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset()
     ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset()
-
     OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {}
-
     CATEGORIZATION_PRIORITY: ClassVar[list[str]] = []
     CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {}
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
-
     DETECTION_OID_PATTERN: ClassVar[str] = ""
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset()
@@ -57,9 +50,7 @@ class FlextLdifServersBaseQuirkHelpers:
     ) -> p.Ldif.SchemaQuirkProtocol | None:
         """Get _parent_quirk attribute safely with type narrowing."""
         parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(
-            instance,
-            "_parent_quirk",
-            None,
+            instance, "_parent_quirk", None
         )
         if (
             parent_raw is not None
@@ -76,11 +67,7 @@ class FlextLdifServersBaseQuirkHelpers:
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_raw: int | t.ContainerValue = getattr(
-            constants_attr,
-            "PRIORITY",
-            100,
-        )
+        priority_raw: int | t.ContainerValue = getattr(constants_attr, "PRIORITY", 100)
         if isinstance(priority_raw, int):
             return priority_raw
         return 100
@@ -108,7 +95,7 @@ class QuirkMethodsMixin:
     def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
         return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
-            type(self),
+            type(self)
         )
 
 

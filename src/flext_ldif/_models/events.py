@@ -54,7 +54,7 @@ class FlextLdifModelsEvents:
         entries_before: int
         entries_after: int
         filter_criteria: list[FlextLdifModelsSettings.FilterCriteria] = Field(
-            default_factory=list,
+            default_factory=list
         )
         filter_duration_ms: float = 0.0
 

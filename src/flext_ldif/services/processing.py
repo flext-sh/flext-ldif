@@ -11,21 +11,16 @@ from flext_core import r
 from flext_ldif import FlextLdifServiceBase, m, u
 
 
-class FlextLdifProcessing(
-    FlextLdifServiceBase[list[m.Ldif.ProcessingResult]],
-):
+class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
     """Service for batch and parallel entry processing."""
 
     @staticmethod
     def _create_transform_processor() -> Callable[
-        [m.Ldif.Entry],
-        m.Ldif.ProcessingResult,
+        [m.Ldif.Entry], m.Ldif.ProcessingResult
     ]:
         """Create transform processor function."""
 
-        def _transform_func(
-            entry: m.Ldif.Entry,
-        ) -> m.Ldif.ProcessingResult:
+        def _transform_func(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
@@ -37,25 +32,18 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-
             attrs_dict = entry.attributes.attributes
-            return m.Ldif.ProcessingResult(
-                dn=dn_str,
-                attributes=attrs_dict,
-            )
+            return m.Ldif.ProcessingResult(dn=dn_str, attributes=attrs_dict)
 
         return _transform_func
 
     @staticmethod
     def _create_validate_processor() -> Callable[
-        [m.Ldif.Entry],
-        m.Ldif.ProcessingResult,
+        [m.Ldif.Entry], m.Ldif.ProcessingResult
     ]:
         """Create validate processor function."""
 
-        def _validate_func(
-            entry: m.Ldif.Entry,
-        ) -> m.Ldif.ProcessingResult:
+        def _validate_func(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
@@ -67,12 +55,8 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-
             attrs_dict = entry.attributes.attributes
-            return m.Ldif.ProcessingResult(
-                dn=dn_str,
-                attributes=attrs_dict,
-            )
+            return m.Ldif.ProcessingResult(dn=dn_str, attributes=attrs_dict)
 
         return _validate_func
 
@@ -83,16 +67,11 @@ class FlextLdifProcessing(
         _batch_size: int,
     ) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute batch processing sequentially."""
-        batch_result = u.Collection.process(
-            entries,
-            processor_func,
-            on_error="collect",
-        )
+        batch_result = u.Collection.process(entries, processor_func, on_error="collect")
         if batch_result.is_failure:
             return r[list[m.Ldif.ProcessingResult]].fail(
-                batch_result.error or "Batch processing failed",
+                batch_result.error or "Batch processing failed"
             )
-
         batch_value = batch_result.value
         if issubclass(batch_value.__class__, list):
             results: list[m.Ldif.ProcessingResult] = [
@@ -101,7 +80,6 @@ class FlextLdifProcessing(
                 if issubclass(item.__class__, m.Ldif.ProcessingResult)
             ]
             return r[list[m.Ldif.ProcessingResult]].ok(results)
-
         return r[list[m.Ldif.ProcessingResult]].ok([])
 
     @staticmethod
@@ -120,12 +98,10 @@ class FlextLdifProcessing(
         return r[list[m.Ldif.ProcessingResult]].ok(results)
 
     @override
-    def execute(
-        self,
-    ) -> r[list[m.Ldif.ProcessingResult]]:
+    def execute(self) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute method required by FlextService abstract base class."""
         return r[list[m.Ldif.ProcessingResult]].fail(
-            "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
+            "FlextLdifProcessing does not support generic execute(). Use specific methods instead."
         )
 
     def process(
@@ -141,37 +117,32 @@ class FlextLdifProcessing(
         processor_result = self._get_processor_function(processor_name)
         if processor_result.is_failure:
             return r[list[m.Ldif.ProcessingResult]].fail(
-                processor_result.error or "Processor function not found",
+                processor_result.error or "Processor function not found"
             )
         processor_func = processor_result.value
-
         if parallel:
             return self._execute_parallel_processing(
-                entries,
-                processor_func,
-                max_workers,
+                entries, processor_func, max_workers
             )
         return self._execute_batch_processing(entries, processor_func, batch_size)
 
     def _get_processor_function(
-        self,
-        processor_name: str,
+        self, processor_name: str
     ) -> r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]]:
         """Get processor function by name."""
         processor_map: dict[
-            str,
-            Callable[[], Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]],
+            str, Callable[[], Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]]
         ] = {
             "transform": self._create_transform_processor,
             "validate": self._create_validate_processor,
         }
         if processor_name in processor_map:
             return r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]].ok(
-                processor_map[processor_name](),
+                processor_map[processor_name]()
             )
         supported = "'transform', 'validate'"
         return r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]].fail(
-            f"Unknown processor: '{processor_name}'. Supported: {supported}",
+            f"Unknown processor: '{processor_name}'. Supported: {supported}"
         )
 
 

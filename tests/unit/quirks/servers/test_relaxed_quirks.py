@@ -50,14 +50,10 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     - Error recovery and edge cases
     """
 
-    # Pytest fixtures with ClassVar annotations
-    schema_quirk: ClassVar[FlextLdifServersRelaxed.Schema]  # pytest fixture
-    acl_quirk: ClassVar[FlextLdifServersRelaxed.Acl]  # pytest fixture
-    entry_quirk: ClassVar[FlextLdifServersRelaxed.Entry]  # pytest fixture
-    relaxed_instance: ClassVar[FlextLdifServersRelaxed]  # pytest fixture
-
-    # ========== Test Data ==========
-
+    schema_quirk: ClassVar[FlextLdifServersRelaxed.Schema]
+    acl_quirk: ClassVar[FlextLdifServersRelaxed.Acl]
+    entry_quirk: ClassVar[FlextLdifServersRelaxed.Entry]
+    relaxed_instance: ClassVar[FlextLdifServersRelaxed]
     ATTRIBUTE_DEFINITIONS: ClassVar[dict[ParseScenario, tuple[str, bool]]] = {
         ParseScenario.VALID: (
             "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
@@ -78,7 +74,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             True,
         ),
     }
-
     OBJECTCLASS_DEFINITIONS: ClassVar[dict[ParseScenario, tuple[str, bool]]] = {
         ParseScenario.VALID: ("( 1.2.3 NAME 'testOc' STRUCTURAL )", True),
         ParseScenario.MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
@@ -88,13 +83,11 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         ParseScenario.WHITESPACE: ("   ", False),
         ParseScenario.UNICODE: ("( 1.2.3.4 NAME 'тест' 😀 )", True),
     }
-
     NAME_FORMAT_VARIATIONS: ClassVar[list[tuple[str, bool]]] = [
         ("( 1.2.3.4 NAME 'quoted' )", True),
         ("( 1.2.3.4 NAME unquoted )", True),
         ('( 1.2.3.4 NAME "doublequoted" )', True),
     ]
-
     ACL_DEFINITIONS: ClassVar[dict[str, tuple[str, bool]]] = {
         "valid": (
             '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
@@ -103,8 +96,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         "malformed": ("(targetentry incomplete", True),
         "broken": ("(targetentry invalid) broken", True),
     }
-
-    # ========== Fixtures ==========
 
     @pytest.fixture
     def schema_quirk(self) -> FlextLdifServersRelaxed.Schema:
@@ -126,11 +117,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         """Create main relaxed quirk instance."""
         return FlextLdifServersRelaxed()
 
-    # ========== Schema Tests ==========
-
     def test_schema_initialization(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test relaxed schema quirk initialization."""
         assert schema_quirk is not None
@@ -150,7 +138,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         """Test parse_attribute with various scenarios."""
         definition, should_succeed = definition_data
         result = schema_quirk.parse_attribute(definition)
-
         if should_succeed:
             assert result.is_success, f"Scenario {scenario}: expected success"
             parsed = result.value
@@ -179,7 +166,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         """Test parse_objectclass with various scenarios."""
         definition, should_succeed = definition_data
         result = schema_quirk.parse_objectclass(definition)
-
         if should_succeed:
             assert result.is_success, f"Scenario {scenario}: expected success"
             parsed = result.value
@@ -203,8 +189,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert result.is_success == expected_success
 
     def test_parse_attribute_stores_original_definition(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
@@ -215,8 +200,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert parsed.metadata.extensions.original_format == original
 
     def test_write_attribute_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test writing attribute back to RFC format."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -242,12 +226,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert isinstance(written, str)
         assert len(written) > 0
 
-    # ========== ACL Tests ==========
-
-    def test_acl_initialization(
-        self,
-        acl_quirk: FlextLdifServersRelaxed.Acl,
-    ) -> None:
+    def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""
         assert acl_quirk is not None
         assert isinstance(acl_quirk, FlextLdifServersRelaxed.Acl)
@@ -266,15 +245,13 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         """Test ACL parsing in relaxed mode with various scenarios."""
         acl_line, _should_succeed = acl_data
         result = acl_quirk.parse(acl_line)
-        # Relaxed mode accepts everything
         assert hasattr(result, "is_success")
         if result.is_success:
             parsed = result.value
             assert parsed.raw_acl == acl_line
 
     def test_write_acl_preserves_raw_content(
-        self,
-        acl_quirk: FlextLdifServersRelaxed.Acl,
+        self, acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
@@ -290,24 +267,18 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         written = result.value
         assert written == raw_acl
 
-    # ========== Entry Tests ==========
-
     def test_entry_initialization(
-        self,
-        entry_quirk: FlextLdifServersRelaxed.Entry,
+        self, entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test relaxed entry quirk initialization."""
         assert entry_quirk is not None
         assert isinstance(entry_quirk, FlextLdifServersRelaxed.Entry)
 
     def test_entry_lenient_dn_parsing(
-        self,
-        relaxed_instance: FlextLdifServersRelaxed,
+        self, relaxed_instance: FlextLdifServersRelaxed
     ) -> None:
         """Test entry quirk accepts malformed c.DNs."""
         assert hasattr(relaxed_instance, "entry_quirk") or True
-
-    # ========== Error Recovery Tests ==========
 
     @pytest.mark.parametrize(
         ("parse_type", "bad_input"),
@@ -331,8 +302,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             result = schema_quirk.parse_attribute(bad_input)
         else:
             result = schema_quirk.parse_objectclass(bad_input)
-
-        # Should succeed if OID can be extracted
         assert result.is_success
         parsed = result.value
         assert parsed.metadata
@@ -343,10 +312,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
     @pytest.mark.parametrize(
         ("parse_type", "input_without_oid"),
-        [
-            ("attribute", "( \x00 )"),
-            ("objectclass", "( \x00 )"),
-        ],
+        [("attribute", "( \x00 )"), ("objectclass", "( \x00 )")],
         ids=["attribute_no_oid", "objectclass_no_oid"],
     )
     def test_fallback_fails_without_oid(
@@ -367,10 +333,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
     @pytest.mark.parametrize(
         ("parse_type", "input_with_oid"),
-        [
-            ("attribute", "( 1.2.3.4 \x00 )"),
-            ("objectclass", "( 1.2.3.4 \x00 )"),
-        ],
+        [("attribute", "( 1.2.3.4 \x00 )"), ("objectclass", "( 1.2.3.4 \x00 )")],
         ids=["attribute_with_oid", "objectclass_with_oid"],
     )
     def test_fallback_succeeds_with_oid(
@@ -391,11 +354,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         parsed = result.value
         assert hasattr(parsed, "name")
 
-    # ========== Integration Tests ==========
-
     def test_relaxed_mode_integration(
-        self,
-        relaxed_instance: FlextLdifServersRelaxed,
+        self, relaxed_instance: FlextLdifServersRelaxed
     ) -> None:
         """Test relaxed mode full integration."""
         assert relaxed_instance is not None
@@ -404,14 +364,10 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert hasattr(relaxed_instance, "entry_quirk")
 
     def test_relaxed_mode_priority(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test relaxed mode has appropriate priority (low = last resort)."""
-        # Priority is in Constants - relaxed mode is last resort fallback
         assert schema_quirk is not None
-
-    # ========== Can Handle Tests ==========
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
@@ -453,11 +409,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = schema_quirk.parse(definition)
         assert result.is_success == expected_success
 
-    # ========== Conversion Tests ==========
-
     def test_conversion_attribute_oid_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -484,8 +437,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         assert "orclGUID" in written
 
     def test_conversion_objectclass_oid_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
+        self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
         oc_data = m.Ldif.SchemaObjectClass(

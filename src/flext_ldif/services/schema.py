@@ -15,11 +15,9 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
     _registry: FlextLdifServer = PrivateAttr(
-        default_factory=FlextLdifServer.get_global_instance,
+        default_factory=FlextLdifServer.get_global_instance
     )
-    _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(
-        default="rfc",
-    )
+    _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
 
     def __init__(
         self,
@@ -29,15 +27,10 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     ) -> None:
         """Initialize schema service with dependency injection."""
         super().__init__()
-
         object.__setattr__(
             self,
             "_registry",
-            (
-                registry
-                if registry is not None
-                else FlextLdifServer.get_global_instance()
-            ),
+            registry if registry is not None else FlextLdifServer.get_global_instance(),
         )
         object.__setattr__(self, "_server_type", server_type)
 
@@ -65,7 +58,6 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             "ldapsyntaxes",
             "matchingrules",
         }
-
         if entry.attributes is None:
             return False
         entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
@@ -82,9 +74,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         return "(" in attr_definition and ")" in attr_definition
 
     @override
-    def execute(
-        self,
-    ) -> r[m.Ldif.SchemaServiceStatus]:
+    def execute(self) -> r[m.Ldif.SchemaServiceStatus]:
         """Execute schema service self-check."""
         return r[m.Ldif.SchemaServiceStatus].ok(
             m.Ldif.SchemaServiceStatus(
@@ -101,43 +91,31 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                     "write_objectclass",
                     "is_schema",
                 ],
-            ),
+            )
         )
 
     def parse_attribute(
-        self,
-        attr_definition: str,
-        *,
-        _server_type: str | None = None,
+        self, attr_definition: str, *, _server_type: str | None = None
     ) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute type definition."""
         try:
             if not attr_definition or not attr_definition.strip():
                 return r[m.Ldif.SchemaAttribute].fail("Attribute definition is empty")
-
             parse_result = u.Ldif.Schema.parse_attribute(attr_definition)
             if parse_result.is_failure:
                 return r[m.Ldif.SchemaAttribute].fail(
-                    f"Parse failed: {parse_result.error}",
+                    f"Parse failed: {parse_result.error}"
                 )
-
             parsed_dict = dict(parse_result.value)
-
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
             parsed_dict.pop("syntax_validation", None)
-
             attr_domain = m.Ldif.SchemaAttribute.model_validate(parsed_dict)
-
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
+                    quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})
                 )
-
             attr: m.Ldif.SchemaAttribute = attr_domain
-
             return r[m.Ldif.SchemaAttribute].ok(attr)
-
         except (
             ValueError,
             KeyError,
@@ -146,29 +124,20 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             struct.error,
         ) as e:
             error_msg = f"Error parsing attribute: {e}"
-            self.logger.exception(
-                "Failed to parse attribute definition",
-                error=str(e),
-            )
+            self.logger.exception("Failed to parse attribute definition", error=str(e))
             return r[m.Ldif.SchemaAttribute].fail(error_msg)
 
     def parse_objectclass(
-        self,
-        oc_definition: str,
-        *,
-        _server_type: str | None = None,
+        self, oc_definition: str, *, _server_type: str | None = None
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition."""
         try:
             if not oc_definition or not oc_definition.strip():
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    "ObjectClass definition is empty",
+                    "ObjectClass definition is empty"
                 )
-
             parsed_dict = dict(u.Ldif.Schema.parse_objectclass(oc_definition))
-
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
-
             oc_dict = {
                 "oid": str(parsed_dict["oid"]) if parsed_dict["oid"] else "",
                 "name": str(parsed_dict.get("name") or parsed_dict["oid"]),
@@ -180,19 +149,13 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                 "must": parsed_dict.get("must"),
                 "may": parsed_dict.get("may"),
             }
-
             oc_domain = m.Ldif.SchemaObjectClass.model_validate(oc_dict)
-
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc",
-                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
+                    quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})
                 )
-
             oc: m.Ldif.SchemaObjectClass = oc_domain
-
             return r[m.Ldif.SchemaObjectClass].ok(oc)
-
         except (
             ValueError,
             KeyError,
@@ -202,31 +165,22 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         ) as e:
             error_msg = f"Error parsing objectClass: {e}"
             self.logger.exception(
-                "Failed to parse objectClass definition",
-                error=str(e),
+                "Failed to parse objectClass definition", error=str(e)
             )
             return r[m.Ldif.SchemaObjectClass].fail(error_msg)
 
-    def validate_attribute(
-        self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> r[bool]:
+    def validate_attribute(self, attr: m.Ldif.SchemaAttribute) -> r[bool]:
         """Validate attribute model syntax and constraints."""
         try:
             if not attr.oid or not attr.oid.strip():
                 return r[bool].fail("Attribute OID is required and cannot be empty")
             if not attr.name or not attr.name.strip():
-                return r[bool].fail(
-                    "Attribute NAME is required and cannot be empty",
-                )
-
+                return r[bool].fail("Attribute NAME is required and cannot be empty")
             if attr.syntax:
                 validation_result = u.Ldif.OID.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.value:
                     return r[bool].fail(f"Invalid SYNTAX OID: {attr.syntax}")
-
             return r[bool].ok(value=True)
-
         except (
             ValueError,
             KeyError,
@@ -235,40 +189,23 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             struct.error,
         ) as e:
             error_msg = f"Error validating attribute: {e}"
-            self.logger.exception(
-                "Failed to validate attribute",
-                error=str(e),
-            )
+            self.logger.exception("Failed to validate attribute", error=str(e))
             return r[bool].fail(error_msg)
 
-    def validate_objectclass(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> r[bool]:
+    def validate_objectclass(self, oc: m.Ldif.SchemaObjectClass) -> r[bool]:
         """Validate objectClass model syntax and constraints."""
         try:
             if not oc.oid or not oc.oid.strip():
-                return r[bool].fail(
-                    "ObjectClass OID is required and cannot be empty",
-                )
+                return r[bool].fail("ObjectClass OID is required and cannot be empty")
             if not oc.name or not oc.name.strip():
-                return r[bool].fail(
-                    "ObjectClass NAME is required and cannot be empty",
-                )
-
-            valid_kinds = {
-                "ABSTRACT",
-                "STRUCTURAL",
-                "AUXILIARY",
-            }
+                return r[bool].fail("ObjectClass NAME is required and cannot be empty")
+            valid_kinds = {"ABSTRACT", "STRUCTURAL", "AUXILIARY"}
             if oc.kind not in valid_kinds:
                 valid_kinds_str = "ABSTRACT, STRUCTURAL, or AUXILIARY"
                 return r[bool].fail(
-                    f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}",
+                    f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}"
                 )
-
             return r[bool].ok(value=True)
-
         except (
             ValueError,
             KeyError,
@@ -277,32 +214,23 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             struct.error,
         ) as e:
             error_msg = f"Error validating objectclass: {e}"
-            self.logger.exception(
-                "Failed to validate objectClass",
-                error=str(e),
-            )
+            self.logger.exception("Failed to validate objectClass", error=str(e))
             return r[bool].fail(error_msg)
 
     def with_server_type(
-        self,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        self, server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
     ) -> Self:
         """Set server type for schema operations (fluent builder)."""
         object.__setattr__(self, "_server_type", server_type)
         return self
 
-    def write_attribute(
-        self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> r[str]:
+    def write_attribute(self, attr: m.Ldif.SchemaAttribute) -> r[str]:
         """Convert attribute model to LDIF format."""
         try:
             validation = self.validate_attribute(attr)
             if not validation.is_success:
                 return r[str].fail(validation.error or "Unknown error")
-
             return u.Ldif.Writer.write_rfc_attribute(attr)
-
         except (
             ValueError,
             KeyError,
@@ -311,24 +239,16 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             struct.error,
         ) as e:
             error_msg = f"Error writing attribute: {e}"
-            self.logger.exception(
-                "Failed to write attribute",
-                error=str(e),
-            )
+            self.logger.exception("Failed to write attribute", error=str(e))
             return r[str].fail(error_msg)
 
-    def write_objectclass(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> r[str]:
+    def write_objectclass(self, oc: m.Ldif.SchemaObjectClass) -> r[str]:
         """Convert objectClass model to LDIF format."""
         try:
             validation = self.validate_objectclass(oc)
             if not validation.is_success:
                 return r[str].fail(validation.error or "Unknown error")
-
             return u.Ldif.Writer.write_rfc_objectclass(oc)
-
         except (
             ValueError,
             KeyError,
@@ -337,13 +257,8 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             struct.error,
         ) as e:
             error_msg = f"Error writing objectClass: {e}"
-            self.logger.exception(
-                "Failed to write objectClass",
-                error=str(e),
-            )
+            self.logger.exception("Failed to write objectClass", error=str(e))
             return r[str].fail(error_msg)
 
 
-__all__ = [
-    "FlextLdifSchema",
-]
+__all__ = ["FlextLdifSchema"]

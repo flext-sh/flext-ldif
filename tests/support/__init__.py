@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from real_services import FlextLdifTestFactory
     from test_files import FileManager
     from validators import TestValidators
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileManager": ("test_files", "FileManager"),
     "FlextLdifTestFactory": ("real_services", "FlextLdifTestFactory"),
@@ -25,7 +23,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdifTestData": ("ldif_data", "LdifTestData"),
     "TestValidators": ("validators", "TestValidators"),
 }
-
 __all__ = [
     "FileManager",
     "FlextLdifTestFactory",
@@ -35,7 +32,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

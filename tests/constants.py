@@ -59,8 +59,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     - All production constants come from FlextLdifConstants
     """
 
-    # Create Schema namespace for test convenience
-    # Maps c.Schema.AUXILIARY and c.Schema.STRUCTURAL to Ldif.AclSubjectTypes constants
     class Schema:
         """Schema constants wrapper for test convenience."""
 
@@ -98,10 +96,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         INETORGPERSON: Final[str] = "inetOrgPerson"
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
 
-    # =========================================================================
-    # FIXTURE DIRECTORY CONSTANTS
-    # =========================================================================
-
     class Fixtures:
         """Test fixture directory names used in tests/fixtures/."""
 
@@ -111,14 +105,9 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         OPENLDAP2: Final[str] = "openldap2"
         RFC: Final[str] = "rfc"
 
-    # =========================================================================
-    # RFC TEST CONSTANTS
-    # =========================================================================
-
     class Rfc:
         """RFC test constants for schema and entry testing."""
 
-        # Attribute definitions
         ATTR_DEF_CN: Final[str] = (
             "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
@@ -144,8 +133,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ATTR_DEF_OBJECTCLASS: Final[str] = (
             "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
         )
-
-        # OIDs
         ATTR_OID_CN: Final[str] = "2.5.4.3"
         ATTR_OID_SN: Final[str] = "2.5.4.4"
         ATTR_OID_ST: Final[str] = "2.5.4.8"
@@ -153,8 +140,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ATTR_OID_MODIFY_TIMESTAMP: Final[str] = "2.5.18.2"
         ATTR_OID_O: Final[str] = "2.5.4.10"
         ATTR_OID_OBJECTCLASS: Final[str] = "2.5.4.0"
-
-        # Attribute names
         ATTR_NAME_CN: Final[str] = "cn"
         ATTR_NAME_SN: Final[str] = "sn"
         ATTR_NAME_ST: Final[str] = "st"
@@ -162,16 +147,12 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ATTR_NAME_MODIFY_TIMESTAMP: Final[str] = "modifyTimestamp"
         ATTR_NAME_O: Final[str] = "o"
         ATTR_NAME_OBJECTCLASS: Final[str] = "objectClass"
-
-        # Syntax OIDs
         SYNTAX_OID_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
         SYNTAX_OID_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
         SYNTAX_OID_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
         SYNTAX_OID_IA5_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.26"
         SYNTAX_OID_GENERALIZED_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"
         SYNTAX_OID_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
-
-        # ObjectClass definitions
         OC_DEF_PERSON: Final[str] = (
             "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
         )
@@ -182,76 +163,43 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         OC_DEF_PERSON_MINIMAL: Final[str] = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
         OC_OID_PERSON: Final[str] = "2.5.6.6"
         OC_NAME_PERSON: Final[str] = "person"
-
-        # Schema DNs
         SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschema"
         SCHEMA_DN_SCHEMA: Final[str] = "cn=schema"
         SCHEMA_DN_SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
-
-        # Test DNs
         TEST_DN: Final[str] = "cn=test,dc=example,dc=com"
         TEST_DN_USER1: Final[str] = "cn=user1,dc=example,dc=com"
         TEST_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
         TEST_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
         INVALID_DN: Final[str] = "invalid-dn-format"
-
-        # Aliases for SAMPLE_* (legacy test compatibility)
         SAMPLE_DN: Final[str] = TEST_DN
         SAMPLE_DN_USER1: Final[str] = TEST_DN_USER1
         SAMPLE_DN_USER2: Final[str] = TEST_DN_USER2
         SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
         SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
-
-        # LDIF content samples
-        SAMPLE_LDIF_BASIC: Final[str] = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
-"""
-        SAMPLE_LDIF_MULTIPLE: Final[str] = """dn: cn=user1,dc=example,dc=com
-objectClass: person
-cn: user1
-
-dn: cn=user2,dc=example,dc=com
-objectClass: person
-cn: user2
-"""
-        SAMPLE_LDIF_BINARY: Final[str] = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-photo:: UGhvdG8gZGF0YQ==
-"""
-        SAMPLE_SCHEMA_CONTENT: Final[str] = """dn: cn=subschema
-objectClass: top
-objectClass: subentry
-objectClass: subschema
-cn: subschema
-attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )
-"""
-
-        # Invalid definitions
+        SAMPLE_LDIF_BASIC: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
+        )
+        SAMPLE_LDIF_MULTIPLE: Final[str] = (
+            "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
+        )
+        SAMPLE_LDIF_BINARY: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nphoto:: UGhvdG8gZGF0YQ==\n"
+        )
+        SAMPLE_SCHEMA_CONTENT: Final[str] = (
+            "dn: cn=subschema\nobjectClass: top\nobjectClass: subentry\nobjectClass: subschema\ncn: subschema\nattributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )\nobjectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )\n"
+        )
         INVALID_ATTR_DEF: Final[str] = "NAME 'cn' DESC 'Common Name'"
         INVALID_OC_DEF: Final[str] = "invalid objectclass definition"
-
-        # ACL samples
         ACL_SAMPLE_BROWSE: Final[str] = "access to entry by * (browse)"
         ACL_SAMPLE_READ: Final[str] = "access to entry by * (read)"
-
-    # =========================================================================
-    # TEST DATA CONSTANTS
-    # =========================================================================
 
     class TestData:
         """Test data generation constants."""
 
-        # Sample DNs for testing
         SAMPLE_BASE_DN: Final[str] = "dc=test,dc=local"
         SAMPLE_USER_DN: Final[str] = "cn=testuser,dc=test,dc=local"
         SAMPLE_GROUP_DN: Final[str] = "cn=testgroup,dc=test,dc=local"
         SAMPLE_OU_DN: Final[str] = "ou=testou,dc=test,dc=local"
-
-        # Sample attributes for testing
         SAMPLE_ATTRIBUTES: Final[dict[str, list[str]]] = {
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
             "cn": ["Test User"],
@@ -259,126 +207,80 @@ objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
             "mail": ["test@example.com"],
             "uid": ["testuser"],
         }
-
-        # Sample LDIF content for parsing tests
-        SAMPLE_LDIF_ENTRY: Final[str] = """dn: cn=Test User,dc=test,dc=local
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-cn: Test User
-sn: User
-mail: test@example.com
-uid: testuser
-"""
-
-    # =========================================================================
-    # FIXTURE CONSTANTS (Consolidated from tests/unit/quirks/servers/fixtures/)
-    # =========================================================================
+        SAMPLE_LDIF_ENTRY: Final[str] = (
+            "dn: cn=Test User,dc=test,dc=local\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\ncn: Test User\nsn: User\nmail: test@example.com\nuid: testuser\n"
+        )
 
     class General:
         """General test constants (from fixtures/general_constants.py)."""
 
-        # Sample DNs
         SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
         SAMPLE_DN_1: Final[str] = "cn=test1,dc=example,dc=com"
         SAMPLE_DN_2: Final[str] = "cn=test2,dc=example,dc=com"
         SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
         SAMPLE_USER_DN: Final[str] = "uid=testuser,ou=people,dc=example,dc=com"
         SAMPLE_SUBSCHEMA_DN: Final[str] = "cn=subschema"
-
-        # Sample LDIF entries
-        SAMPLE_LDIF_ENTRY: Final[str] = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
-"""
-
-        SAMPLE_LDIF_TWO_ENTRIES: Final[str] = """dn: cn=test1,dc=example,dc=com
-cn: test1
-
-dn: cn=test2,dc=example,dc=com
-cn: test2
-"""
-
-        # Error messages for testing
+        SAMPLE_LDIF_ENTRY: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
+        )
+        SAMPLE_LDIF_TWO_ENTRIES: Final[str] = (
+            "dn: cn=test1,dc=example,dc=com\ncn: test1\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\n"
+        )
         WRITER_FAILED_MSG: Final[str] = "Writer failed"
         PARSER_ERROR_MSG: Final[str] = "Parser error"
         DN_ERROR_MSG: Final[str] = "DN error"
         INVALID_ENTRY_MSG: Final[str] = "Invalid entry"
         PARSE_FAILED_MSG: Final[str] = "Parse failed"
         WRITE_FAILED_MSG: Final[str] = "Write failed"
-
-        # Invalid test data
         INVALID_ATTRIBUTE: Final[str] = "this is not a valid attribute definition"
         INVALID_DN: Final[str] = "invalid-dn-format"
         INVALID_DATA_TYPE: Final[str] = "invalid_type"
-
-        # Common attribute names
         ATTR_NAME_CN: Final[str] = "cn"
         ATTR_NAME_SN: Final[str] = "sn"
         ATTR_NAME_OBJECTCLASS: Final[str] = "objectClass"
-
-        # Common attribute values
         ATTR_VALUE_TEST: Final[str] = "test"
         ATTR_VALUE_TEST1: Final[str] = "test1"
         ATTR_VALUE_TEST2: Final[str] = "test2"
         ATTR_VALUE_USER: Final[str] = "user"
-
-        # Common objectClass names
         OC_NAME_PERSON: Final[str] = "person"
         OC_NAME_TOP: Final[str] = "top"
 
     class RFC:
         """RFC server test constants (from fixtures/rfc_constants.py)."""
 
-        # RFC attribute definitions
         ATTR_DEF_CN: Final[str] = "( 2.5.4.3 NAME 'cn' )"
         ATTR_DEF_CN_FULL: Final[str] = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         ATTR_DEF_CN_COMPLETE: Final[str] = (
-            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         ATTR_DEF_SN: Final[str] = (
-            "( 2.5.4.4 NAME 'sn' DESC 'Surname' "
-            "SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
+            "( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
         )
         ATTR_DEF_OBJECTCLASS: Final[str] = (
-            "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' "
-            "SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
+            "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
         )
         ATTR_OID_CN: Final[str] = "2.5.4.3"
         ATTR_OID_OBJECTCLASS: Final[str] = "2.5.4.0"
         ATTR_NAME_CN: Final[str] = "cn"
         ATTR_OID_SN: Final[str] = "2.5.4.4"
         ATTR_NAME_SN: Final[str] = "sn"
-
-        # RFC objectClass definitions
         OC_DEF_PERSON: Final[str] = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
         OC_DEF_PERSON_FULL: Final[str] = (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' "
-            "SUP top STRUCTURAL MUST ( sn $ cn ) )"
+            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
         )
         OC_DEF_PERSON_BASIC: Final[str] = (
             "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
         )
         OC_OID_PERSON: Final[str] = "2.5.6.6"
         OC_NAME_PERSON: Final[str] = "person"
-
-        # Test DNs and origins
         TEST_DN: Final[str] = "cn=test,dc=example,dc=com"
         TEST_ORIGIN: Final[str] = "test.ldif"
         SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschema"
         SCHEMA_DN_SCHEMA: Final[str] = "cn=schema"
         SCHEMA_DN_SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
-
-        # Additional attribute definitions for testing
         ATTR_DEF_CN_MINIMAL: Final[str] = "( 2.5.4.3 )"
         ATTR_DEF_ST: Final[str] = (
-            "( 2.5.4.8 NAME 'st' DESC 'State or Province Name' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
-            "EQUALITY caseIgnoreMatch ORDERING caseIgnoreOrderingMatch "
-            "SUBSTR caseIgnoreSubstringsMatch )"
+            "( 2.5.4.8 NAME 'st' DESC 'State or Province Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch ORDERING caseIgnoreOrderingMatch SUBSTR caseIgnoreSubstringsMatch )"
         )
         ATTR_DEF_MAIL: Final[str] = (
             "( 0.9.2342.19200300.100.1.3 NAME 'mail' SUP name DESC 'Email address' )"
@@ -386,65 +288,38 @@ cn: test2
         ATTR_OID_MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
         ATTR_NAME_MAIL: Final[str] = "mail"
         ATTR_DEF_MODIFY_TIMESTAMP: Final[str] = (
-            "( 2.5.18.2 NAME 'modifyTimestamp' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-            "SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )"
+            "( 2.5.18.2 NAME 'modifyTimestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )"
         )
         ATTR_DEF_OBSOLETE: Final[str] = (
-            "( 2.5.4.10 NAME 'o' DESC 'Organization Name' OBSOLETE "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            "( 2.5.4.10 NAME 'o' DESC 'Organization Name' OBSOLETE SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         ATTR_OID_O: Final[str] = "2.5.4.10"
         ATTR_NAME_O: Final[str] = "o"
-
-        # Syntax OIDs
         SYNTAX_OID_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
         SYNTAX_OID_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
         SYNTAX_OID_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-
-        # Invalid definitions for error testing
         INVALID_ATTR_DEF: Final[str] = "NAME 'cn' DESC 'Common Name'"
         INVALID_OC_DEF: Final[str] = "invalid objectclass definition"
-
-        # Sample LDIF content
-        SAMPLE_LDIF_CONTENT: Final[str] = """dn: cn=schema
-attributeTypes: ( 2.5.4.3 NAME 'cn' )
-objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )
-"""
-
-        SAMPLE_SCHEMA_CONTENT: Final[str] = """dn: cn=subschema
-objectClass: top
-objectClass: subentry
-objectClass: subschema
-cn: subschema
-attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )
-"""
-
-        # LDIF parser test constants
+        SAMPLE_LDIF_CONTENT: Final[str] = (
+            "dn: cn=schema\nattributeTypes: ( 2.5.4.3 NAME 'cn' )\nobjectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )\n"
+        )
+        SAMPLE_SCHEMA_CONTENT: Final[str] = (
+            "dn: cn=subschema\nobjectClass: top\nobjectClass: subentry\nobjectClass: subschema\ncn: subschema\nattributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )\nobjectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )\n"
+        )
         SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
         SAMPLE_DN_USER1: Final[str] = "cn=user1,dc=example,dc=com"
         SAMPLE_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
         SAMPLE_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
         INVALID_DN: Final[str] = "invalid-dn-format"
-        SAMPLE_LDIF_BASIC: Final[str] = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
-"""
-        SAMPLE_LDIF_MULTIPLE: Final[str] = """dn: cn=user1,dc=example,dc=com
-objectClass: person
-cn: user1
-
-dn: cn=user2,dc=example,dc=com
-objectClass: person
-cn: user2
-"""
-        SAMPLE_LDIF_BINARY: Final[str] = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-photo:: UGhvdG8gZGF0YQ==
-"""
+        SAMPLE_LDIF_BASIC: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
+        )
+        SAMPLE_LDIF_MULTIPLE: Final[str] = (
+            "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
+        )
+        SAMPLE_LDIF_BINARY: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nphoto:: UGhvdG8gZGF0YQ==\n"
+        )
         SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
         SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
         SAMPLE_ATTRIBUTE_PHOTO: Final[str] = "photo"
@@ -454,11 +329,8 @@ photo:: UGhvdG8gZGF0YQ==
         SAMPLE_VALUE_USER2: Final[str] = "user2"
         SAMPLE_OBJECTCLASS_PERSON: Final[str] = "person"
         BASE64_PHOTO_DATA: Final[str] = "UGhvdG8gZGF0YQ=="
-
-        # ACL test constants
         ACL_LINE_SAMPLE: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; '
-            'allow (read) userdn="ldap:///self";)'
+            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         )
         ACL_LINE_EMPTY_OID: Final[str] = ""
         ACL_LINE_INVALID_OID: Final[str] = "invalid.oid.format"
@@ -466,59 +338,35 @@ photo:: UGhvdG8gZGF0YQ==
     class OID:
         """OID server test constants (from fixtures/oid_constants.py)."""
 
-        # Oracle OID namespace
         ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894"
-
-        # OID attribute definitions
         ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
         ATTRIBUTE_ORCLDBNAME: Final[str] = (
-            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         ATTRIBUTE_ORCLGUID_COMPLEX: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "DESC 'Oracle Global Unique Identifier' "
-            "EQUALITY caseIgnoreMatch "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 "
-            "SINGLE-VALUE )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle Global Unique Identifier' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE )"
         )
-
-        # OID objectClass definitions
         OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
         OBJECTCLASS_ORCLCONTAINER: Final[str] = (
-            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' "
-            "SUP top STRUCTURAL MUST cn )"
+            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
         )
         OBJECTCLASS_ORCLCONTEXT_WITH_MAY: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
-            "SUP top STRUCTURAL "
-            "MUST cn "
-            "MAY ( description $ orclVersion ) )"
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn MAY ( description $ orclVersion ) )"
         )
-
-        # OID attribute names
         ATTRIBUTE_NAME_ORCLGUID: Final[str] = "orclGUID"
         ATTRIBUTE_NAME_ORCLDBNAME: Final[str] = "orclDBName"
-
-        # OID objectClass names
         OBJECTCLASS_NAME_ORCLCONTEXT: Final[str] = "orclContext"
         OBJECTCLASS_NAME_ORCLCONTAINER: Final[str] = "orclContainer"
 
     class OUD:
         """OUD server test constants (from fixtures/oud_constants.py)."""
 
-        # OUD schema DN
         SCHEMA_DN: Final[str] = "cn=schema"
         SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschemasubentry"
-
-    # =========================================================================
-    # DN CONSTANTS (For backward compatibility - used in tests)
-    # =========================================================================
 
     class DNs:
         """DN constants for testing."""
@@ -528,10 +376,6 @@ photo:: UGhvdG8gZGF0YQ==
         TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
         SCHEMA: Final[str] = "cn=schema"
         BASE: Final[str] = "dc=example,dc=com"
-
-    # =========================================================================
-    # VALUE CONSTANTS (For backward compatibility - used in tests)
-    # =========================================================================
 
     class Values:
         """Value constants for testing."""
@@ -544,21 +388,14 @@ photo:: UGhvdG8gZGF0YQ==
         EXAMPLE: Final[str] = "example"
         USER1_EMAIL: Final[str] = "user1@example.com"
         USER2_EMAIL: Final[str] = "user2@example.com"
-
-        # Sample OUD attribute definitions
         ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
         ATTRIBUTE_ORCLGUID_WITH_X_ORIGIN: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' )"
         )
         ATTRIBUTE_ORCLGUID_WITH_X_EXTENSIONS: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 "
-            "X-ORIGIN 'Oracle' X-FILE-REF '99-user.ldif' "
-            "X-NAME 'TestName' X-ALIAS 'testAlias' X-OID '1.2.3.5' )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' X-FILE-REF '99-user.ldif' X-NAME 'TestName' X-ALIAS 'testAlias' X-OID '1.2.3.5' )"
         )
         ATTRIBUTE_SYNTAX_WITH_QUOTES: Final[str] = (
             "( 1.2.3.4 NAME 'testAttr' SYNTAX '1.3.6.1.4.1.1466.115.121.1.7' )"
@@ -567,8 +404,6 @@ photo:: UGhvdG8gZGF0YQ==
             "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         )
         ATTRIBUTE_INVALID_OID: Final[str] = "( invalid@oid!format NAME 'testAttr' )"
-
-        # OUD objectClass definitions
         OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
@@ -578,20 +413,14 @@ photo:: UGhvdG8gZGF0YQ==
         OBJECTCLASS_SINGLE_SUP: Final[str] = (
             "( 1.2.3.4 NAME 'testOC' SUP top STRUCTURAL )"
         )
-
-        # Sample OIDs
         SAMPLE_ATTRIBUTE_OID: Final[str] = "1.2.3.4"
         SAMPLE_ATTRIBUTE_OID_2: Final[str] = "1.2.3.5"
         SAMPLE_OBJECTCLASS_OID: Final[str] = "1.2.3.6"
         SAMPLE_SYNTAX_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
         SAMPLE_SYNTAX_OID_QUOTED: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-
-        # Sample attribute and objectclass names
         SAMPLE_ATTRIBUTE_NAME: Final[str] = "testAttr"
         SAMPLE_ATTRIBUTE_NAME_2: Final[str] = "testAttr2"
         SAMPLE_OBJECTCLASS_NAME: Final[str] = "testOC"
-
-        # Sample attribute definitions
         SAMPLE_ATTRIBUTE_DEF: Final[str] = (
             "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -601,34 +430,22 @@ photo:: UGhvdG8gZGF0YQ==
         SAMPLE_OBJECTCLASS_DEF: Final[str] = (
             "( 1.2.3.6 NAME 'testOC' SUP top STRUCTURAL )"
         )
-
-        # Sample DNs
         SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
         SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
-
-        # Sample ACL/ACI values
         SAMPLE_ACI: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; '
-            'allow (read) userdn="ldap:///self";)'
+            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         )
         SAMPLE_ACI_WITH_MACRO_SUBJECT: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; '
-            'allow (read) userdn="ldap:///($dn)";)'
+            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         )
         SAMPLE_ACI_WITH_MACRO_TARGET: Final[str] = (
-            '(target="($dn)")(version 3.0; acl "test"; '
-            'allow (read) userdn="ldap:///($dn)";)'
+            '(target="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         )
         SAMPLE_ACI_WITH_MACRO_SUBJECT_NO_TARGET: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; '
-            'allow (read) userdn="ldap:///[$dn]";)'
+            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///[$dn]";)'
         )
-
-        # OUD ACL attribute names
         ACL_ATTRIBUTE_ACI: Final[str] = "aci"
         ACL_ATTRIBUTE_ORCLACI: Final[str] = "orclaci"
-
-        # Matching rules (should be filtered out)
         MATCHING_RULE_DEF: Final[str] = (
             "( 1.2.3.7 NAME 'testMR' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -639,80 +456,38 @@ photo:: UGhvdG8gZGF0YQ==
     class Conversion:
         """Conversion test constants (from conftest ConversionTestConstants)."""
 
-        # OID attribute definitions
         OID_ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
         OID_ATTRIBUTE_ORCLDBNAME: Final[str] = (
-            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         OID_ATTRIBUTE_ORCLGUID_COMPLEX: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "DESC 'Oracle Global Unique Identifier' "
-            "EQUALITY caseIgnoreMatch "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 "
-            "SINGLE-VALUE )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle Global Unique Identifier' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE )"
         )
-
-        # OUD attribute definitions
         OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
-
-        # OID objectClass definitions
         OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
         OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
-            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' "
-            "SUP top STRUCTURAL MUST cn )"
+            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
         )
         OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
-            "SUP top STRUCTURAL "
-            "MUST cn "
-            "MAY ( description $ orclVersion ) )"
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn MAY ( description $ orclVersion ) )"
         )
-
-        # OUD objectClass definitions
         OUD_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
-
-        # Invalid test data, sample LDIF, and error messages
-        # Access via TestsFlextLdifConstants.General.* at runtime:
-        #   c.General.INVALID_ATTRIBUTE
-        #   c.General.INVALID_DN
-        #   c.General.INVALID_DATA_TYPE
-        #   c.General.SAMPLE_LDIF_ENTRY
-        #   c.General.WRITER_FAILED_MSG
-        #   c.General.PARSER_ERROR_MSG
-        #   c.General.DN_ERROR_MSG
-        #   c.General.INVALID_ENTRY_MSG
-        #   c.General.PARSE_FAILED_MSG
-        #   c.General.WRITE_FAILED_MSG
-        # (Cannot reference nested class from class body)
-
-
-# ============================================================================
-# FILTER AND HELPER ALIASES FOR BACKWARD COMPATIBILITY
-# ============================================================================
-# These provide access to server types and test data via the Filters namespace
-# used by existing test files. Maps to c.LdapServers and test constants.
 
 
 class Filters:
     """Test filter constants and server types for categorization tests."""
 
-    # Server types
     SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
     SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
     SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
-
-    # Test DNs
     DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
     DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
     DN_USER_ADMIN: Final[str] = (
@@ -722,27 +497,18 @@ class Filters:
     DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
     DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
     DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
-
-    # DN Patterns
     DN_PATTERN_USERS: Final[str] = "ou=users,*"
     DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
     DN_PATTERN_OU: Final[str] = "ou=*,*"
-
-    # ObjectClasses
     OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
     OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
     OC_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
     OC_PERSON: Final[str] = "person"
     OC_DOMAIN: Final[str] = "domain"
-
     ATTR_MAIL: Final[str] = "mail"
     ATTR_SN: Final[str] = "sn"
     ATTR_CN: Final[str] = "cn"
     ATTR_OBJECTCLASS: Final[str] = "objectClass"
-
-    # =========================================================================
-    # DN CONSTANTS (For backward compatibility - used in tests)
-    # =========================================================================
 
     class DNs:
         """DN constants for testing."""
@@ -752,10 +518,6 @@ class Filters:
         TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
         SCHEMA: Final[str] = "cn=schema"
         BASE: Final[str] = "dc=example,dc=com"
-
-    # =========================================================================
-    # VALUE CONSTANTS (For backward compatibility - used in tests)
-    # =========================================================================
 
     class Values:
         """Value constants for testing."""
@@ -775,27 +537,14 @@ class OIDs:
     Used by test files to reference OID constants with short names.
     """
 
-    # Attribute OIDs
-    CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN  # "2.5.4.3"
-    SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN  # "2.5.4.4"
-    ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST  # "2.5.4.8"
-    MAIL: Final[str] = (
-        TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
-    )  # "0.9.2342.19200300.100.1.3"
-    MODIFY_TIMESTAMP: Final[str] = (
-        TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
-    )  # "2.5.18.2"
-    OID_O: Final[str] = (
-        TestsFlextLdifConstants.Rfc.ATTR_OID_O
-    )  # "2.5.4.10" (Organization attribute)
-    OBJECTCLASS: Final[str] = (
-        TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
-    )  # "2.5.4.0"
-
-    # ObjectClass OIDs
-    PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON  # "2.5.6.6"
-
-    # Syntax OIDs (for convenience)
+    CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN
+    SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN
+    ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST
+    MAIL: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
+    MODIFY_TIMESTAMP: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
+    OID_O: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_O
+    OBJECTCLASS: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
+    PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON
     DIRECTORY_STRING: Final[str] = (
         TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
     )
@@ -817,22 +566,14 @@ class Syntax:
 
     DIRECTORY_STRING: Final[str] = (
         TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
-    )  # "1.3.6.1.4.1.1466.115.121.1.15"
-    BOOLEAN: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-    )  # "1.3.6.1.4.1.1466.115.121.1.7"
-    INTEGER: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-    )  # "1.3.6.1.4.1.1466.115.121.1.27"
-    IA5_STRING: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
-    )  # "1.3.6.1.4.1.1466.115.121.1.26"
+    )
+    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
+    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
+    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
     GENERALIZED_TIME: Final[str] = (
         TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
-    )  # "1.3.6.1.4.1.1466.115.121.1.24"
-    OID: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
-    )  # "1.3.6.1.4.1.1466.115.121.1.38"
+    )
+    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
 
 
 class RfcTestHelpers:
@@ -859,27 +600,19 @@ class RfcTestHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-
-        result = parser_service.parse_string(
-            content=content,
-            server_type=server_type,
-        )
-
+        result = parser_service.parse_string(content=content, server_type=server_type)
         if result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-
         entries = result.value.entries
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}",
+                f"Expected {expected_count} entries, got {len(entries)}"
             )
-
         return [m.Ldif.Entry.model_validate(entry) for entry in entries]
 
     @staticmethod
     def test_entry_create_and_unwrap(
-        dn: str,
-        attributes: dict[str, str | list[str]],
+        dn: str, attributes: dict[str, str | list[str]]
     ) -> m.Ldif.Entry:
         """Create an entry and unwrap the result.
 
@@ -897,7 +630,6 @@ class RfcTestHelpers:
         result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
         if result.is_failure:
             raise AssertionError(f"Entry creation failed: {result.error}")
-
         return result.value
 
     @staticmethod
@@ -939,7 +671,6 @@ class RfcTestHelpers:
             AssertionError: If parsing fails or properties don't match
 
         """
-        # Determine parse method based on content
         if (
             "STRUCTURAL" in schema_def
             or "AUXILIARY" in schema_def
@@ -948,92 +679,75 @@ class RfcTestHelpers:
             parse_method = getattr(quirk, "parse_objectclass", None)
         else:
             parse_method = getattr(quirk, "parse_attribute", None)
-
         if parse_method is None:
             parse_method = getattr(quirk, "parse", None)
-
         if parse_method is None:
             msg = "Quirk has no suitable parse method"
             raise AssertionError(msg)
-
         result = parse_method(schema_def)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-
         value = result.value if hasattr(result, "value") else result
-
-        # Assert expected properties
         if expected_oid is not None:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
                 raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'",
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
                 )
-
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
                 raise AssertionError(
-                    f"Expected NAME '{expected_name}', got '{actual_name}'",
+                    f"Expected NAME '{expected_name}', got '{actual_name}'"
                 )
-
         if expected_desc is not None:
             actual_desc = getattr(value, "desc", None)
             if actual_desc != expected_desc:
                 raise AssertionError(
-                    f"Expected DESC '{expected_desc}', got '{actual_desc}'",
+                    f"Expected DESC '{expected_desc}', got '{actual_desc}'"
                 )
-
         if expected_syntax is not None:
             actual_syntax = getattr(value, "syntax", None)
             if actual_syntax != expected_syntax:
                 raise AssertionError(
-                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'",
+                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
                 )
-
         if expected_single_value is not None:
             actual_sv = getattr(value, "single_value", None)
             if actual_sv != expected_single_value:
                 raise AssertionError(
-                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}",
+                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
                 )
-
         if expected_length is not None:
             actual_length = getattr(value, "length", None)
             if actual_length != expected_length:
                 raise AssertionError(
-                    f"Expected length {expected_length}, got {actual_length}",
+                    f"Expected length {expected_length}, got {actual_length}"
                 )
-
         if expected_kind is not None:
             actual_kind = getattr(value, "kind", None)
             if actual_kind != expected_kind:
                 raise AssertionError(
-                    f"Expected KIND '{expected_kind}', got '{actual_kind}'",
+                    f"Expected KIND '{expected_kind}', got '{actual_kind}'"
                 )
-
         if expected_sup is not None:
             actual_sup = getattr(value, "sup", None)
             if actual_sup != expected_sup:
                 raise AssertionError(
-                    f"Expected SUP '{expected_sup}', got '{actual_sup}'",
+                    f"Expected SUP '{expected_sup}', got '{actual_sup}'"
                 )
-
         if expected_must is not None:
             actual_must = getattr(value, "must", None) or []
             if list(actual_must) != expected_must:
                 raise AssertionError(
-                    f"Expected MUST {expected_must}, got {list(actual_must)}",
+                    f"Expected MUST {expected_must}, got {list(actual_must)}"
                 )
-
         if expected_may is not None:
             actual_may = getattr(value, "may", None) or []
             if list(actual_may) != expected_may:
                 raise AssertionError(
-                    f"Expected MAY {expected_may}, got {list(actual_may)}",
+                    f"Expected MAY {expected_may}, got {list(actual_may)}"
                 )
-
         return value
 
     @staticmethod
@@ -1059,34 +773,29 @@ class RfcTestHelpers:
         is_failure = getattr(result, "is_failure", None)
         if not isinstance(is_failure, bool):
             raise TypeError(f"Expected FlextResult-like object, got {type(result)}")
-
         if is_failure:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Result is failure: {error}")
-
         value = getattr(result, "value", None)
-        if expected_type is not None and not isinstance(value, expected_type):
+        if expected_type is not None and (not isinstance(value, expected_type)):
             raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(value).__name__}",
+                f"Expected {expected_type.__name__}, got {type(value).__name__}"
             )
-
         if expected_count is not None:
             if not isinstance(value, Sized):
                 raise AssertionError(
-                    f"Cannot check count on {type(value).__name__} - not a sequence",
+                    f"Cannot check count on {type(value).__name__} - not a sequence"
                 )
             sized_value: Sized = value
             if len(sized_value) != expected_count:
                 raise AssertionError(
-                    f"Expected count {expected_count}, got {len(sized_value)}",
+                    f"Expected count {expected_count}, got {len(sized_value)}"
                 )
-
         return value
 
     @staticmethod
     def test_create_entry_and_unwrap(
-        dn: str,
-        attributes: dict[str, str | list[str]] | None = None,
+        dn: str, attributes: dict[str, str | list[str]] | None = None
     ) -> m.Ldif.Entry:
         """Create an entry and unwrap the result.
 
@@ -1108,7 +817,6 @@ class RfcTestHelpers:
         result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
         if result.is_failure:
             raise AssertionError(f"Entry creation failed: {result.error}")
-
         return result.value
 
     @staticmethod
@@ -1137,11 +845,7 @@ class RfcTestHelpers:
 
         """
         return m.Ldif.SchemaAttribute(
-            oid=oid,
-            name=name,
-            desc=desc,
-            syntax=syntax,
-            single_value=single_value,
+            oid=oid, name=name, desc=desc, syntax=syntax, single_value=single_value
         )
 
     @staticmethod
@@ -1184,9 +888,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_quirk_parse_success_and_unwrap(
-        quirk: p.Ldif.SchemaQuirk,
-        content: str,
-        parse_method: str | None = None,
+        quirk: p.Ldif.SchemaQuirk, content: str, parse_method: str | None = None
     ) -> p.Ldif.SchemaAttribute | None:
         """Parse using quirk and assert success.
 
@@ -1207,12 +909,10 @@ class RfcTestHelpers:
         if not callable(method):
             raise AssertionError(f"Quirk has no method '{method_name}'")
         result = method(content)
-
         is_failure = getattr(result, "is_failure", None)
         if isinstance(is_failure, bool) and is_failure:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Parsing failed: {error}")
-
         return getattr(result, "value", result)
 
     @staticmethod
@@ -1245,96 +945,79 @@ class RfcTestHelpers:
             AssertionError: If parsing fails or properties don't match
 
         """
-        # Determine parse method based on content
         if "STRUCTURAL" in content or "AUXILIARY" in content or "ABSTRACT" in content:
             parse_method = getattr(quirk, "parse_objectclass", None)
         else:
             parse_method = getattr(quirk, "parse_attribute", None)
-
         if parse_method is None:
             parse_method = getattr(quirk, "parse", None)
-
         if parse_method is None:
             msg = "Quirk has no suitable parse method"
             raise AssertionError(msg)
-
         result = parse_method(content)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-
         value = result.value if hasattr(result, "value") else result
-
         if expected_oid is not None:
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
                 raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'",
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
                 )
-
         if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
                 raise AssertionError(
-                    f"Expected name '{expected_name}', got '{actual_name}'",
+                    f"Expected name '{expected_name}', got '{actual_name}'"
                 )
-
         if expected_desc is not None:
             actual_desc = getattr(value, "desc", None)
             if actual_desc != expected_desc:
                 raise AssertionError(
-                    f"Expected desc '{expected_desc}', got '{actual_desc}'",
+                    f"Expected desc '{expected_desc}', got '{actual_desc}'"
                 )
-
         if expected_sup is not None:
             actual_sup = getattr(value, "sup", None)
             if actual_sup != expected_sup:
                 raise AssertionError(
-                    f"Expected sup '{expected_sup}', got '{actual_sup}'",
+                    f"Expected sup '{expected_sup}', got '{actual_sup}'"
                 )
-
         if expected_kind is not None:
             actual_kind = getattr(value, "kind", None)
             if actual_kind != expected_kind:
                 raise AssertionError(
-                    f"Expected kind '{expected_kind}', got '{actual_kind}'",
+                    f"Expected kind '{expected_kind}', got '{actual_kind}'"
                 )
-
         if expected_must is not None:
             actual_must = getattr(value, "must", None)
             if actual_must != expected_must:
                 raise AssertionError(
-                    f"Expected must '{expected_must}', got '{actual_must}'",
+                    f"Expected must '{expected_must}', got '{actual_must}'"
                 )
-
         if expected_may is not None:
             actual_may = getattr(value, "may", None)
             if actual_may != expected_may:
                 raise AssertionError(
-                    f"Expected may '{expected_may}', got '{actual_may}'",
+                    f"Expected may '{expected_may}', got '{actual_may}'"
                 )
-
         if expected_syntax is not None:
             actual_syntax = getattr(value, "syntax", None)
             if actual_syntax != expected_syntax:
                 raise AssertionError(
-                    f"Expected syntax '{expected_syntax}', got '{actual_syntax}'",
+                    f"Expected syntax '{expected_syntax}', got '{actual_syntax}'"
                 )
-
         if expected_equality is not None:
             actual_equality = getattr(value, "equality", None)
             if actual_equality != expected_equality:
                 raise AssertionError(
-                    f"Expected equality '{expected_equality}', got '{actual_equality}'",
+                    f"Expected equality '{expected_equality}', got '{actual_equality}'"
                 )
-
         if expected_single_value is not None:
             actual_single_value = getattr(value, "single_value", None)
             if actual_single_value != expected_single_value:
                 raise AssertionError(
-                    f"Expected single_value '{expected_single_value}', got '{actual_single_value}'",
+                    f"Expected single_value '{expected_single_value}', got '{actual_single_value}'"
                 )
-
         return value
 
     @staticmethod
@@ -1419,33 +1102,24 @@ class RfcTestHelpers:
             AssertionError: If parsing fails or properties don't match
 
         """
-        # Get parse method
         parse_method = getattr(schema_quirk, "_parse_attribute", None)
         if parse_method is None:
             parse_method = getattr(schema_quirk, "parse_attribute", None)
-
         if parse_method is None:
             msg = "Schema quirk has no attribute parse method"
             raise AssertionError(msg)
-
         result = parse_method(attr_def)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"Attribute parsing failed: {result.error}")
-
         value = result.value if hasattr(result, "value") else result
-
-        # Validate expected properties
         actual_oid = getattr(value, "oid", None)
         if actual_oid != expected_oid:
             raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
             raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'",
+                f"Expected name '{expected_name}', got '{actual_name}'"
             )
-
         return value
 
     @staticmethod
@@ -1470,33 +1144,24 @@ class RfcTestHelpers:
             AssertionError: If parsing fails or properties don't match
 
         """
-        # Get parse method
         parse_method = getattr(schema_quirk, "_parse_objectclass", None)
         if parse_method is None:
             parse_method = getattr(schema_quirk, "parse_objectclass", None)
-
         if parse_method is None:
             msg = "Schema quirk has no objectClass parse method"
             raise AssertionError(msg)
-
         result = parse_method(oc_def)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"ObjectClass parsing failed: {result.error}")
-
         value = result.value if hasattr(result, "value") else result
-
-        # Validate expected properties
         actual_oid = getattr(value, "oid", None)
         if actual_oid != expected_oid:
             raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-
         actual_name = getattr(value, "name", None)
         if actual_name != expected_name:
             raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'",
+                f"Expected name '{expected_name}', got '{actual_name}'"
             )
-
         return value
 
     @staticmethod
@@ -1523,37 +1188,24 @@ class RfcTestHelpers:
             AssertionError: If parsing/writing fails or validations don't pass
 
         """
-        # First parse the attribute
         attr = RfcTestHelpers.test_schema_parse_attribute(
-            schema_quirk,
-            attr_def,
-            expected_oid,
-            expected_name,
+            schema_quirk, attr_def, expected_oid, expected_name
         )
-
-        # Get write method
         write_method = getattr(schema_quirk, "write_attribute", None)
         if write_method is None:
             msg = "Schema quirk has no write_attribute method"
             raise AssertionError(msg)
-
-        # Write the attribute back
         result = write_method(attr)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"Attribute writing failed: {result.error}")
-
         written = result.value if hasattr(result, "value") else result
-
-        # Validate written contains expected elements
         if must_contain:
             for element in must_contain:
                 if element not in written:
                     raise AssertionError(
-                        f"Expected '{element}' in written output: {written}",
+                        f"Expected '{element}' in written output: {written}"
                     )
-
-        return attr, written
+        return (attr, written)
 
     @staticmethod
     def test_parse_and_assert_entry_structure(
@@ -1581,32 +1233,26 @@ class RfcTestHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-
         result = parser_service.parse_string(content=content, server_type="rfc")
-
         if result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-
         entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}",
+                f"Expected {expected_count} entries, got {len(entries)}"
             )
-
         if entries and expected_dn:
             actual_dn = getattr(entries[0], "dn", None)
             if str(actual_dn) != expected_dn:
                 raise AssertionError(f"Expected DN '{expected_dn}', got '{actual_dn}'")
-
         if entries and expected_attributes:
             entry = entries[0]
             attrs = getattr(entry, "attributes", {})
             for attr_name in expected_attributes:
                 if attr_name not in attrs:
                     raise AssertionError(
-                        f"Expected attribute '{attr_name}' not found in entry",
+                        f"Expected attribute '{attr_name}' not found in entry"
                     )
-
         return entries
 
     @staticmethod
@@ -1633,32 +1279,26 @@ class RfcTestHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-
         result = parser_service.parse_string(content=content, server_type="rfc")
-
         if result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-
         entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
         if len(entries) != expected_count:
             raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}",
+                f"Expected {expected_count} entries, got {len(entries)}"
             )
-
         for i, expected_dn in enumerate(expected_dns):
             if i < len(entries):
                 actual_dn = getattr(entries[i], "dn", None)
                 if str(actual_dn) != expected_dn:
                     raise AssertionError(
-                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'",
+                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
                     )
-
         return entries
 
     @staticmethod
     def test_create_entry(
-        dn: str,
-        attributes: dict[str, str | list[str]],
+        dn: str, attributes: dict[str, str | list[str]]
     ) -> m.Ldif.Entry:
         """Create an entry for testing.
 
@@ -1700,21 +1340,16 @@ class RfcTestHelpers:
         """
         if not isinstance(writer_service, FlextLdifWriter):
             raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-
         result = writer_service.write_to_string(entries=entries)
-
         if result.is_failure:
             raise AssertionError(f"Writing failed: {result.error}")
-
         ldif_string = result.value
         if not isinstance(ldif_string, str):
             raise AssertionError(f"Expected string, got {type(ldif_string)}")
-
         if expected_content:
             for substring in expected_content:
                 if substring not in ldif_string:
                     raise AssertionError(f"'{substring}' not found in LDIF output")
-
         return ldif_string
 
     @staticmethod
@@ -1738,18 +1373,13 @@ class RfcTestHelpers:
         """
         if not isinstance(writer_service, FlextLdifWriter):
             raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-
         if not isinstance(file_path, Path):
             raise TypeError(f"Expected Path, got {type(file_path)}")
-
         result = writer_service.write_to_file(entries=entries, path=file_path)
-
         if result.is_failure:
             raise AssertionError(f"Writing to file failed: {result.error}")
-
         if not file_path.exists():
             raise AssertionError(f"Output file {file_path} was not created")
-
         if expected_content:
             content = file_path.read_text()
             for substring in expected_content:
@@ -1778,16 +1408,12 @@ class RfcTestHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-
         result = parser_service.parse_string(content=content, server_type="rfc")
-
         if should_succeed is True and result.is_failure:
             raise AssertionError(f"Expected success but got failure: {result.error}")
-
         if should_succeed is False and result.is_success:
             msg = "Expected failure but got success"
             raise AssertionError(msg)
-
         return result.map_or(None)
 
     @staticmethod
@@ -1807,33 +1433,27 @@ class RfcTestHelpers:
         """
         if not isinstance(writer_service, FlextLdifWriter):
             raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-
         for test_name, data in entry_data.items():
             dn = str(data.get("dn", ""))
             attributes = data.get("attributes", {})
             if not isinstance(attributes, dict):
                 attributes = {}
-
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
             if entry_result.is_failure:
                 raise AssertionError(
-                    f"Entry creation failed for {test_name}: {entry_result.error}",
+                    f"Entry creation failed for {test_name}: {entry_result.error}"
                 )
-
             write_result = writer_service.write_to_string(entries=[entry_result.value])
             if write_result.is_failure:
                 raise AssertionError(
-                    f"Write failed for {test_name}: {write_result.error}",
+                    f"Write failed for {test_name}: {write_result.error}"
                 )
-
             if dn and dn not in write_result.value:
                 raise AssertionError(f"DN '{dn}' not found in output for {test_name}")
 
     @staticmethod
     def test_entry_quirk_can_handle(
-        entry_quirk: p.Ldif.EntryQuirk,
-        entry: m.Ldif.Entry,
-        expected: bool,
+        entry_quirk: p.Ldif.EntryQuirk, entry: m.Ldif.Entry, expected: bool
     ) -> None:
         """Test Entry quirk can_handle method.
 
@@ -1850,21 +1470,17 @@ class RfcTestHelpers:
         if can_handle_method is None:
             msg = "Entry quirk has no can_handle method"
             raise AssertionError(msg)
-
         dn = str(getattr(entry, "dn", ""))
         attributes = getattr(entry, "attributes", {})
-
         result = can_handle_method(dn, attributes)
         if result != expected:
             raise AssertionError(
-                f"Expected can_handle to return {expected}, got {result}",
+                f"Expected can_handle to return {expected}, got {result}"
             )
 
     @staticmethod
     def test_acl_quirk_parse_and_verify(
-        acl_quirk: p.Ldif.AclQuirk,
-        acl_line: str,
-        expected_raw_acl: str | None = None,
+        acl_quirk: p.Ldif.AclQuirk, acl_line: str, expected_raw_acl: str | None = None
     ) -> m.Ldif.Acl | None:
         """Parse ACL and verify result.
 
@@ -1884,28 +1500,21 @@ class RfcTestHelpers:
         if parse_method is None:
             msg = "ACL quirk has no parse method"
             raise AssertionError(msg)
-
         result = parse_method(acl_line)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"ACL parsing failed: {result.error}")
-
         value = result.value if hasattr(result, "value") else result
-
         if expected_raw_acl is not None:
             raw_acl = getattr(value, "raw_acl", None)
             if raw_acl != expected_raw_acl:
                 raise AssertionError(
-                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'",
+                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
                 )
-
         return value
 
     @staticmethod
     def test_acl_quirk_write_and_verify(
-        acl_quirk: p.Ldif.AclQuirk,
-        acl: m.Ldif.Acl,
-        expected_content: str | None = None,
+        acl_quirk: p.Ldif.AclQuirk, acl: m.Ldif.Acl, expected_content: str | None = None
     ) -> str:
         """Write ACL and verify result.
 
@@ -1925,28 +1534,19 @@ class RfcTestHelpers:
         if write_method is None:
             msg = "ACL quirk has no write method"
             raise AssertionError(msg)
-
         result = write_method(acl)
-
         if hasattr(result, "is_failure") and result.is_failure:
             raise AssertionError(f"ACL writing failed: {result.error}")
-
         output = result.value if hasattr(result, "value") else result
-
         if not isinstance(output, str):
             raise AssertionError(f"Expected string output, got {type(output)}")
-
         if expected_content is not None and expected_content not in output:
             raise AssertionError(f"Expected '{expected_content}' not found in output")
-
         return output
 
     @staticmethod
     def test_parse_error_handling(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        invalid_def: str,
-        *,
-        should_fail: bool = True,
+        schema_quirk: p.Ldif.SchemaQuirk, invalid_def: str, *, should_fail: bool = True
     ) -> m.Ldif.SchemaAttribute | None:
         """Test parsing error handling for invalid definitions.
 
@@ -1963,33 +1563,25 @@ class RfcTestHelpers:
                            or if not should_fail and parsing fails
 
         """
-        # Try attribute parse method
         parse_method = getattr(schema_quirk, "_parse_attribute", None)
         if parse_method is None:
             parse_method = getattr(schema_quirk, "parse_attribute", None)
-
         if parse_method is None:
             msg = "Schema quirk has no attribute parse method"
             raise AssertionError(msg)
-
         result = parse_method(invalid_def)
-
         if hasattr(result, "is_failure"):
             is_failure = result.is_failure
         else:
             is_failure = result is None
-
-        if should_fail and not is_failure:
+        if should_fail and (not is_failure):
             msg = "Expected parsing to fail but it succeeded"
             raise AssertionError(msg)
-
         if not should_fail and is_failure:
             error_msg = result.error if hasattr(result, "error") else "Unknown error"
             raise AssertionError(f"Expected parsing to succeed but got: {error_msg}")
-
         if is_failure:
             return None
-
         return result.value if hasattr(result, "value") else result
 
 
@@ -1998,9 +1590,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_entries_batch(
-        entries_data: list[dict[str, object]],
-        *,
-        validate_all: bool = True,
+        entries_data: list[dict[str, object]], *, validate_all: bool = True
     ) -> list[m.Ldif.Entry]:
         """Create multiple entries from data dictionaries.
 
@@ -2017,14 +1607,12 @@ class TestDeduplicationHelpers:
         for entry_data in entries_data:
             dn_raw = entry_data.get("dn")
             attrs_raw = entry_data.get("attributes")
-
             if not isinstance(dn_raw, str):
                 msg = "Entry data must include string 'dn'"
                 raise AssertionError(msg)
             if not isinstance(attrs_raw, dict):
                 msg = "Entry data must include dict 'attributes'"
                 raise AssertionError(msg)
-
             normalized_attrs: dict[str, str | list[str]] = {}
             for attr_name_raw, attr_value_raw in attrs_raw.items():
                 if not isinstance(attr_name_raw, str):
@@ -2038,7 +1626,6 @@ class TestDeduplicationHelpers:
                     ]
                     if len(string_values) == len(attr_value_raw):
                         normalized_attrs[attr_name_raw] = string_values
-
             result = service.create_entry(dn=dn_raw, attributes=normalized_attrs)
             if result.is_success:
                 entries.append(result.value)
@@ -2068,29 +1655,22 @@ class TestDeduplicationHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-
         results = []
         for test_case in test_cases:
             ldif_content = str(test_case.get("ldif_content", ""))
             should_succeed = test_case.get("should_succeed")
             server_type = str(test_case.get("server_type", "rfc"))
-
             result = parser_service.parse_string(
-                content=ldif_content,
-                server_type=server_type,
+                content=ldif_content, server_type=server_type
             )
-
             if validate_all and should_succeed is True and result.is_failure:
                 raise AssertionError(
-                    f"Expected success but got failure: {result.error}",
+                    f"Expected success but got failure: {result.error}"
                 )
-
             if validate_all and should_succeed is False and result.is_success:
                 msg = "Expected failure but got success"
                 raise AssertionError(msg)
-
             results.append(result)
-
         return results
 
     @staticmethod
@@ -2115,13 +1695,11 @@ class TestDeduplicationHelpers:
         assert result.is_success, f"write() failed: {result.error}"
         ldif_string = result.value
         assert isinstance(ldif_string, str)
-
         if must_contain:
             for substring in must_contain:
                 assert substring in ldif_string, (
                     f"'{substring}' not found in LDIF output"
                 )
-
         return ldif_string
 
     @staticmethod
@@ -2142,13 +1720,9 @@ class TestDeduplicationHelpers:
         """
         assert isinstance(api, FlextLdif)
         assert isinstance(output_file, Path)
-
         ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api,
-            entries,
-            must_contain=must_contain,
+            api, entries, must_contain=must_contain
         )
-
         output_file.write_text(ldif_string)
         assert output_file.exists(), f"Output file {output_file} was not created"
 
@@ -2167,9 +1741,7 @@ class TestDeduplicationHelpers:
 
         """
         TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api,
-            entries,
-            must_contain=must_contain,
+            api, entries, must_contain=must_contain
         )
 
     @staticmethod
@@ -2206,7 +1778,6 @@ class TestDeduplicationHelpers:
                 or if type doesn't match
 
         """
-        # Get the appropriate parse method
         if parse_method:
             method = getattr(quirk, parse_method, None)
             if method is None or not callable(method):
@@ -2218,45 +1789,32 @@ class TestDeduplicationHelpers:
                 msg = "Quirk has no callable parse method"
                 raise AssertionError(msg)
             result = parse_callable(content)
-
         is_success = getattr(result, "is_success", None)
         is_failure = getattr(result, "is_failure", None)
         if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
             msg = "Parse method must return FlextResult-like object"
             raise AssertionError(msg)
-
         error = getattr(result, "error", None)
         error_message = str(error) if error is not None else "Unknown parse error"
-
-        # Handle expected failure cases
         if should_succeed is False:
             if is_success:
                 raise AssertionError(msg or "Expected failure but parse succeeded")
-            return None  # Expected failure, return None
-
-        # Handle expected success or default case
+            return None
         if should_succeed is True and is_failure:
             raise AssertionError(
-                msg or f"Expected success but parse failed: {error_message}",
+                msg or f"Expected success but parse failed: {error_message}"
             )
-
-        # Default behavior for should_succeed=None: assert success
         if should_succeed is None:
             assert is_success, msg or f"quirk.parse() failed: {error_message}"
-
-        # For failures with should_succeed=None, return None
         if is_failure:
             return None
-
         value = getattr(result, "value", None)
         if expected_type is not None:
-            # For Protocol types, use duck typing check
             if hasattr(expected_type, "__protocol_attrs__"):
-                # It's a Protocol, just return the value (structural typing)
                 pass
             elif not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
                 )
         return value
 
@@ -2287,7 +1845,6 @@ class TestDeduplicationHelpers:
             AssertionError: If writing fails or must_contain strings not found
 
         """
-        # Get the appropriate write method
         if write_method:
             method = getattr(quirk, write_method, None)
             if method is None:
@@ -2299,24 +1856,18 @@ class TestDeduplicationHelpers:
                 msg = "Quirk has no write method"
                 raise AssertionError(msg)
             result = method(data)
-
-        # Handle FlextResult or direct string
         if hasattr(result, "is_success"):
             assert result.is_success, msg or f"quirk.write() failed: {result.error}"
             output = result.value
         else:
             output = result
-
         assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
-
-        # Check must_contain strings
         if must_contain:
             for substring in must_contain:
                 if substring not in output:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}...",
+                        f"'{substring}' not found in output: {output[:200]}..."
                     )
-
         return output
 
     @staticmethod
@@ -2347,13 +1898,10 @@ class TestDeduplicationHelpers:
             AssertionError: If conversion fails or validation fails
 
         """
-        # Get convert method
         convert_method = getattr(conversion_matrix, "convert", None)
         if convert_method is None:
             msg = "conversion_matrix has no convert method"
             raise AssertionError(msg)
-
-        # Parse data into model instance based on conversion type
         conversion_type_lower = conversion_type.lower()
         if conversion_type_lower == "attribute":
             schema_service = FlextLdifSchema()
@@ -2366,44 +1914,31 @@ class TestDeduplicationHelpers:
             parse_result = schema_service.parse_objectclass(data)
             if not parse_result.is_success:
                 raise AssertionError(
-                    f"Failed to parse objectclass: {parse_result.error}",
+                    f"Failed to parse objectclass: {parse_result.error}"
                 )
             model_instance = parse_result.value
         else:
             raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-
-        # Perform conversion
         result = convert_method(
-            source=source_quirk,
-            target=target_quirk,
-            model_instance=model_instance,
+            source=source_quirk, target=target_quirk, model_instance=model_instance
         )
-
-        # Check result
         if hasattr(result, "is_success"):
             assert result.is_success, f"convert() failed: {result.error}"
             output = result.value
         else:
             output = result
-
-        # Convert model instances to string if expected
-        if expected_type is str and not isinstance(output, str):
+        if expected_type is str and (not isinstance(output, str)):
             output = str(output)
-
-        # Type check
-        if expected_type is not None and not isinstance(output, expected_type):
+        if expected_type is not None and (not isinstance(output, expected_type)):
             raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(output).__name__}",
+                f"Expected {expected_type.__name__}, got {type(output).__name__}"
             )
-
-        # Check must_contain strings
         if must_contain and isinstance(output, str):
             for substring in must_contain:
                 if substring not in output:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}...",
+                        f"'{substring}' not found in output: {output[:200]}..."
                     )
-
         return output
 
     @staticmethod
@@ -2428,20 +1963,13 @@ class TestDeduplicationHelpers:
             AssertionError: If result doesn't have expected keys or values
 
         """
-        # Get supported conversions method
         get_support_method = getattr(
-            conversion_matrix,
-            "get_supported_conversions",
-            None,
+            conversion_matrix, "get_supported_conversions", None
         )
         if get_support_method is None:
             msg = "conversion_matrix has no get_supported_conversions"
             raise AssertionError(msg)
-
-        # Get supported conversions
         result = get_support_method(quirk)
-
-        # Handle FlextResult
         if hasattr(result, "is_success"):
             assert result.is_success, (
                 f"get_supported_conversions failed: {result.error}"
@@ -2449,24 +1977,18 @@ class TestDeduplicationHelpers:
             support_dict = result.value
         else:
             support_dict = result
-
         assert isinstance(support_dict, dict), (
             f"Expected dict, got {type(support_dict).__name__}"
         )
-
-        # Check must_have_keys
         if must_have_keys:
             for key in must_have_keys:
                 assert key in support_dict, f"Missing key '{key}' in support dict"
-
-        # Check expected_support values
         if expected_support:
             for key, expected_value in expected_support.items():
                 if key in support_dict:
                     assert support_dict[key] == expected_value, (
                         f"Expected {key}={expected_value}, got {support_dict[key]}"
                     )
-
         return support_dict
 
     @staticmethod
@@ -2497,13 +2019,10 @@ class TestDeduplicationHelpers:
             AssertionError: If conversion fails or count doesn't match
 
         """
-        # Get batch_convert method
         batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
         if batch_convert_method is None:
             msg = "conversion_matrix has no batch_convert method"
             raise AssertionError(msg)
-
-        # Parse items into model instances based on conversion type
         model_list: list[
             m.Ldif.Entry
             | m.Ldif.SchemaAttribute
@@ -2517,7 +2036,7 @@ class TestDeduplicationHelpers:
                 parse_result = schema_service.parse_attribute(str(item))
                 if not parse_result.is_success:
                     raise AssertionError(
-                        f"Failed to parse attribute: {parse_result.error}",
+                        f"Failed to parse attribute: {parse_result.error}"
                     )
                 model_list.append(parse_result.value)
         elif conversion_type_lower in {"objectclass", "objectclasses"}:
@@ -2526,44 +2045,28 @@ class TestDeduplicationHelpers:
                 parse_result = schema_service.parse_objectclass(str(item))
                 if not parse_result.is_success:
                     raise AssertionError(
-                        f"Failed to parse objectclass: {parse_result.error}",
+                        f"Failed to parse objectclass: {parse_result.error}"
                     )
                 model_list.append(parse_result.value)
         else:
             raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-
-        # Perform batch conversion
         result = batch_convert_method(
-            source=source_quirk,
-            target=target_quirk,
-            model_list=model_list,
+            source=source_quirk, target=target_quirk, model_list=model_list
         )
-
-        # Handle FlextResult
         if hasattr(result, "is_success"):
             assert result.is_success, f"batch_convert() failed: {result.error}"
             converted_items = result.value
         else:
             converted_items = result
-
         assert isinstance(converted_items, list), (
             f"Expected list, got {type(converted_items).__name__}"
         )
-
-        # Check expected count
         if expected_count is not None:
             assert len(converted_items) == expected_count, (
                 f"Expected {expected_count} items, got {len(converted_items)}"
             )
-
         return converted_items
 
 
 c = TestsFlextLdifConstants
-
-__all__ = [
-    "RfcTestHelpers",
-    "TestDeduplicationHelpers",
-    "TestsFlextLdifConstants",
-    "c",
-]
+__all__ = ["RfcTestHelpers", "TestDeduplicationHelpers", "TestsFlextLdifConstants", "c"]

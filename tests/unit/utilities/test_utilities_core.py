@@ -46,22 +46,17 @@ class TestsFlextLdifDnOperationsPure(s):
 
     def test_split_dn_with_escaped_commas(self) -> None:
         """Test splitting DN with escaped commas."""
-        dn = r"cn=Test\, User,ou=Users,dc=example,dc=com"
+        dn = "cn=Test\\, User,ou=Users,dc=example,dc=com"
         result = FlextLdifUtilities.Ldif.DN.split(dn)
-        assert result == [r"cn=Test\, User", "ou=Users", "dc=example", "dc=com"]
+        assert result == ["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"]
 
     def test_split_dn_edge_cases(self) -> None:
         """Test splitting DN edge cases."""
-        # Empty DN
         assert FlextLdifUtilities.Ldif.DN.split("") == []
-
-        # Single component
         assert FlextLdifUtilities.Ldif.DN.split("cn=test") == ["cn=test"]
-
-        # Multiple escaped characters
-        dn = r"cn=Test\, User\\More,ou=Users\, Group,dc=example"
+        dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
         result = FlextLdifUtilities.Ldif.DN.split(dn)
-        assert result == [r"cn=Test\, User\\More", r"ou=Users\, Group", "dc=example"]
+        assert result == ["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"]
 
     def test_validate_dn_format_valid(self) -> None:
         """Test valid DN validation."""
@@ -69,11 +64,11 @@ class TestsFlextLdifDnOperationsPure(s):
             "cn=John,dc=example,dc=com",
             "ou=Users,dc=example,dc=com",
             "cn=REDACTED_LDAP_BIND_PASSWORD,o=example",
-            r"cn=Test\, User,dc=example,dc=com",  # Escaped comma
-            r"cn=Test\5CUser,dc=example,dc=com",  # Escaped backslash
-            r"cn=Test#User,dc=example,dc=com",  # Hash character
-            r"cn=Test\2BUser,dc=example,dc=com",  # Valid hex escape (+)
-            r"cn=Test\3DUser,dc=example,dc=com",  # Valid hex escape (=)
+            "cn=Test\\, User,dc=example,dc=com",
+            "cn=Test\\5CUser,dc=example,dc=com",
+            "cn=Test#User,dc=example,dc=com",
+            "cn=Test\\2BUser,dc=example,dc=com",
+            "cn=Test\\3DUser,dc=example,dc=com",
         ]
         for dn in valid_dns:
             assert FlextLdifUtilities.Ldif.DN.validate(dn), f"DN should be valid: {dn}"
@@ -81,16 +76,16 @@ class TestsFlextLdifDnOperationsPure(s):
     def test_validate_dn_format_invalid(self) -> None:
         """Test invalid DN validation."""
         invalid_dns = [
-            "",  # Empty string
-            "no_equals_sign",  # No equals sign
-            "cn=",  # Empty value
-            "=value",  # Empty attribute
-            "cn=test,",  # Trailing comma
-            ",cn=test",  # Leading comma
-            "cn=test,,ou=users",  # Double comma
-            "cn=test\\",  # Trailing backslash
-            "cn=test\\Z",  # Invalid hex escape
-            "cn=test\\XY",  # Invalid hex escape (non-hex chars)
+            "",
+            "no_equals_sign",
+            "cn=",
+            "=value",
+            "cn=test,",
+            ",cn=test",
+            "cn=test,,ou=users",
+            "cn=test\\",
+            "cn=test\\Z",
+            "cn=test\\XY",
         ]
         for dn in invalid_dns:
             assert not FlextLdifUtilities.Ldif.DN.validate(dn), (
@@ -110,8 +105,6 @@ class TestsFlextLdifDnOperationsPure(s):
         dn1 = "cn=John,dc=example,dc=com"
         dn2 = "cn=jane,dc=example,dc=com"
         result = FlextLdifUtilities.Ldif.DN.compare_dns(dn1, dn2)
-
-        # compare_dns returns FlextResult[int], not int directly
         assert result.is_success
         comparison = result.value
         assert isinstance(comparison, int)
@@ -142,40 +135,25 @@ class TestDnObjectClassMethods:
 
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
-        # Create real SchemaObjectClass with missing SUP
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="orcldasattrcategory",
-            kind="AUXILIARY",
-            sup=None,
+            oid="1.2.3.4", name="orcldasattrcategory", kind="AUXILIARY", sup=None
         )
-
         FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(obj)
         assert obj.sup == "top"
 
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
-        # Create real SchemaObjectClass with kind mismatch
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            sup="orclpwdverifierprofile",
-            kind="AUXILIARY",
+            oid="1.2.3.4", name="testOC", sup="orclpwdverifierprofile", kind="AUXILIARY"
         )
-
         FlextLdifUtilities.Ldif.ObjectClass.fix_kind_mismatch(obj)
         assert obj.kind == "STRUCTURAL"
 
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
-        # Create real SchemaObjectClass with missing SUP
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="AUXILIARY",
-            sup=None,
+            oid="1.2.3.4", name="testOC", kind="AUXILIARY", sup=None
         )
-
         FlextLdifUtilities.Ldif.ObjectClass.ensure_sup_for_auxiliary(obj)
         assert obj.sup == "top"
 
@@ -192,8 +170,7 @@ class TestAttributeFixer:
     def test_normalize_name_with_custom_replacements(self) -> None:
         """Test name normalization with custom replacements."""
         result = FlextLdifUtilities.Ldif.Schema.normalize_name(
-            "test_attr_name",
-            char_replacements={"_": "-"},
+            "test_attr_name", char_replacements={"_": "-"}
         )
         assert result == "test-attr-name"
 
@@ -210,15 +187,14 @@ class TestAttributeFixer:
     def test_normalize_matching_rules_equality_only(self) -> None:
         """Test normalizing matching rules with equality rule only."""
         result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules(
-            "caseIgnoreMatch",
+            "caseIgnoreMatch"
         )
         assert result == ("caseIgnoreMatch", None)
 
     def test_normalize_matching_rules_both(self) -> None:
         """Test normalizing matching rules with both equality and substr."""
         result = FlextLdifUtilities.Ldif.Schema.normalize_matching_rules(
-            "caseIgnoreMatch",
-            "caseIgnoreSubstringsMatch",
+            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
         )
         assert result == ("caseIgnoreMatch", "caseIgnoreSubstringsMatch")
 
@@ -237,7 +213,6 @@ class TestLdifParser:
         """Test extracting X- extensions from schema definition."""
         definition = "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
         result = FlextLdifUtilities.Ldif.LdifParser.extract_extensions(definition)
-        # extract_extensions returns lists for multi-valued extensions
         assert result.get("X-CUSTOM") == ["value"]
         assert result.get("X-OTHER") == ["data"]
 
@@ -245,7 +220,6 @@ class TestLdifParser:
         """Test extracting DESC from schema definition."""
         definition = "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
         result = FlextLdifUtilities.Ldif.LdifParser.extract_extensions(definition)
-        # extract_extensions returns lists for multi-valued extensions
         assert result.get("DESC") == ["Test attribute"]
 
     def test_parse_ldif_lines_empty(self) -> None:
@@ -266,26 +240,13 @@ class TestLdifParser:
 
     def test_parse_ldif_lines_multiple_entries(self) -> None:
         """Test parsing multiple LDIF entries separated by empty line."""
-        # LDIF entries MUST be separated by empty lines
-        content = (
-            "dn: cn=test1,dc=example,dc=com\n"
-            "cn: test1\n"
-            "objectClass: person\n"
-            "\n"
-            "dn: cn=test2,dc=example,dc=com\n"
-            "cn: test2\n"
-            "objectClass: person\n"
-        )
+        content = "dn: cn=test1,dc=example,dc=com\ncn: test1\nobjectClass: person\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\nobjectClass: person\n"
         result = FlextLdifUtilities.Ldif.LdifParser.parse_ldif_lines(content)
         assert len(result) == 2, f"Expected 2 entries but got {len(result)}: {result}"
-
-        # First entry
         dn1, attrs1 = result[0]
         assert dn1 == "cn=test1,dc=example,dc=com"
         assert attrs1.get("cn") == ["test1"]
         assert attrs1.get("objectClass") == ["person"]
-
-        # Second entry
         dn2, attrs2 = result[1]
         assert dn2 == "cn=test2,dc=example,dc=com"
         assert attrs2.get("cn") == ["test2"]
@@ -328,7 +289,6 @@ class TestServerTypes:
 
     def test_normalize_server_type(self) -> None:
         """Test server type normalization."""
-        # Test aliases - use utilities, not constants (functions forbidden in constants.py)
         assert (
             FlextLdifUtilities.Ldif.Server.normalize_server_type("oracle_oid") == "oid"
         )
@@ -346,7 +306,6 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_auxiliary_without_sup(self) -> None:
         """Test fixing missing SUP for known AUXILIARY classes."""
-        # Create AUXILIARY class without SUP
         oc = m.Ldif.SchemaObjectClass(
             name="orcldAsAttrCategory",
             oid="1.2.3.4.5",
@@ -354,8 +313,6 @@ class TestObjectClassUtilities:
             sup=None,
         )
         assert oc.sup is None
-
-        # Fix should add SUP (fix_missing_sup only takes schema_oc argument)
         FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == "top"
 
@@ -368,7 +325,6 @@ class TestObjectClassUtilities:
             sup="top",
         )
         original_sup = oc.sup
-
         FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == original_sup
 
@@ -381,7 +337,6 @@ class TestObjectClassUtilities:
             sup=None,
         )
         original_sup = oc.sup
-
         FlextLdifUtilities.Ldif.ObjectClass.fix_missing_sup(oc)
         assert oc.sup == original_sup
 
@@ -405,8 +360,7 @@ class TestObjectClassUtilities:
             sup=None,
         )
         FlextLdifUtilities.Ldif.ObjectClass.ensure_sup_for_auxiliary(
-            oc,
-            default_sup="custom",
+            oc, default_sup="custom"
         )
         assert oc.sup == "custom"
 
@@ -441,8 +395,7 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
-            oc,
-            lib_c.Ldif.SchemaKind.STRUCTURAL,
+            oc, lib_c.Ldif.SchemaKind.STRUCTURAL
         )
         assert oc.kind == lib_c.Ldif.SchemaKind.STRUCTURAL
 
@@ -455,8 +408,7 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
-            oc,
-            lib_c.Ldif.SchemaKind.AUXILIARY,
+            oc, lib_c.Ldif.SchemaKind.AUXILIARY
         )
         assert oc.kind == lib_c.Ldif.SchemaKind.AUXILIARY
 
@@ -470,7 +422,6 @@ class TestObjectClassUtilities:
         )
         original_kind = oc.kind
         FlextLdifUtilities.Ldif.ObjectClass.align_kind_with_superior(
-            oc,
-            lib_c.Ldif.SchemaKind.STRUCTURAL,
+            oc, lib_c.Ldif.SchemaKind.STRUCTURAL
         )
         assert oc.kind == original_kind

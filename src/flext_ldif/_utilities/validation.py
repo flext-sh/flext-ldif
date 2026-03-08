@@ -10,10 +10,7 @@ from flext_ldif import p, t
 
 class FlextLdifUtilitiesValidation(FlextUtilities):
     @staticmethod
-    def validate(
-        value: t.JsonValue,
-        *validators: p.ValidatorSpec,
-    ) -> r[t.JsonValue]:
+    def validate(value: t.JsonValue, *validators: p.ValidatorSpec) -> r[t.JsonValue]:
         del validators
         return r[t.JsonValue].ok(value)
 
@@ -21,20 +18,14 @@ class FlextLdifUtilitiesValidation(FlextUtilities):
         """RFC validation helpers."""
 
         _DESCRIPTOR_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc.Rfc4512Descriptor]] = (
-            TypeAdapter(
-                t.Ldif.Rfc.Rfc4512Descriptor,
-            )
+            TypeAdapter(t.Ldif.Rfc.Rfc4512Descriptor)
         )
         _DN_COMPONENT_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc.Rfc4514DnComponent]] = (
-            TypeAdapter(
-                t.Ldif.Rfc.Rfc4514DnComponent,
-            )
+            TypeAdapter(t.Ldif.Rfc.Rfc4514DnComponent)
         )
         _ATTRIBUTE_VALUE_ADAPTER: Final[
             TypeAdapter[t.Ldif.Rfc.Rfc2849AttributeValue]
-        ] = TypeAdapter(
-            t.Ldif.Rfc.Rfc2849AttributeValue,
-        )
+        ] = TypeAdapter(t.Ldif.Rfc.Rfc2849AttributeValue)
 
         @classmethod
         def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
@@ -56,7 +47,7 @@ class FlextLdifUtilitiesValidation(FlextUtilities):
         def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
             try:
                 _ = cls._DN_COMPONENT_ADAPTER.validate_python(
-                    f"{attribute_name}={value}",
+                    f"{attribute_name}={value}"
                 )
                 return True
             except ValidationError:

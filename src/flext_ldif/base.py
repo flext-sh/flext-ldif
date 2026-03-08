@@ -15,10 +15,7 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
     @property
     def ldif_config(self) -> FlextLdifSettings:
         """Return the LDIF configuration namespace with proper typing."""
-        return FlextSettings.get_global().get_namespace(
-            "ldif",
-            FlextLdifSettings,
-        )
+        return FlextSettings.get_global().get_namespace("ldif", FlextLdifSettings)
 
     @classmethod
     @override
@@ -32,7 +29,4 @@ class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
         return options
 
 
-# Short alias for service base (s is FlextService from flext-core)
-# Export s for consistency with other modules (u, m, c, t, p)
-# s is already imported from flext_core, so we just need to export it
 __all__ = ["FlextLdifServiceBase", "s"]

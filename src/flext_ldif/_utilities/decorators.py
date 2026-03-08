@@ -16,9 +16,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 logger = FlextLogger(__name__)
 
 
-def _has_metadata_attribute(
-    obj: t.ContainerValue,
-) -> TypeGuard[t.ContainerValue]:
+def _has_metadata_attribute(obj: t.ContainerValue) -> TypeGuard[t.ContainerValue]:
     """Type guard to check if object has metadata attribute."""
     return hasattr(obj, "metadata")
 
@@ -28,31 +26,24 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: t.ContainerValue | None,
-        quirk_type: str,
-        server_type: str | None,
+        result_value: t.ContainerValue | None, quirk_type: str, server_type: str | None
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
         if result_value is None or not _has_metadata_attribute(result_value):
             return
-
-        # Create metadata with extensions
         extensions_dict = {
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        # Normalize quirk_type if provided, otherwise None
-        # normalize_server_type validates and returns a valid ServerTypeLiteral string
         normalized_quirk_type: str | None = (
             FlextLdifShared.normalize_server_type(quirk_type) if quirk_type else None
         )
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions_dict,
+                extensions_dict
             ),
         )
-
         try:
             result_value.metadata = metadata
         except (
@@ -65,13 +56,10 @@ class FlextLdifUtilitiesDecorators:
             logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
-    def _get_server_type_from_class(
-        obj: t.ContainerValue,
-    ) -> str | None:
+    def _get_server_type_from_class(obj: t.ContainerValue) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
             return None
-
         for cls in obj.__class__.__mro__:
             constants_obj = getattr(cls, "Constants", None)
             if (
@@ -79,22 +67,19 @@ class FlextLdifUtilitiesDecorators:
                 and getattr(constants_obj, "SERVER_TYPE", None) is not None
             ):
                 return str(constants_obj.SERVER_TYPE)
-
         return None
 
     @staticmethod
-    def _safe_operation(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
+    def _safe_operation(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
         """Generic decorator to wrap methods with standardized error handling."""
 
         def decorator(
             func: t.Ldif.Decorators.ParseMethod,
         ) -> t.Ldif.Decorators.ParseMethod:
+
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue,
-                arg: t.Ldif.Decorators.ParseMethodArg,
+                self: t.ContainerValue, arg: t.Ldif.Decorators.ParseMethodArg
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
                     return func(self, arg)
@@ -126,17 +111,12 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue,
-                arg: str,
+                self: t.ContainerValue, arg: str
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
-
-                # If result is successful, attach metadata using helper methods
                 if result.is_success:
                     unwrapped = result.value
-                    # Type narrowing: self is a protocol, but we need concrete types
-                    # Check if unwrapped is one of the supported types
                     if issubclass(
                         unwrapped.__class__,
                         (
@@ -148,15 +128,12 @@ class FlextLdifUtilitiesDecorators:
                     ):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
-                                unwrapped,
+                                unwrapped
                             )
                         )
                         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
-                            unwrapped,
-                            quirk_type,
-                            server_type,
+                            unwrapped, quirk_type, server_type
                         )
-
                 return result
 
             return wrapper
@@ -172,10 +149,10 @@ class FlextLdifUtilitiesDecorators:
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
         ) -> t.Ldif.Decorators.WriteMethod:
+
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue,
-                arg: t.Ldif.Decorators.WriteMethodArg,
+                self: t.ContainerValue, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
@@ -184,27 +161,21 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
     @staticmethod
-    def safe_parse(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
+    def safe_parse(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
         """Decorator to wrap parse methods with standardized error handling."""
-        # Use _safe_operation which now returns FlextResult (Failure) on error
-        # This matches the ParseMethodDecorator signature
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
     @staticmethod
-    def safe_write(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.WriteMethodDecorator:
+    def safe_write(operation_name: str) -> t.Ldif.Decorators.WriteMethodDecorator:
         """Decorator to wrap write methods with standardized error handling."""
 
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
         ) -> t.Ldif.Decorators.WriteMethod:
+
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue,
-                arg: t.Ldif.Decorators.WriteMethodArg,
+                self: t.ContainerValue, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:
                     return func(self, arg)
@@ -224,9 +195,4 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
 
-# Use FlextLdifUtilitiesDecorators directly - no aliases needed
-# Access via: FlextLdifUtilitiesDecorators.attach_parse_metadata(...)
-
-__all__ = [
-    "FlextLdifUtilitiesDecorators",
-]
+__all__ = ["FlextLdifUtilitiesDecorators"]

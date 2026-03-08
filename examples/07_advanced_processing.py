@@ -34,35 +34,12 @@ from flext_ldif import FlextLdif, FlextLdifDn, FlextLdifModels, u
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
     api = FlextLdif.get_instance()
-
-    # Parse some entries
-    ldif_content = """dn: cn=User1,ou=People,dc=example,dc=com
-objectClass: person
-cn: User1
-sn: One
-
-dn: cn=User2,ou=People,dc=example,dc=com
-objectClass: person
-cn: User2
-sn: Two
-
-dn: cn=User3,ou=People,dc=example,dc=com
-objectClass: person
-cn: User3
-sn: Three
-"""
-
+    ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse(ldif_content)
-
     if parse_result.is_failure:
         return
-
     entries = parse_result.value
-
-    # Process in batch mode - ONE LINE! (was 15+ lines)
-    # No processor creation, no manual conversion loops!
     batch_result = api.process("transform", entries, parallel=False)
-
     if batch_result.is_success:
         processed = batch_result.value
         _ = len(processed)
@@ -76,8 +53,6 @@ def parallel_processing() -> None:
     Results may be in different order due to parallel execution.
     """
     api = FlextLdif.get_instance()
-
-    # Create larger dataset for parallel processing benefit
     entries: list[FlextLdifModels.Ldif.Entry] = []
     for i in range(10):
         result = api.create_entry(
@@ -90,39 +65,24 @@ def parallel_processing() -> None:
         )
         if result.is_success:
             entries.append(result.value)
-
-    # Process in parallel using ThreadPoolExecutor
     parallel_result = api.process("validate", entries, parallel=True)
-
     if parallel_result.is_success:
         processed = parallel_result.value
         _ = len(processed)
-        # Note: Results may be in different order than input due to parallel execution
 
 
 def use_dn_utilities() -> None:
     """Use DN (Distinguished Name) utilities."""
-    # Use DN service class methods directly
     dn = "cn=John Doe,ou=People,dc=example,dc=com"
-
-    # Parse DN
     parse_result = FlextLdifDn.parse_components(dn)
-
     if parse_result.is_success:
         components = parse_result.value
-        # Components is list of (attribute, value) pairs
         _ = len(components)
-
-    # Validate DN
     validation_result = FlextLdifDn.validate_format(dn)
-
     if validation_result.is_success:
         is_valid = validation_result.value
         _ = is_valid
-
-    # Normalize DN
     normalize_result = FlextLdifDn.normalize(dn)
-
     if normalize_result.is_success:
         normalized = normalize_result.value
         _ = normalized
@@ -130,9 +90,7 @@ def use_dn_utilities() -> None:
 
 def use_text_utilities() -> None:
     """Use text formatting utilities."""
-    # Text utilities functionality moved to standard library or removed
-    # Format byte size using standard approach
-    size_bytes: float = 1024 * 1024  # 1 MB
+    size_bytes: float = 1024 * 1024
     for unit in ["", "K", "M", "G", "T"]:
         if size_bytes < 1024.0:
             size_str = f"{size_bytes:.1f} {unit}B"
@@ -140,55 +98,35 @@ def use_text_utilities() -> None:
         size_bytes /= 1024.0
     else:
         size_str = f"{size_bytes:.1f} PB"
-
     _ = size_str
 
 
 def use_time_utilities() -> None:
     """Use time/timestamp utilities."""
-    # Get current timestamp using standard library
     timestamp = datetime.now(UTC).timestamp()
     _ = timestamp
-
-    # Get formatted timestamp using standard library
     formatted_timestamp = datetime.now(UTC).isoformat()
     _ = formatted_timestamp
 
 
 def use_validation_utilities() -> None:
     """Use validation utilities."""
-    # NOTE: ValidationService was removed - validation now integrated in models/services
-    # validation_service = ValidationService()  # REMOVED - no longer exists
-
-    # Validate attribute name - now done via models
-    # attr_valid = validation_service.validate_attribute_name(attr_name)  # REMOVED
-    attr_valid = True  # Placeholder - use FlextLdif models for validation
+    attr_valid = True
     _ = attr_valid
-
-    # Validate attribute name
-    # attr_valid = validation_service.validate_attribute_name("cn")  # REMOVED
-    attr_valid = True  # Placeholder
+    attr_valid = True
     _ = attr_valid
-
-    # Validate object class name
-    # oc_valid = validation_service.validate_objectclass_name(oc_name)  # REMOVED
-    oc_valid = True  # Placeholder - use FlextLdif models for validation
+    oc_valid = True
     _ = oc_valid
 
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    # LDIF utilities functionality moved to main API
     api = FlextLdif.get_instance()
-
-    # Validate LDIF syntax using API
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
     syntax_result = api.parse(ldif_content)
     _ = syntax_result.is_success
-
-    # Count LDIF entries using API
     if syntax_result.is_success:
         entries = syntax_result.value
         _ = len(entries)
@@ -196,9 +134,7 @@ def use_ldif_utilities() -> None:
 
 def use_encoding_utilities() -> None:
     """Use encoding utilities."""
-    # Simple encoding detection using standard library
     sample_bytes = b"test value"
-    # Try UTF-8 first, fallback to other encodings
     try:
         sample_bytes.decode("utf-8")
         encoding = "utf-8"
@@ -213,13 +149,8 @@ def use_encoding_utilities() -> None:
 
 def use_file_utilities() -> None:
     """Use file operation utilities."""
-    # Use standard library for file operations
     test_file = Path("examples/sample_basic.ldif")
-
-    # Validate file path using standard library
     _ = test_file.exists() and test_file.is_file()
-
-    # Get file info using standard library
     if test_file.exists():
         stat = test_file.stat()
         _ = {
@@ -227,8 +158,6 @@ def use_file_utilities() -> None:
             "modified": stat.st_mtime,
             "is_file": test_file.is_file(),
         }
-
-    # Ensure file extension using standard library
     output_file = Path("examples/util_output")
     if not output_file.suffix:
         ensured_path = output_file.with_suffix(".ldif")
@@ -240,42 +169,22 @@ def use_file_utilities() -> None:
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
     api = FlextLdif.get_instance()
-
-    # Parse LDIF
-    ldif_content = """dn: cn=Pipeline,ou=People,dc=example,dc=com
-objectClass: person
-cn: Pipeline
-sn: User
-"""
-
+    ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse(ldif_content)
-
     if parse_result.is_failure:
         return
-
     entries = parse_result.value
 
-    # Validate using services
     def validate_entry(entry: FlextLdifModels.Ldif.Entry) -> bool:
         """Validate entry DN."""
         dn_result = FlextLdifDn.validate_format(str(entry.dn))
         return dn_result.is_success
 
-    _ = u.process(
-        entries,
-        validate_entry,
-        on_error="skip",
-    )
-
-    # Batch process - ONE LINE! (was 15+ lines)
+    _ = u.process(entries, validate_entry, on_error="skip")
     batch_result = api.process("transform", entries, parallel=False)
-
     if batch_result.is_success:
         processed = batch_result.value
-
-        # Analyze processed results
         analysis_result = api.get_entry_statistics(entries)
-
         if analysis_result.is_success:
             stats = analysis_result.value
             _ = (len(processed), stats)
@@ -283,13 +192,8 @@ sn: User
 
 def access_all_utilities() -> None:
     """Demonstrate access to all utility classes."""
-    # Use services and standard library for utility functions
     time_utils = datetime.now(UTC)
-
-    # Use timestamp utility
     timestamp = time_utils.timestamp()
-
-    # Use text utility
     size_bytes: float = 1024
     for unit in ["", "K", "M", "G", "T"]:
         if size_bytes < 1024.0:
@@ -298,9 +202,5 @@ def access_all_utilities() -> None:
         size_bytes /= 1024.0
     else:
         formatted_size = f"{size_bytes:.1f} PB"
-
-    # Use DN utility
     dn_result = FlextLdifDn.validate_format("cn=test,dc=example,dc=com")
-
-    # All utilities integrated
     _ = (timestamp, formatted_size, dn_result)

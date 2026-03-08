@@ -9,24 +9,21 @@ from typing import Literal, TypeGuard
 from flext_ldif import FlextLdifShared, c
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
-# Valid server types for validation - must match c.Ldif.ServerTypes enum values
-_VALID_SERVER_TYPES: frozenset[str] = frozenset(
-    {
-        "oid",
-        "oud",
-        "rfc",
-        "openldap",
-        "openldap1",
-        "openldap2",  # Added - canonical OpenLDAP 2.x type
-        "ad",
-        "apache",
-        "ds389",
-        "novell",
-        "ibm_tivoli",  # Fixed - was "tivoli", should match ServerTypes.IBM_TIVOLI
-        "relaxed",
-        "generic",  # Added - matches ServerTypes.GENERIC
-    },
-)
+_VALID_SERVER_TYPES: frozenset[str] = frozenset({
+    "oid",
+    "oud",
+    "rfc",
+    "openldap",
+    "openldap1",
+    "openldap2",
+    "ad",
+    "apache",
+    "ds389",
+    "novell",
+    "ibm_tivoli",
+    "relaxed",
+    "generic",
+})
 _CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
 
 
@@ -71,9 +68,6 @@ class FlextLdifUtilitiesServer:
         if not server_name:
             return None
         server_type_lower = server_name.lower()
-
-        # Validate against known server types (No dynamic import)
-        # Use TypeGuard to narrow to ServerTypeLiteral
         if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
             return server_type_lower
         return None
@@ -83,28 +77,23 @@ class FlextLdifUtilitiesServer:
         target_cls: type[object],
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
-        # First try the nested class pattern with __qualname__
         if "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
-            # Check if module is loaded (safe lookup without dynamic import)
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
                 parent_server_cls_obj: type | None = vars(parent_module).get(
-                    parent_class_name,
+                    parent_class_name
                 )
                 if isinstance(parent_server_cls_obj, type):
-                    # Extract server type from parent class constants
                     srv = FlextLdifUtilitiesServer
                     result = srv.extract_server_type_from_constants(
-                        parent_server_cls_obj,
+                        parent_server_cls_obj
                     )
                     if result is not None:
                         return result
-
-        # Fallback: search through MRO for a class with Constants.SERVER_TYPE
         for mro_cls in target_cls.__mro__:
             result = FlextLdifUtilitiesServer.extract_server_type_from_constants(
-                mro_cls,
+                mro_cls
             )
             if result is not None:
                 return result
@@ -150,15 +139,12 @@ class FlextLdifUtilitiesServer:
             if isinstance(nested_class_instance_or_type, type)
             else nested_class_instance_or_type.__class__
         )
-        # Try nested class pattern first
         server_type = FlextLdifUtilitiesServer._get_type_from_nested_class(cls)
         if server_type:
             return server_type
-        # Try independent class pattern
         server_type = FlextLdifUtilitiesServer._get_type_from_independent_class(cls)
         if server_type:
             return server_type
-        # No parent found - error
         msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
         raise AttributeError(msg)
 
@@ -212,11 +198,9 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: (
-            str
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-        ),
+        value: str
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -231,7 +215,7 @@ class FlextLdifUtilitiesServer:
 
         Args:
             value: The definition string or parsed model to check
-            oid_pattern: Regex pattern for server-specific OIDs (e.g., r"2\.16\.840\.1\.113894")
+            oid_pattern: Regex pattern for server-specific OIDs (e.g., r"2\\.16\\.840\\.1\\.113894")
             detection_names: Set of attribute/objectclass names that indicate this server
             detection_string: Optional string to check for in the definition (e.g., "microsoft")
             use_prefix_match: If True, use startswith for prefixes; if False, use contains
@@ -259,10 +243,8 @@ class FlextLdifUtilitiesServer:
             return bool(name and name.lower() in detection_names)
 
         def check_model_patterns(
-            model: (
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ),
+            model: FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass,
         ) -> bool:
             """Check patterns for model types."""
             if check_oid_pattern(model.oid) or check_name_in_set(model.name):
@@ -277,21 +259,15 @@ class FlextLdifUtilitiesServer:
 
         if isinstance(value, str):
             return check_oid_pattern(
-                value,
+                value
             ) or FlextLdifUtilitiesServer._check_name_patterns(
                 value.lower(),
                 detection_names,
                 detection_string,
                 use_prefix_match=use_prefix_match,
             )
-
-        # Import here to avoid circular import - only needed at runtime for isinstance checks
-
         if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
             return check_model_patterns(value)
-
-        # value must be SchemaObjectClass since type is union of 3 types
-        # and str and SchemaAttribute were already handled
         return check_model_patterns(value)
 
     @staticmethod

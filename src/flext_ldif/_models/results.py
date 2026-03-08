@@ -60,10 +60,10 @@ class FlextLdifModelsResults:
     class EntryResult(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         entries_by_category: FlextLdifModelsCollections.FlexibleCategories = Field(
-            default_factory=FlextLdifModelsCollections.FlexibleCategories,
+            default_factory=FlextLdifModelsCollections.FlexibleCategories
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
-            default_factory=lambda: FlextLdifModelsResults._statistics_factory(),
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
         )
         file_paths: FlextLdifModelsCollections.CategoryPaths = Field(
             default_factory=FlextLdifModelsCollections.CategoryPaths
@@ -71,11 +71,12 @@ class FlextLdifModelsResults:
 
         @overload
         def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
+
         @overload
         def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
+
         def __getitem__(
-            self,
-            key: int | slice,
+            self, key: int | slice
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
             return self.get_all_entries()[key]
 
@@ -120,7 +121,7 @@ class FlextLdifModelsResults:
         ) -> FlextLdifModelsResults.EntryResult:
             entry_list = list(entries)
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entry_list),
+                total=len(entry_list)
             )
             flex = FlextLdifModelsCollections.FlexibleCategories()
             flex[category] = entry_list
@@ -142,8 +143,7 @@ class FlextLdifModelsResults:
             return default if default is not None else []
 
         def merge(
-            self,
-            other: FlextLdifModelsResults.EntryResult,
+            self, other: FlextLdifModelsResults.EntryResult
         ) -> FlextLdifModelsResults.EntryResult:
             merged_categories = FlextLdifModelsCollections.FlexibleCategories()
             for cat, entries in self.entries_by_category.items():
@@ -159,8 +159,8 @@ class FlextLdifModelsResults:
             merged_stats = self_stats.model_copy(
                 update={
                     "total_entries": self_stats.total_entries
-                    + other_stats.total_entries,
-                },
+                    + other_stats.total_entries
+                }
             )
             merged_paths = FlextLdifModelsCollections.CategoryPaths()
             merged_paths.update(self.file_paths.to_dict())
@@ -264,8 +264,7 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self,
-            other: FlextLdifModelsResults.Statistics,
+            self, other: FlextLdifModelsResults.Statistics
         ) -> FlextLdifModelsResults.Statistics:
             merged_reasons: dict[str, int] = dict(self.rejection_reasons.items())
             for reason, count in other.rejection_reasons.items():
@@ -321,7 +320,7 @@ class FlextLdifModelsResults:
 
         def _rate(self, numerator: int) -> float:
             return (
-                round((numerator / self.total_entries) * 100, 2)
+                round(numerator / self.total_entries * 100, 2)
                 if self.total_entries
                 else 0.0
             )
@@ -333,7 +332,7 @@ class FlextLdifModelsResults:
         )
         entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         stats: FlextLdifModelsResults.Statistics = Field(
-            default_factory=lambda: FlextLdifModelsResults._statistics_factory(),
+            default_factory=lambda: FlextLdifModelsResults._statistics_factory()
         )
         output_files: list[str] = Field(default_factory=list)
 
@@ -385,7 +384,7 @@ class FlextLdifModelsResults:
         def success_rate(self) -> float:
             if self.total_entries == 0:
                 return 100.0
-            return (self.valid_entries / self.total_entries) * 100.0
+            return self.valid_entries / self.total_entries * 100.0
 
     class EntryAnalysisResult(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
@@ -448,9 +447,7 @@ class FlextLdifModelsResults:
             return extra is not None and key in extra
 
         def get(
-            self,
-            key: str,
-            default: str | float | bool | None = None,
+            self, key: str, default: str | float | bool | None = None
         ) -> t.Scalar | None:
             try:
                 return self[key]

@@ -47,14 +47,11 @@ class FlextLdifTestsServiceBase(flext_tests_s):
 
     """
 
-    # Expose test constants for convenience in test methods (self.c.*)
     c = TestsFlextLdifConstants
 
     @classmethod
     def create_entry(
-        cls,
-        dn: str,
-        attributes: dict[str, str | list[str]] | None = None,
+        cls, dn: str, attributes: dict[str, str | list[str]] | None = None
     ) -> FlextLdifModels.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
@@ -80,8 +77,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
 
     @classmethod
     def create_entries(
-        cls,
-        entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
+        cls, entries_data: Sequence[tuple[str, dict[str, str | list[str]]]]
     ) -> list[FlextLdifModels.Ldif.Entry]:
         """Create multiple test entries.
 
@@ -95,10 +91,5 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         return list(starmap(cls.create_entry, entries_data))
 
 
-# Standardized short name for use in tests
 s = FlextLdifTestsServiceBase
-
-__all__ = [
-    "FlextLdifTestsServiceBase",
-    "s",
-]
+__all__ = ["FlextLdifTestsServiceBase", "s"]

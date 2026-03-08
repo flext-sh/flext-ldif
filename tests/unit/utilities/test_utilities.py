@@ -31,8 +31,8 @@ class TestsTestFlextLdifServiceAPIs(s):
     and nested class organization for better code organization.
     """
 
-    dn_service: ClassVar[FlextLdifDn]  # pytest fixture
-    statistics_service: ClassVar[FlextLdifStatistics]  # pytest fixture
+    dn_service: ClassVar[FlextLdifDn]
+    statistics_service: ClassVar[FlextLdifStatistics]
 
     class ServiceType(StrEnum):
         """Service instantiation test scenarios organized as nested enum."""
@@ -55,7 +55,6 @@ class TestsTestFlextLdifServiceAPIs(s):
         MODULE_UTILITIES: str = "flext_ldif.utilities"
         SERVICE_DN: str = "FlextLdifDn"
         SERVICE_STATISTICS: str = "FlextLdifStatistics"
-        # FLEXT namespace: ServerTypes is inside Ldif namespace
         CONSTANT_LDIF_NAMESPACE: str = "Ldif"
 
     class Helpers:
@@ -74,8 +73,7 @@ class TestsTestFlextLdifServiceAPIs(s):
 
         @staticmethod
         def verify_import(
-            check_type: TestsTestFlextLdifServiceAPIs.ImportCheck,
-            check_target: str,
+            check_type: TestsTestFlextLdifServiceAPIs.ImportCheck, check_target: str
         ) -> None:
             """Verify import availability based on check type."""
             match check_type:
@@ -84,17 +82,15 @@ class TestsTestFlextLdifServiceAPIs(s):
                         "FlextLdifModels should be available"
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
-                    assert hasattr(
-                        FlextLdifConstants,
-                        check_target,
-                    ), f"FlextLdifConstants should have {check_target}"
+                    assert hasattr(FlextLdifConstants, check_target), (
+                        f"FlextLdifConstants should have {check_target}"
+                    )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     assert spec is not None, f"Module {check_target} should exist"
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
                     assert hasattr(
-                        services,
-                        TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN,
+                        services, TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN
                     ), (
                         f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN}"
                     )
@@ -119,8 +115,7 @@ class TestsTestFlextLdifServiceAPIs(s):
         return FlextLdifStatistics()
 
     @pytest.mark.parametrize(
-        "service_type",
-        [ServiceType.DN_SERVICE, ServiceType.STATISTICS_SERVICE],
+        "service_type", [ServiceType.DN_SERVICE, ServiceType.STATISTICS_SERVICE]
     )
     def test_service_instantiation(
         self,
@@ -145,9 +140,7 @@ class TestsTestFlextLdifServiceAPIs(s):
         ],
     )
     def test_imports_available(
-        self,
-        check_type: ImportCheck,
-        check_target: str,
+        self, check_type: ImportCheck, check_target: str
     ) -> None:
         """Test import availability with parametrized test cases."""
         self.Helpers.verify_import(check_type, check_target)

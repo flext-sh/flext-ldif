@@ -82,12 +82,9 @@ class AclElement(FlextModels.ArbitraryTypesModel):
         use_enum_values=True,
         str_strip_whitespace=True,
     )
-
     server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc",
-        description="LDAP server type (oid, oud, openldap, rfc, etc.)",
+        default="rfc", description="LDAP server type (oid, oud, openldap, rfc, etc.)"
     )
-
     validation_violations: list[str] = Field(
         default_factory=list,
         description="Validation violations captured during parsing/processing",

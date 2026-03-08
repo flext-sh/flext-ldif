@@ -8,12 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._models.results import (
-    DynamicCounts,
-    FlextLdifModelsResults,
-)
+from flext_ldif._models.results import DynamicCounts, FlextLdifModelsResults
 
-__all__ = [
-    "DynamicCounts",
-    "FlextLdifModelsResults",
-]
+__all__ = ["DynamicCounts", "FlextLdifModelsResults"]

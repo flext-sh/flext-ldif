@@ -11,8 +11,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
     "FlextLdifServersOidConstants": (
@@ -28,7 +26,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServersOidSchema",
     ),
 }
-
 __all__ = [
     "FlextLdifServersOidAcl",
     "FlextLdifServersOidConstants",
@@ -37,7 +34,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

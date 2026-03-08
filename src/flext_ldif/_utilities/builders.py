@@ -19,8 +19,6 @@ TransformConfig = FlextLdifModels.Ldif.TransformConfig
 ValidationConfig = FlextLdifModels.Ldif.ValidationConfig
 WriteConfig = FlextLdifModels.Ldif.WriteConfig
 
-# PROCESS CONFIG BUILDER
-
 
 class ProcessConfigBuilder:
     """Fluent builder for ProcessConfig."""
@@ -54,7 +52,6 @@ class ProcessConfigBuilder:
         map_server_specific: bool = True,
     ) -> Self:
         """Configure ACL conversion."""
-        # Create config with values in constructor to avoid frozen model issues
         self._acl_config = AclConversionConfig(
             convert_aci=convert_aci,
             preserve_original_aci=preserve_original_aci,
@@ -64,7 +61,6 @@ class ProcessConfigBuilder:
 
     def build(self) -> ProcessConfig:
         """Build the ProcessConfig."""
-        # Create config with all values in constructor to avoid frozen model issues
         return ProcessConfig(
             source_server=self._source_server,
             target_server=self._target_server or c.Ldif.ServerTypes.RFC,
@@ -84,14 +80,12 @@ class ProcessConfigBuilder:
         lowercase_keys: bool = False,
     ) -> Self:
         """Configure attribute normalization."""
-        # Create config with values in constructor to avoid frozen model issues
         config_kwargs = {
             "sort_values": sort_values,
             "normalize_whitespace": normalize_whitespace,
             "lowercase_keys": lowercase_keys,
             "sort_attributes": sort_attributes,
         }
-
         self._attr_config = AttrNormalizationConfig.model_validate(config_kwargs)
         return self
 
@@ -103,7 +97,6 @@ class ProcessConfigBuilder:
         escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization."""
-        # Create config with values in constructor to avoid frozen model issues
         config_kwargs = {}
         if case is not None:
             config_kwargs["case_fold"] = case
@@ -111,7 +104,6 @@ class ProcessConfigBuilder:
             config_kwargs["space_handling"] = spaces
         if escapes is not None:
             config_kwargs["escape_handling"] = escapes
-
         self._dn_config = DnNormalizationConfig.model_validate(config_kwargs)
         return self
 
@@ -123,7 +115,6 @@ class ProcessConfigBuilder:
         preserve_validation: bool = False,
     ) -> Self:
         """Configure metadata handling."""
-        # Create config with values in constructor to avoid frozen model issues
         self._metadata_config = MetadataConfig(
             include_timestamps=preserve_original,
             include_processing_stats=preserve_tracking,
@@ -149,16 +140,12 @@ class ProcessConfigBuilder:
         validate_dn_format: bool = True,
     ) -> Self:
         """Configure validation behavior."""
-        # Create config with values in constructor to avoid frozen model issues
         self._validation_config = ValidationConfig(
             strict_mode=strict_rfc,
             validate_schema=allow_server_quirks,
             validate_acl=validate_dn_format,
         )
         return self
-
-
-# TRANSFORM CONFIG BUILDER
 
 
 class TransformConfigBuilder:
@@ -175,7 +162,6 @@ class TransformConfigBuilder:
 
     def build(self) -> TransformConfig:
         """Build the TransformConfig."""
-        # Create config with all values at construction time (frozen model)
         return TransformConfig(
             fail_fast=self._fail_fast,
             preserve_order=self._preserve_order,
@@ -198,9 +184,6 @@ class TransformConfigBuilder:
         return self
 
 
-# FILTER CONFIG BUILDER
-
-
 class FilterConfigBuilder:
     """Fluent builder for FilterConfig."""
 
@@ -215,7 +198,6 @@ class FilterConfigBuilder:
 
     def build(self) -> FilterConfig:
         """Build the FilterConfig."""
-        # Create config with all values at construction time (frozen model)
         return FilterConfig(
             mode=self._mode,
             case_sensitive=self._case_sensitive,
@@ -236,9 +218,6 @@ class FilterConfigBuilder:
         """Set filter combination mode."""
         self._mode = mode
         return self
-
-
-# WRITE CONFIG BUILDER
 
 
 class WriteConfigBuilder:
@@ -279,8 +258,6 @@ class WriteConfigBuilder:
 
     def build(self) -> WriteConfig:
         """Build the WriteConfig."""
-        # Create config with all values at construction time (frozen model)
-        # Convert types to match WriteConfig expectations
         base64_attrs_value = (
             [str(item) for item in self._base64_attrs]
             if issubclass(self._base64_attrs.__class__, (list, tuple))
@@ -289,9 +266,8 @@ class WriteConfigBuilder:
         attr_order_value = (
             list(self._attr_order) if self._attr_order is not None else None
         )
-
         return WriteConfig(
-            format=self._format.value,  # format is alias for output_format
+            format=self._format.value,
             line_width=self._line_width,
             fold_lines=self._fold_lines,
             base64_attrs=base64_attrs_value,

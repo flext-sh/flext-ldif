@@ -16,36 +16,23 @@ from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 type DN = str
 
 
-class FlextLdifDn(
-    FlextLdifServiceBase[str],
-):
+class FlextLdifDn(FlextLdifServiceBase[str]):
     """RFC 4514 Compliant DN Operations Service with Nested Classes."""
 
-    dn: str = Field(
-        default="",
-        description="Distinguished name to operate on.",
-    )
-
+    dn: str = Field(default="", description="Distinguished name to operate on.")
     other_dn: str | None = Field(
-        default=None,
-        description="Second DN for comparison operations.",
+        default=None, description="Second DN for comparison operations."
     )
-
     operation: str = Field(
         default="normalize",
         description="Operation: parse|validate|normalize|clean|escape|unescape|compare|parse_rdn",
     )
-
     escape_mode: str = Field(
-        default="standard",
-        description="Escape mode: standard (backslash) or hex",
+        default="standard", description="Escape mode: standard (backslash) or hex"
     )
-
     enable_events: bool = Field(
-        default=False,
-        description="Enable domain event emission for operations",
+        default=False, description="Enable domain event emission for operations"
     )
-
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
 
     @property
@@ -148,16 +135,12 @@ class FlextLdifDn(
     def execute(self) -> r[str]:
         """Execute DN operation based on configuration."""
         start_time = time.perf_counter() if self.enable_events else 0
-
         result = self._dispatch_operation()
-
         if self.enable_events and getattr(self, "logger", None) is not None:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-
             parse_components = None
             if self.operation == "parse" and result.is_success:
                 parse_components = self.parse_components(self.dn).map_or(None)
-
             dn_config = m.Ldif.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
@@ -173,9 +156,7 @@ class FlextLdifDn(
                 config=dn_config,
                 log_level="info" if result.is_success else "error",
             )
-
             object.__setattr__(self, "_last_event", event)
-
         return result
 
     def get_last_event(self) -> m.Ldif.DnEvent | None:
@@ -226,18 +207,15 @@ class FlextLdifDn(
             "normalize": lambda: self._normalizer.normalize_operation(self.dn),
             "clean": lambda: self._normalizer.clean_operation(self.dn),
             "escape": lambda: self._normalizer.escape_operation(
-                self.dn,
-                self.escape_mode,
+                self.dn, self.escape_mode
             ),
             "unescape": lambda: self._normalizer.unescape_operation(self.dn),
             "compare": self._handle_compare,
             "parse_rdn": lambda: self._parser.parse_rdn_operation(self.dn),
         }
-
         handler: Callable[[], r[str]] | None = handlers.get(self.operation)
         if not handler:
             return r[str].fail(f"Unknown operation: {self.operation}")
-
         return handler()
 
     def _handle_compare(self) -> r[str]:
@@ -269,8 +247,8 @@ class FlextLdifDn(
             """Parse DN operation (internal)."""
             return FlextLdifDn.Parser.parse_components(dn).map(
                 lambda components: ", ".join(
-                    f"{attr}={value}" for attr, value in components
-                ),
+                    (f"{attr}={value}" for attr, value in components)
+                )
             )
 
         @staticmethod
@@ -282,7 +260,7 @@ class FlextLdifDn(
         def parse_rdn_operation(dn: str) -> r[str]:
             """Parse RDN operation (internal)."""
             return FlextLdifDn.Parser.parse_rdn(dn).map(
-                lambda pairs: ", ".join(f"{attr}={value}" for attr, value in pairs),
+                lambda pairs: ", ".join((f"{attr}={value}" for attr, value in pairs))
             )
 
         @staticmethod
@@ -326,12 +304,12 @@ class FlextLdifDn(
 
         @staticmethod
         def hex_escape(value: str) -> str:
-            r"""Convert string to hex escape format (\XX for each character)."""
+            r"""Convert string to hex escape format (\\XX for each character)."""
             return "".join(f"\\{ord(char):02x}" for char in value)
 
         @staticmethod
         def hex_unescape(value: str) -> str:
-            r"""Convert hex escape format (\XX) back to string."""
+            r"""Convert hex escape format (\\XX) back to string."""
             result = ""
             i = 0
             while i < len(value):

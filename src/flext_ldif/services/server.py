@@ -19,7 +19,6 @@ from flext_ldif.servers._base import (
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
-
 type QuirkComponent = (
     FlextLdifServersBaseSchema
     | FlextLdifServersBaseSchemaAcl
@@ -34,9 +33,7 @@ class FlextLdifServer(FlextRegistry):
     _discovery_initialized: ClassVar[bool] = False
 
     def __init__(
-        self,
-        dispatcher: p.CommandBus | None = None,
-        **data: t.ContainerValue,
+        self, dispatcher: p.CommandBus | None = None, **data: t.ContainerValue
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
@@ -61,17 +58,14 @@ class FlextLdifServer(FlextRegistry):
             return None
         return base.entry_quirk
 
-    def get_all_quirks(
-        self,
-        server_type: str,
-    ) -> r[Mapping[str, QuirkComponent]]:
+    def get_all_quirks(self, server_type: str) -> r[Mapping[str, QuirkComponent]]:
         """Get all quirk types for a server."""
         return self.quirk(server_type).map(
             lambda base: {
                 "schema": base.schema_quirk,
                 "acl": base.acl_quirk,
                 "entry": base.entry_quirk,
-            },
+            }
         )
 
     def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
@@ -87,7 +81,7 @@ class FlextLdifServer(FlextRegistry):
                 return r[type].fail(f"Server {server_type} missing Constants")
             if not getattr(constants, "CATEGORIZATION_PRIORITY", None) is not None:
                 return r[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
+                    f"Server {server_type} missing CATEGORIZATION_PRIORITY"
                 )
             return r[type].ok(constants)
 
@@ -98,7 +92,6 @@ class FlextLdifServer(FlextRegistry):
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}
         priorities: dict[str, int] = {}
-
         for st in servers:
             base = self.quirk(st).map_or(None)
             if base is None:
@@ -111,7 +104,6 @@ class FlextLdifServer(FlextRegistry):
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
             priorities[st] = base.priority
-
         return {
             "total_servers": len(servers),
             "quirks_by_server": quirks_by_server,
@@ -138,7 +130,6 @@ class FlextLdifServer(FlextRegistry):
         result = self.get_plugin(self.SERVERS, normalized, scope="class")
         if result.is_failure:
             return r[FlextLdifServersBase].fail(str(result.error))
-
         if isinstance(result.value, FlextLdifServersBase):
             return r[FlextLdifServersBase].ok(result.value)
         return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
@@ -150,31 +141,24 @@ class FlextLdifServer(FlextRegistry):
                 name.startswith("_")
                 or not inspect.isclass(obj)
                 or obj is FlextLdifServersBase
-                or not issubclass(obj, FlextLdifServersBase)
+                or (not issubclass(obj, FlextLdifServersBase))
             ):
                 continue
-
             try:
                 instance = obj()
                 server_type = getattr(instance, "server_type", None)
                 if not issubclass(server_type.__class__, str):
                     continue
-
                 quirk_class = type(instance)
                 if not all(
                     getattr(quirk_class, c, None) is not None
                     for c in ("Schema", "Acl", "Entry")
                 ):
                     continue
-
                 if server_type and isinstance(server_type, str):
                     self.register_plugin(
-                        self.SERVERS,
-                        server_type,
-                        instance,
-                        scope="class",
+                        self.SERVERS, server_type, instance, scope="class"
                     )
-
             except (TypeError, AttributeError):
                 continue
 

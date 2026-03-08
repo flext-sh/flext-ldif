@@ -13,7 +13,6 @@ from __future__ import annotations
 from importlib.metadata import metadata
 
 _metadata = metadata("flext-ldif")
-
 __version__ = _metadata.get("Version", "0.12.0-dev")
 __version_info__ = tuple(
     int(part) if part.isdigit() else part for part in __version__.split(".")
@@ -24,7 +23,6 @@ __author__ = _metadata.get("Author", "FLEXT Team")
 __author_email__ = _metadata.get("Author-Email", "")
 __license__ = _metadata.get("License", "MIT")
 __url__ = _metadata.get("Home-Page", "")
-
 __all__ = [
     "__author__",
     "__author_email__",

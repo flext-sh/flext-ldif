@@ -65,12 +65,9 @@ class FlextLdifUtilitiesEvents:
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras."""
-        # Add extras using shared processing helper
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
         merged_context = dict(log_context)
         merged_context.update(filtered_extras)
-
-        # Log with appropriate level (common logic for all event types)
         if log_level == "debug":
             logger.debug(log_message, return_result=False, **merged_context)
         elif log_level == "warning":
@@ -80,18 +77,6 @@ class FlextLdifUtilitiesEvents:
         else:
             logger.info(log_message, return_result=False, **merged_context)
 
-    # ════════════════════════════════════════════════════════════════════════
-    # EVENT STORAGE HELPERS
-    # ════════════════════════════════════════════════════════════════════════
-
-    # ════════════════════════════════════════════════════════════════════════
-    # STATISTICS HELPERS
-    # ════════════════════════════════════════════════════════════════════════
-
-    # ════════════════════════════════════════════════════════════════════════
-    # INTEGRATED LOGGING & EVENT HELPERS (FlextLogger Integration)
-    # ════════════════════════════════════════════════════════════════════════
-
     @staticmethod
     def _process_extras(
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -100,8 +85,6 @@ class FlextLdifUtilitiesEvents:
         filtered_extras: dict[str, t.Scalar] = {}
         if not extras:
             return filtered_extras
-
-        # Access known fields directly
         if extras.user_id is not None:
             filtered_extras["user_id"] = extras.user_id
         if extras.session_id is not None:
@@ -115,10 +98,6 @@ class FlextLdifUtilitiesEvents:
         if extras.trace_id is not None:
             filtered_extras["trace_id"] = extras.trace_id
         return filtered_extras
-
-    # ════════════════════════════════════════════════════════════════════════
-    # EVENT FACTORY METHODS
-    # ════════════════════════════════════════════════════════════════════════
 
     @staticmethod
     def _to_error_details_list(
@@ -135,11 +114,11 @@ class FlextLdifUtilitiesEvents:
         """Create ConversionEvent with standardized fields from config Model."""
         aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None,
+            list(config.error_details) if config.error_details is not None else None
         )
         return FlextLdifModelsEvents.ConversionEvent(
             event_type="ldif.conversion",
-            aggregate_id=aggregate_id,  # Unique identifier for this conversion
+            aggregate_id=aggregate_id,
             conversion_operation=config.conversion_operation,
             source_format=config.source_format,
             target_format=config.target_format,
@@ -156,7 +135,7 @@ class FlextLdifUtilitiesEvents:
         """Create DnEvent with standardized fields from config Model."""
         return FlextLdifModelsEvents.DnEvent(
             event_type="ldif.dn",
-            aggregate_id=config.input_dn,  # Use input DN as aggregate identifier
+            aggregate_id=config.input_dn,
             dn_operation=config.dn_operation,
             input_dn=config.input_dn,
             output_dn=config.output_dn,
@@ -171,11 +150,11 @@ class FlextLdifUtilitiesEvents:
         """Create MigrationEvent with standardized fields from config Model."""
         aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None,
+            list(config.error_details) if config.error_details is not None else None
         )
         return FlextLdifModelsEvents.MigrationEvent(
             event_type="ldif.migration",
-            aggregate_id=aggregate_id,  # Unique identifier for this migration
+            aggregate_id=aggregate_id,
             migration_operation=config.migration_operation,
             source_server=config.source_server,
             target_server=config.target_server,
@@ -209,25 +188,13 @@ class FlextLdifUtilitiesEvents:
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context."""
-        # Create event
         event = FlextLdifUtilitiesEvents.create_conversion_event(config)
-
         log_context, log_message = (
-            FlextLdifUtilitiesEvents._build_conversion_event_logging(
-                event,
-                config,
-            )
+            FlextLdifUtilitiesEvents._build_conversion_event_logging(event, config)
         )
-
-        # Delegate to generic helper for extras and logging
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger,
-            log_context,
-            log_message,
-            log_level,
-            extras,
+            logger, log_context, log_message, log_level, extras
         )
-
         return event
 
     @staticmethod
@@ -238,9 +205,7 @@ class FlextLdifUtilitiesEvents:
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
-        # Create event
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
-
         log_context: dict[str, t.Scalar] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
@@ -250,8 +215,6 @@ class FlextLdifUtilitiesEvents:
             "has_output": event.has_output,
             "component_count": event.component_count,
         }
-
-        # Log with context and extras using shared helper
         log_message = f"DN operation '{config.dn_operation}' completed"
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
             logger=logger,
@@ -260,10 +223,7 @@ class FlextLdifUtilitiesEvents:
             log_level=log_level,
             extras=extras,
         )
-
         return event
 
 
-__all__ = [
-    "FlextLdifUtilitiesEvents",
-]
+__all__ = ["FlextLdifUtilitiesEvents"]

@@ -20,9 +20,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
-        self,
-        dispatcher: p.CommandBus | None = None,
-        **data: t.ContainerValue,
+        self, dispatcher: p.CommandBus | None = None, **data: t.ContainerValue
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data
@@ -48,6 +46,4 @@ class FlextLdifServiceRegistry(FlextRegistry):
         _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
 
 
-__all__ = [
-    "FlextLdifServiceRegistry",
-]
+__all__ = ["FlextLdifServiceRegistry"]

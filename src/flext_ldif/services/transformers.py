@@ -16,9 +16,7 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
     __slots__ = ("_source_server", "_target_server")
 
     def __init__(
-        self,
-        source_server: c.Ldif.ServerTypes,
-        target_server: c.Ldif.ServerTypes,
+        self, source_server: c.Ldif.ServerTypes, target_server: c.Ldif.ServerTypes
     ) -> None:
         """Initialize server transformer."""
         super().__init__()
@@ -34,15 +32,13 @@ class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
             target=self._target_server.value,
             model_instance=item,
         )
-
         if result.is_failure:
             return r[m.Ldif.Entry].fail(result.error)
-
         converted = result.value
         match converted:
             case m.Ldif.Entry() as converted_entry:
                 return r[m.Ldif.Entry].ok(converted_entry)
             case _:
                 return r[m.Ldif.Entry].fail(
-                    f"Conversion returned unexpected type: {type(converted).__name__}",
+                    f"Conversion returned unexpected type: {type(converted).__name__}"
                 )

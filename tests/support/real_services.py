@@ -32,8 +32,7 @@ class FlextLdifTestFactory:
 
             Config is accessed via FlextLdifServiceBase.config.ldif (singleton pattern).
             """
-            # Note: params ignored - config is accessed via self.config.ldif
-            _ = params  # Unused, kept for signature compatibility
+            _ = params
             return FlextLdifParser()
 
         @staticmethod
@@ -46,8 +45,7 @@ class FlextLdifTestFactory:
             This method returns the same parser for backward compatibility with tests.
             Config is accessed via FlextLdifServiceBase.config.ldif (singleton pattern).
             """
-            # Note: params ignored - config is accessed via self.config.ldif
-            _ = params  # Unused, kept for signature compatibility
+            _ = params
             return FlextLdifParser()
 
         @staticmethod
@@ -56,8 +54,6 @@ class FlextLdifTestFactory:
             quirk_registry: FlextLdifServer | None = None,
         ) -> FlextLdifWriter:
             """Create unified LDIF writer service."""
-            # WriterService is stateless and uses global registry
-            # Config and quirk_registry are fetched at runtime via singletons
             return FlextLdifWriter()
 
         @staticmethod
@@ -67,13 +63,11 @@ class FlextLdifTestFactory:
             target_server_type: str = "oud",
         ) -> FlextLdifMigrationPipeline:
             """Create migration pipeline service."""
-            # Create temporary directories for testing
             temp_dir = Path(tempfile.gettempdir())
             input_dir = temp_dir / "ldif_input"
             output_dir = temp_dir / "ldif_output"
             input_dir.mkdir(exist_ok=True)
             output_dir.mkdir(exist_ok=True)
-
             return FlextLdifMigrationPipeline(
                 input_dir=input_dir,
                 output_dir=output_dir,
@@ -137,9 +131,7 @@ class FlextLdifTestFactory:
 
     @classmethod
     def create_test_services(
-        cls,
-        config_type: str = "strict",
-        quirk_registry: FlextLdifServer | None = None,
+        cls, config_type: str = "strict", quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create complete service set for testing.
 
@@ -159,16 +151,13 @@ class FlextLdifTestFactory:
             config = cls._ConfigFactory.create_performance_config()
         else:
             config = cls._ConfigFactory.create_strict_config()
-
         if quirk_registry is None:
             quirk_registry = FlextLdifServer()
-
         return {
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                config,
-                quirk_registry,
+                config, quirk_registry
             ),
             "config": config,
             "quirk_registry": quirk_registry,
@@ -192,19 +181,16 @@ class FlextLdifTestFactory:
         """
         if config is None:
             config = cls._ConfigFactory.create_strict_config()
-
         if quirk_registry is None:
             quirk_registry = FlextLdifServer()
-
         return {
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                None,
-                quirk_registry,
+                None, quirk_registry
             ),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
-                config,
+                config
             ),
             "quirk_registry": quirk_registry,
             "config": config,
@@ -262,33 +248,27 @@ class FlextLdifTestFactory:
 
     @classmethod
     def create_lenient_api(
-        cls,
-        quirk_registry: FlextLdifServer | None = None,
+        cls, quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create API with lenient parsing."""
         return cls.create_api(
-            cls._ConfigFactory.create_lenient_config(),
-            quirk_registry,
+            cls._ConfigFactory.create_lenient_config(), quirk_registry
         )
 
     @classmethod
     def create_strict_api(
-        cls,
-        quirk_registry: FlextLdifServer | None = None,
+        cls, quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create API with strict parsing and validation."""
         return cls.create_api(cls._ConfigFactory.create_strict_config(), quirk_registry)
 
     @classmethod
     def create_performance_api(
-        cls,
-        max_entries: int = 100000,
-        quirk_registry: FlextLdifServer | None = None,
+        cls, max_entries: int = 100000, quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create API optimized for performance testing."""
         return cls.create_api(
-            cls._ConfigFactory.create_performance_config(max_entries),
-            quirk_registry,
+            cls._ConfigFactory.create_performance_config(max_entries), quirk_registry
         )
 
     @classmethod
@@ -312,15 +292,12 @@ class FlextLdifTestFactory:
 
     @classmethod
     def services_for_integration_test(
-        cls,
-        quirk_registry: FlextLdifServer | None = None,
+        cls, quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
-
         if quirk_registry is None:
             quirk_registry = FlextLdifServer()
-
         return {
             "api": cls.create_api(config, quirk_registry),
             "parser": cls.create_parser(config, quirk_registry),
@@ -332,13 +309,11 @@ class FlextLdifTestFactory:
 
     @classmethod
     def minimal_services(
-        cls,
-        quirk_registry: FlextLdifServer | None = None,
+        cls, quirk_registry: FlextLdifServer | None = None
     ) -> dict[str, object]:
         """Create minimal service set for basic testing."""
         if quirk_registry is None:
             quirk_registry = FlextLdifServer()
-
         return {
             "api": cls.create_api(quirk_registry=quirk_registry),
             "parser": cls.create_parser(_registry=quirk_registry),

@@ -54,14 +54,12 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     ) -> None:
         """Initialize LDIF facade."""
         del kwargs
-
         try:
             if config is not None:
                 self._set_init_config_overrides(config)
             super().__init__()
         finally:
             self._clear_init_config_overrides()
-
         self._processing_service = None
         self._acl_service = None
         self._parser_service = None
@@ -159,26 +157,19 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         overrides = cls._init_config_overrides
         if not overrides:
             return base_options
-
         model_copy = getattr(base_options, "model_copy", None)
         if model_copy:
             return model_copy(update={"config_overrides": dict(overrides)})
         return base_options
 
     @classmethod
-    def _set_init_config_overrides(
-        cls,
-        config: FlextLdifSettings,
-    ) -> None:
+    def _set_init_config_overrides(cls, config: FlextLdifSettings) -> None:
         """Set temporary init config overrides for runtime bootstrap."""
         cls._init_config_overrides = config.model_dump(exclude_none=True)
 
     @classmethod
     def categorization(
-        cls,
-        *,
-        base_dn: str | None = None,
-        server_type: str = "rfc",
+        cls, *, base_dn: str | None = None, server_type: str = "rfc"
     ) -> FlextLdifCategorization:
         """Create a categorization service with the global server registry."""
         return FlextLdifCategorization(
@@ -202,14 +193,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     ) -> r[m.Ldif.Entry]:
         """Create a new Entry model."""
         return FlextLdifEntries.create_entry(
-            dn=dn,
-            attributes=attributes,
-            objectclasses=objectclasses,
+            dn=dn, attributes=attributes, objectclasses=objectclasses
         )
 
     def detect_server_type(
-        self,
-        ldif_content: str | Path,
+        self, ldif_content: str | Path
     ) -> r[m.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF content."""
         content_str: str | None = None
@@ -219,7 +207,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                     content_str = source_path.read_text(encoding="utf-8")
                 except OSError as e:
                     return r[m.Ldif.ServerDetectionResult].fail(
-                        f"Failed to read file: {e}",
+                        f"Failed to read file: {e}"
                     )
             case str() as content:
                 content_str = content
@@ -232,7 +220,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             _ = self.parser
             _ = self.writer
             _ = self.detector
-
             health_entry = m.Ldif.Entry.model_validate({
                 "dn": "cn=health-check",
                 "attributes": {"cn": ["health-check"]},
@@ -248,12 +235,10 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(f"Health check failed: {e}")
 
     def extract_acls(
-        self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue],
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue]
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
-
         match entry:
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
@@ -261,10 +246,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
                 entry_typed = m.Ldif.Entry.model_validate(entry)
-        return self.acl_service.extract_acls_from_entry(
-            entry_typed,
-            server_type,
-        )
+        return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
     def filter(
         self,
@@ -275,9 +257,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         attributes: Mapping[str, str | list[str]] | None = None,
     ) -> r[list[m.Ldif.Entry]]:
         """Filter entries by objectClass, DN pattern and attribute criteria."""
-        if not objectclass and not dn_pattern and not attributes:
+        if not objectclass and (not dn_pattern) and (not attributes):
             return r[list[m.Ldif.Entry]].ok(list(entries))
-
         required_attrs: list[str] = list(attributes.keys()) if attributes else []
         filtered: list[m.Ldif.Entry] = []
         for entry in entries:
@@ -289,7 +270,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             )
             if not FlextLdifUtilitiesEntry.matches_criteria(entry, config=criteria):
                 continue
-
             if attributes and entry.attributes is not None:
                 attr_map = entry.attributes.attributes
                 matches_values = True
@@ -310,9 +290,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                         break
                 if not matches_values:
                     continue
-
             filtered.append(entry)
-
         return r[list[m.Ldif.Entry]].ok(filtered)
 
     def filter_entries(
@@ -333,10 +311,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         ) as e:
             return r[list[m.Ldif.Entry]].fail(f"Filter error: {e}")
 
-    def filter_persons(
-        self,
-        entries: list[m.Ldif.Entry],
-    ) -> r[list[m.Ldif.Entry]]:
+    def filter_persons(self, entries: list[m.Ldif.Entry]) -> r[list[m.Ldif.Entry]]:
         """Filter entries to only person entries."""
         person_classes = {"person", "inetorgperson", "organizationalperson"}
 
@@ -349,30 +324,21 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 if attrs is None:
                     return False
                 objectclasses = attrs.attributes.get("objectClass", [])
-
                 objectclasses_list: list[str] = [str(oc) for oc in objectclasses]
-
                 return any(oc.lower() in person_classes for oc in objectclasses_list)
 
         return self.filter_entries(entries, IsPersonPredicate())
 
-    def get_attribute_values(
-        self,
-        attribute: str | list[str],
-    ) -> r[list[str]]:
+    def get_attribute_values(self, attribute: str | list[str]) -> r[list[str]]:
         """Get values from attribute value container."""
         return FlextLdifEntries.get_attribute_values(attribute)
 
-    def get_effective_server_type(
-        self,
-        ldif_content: str | None = None,
-    ) -> r[str]:
+    def get_effective_server_type(self, ldif_content: str | None = None) -> r[str]:
         """Get effective server type based on config and detection."""
         return self.detector.get_effective_server_type(ldif_content=ldif_content)
 
     def get_entry_attributes(
-        self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue],
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue]
     ) -> r[Mapping[str, list[str]]]:
         """Get entry attributes dictionary."""
         match entry:
@@ -385,15 +351,13 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return FlextLdifEntries.get_entry_attributes(entry_typed)
 
     def get_entry_dn(
-        self,
-        entry: m.Ldif.Entry | Mapping[str, str | list[str]],
+        self, entry: m.Ldif.Entry | Mapping[str, str | list[str]]
     ) -> r[str]:
         """Get entry DN string."""
         return FlextLdifEntries.get_entry_dn(entry)
 
     def get_entry_objectclasses(
-        self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue],
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.JsonValue]
     ) -> r[list[str]]:
         """Get entry objectClass values."""
         match entry:
@@ -406,8 +370,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return FlextLdifEntries.get_entry_objectclasses(entry_typed)
 
     def get_entry_statistics(
-        self,
-        _entries: list[m.Ldif.Entry],
+        self, _entries: list[m.Ldif.Entry]
     ) -> r[m.Ldif.EntriesStatistics]:
         """Get statistics for list of entries."""
         stats_service = FlextLdifStatistics()
@@ -428,16 +391,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             and getattr(options, "write_options", None) is not None
             and options.write_options
         ):
-            _ = kwargs.setdefault(
-                "fold_lines",
-                options.write_options.fold_lines,
-            )
+            _ = kwargs.setdefault("fold_lines", options.write_options.fold_lines)
             if options.write_options.attr_order:
                 _ = kwargs.setdefault(
-                    "attr_order",
-                    ",".join(options.write_options.attr_order),
+                    "attr_order", ",".join(options.write_options.attr_order)
                 )
-
         source_server_typed: str = str(source_server)
         target_server_typed: str = str(target_server)
         output_filename_raw = kwargs.get("output_filename")
@@ -457,15 +415,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return pipeline.execute()
 
     def parse(
-        self,
-        source: str | Path,
-        *,
-        server_type: str | None = None,
+        self, source: str | Path, *, server_type: str | None = None
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
         source_content: str
-
         match source:
             case Path() as source_path:
                 return self._parse_file(source_path, server_type=effective_type)
@@ -473,14 +427,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 source_content = content
             case _:
                 return r[list[m.Ldif.Entry]].fail("Unsupported source type")
-
         parse_result = self.parser.parse_string(
-            source_content,
-            server_type=effective_type,
+            source_content, server_type=effective_type
         )
         if parse_result.is_failure:
             return r[list[m.Ldif.Entry]].fail(str(parse_result.error))
-
         response = parse_result.value
         entries_list: list[m.Ldif.Entry] = [
             entry
@@ -509,30 +460,24 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         )
 
     def validate_entries(
-        self,
-        entries: list[m.Ldif.Entry],
+        self, entries: list[m.Ldif.Entry]
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         validation_service = FlextLdifValidation()
-        return FlextLdifAnalysis.validate_entries(
-            entries,
-            validation_service,
-        )
+        return FlextLdifAnalysis.validate_entries(entries, validation_service)
 
     def write(
         self,
         entries: list[m.Ldif.Entry],
         *,
         server_type: str | None = None,
-        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
     ) -> r[str]:
         """Write entries to LDIF format string."""
         effective_type = server_type or self._get_effective_server_type_value()
         server_type_typed: str = str(effective_type)
         return self.writer.write_to_string(
-            entries,
-            server_type=server_type_typed,
-            format_options=format_options,
+            entries, server_type=server_type_typed, format_options=format_options
         )
 
     def write_file(
@@ -541,17 +486,14 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         path: Path,
         *,
         server_type: str | None = None,
-        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
     ) -> r[bool]:
         """Write entries to LDIF file."""
         write_result = self.write(
-            entries,
-            server_type=server_type,
-            format_options=format_options,
+            entries, server_type=server_type, format_options=format_options
         )
         if write_result.is_failure:
             return r[bool].fail(str(write_result.error))
-
         content = write_result.value
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -568,27 +510,21 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return "rfc"
 
     def _parse_file(
-        self,
-        path: Path,
-        *,
-        server_type: str | None = None,
+        self, path: Path, *, server_type: str | None = None
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF file (internal helper)."""
         resolved_path = path
-        if not resolved_path.exists() and not resolved_path.is_absolute():
+        if not resolved_path.exists() and (not resolved_path.is_absolute()):
             project_root = Path(__file__).resolve().parents[2]
             candidate_path = project_root / resolved_path
             if candidate_path.exists():
                 resolved_path = candidate_path
-
         if not resolved_path.exists():
             return r[list[m.Ldif.Entry]].fail(f"File not found: {path}")
-
         try:
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
             return r[list[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
-
         return self.parse(source=content, server_type=server_type)
 
 

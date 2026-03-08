@@ -22,9 +22,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for LDIF Entry models."""
 
             dn: str | None
-
             attributes: Mapping[str, Sequence[str]] | None
-
             metadata: m.ConfigMap | None
 
             def get_objectclass_names(self) -> Sequence[str]:
@@ -48,9 +46,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for LDIF ACL models."""
 
             name: str
-
             raw_acl: str
-
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
 
         @runtime_checkable
@@ -79,9 +75,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for objects with parse method."""
 
             def parse(
-                self,
-                ldif_input: str | Path,
-                server_type: str | None = None,
+                self, ldif_input: str | Path, server_type: str | None = None
             ) -> FlextResult[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
                 """Parse LDIF content."""
                 ...
@@ -146,7 +140,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for EntryResult model."""
 
             entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-
             content: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
 
             def __len__(self) -> int:
@@ -158,8 +151,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for Schema quirk implementations."""
 
             def parse(
-                self,
-                attr_definition: str,
+                self, attr_definition: str
             ) -> FlextResult[
                 FlextLdifProtocols.Ldif.SchemaAttributeProtocol
                 | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
@@ -168,15 +160,13 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def parse_attribute(
-                self,
-                attr_definition: str,
+                self, attr_definition: str
             ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaAttributeProtocol]:
                 """Parse individual attribute definition."""
                 ...
 
             def parse_objectclass(
-                self,
-                oc_definition: str,
+                self, oc_definition: str
             ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaObjectClassProtocol]:
                 """Parse individual objectClass definition."""
                 ...
@@ -190,15 +180,13 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def write_attribute(
-                self,
-                attribute: FlextLdifProtocols.Ldif.SchemaAttributeProtocol,
+                self, attribute: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
             ) -> FlextResult[str]:
                 """Write individual attribute definition."""
                 ...
 
             def write_objectclass(
-                self,
-                objectclass: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
+                self, objectclass: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
             ) -> FlextResult[str]:
                 """Write individual objectClass definition."""
                 ...
@@ -208,15 +196,13 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for ACL quirk implementations."""
 
             def parse(
-                self,
-                acl_line: str,
+                self, acl_line: str
             ) -> FlextResult[FlextLdifProtocols.Ldif.AclProtocol]:
                 """Parse ACL definition."""
                 ...
 
             def write(
-                self,
-                acl_data: FlextLdifProtocols.Ldif.AclProtocol,
+                self, acl_data: FlextLdifProtocols.Ldif.AclProtocol
             ) -> FlextResult[str]:
                 """Write ACL definition."""
                 ...
@@ -226,16 +212,13 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for Entry quirk implementations."""
 
             def parse(
-                self,
-                entry_lines: Sequence[str],
+                self, entry_lines: Sequence[str]
             ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
-                self,
-                entry_dn: str,
-                entry_attrs: Mapping[str, Sequence[str]],
+                self, entry_dn: str, entry_attrs: Mapping[str, Sequence[str]]
             ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Parse single entry from DN and attributes."""
                 ...
@@ -254,8 +237,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for quirk registry implementations."""
 
             def get_quirk(
-                self,
-                server_type: str,
+                self, server_type: str
             ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
                 """Get quirk for server type."""
                 ...
@@ -305,8 +287,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for filters in pipelines."""
 
             def __and__(
-                self,
-                other: FlextLdifProtocols.Ldif.FilterProtocol[T],
+                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
             ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
                 """AND combination."""
                 ...
@@ -316,8 +297,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def __or__(
-                self,
-                other: FlextLdifProtocols.Ldif.FilterProtocol[T],
+                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
             ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
                 """OR combination."""
                 ...
@@ -330,10 +310,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidatorProtocol[T](Protocol):
             """Protocol for validators."""
 
-            def validate(
-                self,
-                item: T,
-            ) -> FlextResult[T]:
+            def validate(self, item: T) -> FlextResult[T]:
                 """Validate an item."""
                 ...
 
@@ -405,6 +382,4 @@ class FlextLdifProtocols(FlextProtocols):
 
 
 p = FlextLdifProtocols
-
-
 __all__ = ["FlextLdifProtocols", "p"]

@@ -48,18 +48,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
-
         if hasattr(dn_value, "value"):
             value_attr = getattr(dn_value, "value", None)
             if isinstance(value_attr, str):
                 return r[str].ok(value_attr)
-
         if isinstance(dn_value, str):
             return r[str].ok(dn_value)
-
         if isinstance(dn_value, list):
             return r[str].ok(dn_value[0] if dn_value else "")
-
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
@@ -125,7 +121,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """Read DN from model or dictionary entry."""
         if isinstance(entry, Mapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
-
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
@@ -134,7 +129,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
             return r[list[str]].fail(
-                f"Failed to get entry attributes: {attributes_result.error}",
+                f"Failed to get entry attributes: {attributes_result.error}"
             )
         attributes = attributes_result.value
         for attr_name, attr_values in attributes.items():
@@ -156,8 +151,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def remove_attributes(
-        entry: m.Ldif.Entry,
-        attributes_to_remove: list[str],
+        entry: m.Ldif.Entry, attributes_to_remove: list[str]
     ) -> r[m.Ldif.Entry]:
         """Remove selected attributes from a single entry."""
         if entry.attributes is None:
@@ -177,8 +171,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def remove_objectclasses(
-        entry: m.Ldif.Entry,
-        objectclasses_to_remove: list[str],
+        entry: m.Ldif.Entry, objectclasses_to_remove: list[str]
     ) -> r[m.Ldif.Entry]:
         """Remove objectClass values from a single entry."""
         if entry.attributes is None:
@@ -193,7 +186,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         new_ocs = [oc for oc in current_ocs if oc.lower() not in ocs_to_remove_lower]
         if not new_ocs:
             return r[m.Ldif.Entry].fail(
-                "Cannot remove all objectClass values from entry",
+                "Cannot remove all objectClass values from entry"
             )
         new_attrs = dict(entry.attributes.attributes)
         new_attrs["objectClass"] = new_ocs
@@ -247,7 +240,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             result = FlextLdifEntries.remove_operational_attributes(entry)
             if result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry",
+                    result.error or "Failed to process entry"
                 )
             results.append(result.value)
         return r[list[m.Ldif.Entry]].ok(results)
@@ -270,28 +263,23 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if self._operation == "remove_attributes":
             if not self._attributes_to_remove:
                 return r[list[m.Ldif.Entry]].fail(
-                    "No attributes_to_remove specified for remove_attributes operation",
+                    "No attributes_to_remove specified for remove_attributes operation"
                 )
             return self.remove_attributes_batch(
-                self._entries,
-                self._attributes_to_remove,
+                self._entries, self._attributes_to_remove
             )
         return r[list[m.Ldif.Entry]].fail(f"Unknown operation: {self._operation}")
 
     def get_normalized_attribute(
-        self,
-        entry: m.Ldif.Entry,
-        attribute_name: str,
+        self, entry: m.Ldif.Entry, attribute_name: str
     ) -> r[str]:
         """Get and normalize one entry attribute."""
         return self.get_entry_attribute(entry, attribute_name).flat_map(
-            FlextLdifEntries.normalize_attribute_value,
+            FlextLdifEntries.normalize_attribute_value
         )
 
     def remove_attributes_batch(
-        self,
-        entries: list[m.Ldif.Entry],
-        attributes: list[str],
+        self, entries: list[m.Ldif.Entry], attributes: list[str]
     ) -> r[list[m.Ldif.Entry]]:
         """Remove selected attributes for all entries."""
         results: list[m.Ldif.Entry] = []
@@ -299,7 +287,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             result = FlextLdifEntries.remove_attributes(entry, attributes)
             if result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry",
+                    result.error or "Failed to process entry"
                 )
             results.append(result.value)
         return r[list[m.Ldif.Entry]].ok(results)

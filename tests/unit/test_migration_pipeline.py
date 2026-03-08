@@ -39,14 +39,12 @@ class TestsFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type="oid",
             target_server_type="oud",
         )
-
         assert pipeline is not None
 
     def test_initialization_with_defaults(self, tmp_path: Path) -> None:
@@ -55,12 +53,9 @@ class TestsFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
         pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
+            input_dir=input_dir, output_dir=output_dir
         )
-
         assert pipeline is not None
         assert pipeline.source_server_type == "rfc"
         assert pipeline.target_server_type == "rfc"
@@ -77,44 +72,35 @@ class TestsFlextLdifMigrationPipeline(s):
         ],
     )
     def test_initialization_with_different_server_types(
-        self,
-        source: str,
-        target: str,
-        tmp_path: Path,
+        self, source: str, target: str, tmp_path: Path
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type=source,
             target_server_type=target,
         )
-
         assert pipeline is not None
 
     def test_execute_with_nonexistent_input_dir_returns_failure(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Test pipeline returns failure when input directory doesn't exist."""
         nonexistent_input = tmp_path / "nonexistent"
         output_dir = tmp_path / "output"
         output_dir.mkdir()
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=nonexistent_input,
             output_dir=output_dir,
             source_server_type="oid",
             target_server_type="oud",
         )
-
         result = pipeline.execute()
-
         assert result.is_failure
         assert result.error is not None
         assert "not found" in str(result.error).lower()
@@ -125,16 +111,13 @@ class TestsFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type="rfc",
             target_server_type="rfc",
         )
-
         result = pipeline.execute()
-
         assert result.is_success or result.is_failure
 
     def test_basic_execution(self, tmp_path: Path) -> None:
@@ -143,62 +126,38 @@ class TestsFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create a simple LDIF file using test constants
-        ldif_content = f"""dn: {c.TestData.SAMPLE_USER_DN}
-objectClass: person
-objectClass: top
-cn: testuser
-sn: test
-"""
+        ldif_content = f"dn: {c.TestData.SAMPLE_USER_DN}\nobjectClass: person\nobjectClass: top\ncn: testuser\nsn: test\n"
         (input_dir / "test.ldif").write_text(ldif_content)
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type="rfc",
             target_server_type="rfc",
         )
-
         result = pipeline.execute()
-
         assert result.is_success or result.is_failure
 
     @pytest.mark.parametrize(
         ("source", "target"),
-        [
-            ("oid", "oud"),
-            ("oud", "oid"),
-            ("rfc", "oid"),
-            ("rfc", "oud"),
-        ],
+        [("oid", "oud"), ("oud", "oid"), ("rfc", "oid"), ("rfc", "oud")],
     )
     def test_server_conversion_modes(
-        self,
-        source: str,
-        target: str,
-        tmp_path: Path,
+        self, source: str, target: str, tmp_path: Path
     ) -> None:
         """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        # Create a simple LDIF file using test constants
-        ldif_content = f"""dn: {c.TestData.SAMPLE_USER_DN}
-objectClass: person
-cn: testuser
-"""
+        ldif_content = (
+            f"dn: {c.TestData.SAMPLE_USER_DN}\nobjectClass: person\ncn: testuser\n"
+        )
         (input_dir / "test.ldif").write_text(ldif_content)
-
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type=source,
             target_server_type=target,
         )
-
         result = pipeline.execute()
-
         assert result.is_success or result.is_failure

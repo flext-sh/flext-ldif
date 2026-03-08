@@ -39,8 +39,4 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
 
 u = TestsFlextLdifUtilities
-
-__all__ = [
-    "TestsFlextLdifUtilities",
-    "u",
-]
+__all__ = ["TestsFlextLdifUtilities", "u"]

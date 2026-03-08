@@ -23,16 +23,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     @override
     def _handle_parse_operation(
-        self,
-        ldif_text: str,
+        self, ldif_text: str
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Handle parse operation for main quirk."""
         return super()._handle_parse_operation(ldif_text)
 
     @override
     def _handle_write_operation(
-        self,
-        entries: list[m.Ldif.Entry],
+        self, entries: list[m.Ldif.Entry]
     ) -> FlextResult[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         return super()._handle_write_operation(entries)
@@ -61,6 +59,4 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """RFC baseline constants (RFC 4512 compliant)."""
 
 
-__all__ = [
-    "FlextLdifServersRfc",
-]
+__all__ = ["FlextLdifServersRfc"]

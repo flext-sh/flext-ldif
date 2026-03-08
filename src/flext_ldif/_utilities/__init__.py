@@ -67,8 +67,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.constants import c
     from flext_ldif.typings import FlextLdifTypes as t
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
     "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
@@ -187,7 +185,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "c": ("flext_ldif.constants", "c"),
     "t": ("flext_ldif.typings", "t"),
 }
-
 __all__ = [
     "AndFilter",
     "ByAttrValueFilter",
@@ -245,7 +242,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

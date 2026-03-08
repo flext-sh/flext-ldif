@@ -30,8 +30,6 @@ class FlextLdifTypes(FlextTypes):
         MetadataKey: TypeAlias = str
         ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
         ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
-
-        # Entry-level type aliases (moved from models.py Ldif namespace)
         EntryAttributesDict: TypeAlias = dict[str, list[str]]
         RawEntryDict: TypeAlias = dict[str, str | list[str] | set[str]]
 
@@ -47,7 +45,6 @@ class FlextLdifTypes(FlextTypes):
                     strip_whitespace=True,
                 ),
             ]
-
             type Rfc4514DnComponent = Annotated[
                 str,
                 StringConstraints(
@@ -55,11 +52,10 @@ class FlextLdifTypes(FlextTypes):
                     pattern=c.Ldif.LdifValidation.RFC4514_DN_COMPONENT_PATTERN,
                 ),
             ]
-
             type Rfc2849AttributeValue = Annotated[
                 str,
                 StringConstraints(
-                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH,
+                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
                 ),
             ]
 

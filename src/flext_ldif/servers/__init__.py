@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServer": ("flext_ldif.servers.base", "FlextLdifServersBase"),
     "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
@@ -48,7 +46,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersRfc": ("flext_ldif.servers.rfc", "FlextLdifServersRfc"),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
 }
-
 __all__ = [
     "FlextLdifServer",
     "FlextLdifServersAd",
@@ -66,7 +63,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

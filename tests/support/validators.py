@@ -15,8 +15,7 @@ class MockResultHelpers:
 
     @staticmethod
     def validate_composition(
-        *args: t.ContainerValue,
-        **kwargs: t.ContainerValue,
+        *args: t.ContainerValue, **kwargs: t.ContainerValue
     ) -> bool:
         """Validate composition."""
         return True
@@ -27,16 +26,12 @@ class MockResultHelpers:
         return True
 
     @staticmethod
-    def assert_composition(
-        *args: t.ContainerValue,
-        **kwargs: t.ContainerValue,
-    ) -> None:
+    def assert_composition(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> None:
         """Assert composition."""
 
     @staticmethod
     def assert_chain_success(
-        *args: t.ContainerValue,
-        **kwargs: t.ContainerValue,
+        *args: t.ContainerValue, **kwargs: t.ContainerValue
     ) -> None:
         """Assert chain success."""
 
@@ -56,7 +51,6 @@ class TestValidators:
     Only LDIF-specific validation methods are implemented here.
     """
 
-    # Expose uor pattern validation
     Validation = u
 
     @staticmethod
@@ -71,7 +65,6 @@ class TestValidators:
 
         """
         dn_value = entry.dn if entry.dn is not None else ""
-        # entry.attributes is Attributes, need to access .attributes dict
         if entry.attributes is not None:
             if isinstance(entry.attributes, m.Ldif.Attributes):
                 attributes_dict: dict[str, list[str]] = entry.attributes.attributes
@@ -83,8 +76,10 @@ class TestValidators:
             "dn_format_valid": bool(entry.dn is not None and "=" in dn_value),
             "has_attributes": len(attributes_dict) > 0,
             "attributes_valid": all(
-                isinstance(k, str) and isinstance(v, list)
-                for k, v in attributes_dict.items()
+                (
+                    isinstance(k, str) and isinstance(v, list)
+                    for k, v in attributes_dict.items()
+                )
             ),
         }
 

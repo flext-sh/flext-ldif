@@ -26,9 +26,6 @@ from ldap3 import Connection
 
 from flext_ldif import FlextLdif, m
 
-# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
-# They use unique_dn_suffix for isolation and indepotency in parallel execution
-
 
 @pytest.fixture
 def flext_api() -> FlextLdif:
@@ -50,7 +47,6 @@ class TestRealLdapCRUD:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Test Create→Read→Update→Delete cycle."""
-        # CREATE: Build entry using FlextLdif API with isolated username
         unique_username = make_test_username("CRUDTestUser")
         person_dn = f"cn={unique_username},{clean_test_ou}"
         person_result = flext_api.create_entry(
@@ -65,8 +61,6 @@ class TestRealLdapCRUD:
         )
         assert person_result.is_success
         person_entry = person_result.value
-
-        # Write to LDAP
         obj_class_values = person_entry.get_attribute_values("objectclass")
         assert isinstance(obj_class_values, list)
         assert person_entry.attributes is not None
@@ -79,30 +73,18 @@ class TestRealLdapCRUD:
                 if attr.lower() != "objectclass"
             },
         )
-
-        # UPDATE: Modify the mail attribute
         ldap_connection.modify(
             str(person_entry.dn),
             {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
-
-        # Verify update
         ldap_connection.search(
-            str(person_entry.dn),
-            "(objectClass=*)",
-            attributes=["*"],
+            str(person_entry.dn), "(objectClass=*)", attributes=["*"]
         )
         updated_entry = ldap_connection.entries[0]
         assert updated_entry["mail"].value == "updated_crud@example.com"
-
-        # DELETE: Remove entry
         ldap_connection.delete(str(person_entry.dn))
-
-        # Verify deletion
         result = ldap_connection.search(
-            str(person_entry.dn),
-            "(objectClass=*)",
-            search_scope="BASE",
+            str(person_entry.dn), "(objectClass=*)", search_scope="BASE"
         )
         assert not result or len(ldap_connection.entries) == 0
 
@@ -121,7 +103,6 @@ class TestRealLdapBatchOperations:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using FlextLdif API and write to LDAP."""
-        # Build 20 entries using API with isolated usernames
         entries = []
         for i in range(20):
             unique_username = make_test_username(f"BatchUser{i}")
@@ -137,55 +118,32 @@ class TestRealLdapBatchOperations:
             )
             if result.is_success:
                 unwrapped_entry = result.value
-                # Convert domain Entry to facade Entry if needed
                 if hasattr(unwrapped_entry, "dn") and hasattr(
-                    unwrapped_entry,
-                    "attributes",
+                    unwrapped_entry, "attributes"
                 ):
                     entries.append(unwrapped_entry)
                 else:
-                    # Convert domain Entry to facade Entry
                     entry_dict = unwrapped_entry.model_dump()
                     facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
-
         assert len(entries) == 20
-
-        # Write to LDAP in batch
         ldap_entries = []
         for entry in entries:
-            # Extract object classes (not included in attributes dict)
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
-                # Convert to list if needed
                 object_classes = list(object_classes) if object_classes else []
-
-            # Build attributes dict from FlextLdif entry
-            # EXCLUDE objectclass as it's passed separately to ldap3.add()
             attrs_dict = {}
             for attr_name, attr_values in entry.attributes.attributes.items():
-                # Skip objectclass - it's handled separately
                 if attr_name.lower() == "objectclass":
                     continue
-                # Extract actual list of strings from AttributeValues
                 if isinstance(attr_values, list):
-                    # Already a list
                     attrs_dict[attr_name] = attr_values
                 elif hasattr(attr_values, "values"):
-                    # AttributeValues object with values property
                     attrs_dict[attr_name] = list(attr_values.values)
                 else:
-                    # Single value or other type - convert to list
                     attrs_dict[attr_name] = [str(attr_values)]
-
-            ldap_connection.add(
-                str(entry.dn),
-                object_classes,
-                attrs_dict,
-            )
+            ldap_connection.add(str(entry.dn), object_classes, attrs_dict)
             ldap_entries.append(entry.dn)
-
-        # Validate batch
         validation_result = flext_api.validate_entries(entries)
         assert validation_result.is_success
 
@@ -198,7 +156,6 @@ class TestRealLdapBatchOperations:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Export batch from LDAP to LDIF file, then reimport."""
-        # Create test data in LDAP with isolated usernames
         unique_usernames = [make_test_username(f"ExportBatch{i}") for i in range(10)]
         for i, unique_username in enumerate(unique_usernames):
             person_dn = f"cn={unique_username},{clean_test_ou}"
@@ -211,27 +168,19 @@ class TestRealLdapBatchOperations:
                     "mail": f"export{i}@example.com",
                 },
             )
-
-        # Export all to LDIF file
         ldap_connection.search(
             clean_test_ou,
             "(objectClass=person)",
             search_scope="SUBTREE",
             attributes=["*"],
         )
-
-        # Work with actual number of entries found
-        # (may vary based on LDAP server state)
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
-
         entries = []
         for entry in ldap_connection.entries:
-            # Convert ldap3 entry attributes to dict format
             attrs_dict = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
-                # Extract values from ldap3 Attribute object
                 if hasattr(attr_obj, "values"):
                     values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
                 elif isinstance(attr_obj, list):
@@ -239,36 +188,26 @@ class TestRealLdapBatchOperations:
                 else:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
-
             result = m.Ldif.Entry.create(
-                dn=entry.entry_dn,
-                attributes=attrs_dict,
-                metadata=None,
+                dn=entry.entry_dn, attributes=attrs_dict, metadata=None
             )
             assert result.is_success
             unwrapped_entry = result.value
-            # Convert domain Entry to facade Entry if needed
             if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry,
-                "attributes",
+                unwrapped_entry, "attributes"
             ):
                 entries.append(unwrapped_entry)
             else:
-                # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
                 facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
-
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_file(entries, export_file)
         assert write_result.is_success
         assert export_file.exists()
-
-        # Parse exported file - should match number of exported entries
         parse_result = flext_api.parse(export_file)
         assert parse_result.is_success
         parsed_entries = parse_result.value
-        # Verify roundtrip preserves entry count
         assert len(parsed_entries) == actual_count
 
 

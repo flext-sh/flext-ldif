@@ -27,15 +27,10 @@ class DRYEntryOperations:
     def advanced_filtering() -> r[list[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
-
-        # Build entries first
         entries_result = DRYEntryOperations.intelligent_builders()
         if entries_result.is_failure:
             return entries_result
-
         entries = entries_result.value
-
-        # DRY filtering: department IT + valid email in one pipeline
         filtered_it = api.filter_entries(
             entries,
             filter_func=lambda item: (
@@ -62,20 +57,16 @@ class DRYEntryOperations:
     def batch_processing() -> r[list[dict[str, object]]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
-
-        # Build → filter → parallel transform in one composition
         return DRYEntryOperations.advanced_filtering().flat_map(
             lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
-                lambda results: [r.model_dump() for r in results],
-            ),
+                lambda results: [r.model_dump() for r in results]
+            )
         )
 
     @staticmethod
     def intelligent_builders() -> r[list[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
-
-        # DRY: Single list comprehension creates all entries
         return r.ok([
             api.create_entry(
                 dn=f"cn={name},ou=People,dc=example,dc=com",

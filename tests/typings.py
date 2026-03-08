@@ -41,13 +41,6 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
             """TypedDict definitions for LDIF test fixtures."""
 
 
-# Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
-
 GenericFieldsDict = TestsFlextLdifTypes.LdifTests.Fixtures.GenericFieldsDict
-
-__all__ = [
-    "GenericFieldsDict",
-    "TestsFlextLdifTypes",
-    "t",
-]
+__all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

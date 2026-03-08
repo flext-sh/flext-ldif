@@ -40,8 +40,6 @@ if TYPE_CHECKING:
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
     "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
@@ -97,7 +95,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("flext_ldif.typings", "FlextLdifTypes"),
     "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
 }
-
 __all__ = [
     "FlextLdif",
     "FlextLdifAcl",
@@ -143,7 +140,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

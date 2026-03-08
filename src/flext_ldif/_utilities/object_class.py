@@ -16,7 +16,6 @@ class _SchemaConstants:
     """Schema constants container for type safety (single class, no loose helpers)."""
 
     _instance: _SchemaConstants | None = None
-
     auxiliary: str
     structural: str
 
@@ -35,8 +34,6 @@ class _SchemaConstants:
 
 
 logger = FlextLogger(__name__)
-
-
 _ParsedObjectClass = FlextLdifModelsDomains.ParsedObjectClass
 
 
@@ -45,68 +42,51 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-        superior_kind: str | None,
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, superior_kind: str | None
     ) -> None:
         """Align ObjectClass kind with its superior class kind."""
-        # Only align if:
-        # - schema_oc has a SUP defined
-        # - schema_oc.kind is not empty (falsy check - empty string means undefined)
-        # - superior_kind is provided
-        # - current kind differs from superior_kind
         if (
             schema_oc.sup
             and schema_oc.kind
             and superior_kind
-            and schema_oc.kind != superior_kind
+            and (schema_oc.kind != superior_kind)
         ):
             schema_oc.kind = superior_kind
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-        default_sup: str = "top",
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, default_sup: str = "top"
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute."""
         schema_constants = _SchemaConstants.get_instance()
-        if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
+        if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
             schema_oc.sup = default_sup
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-        _server_type: str = "oid",
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, _server_type: str = "oid"
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
-        # Only fix if both SUP and kind are present
         if not schema_oc.sup or not schema_oc.kind:
             return
-
-        # Known STRUCTURAL superior classes that cause conflicts
         structural_superiors = {
             "orclpwdverifierprofile",
             "orclapplicationentity",
             "tombstone",
         }
-        # Known AUXILIARY superior classes that cause conflicts
         auxiliary_superiors = {"javanamingref", "javanamingReference"}
-
         sup_value = schema_oc.sup
         if isinstance(sup_value, list):
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = str(first_sup).lower() if first_sup else ""
         else:
             sup_lower = sup_value.lower() if sup_value else ""
-
         schema_constants = _SchemaConstants.get_instance()
-        # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
         if (
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
         ):
             schema_oc.kind = schema_constants.structural
-
-        # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
         elif (
             sup_lower in auxiliary_superiors
             and schema_oc.kind == schema_constants.structural
@@ -114,13 +94,10 @@ class FlextLdifUtilitiesObjectClass:
             schema_oc.kind = schema_constants.auxiliary
 
     @staticmethod
-    def fix_missing_sup(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> None:
+    def fix_missing_sup(schema_oc: FlextLdifModelsDomains.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = _SchemaConstants.get_instance()
-        # Only fix AUXILIARY classes - STRUCTURAL classes are left unchanged
-        if schema_oc.kind == schema_constants.auxiliary and not schema_oc.sup:
+        if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
             schema_oc.sup = "top"
 
     @staticmethod
@@ -131,19 +108,12 @@ class FlextLdifUtilitiesObjectClass:
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            # Parse to dict first
             parsed_dict: Mapping[str, t.ContainerValue] = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
-
-            # Apply server-specific parsing hook if provided
             if parse_parts_hook is not None:
-                # Hook receives the definition and returns parsed dict
                 parsed_dict = parse_parts_hook(definition)
-
             parsed_model = _ParsedObjectClass.model_validate(parsed_dict)
-
-            # Create the model with validated types
             schema_oc = m.Ldif.SchemaObjectClass(
                 oid=parsed_model.oid,
                 name=parsed_model.name,
@@ -153,13 +123,9 @@ class FlextLdifUtilitiesObjectClass:
                 must=parsed_model.must,
                 may=parsed_model.may,
             )
-
-            # Apply fixes based on server type
             if server_type:
                 FlextLdifUtilitiesObjectClass.fix_missing_sup(schema_oc)
-
             return r[m.Ldif.SchemaObjectClass].ok(schema_oc)
-
         except (
             ValueError,
             KeyError,
@@ -168,5 +134,5 @@ class FlextLdifUtilitiesObjectClass:
             struct.error,
         ) as e:
             return r[m.Ldif.SchemaObjectClass].fail(
-                f"Failed to parse objectClass definition: {e}",
+                f"Failed to parse objectClass definition: {e}"
             )

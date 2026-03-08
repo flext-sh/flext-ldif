@@ -29,24 +29,20 @@ class DRYValidationAnalysis:
     ) -> r[m.Ldif.Results.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
-            # Group errors by category for analysis
             error_groups: dict[str, list[str]] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:
                     error_groups[category] = []
                 error_groups[category].append(str(error))
-
         return r.ok(validation_result)
 
     @staticmethod
     def _generate_test_dataset(
-        count: int,
-        error_rate: float = 0.0,
+        count: int, error_rate: float = 0.0
     ) -> list[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
-
         return [
             api.create_entry(
                 dn=f"cn=Test User {i},ou=People,dc=example,dc=com",
@@ -57,12 +53,9 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid",
+                        else "invalid"
                     ],
-                    # Inject errors: missing required attributes, invalid DNs, etc.
-                    **(
-                        {} if i % int(1 / error_rate) != 0 else {"sn": []}
-                    ),  # Missing sn
+                    **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
                 },
             ).value
             for i in range(count)
@@ -75,7 +68,7 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid",
+                        else "invalid"
                     ],
                     **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
                 },
@@ -86,11 +79,7 @@ class DRYValidationAnalysis:
     def parallel_validation() -> r[m.Ldif.Results.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = FlextLdif.get_instance()
-
-        # DRY dataset generation with error injection
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
-
-        # Validate entries
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
         if validate_result.is_failure:
@@ -102,8 +91,6 @@ class DRYValidationAnalysis:
                 errors=[str(validate_result.error)],
             )
             return r[m.Ldif.Results.ValidationResult].ok(validation_result)
-
-        # Create ValidationResult from successful validation
         vr = validate_result.value
         validation_result = m.Ldif.Results.ValidationResult(
             is_valid=vr.is_valid,
@@ -118,19 +105,14 @@ class DRYValidationAnalysis:
     def statistical_analysis() -> r[dict[str, int | float]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
         api = FlextLdif.get_instance()
-
-        # Generate large dataset → validate → extract statistics
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r[dict[str, int | float]].fail(validate_result.error)
-
-        # Create ValidationResult manually from validation
         total_entries = len(entries)
         valid_result = validate_result.value
         valid_entries = valid_result.valid_entries
         invalid_entries = valid_result.invalid_entries
-
         return r[dict[str, int | float]].ok({
             "total_entries": total_entries,
             "valid_entries": valid_entries,

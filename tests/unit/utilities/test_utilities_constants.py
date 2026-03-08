@@ -15,10 +15,6 @@ from tests import s
 
 from flext_ldif import FlextLdifUtilities
 
-# =============================================================================
-# TEST SCENARIO ENUMS
-# =============================================================================
-
 
 class GetValidValuesType(StrEnum):
     """Get valid values test scenarios."""
@@ -44,16 +40,10 @@ class ValidateManyType(StrEnum):
     UNKNOWN_CATEGORY = "unknown_category"
 
 
-# =============================================================================
-# PARAMETRIZED TEST DATA
-# =============================================================================
-
-
 @pytest.mark.unit
 class TestsTestFlextLdifConstants(s):
     """Test constants utilities."""
 
-    # Get valid values test data
     GET_VALID_VALUES_DATA: ClassVar[
         dict[str, tuple[GetValidValuesType, str, set[str], bool]]
     ] = {
@@ -99,8 +89,6 @@ class TestsTestFlextLdifConstants(s):
             True,
         ),
     }
-
-    # Is valid test data
     IS_VALID_DATA: ClassVar[dict[str, tuple[IsValidTestType, str, str, bool, bool]]] = {
         "is_valid_known_value": (
             IsValidTestType.KNOWN_VALUE,
@@ -131,8 +119,6 @@ class TestsTestFlextLdifConstants(s):
             False,
         ),
     }
-
-    # Validate many test data
     VALIDATE_MANY_DATA: ClassVar[
         dict[str, tuple[ValidateManyType, set[str], str, bool, bool]]
     ] = {
@@ -159,10 +145,6 @@ class TestsTestFlextLdifConstants(s):
         ),
     }
 
-    # =======================================================================
-    # Get Valid Values Tests
-    # =======================================================================
-
     @pytest.mark.parametrize(
         ("scenario", "test_type", "category", "expected_values", "should_raise"),
         [
@@ -188,10 +170,6 @@ class TestsTestFlextLdifConstants(s):
             assert values == expected_values, (
                 f"Expected {expected_values}, got {values}"
             )
-
-    # =======================================================================
-    # Is Valid Tests
-    # =======================================================================
 
     @pytest.mark.parametrize(
         (
@@ -223,10 +201,6 @@ class TestsTestFlextLdifConstants(s):
             result = FlextLdifUtilities.Ldif.Constants.is_valid(value, category)
             assert result == expected_result
 
-    # =======================================================================
-    # Validate Many Tests
-    # =======================================================================
-
     @pytest.mark.parametrize(
         (
             "scenario",
@@ -256,25 +230,18 @@ class TestsTestFlextLdifConstants(s):
                 FlextLdifUtilities.Ldif.Constants.validate_many(values, category)
         else:
             is_valid, invalid = FlextLdifUtilities.Ldif.Constants.validate_many(
-                values,
-                category,
+                values, category
             )
             assert is_valid == expected_valid
             if not expected_valid:
                 assert len(invalid) > 0
 
-    # =======================================================================
-    # Constants Accessibility Tests
-    # =======================================================================
-
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        # Check that category map exists and has expected keys
         assert hasattr(FlextLdifUtilities.Ldif.Constants, "_CATEGORY_MAP")
         category_map = FlextLdifUtilities.Ldif.Constants._CATEGORY_MAP
         assert "server_type" in category_map
         assert "encoding" in category_map
-        # Verify the methods are accessible
         assert hasattr(FlextLdifUtilities.Ldif.Constants, "get_valid_values")
         assert hasattr(FlextLdifUtilities.Ldif.Constants, "is_valid")
         assert hasattr(FlextLdifUtilities.Ldif.Constants, "validate_many")

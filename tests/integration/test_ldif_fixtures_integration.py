@@ -43,7 +43,6 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
         parse_result = ldif.parse(fixture)
         assert parse_result.is_success
-
         entries_raw = parse_result.value
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
@@ -87,7 +86,6 @@ class TestsFlextLdifFixtures:
             "tests/fixtures/oud/oud_entries_fixtures.ldif",
             "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
         ]
-
         for fixture_path in fixtures:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
@@ -102,15 +100,12 @@ class TestsFlextLdifFixtures:
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-
         entries_raw = result.value
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
-            # DN should follow RFC 4514 format
             assert entry.dn is not None, "Entry must have DN"
             dn_str = entry.dn.value
             assert len(dn_str) > 0
-            # Should have at least one = for attribute=value
             assert "=" in dn_str
 
     def test_all_fixtures_have_objectclass(self, ldif: FlextLdif) -> None:
@@ -121,15 +116,12 @@ class TestsFlextLdifFixtures:
             "tests/fixtures/oud/oud_entries_fixtures.ldif",
             "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
         ]
-
         for fixture_path in fixtures:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success
-
             entries_raw = result.value
             assert isinstance(entries_raw, list)
             for entry in entries_raw:
-                # Check for objectClass (case-insensitive)
                 assert entry.attributes is not None, "Entry must have attributes"
                 assert entry.dn is not None, "Entry must have DN"
                 attrs = entry.attributes.attributes

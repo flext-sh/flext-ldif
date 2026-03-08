@@ -15,50 +15,37 @@ class TestFlextLdifUtilitiesComprehensive:
 
     @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
     def test_all_utility_functions_with_real_data(
-        self,
-        test_data: dict[str, object],
+        self, test_data: dict[str, object]
     ) -> None:
         """Test all utility functions with real generated data."""
-        # Test DN operations using correct namespace
         if "dn" in test_data:
             dn = str(test_data["dn"])
-            # Use u.Ldif.DN.norm_string for DN normalization
             result = u.Ldif.DN.norm_string(dn)
             assert isinstance(result, str)
             assert len(result) > 0
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
-        # Generate real LDIF content
         ldif_content = FlextLdifTestFactory.create_real_ldif_content(
-            entries_count=5,
-            include_schema=True,
+            entries_count=5, include_schema=True
         )
-
-        # Process through utilities
         lines = ldif_content.split("\n")
         entries = []
-
-        # Simulate processing pipeline
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
                 current_attrs = {}
                 entries.append({"dn": current_dn, "attributes": current_attrs})
             elif line.startswith(" ") and entries:
-                # Continuation line
                 continue
             elif ":" in line and entries:
-                # Attribute line
                 key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
                 if key not in entries[-1]["attributes"]:
                     entries[-1]["attributes"][key] = []
                 entries[-1]["attributes"][key].append(value)
-
-        # Validate results
-        assert len(entries) >= 5  # At least 5 entries processed
+        assert len(entries) >= 5
         for entry in entries:
             assert "dn" in entry
             assert "attributes" in entry
@@ -67,15 +54,10 @@ class TestFlextLdifUtilitiesComprehensive:
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
-        # Create real entry for specific server
         entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
-
-        # Test entry was created with correct server type
         assert entry is not None
         assert hasattr(entry, "dn")
         assert hasattr(entry, "attributes")
-
-        # Test server type normalization utility
         normalized = u.Ldif.Server.normalize_server_type(server_type)
         assert isinstance(normalized, str)
         assert len(normalized) > 0

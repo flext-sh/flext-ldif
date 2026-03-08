@@ -37,12 +37,8 @@ class TestMalformedLdifHandling:
         - Error is reported appropriately
         - Processing continues gracefully
         """
-        ldif_content = """objectClass: person
-cn: NoDN
-sn: User
-"""
+        ldif_content = "objectClass: person\ncn: NoDN\nsn: User\n"
         result = api.parse(ldif_content)
-        # Should handle gracefully - either parse fails or skips entry
         assert result is not None
 
     def test_incomplete_attribute_syntax(self, api: FlextLdif) -> None:
@@ -53,13 +49,10 @@ sn: User
         - Incomplete attribute definitions are detected
         - Parsing continues with remaining entries
         """
-        ldif_content = """dn: cn=Test,dc=example,dc=com
-objectClass person
-cn: Test
-sn: User
-"""
+        ldif_content = (
+            "dn: cn=Test,dc=example,dc=com\nobjectClass person\ncn: Test\nsn: User\n"
+        )
         result = api.parse(ldif_content)
-        # Should handle gracefully
         assert result is not None
 
     def test_invalid_dn_format(self, api: FlextLdif) -> None:
@@ -70,12 +63,8 @@ sn: User
         - Malformed DNs are handled gracefully
         - Processing continues
         """
-        ldif_content = """dn: invalid-dn-no-equals
-objectClass: person
-cn: Test
-"""
+        ldif_content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
         result = api.parse(ldif_content)
-        # Should handle gracefully
         assert result is not None
 
     def test_orphaned_continuation_lines(self, api: FlextLdif) -> None:
@@ -86,15 +75,7 @@ cn: Test
         - Parser doesn't crash on malformed continuations
         - Following entries still parse
         """
-        ldif_content = """dn: cn=Test1,dc=example,dc=com
-objectClass: person
-cn: Test1
-
- orphaned-continuation
-dn: cn=Test2,dc=example,dc=com
-objectClass: person
-cn: Test2
-"""
+        ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n\n orphaned-continuation\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -106,10 +87,8 @@ cn: Test2
         - Entries with minimal attributes parse successfully
         - DN alone is valid entry
         """
-        ldif_content = """dn: cn=Minimal,dc=example,dc=com
-"""
+        ldif_content = "dn: cn=Minimal,dc=example,dc=com\n"
         result = api.parse(ldif_content)
-        # DN alone should be valid
         if result.is_success:
             entries = result.value
             assert len(entries) > 0 or len(entries) == 0
@@ -122,12 +101,7 @@ cn: Test2
         - Attributes with only whitespace handled
         - Parser doesn't crash on empty values
         """
-        ldif_content = """dn: cn=Empty,dc=example,dc=com
-objectClass: person
-cn: Empty
-description:
-mail: test@example.com
-"""
+        ldif_content = "dn: cn=Empty,dc=example,dc=com\nobjectClass: person\ncn: Empty\ndescription:\nmail: test@example.com\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -139,13 +113,7 @@ mail: test@example.com
         - Duplicates don't cause parsing errors
         - All values are preserved
         """
-        ldif_content = """dn: cn=Duplicate,dc=example,dc=com
-objectClass: person
-cn: Duplicate
-mail: test1@example.com
-mail: test2@example.com
-mail: test3@example.com
-"""
+        ldif_content = "dn: cn=Duplicate,dc=example,dc=com\nobjectClass: person\ncn: Duplicate\nmail: test1@example.com\nmail: test2@example.com\nmail: test3@example.com\n"
         result = api.parse(ldif_content)
         if result.is_success:
             entries = result.value
@@ -159,12 +127,7 @@ mail: test3@example.com
         - Escaped characters processed correctly
         - Unicode and UTF-8 characters supported
         """
-        ldif_content = """dn: cn=José,dc=example,dc=com
-objectClass: person
-cn: José
-description: Contains , comma and = equals signs
-mail: user+tag@example.com
-"""
+        ldif_content = "dn: cn=José,dc=example,dc=com\nobjectClass: person\ncn: José\ndescription: Contains , comma and = equals signs\nmail: user+tag@example.com\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -177,11 +140,7 @@ mail: user+tag@example.com
         - No buffer overflow or truncation
         """
         long_value = "x" * 2000
-        ldif_content = f"""dn: cn=LongValue,dc=example,dc=com
-objectClass: person
-cn: LongValue
-description: {long_value}
-"""
+        ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -193,11 +152,7 @@ description: {long_value}
         - :: syntax for binary attributes handled
         - Non-UTF8 binary data supported
         """
-        ldif_content = """dn: cn=Binary,dc=example,dc=com
-objectClass: person
-cn: Binary
-jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==
-"""
+        ldif_content = "dn: cn=Binary,dc=example,dc=com\nobjectClass: person\ncn: Binary\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -209,11 +164,7 @@ jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==
         - Doesn't cause parsing errors
         - Standard LDIF format supported
         """
-        ldif_content = """version: 1
-dn: cn=WithVersion,dc=example,dc=com
-objectClass: person
-cn: WithVersion
-"""
+        ldif_content = "version: 1\ndn: cn=WithVersion,dc=example,dc=com\nobjectClass: person\ncn: WithVersion\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -225,13 +176,7 @@ cn: WithVersion
         - Comments don't interfere with parsing
         - Entries after comments parse correctly
         """
-        ldif_content = """# This is a comment
-dn: cn=WithComments,dc=example,dc=com
-# Another comment
-objectClass: person
-cn: WithComments
-# Final comment
-"""
+        ldif_content = "# This is a comment\ndn: cn=WithComments,dc=example,dc=com\n# Another comment\nobjectClass: person\ncn: WithComments\n# Final comment\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -243,12 +188,7 @@ cn: WithComments
         - CN, cn, Cn all treated same
         - DN, dn, Dn handled correctly
         """
-        ldif_content = """Dn: cn=MixedCase,dc=example,dc=com
-ObjectClass: person
-CN: MixedCase
-SN: User
-Mail: test@example.com
-"""
+        ldif_content = "Dn: cn=MixedCase,dc=example,dc=com\nObjectClass: person\nCN: MixedCase\nSN: User\nMail: test@example.com\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -269,14 +209,8 @@ class TestIncompleteEntries:
         - Previous complete entries still parsed
         - No crash on unexpected EOF
         """
-        ldif_content = """dn: cn=Complete,dc=example,dc=com
-objectClass: person
-cn: Complete
-
-dn: cn=Incomplete,dc=example,dc
-"""
+        ldif_content = "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n\ndn: cn=Incomplete,dc=example,dc\n"
         result = api.parse(ldif_content)
-        # Should handle gracefully
         assert result is not None
 
     def test_unclosed_multiline_value(self, api: FlextLdif) -> None:
@@ -287,17 +221,7 @@ dn: cn=Incomplete,dc=example,dc
         - Following entries recover correctly
         - No parser state corruption
         """
-        ldif_content = """dn: cn=Test1,dc=example,dc=com
-objectClass: person
-cn: Test1
-description: This is a multi-line
- value that continues
- but next entry starts
-
-dn: cn=Test2,dc=example,dc=com
-objectClass: person
-cn: Test2
-"""
+        ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\ndescription: This is a multi-line\n value that continues\n but next entry starts\n\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -309,10 +233,7 @@ cn: Test2
         - EOF properly terminates entry
         - No data loss
         """
-        ldif_content = """dn: cn=NoBlankLine,dc=example,dc=com
-objectClass: person
-cn: NoBlankLine
-sn: Test"""
+        ldif_content = "dn: cn=NoBlankLine,dc=example,dc=com\nobjectClass: person\ncn: NoBlankLine\nsn: Test"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -333,10 +254,7 @@ class TestInvalidSchemaDefinitions:
         - Parsing continues gracefully
         - Other schema entries still processed
         """
-        ldif_content = """dn: cn=Schema,cn=config
-objectClass: schema
-attributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-"""
+        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -348,10 +266,7 @@ attributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
         - Missing NAME detected
         - Graceful error handling
         """
-        ldif_content = """dn: cn=Schema,cn=config
-objectClass: schema
-attributeTypes: ( NAME 'incomplete' )
-"""
+        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -363,10 +278,7 @@ attributeTypes: ( NAME 'incomplete' )
         - Following definitions still parsed
         - No parser crash
         """
-        ldif_content = """dn: cn=Schema,cn=config
-objectClass: schema
-attributeTypes: ( 1.2.3 NAME 'incomplete'
-"""
+        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
         result = api.parse(ldif_content)
         assert result is not None
 
@@ -387,11 +299,7 @@ class TestEncodingErrors:
         - Non-ASCII characters preserved
         - Multi-byte characters handled
         """
-        ldif_content = """dn: cn=UTF8Test,dc=example,dc=com
-objectClass: person
-cn: UTF8Test
-description: Contains UTF-8: café, naïve, résumé
-"""
+        ldif_content = "dn: cn=UTF8Test,dc=example,dc=com\nobjectClass: person\ncn: UTF8Test\ndescription: Contains UTF-8: café, naïve, résumé\n"
         result = api.parse(ldif_content)
         if result.is_success:
             entries = result.value
@@ -405,12 +313,8 @@ description: Contains UTF-8: café, naïve, résumé
         - Parsing continues
         - Error reported appropriately
         """
-        ldif_content = """dn: cn=InvalidBase64,dc=example,dc=com
-objectClass: person
-jpegPhoto:: !!!invalid-base64!!!
-"""
+        ldif_content = "dn: cn=InvalidBase64,dc=example,dc=com\nobjectClass: person\njpegPhoto:: !!!invalid-base64!!!\n"
         result = api.parse(ldif_content)
-        # Should handle gracefully
         assert result is not None
 
     def test_mixed_encoding_in_entry(self, api: FlextLdif) -> None:
@@ -421,12 +325,7 @@ jpegPhoto:: !!!invalid-base64!!!
         - No encoding conflicts
         - Values properly separated
         """
-        ldif_content = """dn: cn=Mixed,dc=example,dc=com
-objectClass: person
-cn: Mixed
-description: UTF-8 text: café
-jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABg
-"""
+        ldif_content = "dn: cn=Mixed,dc=example,dc=com\nobjectClass: person\ncn: Mixed\ndescription: UTF-8 text: café\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABg\n"
         result = api.parse(ldif_content)
         assert result is not None
 
