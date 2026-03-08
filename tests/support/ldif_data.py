@@ -147,6 +147,6 @@ class LdifTestData:
         files: dict[str, Path] = {}
         for name, sample in cls.all_samples().items():
             file_path = directory / f"{name}.ldif"
-            file_path.write_text(sample.content, encoding="utf-8")
+            _ = file_path.write_text(sample.content, encoding="utf-8")
             files[name] = file_path
         return files

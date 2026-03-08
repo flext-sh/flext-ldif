@@ -183,7 +183,7 @@ class FileManager:
         """Create text file with given content."""
         target_dir = self._resolve_directory(directory)
         file_path = target_dir / filename
-        file_path.write_text(content, encoding="utf-8")
+        _ = file_path.write_text(content, encoding="utf-8")
         return file_path
 
     def create_file_set(
