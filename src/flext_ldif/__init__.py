@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r
-    from flext_core.typings import FlextTypes
 
     from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._shared import FlextLdifShared
@@ -41,6 +40,8 @@ if TYPE_CHECKING:
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
     "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
@@ -96,6 +97,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("flext_ldif.typings", "FlextLdifTypes"),
     "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
 }
+
 __all__ = [
     "FlextLdif",
     "FlextLdifAcl",
@@ -141,7 +143,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
