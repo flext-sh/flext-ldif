@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import inspect
 import struct
-import typing
 from collections.abc import (
     Callable,
     Collection as ABCCollection,
@@ -372,11 +371,11 @@ class FlextLdifUtilities(FlextUtilities):
             )
             ops: dict[str, t.JsonValue] = {
                 "ensure": "list",
-                "ensure_default": typing.cast("t.JsonValue", default_list),
+                "ensure_default": default_list,
             }
             result = cls.build(
-                typing.cast("t.JsonValue", extracted),
-                ops=typing.cast("Mapping[str, t.JsonValue]", ops),
+                extracted,
+                ops=ops,
             )
             match result:
                 case list() as result_list:
@@ -466,24 +465,19 @@ class FlextLdifUtilities(FlextUtilities):
                     def predicate_callable(item: t.ContainerValue) -> bool:
                         return predicate(item)
 
-                    return typing.cast(
-                        "list[T] | list[R] | Mapping[str, T] | Mapping[str, R] | list[object] | t.ConfigurationMapping | FlextLdifResult[list[m.Ldif.Entry]]",
-                        FlextLdifUtilities.Ldif.filter_base_class(
-                            items_or_entries,
-                            typing.cast("Callable[[object], bool]", predicate_callable),
-                        ),
+                    return FlextLdifUtilities.Ldif.filter_base_class(
+                        items_or_entries,
+                        predicate_callable,
                     )
             if isinstance(items_or_entries, Sequence) and (
                 not isinstance(items_or_entries, (str, bytes))
             ):
-                seq_items = typing.cast("Sequence[object]", items_or_entries)
+                seq_items = items_or_entries
                 if seq_items and isinstance(seq_items[0], m.Ldif.Entry):
                     entries_list: list[m.Ldif.Entry] = [
                         e for e in seq_items if isinstance(e, m.Ldif.Entry)
                     ]
-                    filter_entry = typing.cast(
-                        "EntryFilter[m.Ldif.Entry]", predicate_or_filter1
-                    )
+                    filter_entry = predicate_or_filter1
                     return FlextLdifUtilities.Ldif.filter_ldif_entries(
                         entries_list, filter_entry, filters, mode
                     )
@@ -500,15 +494,9 @@ class FlextLdifUtilities(FlextUtilities):
                     case _:
                         return False
 
-            return typing.cast(
-                "list[T] | list[R] | Mapping[str, T] | Mapping[str, R] | list[object] | t.ConfigurationMapping | FlextLdifResult[list[m.Ldif.Entry]]",
-                FlextLdifUtilities.Ldif.filter_base_class(
-                    typing.cast(
-                        "Sequence[object] | Mapping[str, object] | object",
-                        items_or_entries,
-                    ),
-                    typing.cast("Callable[[object], bool]", predicate_wrapper),
-                ),
+            return FlextLdifUtilities.Ldif.filter_base_class(
+                items_or_entries,
+                predicate_wrapper,
             )
 
         @staticmethod
@@ -519,20 +507,15 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> list[object] | Mapping[str, t.ContainerValue]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
-                items_list: list[object] = list(
-                    typing.cast("Iterable[object]", items_or_entries)
-                )
+                items_list: list[object] = list(items_or_entries)
                 list_filter_result = FlextUtilities.Collection.filter(
                     items_list, predicate
                 )
                 return list(list_filter_result) if list_filter_result else []
             if isinstance(items_or_entries, dict):
                 items_dict: dict[str, t.ContainerValue] = {}
-                dict_items = typing.cast("Mapping[str, object]", items_or_entries)
-                for k, v in dict_items.items():
-                    items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(
-                        typing.cast("t.ContainerValue", v)
-                    )
+                for k, v in items_or_entries.items():
+                    items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(v)
                 dict_filter_result = FlextUtilities.Collection.filter(
                     items_dict, predicate
                 )
@@ -689,25 +672,15 @@ class FlextLdifUtilities(FlextUtilities):
                 if (
                     isinstance(items_or_entries, Sequence)
                     and (not isinstance(items_or_entries, (str, bytes)))
-                    and all(
-                        isinstance(x, m.Ldif.Entry)
-                        for x in typing.cast(
-                            "typing.Sequence[object]", items_or_entries
-                        )
-                    )
+                    and all(isinstance(x, m.Ldif.Entry) for x in items_or_entries)
                 ):
-                    entries = typing.cast(
-                        "typing.Sequence[m.Ldif.Entry]", items_or_entries
-                    )
+                    entries = items_or_entries
                     result = FlextLdifUtilities.Ldif.Entry.transform_batch(
                         entries,
                         normalize_dns=normalize_dns,
                         normalize_attrs=normalize_attrs,
                     )
-                    return typing.cast(
-                        "FlextLdifResult[list[m.Ldif.Entry]]",
-                        FlextLdifResult.from_result(result),
-                    )
+                    return FlextLdifResult.from_result(result)
                 if processor_normalized is None:
                     msg = "processor is required for base class process"
                     return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
@@ -716,26 +689,17 @@ class FlextLdifUtilities(FlextUtilities):
             processor_func = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():
-                    mapping_types = typing.cast(
-                        "dict[typing.Any, typing.Any] | Mapping[typing.Any, typing.Any]",
-                        items_or_entries,
-                    )
                     dict_items: dict[str, t.ContainerValue] = {
                         str(key): FlextLdifUtilities.Ldif.to_config_map_value(value)
-                        for key, value in typing.cast(
-                            "typing.Mapping[object, object]", mapping_types
-                        ).items()
+                        for key, value in items_or_entries.items()
                     }
                     results = FlextLdifUtilities.Ldif.process_dict_items(
                         dict_items, processor_func, predicate, filter_keys, exclude_keys
                     )
                     return r[list[R]].ok(results)
                 case list() | tuple():
-                    seq_types = typing.cast(
-                        "list[typing.Any] | tuple[typing.Any, ...]", items_or_entries
-                    )
                     return FlextLdifUtilities.Ldif.process_list_items(
-                        seq_types, processor_func, predicate, on_error
+                        items_or_entries, processor_func, predicate, on_error
                     )
                 case _:
                     result_item: R = processor_func(items_or_entries)
@@ -1171,15 +1135,15 @@ class FlextLdifUtilities(FlextUtilities):
             for dict_item in dicts_typed:
                 dict_item_dict: dict[str, t.JsonValue] = dict(dict_item)
                 merge_result = FlextUtilities.merge(
-                    typing.cast("dict[str, t.Container]", merged),
-                    typing.cast("dict[str, t.Container]", dict_item_dict),
+                    merged,
+                    dict_item_dict,
                     strategy=strategy,
                 )
                 if merge_result.is_failure:
                     return r[dict[str, t.JsonValue]].fail(
                         merge_result.error or "Merge failed"
                     )
-                merged = typing.cast("dict[str, t.JsonValue]", merge_result.value)
+                merged = merge_result.value
             if filter_none or filter_empty:
                 filtered: dict[str, t.JsonValue] = {}
                 for key, value in merged.items():
@@ -1212,7 +1176,7 @@ class FlextLdifUtilities(FlextUtilities):
                     extracted = value
             if extracted is None:
                 return default
-            conv_builder = cls.conv(typing.cast("t.JsonValue", extracted))
+            conv_builder = cls.conv(extracted)
             conv_result: t.ContainerValue = None
             if target_type == "str":
                 str_default = default if isinstance(default, str) else ""
@@ -1237,16 +1201,13 @@ class FlextLdifUtilities(FlextUtilities):
             else:
                 ops: dict[str, t.JsonValue] = {
                     "ensure": target_type,
-                    "ensure_default": typing.cast("t.JsonValue", default),
+                    "ensure_default": default,
                 }
                 if predicate:
                     pass
-                conv_result = typing.cast(
-                    "t.ContainerValue",
-                    cls.build(
-                        typing.cast("t.JsonValue", extracted),
-                        ops=typing.cast("Mapping[str, t.JsonValue]", ops),
-                    ),
+                conv_result = cls.build(
+                    extracted,
+                    ops=ops,
                 )
             return conv_result if conv_result is not None else default
 
@@ -1274,31 +1235,13 @@ class FlextLdifUtilities(FlextUtilities):
                 return default
             if target_type is str:
                 str_default = default if isinstance(default, str) else ""
-                return (
-                    cls
-                    .conv(typing.cast("t.JsonValue", value))
-                    .to_str(default=str_default)
-                    .safe()
-                    .build()
-                )
+                return cls.conv(value).to_str(default=str_default).safe().build()
             if target_type is int:
                 int_default = default if isinstance(default, int) else 0
-                return (
-                    cls
-                    .conv(typing.cast("t.JsonValue", value))
-                    .to_int(default=int_default)
-                    .safe()
-                    .build()
-                )
+                return cls.conv(value).to_int(default=int_default).safe().build()
             if target_type is bool:
                 bool_default = default if isinstance(default, bool) else False
-                return (
-                    cls
-                    .conv(typing.cast("t.JsonValue", value))
-                    .to_bool(default=bool_default)
-                    .safe()
-                    .build()
-                )
+                return cls.conv(value).to_bool(default=bool_default).safe().build()
             if target_type is list:
                 list_default: list[str] = []
                 match default:
@@ -1306,28 +1249,16 @@ class FlextLdifUtilities(FlextUtilities):
                         list_default = [str(item) for item in default_seq]
                     case _:
                         pass
-                return (
-                    cls
-                    .conv(typing.cast("t.JsonValue", value))
-                    .str_list(default=list_default)
-                    .safe()
-                    .build()
-                )
+                return cls.conv(value).str_list(default=list_default).safe().build()
             ops: dict[str, t.JsonValue] = {}
             result = cls.build(
-                typing.cast("t.JsonValue", value),
-                ops=typing.cast("Mapping[str, t.JsonValue]", ops),
+                value,
+                ops=ops,
             )
             if result is None:
-                return typing.cast(
-                    "t.ContainerValue",
-                    cls.or_(None, default=typing.cast("t.JsonValue", default)),
-                )
+                return cls.or_(None, default=default)
             result_typed = FlextLdifUtilities.Ldif.to_config_map_value(result)
-            return typing.cast(
-                "t.ContainerValue",
-                cls.or_(typing.cast("t.JsonValue", result_typed), default=default),
-            )
+            return cls.or_(result_typed, default=default)
 
         @classmethod
         def guard_simple[T](
@@ -1596,12 +1527,12 @@ class FlextLdifUtilities(FlextUtilities):
             merged: dict[str, t.JsonValue] = dict(mapping_list[0])
             for mapping in mapping_list[1:]:
                 merge_result = FlextUtilities.merge(
-                    typing.cast("dict[str, t.Container]", merged),
-                    typing.cast("dict[str, t.Container]", dict(mapping)),
+                    merged,
+                    dict(mapping),
                     strategy="deep",
                 )
                 if merge_result.is_success:
-                    merged = typing.cast("dict[str, t.JsonValue]", merge_result.value)
+                    merged = merge_result.value
             return merged
 
         dm = deep_merge
@@ -2158,9 +2089,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return initial
             match items:
                 case list() | tuple() as seq_items:
-                    items_list: list[object] = list(
-                        typing.cast("Iterable[object]", seq_items)
-                    )
+                    items_list: list[object] = list(seq_items)
                 case _:
                     items_list: list[object] = [items]
             if predicate:
@@ -2182,9 +2111,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Map then filter items (mnemonic: mf)."""
             match items:
                 case list() | tuple() as seq_items:
-                    items_list: list[object] = list(
-                        typing.cast("Iterable[object]", seq_items)
-                    )
+                    items_list: list[object] = list(seq_items)
                 case _:
                     items_list: list[object] = [items]
             if mapper:
@@ -2205,9 +2132,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Process and flatten items (mnemonic: pf)."""
             match items:
                 case list() | tuple() | set() | frozenset() | dict() as many_items:
-                    items_list: list[object] = list(
-                        typing.cast("Iterable[object]", many_items)
-                    )
+                    items_list: list[object] = list(many_items)
                 case _:
                     items_list: list[object] = [items]
             result: list[object] = []
@@ -2216,9 +2141,7 @@ class FlextLdifUtilities(FlextUtilities):
                     processed = processor(item) if processor else item
                     match processed:
                         case list() | tuple() as processed_seq:
-                            result.extend(
-                                typing.cast("Iterable[object]", processed_seq)
-                            )
+                            result.extend(processed_seq)
                         case _:
                             result.append(processed)
                 except (
