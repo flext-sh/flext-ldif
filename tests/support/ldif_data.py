@@ -9,17 +9,22 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import NamedTuple
+
+from pydantic import BaseModel, Field
 
 
-class LdifSample(NamedTuple):
+class LdifSample(BaseModel):
     """LDIF sample with metadata."""
 
-    content: str
-    description: str
-    expected_entries: int
-    has_binary: bool = False
-    has_changes: bool = False
+    content: str = Field(description="LDIF content as string")
+    description: str = Field(description="Human-readable description of the sample")
+    expected_entries: int = Field(description="Expected number of entries in the LDIF")
+    has_binary: bool = Field(
+        default=False, description="Whether the sample contains binary data"
+    )
+    has_changes: bool = Field(
+        default=False, description="Whether the sample contains change records"
+    )
 
 
 class LdifTestData:
