@@ -125,7 +125,7 @@ class FlextLdifUtilities(FlextUtilities):
 
             def str_list(self, default: list[str] | None = None) -> Self:
                 """Convert to string list using parent Conversion utilities."""
-                self._default = default or []
+                self._default = default if default is not None else list[str]()
                 self._target_type = "to_str_list"
                 return self
 
@@ -674,7 +674,9 @@ class FlextLdifUtilities(FlextUtilities):
                     and (not isinstance(items_or_entries, (str, bytes)))
                     and all(isinstance(x, m.Ldif.Entry) for x in items_or_entries)
                 ):
-                    entries = items_or_entries
+                    entries: list[m.Ldif.Entry] = [
+                        x for x in items_or_entries if isinstance(x, m.Ldif.Entry)
+                    ]
                     result = FlextLdifUtilities.Ldif.Entry.transform_batch(
                         entries,
                         normalize_dns=normalize_dns,
@@ -686,7 +688,7 @@ class FlextLdifUtilities(FlextUtilities):
                     return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
                 msg = "ProcessConfig requires LDIF entry sequence"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
-            processor_func = processor_normalized
+            processor_func: Callable[..., R] = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():
                     dict_items: dict[str, t.ContainerValue] = {
@@ -702,6 +704,11 @@ class FlextLdifUtilities(FlextUtilities):
                         items_or_entries, processor_func, predicate, on_error
                     )
                 case _:
+                    if isinstance(items_or_entries, Sequence) and (
+                        not isinstance(items_or_entries, (str, bytes))
+                    ):
+                        msg = "Unsupported non-list sequence for single-item processing"
+                        return r[list[R]].fail(msg)
                     result_item: R = processor_func(items_or_entries)
                     return r[list[R]].ok([result_item])
 
@@ -1130,7 +1137,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Merge multiple dicts with filtering options (mnemonic: mg)."""
             dicts_typed: tuple[Mapping[str, t.JsonValue], ...] = dicts
             if not dicts_typed:
-                return r[dict[str, t.JsonValue]].ok({})
+                return r[Mapping[str, t.JsonValue]].ok({})
             merged: dict[str, t.JsonValue] = {}
             for dict_item in dicts_typed:
                 dict_item_dict: dict[str, t.JsonValue] = dict(dict_item)
@@ -1140,7 +1147,7 @@ class FlextLdifUtilities(FlextUtilities):
                     strategy=strategy,
                 )
                 if merge_result.is_failure:
-                    return r[dict[str, t.JsonValue]].fail(
+                    return r[Mapping[str, t.JsonValue]].fail(
                         merge_result.error or "Merge failed"
                     )
                 merged = merge_result.value
@@ -1153,7 +1160,7 @@ class FlextLdifUtilities(FlextUtilities):
                         continue
                     filtered[key] = value
                 merged = filtered
-            return r[dict[str, t.JsonValue]].ok(merged)
+            return r[Mapping[str, t.JsonValue]].ok(merged)
 
         mg = merge_dicts
 
