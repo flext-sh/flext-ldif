@@ -159,6 +159,7 @@ oud = server.quirk("oud")
 def my_function(oid: FlextLdifServersOid) -> None:
     pass
 
+
 # DEPOIS
 def my_function(oid: FlextLdifServersBase) -> None:
     pass
@@ -190,19 +191,19 @@ ______________________________________________________________________
 server = FlextLdifServer()
 
 # Servers totalmente implementados
-server.quirk("rfc")      # RFC 2849/4512 baseline
-server.quirk("oid")      # Oracle Internet Directory
-server.quirk("oud")      # Oracle Unified Directory
-server.quirk("openldap") # OpenLDAP 2.x
-server.quirk("openldap1")# OpenLDAP 1.x
+server.quirk("rfc")  # RFC 2849/4512 baseline
+server.quirk("oid")  # Oracle Internet Directory
+server.quirk("oud")  # Oracle Unified Directory
+server.quirk("openldap")  # OpenLDAP 2.x
+server.quirk("openldap1")  # OpenLDAP 1.x
 server.quirk("relaxed")  # Lenient parsing mode
 
 # Servers com stubs
-server.quirk("ad")       # Active Directory
-server.quirk("apache")   # Apache Directory Server
-server.quirk("ds389")    # Red Hat DS
-server.quirk("novell")   # Novell eDirectory
-server.quirk("tivoli")   # IBM Tivoli DS
+server.quirk("ad")  # Active Directory
+server.quirk("apache")  # Apache Directory Server
+server.quirk("ds389")  # Red Hat DS
+server.quirk("novell")  # Novell eDirectory
+server.quirk("tivoli")  # IBM Tivoli DS
 ```
 
 ______________________________________________________________________

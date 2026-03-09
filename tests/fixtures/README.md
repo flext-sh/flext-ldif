@@ -65,8 +65,7 @@ from tests.fixtures.loader import FlextLdifFixtures
 
 loader = FlextLdifFixtures.Loader()
 schema = loader.load(
-    FlextLdifFixtures.ServerType.OID,
-    FlextLdifFixtures.FixtureType.SCHEMA
+    FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
 )
 ```
 

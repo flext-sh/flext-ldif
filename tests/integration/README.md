@@ -269,6 +269,7 @@ def api() -> FlextLdif:
 def parser():
     """LDIF parser service."""
 
+
 @pytest.fixture
 def writer():
     """LDIF writer service."""
@@ -280,6 +281,7 @@ def writer():
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """OID server schema LDIF fixture."""
+
 
 @pytest.fixture
 def oud_schema_fixture() -> str:
@@ -293,6 +295,7 @@ def oud_schema_fixture() -> str:
 def oid_entries_fixture() -> str:
     """OID server entries LDIF fixture."""
 
+
 @pytest.fixture
 def oud_entries_fixture() -> str:
     """OUD server entries LDIF fixture."""
@@ -304,6 +307,7 @@ def oud_entries_fixture() -> str:
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """OID server ACL LDIF fixture."""
+
 
 @pytest.fixture
 def oud_acl_fixture() -> str:
@@ -317,6 +321,7 @@ def oud_acl_fixture() -> str:
 def oid_integration_fixture() -> str:
     """OID server complete integration fixture (schema + ACL + entries)."""
 
+
 @pytest.fixture
 def oud_integration_fixture() -> str:
     """OUD server complete integration fixture (schema + ACL + entries)."""
@@ -327,6 +332,7 @@ def oud_integration_fixture() -> str:
 ```python
 import pytest
 from flext_ldif import FlextLdif
+
 
 class TestMyFeature:
     @pytest.fixture
@@ -348,6 +354,7 @@ class TestMyFeature:
 ```python
 import pytest
 from flext_ldif import FlextLdif
+
 
 class TestAllServers:
     @pytest.fixture
@@ -471,6 +478,7 @@ def test_oid_entries(self) -> None:
     result = api.parse(oid_fixture)
     # Duplicates logic
 
+
 def test_oud_entries(self) -> None:
     result = api.parse(oud_fixture)
     # Same test logic, not DRY
@@ -568,6 +576,7 @@ Always use fixtures from `conftest.py`:
 import pytest
 from flext_ldif import FlextLdif
 
+
 class TestMyNewFeature:
     @pytest.fixture
     def api(self) -> FlextLdif:
@@ -596,7 +605,9 @@ class TestMyNewFeature:
     ["oid_entries_fixture", "oud_entries_fixture"],
     ids=["OID", "OUD"],
 )
-def test_feature_all_servers(self, api: FlextLdif, server_fixture: str, request) -> None:
+def test_feature_all_servers(
+    self, api: FlextLdif, server_fixture: str, request
+) -> None:
     fixture_data = request.getfixturevalue(server_fixture)
     # Test implementation
 ```

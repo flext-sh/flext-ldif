@@ -114,8 +114,8 @@ ______________________________________________________________________
 class FlextLdifParser(Flext[dict[str, object]]):
     """LDIF parsing service following FLEXT patterns."""
 
-    _logger: FlextLogger          # Structured logging
-    _config: FlextLdifSettings      # Configuration
+    _logger: FlextLogger  # Structured logging
+    _config: FlextLdifSettings  # Configuration
 ```
 
 ### Dependencies
@@ -150,10 +150,7 @@ class FlextLdif(Flext[dict[str, object]]):
         self._config = config if config is not None else FlextLdifSettings()
 
         # Initialize parser service
-        self._parser = FlextLdifParser(
-            client=self._client,
-            config=self._config
-        )
+        self._parser = FlextLdifParser(client=self._client, config=self._config)
         # ... rest of initialization
 
     def parse(self, source, server_type, *, batch, paginate, page_size):
@@ -163,7 +160,7 @@ class FlextLdif(Flext[dict[str, object]]):
             server_type=server_type,
             batch=batch,
             paginate=paginate,
-            page_size=page_size
+            page_size=page_size,
         )
 
     def parse_schema_ldif(self, file_path, server_type=None):

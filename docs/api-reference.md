@@ -169,9 +169,7 @@ Write LDIF entries to file.
 
 ```python
 def write_file(
-    self,
-    entries: list[FlextLdifModels.Entry],
-    file_path: Path | str
+    self, entries: list[FlextLdifModels.Entry], file_path: Path | str
 ) -> FlextResult[bool]:
     """Write LDIF entries to file.
 
@@ -219,7 +217,9 @@ def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
 Filter entries with person object class.
 
 ```python
-def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
+def filter_persons(
+    self, entries: list[FlextLdifModels.Entry]
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
@@ -241,7 +241,9 @@ def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[li
 Filter entries with group object classes.
 
 ```python
-def filter_groups(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
+def filter_groups(
+    self, entries: list[FlextLdifModels.Entry]
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
@@ -262,9 +264,7 @@ Filter entries by specific object class.
 
 ```python
 def filter_by_objectclass(
-    self,
-    entries: list[FlextLdifModels.Entry],
-    object_class: str
+    self, entries: list[FlextLdifModels.Entry], object_class: str
 ) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter entries by object class.
 
@@ -288,7 +288,9 @@ def filter_by_objectclass(
 Generate statistics about LDIF entries.
 
 ```python
-def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict[str, int]]:
+def get_entry_statistics(
+    self, entries: list[FlextLdifModels.Entry]
+) -> FlextResult[dict[str, int]]:
     """Get statistics about LDIF entries.
 
     Args:
@@ -498,8 +500,7 @@ class Entry(BaseModel):
 
     dn: str = Field(..., description="Distinguished Name")
     attributes: dict[str, t.StringList] = Field(
-        default_factory=dict,
-        description="Entry attributes as key-value pairs"
+        default_factory=dict, description="Entry attributes as key-value pairs"
     )
 
     def get_object_classes(self) -> t.StringList:
@@ -530,7 +531,7 @@ print(f"Object Classes: {entry.get_object_classes()}")
 # Check entry type
 if entry.is_person():
     print("This is a person entry")
-    email = entry.get_attribute_values('mail')
+    email = entry.get_attribute_values("mail")
     if email:
         print(f"Email: {email[0]}")
 ```
@@ -544,25 +545,16 @@ class Config(BaseModel):
     """LDIF processing configuration."""
 
     max_entries: int | None = Field(
-        None,
-        description="Maximum number of entries to process"
+        None, description="Maximum number of entries to process"
     )
     strict_validation: bool = Field(
-        False,
-        description="Enable strict RFC 2849 validation"
+        False, description="Enable strict RFC 2849 validation"
     )
     ignore_unknown_attributes: bool = Field(
-        True,
-        description="Ignore attributes not in standard schema"
+        True, description="Ignore attributes not in standard schema"
     )
-    encoding: str = Field(
-        "utf-8",
-        description="Character encoding for LDIF processing"
-    )
-    line_separator: str = Field(
-        "\n",
-        description="Line separator for LDIF output"
-    )
+    encoding: str = Field("utf-8", description="Character encoding for LDIF processing")
+    line_separator: str = Field("\n", description="Line separator for LDIF output")
 ```
 
 **Example Usage**:
@@ -573,7 +565,7 @@ config = FlextLdifModels.Config(
     max_entries=50000,
     strict_validation=True,
     ignore_unknown_attributes=False,
-    encoding='utf-8'
+    encoding="utf-8",
 )
 
 # Use configuration with API
@@ -589,7 +581,9 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create(data: t.Dict | str, attributes: dict[str, t.StringList] | None = None) -> Entry:
+    def create(
+        data: t.Dict | str, attributes: dict[str, t.StringList] | None = None
+    ) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod
@@ -597,20 +591,12 @@ class Factory:
         """Create configuration with validation."""
 
     @staticmethod
-    def create_person_entry(
-        dn: str,
-        cn: str,
-        sn: str,
-        **additional_attrs
-    ) -> Entry:
+    def create_person_entry(dn: str, cn: str, sn: str, **additional_attrs) -> Entry:
         """Create person entry with common attributes."""
 
     @staticmethod
     def create_group_entry(
-        dn: str,
-        cn: str,
-        members: t.StringList,
-        **additional_attrs
+        dn: str, cn: str, members: t.StringList, **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
 ```
@@ -623,13 +609,13 @@ person = FlextLdifModels.Factory.create_person_entry(
     dn="cn=John Doe,ou=People,dc=example,dc=com",
     cn="John Doe",
     sn="Doe",
-    mail=["john.doe@example.com"]
+    mail=["john.doe@example.com"],
 )
 
 group = FlextLdifModels.Factory.create_group_entry(
     dn="cn=Admins,ou=Groups,dc=example,dc=com",
     cn="Administrators",
-    members=["cn=John Doe,ou=People,dc=example,dc=com"]
+    members=["cn=John Doe,ou=People,dc=example,dc=com"],
 )
 ```
 
@@ -642,9 +628,9 @@ from flext_ldif import FlextLdifSettings, initialize_ldif_config, get_ldif_confi
 
 # Initialize global configuration
 initialize_ldif_config({
-    'max_entries': 100000,
-    'strict_validation': True,
-    'encoding': 'utf-8'
+    "max_entries": 100000,
+    "strict_validation": True,
+    "encoding": "utf-8",
 })
 
 # Access global configuration
@@ -658,7 +644,7 @@ print(f"Max entries: {config.max_entries}")
 # Create instance-specific configuration
 instance_config = FlextLdifModels.Config(
     max_entries=10000,  # Override global setting
-    strict_validation=False
+    strict_validation=False,
 )
 
 # Use with API instance
@@ -707,7 +693,8 @@ entries = result.unwrap_or([])  # Empty list if failed
 
 # Railway-oriented composition
 final_result = (
-    api.parse_file("input.ldif")
+    api
+    .parse_file("input.ldif")
     .flat_map(api.validate_entries)
     .flat_map(lambda entries: api.filter_persons(entries))
     .flat_map(lambda persons: api.write_file(persons, "persons.ldif"))
@@ -718,9 +705,9 @@ final_result = (
 
 ```python
 from flext_ldif import (
-    FlextLdifError,           # Base LDIF error
-    FlextLdifParseError,      # LDIF parsing errors
-    FlextLdifValidationError, # Validation errors
+    FlextLdifError,  # Base LDIF error
+    FlextLdifParseError,  # LDIF parsing errors
+    FlextLdifValidationError,  # Validation errors
 )
 
 # Exception builder pattern
@@ -783,32 +770,32 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[t.Dict]:
+def process_enterprise_directory(
+    input_file: Path, output_file: Path
+) -> FlextResult[t.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
     return (
         # Parse directory export
-        api.parse_file(input_file)
-
+        api
+        .parse_file(input_file)
         # Validate all entries
-        .flat_map(lambda entries:
-            api.validate_entries(entries).map(lambda _: entries))
-
+        .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
         # Extract person entries
         .flat_map(api.filter_persons)
-
         # Generate statistics
-        .flat_map(lambda persons: (
-            api.get_entry_statistics(persons)
-            .map(lambda stats: {'persons': persons, 'stats': stats})
-        ))
-
+        .flat_map(
+            lambda persons: api.get_entry_statistics(persons).map(
+                lambda stats: {"persons": persons, "stats": stats}
+            )
+        )
         # Write processed entries
-        .flat_map(lambda data:
-            api.write_file(data['persons'], output_file)
-            .map(lambda _: data['stats']))
-
+        .flat_map(
+            lambda data: api.write_file(data["persons"], output_file).map(
+                lambda _: data["stats"]
+            )
+        )
         # Add error context
         .map_error(lambda error: f"Enterprise processing failed: {error}")
     )
@@ -830,12 +817,14 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return FlextResult[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[t.Dict].fail(
+                f"Failed to process {file_path}: {result.error}"
+            )
 
     return FlextResult[t.Dict].ok({
-        'total_entries': len(all_entries),
-        'file_stats': processing_stats,
-        'entries': all_entries
+        "total_entries": len(all_entries),
+        "file_stats": processing_stats,
+        "entries": all_entries,
     })
 ```
 
@@ -843,17 +832,16 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLdif,
-    entries: list[FlextLdifModels.Entry]
+    api: FlextLdif, entries: list[FlextLdifModels.Entry]
 ) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
     def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
         # Custom business logic
         return (
-            entry.has_object_class('person') and
-            entry.get_attribute_values('mail') and
-            'REDACTED_LDAP_BIND_PASSWORD' not in entry.dn.lower()
+            entry.has_object_class("person")
+            and entry.get_attribute_values("mail")
+            and "REDACTED_LDAP_BIND_PASSWORD" not in entry.dn.lower()
         )
 
     try:
@@ -873,6 +861,7 @@ Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks su
 # ✅ v1.0+ Flat imports
 from flext_ldif import FlextLdifParser
 from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
+
 
 class RfcSchemaParserService:
     """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
@@ -963,6 +952,7 @@ Generic LDIF migration between different LDAP servers.
 from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
+
 class FlextLdifMigration:
     """Generic LDIF migration pipeline using quirks-based transformation."""
 
@@ -1028,6 +1018,7 @@ Central registry for managing server-specific quirks.
 
 ```python
 from flext_ldif import QuirkRegistryService
+
 
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
@@ -1145,16 +1136,16 @@ from flext_core import u
 logger = FlextLogger(__name__)
 
 # Log processing operations
-logger.info("Starting LDIF processing", extra={
-    'file_path': str(input_file),
-    'config': config.model_dump()
-})
+logger.info(
+    "Starting LDIF processing",
+    extra={"file_path": str(input_file), "config": config.model_dump()},
+)
 
 # Log processing results
-logger.info("LDIF processing completed", extra={
-    'entries_processed': len(entries),
-    'processing_time': elapsed_time
-})
+logger.info(
+    "LDIF processing completed",
+    extra={"entries_processed": len(entries), "processing_time": elapsed_time},
+)
 ```
 
 ## 🚀 Quick Start Guide
@@ -1249,8 +1240,8 @@ from pathlib import Path
 migration = FlextLdifMigration(
     input_dir=Path("source_oid_ldif"),
     output_dir=Path("target_oud_ldif"),
-    source_server_type="oid",     # Oracle Internet Directory
-    target_server_type="oud",     # Oracle Unified Directory
+    source_server_type="oid",  # Oracle Internet Directory
+    target_server_type="oud",  # Oracle Unified Directory
 )
 
 # Execute migration: OID → RFC → OUD
@@ -1278,25 +1269,24 @@ api = FlextLdif()
 # Composable pipeline with explicit error handling
 result = (
     # Parse LDIF file
-    api.parse_file(Path("directory.ldif"))
-
+    api
+    .parse_file(Path("directory.ldif"))
     # Validate all entries
-    .flat_map(lambda entries:
-        api.validate_entries(entries).map(lambda _: entries))
-
+    .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
     # Filter person entries
     .flat_map(api.filter_persons)
-
     # Generate statistics
-    .flat_map(lambda persons:
-        api.get_entry_statistics(persons)
-        .map(lambda stats: {"persons": persons, "stats": stats}))
-
+    .flat_map(
+        lambda persons: api.get_entry_statistics(persons).map(
+            lambda stats: {"persons": persons, "stats": stats}
+        )
+    )
     # Write filtered entries
-    .flat_map(lambda data:
-        api.write_file(data["persons"], Path("persons.ldif"))
-        .map(lambda _: data["stats"]))
-
+    .flat_map(
+        lambda data: api.write_file(data["persons"], Path("persons.ldif")).map(
+            lambda _: data["stats"]
+        )
+    )
     # Add error context
     .map_error(lambda error: f"Processing failed: {error}")
 )
@@ -1315,43 +1305,43 @@ else:
 
 ```python
 # Oracle Internet Directory
-server_type="oid"
+server_type = "oid"
 
 # Oracle Unified Directory
-server_type="oud"
+server_type = "oud"
 
 # OpenLDAP 2.x
-server_type="openldap"
+server_type = "openldap"
 
 # OpenLDAP 1.x
-server_type="openldap1"
+server_type = "openldap1"
 ```
 
 **Stub Implementations** (5 servers - ready for enhancement):
 
 ```python
 # Active Directory (stub - not implemented)
-server_type="ad"
+server_type = "ad"
 
 # Apache Directory Server (stub - not implemented)
-server_type="apache"
+server_type = "apache"
 
 # 389 Directory Server (stub - not implemented)
-server_type="389ds"
+server_type = "389ds"
 
 # Novell eDirectory (stub - not implemented)
-server_type="novell"
+server_type = "novell"
 
 # IBM Tivoli Directory Server (stub - not implemented)
-server_type="tivoli"
+server_type = "tivoli"
 ```
 
 **Generic/Unknown Servers**:
 
 ```python
 # Works with ANY LDAP server using pure RFC baseline
-server_type=None  # Pure RFC 2849/4512 compliance
-server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
+server_type = None  # Pure RFC 2849/4512 compliance
+server_type = "my_custom_ldap_v5"  # Unknown server = RFC baseline
 ```
 
 ______________________________________________________________________

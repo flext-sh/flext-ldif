@@ -176,6 +176,7 @@ ______________________________________________________________________
 def my_func():
     from flext_ldif import p  # PROIBIDO
 
+
 try:
     import pandas  # PROIBIDO
 except ImportError:
@@ -183,6 +184,7 @@ except ImportError:
 
 # ✅ CORRETO - TYPE_CHECKING apenas para resolver ciclos em módulos não-Pydantic
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from flext_ldif.protocols import p
 ```
@@ -213,8 +215,9 @@ class _FlextLdifConstantsMeta(type):
             return cls.Ldif.LiteralTypes
         ...
 
-class FlextLdifConstants(metaclass=_FlextLdifConstantsMeta):
-    ...
+
+class FlextLdifConstants(metaclass=_FlextLdifConstantsMeta): ...
+
 
 # ✅ CORRETO - Sempre usar namespace completo
 c.Ldif.LiteralTypes  # Não c.LiteralTypes
@@ -236,13 +239,12 @@ m.Ldif.Entry  # Não m.Entry
 # ❌ PROIBIDO - constants.py
 class FlextLdifConstants:
     @staticmethod
-    def normalize_server_type(server_type: str) -> str:
-        ...
+    def normalize_server_type(server_type: str) -> str: ...
+
 
 # ✅ CORRETO - Mover para utilities.py ou _utilities/server.py
 # utilities.py ou _utilities/server.py
-def normalize_server_type(server_type: str) -> str:
-    ...
+def normalize_server_type(server_type: str) -> str: ...
 ```
 
 #### cast()
@@ -254,6 +256,8 @@ value = cast(MyModel, data)
 # ✅ CORRETO - Usar Models/Protocols/TypeGuards
 if isinstance(data, MyModel):
     value = data
+
+
 # ou
 def is_my_model(obj: object) -> TypeGuard[MyModel]:
     return isinstance(obj, MyModel)
@@ -266,8 +270,11 @@ def is_my_model(obj: object) -> TypeGuard[MyModel]:
 def process(data: Any) -> Any:
     """Process any data."""
 
+
 # ✅ CORRETO - Usar tipos específicos
 from flext_core import FlextTypes
+
+
 def process(data: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
     """Process general value type data."""
 ```
@@ -387,17 +394,17 @@ This section defines **mandatory patterns** for imports, namespaces, and module 
 
 ```python
 # ✅ CORRECT - Runtime short aliases (src/ and tests/)
-from flext_ldif.typings import t      # FlextLdifTypes
-from flext_ldif.constants import c    # FlextLdifConstants
-from flext_ldif.models import m       # FlextLdifModels
-from flext_ldif.protocols import p    # FlextLdifProtocols
-from flext_ldif.utilities import u    # FlextLdifUtilities
+from flext_ldif.typings import t  # FlextLdifTypes
+from flext_ldif.constants import c  # FlextLdifConstants
+from flext_ldif.models import m  # FlextLdifModels
+from flext_ldif.protocols import p  # FlextLdifProtocols
+from flext_ldif.utilities import u  # FlextLdifUtilities
 
 # flext_core aliases (also available)
-from flext_core import r      # FlextResult
+from flext_core import r  # FlextResult
 from flext_core import e  # FlextExceptions
 from flext_core import d  # FlextDecorators
-from flext_core import mx     # FlextMixins
+from flext_core import mx  # FlextMixins
 
 # Usage with full namespace (MANDATORY)
 result: r[str] = r[str].ok("value")
@@ -407,8 +414,8 @@ entry: m.Ldif.Entry = m.Ldif.Entry(dn="cn=test")
 service: p.Ldif.Service[str] = my_service
 
 # ❌ FORBIDDEN - Root aliases
-server: c.ServerTypes    # WRONG - must use c.Ldif.ServerTypes
-entry: m.Entry           # WRONG - must use m.Ldif.Entry
+server: c.ServerTypes  # WRONG - must use c.Ldif.ServerTypes
+entry: m.Entry  # WRONG - must use m.Ldif.Entry
 ```
 
 ### 2. Module Aggregation Rules (Facades)
@@ -422,6 +429,7 @@ entry: m.Entry           # WRONG - must use m.Ldif.Entry
 from flext_ldif._models.entry import LdifEntry
 from flext_ldif._models.config import ProcessConfig
 
+
 class FlextLdifModels:
     """Facade aggregating all model classes."""
 
@@ -431,6 +439,7 @@ class FlextLdifModels:
         class Config:
             ProcessConfig = ProcessConfig
             # ... other config models
+
 
 # Short alias for runtime access
 m = FlextLdifModels
@@ -460,6 +469,7 @@ m = FlextLdifModels
 from __future__ import annotations
 from typing import Self
 
+
 class QuirkBase:
     def clone(self) -> Self:
         """Self reference works with forward annotations."""
@@ -472,13 +482,16 @@ class QuirkBase:
 # protocols.py (Tier 0 - no internal imports except flext_core)
 from flext_core import FlextProtocols
 
+
 class FlextLdifProtocols(FlextProtocols):
     class Ldif:
         class Parser(Protocol):
             def parse(self, content: str) -> list[Entry]: ...
 
+
 # services/parser.py (Tier 3 - can import protocols)
 from flext_ldif.protocols import p
+
 
 class ParserService:
     def process(self, parser: p.Ldif.Parser) -> r[list[Entry]]:
@@ -491,6 +504,7 @@ class ParserService:
 ```python
 # Instead of importing services directly, inject them
 from flext_core import FlextContainer
+
 
 class MigrationHandler:
     def __init__(self, container: FlextContainer) -> None:
@@ -514,6 +528,7 @@ class MigrationHandler:
 
 # _utilities/builders.py
 from flext_ldif.models import FlextLdifModels  # ✅ ALLOWED
+
 m = FlextLdifModels
 
 # WHY: _utilities (Tier 1) can import from models (Tier 1)
@@ -562,13 +577,16 @@ from tests import tm, tf  # TestsFlextLdifMatchers, TestsFlextLdifFixtures
 # ✅ ALLOWED - Tests can import internal modules for testing
 from flext_ldif._utilities.builders import ProcessConfigBuilder
 
+
 # ✅ CORRECT - Use pytest fixtures
 @pytest.fixture
 def ldif_client() -> FlextLdif:
     return FlextLdif()
 
+
 # ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests unnecessarily
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from flext_ldif import FlextLdif
 ```
@@ -706,7 +724,9 @@ entries = tm.ok_entries(result, count=3, empty=False)
 
 ```python
 entry = tf.create_entry("cn=test,dc=example", attrs={"cn": ["test"]})
-entry = tf.create_entry("cn=user,dc=example", object_classes=["person", "inetOrgPerson"])
+entry = tf.create_entry(
+    "cn=user,dc=example", object_classes=["person", "inetOrgPerson"]
+)
 ```
 
 **`tf.create_entries()`** - Create multiple entries:
@@ -760,20 +780,23 @@ from flext_core import FlextModels
 # Use unified Models namespace (ALWAYS use namespace completo)
 entry = FlextModels.Ldif.Entry(
     dn="cn=test,dc=example,dc=com",
-    attributes={"cn": ["test"], "objectClass": ["person"]}
+    attributes={"cn": ["test"], "objectClass": ["person"]},
 )
 
 # Or use short alias with namespace completo
 from flext_core import m
+
 entry = m.Ldif.Entry(...)  # ✅ CORRETO
 # entry = m.Entry(...)  # ❌ PROIBIDO - root alias
 
 # Access configuration
 from flext_ldif import FlextLdifConfig
+
 config = FlextLdifConfig()
 
 # Access constants (ALWAYS use namespace completo)
 from flext_core import c
+
 server_types = c.Ldif.ServerTypes  # ✅ CORRETO
 # server_types = c.ServerTypes  # ❌ PROIBIDO - root alias
 ```
@@ -815,8 +838,8 @@ from pathlib import Path
 pipeline = FlextLdifMigrationPipeline(
     input_dir=Path("source_ldifs"),
     output_dir=Path("target_ldifs"),
-    source_server_type="oid",    # Source: Oracle Internet Directory
-    target_server_type="oud",    # Target: Oracle Unified Directory
+    source_server_type="oid",  # Source: Oracle Internet Directory
+    target_server_type="oud",  # Target: Oracle Unified Directory
 )
 
 # Generic transformation: OID → RFC → OUD

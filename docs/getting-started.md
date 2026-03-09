@@ -183,10 +183,10 @@ from flext_ldif import FlextLdif, FlextLdifModels
 
 # Create configuration
 config = FlextLdifModels.Config(
-    max_entries=10000,              # Limit number of entries processed
-    strict_validation=True,         # Enable strict RFC 2849 validation
-    ignore_unknown_attributes=False, # Process all attributes
-    encoding='utf-8'                # Character encoding
+    max_entries=10000,  # Limit number of entries processed
+    strict_validation=True,  # Enable strict RFC 2849 validation
+    ignore_unknown_attributes=False,  # Process all attributes
+    encoding="utf-8",  # Character encoding
 )
 
 # Initialize API with configuration
@@ -288,8 +288,8 @@ from pathlib import Path
 pipeline = FlextLdifMigration(
     input_dir=Path("source_ldifs"),
     output_dir=Path("target_ldifs"),
-    source_server_type="oid",    # Source: Oracle Internet Directory
-    target_server_type="oud",    # Target: Oracle Unified Directory
+    source_server_type="oid",  # Source: Oracle Internet Directory
+    target_server_type="oud",  # Target: Oracle Unified Directory
 )
 
 # Execute generic transformation: OID → RFC → OUD

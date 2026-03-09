@@ -145,9 +145,9 @@ from flext_ldif import TLdif
 ```python
 # Simplified public interface
 from flext_ldif import (
-    FlextLdif,           # Main application service
-    FlextLdifSettings,        # Configuration management
-    FlextLdifModels,        # Unified domain models
+    FlextLdif,  # Main application service
+    FlextLdifSettings,  # Configuration management
+    FlextLdifModels,  # Unified domain models
 )
 ```
 

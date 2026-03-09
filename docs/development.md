@@ -112,8 +112,8 @@ entry_data = {
     "attributes": {
         "cn": ["user"],
         "objectClass": ["person", "organizationalPerson"],
-        "mail": ["user@example.com"]
-    }
+        "mail": ["user@example.com"],
+    },
 }
 entry = FlextLdifModels.Entry.create(entry_data)
 
@@ -182,6 +182,7 @@ objectClass: person
 description: Administrator account
 """
 
+
 # Test parsing with various LDIF formats
 def test_ldif_parsing():
     api = FlextLdif()
@@ -196,6 +197,7 @@ def test_ldif_parsing():
 ```python
 import psutil
 import os
+
 
 def test_memory_usage():
     """Monitor memory usage during LDIF processing."""
@@ -231,12 +233,14 @@ def process_small_ldif(file_path: str) -> FlextResult[t.Dict]:
     api = FlextLdif()
     return api.parse_file(file_path)
 
+
 # Consider: External tools for large files
 def process_large_ldif(file_path: str) -> FlextResult[t.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
     pass
+
 
 # Monitor: Memory usage for production systems
 def process_with_monitoring(file_path: str) -> FlextResult[t.Dict]:

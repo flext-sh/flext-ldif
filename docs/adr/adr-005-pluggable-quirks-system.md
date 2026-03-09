@@ -77,9 +77,7 @@ oid = registry.get_for_server("oid")  # Priority 10
 oud = registry.get_for_server("oud")  # Priority 20
 
 # RFC-first with quirks enhancement
-result = rfc_parser.parse_withs(
-    content, server, data_type="schema"
-)
+result = rfc_parser.parse_withs(content, server, data_type="schema")
 ```
 
 **Consequences**:

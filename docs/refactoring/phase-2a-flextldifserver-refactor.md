@@ -65,11 +65,14 @@ def _get_attr(self, server_type: str, attr_name: str) -> object | None:
     base = self._bases.get(self._normalize_server_type(server_type))
     return getattr(base, attr_name, None) if base else None
 
+
 def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
     return self._get_attr(server_type, "schema")
 
+
 def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
     return self._get_attr(server_type, "acl")
+
 
 def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
     return self._get_attr(server_type, "entry")
@@ -97,9 +100,9 @@ def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
 registry = FlextLdifServer()
 
 # Get quirks by type (clean, minimal)
-schema = registry.schema("oud")       # Get OUD schema quirk
-acl = registry.acl("oid")             # Get OID ACL quirk
-entry = registry.entry("openldap")    # Get OpenLDAP entry quirk
+schema = registry.schema("oud")  # Get OUD schema quirk
+acl = registry.acl("oid")  # Get OID ACL quirk
+entry = registry.entry("openldap")  # Get OpenLDAP entry quirk
 
 # Find quirks that handle specific items
 schema = registry.find_schema_for_attribute(attr_def)
@@ -116,9 +119,9 @@ Old method names still work:
 
 ```python
 # These still work for existing code
-base = registry.get_base("rfc")           # → quirk()
-schema = registry.get_schema_quirk("rfc") # → schema()
-acl = registry.get_acl_quirk("rfc")       # → acl()
+base = registry.get_base("rfc")  # → quirk()
+schema = registry.get_schema_quirk("rfc")  # → schema()
+acl = registry.get_acl_quirk("rfc")  # → acl()
 ```
 
 ### 5. Internal Optimization
@@ -175,9 +178,11 @@ def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
     """Get schema quirk for a server type."""
     return self._get_attr(server_type, "schema")
 
+
 def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
     """Get ACL quirk for a server type."""
     return self._get_attr(server_type, "acl")
+
 
 def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
     """Get entry quirk for a server type."""

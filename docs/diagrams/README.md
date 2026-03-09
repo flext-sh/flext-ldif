@@ -185,6 +185,7 @@ note right : Version: 0.9.9
 import os
 from pathlib import Path
 
+
 def generate_diagrams():
     """Generate all diagrams from code annotations."""
     diagram_dir = Path("docs/diagrams")

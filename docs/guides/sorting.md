@@ -55,10 +55,7 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 ### Pattern 1: Execute Method (V1 Style)
 
 ```python
-result = FlextLdifSorting(
-    entries=my_entries,
-    sort_by="hierarchy"
-).execute()
+result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
 if result.is_success:
     sorted_entries = result.unwrap()
@@ -68,7 +65,8 @@ if result.is_success:
 
 ```python
 result = (
-    FlextLdifSorting.sort(my_entries, by="hierarchy")
+    FlextLdifSorting
+    .sort(my_entries, by="hierarchy")
     .map(lambda e: e[:10])  # Take first 10
     .and_then(lambda e: FlextLdifSorting.sort(e, by="alphabetical"))
 )
@@ -78,7 +76,8 @@ result = (
 
 ```python
 sorted_entries = (
-    FlextLdifSorting.builder()
+    FlextLdifSorting
+    .builder()
     .with_entries(my_entries)
     .with_strategy("hierarchy")
     .with_attribute_sorting(order=["cn", "sn", "mail"])
@@ -98,14 +97,12 @@ result = FlextLdifSorting.by_dn(my_entries)
 
 # Sort entries by custom predicate
 result = FlextLdifSorting.by_custom(
-    my_entries,
-    lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
+    my_entries, lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
 )
 
 # Sort attributes in entries
 result = FlextLdifSorting.sort_attributes_in_entries(
-    my_entries,
-    order=["cn", "sn", "mail"]
+    my_entries, order=["cn", "sn", "mail"]
 )
 
 # Sort ACL values in entries
@@ -130,38 +127,43 @@ result = FlextLdifSorting.by_schema(schema_entries)
 
 ```python
 # Sort ONLY attributes, preserving entry order
-sorted_entries = FlextLdifSorting(
-    entries=my_entries,
-    sort_target="attributes"
-).execute().unwrap()
+sorted_entries = (
+    FlextLdifSorting(entries=my_entries, sort_target="attributes").execute().unwrap()
+)
 
 # Sort ONLY ACL values within entries
-sorted_entries = FlextLdifSorting(
-    entries=my_entries,
-    sort_target="acl"
-).execute().unwrap()
+sorted_entries = (
+    FlextLdifSorting(entries=my_entries, sort_target="acl").execute().unwrap()
+)
 
 # Sort EVERYTHING at once
-sorted_entries = FlextLdifSorting(
-    entries=my_entries,
-    sort_target="combined",
-    sort_by="hierarchy",
-    sort_attributes=True,
-    attribute_order=["objectClass", "cn", "sn", "mail"],
-    sort_acl=True
-).execute().unwrap()
+sorted_entries = (
+    FlextLdifSorting(
+        entries=my_entries,
+        sort_target="combined",
+        sort_by="hierarchy",
+        sort_attributes=True,
+        attribute_order=["objectClass", "cn", "sn", "mail"],
+        sort_acl=True,
+    )
+    .execute()
+    .unwrap()
+)
 
 # Custom sorting: sort by DN length
-sorted_entries = FlextLdifSorting(
-    entries=my_entries,
-    sort_by="custom",
-    custom_predicate=lambda e: len(FlextLdifUtilities.DN.get_dn_value(e.dn))
-).execute().unwrap()
+sorted_entries = (
+    FlextLdifSorting(
+        entries=my_entries,
+        sort_by="custom",
+        custom_predicate=lambda e: len(FlextLdifUtilities.DN.get_dn_value(e.dn)),
+    )
+    .execute()
+    .unwrap()
+)
 
 # Custom sorting: sort by CN attribute value
 result = FlextLdifSorting.by_custom(
-    my_entries,
-    lambda e: e.attributes.attributes.get("cn", [""])[0].lower()
+    my_entries, lambda e: e.attributes.attributes.get("cn", [""])[0].lower()
 )
 ```
 
@@ -190,18 +192,21 @@ sorted = FlextLdifSorting.by_hierarchy(entries).unwrap()
 sorted = FlextLdifSorting.by_dn(entries).unwrap()
 
 # Sort entries + sort attributes + sort ACL
-sorted = FlextLdifSorting(
-    entries=entries,
-    sort_target="combined",
-    sort_by="hierarchy",
-    sort_attributes=True,
-    sort_acl=True
-).execute().unwrap()
+sorted = (
+    FlextLdifSorting(
+        entries=entries,
+        sort_target="combined",
+        sort_by="hierarchy",
+        sort_attributes=True,
+        sort_acl=True,
+    )
+    .execute()
+    .unwrap()
+)
 
 # Sort with custom logic
 sorted = FlextLdifSorting.by_custom(
-    entries,
-    lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
+    entries, lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
 ).unwrap()
 ```
 
