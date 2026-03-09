@@ -6,12 +6,12 @@ server implementations, ACL handling, and service contracts.
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
+from pydantic import BaseModel, ConfigDict, Field
 from tests import s
 
 from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
@@ -61,14 +61,15 @@ class TestsTestFlextLdifProtocols(s):
         OPENLDAP = "openldap"
         RELAXED = "relaxed"
 
-    @dataclasses.dataclass(frozen=True)
-    class ProtocolServer:
-        """Server implementation for schema protocol testing organized as nested dataclass."""
+    class ProtocolServer(BaseModel):
+        """Server implementation for schema protocol testing."""
 
         __test__ = False
-        name: str
-        server_class: type
-        schema_class: type
+        model_config = ConfigDict(frozen=True)
+
+        name: str = Field(description="Protocol server implementation name")
+        server_class: type = Field(description="Server implementation class")
+        schema_class: type = Field(description="Schema implementation class")
 
     class Constants:
         """Test constants organized as nested class."""

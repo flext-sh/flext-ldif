@@ -6,11 +6,11 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 from tests import TestDeduplicationHelpers, c, m, s
 
 from flext_ldif.servers.apache import FlextLdifServersApache
@@ -59,44 +59,65 @@ class AclScenario(StrEnum):
     WRITE_EMPTY = "write_empty"
 
 
-@dataclasses.dataclass(frozen=True)
-class AttributeTestCase:
+class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    scenario: AttributeScenario
-    attr_definition: str
-    expected_can_handle: bool
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AttributeScenario = Field(description="Attribute scenario identifier")
+    attr_definition: str = Field(description="Schema attribute definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed attribute name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class ObjectClassTestCase:
+class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    scenario: ObjectClassScenario
-    oc_definition: str
-    expected_can_handle: bool
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
+    oc_definition: str = Field(description="Schema objectClass definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class EntryTestCase:
+class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    scenario: EntryScenario
-    entry_dn: str
-    attributes: dict[str, list[str]]
-    expected_can_handle: bool
+    model_config = ConfigDict(frozen=True)
+
+    scenario: EntryScenario = Field(description="Entry detection scenario identifier")
+    entry_dn: str = Field(description="Entry distinguished name")
+    attributes: dict[str, list[str]] = Field(
+        description="Entry attributes mapped by name"
+    )
+    expected_can_handle: bool = Field(description="Expected can_handle result")
 
 
-@dataclasses.dataclass(frozen=True)
-class AclTestCase:
+class AclTestCase(BaseModel):
     """Test case for ACL handling."""
 
-    scenario: AclScenario
-    acl_line: str | None = None
-    expected_can_handle: bool = False
-    expected_success: bool = False
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AclScenario = Field(description="ACL scenario identifier")
+    acl_line: str | None = Field(
+        default=None,
+        description="ACL line under test",
+    )
+    expected_can_handle: bool = Field(
+        default=False,
+        description="Expected can_handle result",
+    )
+    expected_success: bool = Field(
+        default=False,
+        description="Expected parse success state",
+    )
 
 
 ATTRIBUTE_TEST_CASES = (

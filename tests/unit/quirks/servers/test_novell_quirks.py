@@ -6,10 +6,10 @@ eDirectory-specific attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 from flext_ldif import m
@@ -46,37 +46,51 @@ class EntryScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
-@dataclasses.dataclass(frozen=True)
-class AttributeTestCase:
+class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    scenario: AttributeScenario
-    attr_definition: str
-    expected_can_handle: bool
-    expected_oid: str | None = None
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AttributeScenario = Field(description="Attribute scenario identifier")
+    attr_definition: str = Field(description="Schema attribute definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed attribute name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class ObjectClassTestCase:
+class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    scenario: ObjectClassScenario
-    oc_definition: str
-    expected_can_handle: bool
-    expected_oid: str | None = None
-    expected_name: str | None = None
-    expected_kind: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
+    oc_definition: str = Field(description="Schema objectClass definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass name",
+    )
+    expected_kind: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass kind",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class EntryTestCase:
+class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    scenario: EntryScenario
-    entry_dn: str
-    attributes: dict[str, list[str]]
-    expected_can_handle: bool
+    model_config = ConfigDict(frozen=True)
+
+    scenario: EntryScenario = Field(description="Entry detection scenario identifier")
+    entry_dn: str = Field(description="Entry distinguished name")
+    attributes: dict[str, list[str]] = Field(
+        description="Entry attributes mapped by name"
+    )
+    expected_can_handle: bool = Field(description="Expected can_handle result")
 
 
 ATTRIBUTE_TEST_CASES = (

@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 
@@ -169,16 +169,21 @@ class FlextLdifFixtures:
         ENTRIES = "entries"
         INTEGRATION = "integration"
 
-    @dataclass(frozen=True)
-    class Metadata:
+    class Metadata(BaseModel):
         """Metadata about a loaded fixture."""
 
-        server_type: FlextLdifFixtures.ServerType
-        fixture_type: FlextLdifFixtures.FixtureType
-        file_path: Path
-        line_count: int
-        entry_count: int
-        size_bytes: int
+        model_config = ConfigDict(frozen=True)
+
+        server_type: FlextLdifFixtures.ServerType = Field(
+            description="LDAP server type for the fixture"
+        )
+        fixture_type: FlextLdifFixtures.FixtureType = Field(
+            description="Fixture category identifier"
+        )
+        file_path: Path = Field(description="Fixture file path")
+        line_count: int = Field(description="Number of lines in the fixture file")
+        entry_count: int = Field(description="Number of LDIF entries in the fixture")
+        size_bytes: int = Field(description="Fixture file size in bytes")
 
     class Loader:
         """Generic fixture loader for all LDAP server types.

@@ -151,6 +151,7 @@ class FileManager:
 
     def __init__(self) -> None:
         """Initialize FileManager."""
+        super().__init__()
         self._temp_dir: TemporaryDirectory[str] | None = None
 
     def __enter__(self) -> Self:
@@ -190,7 +191,7 @@ class FileManager:
         self, files: dict[str, str], extension: str = ""
     ) -> dict[str, Path]:
         """Create set of files."""
-        created = {}
+        created: dict[str, Path] = {}
         for name, content in files.items():
             filename = f"{name}{extension}"
             created[name] = self.create_text_file(content, filename)
