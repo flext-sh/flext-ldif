@@ -18,6 +18,14 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 
+def _schema_attributes_factory() -> list[FlextLdifModelsDomains.SchemaAttribute]:
+    return []
+
+
+def _schema_object_classes_factory() -> list[FlextLdifModelsDomains.SchemaObjectClass]:
+    return []
+
+
 class FlextLdifModelsCollections:
     class DynamicCounts(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(
@@ -90,10 +98,10 @@ class FlextLdifModelsCollections:
     class SchemaContent(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
         attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
-            default_factory=list
+            default_factory=_schema_attributes_factory
         )
         object_classes: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-            default_factory=list
+            default_factory=_schema_object_classes_factory
         )
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):

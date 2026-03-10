@@ -141,20 +141,10 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         original_format = acl_metadata.original_format
         if not original_format:
             return FlextResult[str].ok(acl_value)
-        sanitize_result_raw: tuple[str, bool] | str = (
-            FlextLdifUtilitiesACL.sanitize_acl_name(original_format)
+        sanitize_result_raw: tuple[str, bool] = FlextLdifUtilitiesACL.sanitize_acl_name(
+            original_format
         )
-        sanitized_name: str
-        _was_sanitized: bool
-        tuple_length_pair = 2
-        if (
-            isinstance(sanitize_result_raw, tuple)
-            and len(sanitize_result_raw) == tuple_length_pair
-        ):
-            sanitized_name, _was_sanitized = sanitize_result_raw
-        else:
-            sanitized_name = original_format
-            _was_sanitized = False
+        sanitized_name, _was_sanitized = sanitize_result_raw
         if not sanitized_name:
             return FlextResult[str].ok(acl_value)
         pattern_result = self._hook_format_acl_name_pattern()
@@ -239,15 +229,15 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _extract_acl_parameters(
         self,
-        kwargs: Mapping[
-            str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str] | None] | None
-        ],
+        kwargs: Mapping[str, t.JsonValue],
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
         operation_raw = kwargs.get("operation")
-        operation = self._coerce_operation(operation_raw)
+        operation = (
+            self._coerce_operation(operation_raw) if operation_raw is not None else None
+        )
         return (data, operation)
 
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
@@ -270,7 +260,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """REQUIRED: Parse server-specific ACL definition (internal)."""
         _ = acl_line
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
         self, data: str | m.Ldif.Acl | None, kwargs: Mapping[str, t.JsonValue]
@@ -288,6 +278,8 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if operation is not None:
             return operation
         operation_raw = kwargs.get("operation")
+        if operation_raw is None:
+            return None
         return self._coerce_operation(operation_raw)
 
     def _supports_feature(self, _feature_id: str) -> bool:

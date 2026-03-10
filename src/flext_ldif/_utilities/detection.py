@@ -13,6 +13,23 @@ from flext_ldif import m, p, t
 class FlextLdifUtilitiesDetection:
     """Detection utilities for LDIF server quirks."""
 
+    @staticmethod
+    def _is_server_constants_class(
+        value: type, required_attr: str | None = None
+    ) -> type[p.Ldif.ServerConstantsProtocol]:
+        if required_attr is not None:
+            return getattr(value, required_attr, None) is not None
+        return all(
+            getattr(value, attr, None) is not None
+            for attr in (
+                "DETECTION_OID_PATTERN",
+                "DETECTION_ATTRIBUTE_PREFIXES",
+                "DETECTION_OBJECTCLASS_NAMES",
+                "DETECTION_DN_MARKERS",
+                "ACL_ATTRIBUTE_NAME",
+            )
+        )
+
     class BaseDetectionMixin:
         """Base mixin with shared _get_constants method."""
 
@@ -31,21 +48,10 @@ class FlextLdifUtilitiesDetection:
                     )
                     if not isinstance(constants_obj, type):
                         continue
-                    constants_class = constants_obj
-                    if required_attr is None:
-                        if all(
-                            getattr(constants_class, attr, None) is not None
-                            for attr in (
-                                "DETECTION_OID_PATTERN",
-                                "DETECTION_ATTRIBUTE_PREFIXES",
-                                "DETECTION_OBJECTCLASS_NAMES",
-                                "DETECTION_DN_MARKERS",
-                                "ACL_ATTRIBUTE_NAME",
-                            )
-                        ):
-                            return constants_class
-                    elif getattr(constants_class, required_attr, None) is not None:
-                        return constants_class
+                    if FlextLdifUtilitiesDetection._is_server_constants_class(
+                        constants_obj, required_attr
+                    ):
+                        return constants_obj
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):

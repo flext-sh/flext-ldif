@@ -360,8 +360,6 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.MetadataValue,
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
-        if value is None:
-            return None
         if isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, datetime):
@@ -372,7 +370,7 @@ class FlextLdifUtilitiesSchema:
         mapping_value: Mapping[str, t.MetadataValue] = value
         for k, v_raw in mapping_value.items():
             k_str = str(k)
-            if v_raw is None or isinstance(v_raw, (str, int, float, bool)):
+            if isinstance(v_raw, (str, int, float, bool)):
                 converted_nested[k_str] = v_raw
             elif isinstance(v_raw, datetime):
                 converted_nested[k_str] = v_raw.isoformat()
@@ -713,7 +711,7 @@ class FlextLdifUtilitiesSchema:
             if isinstance(val, list):
                 list_typed: t.MetadataValue = list(val)
                 result_dict[key] = list_typed
-            else:
+            elif val is not None:
                 result_dict[key] = val
         return result_dict
 
@@ -1181,15 +1179,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_attribute(
         attr_definition: str, *, validate_syntax: bool = True
-    ) -> r[Mapping[str, FlextTypes.ContainerValue]]:
+    ) -> r[dict[str, t.ContainerValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, FlextTypes.ContainerValue]].fail(
-                basic_fields_result.error
-            )
+            return r[dict[str, t.ContainerValue]].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition
@@ -1227,7 +1223,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result
                 )
             )
-        parsed_dict: dict[str, FlextTypes.ContainerValue] = {
+        parsed_dict: dict[str, t.ContainerValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1243,7 +1239,7 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, FlextTypes.ContainerValue]].ok(parsed_dict)
+        return r[dict[str, t.ContainerValue]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(

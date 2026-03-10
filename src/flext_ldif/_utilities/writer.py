@@ -297,7 +297,10 @@ class FlextLdifUtilitiesWriter:
         attr_order_raw: list[str] | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            raw_attr_order = metadata_extensions.get("attribute_order")
+            typed_extensions = m.ConfigMap.model_validate(metadata_extensions).root
+            raw_attr_order: t.ContainerValue | None = typed_extensions.get(
+                "attribute_order"
+            )
             if isinstance(raw_attr_order, Sequence) and not isinstance(
                 raw_attr_order, (str, bytes)
             ):
@@ -305,7 +308,8 @@ class FlextLdifUtilitiesWriter:
         elif isinstance(metadata, Mapping):
             raw_extensions = metadata.get("extensions")
             if isinstance(raw_extensions, Mapping):
-                raw_attr_order = raw_extensions.get("attribute_order")
+                typed_extensions = m.ConfigMap.model_validate(raw_extensions).root
+                raw_attr_order = typed_extensions.get("attribute_order")
                 if isinstance(raw_attr_order, Sequence) and not isinstance(
                     raw_attr_order, (str, bytes)
                 ):

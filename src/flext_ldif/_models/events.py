@@ -15,6 +15,10 @@ from flext_ldif._models.settings import FlextLdifModelsSettings
 FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
 
 
+def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
+    return []
+
+
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
@@ -54,7 +58,7 @@ class FlextLdifModelsEvents:
         entries_before: int
         entries_after: int
         filter_criteria: list[FlextLdifModelsSettings.FilterCriteria] = Field(
-            default_factory=list
+            default_factory=_filter_criteria_factory
         )
         filter_duration_ms: float = 0.0
 

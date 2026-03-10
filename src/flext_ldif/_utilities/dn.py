@@ -756,9 +756,9 @@ class FlextLdifUtilitiesDN:
                 str(item) for item in filtered_str if item is not None
             ]
             return (
-                r.ok(",".join(normalized))
+                r[str].ok(",".join(normalized))
                 if normalized
-                else r.fail(
+                else r[str].fail(
                     f"Failed to normalize DN: no valid components in '{dn_str}'"
                 )
             )
@@ -919,9 +919,11 @@ class FlextLdifUtilitiesDN:
                 if parsed is not None
             ]
             return (
-                r.ok(result)
+                r[list[tuple[str, str]]].ok(result)
                 if result
-                else r.fail(f"Failed to parse DN components from '{dn_str}'")
+                else r[list[tuple[str, str]]].fail(
+                    f"Failed to parse DN components from '{dn_str}'"
+                )
             )
         except (
             ValueError,

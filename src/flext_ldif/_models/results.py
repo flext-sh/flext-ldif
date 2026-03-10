@@ -207,7 +207,9 @@ class FlextLdifModelsResults:
         rejection_reasons: FlextLdifModelsCollections.DynamicCounts = Field(
             default_factory=FlextLdifModelsCollections.DynamicCounts
         )
-        events: list[FlextLdifModelsResults.EventType] = Field(default_factory=list)
+        events: list[FlextLdifModelsResults.EventType] = Field(
+            default_factory=FlextLdifModelsResults._events_factory
+        )
 
         @computed_field
         def failure_rate(self) -> float:
