@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Literal
+
+from flext_core import t
 from pydantic import BaseModel, ConfigDict, Field
+
+_TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 
 
 class ConvertToStr(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[str] = "str"
+    target_type: Literal["str"] = "str"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
@@ -20,7 +26,7 @@ class ConvertToStr(BaseModel):
 
 class ConvertToInt(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[int] = "int"
+    target_type: Literal["int"] = "int"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
@@ -33,7 +39,7 @@ class ConvertToInt(BaseModel):
 
 class ConvertToFloat(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[float] = "float"
+    target_type: Literal["float"] = "float"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
@@ -46,7 +52,7 @@ class ConvertToFloat(BaseModel):
 
 class ConvertToBool(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[bool] = "bool"
+    target_type: Literal["bool"] = "bool"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
@@ -62,37 +68,39 @@ class ConvertToBool(BaseModel):
 
 class ConvertToList(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[list] = "list"
+    target_type: Literal["list"] = "list"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
     def convert(self) -> t.ContainerValue | None:
         val = self.value
-        if isinstance(val, (list, tuple, set, frozenset)):
-            return list(val)  # type: ignore[arg-type]
+        if isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray)):
+            seq_val: Sequence[t.ContainerValue] = val
+            return list(seq_val)
         return [val]
 
 
 class ConvertToTuple(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[tuple] = "tuple"
+    target_type: Literal["tuple"] = "tuple"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
     def convert(self) -> t.ContainerValue | None:
         val = self.value
-        if isinstance(val, (list, tuple, set, frozenset)):
-            return tuple(val)  # type: ignore[arg-type]
+        if isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray)):
+            seq_val: Sequence[t.ContainerValue] = val
+            return tuple(seq_val)
         return (val,)
 
 
 class ConvertToDict(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    target_type: Literal[dict] = "dict"
+    target_type: Literal["dict"] = "dict"
     value: t.ContainerValue = Field(...)
     default: t.ContainerValue | None = None
 
     def convert(self) -> t.ContainerValue | None:
-        if u.is_dict_like(self.value):
-            return self.value
+        if isinstance(self.value, Mapping):
+            return dict(self.value)
         return self.default

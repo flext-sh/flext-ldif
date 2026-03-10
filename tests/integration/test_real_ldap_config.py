@@ -34,7 +34,7 @@ class TestRealLdapConfigurationFromEnv:
         root_config = flext_api.config
         ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
         if ldif_config is None:
-            ldif_config = FlextLdifSettings.get_global_instance()
+            ldif_config = FlextLdifSettings.get_global()
         assert ldif_config.ldif_encoding in {
             "utf-8",
             "utf-16",
@@ -44,12 +44,12 @@ class TestRealLdapConfigurationFromEnv:
             "cp1252",
         }
         assert isinstance(ldif_config.ldif_strict_validation, bool)
-        root_config = FlextSettings.get_global_instance()
+        root_config = FlextSettings.get_global()
         assert root_config.max_workers >= 1
 
     def test_effective_workers_calculation(self, flext_api: FlextLdif) -> None:
         """Test dynamic worker calculation based on config and entry count."""
-        root_config = FlextSettings.get_global_instance()
+        root_config = FlextSettings.get_global()
         assert root_config.max_workers >= 1
         assert root_config.max_workers > 0
 

@@ -953,7 +953,7 @@ class FlextLdifModelsSettings:
                 # NEW (correct):
                 from flext_ldif import FlextLdifSettings
 
-                config = FlextSettings.get_global_instance().get_namespace(
+                config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings
                 )
                 # Override if needed: config.ldif_write_fold_long_lines = True
@@ -1232,7 +1232,7 @@ class FlextLdifModelsSettings:
                 # Config is source of truth
                 from flext_ldif import FlextLdifSettings
 
-                config = FlextSettings.get_global_instance().get_namespace(
+                config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings
                 )
 

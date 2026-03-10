@@ -108,17 +108,14 @@ class FlextLdifTypes(FlextTypes):
         TEntry = TypeVar("TEntry")
         TAttribute = TypeVar("TAttribute")
         TSchema = TypeVar("TSchema")
+    
+    class _Core:
+        type ConversionTargetType = Literal[
+            "str", "int", "float", "bool", "list", "tuple", "dict"
+        ]
+        type ResultValue[T] = T
+        type DN = str
+    Core = _Core
 
 
 __all__ = ["FlextLdifTypes"]
-
-
-type ConversionTargetType = Literal[
-    "str", "int", "float", "bool", "list", "tuple", "dict"
-]
-
-
-type ResultValue[T] = T
-
-
-type DN = str

@@ -10,13 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
+import json
 import re
 import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
-from typing import ClassVar, Self, Unpack, override
+from typing import ClassVar, Self, TypedDict, Unpack, override
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities, m
 from pydantic import (
@@ -38,6 +38,19 @@ FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
 SchemaElement = FlextLdifModelsBases.SchemaElement
 u = FlextUtilities
 logger = FlextLogger(__name__)
+
+
+class _DNStatisticsFlags(TypedDict, total=False):
+    had_tab_chars: bool
+    had_trailing_spaces: bool
+    had_leading_spaces: bool
+    had_extra_spaces: bool
+    was_base64_encoded: bool
+    had_utf8_chars: bool
+    had_escape_sequences: bool
+    validation_status: str
+    validation_warnings: list[str]
+    validation_errors: list[str]
 
 
 class FlextLdifModelsDomains:
@@ -143,7 +156,7 @@ class FlextLdifModelsDomains:
             original_dn: str | None = None,
             cleaned_dn: str | None = None,
             transformations: list[str] | None = None,
-            **transformation_flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
+            **transformation_flags: Unpack[_DNStatisticsFlags],
         ) -> FlextLdifModelsDomains.DNStatistics:
             """Create DNStatistics for this DN with transformation history.
 
@@ -920,8 +933,6 @@ class FlextLdifModelsDomains:
             """
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
-            if value is None:
-                return None
             return str(value)
 
         def get_case_variants(self, dn: str) -> set[str]:
@@ -973,7 +984,7 @@ class FlextLdifModelsDomains:
             self,
             data: Mapping[str, str | list[str] | Mapping[str, str]],
             dn_fields: list[str] | None = None,
-        ) -> FlextResult[Mapping[str, str | list[str] | Mapping[str, str]]]:
+        ) -> FlextResult[dict[str, str | list[str] | Mapping[str, str]]]:
             """Normalize DN references in data object to canonical case.
 
             Args:
@@ -988,7 +999,9 @@ class FlextLdifModelsDomains:
             try:
                 if dn_fields is None:
                     dn_fields = ["dn"] + list(c.Ldif.DnValuedAttributes.ALL_DN_VALUED)
-                normalized_data = dict(data)
+                normalized_data: dict[str, str | list[str] | Mapping[str, str]] = dict(
+                    data
+                )
                 for field_name in dn_fields:
                     if field_name not in normalized_data:
                         continue
@@ -1002,7 +1015,7 @@ class FlextLdifModelsDomains:
                         normalized_data[field_name] = self._normalize_dn_list(
                             field_value_list
                         )
-                return FlextResult[dict[str, str | list[str] | dict[str, str]]].ok(
+                return FlextResult[dict[str, str | list[str] | Mapping[str, str]]].ok(
                     normalized_data
                 )
             except (
@@ -1012,7 +1025,7 @@ class FlextLdifModelsDomains:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[dict[str, str | list[str] | dict[str, str]]].fail(
+                return FlextResult[dict[str, str | list[str] | Mapping[str, str]]].fail(
                     f"Failed to normalize DN references: {e}"
                 )
 
@@ -1037,7 +1050,7 @@ class FlextLdifModelsDomains:
             if normalized not in self._registry or force:
                 self._registry[normalized] = dn
             value = self._registry[normalized]
-            return str(value) if value is not None else dn
+            return str(value)
 
         def validate_oud_consistency(self) -> FlextResult[bool]:
             """Validate DN case consistency for server conversion.
@@ -1050,11 +1063,7 @@ class FlextLdifModelsDomains:
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:
                     canonical_value = self._registry.get(normalized_dn)
-                    canonical = (
-                        str(canonical_value)
-                        if canonical_value is not None
-                        else normalized_dn
-                    )
+                    canonical = str(canonical_value)
                     inconsistencies.append({
                         "normalized_dn": normalized_dn,
                         "canonical_case": canonical,
@@ -1302,7 +1311,7 @@ class FlextLdifModelsDomains:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )
             if violations:
-                self.__dict__["validation_violations"] = violations
+                setattr(self, "validation_violations", violations)
                 return self
             return self
 
@@ -1552,7 +1561,7 @@ class FlextLdifModelsDomains:
                 return validation_rules
             if isinstance(validation_rules, str):
                 try:
-                    parsed_rules = ast.literal_eval(validation_rules)
+                    parsed_rules = json.loads(validation_rules)
                 except (ValueError, SyntaxError):
                     return None
                 if not isinstance(parsed_rules, dict):
@@ -1626,8 +1635,10 @@ class FlextLdifModelsDomains:
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.__dict__["metadata"] = (
-                    FlextLdifModelsDomains.QuirkMetadata.create_for()
+                setattr(
+                    self,
+                    "metadata",
+                    FlextLdifModelsDomains.QuirkMetadata.create_for(),
                 )
 
         @model_validator(mode="after")
@@ -1673,9 +1684,12 @@ class FlextLdifModelsDomains:
                 violations.extend(self._validate_changetype())
             if violations and self.metadata is not None:
                 attribute_count = len(self.attributes) if self.attributes else 0
-                old_context: dict[str, t.MetadataValue] = {}
+                old_context: dict[str, str] = {}
                 if self.metadata.validation_results is not None:
-                    old_context = dict(self.metadata.validation_results.context)
+                    old_context = {
+                        key: str(value)
+                        for key, value in self.metadata.validation_results.context.items()
+                    }
                 self.metadata.validation_results = (
                     FlextLdifModelsDomains.ValidationMetadata(
                         rfc_violations=violations,
@@ -2229,7 +2243,7 @@ class FlextLdifModelsDomains:
                 entry_instance = cls.model_validate(entry_data)
                 return FlextResult.ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult.fail(f"Failed to create Entry: {e}")
+                return FlextResult[Self].fail(f"Failed to create Entry: {e}")
 
         @classmethod
         def _normalize_attributes(
@@ -2359,7 +2373,7 @@ class FlextLdifModelsDomains:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult.fail(f"Failed to create Entry from ldap3: {e}")
+                return FlextResult[Self].fail(f"Failed to create Entry from ldap3: {e}")
 
         def clone(self) -> Self:
             """Create an immutable copy of the entry.
@@ -2554,23 +2568,7 @@ class FlextLdifModelsDomains:
             default="", description="Human-readable reason for transformation"
         )
 
-    class DNStatisticsFlags:
-        """Optional flags for DNStatistics.create_with_transformation().
-
-        Public TypedDict for type-safe DN transformation flags.
-        Used by DNStatistics.create_with_transformation() and FlextLdifUtilitiesDN.
-        """
-
-        had_tab_chars: bool
-        had_trailing_spaces: bool
-        had_leading_spaces: bool
-        had_extra_spaces: bool
-        was_base64_encoded: bool
-        had_utf8_chars: bool
-        had_escape_sequences: bool
-        validation_status: str
-        validation_warnings: list[str]
-        validation_errors: list[str]
+    DNStatisticsFlags = _DNStatisticsFlags
 
     class DNStatistics(FlextLdifModelsBase):
         """Statistics tracking for DN transformations and validation.
@@ -2663,7 +2661,7 @@ class FlextLdifModelsDomains:
             cleaned_dn: str,
             normalized_dn: str,
             transformations: list[str] | None = None,
-            **flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
+            **flags: Unpack[_DNStatisticsFlags],
         ) -> Self:
             """Create statistics with transformation details.
 
@@ -3501,5 +3499,4 @@ class SchemaLookup(FlextLdifModelsBase):
     )
 
 
-_ = FlextLdifModelsDomains.Entry.model_rebuild(_types_namespace={"m": m})
 __all__ = ["FlextLdifModelsDomains"]

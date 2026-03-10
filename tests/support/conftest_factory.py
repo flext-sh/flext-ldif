@@ -150,7 +150,7 @@ class FlextLdifTestConftest:
     def set_test_environment(self) -> Generator[None]:
         """Set test environment variables."""
         yield
-        FlextSettings.reset_global_instance()
+        FlextSettings.reset_for_testing()
 
     def reset_flextldif_singleton(self) -> Generator[None]:
         """Reset FlextLdif singleton for test isolation.
