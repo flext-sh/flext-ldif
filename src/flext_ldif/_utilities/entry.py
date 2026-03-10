@@ -395,7 +395,7 @@ class FlextLdifUtilitiesEntry:
                 kwargs
             )
         result: dict[str, list[str | bytes]] = {}
-        operational_lower = (
+        operational_lower: set[str] = (
             {a.lower() for a in config.operational_attrs}
             if config.operational_attrs
             else set()

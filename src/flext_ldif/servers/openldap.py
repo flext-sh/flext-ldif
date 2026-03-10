@@ -428,13 +428,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
             object_classes_raw = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes_list: list[str] = []
-            if isinstance(object_classes_raw, (list, tuple)):
-                object_classes_list.extend(
-                    str(item) for item in object_classes_raw if item is not None
-                )
-            elif object_classes_raw is not None:
-                object_classes_list = [str(object_classes_raw)]
+            object_classes_list: list[str] = [str(item) for item in object_classes_raw]
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes_list

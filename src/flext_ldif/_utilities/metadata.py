@@ -867,6 +867,8 @@ class FlextLdifUtilitiesMetadata:
         metadata: FlextLdifModelsDomains.QuirkMetadata, **extra: t.Scalar
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
+        _ = metadata
+        _ = extra
 
     @staticmethod
     def track_boolean_conversion(

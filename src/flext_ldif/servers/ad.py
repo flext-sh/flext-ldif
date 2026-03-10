@@ -304,7 +304,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     metadata=m.Ldif.QuirkMetadata.create_for(self._get_server_type()),
                     raw_acl=acl_line,
                 )
-                if acl_model.metadata and acl_model.metadata.extensions is not None:
+                if acl_model.metadata:
                     acl_model.metadata.extensions["original_format"] = acl_line
                 return r[m.Ldif.Acl].ok(acl_model)
             except (ValueError, TypeError, AttributeError) as exc:

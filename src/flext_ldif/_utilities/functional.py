@@ -241,9 +241,11 @@ class FlextFunctional:
                         sub_item for sub_item in processed_values if predicate(sub_item)
                     )
                 elif isinstance(processed, tuple):
-                    processed_values: list[t.ContainerValue] = list(processed)
+                    processed_tuple_values: list[t.ContainerValue] = list(processed)
                     result.extend(
-                        sub_item for sub_item in processed_values if predicate(sub_item)
+                        sub_item
+                        for sub_item in processed_tuple_values
+                        if predicate(sub_item)
                     )
                 elif predicate(processed):
                     result.append(processed)

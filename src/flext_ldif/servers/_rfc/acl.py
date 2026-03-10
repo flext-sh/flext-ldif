@@ -136,7 +136,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
-            return FlextResult.fail("ACL line must be a non-empty string.")
+            return FlextResult[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
             server_type_str

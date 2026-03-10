@@ -13,14 +13,14 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 
 
+def _events_factory() -> list[FlextLdifModelsResults.EventType]:
+    return []
+
+
 class FlextLdifModelsResults:
     @staticmethod
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
         return FlextLdifModelsResults.Statistics()
-
-    @staticmethod
-    def _events_factory() -> list[FlextLdifModelsResults.EventType]:
-        return []
 
     type EventType = (
         FlextLdifModelsEvents.AclEvent
@@ -208,7 +208,7 @@ class FlextLdifModelsResults:
             default_factory=FlextLdifModelsCollections.DynamicCounts
         )
         events: list[FlextLdifModelsResults.EventType] = Field(
-            default_factory=FlextLdifModelsResults._events_factory
+            default_factory=_events_factory
         )
 
         @computed_field

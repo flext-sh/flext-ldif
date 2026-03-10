@@ -483,10 +483,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return True
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             object_classes_raw = normalized_attrs.get(objectclass_key, [])
-            if isinstance(object_classes_raw, list):
-                object_classes: list[str] = object_classes_raw
-            else:
-                object_classes = [str(object_classes_raw)]
+            object_classes: list[str] = object_classes_raw
             return bool(
                 any(
                     str(oc).lower()

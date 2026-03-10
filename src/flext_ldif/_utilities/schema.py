@@ -84,8 +84,6 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
         """Apply single field transformation with monadic error handling."""
-        if not callable(transform_fn):
-            return FlextResult.ok(transformed)
         try:
             old_value = getattr(transformed, field_name, None)
             new_value = transform_fn(old_value)

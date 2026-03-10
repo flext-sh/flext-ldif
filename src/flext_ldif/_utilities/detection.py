@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from typing import TypeGuard
 
 from flext_core import u
 
@@ -16,7 +17,7 @@ class FlextLdifUtilitiesDetection:
     @staticmethod
     def _is_server_constants_class(
         value: type, required_attr: str | None = None
-    ) -> type[p.Ldif.ServerConstantsProtocol]:
+    ) -> TypeGuard[type[p.Ldif.ServerConstantsProtocol]]:
         if required_attr is not None:
             return getattr(value, required_attr, None) is not None
         return all(
