@@ -174,7 +174,9 @@ class FlextLdifUtilitiesOID:
     ORACLE_OID_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113894\\..*")
     MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile(r"1\\.2\\.840\\.113556\\..*")
     OPENLDAP_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.6\\.1\\.4\\.1\\.4203\\..*")
-    REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113730\\..*")
+    REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile(
+        r"2\\.16\\.840\\.1\\.113730\\..*"
+    )
     NOVELL_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113719\\..*")
     IBM_TIVOLI_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.18\\.0\\.2\\..*")
 

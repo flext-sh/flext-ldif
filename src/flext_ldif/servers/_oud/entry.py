@@ -1819,7 +1819,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self, aci_value: str, acl_metadata_extensions: dict[str, t.MetadataValue]
     ) -> FlextResult[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
-        has_macros = bool(re.search(r"\\(\\$dn\\)|\\[\\$dn\\]|\\(\\$attr\\.", aci_value))
+        has_macros = bool(
+            re.search(r"\\(\\$dn\\)|\\[\\$dn\\]|\\(\\$attr\\.", aci_value)
+        )
         validation_result = self._validate_aci_macros(aci_value)
         if validation_result.is_failure:
             return FlextResult[bool].fail(

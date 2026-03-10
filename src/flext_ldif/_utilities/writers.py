@@ -288,7 +288,7 @@ class FlextLdifUtilitiesWriters:
         def write_single_entry_with_stats(
             entry: FlextLdifModelsDomains.Entry,
             write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
-            stats: Stats,
+            stats: Stats,  # noqa: F821
         ) -> str | None:
             """Write single entry with stats tracking."""
             result = write_entry_hook(entry)
