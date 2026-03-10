@@ -388,7 +388,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             if attr_name.lower() != "aci" or not acl_original_format:
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
-            return re.sub('acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1)
+            return re.sub(r'acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1)
 
         def emit_attribute_line(attr_name: str, value: str) -> str:
             effective_name = (

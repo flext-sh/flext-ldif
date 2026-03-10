@@ -111,3 +111,14 @@ class FlextLdifTypes(FlextTypes):
 
 
 __all__ = ["FlextLdifTypes"]
+
+
+type ConversionTargetType = Literal[
+    "str", "int", "float", "bool", "list", "tuple", "dict"
+]
+
+
+type ResultValue[T] = T
+
+
+type DN = str

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Literal
-
 from ._models import (
     ConvertToBool,
     ConvertToDict,
@@ -15,9 +13,6 @@ from ._models import (
 )
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
-type ConversionTargetType = Literal[
-    "str", "int", "float", "bool", "list", "tuple", "dict"
-]
 ConversionRequest = (
     ConvertToStr
     | ConvertToInt

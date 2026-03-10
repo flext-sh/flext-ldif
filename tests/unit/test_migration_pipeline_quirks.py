@@ -143,7 +143,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         assert output_file.exists(), f"Expected output file to exist: {output_file}"
         content = output_file.read_text(encoding="utf-8")
         assert f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content
-        assert not re.search("(^|\\n)aci:", content), (
+        assert not re.search(r"(^|\\n)aci:", content), (
             "Should not have standalone 'aci:' attribute"
         )
 

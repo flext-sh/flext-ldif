@@ -13,8 +13,6 @@ from flext_ldif import FlextLdifServiceBase, m
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 
-type DN = str
-
 
 class FlextLdifDn(FlextLdifServiceBase[str]):
     """RFC 4514 Compliant DN Operations Service with Nested Classes."""

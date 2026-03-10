@@ -66,7 +66,7 @@ class FlextLdifModelsDomains:
             description="Quirk-specific metadata for preserving original format",
         )
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            "^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$", re.IGNORECASE
+            r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$", re.IGNORECASE
         )
 
         @override
@@ -412,7 +412,7 @@ class FlextLdifModelsDomains:
             if not oid or not oid.strip():
                 return None
             try:
-                oid_pattern = re.compile("^\\d+(\\.\\d+)*$")
+                oid_pattern = re.compile(r"^\\d+(\\.\\d+)*$")
                 if not oid_pattern.match(oid):
                     return None
                 oid_to_name = dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)

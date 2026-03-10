@@ -150,7 +150,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         if not oid:
             return r[bool].ok(False)
         try:
-            return r[bool].ok(bool(re.match("^[0-2](\\.[0-9]+)*$", oid)))
+            return r[bool].ok(bool(re.match(r"^[0-2](\\.[0-9]+)*$", oid)))
         except (TypeError, re.error) as e:
             return r[bool].fail(f"Failed to validate OID format: {e}")
 

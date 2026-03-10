@@ -7,7 +7,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextLogger
 
 type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
@@ -2108,3 +2108,6 @@ class FlextLdifConstants(FlextConstants):
 
 c = FlextLdifConstants
 __all__ = ["FlextLdifConstants", "c"]
+
+
+logger: Final = FlextLogger(__name__)

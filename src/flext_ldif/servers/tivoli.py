@@ -39,7 +39,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "\\b1\\.3\\.18\\."
         DETECTION_OID_PATTERN_COMPILED: ClassVar[re.Pattern[str]] = re.compile(
-            "\\b1\\.3\\.18\\.", re.IGNORECASE
+            r"\\b1\\.3\\.18\\.", re.IGNORECASE
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",

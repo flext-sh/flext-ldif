@@ -6,13 +6,13 @@ import struct
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from pydantic import BaseModel, ValidationError
 
 from flext_ldif import FlextLdifFilters, FlextLdifServer, c, m, s, t, u
+from flext_ldif.constants import logger
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
-logger: Final = FlextLogger(__name__)
 _MISSING_ATTR = object()
 
 

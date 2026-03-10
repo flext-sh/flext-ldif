@@ -256,7 +256,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _hook_format_acl_name_pattern(self) -> FlextResult[tuple[re.Pattern[str], str]]:
         """Hook for server-specific ACL name pattern matching."""
-        pattern = re.compile('acl\\s+"[^"]*"')
+        pattern = re.compile(r'acl\\s+"[^"]*"')
         replacement_template = 'acl "{0}"'
         return FlextResult[tuple[re.Pattern[str], str]].ok((
             pattern,

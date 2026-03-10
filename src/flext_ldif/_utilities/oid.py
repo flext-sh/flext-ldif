@@ -20,7 +20,7 @@ class FlextLdifUtilitiesOID:
     def extract_from_definition(definition: str) -> str | None:
         """Extract OID from schema definition string."""
         try:
-            match = re.search("\\(\\s*([\\d.]+)", definition)
+            match = re.search(r"\\(\\s*([\\d.]+)", definition)
             if match:
                 return match.group(1)
         except (re.error, AttributeError) as e:
@@ -39,7 +39,7 @@ class FlextLdifUtilitiesOID:
             try:
                 original_format = schema_obj.metadata.extensions.get("original_format")
                 if isinstance(original_format, str):
-                    match = re.search("\\(\\s*([\\d.]+)", original_format)
+                    match = re.search(r"\\(\\s*([\\d.]+)", original_format)
                 else:
                     match = None
                 if match:
@@ -171,12 +171,12 @@ class FlextLdifUtilitiesOID:
         except (TypeError, re.error) as e:
             return FlextResult[bool].fail(f"Failed to validate OID format: {e}")
 
-    ORACLE_OID_PATTERN: re.Pattern[str] = re.compile("2\\.16\\.840\\.1\\.113894\\..*")
-    MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile("1\\.2\\.840\\.113556\\..*")
-    OPENLDAP_PATTERN: re.Pattern[str] = re.compile("1\\.3\\.6\\.1\\.4\\.1\\.4203\\..*")
-    REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile("2\\.16\\.840\\.1\\.113730\\..*")
-    NOVELL_PATTERN: re.Pattern[str] = re.compile("2\\.16\\.840\\.1\\.113719\\..*")
-    IBM_TIVOLI_PATTERN: re.Pattern[str] = re.compile("1\\.3\\.18\\.0\\.2\\..*")
+    ORACLE_OID_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113894\\..*")
+    MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile(r"1\\.2\\.840\\.113556\\..*")
+    OPENLDAP_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.6\\.1\\.4\\.1\\.4203\\..*")
+    REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113730\\..*")
+    NOVELL_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113719\\..*")
+    IBM_TIVOLI_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.18\\.0\\.2\\..*")
 
 
 __all__ = ["FlextLdifUtilitiesOID"]

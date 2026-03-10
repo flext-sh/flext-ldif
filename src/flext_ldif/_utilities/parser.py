@@ -160,21 +160,21 @@ class FlextLdifUtilitiesParser:
             return {}
         extensions: dict[str, list[str]] = {}
         x_pattern = re.compile(
-            "X-([A-Z0-9_-]+)\\s+[\"\\']?([^\"\\']*)[\"\\']?(?:\\s|$)", re.IGNORECASE
+            r"X-([A-Z0-9_-]+)\\s+[\"\\']?([^\"\\']*)[\"\\']?(?:\\s|$)", re.IGNORECASE
         )
         for match in x_pattern.finditer(definition):
             key = f"X-{match.group(1)}"
             value = match.group(2).strip()
             extensions[key] = [value]
-        desc_pattern = re.compile("DESC\\s+['\\\"]([^'\\\"]*)['\\\"]")
+        desc_pattern = re.compile(r"DESC\\s+['\\\"]([^'\\\"]*)['\\\"]")
         desc_match = desc_pattern.search(definition)
         if desc_match:
             extensions["DESC"] = [desc_match.group(1)]
-        ordering_pattern = re.compile("ORDERING\\s+([A-Za-z0-9_-]+)")
+        ordering_pattern = re.compile(r"ORDERING\\s+([A-Za-z0-9_-]+)")
         ordering_match = ordering_pattern.search(definition)
         if ordering_match:
             extensions["ORDERING"] = [ordering_match.group(1)]
-        substr_pattern = re.compile("SUBSTR\\s+([A-Za-z0-9_-]+)")
+        substr_pattern = re.compile(r"SUBSTR\\s+([A-Za-z0-9_-]+)")
         substr_match = substr_pattern.search(definition)
         if substr_match:
             extensions["SUBSTR"] = [substr_match.group(1)]
@@ -185,7 +185,7 @@ class FlextLdifUtilitiesParser:
         """Extract OID from schema definition string."""
         if not definition:
             return None
-        oid_pattern = re.compile("\\(\\s*([0-9.]+)")
+        oid_pattern = re.compile(r"\\(\\s*([0-9.]+)")
         match = re.match(oid_pattern, definition.strip())
         return match.group(1) if match else None
 

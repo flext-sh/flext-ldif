@@ -31,7 +31,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            "\\(?\\s*([0-9a-zA-Z._\\-]+)"
+            r"\\(?\\s*([0-9a-zA-Z._\\-]+)"
         )
         OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
         OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
@@ -101,7 +101,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Extract MUST and MAY fields from objectClass definition."""
             must = None
             must_match = re.search(
-                "\\bMUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
+                r"\\bMUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
             )
             if must_match:
                 if must_match.group(1):
@@ -118,7 +118,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ]
             may = None
             may_match = re.search(
-                "\\bMAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
+                r"\\bMAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
             )
             if may_match:
                 if may_match.group(1):
@@ -184,7 +184,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
             """Extract SUP (superior) field from objectClass definition."""
             sup_match = re.search(
-                "\\bSUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
+                r"\\bSUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b", oc_definition
             )
             if not sup_match:
                 return None
@@ -327,7 +327,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
             sup = self._extract_sup_from_objectclass(oc_definition)
             kind_match = re.search(
-                "\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b", oc_definition, re.IGNORECASE
+                r"\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b", oc_definition, re.IGNORECASE
             )
             kind = (
                 kind_match.group(1).upper()

@@ -281,8 +281,8 @@ class TestOudRoundTripIntegration:
             assert len(entries2) == 1
             assert entries2[0].dn is not None
             parsed_dn = entries2[0].dn.value
-            original_rdns = re.split("\\s*,\\s*", original_dn)
-            parsed_rdns = re.split("\\s*,\\s*", parsed_dn)
+            original_rdns = re.split(r"\\s*,\\s*", original_dn)
+            parsed_rdns = re.split(r"\\s*,\\s*", parsed_dn)
             assert len(original_rdns) == len(parsed_rdns), "RDN count mismatch"
 
 

@@ -13,7 +13,6 @@ from flext_ldif import m, p
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 r = FlextResult
-type ResultValue[T] = T
 
 
 class FlextLdifResult[T]:
