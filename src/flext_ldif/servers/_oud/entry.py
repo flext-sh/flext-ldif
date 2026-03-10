@@ -16,6 +16,7 @@ from typing import override
 from flext_core import FlextLogger, FlextResult, u as core_u
 
 from flext_ldif import c, m, p, t, u
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
@@ -220,7 +221,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | t.ConfigurationMapping | None,
+        write_opts: FlextLdifModelsDomains.WriteOptions | t.ConfigurationMapping | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -240,10 +241,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if core_u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
-        if isinstance(write_opts, m.Ldif.WriteOptions):
-            return write_opts.model_copy(
-                update={"hidden_attrs": list(hidden_attrs_set)}
-            )
+        if isinstance(write_opts, FlextLdifModelsDomains.WriteOptions):
+            write_opts_data: dict[str, t.ContainerValue] = write_opts.model_dump()
+            write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
+            return m.Ldif.WriteOptions.model_validate(write_opts_data)
         write_opts_dict: dict[str, t.ContainerValue] = {
             "hidden_attrs": list(hidden_attrs_set)
         }
@@ -760,7 +761,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: list[str],
         attr_name: str,
-        _transformation: m.Ldif.AttributeTransformation,
+        _transformation: FlextLdifModelsDomains.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.
@@ -1187,14 +1188,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ]
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
-                    value_dict_2: dict[str, t.Scalar | None] = {}
+                    value_dict_2: dict[str, t.Scalar] = {}
                     for k, v in value_raw.items():
-                        if not isinstance(k, str):
-                            continue
-                        if isinstance(v, (str, int, float, bool, type(None))):
-                            value_dict_2[k] = v
-                        else:
-                            value_dict_2[k] = str(v)
+                        key = str(k)
+                        value_dict_2[key] = (
+                            v if isinstance(v, (str, int, float, bool)) else str(v)
+                        )
                     value_dict_typed_2: t.MetadataValue = dict(value_dict_2)
                     acl_metadata_extensions[dest_key] = value_dict_typed_2
                 else:
@@ -1225,30 +1224,31 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         }
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
-            if value_raw is not None:
-                if isinstance(value_raw, (str, int, float, bool, type(None))):
-                    acl_metadata_extensions[dest_key] = value_raw
-                elif isinstance(value_raw, (list, tuple)):
-                    value_list: list[t.Scalar] = [
-                        item
-                        if isinstance(item, (str, int, float, bool, type(None)))
-                        else str(item)
-                        for item in value_raw
-                    ]
-                    acl_metadata_extensions[dest_key] = value_list
-                elif isinstance(value_raw, Mapping):
-                    value_dict_1: dict[str, t.Scalar | None] = {}
-                    for k, v in value_raw.items():
-                        if not isinstance(k, str):
-                            continue
-                        if isinstance(v, (str, int, float, bool, type(None))):
-                            value_dict_1[k] = v
-                        else:
-                            value_dict_1[k] = str(v)
-                    value_dict_typed_1: t.MetadataValue = dict(value_dict_1)
-                    acl_metadata_extensions[dest_key] = value_dict_typed_1
-                else:
-                    acl_metadata_extensions[dest_key] = str(value_raw)
+            if value_raw is None:
+                continue
+            if isinstance(value_raw, (str, int, float, bool)):
+                scalar_value: t.Scalar = value_raw
+                acl_metadata_extensions[dest_key] = scalar_value
+            elif isinstance(value_raw, (list, tuple)):
+                value_list: list[t.Scalar] = [
+                    item
+                    if isinstance(item, (str, int, float, bool, type(None)))
+                    else str(item)
+                    for item in value_raw
+                ]
+                acl_metadata_extensions[dest_key] = value_list
+            elif isinstance(value_raw, Mapping):
+                value_dict_1: dict[str, t.Scalar] = {}
+                for k, v in value_raw.items():
+                    key = str(k)
+                    if isinstance(v, (str, int, float, bool)):
+                        value_dict_1[key] = v
+                    else:
+                        value_dict_1[key] = str(v)
+                value_dict_typed_1: t.MetadataValue = dict(value_dict_1)
+                acl_metadata_extensions[dest_key] = value_dict_typed_1
+            else:
+                acl_metadata_extensions[dest_key] = str(value_raw)
 
     def _finalize_and_parse_entry(
         self, entry_dict: dict[str, t.ContainerValue], entries_list: list[m.Ldif.Entry]
@@ -1342,7 +1342,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return None
         for key, value in attrs.items():
             if key.lower() == "aci":
-                return self._normalize_aci_value_simple(value)
+                if value is None:
+                    return None
+                if isinstance(value, str):
+                    return value
+                return str(value)
         return None
 
     def _find_aci_values(
@@ -1351,26 +1355,33 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_attrs: t.Ldif.CommonDict.AttributeDictGeneric,
     ) -> list[str] | str | None:
         """Find ACI values from entry or original_attrs."""
-        aci_values = self._normalize_aci_value_simple(
-            original_attrs.get("aci") if original_attrs else None
-        )
+        aci_values: list[str] | str | None = None
+        if original_attrs:
+            original_aci = original_attrs.get("aci")
+            if isinstance(original_aci, list):
+                aci_input: t.MetadataValue = [str(v) for v in original_aci]
+                aci_values = self._normalize_aci_value_simple(aci_input)
+            elif isinstance(original_aci, str):
+                aci_values = self._normalize_aci_value_simple(original_aci)
         if not aci_values and entry.attributes and entry.attributes.attributes:
-            aci_values = self._normalize_aci_value_simple(
-                entry.attributes.attributes.get("aci")
-            )
+            entry_aci = entry.attributes.attributes.get("aci")
+            if isinstance(entry_aci, list):
+                entry_aci_input: t.MetadataValue = [str(v) for v in entry_aci]
+                aci_values = self._normalize_aci_value_simple(entry_aci_input)
         if not aci_values:
             aci_values = self._find_aci_in_dict(original_attrs)
             if not aci_values and entry.attributes and entry.attributes.attributes:
                 aci_values = self._find_aci_in_dict(entry.attributes.attributes)
         if not aci_values and entry.metadata and entry.metadata.extensions:
             commented_raw = entry.metadata.extensions.get("commented_attribute_values")
-            commented_values = self._parse_commented_values(commented_raw)
-            if commented_values:
-                for key, value in commented_values.items():
-                    if key.lower() == "aci":
-                        aci_values = self._normalize_aci_value_simple(value)
-                        if aci_values:
-                            break
+            if commented_raw is not None:
+                commented_values = self._parse_commented_values(commented_raw)
+                if commented_values:
+                    for key, value in commented_values.items():
+                        if key.lower() == "aci":
+                            aci_values = self._normalize_aci_value_simple(value)
+                            if aci_values:
+                                break
         return aci_values
 
     def _get_original_acl_attr(self, entry: m.Ldif.Entry) -> str:
@@ -1626,8 +1637,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return [str(v) for v in value]
         if isinstance(value, str):
             return value
-        if value is None:
-            return None
         return str(value)
 
     def _normalize_acl_dns(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
@@ -1702,8 +1711,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Process list of ACI values and extract metadata."""
         aci_list = list(aci_values) if isinstance(aci_values, list) else [aci_values]
         for aci_value in aci_list:
-            if not isinstance(aci_value, str):
-                continue
             normalized_aci = aci_value.strip()
             if not normalized_aci.startswith("aci:"):
                 normalized_aci = f"aci: {normalized_aci}"
@@ -1714,9 +1721,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_ext_raw = acl_model.metadata.extensions.to_dict()
                     acl_extensions: dict[str, t.MetadataValue] = {}
                     for raw_key, raw_value in acl_ext_raw.items():
-                        if not isinstance(raw_key, str):
-                            continue
-                        acl_extensions[raw_key] = (
+                        key = str(raw_key)
+                        acl_extensions[key] = (
                             FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
                                 raw_value
                             )
@@ -1780,14 +1786,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 ]
                 current_extensions[final_key] = value_list
             elif isinstance(value, Mapping):
-                value_dict_inner: dict[str, t.Scalar | None] = {}
+                value_dict_inner: dict[str, t.Scalar] = {}
                 for k, v in value.items():
-                    if not isinstance(k, str):
-                        continue
-                    if isinstance(v, (str, int, float, bool, type(None))):
-                        value_dict_inner[k] = v
+                    key = str(k)
+                    if isinstance(v, (str, int, float, bool)):
+                        value_dict_inner[key] = v
                     else:
-                        value_dict_inner[k] = str(v)
+                        value_dict_inner[key] = str(v)
                 value_dict_typed: t.MetadataValue = dict(value_dict_inner)
                 current_extensions[final_key] = value_dict_typed
             else:
@@ -1828,7 +1833,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                             v
                         )
                         for k, v in acl_extensions.items()
-                        if isinstance(k, str)
                     }
                     self._extract_acl_metadata_from_dict(
                         acl_extensions_dict, acl_metadata_extensions
@@ -1923,7 +1927,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else:
                     restored[orig_case] = (
                         [str(i) for i in attr_values]
-                        if isinstance(attr_values, list)
+                        if attr_values
                         else [str(attr_values)]
                     )
             if restored:

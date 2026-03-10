@@ -88,7 +88,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         """Access to nested schema quirk instance (alias for schema)."""
         return self._schema_quirk
 
-    def get_schema_quirk(self) -> p.Ldif.SchemaQuirkProtocol:
+    def get_schema_quirk(self) -> FlextLdifServersBaseSchema:
         """Get schema quirk instance."""
         return self.schema_quirk
 
@@ -152,7 +152,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @classmethod
     def _extract_execute_params(
-        cls, kwargs: Mapping[str, object]
+        cls, kwargs: Mapping[str, t.ContainerValue]
     ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -287,7 +287,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         perform_registration(register_method, quirk_instance)
 
     @staticmethod
-    def _extract_entries(kwargs: Mapping[str, object]) -> list[m.Ldif.Entry] | None:
+    def _extract_entries(
+        kwargs: Mapping[str, t.ContainerValue],
+    ) -> list[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
@@ -503,6 +505,6 @@ class _PriorityDescriptor:
         return self.value
 
 
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
+setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
 __all__ = ["FlextLdifServersBase"]

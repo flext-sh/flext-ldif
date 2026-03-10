@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
 
-from flext_core import t, x
+from flext_core import t
 from pydantic import BaseModel
 
 from flext_ldif._models.conversion import FlextLdifModelsConversions
@@ -49,9 +49,7 @@ class FlextFunctional:
             for key, item in value.items():
                 normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
-        if isinstance(value, Sequence):
-            return [FlextFunctional._to_general(item) for item in value]
-        return str(value)
+        return [FlextFunctional._to_general(item) for item in value]
 
     @staticmethod
     def or_[T](*values: T | None, default: T | None = None) -> T | None:
@@ -222,22 +220,31 @@ class FlextFunctional:
     mf = map_filter
 
     @staticmethod
-    def process_flatten[T, U](
-        items: Sequence[T],
-        processor: Callable[[T], list[U] | tuple[U, ...] | U],
+    def process_flatten(
+        items: Sequence[t.ContainerValue],
+        processor: Callable[
+            [t.ContainerValue],
+            list[t.ContainerValue] | tuple[t.ContainerValue, ...] | t.ContainerValue,
+        ],
         *,
-        predicate: Callable[[U], bool] = lambda x: x is not None,
+        predicate: Callable[[t.ContainerValue], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> list[U]:
+    ) -> list[t.ContainerValue]:
         """Process and flatten items (mnemonic: pf)."""
-        result: list[U] = []
+        result: list[t.ContainerValue] = []
         for item in items:
             try:
                 processed = processor(item)
-                if isinstance(processed, (list, tuple)):
-                    result.extend([
-                        sub_item for sub_item in processed if predicate(sub_item)
-                    ])
+                if isinstance(processed, list):
+                    processed_values: list[t.ContainerValue] = processed
+                    result.extend(
+                        sub_item for sub_item in processed_values if predicate(sub_item)
+                    )
+                elif isinstance(processed, tuple):
+                    processed_values: list[t.ContainerValue] = list(processed)
+                    result.extend(
+                        sub_item for sub_item in processed_values if predicate(sub_item)
+                    )
                 elif predicate(processed):
                     result.append(processed)
             except (
@@ -254,22 +261,27 @@ class FlextFunctional:
     pf = process_flatten
 
     @classmethod
-    def normalize_list[T](
+    def normalize_list(
         cls,
-        value: T | list[T] | tuple[T, ...] | None,
+        value: t.ContainerValue | Sequence[t.ContainerValue] | None,
         *,
-        mapper: Callable[[T], T] | None = None,
-        predicate: Callable[[T], bool] | None = None,
-        default: list[T] | None = None,
-    ) -> list[T]:
+        mapper: Callable[[t.ContainerValue], t.ContainerValue] | None = None,
+        predicate: Callable[[t.ContainerValue], bool] | None = None,
+        default: list[t.ContainerValue] | None = None,
+    ) -> list[t.ContainerValue]:
         """Normalize to list (mnemonic: nl)."""
         if value is None:
             if default is not None:
                 return list(default)
             return []
-        items: list[T] = list(value) if isinstance(value, (list, tuple)) else [value]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            items: list[t.ContainerValue] = []
+            for sequence_item in value:
+                items.append(sequence_item)
+        else:
+            items = [value]
         if mapper is not None:
-            items_mapped: list[T] = [mapper(item) for item in items]
+            items_mapped: list[t.ContainerValue] = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
@@ -569,10 +581,9 @@ class FlextFunctional:
 
         def getter(obj: t.ContainerValue) -> t.ContainerValue:
             """Get value from object by key."""
-            if isinstance(obj, Mapping):
-                return FlextFunctional._to_general(obj.get(key))
-            if x.is_base_model(obj):
-                return FlextFunctional._to_general(getattr(obj, key, None))
+            normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
+            if isinstance(normalized_obj, dict):
+                return FlextFunctional._to_general(normalized_obj.get(key))
             return None
 
         return getter
@@ -588,11 +599,11 @@ class FlextFunctional:
         def accessor(obj: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
             """Get multiple values from object by keys."""
             result_dict: dict[str, t.ContainerValue] = {}
+            normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
             for k in keys:
-                if isinstance(obj, Mapping):
-                    result_dict[k] = FlextFunctional._to_general(obj.get(k))
-                elif x.is_base_model(obj):
-                    result_dict[k] = FlextFunctional._to_general(getattr(obj, k, None))
+                if isinstance(normalized_obj, dict):
+                    val: t.ContainerValue | None = normalized_obj.get(k)
+                    result_dict[k] = FlextFunctional._to_general(val)
                 else:
                     result_dict[k] = None
             return result_dict
@@ -612,10 +623,9 @@ class FlextFunctional:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                if isinstance(obj, Mapping):
-                    return FlextFunctional._to_general(obj.get(key))
-                if x.is_base_model(obj):
-                    return FlextFunctional._to_general(getattr(obj, key, None))
+                normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
+                if isinstance(normalized_obj, dict):
+                    return FlextFunctional._to_general(normalized_obj.get(key))
                 return None
 
             return getter_fn

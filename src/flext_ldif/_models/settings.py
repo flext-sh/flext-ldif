@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
 
 
+def _rdn_pairs_factory() -> list[tuple[str, str]]:
+    return []
+
+
 class FlextLdifModelsSettings:
     """LDIF configuration models container class.
 
@@ -645,7 +649,7 @@ class FlextLdifModelsSettings:
             default=False, description="Whether currently parsing value (after '=')"
         )
         pairs: list[tuple[str, str]] = Field(
-            default_factory=lambda: [],
+            default_factory=_rdn_pairs_factory,
             description="List of (attr, value) pairs parsed so far",
         )
 
@@ -901,7 +905,7 @@ class FlextLdifModelsSettings:
             str,
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
-        allowed_encodings: list[str] = Field(default_factory=lambda: [])
+        allowed_encodings: list[str] = Field(default_factory=list)
 
     class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""

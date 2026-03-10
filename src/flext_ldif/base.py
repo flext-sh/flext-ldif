@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, FlextSettings, p, s
+from flext_core import FlextService, FlextSettings, p, s, t
 
 from flext_ldif.settings import FlextLdifSettings
 
 
-class FlextLdifServiceBase[TDomainResult](FlextService[TDomainResult]):
+class FlextLdifServiceBase[TDomainResult: t.ContainerValue](
+    FlextService[TDomainResult]
+):
     """Base class for LDIF services with typed config helper."""
 
     @property

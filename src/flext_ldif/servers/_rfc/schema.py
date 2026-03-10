@@ -46,7 +46,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
         parent_quirk_value: p.Ldif.SchemaQuirkProtocol | None = (
-            parent_quirk_raw if parent_quirk_raw is not None else None
+            parent_quirk_raw
+            if isinstance(parent_quirk_raw, p.Ldif.SchemaQuirkProtocol)
+            else None
         )
         schema_instance: Self = instance
         super(FlextLdifServersBase.Schema, schema_instance).__init__()
@@ -351,9 +353,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ]:
         """Extract schema definitions from LDIF using u."""
         try:
+
+            def parse_attribute_domain(
+                attr_definition: str,
+            ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+                return self.parse_attribute(attr_definition).map(
+                    lambda attr: FlextLdifModelsDomains.SchemaAttribute.model_validate(
+                        attr.model_dump()
+                    )
+                )
+
             attributes_parsed = FlextLdifUtilitiesSchema.extract_attributes_from_lines(
-                ldif_content, self.parse_attribute
+                ldif_content, parse_attribute_domain
             )
+            attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
+                m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
+                for attr in attributes_parsed
+            ]
             if validate_dependencies:
                 available_attrs = (
                     FlextLdifUtilitiesSchema.build_available_attributes_set(
@@ -361,29 +377,46 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     )
                 )
                 validation_result = self._hook_validate_attributes(
-                    attributes_parsed, available_attrs
+                    attributes_parsed_model, available_attrs
                 )
                 if not validation_result.is_success:
                     return FlextResult[
-                        dict[
+                        Mapping[
                             str,
                             list[m.Ldif.SchemaAttribute]
                             | list[m.Ldif.SchemaObjectClass],
                         ]
                     ].fail(f"Attribute validation failed: {validation_result.error}")
+
+            def parse_objectclass_domain(
+                oc_definition: str,
+            ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+                return self.parse_objectclass(oc_definition).map(
+                    lambda oc: FlextLdifModelsDomains.SchemaObjectClass.model_validate(
+                        oc.model_dump()
+                    )
+                )
+
             objectclasses_parsed = (
                 FlextLdifUtilitiesSchema.extract_objectclasses_from_lines(
-                    ldif_content, self.parse_objectclass
+                    ldif_content, parse_objectclass_domain
                 )
             )
+            objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
+                m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
+                for oc in objectclasses_parsed
+            ]
             schema_dict: dict[
                 str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
             ] = {
-                c.Ldif.DictKeys.ATTRIBUTES: attributes_parsed,
-                c.Ldif.DictKeys.OBJECTCLASS: objectclasses_parsed,
+                str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
+                str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
             }
             return FlextResult[
-                dict[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]
+                Mapping[
+                    str,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
+                ]
             ].ok(schema_dict)
         except (
             ValueError,
@@ -394,7 +427,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ) as e:
             logger.exception("Schema extraction failed")
             return FlextResult[
-                dict[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]
+                Mapping[
+                    str,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
+                ]
             ].fail(f"Schema extraction failed: {e}")
 
     def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:

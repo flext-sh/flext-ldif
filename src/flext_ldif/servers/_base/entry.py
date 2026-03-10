@@ -54,16 +54,20 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
-        extensions_extra = getattr(metadata.extensions, "__pydantic_extra__", None)
-        format_options_raw = None
-        if isinstance(extensions_extra, Mapping):
-            format_options_raw = extensions_extra.get("write_format_options")
-        if format_options_raw is None:
-            format_options_raw = metadata.extensions.get("write_format_options")
+        format_options_raw: t.ContainerValue | None = metadata.extensions.get(
+            "write_format_options"
+        )
         if isinstance(format_options_raw, Mapping):
+            format_options_map: dict[str, t.ContainerValue] = {}
+            for raw_key, raw_value in format_options_raw.items():
+                key = str(raw_key)
+                if isinstance(raw_value, (str, int, float, bool, datetime)):
+                    format_options_map[key] = raw_value
+                else:
+                    format_options_map[key] = [str(item) for item in raw_value]
             with suppress(Exception):
                 return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
-                    dict(format_options_raw)
+                    dict(format_options_map)
                 )
         if metadata.write_options is None:
             return None
@@ -203,12 +207,15 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                 ),
             })
         write_options_payload = dict(write_options)
+        sort_entries_raw = write_options_payload.get("sort_attributes", False)
+        include_comments_raw = write_options_payload.get("include_dn_comments", False)
+        base64_encode_binary_raw = write_options_payload.get(
+            "base64_encode_binary", False
+        )
         return FlextLdifModelsDomains.WriteOptions(
-            sort_entries=write_options_payload.get("sort_attributes", False),
-            include_comments=write_options_payload.get("include_dn_comments", False),
-            base64_encode_binary=write_options_payload.get(
-                "base64_encode_binary", False
-            ),
+            sort_entries=bool(sort_entries_raw),
+            include_comments=bool(include_comments_raw),
+            base64_encode_binary=bool(base64_encode_binary_raw),
         )
 
     def _denormalize_entry(
@@ -232,7 +239,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         """Hook to validate raw entry before parsing."""
         _ = attrs
         if not dn:
-            return FlextResult.fail("DN cannot be empty")
+            return FlextResult[bool].fail("DN cannot be empty")
         return FlextResult.ok(True)
 
     def _inject_write_options(
@@ -279,7 +286,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[list[m.Ldif.Entry]].fail("Must be implemented by subclass")
 
     def _resolve_write_options_for_header(
         self, write_options: FlextLdifModelsSettings.WriteFormatOptions | None
@@ -303,7 +310,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: Mapping[str, object] = {}
+        extensions_data: Mapping[str, t.MetadataValue] = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
@@ -312,9 +319,8 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                 extensions_data = dict(metadata_extensions.to_dict())
         hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
-            hidden_attributes = {
-                attr.lower() for attr in hidden_raw if isinstance(attr, str)
-            }
+            hidden_text: list[str] = [str(value) for value in hidden_raw]
+            hidden_attributes = {attr.lower() for attr in hidden_text}
         acl_original_raw = extensions_data.get(c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT)
         if isinstance(acl_original_raw, str):
             acl_original_format = acl_original_raw
@@ -420,7 +426,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             dn_line = f"dn: {entry_data.dn.value}"
             output_lines.extend(fold_line(dn_line))
         else:
-            return FlextResult.fail("Entry DN is None")
+            return FlextResult[str].fail("Entry DN is None")
         if core_u.has(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes

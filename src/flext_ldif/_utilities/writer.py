@@ -294,17 +294,25 @@ class FlextLdifUtilitiesWriter:
         metadata = entry_data.get("_metadata")
         if metadata is None:
             return None
-        attr_order_raw: t.ContainerValue | None = None
+        attr_order_raw: list[str] | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            attr_order_raw = metadata_extensions.get("attribute_order")
+            raw_attr_order = metadata_extensions.get("attribute_order")
+            if isinstance(raw_attr_order, Sequence) and not isinstance(
+                raw_attr_order, (str, bytes)
+            ):
+                attr_order_raw = [str(item) for item in raw_attr_order]
         elif isinstance(metadata, Mapping):
             raw_extensions = metadata.get("extensions")
             if isinstance(raw_extensions, Mapping):
-                attr_order_raw = raw_extensions.get("attribute_order")
-        if not isinstance(attr_order_raw, Sequence) or isinstance(attr_order_raw, str):
+                raw_attr_order = raw_extensions.get("attribute_order")
+                if isinstance(raw_attr_order, Sequence) and not isinstance(
+                    raw_attr_order, (str, bytes)
+                ):
+                    attr_order_raw = [str(item) for item in raw_attr_order]
+        if attr_order_raw is None:
             return None
-        attr_order = [str(item) for item in attr_order_raw]
+        attr_order = attr_order_raw
         skip_keys = {c.Ldif.DictKeys.DN, "_metadata", "server_type", "_acl_attributes"}
         result: list[tuple[str, t.ContainerValue]] = [
             (key, entry_data[key])

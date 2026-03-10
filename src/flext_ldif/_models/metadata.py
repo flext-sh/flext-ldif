@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
+from collections.abc import (
+    ItemsView,
+    Iterator,
+    KeysView,
+    Mapping,
+    ValuesView,
+)
 from typing import ClassVar, override
 
 from flext_core import FlextModels
@@ -40,7 +46,7 @@ class FlextLdifModelsMetadata:
             setattr(self, key, value)
 
         @override
-        def __iter__(self) -> Generator[tuple[str, t.MetadataValue], None, None]:
+        def __iter__(self) -> Iterator[tuple[str, t.MetadataValue]]:
             yield from self._extra().items()
 
         def __len__(self) -> int:

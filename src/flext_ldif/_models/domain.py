@@ -28,16 +28,21 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifShared, c, p, t
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif import FlextLdifShared, c
+from flext_ldif._models.base import AclElement, FlextLdifModelsBase, SchemaElement
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.typings import FlextLdifTypes
 
-AclElement = FlextLdifModelsBases.AclElement
-FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
-SchemaElement = FlextLdifModelsBases.SchemaElement
+p = FlextLdifProtocols
+t = FlextLdifTypes
 u = FlextUtilities
 logger = FlextLogger(__name__)
+
+
+def _conversion_history_factory() -> tuple[dict[str, str], ...]:
+    return ()
 
 
 class _DNStatisticsFlags(TypedDict, total=False):
@@ -1113,13 +1118,13 @@ class FlextLdifModelsDomains:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type identifier (e.g., 'oid', 'oud')"
         )
-        schemas: list[FlextLdifModelsBase] = Field(
+        schemas: list[str] = Field(
             default_factory=list, description="List of Schema quirk model instances"
         )
-        acls: list[FlextLdifModelsBase] = Field(
+        acls: list[str] = Field(
             default_factory=list, description="List of ACL quirk model instances"
         )
-        entrys: list[FlextLdifModelsBase] = Field(
+        entrys: list[str] = Field(
             default_factory=list, description="List of Entry quirk model instances"
         )
 
@@ -3134,11 +3139,11 @@ class FlextLdifModelsDomains:
             default=None,
             description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
         )
-        acls: list[FlextLdifModelsBase] = Field(
+        acls: list[str] = Field(
             default_factory=list,
             description="Access Control Lists extracted from entry attributes during parsing",
         )
-        objectclasses: list[FlextLdifModelsBase] = Field(
+        objectclasses: list[str] = Field(
             default_factory=list,
             description="ObjectClass definitions for schema validation (not RFC LDIF data)",
         )
@@ -3192,8 +3197,8 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
             description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
         )
-        conversion_history: list[dict[str, str | list[str]]] = Field(
-            default_factory=list,
+        conversion_history: tuple[dict[str, str], ...] = Field(
+            default_factory=_conversion_history_factory,
             description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
         )
 

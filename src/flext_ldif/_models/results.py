@@ -18,6 +18,10 @@ class FlextLdifModelsResults:
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
         return FlextLdifModelsResults.Statistics()
 
+    @staticmethod
+    def _events_factory() -> list[FlextLdifModelsResults.EventType]:
+        return []
+
     type EventType = (
         FlextLdifModelsEvents.AclEvent
         | FlextLdifModelsEvents.CategoryEvent
@@ -330,7 +334,7 @@ class FlextLdifModelsResults:
         migrated_schema: FlextLdifModelsCollections.SchemaContent = Field(
             default_factory=FlextLdifModelsCollections.SchemaContent
         )
-        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
+        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=tuple)
         stats: FlextLdifModelsResults.Statistics = Field(
             default_factory=lambda: FlextLdifModelsResults._statistics_factory()
         )
@@ -542,7 +546,7 @@ class FlextLdifModelsResults:
 
     class ParseResponse(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
-        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
+        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(default_factory=tuple)
         statistics: FlextLdifModelsResults.Statistics = Field()
         detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
 
@@ -555,7 +559,7 @@ class FlextLdifModelsResults:
 
     class AclResponse(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
-        acls: Sequence[FlextLdifModelsDomains.Acl] = Field(default_factory=list)
+        acls: Sequence[FlextLdifModelsDomains.Acl] = Field(default_factory=tuple)
         statistics: FlextLdifModelsResults.Statistics = Field()
 
     class AclEvaluationResult(m.Value):

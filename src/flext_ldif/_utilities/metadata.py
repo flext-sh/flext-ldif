@@ -37,7 +37,8 @@ class FlextLdifUtilitiesMetadata:
                         inner_value
                     )
                 elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
-                    merged_value[key] = inner_value
+                    if inner_value is not None:
+                        merged_value[key] = inner_value
                 else:
                     merged_value[key] = str(inner_value)
             metadata[metadata_key] = merged_value
@@ -55,6 +56,8 @@ class FlextLdifUtilitiesMetadata:
         normalized_item = FlextLdifUtilitiesMetadata._normalize_metadata_list_item(
             item_data
         )
+        if normalized_item is None:
+            return
         if isinstance(value, list):
             value.append(normalized_item)
             metadata[metadata_key] = value
@@ -157,7 +160,8 @@ class FlextLdifUtilitiesMetadata:
             extracted_raw = extractor(definition)
             for key, value in extracted_raw.items():
                 if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
-                    combined[key] = value
+                    if value is not None:
+                        combined[key] = value
                 elif isinstance(value, list):
                     combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
                         value
@@ -562,21 +566,23 @@ class FlextLdifUtilitiesMetadata:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
-    def _normalize_dict_list(values: Sequence[object]) -> list[t.Scalar | None]:
-        normalized: list[t.Scalar | None] = []
+    def _normalize_dict_list(values: Sequence[t.ContainerValue]) -> list[t.Scalar]:
+        normalized: list[t.Scalar] = []
         for item in values:
-            if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
+            if isinstance(item, (str, int, float, bool, datetime)):
                 normalized.append(item)
-            else:
+            elif item is not None:
                 normalized.append(str(item))
         return normalized
 
     @staticmethod
-    def _normalize_mapping_list(values: Sequence[object]) -> list[t.Scalar | None]:
-        normalized: list[t.Scalar | None] = [
+    def _normalize_mapping_list(
+        values: Sequence[t.ContainerValue],
+    ) -> list[t.Scalar]:
+        normalized: list[t.Scalar] = [
             item
             for item in values
-            if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item)
+            if isinstance(item, (str, int, float, bool, datetime))
         ]
         return normalized
 
@@ -594,15 +600,20 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: dict[str, t.Scalar | list[str] | None] = {}
+            normalized_metadata: dict[str, t.ContainerValue] = {}
             for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)):
                     normalized_metadata[key] = value
                 elif isinstance(value, list):
                     normalized_metadata[key] = [str(item) for item in value]
+                elif isinstance(value, Mapping):
+                    normalized_metadata[key] = {
+                        str(inner_key): inner_value
+                        for inner_key, inner_value in value.items()
+                    }
                 else:
                     normalized_metadata[key] = str(value)
-            model.validation_metadata = normalized_metadata
+            setattr(model, "validation_metadata", m.ConfigMap(root=normalized_metadata))
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -682,7 +693,7 @@ class FlextLdifUtilitiesMetadata:
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
-            "converted": converted,
+            "converted": converted if converted is not None else original,
             "differences": [],
             "original_length": len(original),
             "converted_length": len(converted) if converted else len(original),
@@ -821,12 +832,19 @@ class FlextLdifUtilitiesMetadata:
         if write_opts is None:
             return None
         key = c.Ldif.MetadataKeys.WRITE_OPTIONS
-        extras = getattr(write_opts, "model_extra", None) or {}
-        if key not in extras:
-            return None
+        raw_extras = getattr(write_opts, "model_extra", None)
+        extras: dict[str, t.MetadataValue] = {}
+        opt: t.ContainerValue | None = None
+        if isinstance(raw_extras, Mapping):
+            extras = {
+                extra_key: u.normalize_to_metadata_value(extra_value)
+                for extra_key, extra_value in m.ConfigMap.model_validate(
+                    raw_extras
+                ).root.items()
+            }
         opt = extras.get(key)
-        if isinstance(opt, FlextLdifModelsSettings.WriteFormatOptions):
-            return opt
+        if isinstance(opt, Mapping):
+            return FlextLdifModelsSettings.WriteFormatOptions.model_validate(opt)
         return None
 
     @staticmethod
@@ -889,7 +907,9 @@ class FlextLdifUtilitiesMetadata:
         processing_stats = entry.metadata.processing_stats
         if not processing_stats:
             return entry
-        updated_stats = processing_stats.model_copy()
+        updated_stats = m.Ldif.EntryStatistics.model_validate(
+            processing_stats.model_dump()
+        )
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
                 updated_stats, category

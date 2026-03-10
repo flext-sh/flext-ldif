@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif import c, m, p, u
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -24,15 +25,18 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""
-        {
+        filtered_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "_schema_service"}
-            and issubclass(v.__class__, (str, float, bool, type(None)))
+            and isinstance(v, (str, float, bool, type(None)))
         }
-        FlextService.__init__(self)
-        if schema_service is not None:
-            object.__setattr__(self, "_schema_service", schema_service)
+        FlextLdifServersBaseSchema.__init__(
+            self,
+            _schema_service=schema_service,
+            _parent_quirk=None,
+            **filtered_kwargs,
+        )
 
     @override
     def extract_schemas_from_ldif(
@@ -117,7 +121,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _collect_attribute_extensions(self, attr: m.Ldif.SchemaAttribute) -> list[str]:
         """Collect OUD X-* extensions from attribute."""
-        extensions = []
+        extensions: list[str] = []
         if attr.x_origin:
             extensions.append("X-ORIGIN")
         if attr.x_file_ref:
