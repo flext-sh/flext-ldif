@@ -42,8 +42,8 @@ class FlextLdifServiceRegistry(FlextRegistry):
 
     def reset(self) -> None:
         """Reset registry (for testing only)."""
-        _ = self.unregister_class_plugin(self.FACTORIES, "filter")
-        _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
+        _ = self.unregister_plugin(self.FACTORIES, "filter", scope="class")
+        _ = self.unregister_plugin(self.FACTORIES, "categorization", scope="class")
 
 
 __all__ = ["FlextLdifServiceRegistry"]

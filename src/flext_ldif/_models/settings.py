@@ -645,7 +645,7 @@ class FlextLdifModelsSettings:
             default=False, description="Whether currently parsing value (after '=')"
         )
         pairs: list[tuple[str, str]] = Field(
-            default_factory=list,
+            default_factory=lambda: [],
             description="List of (attr, value) pairs parsed so far",
         )
 
@@ -901,9 +901,7 @@ class FlextLdifModelsSettings:
             str,
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
-        allowed_encodings: list[c.Ldif.LiteralTypes.EncodingLiteral] = Field(
-            default_factory=list
-        )
+        allowed_encodings: list[str] = Field(default_factory=lambda: [])
 
     class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""

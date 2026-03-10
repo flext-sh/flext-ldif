@@ -202,12 +202,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """Check if this is an Active Directory ACL (public method)."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                return self.can_handle_acl(raw_acl)
-            return False
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            return self.can_handle_acl(raw_acl)
 
         @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -229,27 +227,25 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         re.IGNORECASE,
                     )
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                normalized = raw_acl.strip()
-                if not normalized:
-                    return False
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
-                ):
-                    return True
-                return bool(
-                    re.match(
-                        FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
-                        normalized,
-                        re.IGNORECASE,
-                    )
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            normalized = raw_acl.strip()
+            if not normalized:
+                return False
+            attr_name, _, _ = normalized.partition(":")
+            if (
+                attr_name.strip().lower()
+                == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
+            ):
+                return True
+            return bool(
+                re.match(
+                    FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
+                    normalized,
+                    re.IGNORECASE,
                 )
-            return False
+            )
 
         @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
@@ -363,11 +359,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
             raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes = (
-                raw_object_classes
-                if isinstance(raw_object_classes, (list, tuple))
-                else [raw_object_classes]
-            )
+            object_classes = list(raw_object_classes)
             normalized_object_classes: list[str] = []
             for oc in object_classes:
                 if isinstance(oc, list):

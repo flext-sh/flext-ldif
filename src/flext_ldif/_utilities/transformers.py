@@ -275,6 +275,8 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     """Transformer for filtering entry attributes."""
 
     __slots__ = ("_exclude", "_include")
+    _include: set[str] | None
+    _exclude: set[str]
 
     def __init__(
         self,
@@ -284,8 +286,8 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
     ) -> None:
         """Initialize attribute filter transformer."""
         super().__init__()
-        self._include = set(include) if include else None
-        self._exclude = set(exclude) if exclude else set()
+        self._include = {str(item) for item in include} if include else None
+        self._exclude: set[str] = {str(item) for item in exclude} if exclude else set()
 
     @override
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:

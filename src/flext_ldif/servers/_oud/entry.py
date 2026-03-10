@@ -16,9 +16,7 @@ from typing import override
 from flext_core import FlextLogger, FlextResult, u as core_u
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
@@ -193,6 +191,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         existing_metadata = entry_data.metadata
         if not existing_metadata:
             existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+        else:
+            existing_metadata = m.Ldif.QuirkMetadata.model_validate(
+                existing_metadata.model_dump()
+            )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudEntry.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes, acl_attribute_names
@@ -234,46 +236,41 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not write_opts:
             return m.Ldif.WriteOptions()
         hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
-        hidden_attrs_set = (
-            set(hidden_attrs_raw)
-            if core_u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set))
-            else set()
-        )
+        hidden_attrs_set: set[str] = set()
+        if core_u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
+            hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
         if isinstance(write_opts, m.Ldif.WriteOptions):
             return write_opts.model_copy(
                 update={"hidden_attrs": list(hidden_attrs_set)}
             )
-        if isinstance(write_opts, Mapping):
-            write_opts_dict: dict[str, object] = {
-                "hidden_attrs": list(hidden_attrs_set)
-            }
-            format_value = write_opts.get("format")
-            if isinstance(format_value, str):
-                write_opts_dict["format"] = format_value
-            base_dn_value = write_opts.get("base_dn")
-            if isinstance(base_dn_value, str):
-                write_opts_dict["base_dn"] = base_dn_value
-            sort_entries_value = write_opts.get("sort_entries")
-            if isinstance(sort_entries_value, bool):
-                write_opts_dict["sort_entries"] = sort_entries_value
-            else:
-                sort_attributes_value = write_opts.get("sort_attributes")
-                if isinstance(sort_attributes_value, bool):
-                    write_opts_dict["sort_entries"] = sort_attributes_value
-            include_comments_value = write_opts.get("include_comments")
-            if isinstance(include_comments_value, bool):
-                write_opts_dict["include_comments"] = include_comments_value
-            else:
-                write_metadata_as_comments = write_opts.get(
-                    "write_metadata_as_comments"
-                )
-                if isinstance(write_metadata_as_comments, bool):
-                    write_opts_dict["include_comments"] = write_metadata_as_comments
-            base64_encode_binary_value = write_opts.get("base64_encode_binary")
-            if isinstance(base64_encode_binary_value, bool):
-                write_opts_dict["base64_encode_binary"] = base64_encode_binary_value
-            return m.Ldif.WriteOptions.model_validate(write_opts_dict)
+        write_opts_dict: dict[str, t.ContainerValue] = {
+            "hidden_attrs": list(hidden_attrs_set)
+        }
+        format_value = write_opts.get("format")
+        if isinstance(format_value, str):
+            write_opts_dict["format"] = format_value
+        base_dn_value = write_opts.get("base_dn")
+        if isinstance(base_dn_value, str):
+            write_opts_dict["base_dn"] = base_dn_value
+        sort_entries_value = write_opts.get("sort_entries")
+        if isinstance(sort_entries_value, bool):
+            write_opts_dict["sort_entries"] = sort_entries_value
+        else:
+            sort_attributes_value = write_opts.get("sort_attributes")
+            if isinstance(sort_attributes_value, bool):
+                write_opts_dict["sort_entries"] = sort_attributes_value
+        include_comments_value = write_opts.get("include_comments")
+        if isinstance(include_comments_value, bool):
+            write_opts_dict["include_comments"] = include_comments_value
+        else:
+            write_metadata_as_comments = write_opts.get("write_metadata_as_comments")
+            if isinstance(write_metadata_as_comments, bool):
+                write_opts_dict["include_comments"] = write_metadata_as_comments
+        base64_encode_binary_value = write_opts.get("base64_encode_binary")
+        if isinstance(base64_encode_binary_value, bool):
+            write_opts_dict["base64_encode_binary"] = base64_encode_binary_value
+        return m.Ldif.WriteOptions.model_validate(write_opts_dict)
         return m.Ldif.WriteOptions(hidden_attrs=list(hidden_attrs_set))
 
     @staticmethod
@@ -354,8 +351,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return None
         normalized: dict[str, t.MetadataValue] = {}
         for raw_key, raw_value in parsed.items():
-            if not isinstance(raw_key, str):
-                continue
             normalized[raw_key] = (
                 FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(raw_value)
             )
@@ -375,12 +370,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return FlextResult[m.Ldif.Entry].ok(entry)
         attrs_for_model: dict[str, list[str]] = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
-            if not isinstance(raw_key, str):
-                continue
             if isinstance(raw_value, list):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
-            elif isinstance(raw_value, str):
-                attrs_for_model[raw_key] = [raw_value]
             else:
                 attrs_for_model[raw_key] = [str(raw_value)]
         corrected_ldif_attrs = m.Ldif.Attributes(attributes=attrs_for_model)
@@ -420,7 +411,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         elif isinstance(syntax_corrections_raw, Mapping):
             syntax_corrections_dict: dict[str, str] = {}
             for k, v in syntax_corrections_raw.items():
-                syntax_corrections_dict[str(k)] = str(v) if v is not None else ""
+                syntax_corrections_dict[str(k)] = str(v)
             syntax_corrections_typed = syntax_corrections_dict
         if syntax_corrections_typed is not None:
             return FlextLdifServersOudEntry.apply_syntax_corrections(
@@ -593,7 +584,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         oud_constants = FlextLdifServersOudConstants
-        patterns_config = FlextLdifModelsSettings.ServerPatternsConfig(
+        patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
             attr_prefixes=oud_constants.DETECTION_ATTRIBUTE_PREFIXES,
             attr_names=oud_constants.BOOLEAN_ATTRIBUTES,
@@ -641,7 +632,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[list[m.Ldif.Entry]].fail(
                     post_parse_result.error or "OUD post-parse failed"
                 )
             entry_after_post = post_parse_result.value
@@ -656,11 +647,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 entry_after_post, original_dn, original_attrs
             )
             if finalize_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[list[m.Ldif.Entry]].fail(
                     finalize_result.error or "OUD finalize parse failed"
                 )
             processed_entries.append(finalize_result.value)
-        return FlextResult.ok(processed_entries)
+        return FlextResult[list[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
@@ -715,22 +706,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry_attrs_dict: dict[str, list[str]] = {}
         if isinstance(entry_attrs, Mapping):
             for key, values in entry_attrs.items():
-                key_str = str(key)
-                if isinstance(values, list):
-                    entry_attrs_dict[key_str] = [str(v) for v in values]
-                elif isinstance(values, bytes):
-                    entry_attrs_dict[key_str] = [values.decode("utf-8")]
-                elif isinstance(values, str):
-                    entry_attrs_dict[key_str] = [values]
-                else:
-                    entry_attrs_dict[key_str] = [str(values)]
-        elif (
-            isinstance(entry_attrs, m.Ldif.Entry)
-            and entry_attrs.attributes
-            and entry_attrs.attributes.attributes
-        ):
+                entry_attrs_dict[str(key)] = [str(v) for v in values]
+        elif entry_attrs.attributes and entry_attrs.attributes.attributes:
             entry_attrs_dict = {
-                k: [str(v) for v in (vs if isinstance(vs, list) else [vs])]
+                k: [str(v) for v in vs]
                 for k, vs in entry_attrs.attributes.attributes.items()
             }
         result = super().parse_entry(entry_dn, entry_attrs_dict)
@@ -740,9 +719,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_attribute_case: dict[str, str] = {}
         if isinstance(entry_attrs, Mapping):
             for attr_name in entry_attrs:
-                if isinstance(attr_name, str):
-                    original_attribute_case[attr_name.lower()] = attr_name
-        metadata_config = FlextLdifModelsSettings.EntryParseMetadataConfig(
+                original_attribute_case[attr_name.lower()] = attr_name
+        metadata_config = m.Ldif.EntryParseMetadataConfig(
             quirk_type="oud",
             original_entry_dn=entry_dn,
             cleaned_dn=entry.dn.value if entry.dn else entry_dn,
@@ -755,7 +733,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             metadata_config
         )
         entry.metadata = metadata
-        return FlextResult.ok(entry)
+        return FlextResult[m.Ldif.Entry].ok(entry)
 
     def _add_acl_value_comments(
         self,
@@ -782,7 +760,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: list[str],
         attr_name: str,
-        _transformation: FlextLdifModelsDomains.AttributeTransformation,
+        _transformation: m.Ldif.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.
@@ -2041,7 +2019,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return FlextResult[str].fail(f"Pre-write hook failed: {hook_result.error}")
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
-        write_options = FlextLdifUtilitiesMetadata.extract_write_options(entry_to_write)
+        write_options_raw = FlextLdifUtilitiesMetadata.extract_write_options(
+            entry_to_write
+        )
+        write_options = (
+            m.Ldif.WriteFormatOptions.model_validate(write_options_raw.model_dump())
+            if write_options_raw is not None
+            else None
+        )
         ldif_parts: list[str] = []
         ldif_parts.extend(self._add_original_entry_comments(entry_data, write_options))
         entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)

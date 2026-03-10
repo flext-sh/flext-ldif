@@ -84,7 +84,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _scalar_or_list_value(value: t.MetadataValue) -> bool:
         """Check if value is scalar metadata value or list."""
-        return value is None or value.__class__ in {str, int, float, bool, list}
+        return value.__class__ in {str, int, float, bool, list}
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -161,7 +161,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 k = str(key)
                 if isinstance(val, Mapping):
                     continue
-                if val is None or val.__class__ in {str, bool, int, float}:
+                if val.__class__ in {str, bool, int, float}:
                     perms_data[k] = val
                 elif isinstance(val, list):
                     str_list = [str(item) for item in val if isinstance(item, str)]
@@ -255,8 +255,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             target_data: dict[str, t.MetadataValue] = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
-                    if not isinstance(raw_key, str):
-                        continue
                     if isinstance(raw_value, Mapping):
                         continue
                     if FlextLdifServersOudAcl._scalar_or_list_value(raw_value):
@@ -415,7 +413,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Check if raw_acl should be used as-is."""
         if not acl_data.raw_acl:
             return False
-        raw_acl_str = acl_data.raw_acl if isinstance(acl_data.raw_acl, str) else ""
+        raw_acl_str = acl_data.raw_acl
         return raw_acl_str.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX)
 
     @override

@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from flext_core import FlextLogger, r, t
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import m
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -221,6 +222,12 @@ class FlextLdifUtilitiesWriters:
     class Content:
         """Generalized content writer for multiple entries."""
 
+        class Stats(BaseModel):
+            model_config = ConfigDict(validate_default=True)
+            total_entries: int = Field(default=0, ge=0)
+            successful: int = Field(default=0, ge=0)
+            failed: int = Field(default=0, ge=0)
+
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""
 
@@ -288,7 +295,7 @@ class FlextLdifUtilitiesWriters:
         def write_single_entry_with_stats(
             entry: FlextLdifModelsDomains.Entry,
             write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
-            stats: Stats,  # noqa: F821
+            stats: FlextLdifUtilitiesWriters.Content.Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""
             result = write_entry_hook(entry)

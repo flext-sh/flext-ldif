@@ -18,12 +18,16 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     auto_execute: ClassVar[bool] = False
 
+    @staticmethod
+    def _empty_entries() -> list[m.Ldif.Entry]:
+        return []
+
     @classmethod
     def builder(cls) -> Self:
         """Create a new sorting service instance for builder pattern."""
         return cls()
 
-    entries: list[m.Ldif.Entry] = Field(default_factory=list)
+    entries: list[m.Ldif.Entry] = Field(default_factory=_empty_entries)
     sort_target: str = Field(default="entries")
     sort_by: str = Field(default="hierarchy")
     custom_predicate: Callable[[m.Ldif.Entry], str | int | float] | None = Field(
@@ -102,7 +106,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         default_by = c.Ldif.SortStrategy.HIERARCHY.value
         default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
         if config is not None:
-            strategy = config.by if isinstance(config.by, str) else str(config.by)
+            strategy = config.by
             entries_final = [e for e in config.entries if isinstance(e, m.Ldif.Entry)]
             acl_attrs_final = config.acl_attributes or []
             sorting_instance = cls(
@@ -177,7 +181,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             c.Ldif.SortStrategy.SCHEMA.value,
             c.Ldif.SortStrategy.CUSTOM.value,
         }
-        if isinstance(v, str) and v in valid_values:
+        if v in valid_values:
             return v
         msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -193,7 +197,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             c.Ldif.SortTarget.SCHEMA.value,
             c.Ldif.SortTarget.COMBINED.value,
         }
-        if isinstance(v, str) and v in valid_values:
+        if v in valid_values:
             return v
         msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid_values))}"
         raise ValueError(msg)
@@ -246,10 +250,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             return []
         visited.add(dn)
         result = list(dn_to_entries[dn])
-        children_raw = parent_to_children.get(dn, [])
-        children: list[str] = []
-        if isinstance(children_raw, Sequence) and (not isinstance(children_raw, str)):
-            children.extend(item for item in children_raw if isinstance(item, str))
+        children = list(parent_to_children.get(dn, []))
         for child_dn in children:
             result.extend(
                 FlextLdifSorting._dfs_traverse(
@@ -413,15 +414,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     dn_key = FlextLdifSorting._normalized_dn_key(dn_value)
                     if dn_key not in visited:
                         entries_raw = dn_to_entries.get(dn_key, [])
-                        entries_for_dn: list[m.Ldif.Entry] = []
-                        if isinstance(entries_raw, Sequence) and (
-                            not isinstance(entries_raw, str)
-                        ):
-                            entries_for_dn.extend(
-                                item
-                                for item in entries_raw
-                                if isinstance(item, m.Ldif.Entry)
-                            )
+                        entries_for_dn = list(entries_raw)
                         sorted_entries.extend(entries_for_dn)
                         visited.add(dn_key)
             return r[list[m.Ldif.Entry]].ok(sorted_entries)
@@ -447,9 +440,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             else:
                 dn_value = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
-            first_val = str(
-                oid_values[0] if isinstance(oid_values, (list, tuple)) else oid_values
-            )
+            first_val = str(oid_values[0])
             oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
             return (priority, oid)
 
@@ -467,19 +458,12 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return entry
             attrs_dict: dict[str, list[str]] = {
                 str(k): [str(v) for v in vals]
-                if isinstance(vals, (list, tuple))
-                else [str(vals)]
                 for k, vals in entry.attributes.attributes.items()
             }
             modified = False
             for acl_attr in self.acl_attributes:
                 if acl_attr in attrs_dict:
-                    acl_values_raw = attrs_dict[acl_attr]
-                    acl_values_raw_normalized = (
-                        acl_values_raw
-                        if isinstance(acl_values_raw, (list, tuple))
-                        else [str(acl_values_raw)]
-                    )
+                    acl_values_raw_normalized = attrs_dict[acl_attr]
                     acl_values: list[str] = [
                         str(item) for item in acl_values_raw_normalized
                     ]
@@ -639,10 +623,12 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     if case_sensitive
                     else c.Ldif.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE
                 )
-                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = original_attr_order
-                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = (
-                    new_attr_order
-                )
+                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = [
+                    str(item) for item in original_attr_order
+                ]
+                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = [
+                    str(item) for item in new_attr_order
+                ]
                 extensions[c.Ldif.MetadataKeys.SORTING_STRATEGY] = strategy_type.value
                 self.logger.debug(
                     "Sorted entry attributes",
@@ -690,20 +676,24 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 extensions = new_entry.metadata.extensions
                 ordered_attrs = [k for k, _ in ordered]
                 remaining_attrs = [k for k, _ in remaining]
-                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = original_attr_order
-                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = (
-                    new_attr_order
-                )
+                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = [
+                    str(item) for item in original_attr_order
+                ]
+                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = [
+                    str(item) for item in new_attr_order
+                ]
                 extensions[c.Ldif.MetadataKeys.SORTING_STRATEGY] = (
                     c.Ldif.SortingStrategyType.CUSTOM_ORDER.value
                 )
-                extensions[c.Ldif.MetadataKeys.SORTING_CUSTOM_ORDER] = order
-                extensions[c.Ldif.MetadataKeys.SORTING_ORDERED_ATTRIBUTES] = (
-                    ordered_attrs
-                )
-                extensions[c.Ldif.MetadataKeys.SORTING_REMAINING_ATTRIBUTES] = (
-                    remaining_attrs
-                )
+                extensions[c.Ldif.MetadataKeys.SORTING_CUSTOM_ORDER] = [
+                    str(item) for item in order
+                ]
+                extensions[c.Ldif.MetadataKeys.SORTING_ORDERED_ATTRIBUTES] = [
+                    str(item) for item in ordered_attrs
+                ]
+                extensions[c.Ldif.MetadataKeys.SORTING_REMAINING_ATTRIBUTES] = [
+                    str(item) for item in remaining_attrs
+                ]
                 self.logger.debug(
                     "Sorted entry attributes by custom order",
                     entry_dn=str(entry.dn) if entry.dn else None,
@@ -730,6 +720,8 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         new_entry = FlextLdifSorting._ensure_metadata_extensions(entry)
         if new_entry.metadata is not None:
             extensions = new_entry.metadata.extensions
-            extensions[c.Ldif.MetadataKeys.SORTING_ACL_ATTRIBUTES] = self.acl_attributes
+            extensions[c.Ldif.MetadataKeys.SORTING_ACL_ATTRIBUTES] = [
+                str(item) for item in self.acl_attributes
+            ]
             extensions[c.Ldif.MetadataKeys.SORTING_ACL_SORTED] = True
         return new_entry

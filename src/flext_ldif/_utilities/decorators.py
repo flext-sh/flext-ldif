@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeGuard
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import FlextLdifShared, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -16,9 +16,16 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 logger = FlextLogger(__name__)
 
 
-def _has_metadata_attribute(obj: t.ContainerValue) -> TypeGuard[t.ContainerValue]:
-    """Type guard to check if object has metadata attribute."""
-    return hasattr(obj, "metadata")
+def _is_metadata_attachable(
+    obj: t.ContainerValue,
+) -> TypeGuard[
+    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+]:
+    """Type guard to check if object supports metadata attachment."""
+    return isinstance(
+        obj,
+        (m.Ldif.Entry, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+    )
 
 
 class FlextLdifUtilitiesDecorators:
@@ -26,14 +33,21 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: t.ContainerValue | None, quirk_type: str, server_type: str | None
+        result_value: t.ContainerValue | None,
+        quirk_type: str,
+        server_type: str | None,
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
-        if result_value is None or not _has_metadata_attribute(result_value):
+        if result_value is None or not _is_metadata_attachable(result_value):
             return
-        extensions_dict = {
+        extensions_dict_raw: dict[str, str | None] = {
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        }
+        extensions_dict: dict[str, t.MetadataValue] = {
+            key: value
+            for key, value in extensions_dict_raw.items()
+            if value is not None
         }
         normalized_quirk_type: str | None = (
             FlextLdifShared.normalize_server_type(quirk_type) if quirk_type else None
@@ -79,7 +93,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue, arg: t.Ldif.Decorators.ParseMethodArg
+                self: object, arg: t.Ldif.Decorators.ParseMethodArg
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
                     return func(self, arg)
@@ -92,7 +106,7 @@ class FlextLdifUtilitiesDecorators:
                 ) as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
-                    return FlextResult.fail(error_msg)
+                    return r[t.Scalar | list[str] | None].fail(error_msg)
 
             return wrapper
 
@@ -110,22 +124,12 @@ class FlextLdifUtilitiesDecorators:
             """Wrapper function for parse methods."""
 
             @wraps(func)
-            def wrapper(
-                self: t.ContainerValue, arg: str
-            ) -> t.Ldif.Decorators.ParseMethodReturn:
+            def wrapper(self: object, arg: str) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
                 if result.is_success:
                     unwrapped = result.value
-                    if issubclass(
-                        unwrapped.__class__,
-                        (
-                            m.Ldif.Entry,
-                            m.Ldif.SchemaAttribute,
-                            m.Ldif.SchemaObjectClass,
-                            m.Ldif.Acl,
-                        ),
-                    ):
+                    if _is_metadata_attachable(unwrapped):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
                                 unwrapped
@@ -152,7 +156,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue, arg: t.Ldif.Decorators.WriteMethodArg
+                self: object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
@@ -175,7 +179,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: t.ContainerValue, arg: t.Ldif.Decorators.WriteMethodArg
+                self: object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:
                     return func(self, arg)
@@ -188,7 +192,7 @@ class FlextLdifUtilitiesDecorators:
                 ) as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
-                    return FlextResult.fail(error_msg)
+                    return r[t.Scalar | list[str] | None].fail(error_msg)
 
             return wrapper
 

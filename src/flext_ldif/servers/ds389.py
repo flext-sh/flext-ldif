@@ -253,21 +253,19 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 ):
                     return True
                 return normalized.lower().startswith("(version")
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                normalized = raw_acl.strip()
-                if not normalized:
-                    return False
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    == FlextLdifServersDs389.Constants.ACL_ATTRIBUTE_NAME
-                ):
-                    return True
-                return normalized.lower().startswith("(version")
-            return False
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            normalized = raw_acl.strip()
+            if not normalized:
+                return False
+            attr_name, _, _ = normalized.partition(":")
+            if (
+                attr_name.strip().lower()
+                == FlextLdifServersDs389.Constants.ACL_ATTRIBUTE_NAME
+            ):
+                return True
+            return normalized.lower().startswith("(version")
 
         def _build_acl_string(
             self, acl_name: str, permissions: list[str], targetattr: str, userdn: str
@@ -487,8 +485,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             object_classes_raw = normalized_attrs.get(objectclass_key, [])
             if isinstance(object_classes_raw, list):
                 object_classes: list[str] = object_classes_raw
-            elif isinstance(object_classes_raw, tuple):
-                object_classes = list(object_classes_raw)
             else:
                 object_classes = [str(object_classes_raw)]
             return bool(

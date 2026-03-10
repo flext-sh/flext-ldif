@@ -11,6 +11,7 @@ from pydantic import BaseModel, ValidationError
 
 from flext_ldif import FlextLdifFilters, FlextLdifServer, c, m, s, t, u
 from flext_ldif.constants import logger
+from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 _MISSING_ATTR = object()
@@ -152,7 +153,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return (included, excluded)
 
     @staticmethod
-    def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
+    def _has_attr(obj: t.ContainerValue | type, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -307,9 +308,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             categories[category] = updated_entries
         for cat, cat_entries in categories.items():
             if cat_entries:
-                entries_count: int = (
-                    u.count(cat_entries) if isinstance(cat_entries, list) else 0
-                )
+                entries_count = u.count(cat_entries)
                 logger.info(
                     "Category entries", category=cat, entries_count=entries_count
                 )
@@ -346,7 +345,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         constants_result = self._get_server_constants(effective_server_type)
         if constants_result.is_success:
             constants_raw = constants_result.map_or(None)
-            if constants_raw is not None and isinstance(constants_raw, type):
+            if constants_raw is not None:
                 constants = constants_raw
         elif not merged_category_map:
             return (c.Ldif.Category.REJECTED, constants_result.error)
@@ -567,39 +566,36 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             mapped = u.Collection.map(
                 rules.hierarchy_objectclasses, mapper=lambda oc: oc.lower()
             )
-            category_map[c.Ldif.Category.HIERARCHY] = frozenset(
-                mapped if isinstance(mapped, list) else []
-            )
+            category_map[c.Ldif.Category.HIERARCHY] = frozenset(mapped)
         if rules.user_objectclasses:
             mapped = u.Collection.map(
                 rules.user_objectclasses, mapper=lambda oc: oc.lower()
             )
-            category_map[c.Ldif.Category.USERS] = frozenset(
-                mapped if isinstance(mapped, list) else []
-            )
+            category_map[c.Ldif.Category.USERS] = frozenset(mapped)
         if rules.group_objectclasses:
             mapped = u.Collection.map(
                 rules.group_objectclasses, mapper=lambda oc: oc.lower()
             )
-            category_map[c.Ldif.Category.GROUPS] = frozenset(
-                mapped if isinstance(mapped, list) else []
-            )
+            category_map[c.Ldif.Category.GROUPS] = frozenset(mapped)
         if rules.acl_attributes:
             mapped = u.Collection.map(
                 rules.acl_attributes, mapper=lambda attr: f"attr:{attr.lower()}"
             )
-            category_map[c.Ldif.Category.ACL] = frozenset(
-                mapped if isinstance(mapped, list) else []
-            )
+            category_map[c.Ldif.Category.ACL] = frozenset(mapped)
         return category_map
 
-    def _check_hierarchy_priority(self, entry: m.Ldif.Entry, constants: type) -> bool:
+    def _check_hierarchy_priority(
+        self,
+        entry: m.Ldif.Entry,
+        constants: type[FlextLdifServersBaseConstants],
+    ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
-        priority_classes: t.ContainerValue = getattr(
-            constants, "HIERARCHY_PRIORITY_OBJECTCLASSES", frozenset()
+        priority_classes_raw: frozenset[str] = getattr(
+            constants,
+            "HIERARCHY_PRIORITY_OBJECTCLASSES",
+            frozenset(),
         )
-        if not isinstance(priority_classes, frozenset):
-            return False
+        priority_classes = frozenset(map(str, priority_classes_raw))
         entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
         return any(oc.lower() in entry_ocs for oc in priority_classes)
 
@@ -612,11 +608,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             c.Ldif.Category.ACL,
         ]
 
-    def _get_priority_order_from_constants(self, constants: type | None) -> list[str]:
+    def _get_priority_order_from_constants(
+        self,
+        constants: type[FlextLdifServersBaseConstants] | None,
+    ) -> list[str]:
         """Get priority order from constants or use default."""
-        if constants is not None and FlextLdifCategorization._has_attr(
-            constants, "CATEGORIZATION_PRIORITY"
-        ):
+        if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
 
             def is_valid_category(value: str) -> bool:
                 """Wrapper for TypeIs function to use as filter predicate."""
@@ -629,26 +626,24 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                     c.Ldif.Category.REJECTED,
                 }
 
-            priority_list = getattr(constants, "CATEGORIZATION_PRIORITY", [])
-            if isinstance(priority_list, (list, tuple)):
-                filtered = [
-                    item
-                    for item in priority_list
-                    if isinstance(item, str) and is_valid_category(item)
-                ]
-            else:
-                filtered: list[str] = []
-            result: list[str] = [
-                item
-                for item in filtered
-                if isinstance(item, str) and item in frozenset(c.Ldif.Category)
+            priority_list: list[str] = getattr(constants, "CATEGORIZATION_PRIORITY", [])
+            filtered: list[str] = [
+                item for item in priority_list if is_valid_category(item)
             ]
+            valid_categories: frozenset[str] = frozenset(c.Ldif.Category)
+            result: list[str] = [item for item in filtered if item in valid_categories]
             return result
         return self._get_default_priority_order()
 
-    def _get_server_constants(self, server_type: str) -> r[type]:
+    def _get_server_constants(
+        self, server_type: str
+    ) -> r[type[FlextLdifServersBaseConstants]]:
         """Get and validate server constants via FlextLdifServer registry."""
-        return self._server_registry.get_constants(server_type)
+        constants_result = self._server_registry.get_constants(server_type)
+        if constants_result.is_failure:
+            return r[type[FlextLdifServersBaseConstants]].fail(constants_result.error)
+        constants_raw = constants_result.value
+        return r[type[FlextLdifServersBaseConstants]].ok(constants_raw)
 
     def _match_entry_to_category(
         self,
@@ -676,23 +671,32 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _merge_server_constants_to_map(
         self,
         category_map: MutableMapping[str, frozenset[str]],
-        constants: type,
+        constants: type[FlextLdifServersBaseConstants],
         *,
         override_existing: bool = False,
     ) -> MutableMapping[str, frozenset[str]]:
         """Merge server constants into category map."""
-        category_objectclasses = getattr(constants, "CATEGORY_OBJECTCLASSES", None)
-        if isinstance(category_objectclasses, Mapping):
-            FlextLdifCategorization._merge_category_from_constants(
-                category_map,
-                category_objectclasses,
-                override_existing=override_existing,
-            )
-        acl_attrs_raw: t.ContainerValue = getattr(
-            constants, "CATEGORIZATION_ACL_ATTRIBUTES", frozenset()
+        empty_category_map: Mapping[str, frozenset[str]] = {}
+        category_objectclasses: Mapping[str, frozenset[str]] = getattr(
+            constants,
+            "CATEGORY_OBJECTCLASSES",
+            empty_category_map,
         )
-        if isinstance(acl_attrs_raw, frozenset) and acl_attrs_raw:
-            acl_attrs = acl_attrs_raw
+        server_map: dict[str, frozenset[str] | str] = {}
+        for map_key, map_value in category_objectclasses.items():
+            server_map[map_key] = frozenset(map_value)
+        FlextLdifCategorization._merge_category_from_constants(
+            category_map,
+            server_map,
+            override_existing=override_existing,
+        )
+        acl_attrs_raw: frozenset[str] = getattr(
+            constants,
+            "CATEGORIZATION_ACL_ATTRIBUTES",
+            frozenset(),
+        )
+        if acl_attrs_raw:
+            acl_attrs = frozenset(map(str, acl_attrs_raw))
             acl_category = c.Ldif.Category.ACL
 
             def _to_attr_key(attr: str) -> str:
@@ -700,21 +704,11 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
             if override_existing or acl_category not in category_map:
                 mapped = u.Collection.map(acl_attrs, mapper=_to_attr_key)
-                if isinstance(mapped, frozenset):
-                    category_map[acl_category] = mapped
-                elif isinstance(mapped, list):
-                    category_map[acl_category] = frozenset(mapped)
-                else:
-                    category_map[acl_category] = frozenset()
+                category_map[acl_category] = frozenset(mapped)
             else:
                 existing_acl = category_map.get(acl_category, frozenset())
                 mapped = u.Collection.map(acl_attrs, mapper=_to_attr_key)
-                if isinstance(mapped, frozenset):
-                    new_acl_attrs = mapped
-                elif isinstance(mapped, list):
-                    new_acl_attrs = frozenset(mapped)
-                else:
-                    new_acl_attrs = frozenset()
+                new_acl_attrs = frozenset(mapped)
                 category_map[acl_category] = existing_acl | new_acl_attrs
         return category_map
 
@@ -726,22 +720,18 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             return r[m.Ldif.CategoryRules].ok(rules)
         if rules is None:
             return r[m.Ldif.CategoryRules].ok(self._categorization_rules)
-        if isinstance(rules, Mapping):
-            try:
-                return r[m.Ldif.CategoryRules].ok(
-                    m.Ldif.CategoryRules.model_validate(dict(rules))
-                )
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
-                return r[m.Ldif.CategoryRules].fail(f"Invalid rules mapping: {e}")
-        return r[m.Ldif.CategoryRules].fail(
-            f"Invalid rules type: {type(rules)}. Expected CategoryRules model."
-        )
+        try:
+            return r[m.Ldif.CategoryRules].ok(
+                m.Ldif.CategoryRules.model_validate(dict(rules))
+            )
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            return r[m.Ldif.CategoryRules].fail(f"Invalid rules mapping: {e}")
 
     def _update_metadata_for_filtered_entries(
         self,

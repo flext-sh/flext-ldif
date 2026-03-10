@@ -91,7 +91,10 @@ class FlextLdifUtilitiesSchema:
             new_value = transform_fn(old_value)
             if isinstance(new_value, FlextResult):
                 if new_value.is_failure:
-                    return FlextResult.fail(
+                    return r[
+                        FlextLdifModelsDomains.SchemaAttribute
+                        | FlextLdifModelsDomains.SchemaObjectClass
+                    ].fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}"
                     )
                 setattr(transformed, field_name, new_value.value)
@@ -108,7 +111,10 @@ class FlextLdifUtilitiesSchema:
             logger.exception(
                 "Schema field transformation failed", field_name=field_name
             )
-            return FlextResult.fail(f"Transformation of '{field_name}' error: {e}")
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].fail(f"Transformation of '{field_name}' error: {e}")
 
     @staticmethod
     def _apply_field_transforms(
@@ -148,7 +154,10 @@ class FlextLdifUtilitiesSchema:
                 current, field_name, transform_fn
             )
             if result.is_failure:
-                return FlextResult.fail(result.error or "Field transformation failed")
+                return r[
+                    FlextLdifModelsDomains.SchemaAttribute
+                    | FlextLdifModelsDomains.SchemaObjectClass
+                ].fail(result.error or "Field transformation failed")
             unwrapped = result.value
             validation_result = (
                 FlextLdifUtilitiesSchema._validate_transformation_result(
@@ -185,7 +194,10 @@ class FlextLdifUtilitiesSchema:
                 UnicodeDecodeError,
                 struct.error,
             ):
-                return FlextResult.fail(
+                return r[
+                    FlextLdifModelsDomains.SchemaAttribute
+                    | FlextLdifModelsDomains.SchemaObjectClass
+                ].fail(
                     f"Unexpected type after transformation: {type(unwrapped_validated).__name__}"
                 )
         return FlextResult[
@@ -622,9 +634,10 @@ class FlextLdifUtilitiesSchema:
                 FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            return FlextResult.fail(
-                f"Unknown schema object type: {type(transformed).__name__}"
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].fail(f"Unknown schema object type: {type(transformed).__name__}")
 
     @staticmethod
     def _split_schema_values(value: str) -> list[str]:
@@ -738,9 +751,10 @@ class FlextLdifUtilitiesSchema:
             )
             return FlextResult.ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            return FlextResult.fail(
-                f"Unknown schema object type: {type(schema_obj).__name__}"
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].fail(f"Unknown schema object type: {type(schema_obj).__name__}")
 
     @staticmethod
     def _write_schema_element(
@@ -810,7 +824,10 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as e:
             logger.exception("Transformation pipeline error")
-            return FlextResult.fail(f"Transformation pipeline error: {e}")
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].fail(f"Transformation pipeline error: {e}")
 
     @staticmethod
     def build_attribute_parts_with_metadata(

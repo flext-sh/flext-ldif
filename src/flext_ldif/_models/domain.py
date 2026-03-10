@@ -1113,13 +1113,13 @@ class FlextLdifModelsDomains:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type identifier (e.g., 'oid', 'oud')"
         )
-        schemas: list[p.Ldif.SchemaQuirkProtocol] = Field(
+        schemas: list[FlextLdifModelsBase] = Field(
             default_factory=list, description="List of Schema quirk model instances"
         )
-        acls: list[p.Ldif.AclQuirkProtocol] = Field(
+        acls: list[FlextLdifModelsBase] = Field(
             default_factory=list, description="List of ACL quirk model instances"
         )
-        entrys: list[p.Ldif.EntryQuirkProtocol] = Field(
+        entrys: list[FlextLdifModelsBase] = Field(
             default_factory=list, description="List of Entry quirk model instances"
         )
 
@@ -2754,7 +2754,7 @@ class FlextLdifModelsDomains:
             default_factory=list,
             description="Final objectClass values after transformation",
         )
-        quirks_applied: list[c.Ldif.LiteralTypes.ServerTypeLiteral] = Field(
+        quirks_applied: list[str] = Field(
             default_factory=list,
             description="List of quirk types applied to this entry",
         )
@@ -3134,11 +3134,11 @@ class FlextLdifModelsDomains:
             default=None,
             description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
         )
-        acls: list[FlextLdifModelsDomains.Acl] = Field(
+        acls: list[FlextLdifModelsBase] = Field(
             default_factory=list,
             description="Access Control Lists extracted from entry attributes during parsing",
         )
-        objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+        objectclasses: list[FlextLdifModelsBase] = Field(
             default_factory=list,
             description="ObjectClass definitions for schema validation (not RFC LDIF data)",
         )
@@ -3176,7 +3176,7 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
             description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
         )
-        schema_quirks_applied: list[c.Ldif.LiteralTypes.ServerTypeLiteral] = Field(
+        schema_quirks_applied: list[str] = Field(
             default_factory=list,
             description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
         )
@@ -3192,7 +3192,7 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
             description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
         )
-        conversion_history: list[dict[str, t.Scalar | list[str] | None]] = Field(
+        conversion_history: list[dict[str, str | list[str]]] = Field(
             default_factory=list,
             description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
         )

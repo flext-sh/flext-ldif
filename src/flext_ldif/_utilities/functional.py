@@ -47,12 +47,9 @@ class FlextFunctional:
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.ContainerValue] = {}
             for key, item in value.items():
-                if isinstance(key, str):
-                    normalized_mapping[key] = FlextFunctional._to_general(item)
+                normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
-        if isinstance(value, Sequence) and (
-            not isinstance(value, (str, bytes, bytearray))
-        ):
+        if isinstance(value, Sequence):
             return [FlextFunctional._to_general(item) for item in value]
         return str(value)
 

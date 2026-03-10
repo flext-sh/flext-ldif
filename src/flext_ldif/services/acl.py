@@ -93,13 +93,14 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             """Check if ACL grants all permissions."""
             return acl_grants_all(value)
 
-        found_raw = u.find(acls, predicate=predicate)
-        if found_raw is not None:
+        found_result = u.find(acls, predicate=predicate)
+        if found_result.is_success:
+            found_acl = found_result.value
             return r[m.Ldif.AclEvaluationResult].ok(
                 m.Ldif.AclEvaluationResult(
                     granted=True,
-                    matched_acl=found_raw,
-                    message=f"ACL '{found_raw.name}' grants required permissions: {required_perms}",
+                    matched_acl=found_acl,
+                    message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
                 )
             )
         return r[m.Ldif.AclEvaluationResult].ok(

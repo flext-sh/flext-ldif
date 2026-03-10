@@ -9,13 +9,10 @@ from typing import override
 
 from flext_core import d, r
 
-from flext_ldif import FlextLdifServiceBase, m, u
-from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif import FlextLdifServiceBase, m, t, u
 
 
-class FlextLdifStatistics(
-    FlextLdifServiceBase[FlextLdifModelsResults.StatisticsServiceStatus]
-):
+class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
     """Statistics service for LDIF processing pipeline."""
 
     def __init__(self) -> None:
@@ -31,7 +28,7 @@ class FlextLdifStatistics(
         for entry in entries:
             object_class_distribution.update(entry.get_objectclass_names())
             metadata = entry.metadata
-            if metadata is not None and metadata.extensions is not None:
+            if metadata is not None:
                 server_type_value = metadata.extensions.get("server_type")
                 if isinstance(server_type_value, str):
                     server_type_distribution[server_type_value] += 1
@@ -74,7 +71,7 @@ class FlextLdifStatistics(
         output_files: Mapping[str, str],
     ) -> r[m.Ldif.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
-        categorized_values_list: list[object] = list(categorized.values())
+        categorized_values_list: list[t.ContainerValue] = list(categorized.values())
         total_entries = sum(
             len(entries) if isinstance(entries, list) else 0
             for entries in categorized_values_list
@@ -90,8 +87,8 @@ class FlextLdifStatistics(
             for entry in categorized.get("rejected", [])
         ]
         rejection_count = u.count(rejected_entries)
-        rejection_reasons = self._extract_rejection_reasons(rejected_entries)
-        total_entries_int = total_entries if isinstance(total_entries, int) else 0
+        _ = self._extract_rejection_reasons(rejected_entries)
+        total_entries_int = total_entries
         rejection_rate = (
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
@@ -111,7 +108,6 @@ class FlextLdifStatistics(
                 categorized=categorized_counts_model,
                 rejection_rate=rejection_rate,
                 rejection_count=rejection_count,
-                rejection_reasons=rejection_reasons,
                 written_counts=written_counts_model,
                 output_files=output_files_model,
             )

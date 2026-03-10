@@ -259,12 +259,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> dict[str, list[str] | str | bool | None]:
         extensions: dict[str, list[str] | str | bool | None] = {}
         for key, value in metadata.items():
-            if not isinstance(key, str):
-                continue
             if isinstance(value, bool):
                 extensions[key] = value
                 continue
-            if isinstance(value, str) or value is None:
+            if isinstance(value, str):
                 extensions[key] = value
                 continue
             if isinstance(value, list):

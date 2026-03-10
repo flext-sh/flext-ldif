@@ -370,21 +370,19 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             )
         x_origin_value: str | None = None
         if attr_data.metadata and attr_data.metadata.extensions:
-            match attr_data.metadata.extensions.get("x_origin"):
-                case origin if isinstance(origin, str):
-                    x_origin_value = origin
-                case None:
-                    pass
-                case x_origin_raw:
-                    logger.warning(
-                        "x_origin extension is not a string, ignoring",
-                        extra={
-                            "x_origin_type": type(x_origin_raw).__name__,
-                            "x_origin_value": str(x_origin_raw)[:100],
-                            "attribute_name": attr_data.name,
-                            "attribute_oid": attr_data.oid,
-                        },
-                    )
+            x_origin_raw = attr_data.metadata.extensions.get("x_origin")
+            if isinstance(x_origin_raw, str):
+                x_origin_value = x_origin_raw
+            else:
+                logger.warning(
+                    "x_origin extension is not a string, ignoring",
+                    extra={
+                        "x_origin_type": type(x_origin_raw).__name__,
+                        "x_origin_value": str(x_origin_raw)[:100],
+                        "attribute_name": attr_data.name,
+                        "attribute_oid": attr_data.oid,
+                    },
+                )
         return m.Ldif.SchemaAttribute(
             oid=attr_data.oid,
             name=fixed_name,
@@ -438,10 +436,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 original_format_raw = attr_data.metadata.extensions.get(
                     c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
                 )
-                if original_format_raw is None or isinstance(original_format_raw, str):
+                if isinstance(original_format_raw, str):
                     original_format = original_format_raw
                 else:
-                    msg = f"Expected str | None, got {type(original_format_raw)}"
+                    msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
             transformed = attr_data.model_copy(
                 update={"equality": normalized_equality, "substr": normalized_substr}

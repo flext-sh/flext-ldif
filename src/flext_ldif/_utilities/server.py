@@ -118,7 +118,6 @@ class FlextLdifUtilitiesServer:
         server_type_raw: str | None = vars(constants_obj).get("SERVER_TYPE")
         if (
             server_type_raw is not None
-            and isinstance(server_type_raw, str)
             and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
         ):
             return server_type_raw

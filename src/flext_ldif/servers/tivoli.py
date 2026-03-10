@@ -177,12 +177,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """Check if this ACL is a Tivoli DS ACL."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                return self.can_handle_acl(raw_acl)
-            return False
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            return self.can_handle_acl(raw_acl)
 
         @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -203,19 +201,17 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     attr_name_lower
                     in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                normalized = raw_acl.strip()
-                if not normalized:
-                    return False
-                attr_name, _, _ = normalized.partition(":")
-                return (
-                    attr_name.strip().lower()
-                    in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
-                )
-            return False
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            normalized = raw_acl.strip()
+            if not normalized:
+                return False
+            attr_name, _, _ = normalized.partition(":")
+            return (
+                attr_name.strip().lower()
+                in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
+            )
 
         @override
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:

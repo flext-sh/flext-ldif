@@ -81,9 +81,10 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
                     validated_names[name] = result.value
                 else:
                     validated_names[name] = False
-            return r[dict[str, bool]].ok(validated_names)
+            validated_mapping: Mapping[str, bool] = validated_names
+            return r[Mapping[str, bool]].ok(validated_mapping)
         except (ValueError, TypeError, AttributeError) as e:
-            return r[dict[str, bool]].fail(
+            return r[Mapping[str, bool]].fail(
                 f"Failed to batch validate attribute names: {e}"
             )
 

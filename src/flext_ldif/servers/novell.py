@@ -216,19 +216,17 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     attr_name.strip().lower()
                     in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                normalized = raw_acl.strip()
-                if not normalized:
-                    return False
-                attr_name, _, _ = normalized.partition(":")
-                return (
-                    attr_name.strip().lower()
-                    in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
-                )
-            return False
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            normalized = raw_acl.strip()
+            if not normalized:
+                return False
+            attr_name, _, _ = normalized.partition(":")
+            return (
+                attr_name.strip().lower()
+                in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
+            )
 
         def _build_novell_permissions_from_rights(
             self, rights: list[str], permission_name_map: Mapping[str, str]

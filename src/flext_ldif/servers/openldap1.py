@@ -210,11 +210,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 if sup:
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
-                if must and isinstance(must, list):
+                if must:
                     must_list_str: list[str] = [str(item) for item in must]
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
-                if may and isinstance(may, list):
+                if may:
                     may_list_str: list[str] = [str(item) for item in may]
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"

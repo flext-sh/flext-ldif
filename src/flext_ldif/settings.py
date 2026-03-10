@@ -12,4 +12,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__ = ["FlextLdifSettings"]  # noqa: F822
+from flext_core import FlextSettings
+
+
+class FlextLdifSettings(FlextSettings):
+    pass
+
+
+__all__ = ["FlextLdifSettings"]

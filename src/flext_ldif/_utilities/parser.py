@@ -130,7 +130,7 @@ class FlextLdifUtilitiesParser:
             return None
 
         result = metadata.get("extensions")
-        if result is None or not isinstance(result, Mapping):
+        if not isinstance(result, Mapping):
             extensions: dict[str, list[str]] = {}
             for key, value in metadata.items():
                 str_list = _as_str_list(value)

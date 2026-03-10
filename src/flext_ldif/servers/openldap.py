@@ -157,16 +157,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 return super().can_handle_attribute(attr_definition_str)
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                oid_raw = getattr(attr_definition, "oid", None)
-                if isinstance(oid_raw, str) and re.search(
-                    FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    oid_raw,
-                    re.IGNORECASE,
-                ):
-                    return True
-                return super().can_handle_attribute(attr_definition)
-            return False
+            oid_raw = getattr(attr_definition, "oid", None)
+            if isinstance(oid_raw, str) and re.search(
+                FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                oid_raw,
+                re.IGNORECASE,
+            ):
+                return True
+            return super().can_handle_attribute(attr_definition)
 
         @override
         def can_handle_objectclass(
@@ -182,16 +180,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 return super().can_handle_objectclass(oc_definition_str)
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                oid_raw = getattr(oc_definition, "oid", None)
-                if isinstance(oid_raw, str) and re.search(
-                    FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
-                    oid_raw,
-                    re.IGNORECASE,
-                ):
-                    return True
-                return super().can_handle_objectclass(oc_definition)
-            return False
+            oid_raw = getattr(oc_definition, "oid", None)
+            if isinstance(oid_raw, str) and re.search(
+                FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                oid_raw,
+                re.IGNORECASE,
+            ):
+                return True
+            return super().can_handle_objectclass(oc_definition)
 
         @override
         def _transform_attribute_for_write(
@@ -228,7 +224,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if not isinstance(raw_acl, str) or not raw_acl:
                     return False
                 acl_line = raw_acl
-            if not isinstance(acl_line, str) or not acl_line:
+            if not acl_line:
                 return False
             acl_content = acl_line
             olc_prefix = FlextLdifServersOpenldap.Constants.ACL_OLCACCESS_PREFIX
@@ -435,12 +431,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             object_classes_list: list[str] = []
             if isinstance(object_classes_raw, (list, tuple)):
                 for item in object_classes_raw:
-                    if isinstance(item, str):
-                        object_classes_list.append(item)
-                    elif item is not None:
+                    if item is not None:
                         object_classes_list.append(str(item))
-            elif isinstance(object_classes_raw, str):
-                object_classes_list = [object_classes_raw]
             elif object_classes_raw is not None:
                 object_classes_list = [str(object_classes_raw)]
             has_olc_classes = any(

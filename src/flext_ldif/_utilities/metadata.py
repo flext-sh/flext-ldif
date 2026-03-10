@@ -596,7 +596,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = metadata.to_dict()
             normalized_metadata: dict[str, t.Scalar | list[str] | None] = {}
             for key, value in metadata_obj.items():
-                if isinstance(value, (str, int, float, bool)) or value is None:
+                if isinstance(value, (str, int, float, bool)):
                     normalized_metadata[key] = value
                 elif isinstance(value, list):
                     normalized_metadata[key] = [str(item) for item in value]

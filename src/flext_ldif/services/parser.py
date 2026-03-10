@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import override
 
@@ -100,26 +100,18 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method"
             )
-        parse_attr = getattr(entry_quirk_raw, "parse", None)
+        parse_attr: Callable[[str], r[list[m.Ldif.Entry]]] | None = getattr(
+            entry_quirk_raw, "parse", None
+        )
         if parse_attr is None or not callable(parse_attr):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable"
             )
-        parse_result_raw = parse_attr(content)
-        is_failure = getattr(parse_result_raw, "is_failure", None)
-        if is_failure is None:
-            return r[m.Ldif.ParseResponse].fail("Invalid parse result from entry quirk")
-        if is_failure:
-            error_msg = (
-                getattr(parse_result_raw, "error", None) or "LDIF parsing failed"
-            )
-            return r[m.Ldif.ParseResponse].fail(
-                error_msg if issubclass(error_msg.__class__, str) else str(error_msg)
-            )
-        entries_raw = getattr(parse_result_raw, "value", None)
-        if entries_raw is None:
-            return r[m.Ldif.ParseResponse].fail("Parse result has no value")
-        entries = entries_raw if issubclass(entries_raw.__class__, list) else []
+        parse_result = parse_attr(content)
+        if parse_result.is_failure:
+            error_msg = parse_result.error or "LDIF parsing failed"
+            return r[m.Ldif.ParseResponse].fail(str(error_msg))
+        entries = parse_result.value
         response = m.Ldif.ParseResponse(
             entries=entries,
             statistics=m.Ldif.Statistics(total_entries=len(entries), parse_errors=0),

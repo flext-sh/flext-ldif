@@ -516,7 +516,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:
                 return parent_result
-            if acl_data.raw_acl and isinstance(acl_data.raw_acl, str):
+            if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)
             acl_name = (
                 acl_data.name or FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME

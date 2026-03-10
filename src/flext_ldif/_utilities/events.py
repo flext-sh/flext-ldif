@@ -206,15 +206,17 @@ class FlextLdifUtilitiesEvents:
     ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
+        aggregate_id = event.aggregate_id or ""
         log_context: dict[str, t.Scalar] = {
-            "aggregate_id": event.aggregate_id,
+            "aggregate_id": aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
-            "output_dn": config.output_dn,
             "operation_duration_ms": config.operation_duration_ms,
             "has_output": event.has_output,
             "component_count": event.component_count,
         }
+        if config.output_dn is not None:
+            log_context["output_dn"] = config.output_dn
         log_message = f"DN operation '{config.dn_operation}' completed"
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
             logger=logger,

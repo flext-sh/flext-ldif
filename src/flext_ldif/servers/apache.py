@@ -181,22 +181,21 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return normalized.lower().startswith(
                     FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
                 )
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                normalized = raw_acl.strip()
-                if not normalized:
-                    return False
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    in FlextLdifServersApache.Constants.ACL_ACI_ATTRIBUTE_NAMES
-                ):
-                    return True
-                return normalized.lower().startswith(
-                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
-                )
+            raw_acl = getattr(acl_line, "raw_acl", None)
+            if not isinstance(raw_acl, str) or not raw_acl:
+                return False
+            normalized = raw_acl.strip()
+            if not normalized:
+                return False
+            attr_name, _, _ = normalized.partition(":")
+            if (
+                attr_name.strip().lower()
+                in FlextLdifServersApache.Constants.ACL_ACI_ATTRIBUTE_NAMES
+            ):
+                return True
+            return normalized.lower().startswith(
+                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+            )
             return False
 
         @override

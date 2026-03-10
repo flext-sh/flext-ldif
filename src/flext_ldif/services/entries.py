@@ -41,7 +41,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[str].ok(dn_text)
             case list() as dn_list:
                 return r[str].ok(dn_list[0] if dn_list else "")
-        return r[str].fail("Invalid DN value type")
 
     @staticmethod
     def _extract_dn_from_object(entry: t.ContainerValue) -> r[str]:
@@ -55,7 +54,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         if isinstance(dn_value, str):
             return r[str].ok(dn_value)
         if isinstance(dn_value, list):
-            return r[str].ok(dn_value[0] if dn_value else "")
+            if dn_value and isinstance(dn_value[0], str):
+                return r[str].ok(dn_value[0])
+            return r[str].ok("")
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
@@ -97,7 +98,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[list[str]].ok(values)
             case tuple() | set() | frozenset() as values:
                 return r[list[str]].ok(list(values))
-        return r[list[str]].fail("Unsupported attribute type")
 
     @staticmethod
     def get_entry_attribute(entry: m.Ldif.Entry, attribute_name: str) -> r[list[str]]:
@@ -113,8 +113,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_entry_attributes(entry: m.Ldif.Entry) -> r[Mapping[str, list[str]]]:
         """Get entry attributes mapping."""
         if entry.attributes is None:
-            return r[dict[str, list[str]]].fail("Entry has no attributes")
-        return r[dict[str, list[str]]].ok(dict(entry.attributes.attributes))
+            return r[Mapping[str, list[str]]].fail("Entry has no attributes")
+        attrs: Mapping[str, list[str]] = dict(entry.attributes.attributes)
+        return r[Mapping[str, list[str]]].ok(attrs)
 
     @staticmethod
     def get_entry_dn(entry: m.Ldif.Entry | Mapping[str, str | list[str]]) -> r[str]:
@@ -147,7 +148,6 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return FlextLdifEntries._normalize_string_value(value_text)
             case list() as value_list:
                 return FlextLdifEntries._normalize_list_value(value_list)
-        return r[str].fail("Cannot normalize unsupported value type")
 
     @staticmethod
     def remove_attributes(

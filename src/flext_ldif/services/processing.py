@@ -72,15 +72,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
             return r[list[m.Ldif.ProcessingResult]].fail(
                 batch_result.error or "Batch processing failed"
             )
-        batch_value = batch_result.value
-        if issubclass(batch_value.__class__, list):
-            results: list[m.Ldif.ProcessingResult] = [
-                item
-                for item in batch_value
-                if issubclass(item.__class__, m.Ldif.ProcessingResult)
-            ]
-            return r[list[m.Ldif.ProcessingResult]].ok(results)
-        return r[list[m.Ldif.ProcessingResult]].ok([])
+        return r[list[m.Ldif.ProcessingResult]].ok(batch_result.value)
 
     @staticmethod
     def _execute_parallel_processing(

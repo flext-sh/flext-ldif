@@ -89,10 +89,10 @@ class FlextLdifModelsCollections:
 
     class SchemaContent(FlextLdifModelsBases.FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
-        attributes: Sequence[FlextLdifModelsDomains.SchemaAttribute] = Field(
+        attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
             default_factory=list
         )
-        object_classes: Sequence[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+        object_classes: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
             default_factory=list
         )
 

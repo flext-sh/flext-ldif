@@ -6,7 +6,7 @@ import struct
 from collections.abc import Mapping
 from typing import Protocol
 
-from flext_core import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, r
 
 from flext_ldif import m
 
@@ -116,7 +116,7 @@ class FlextLdifUtilitiesParsers:
             *,
             transform_hook: TransformHook | None = None,
             parse_oid_hook: ParseOidHook | None = None,
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition using hooks."""
             try:
                 parts = parse_parts_hook(definition)
@@ -144,7 +144,7 @@ class FlextLdifUtilitiesParsers:
                 )
                 if transform_hook:
                     attribute = transform_hook(attribute)
-                return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
+                return r[m.Ldif.SchemaAttribute].ok(attribute)
             except (
                 ValueError,
                 KeyError,
@@ -153,7 +153,7 @@ class FlextLdifUtilitiesParsers:
                 struct.error,
             ) as e:
                 logger.exception("Failed to parse attribute", server_type=server_type)
-                return FlextResult.fail(f"Failed to parse attribute: {e}")
+                return r[m.Ldif.SchemaAttribute].fail(f"Failed to parse attribute: {e}")
 
     class ObjectClass:
         """Generalized objectClass definition parser."""
@@ -179,7 +179,7 @@ class FlextLdifUtilitiesParsers:
             parse_parts_hook: ParsePartsHook,
             *,
             transform_hook: TransformHook | None = None,
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition using hooks."""
             try:
                 parts = parse_parts_hook(definition)
@@ -210,7 +210,7 @@ class FlextLdifUtilitiesParsers:
                 )
                 if transform_hook:
                     objectclass = transform_hook(objectclass)
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
+                return r[m.Ldif.SchemaObjectClass].ok(objectclass)
             except (
                 ValueError,
                 KeyError,
@@ -219,7 +219,9 @@ class FlextLdifUtilitiesParsers:
                 struct.error,
             ) as e:
                 logger.exception("Failed to parse objectClass", server_type=server_type)
-                return FlextResult.fail(f"Failed to parse objectClass: {e}")
+                return r[m.Ldif.SchemaObjectClass].fail(
+                    f"Failed to parse objectClass: {e}"
+                )
 
     class Content:
         """Generalized content parser for multiple entries."""
@@ -245,9 +247,9 @@ class FlextLdifUtilitiesParsers:
             """Parse multiple entries from LDIF content."""
             try:
                 entries: list[m.Ldif.Entry] = []
-                stats = FlextLdifUtilitiesParsers.Content.Stats()
                 raw_entries = ldif_content.strip().split("\n\n")
-                stats.total_entries = len(raw_entries)
+                successful = 0
+                failed = 0
                 for raw_entry in raw_entries:
                     if not raw_entry.strip():
                         continue
@@ -262,15 +264,21 @@ class FlextLdifUtilitiesParsers:
                         processed_entry = raw_entry.strip()
                     result = parse_entry_hook(processed_entry)
                     if result.is_success:
-                        stats.successful += 1
+                        successful += 1
                         entries.append(result.value)
                     else:
-                        stats.failed += 1
+                        failed += 1
                         logger.warning(
                             "Failed to parse entry",
                             error=str(result.error),
                             server_type=server_type,
                         )
+                logger.debug(
+                    "LDIF content parse stats",
+                    total_entries=len(raw_entries),
+                    successful=successful,
+                    failed=failed,
+                )
                 return r[list[m.Ldif.Entry]].ok(entries)
             except (
                 ValueError,

@@ -92,8 +92,9 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return r[str].fail("Syntax name cannot be empty")
         try:
             oid_raw = u.Mapper.get(self._name_to_oid, name, default="")
-            if oid_raw:
-                return r[str].ok(oid_raw)
+            if isinstance(oid_raw, str) and oid_raw:
+                oid_text: str = oid_raw
+                return r[str].ok(oid_text)
             return r[str].fail(f"OID not found for syntax name: {name}")
         except (TypeError, KeyError) as e:
             return r[str].fail(f"Failed to lookup syntax name: {e}")
@@ -104,8 +105,9 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return r[str].fail("OID cannot be empty")
         try:
             name_raw = u.Mapper.get(self._oid_to_name, oid, default="")
-            if name_raw:
-                return r[str].ok(name_raw)
+            if isinstance(name_raw, str) and name_raw:
+                name_text: str = name_raw
+                return r[str].ok(name_text)
             return r[str].fail(f"Syntax name not found for OID: {oid}")
         except (TypeError, KeyError) as e:
             return r[str].fail(f"Failed to lookup OID: {e}")

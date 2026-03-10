@@ -89,11 +89,9 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-        service_kwargs: dict[
-            str, FlextTypes.ScalarValue | m.ConfigMap | Sequence[FlextTypes.ScalarValue]
-        ] = {}
+        service_kwargs: dict[str, t.Scalar | m.ConfigMap | Sequence[t.Scalar]] = {}
         for key, value in filtered_kwargs.items():
-            if isinstance(value, (str, int, float, bool, datetime)) or value is None:
+            if isinstance(value, (str, int, float, bool, datetime)):
                 service_kwargs[key] = value
                 continue
             if isinstance(value, m.ConfigMap):
@@ -102,12 +100,9 @@ class FlextLdifServersBaseSchema(
             if isinstance(value, Sequence) and (
                 not isinstance(value, (str, bytes, bytearray))
             ):
-                scalar_values: list[FlextTypes.ScalarValue] = []
+                scalar_values: list[t.Scalar] = []
                 for item in value:
-                    if (
-                        isinstance(item, (str, int, float, bool, datetime))
-                        or item is None
-                    ):
+                    if isinstance(item, (str, int, float, bool, datetime)):
                         scalar_values.append(item)
                     else:
                         scalar_values = []
@@ -133,16 +128,14 @@ class FlextLdifServersBaseSchema(
         extensions_raw = extract_method(attr_definition)
         if not isinstance(extensions_raw, Mapping):
             return {}
-        extensions_mapping: Mapping[object, object] = extensions_raw
+        extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
         extracted: dict[str, list[str] | str | bool | None] = {}
-        for key, value in extensions_mapping.items():
-            if not isinstance(key, str):
+        for raw_key, raw_value in extensions_map.items():
+            if isinstance(raw_value, str | bool):
+                extracted[raw_key] = raw_value
                 continue
-            if isinstance(value, str | bool) or value is None:
-                extracted[key] = value
-                continue
-            if isinstance(value, list):
-                extracted[key] = [str(item) for item in value]
+            if isinstance(raw_value, list):
+                extracted[raw_key] = [str(item) for item in raw_value]
         return extracted
 
     @staticmethod
@@ -219,7 +212,7 @@ class FlextLdifServersBaseSchema(
             if isinstance(val, list):
                 list_typed: t.MetadataValue = list(val)
                 extensions_typed[key] = list_typed
-            else:
+            elif val is not None:
                 extensions_typed[key] = val
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
@@ -257,15 +250,15 @@ class FlextLdifServersBaseSchema(
             validate_result_raw = validate_method(oid_value)
             if isinstance(validate_result_raw, FlextResult):
                 if validate_result_raw.is_failure:
-                    oid_validate_result = FlextResult.fail(validate_result_raw.error)
-                else:
-                    oid_validate_result = FlextResult.ok(
-                        bool(validate_result_raw.value)
+                    oid_validate_result = FlextResult[bool].fail(
+                        validate_result_raw.error
                     )
+                else:
+                    oid_validate_result = FlextResult[bool].ok(True)
             else:
-                oid_validate_result = FlextResult.ok(bool(validate_result_raw))
+                oid_validate_result = FlextResult[bool].ok(bool(validate_result_raw))
         else:
-            oid_validate_result = FlextResult.ok(True)
+            oid_validate_result = FlextResult[bool].ok(True)
         if oid_validate_result.is_failure:
             metadata_extensions["syntax_validation_error"] = (
                 f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
@@ -342,7 +335,7 @@ class FlextLdifServersBaseSchema(
                 m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
             ].ok(empty_str)
         operation_final: str | None = None
-        if operation.__class__ is str and operation in {"parse", "write"}:
+        if isinstance(operation, str) and operation in {"parse", "write"}:
             operation_final = "parse" if operation == "parse" else "write"
         detected_op = self._auto_detect_operation(data, operation_final)
         return self._route_operation(data, detected_op)
@@ -508,14 +501,18 @@ class FlextLdifServersBaseSchema(
     ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[m.Ldif.SchemaAttribute].fail(
+            "Must be implemented by subclass"
+        )
 
     def _parse_objectclass(
         self, oc_definition: str
     ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[m.Ldif.SchemaObjectClass].fail(
+            "Must be implemented by subclass"
+        )
 
     def _route_operation(
         self,
@@ -579,9 +576,9 @@ class FlextLdifServersBaseSchema(
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
         _ = attr_data
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[str].fail("Must be implemented by subclass")
 
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format (internal)."""
         _ = oc_data
-        return FlextResult.fail("Must be implemented by subclass")
+        return FlextResult[str].fail("Must be implemented by subclass")

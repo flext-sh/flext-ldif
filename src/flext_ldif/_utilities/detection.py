@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import u
 
-from flext_ldif import m, p
+from flext_ldif import m, p, t
 
 
 class FlextLdifUtilitiesDetection:
@@ -20,13 +20,15 @@ class FlextLdifUtilitiesDetection:
             self, required_attr: str | None = None
         ) -> type[p.Ldif.ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal."""
-            for cls in self.__class__.__mro__:
+            for cls in type(self).__mro__:
                 if (
                     cls.__name__.startswith("FlextLdifServers")
                     and getattr(cls, "Constants", None) is not None
                     and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
-                    constants_obj: type = cls.Constants
+                    constants_obj: t.ContainerValue | None = getattr(
+                        cls, "Constants", None
+                    )
                     if not isinstance(constants_obj, type):
                         continue
                     constants_class = constants_obj

@@ -183,7 +183,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_metadata_scalar_or_container(value: t.ContainerValue) -> bool:
         """Check supported metadata extension value shape."""
-        return value is None or value.__class__ in {str, int, float, bool, list, dict}
+        return value.__class__ in {str, int, float, bool, list, dict}
 
     @staticmethod
     def _normalize_permission(
@@ -192,7 +192,8 @@ class FlextLdifUtilitiesACL:
         """Normalize permission name using map if available."""
         if not permission_map:
             return perm
-        return u.get(permission_map, perm, default=perm)
+        mapped = u.get(permission_map, perm, default=perm)
+        return mapped if isinstance(mapped, str) else perm
 
     @staticmethod
     def _parse_single_acl_with_config(
@@ -292,8 +293,9 @@ class FlextLdifUtilitiesACL:
             return ("self", "ldap:///self")
         for rule in bind_rules_data:
             rule_type_raw = u.get(rule, "type", default="")
-            rule_type = rule_type_raw.lower()
-            rule_value = u.get(rule, "value", default="")
+            rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
+            rule_value_raw = u.get(rule, "value", default="")
+            rule_value = rule_value_raw if isinstance(rule_value_raw, str) else ""
             special_match = FlextLdifUtilitiesACL._check_special_value(
                 rule_value, special_values
             )
@@ -306,7 +308,10 @@ class FlextLdifUtilitiesACL:
             if mapped_type:
                 return (mapped_type, rule_value)
         if bind_rules_data:
-            default_value = u.get(bind_rules_data[0], "value", default="")
+            default_value_raw = u.get(bind_rules_data[0], "value", default="")
+            default_value = (
+                default_value_raw if isinstance(default_value_raw, str) else ""
+            )
         else:
             default_value = ""
         return ("user", default_value)
@@ -335,7 +340,7 @@ class FlextLdifUtilitiesACL:
         normalized_targetscope: list[t.Scalar] | None = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
-        extension_items: list[tuple[str, t.MetadataValue]] = [
+        extension_items: list[tuple[str, t.MetadataValue | None]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", normalized_targetscope),
@@ -492,7 +497,7 @@ class FlextLdifUtilitiesACL:
         content: str,
         patterns: Mapping[str, str | tuple[str, int]],
         *,
-        defaults: Mapping[str, object] | None = None,
+        defaults: Mapping[str, t.ContainerValue] | None = None,
     ) -> Mapping[str, t.JsonValue]:
         r"""Extract multiple ACL components in one call.
 
@@ -541,7 +546,7 @@ class FlextLdifUtilitiesACL:
 
         def extract_component_batch(
             name: str, pattern_spec: str | tuple[str, int]
-        ) -> tuple[str, t.JsonValue]:
+        ) -> tuple[str, t.JsonValue | None]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
@@ -556,29 +561,23 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, (str, int, float, bool)):
                 default_value = raw_default
             elif isinstance(raw_default, list):
-                normalized_list: list[t.Scalar | None] = []
+                normalized_list: list[t.Scalar] = []
                 for item in raw_default:
-                    if item is None or isinstance(
-                        item, (str, int, float, bool, datetime)
-                    ):
+                    if isinstance(item, (str, int, float, bool, datetime)):
                         normalized_list.append(item)
                     else:
                         normalized_list.append(str(item))
                 default_value = normalized_list
             elif isinstance(raw_default, Mapping):
-                normalized_mapping: dict[str, t.Scalar | list[t.Scalar] | None] = {}
+                normalized_mapping: dict[str, t.Scalar | list[t.Scalar]] = {}
                 for key, item in raw_default.items():
-                    if not isinstance(key, str):
-                        continue
-                    if item is None or isinstance(
-                        item, (str, int, float, bool, datetime)
-                    ):
+                    if isinstance(item, (str, int, float, bool, datetime)):
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
-                        nested_list: list[t.Scalar | None] = []
+                        nested_list: list[t.Scalar] = []
                         for nested_item in item:
-                            if nested_item is None or isinstance(
+                            if isinstance(
                                 nested_item, (str, int, float, bool, datetime)
                             ):
                                 nested_list.append(nested_item)
@@ -590,10 +589,12 @@ class FlextLdifUtilitiesACL:
                 default_value = normalized_mapping
             else:
                 default_value = str(raw_default)
-            final_value: t.JsonValue = value if value is not None else default_value
+            final_value: t.JsonValue | None = (
+                value if value is not None else default_value
+            )
             return (name, final_value)
 
-        result_dict: dict[str, tuple[str, t.JsonValue]] = {}
+        result_dict: dict[str, tuple[str, t.JsonValue | None]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
@@ -602,7 +603,7 @@ class FlextLdifUtilitiesACL:
                 continue
         final_result: dict[str, t.JsonValue] = {}
         for key, value_item in result_dict.items():
-            if len(value_item) == TUPLE_LENGTH_PAIR:
+            if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
                 final_result[key] = value_item[1]
         return final_result
 
@@ -906,7 +907,7 @@ class FlextLdifUtilitiesACL:
                 else None,
             ),
         )
-        return r[str].ok(acl_model)
+        return r[m.Ldif.Acl].ok(acl_model)
 
     @staticmethod
     def parse_targetattr(
@@ -1032,7 +1033,7 @@ class FlextLdifUtilitiesACL:
                 results.append(result_tuple)
                 if not result_tuple[1]:
                     break
-        return r[str].ok(results)
+        return r[list[tuple[str, bool, str | None]]].ok(results)
 
 
 __all__ = ["FlextLdifUtilitiesACL"]

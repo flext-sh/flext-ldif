@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
+from collections.abc import Generator, ItemsView, KeysView, Mapping, ValuesView
 from typing import ClassVar, override
 
 from flext_core import FlextModels
@@ -40,7 +40,7 @@ class FlextLdifModelsMetadata:
             setattr(self, key, value)
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, t.MetadataValue]]:
+        def __iter__(self) -> Generator[tuple[str, t.MetadataValue], None, None]:
             yield from self._extra().items()
 
         def __len__(self) -> int:
@@ -68,7 +68,9 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def get(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
+        def get(
+            self, key: str, default: t.MetadataValue | None = None
+        ) -> t.MetadataValue | None:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 return getattr(self, key)
@@ -80,7 +82,9 @@ class FlextLdifModelsMetadata:
         def keys(self) -> KeysView[str]:
             return self._extra().keys()
 
-        def pop(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
+        def pop(
+            self, key: str, default: t.MetadataValue | None = None
+        ) -> t.MetadataValue | None:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 return extra.pop(key)
@@ -112,7 +116,9 @@ class FlextLdifModelsMetadata:
         def __contains__(self, key: str) -> bool:
             return key in self._extra()
 
-        def get(self, key: str, default: t.MetadataValue = None) -> t.MetadataValue:
+        def get(
+            self, key: str, default: t.MetadataValue | None = None
+        ) -> t.MetadataValue | None:
             return self._extra().get(key, default)
 
         def _extra(self) -> dict[str, t.MetadataValue]:

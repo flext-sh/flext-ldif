@@ -6,7 +6,7 @@ import struct
 from collections.abc import Sequence
 from typing import Literal, Self
 
-from flext_core import FlextResult
+from flext_core import r
 
 from flext_ldif import c, m
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
@@ -35,11 +35,11 @@ class DnOps:
         """Get current DN value (may have errors)."""
         return self._dn
 
-    def build(self) -> FlextResult[str]:
+    def build(self) -> r[str]:
         """Build and return the final DN."""
         if self._error:
-            return FlextResult.fail(self._error)
-        return FlextResult.ok(self._dn)
+            return r[str].fail(self._error)
+        return r[str].ok(self._dn)
 
     def clean(self, *, _spaces: bool = True, _escapes: bool = True) -> Self:
         """Clean the DN (remove extra whitespace, normalize escapes)."""
@@ -67,16 +67,16 @@ class DnOps:
             return False
         return compare_result.value == 0
 
-    def extract_parent(self) -> FlextResult[str]:
+    def extract_parent(self) -> r[str]:
         """Extract the parent DN."""
         if self._error:
-            return FlextResult.fail(self._error)
+            return r[str].fail(self._error)
         return FlextLdifUtilitiesDN.extract_parent_dn(self._dn)
 
-    def extract_rdn(self) -> FlextResult[str]:
+    def extract_rdn(self) -> r[str]:
         """Extract the RDN (Relative Distinguished Name)."""
         if self._error:
-            return FlextResult.fail(self._error)
+            return r[str].fail(self._error)
         return FlextLdifUtilitiesDN.extract_rdn(self._dn)
 
     def is_under(self, base: str) -> bool:
@@ -123,17 +123,17 @@ class DnOps:
             return self
         return self
 
-    def split(self) -> FlextResult[list[str]]:
+    def split(self) -> r[list[str]]:
         """Split DN into RDN components."""
         if self._error:
-            return FlextResult.fail(self._error)
+            return r[list[str]].fail(self._error)
         rdn_components = FlextLdifUtilitiesDN.split(self._dn)
-        return FlextResult.ok(rdn_components)
+        return r[list[str]].ok(rdn_components)
 
-    def validate(self, *, strict: bool = True) -> FlextResult[bool]:
+    def validate(self, *, strict: bool = True) -> r[bool]:
         """Validate the DN."""
         if self._error:
-            return FlextResult.fail(self._error)
+            return r[bool].fail(self._error)
         components = FlextLdifUtilitiesDN.split(self._dn)
         all_errors: list[str] = []
         for comp in components:
@@ -147,8 +147,8 @@ class DnOps:
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
-            return FlextResult.fail(f"Invalid DN: {', '.join(all_errors)}")
-        return FlextResult.ok(True)
+            return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
+        return r[bool].ok(True)
 
 
 class EntryOps:
@@ -210,11 +210,11 @@ class EntryOps:
         self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
         return self
 
-    def build(self) -> FlextResult[m.Ldif.Entry]:
+    def build(self) -> r[m.Ldif.Entry]:
         """Build and return the final entry."""
         if self._error:
-            return FlextResult.fail(self._error)
-        return FlextResult.ok(self._entry)
+            return r[m.Ldif.Entry].fail(self._error)
+        return r[m.Ldif.Entry].ok(self._entry)
 
     def convert_booleans(
         self,
@@ -309,14 +309,14 @@ class EntryOps:
         self._entry = FlextLdifUtilitiesEntry.remove_attributes(self._entry, [name])
         return self
 
-    def validate(self, *, strict: bool = True) -> FlextResult[bool]:
+    def validate(self, *, strict: bool = True) -> r[bool]:
         """Validate the entry."""
         if self._error:
-            return FlextResult.fail(self._error)
+            return r[bool].fail(self._error)
         if self._entry.dn is None:
-            return FlextResult.fail("Entry has no DN")
+            return r[bool].fail("Entry has no DN")
         if self._entry.attributes is None:
-            return FlextResult.fail("Entry has no attributes")
+            return r[bool].fail("Entry has no attributes")
         dn_str = (
             self._entry.dn.value
             if getattr(self._entry.dn, "value", None) is not None
@@ -335,8 +335,8 @@ class EntryOps:
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
-            return FlextResult.fail(f"Invalid DN: {', '.join(all_errors)}")
-        return FlextResult.ok(True)
+            return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
+        return r[bool].ok(True)
 
 
 __all__ = ["DnOps", "EntryOps"]

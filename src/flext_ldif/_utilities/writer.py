@@ -35,7 +35,7 @@ class FlextLdifUtilitiesWriter:
             u.get(changetype_config, "fold_long_lines", default=True)
         )
         width_raw = u.get(changetype_config, "width", default=76)
-        width = int(width_raw)
+        width = int(width_raw) if isinstance(width_raw, (str, int, float)) else 76
         if format_type == "modify":
             changetype_line = "changetype: modify"
             FlextLdifUtilitiesWriter._add_line_with_folding(
@@ -294,26 +294,23 @@ class FlextLdifUtilitiesWriter:
         metadata = entry_data.get("_metadata")
         if metadata is None:
             return None
-        extensions_data: Mapping[str, object] | None = None
+        attr_order_raw: t.ContainerValue | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            extensions_data = metadata_extensions
+            attr_order_raw = metadata_extensions.get("attribute_order")
         elif isinstance(metadata, Mapping):
             raw_extensions = metadata.get("extensions")
             if isinstance(raw_extensions, Mapping):
-                extensions_data = raw_extensions
-        if extensions_data is None:
+                attr_order_raw = raw_extensions.get("attribute_order")
+        if not isinstance(attr_order_raw, Sequence) or isinstance(attr_order_raw, str):
             return None
-        attr_order = extensions_data.get("attribute_order")
-        if not isinstance(attr_order, Sequence) or isinstance(attr_order, str):
-            return None
+        attr_order = [str(item) for item in attr_order_raw]
         skip_keys = {c.Ldif.DictKeys.DN, "_metadata", "server_type", "_acl_attributes"}
-        result: list[tuple[str, t.ContainerValue]] = []
-        for key in attr_order:
-            if not isinstance(key, str):
-                continue
-            if key in entry_data and key not in skip_keys:
-                result.append((key, entry_data[key]))
+        result: list[tuple[str, t.ContainerValue]] = [
+            (key, entry_data[key])
+            for key in attr_order
+            if key in entry_data and key not in skip_keys
+        ]
         return result
 
     @staticmethod
@@ -448,7 +445,7 @@ class FlextLdifUtilitiesWriter:
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[dict[str, str | int]].ok(stats)
+            return FlextResult[Mapping[str, str | int]].ok(stats)
         except (
             ValueError,
             KeyError,
@@ -457,7 +454,7 @@ class FlextLdifUtilitiesWriter:
             struct.error,
         ) as e:
             logger.exception("File write failed", file_path=str(file_path))
-            return FlextResult[dict[str, str | int]].fail(f"File write failed: {e}")
+            return FlextResult[Mapping[str, str | int]].fail(f"File write failed: {e}")
 
     @staticmethod
     def write_rfc_attribute(
@@ -466,12 +463,14 @@ class FlextLdifUtilitiesWriter:
         """Write attribute data to RFC 4512 format."""
         try:
             if not attr_data.oid:
-                return FlextResult.fail("RFC attribute writing failed: missing OID")
+                return FlextResult[str].fail(
+                    "RFC attribute writing failed: missing OID"
+                )
             parts = FlextLdifUtilitiesWriter._build_attribute_parts(attr_data)
-            return FlextResult.ok(" ".join(parts))
+            return FlextResult[str].ok(" ".join(parts))
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC attribute writing exception")
-            return FlextResult.fail(f"RFC attribute writing failed: {e}")
+            return FlextResult[str].fail(f"RFC attribute writing failed: {e}")
 
     @staticmethod
     def write_rfc_objectclass(
@@ -480,12 +479,14 @@ class FlextLdifUtilitiesWriter:
         """Write objectClass data to RFC 4512 format."""
         try:
             if not objectclass.oid:
-                return FlextResult.fail("RFC objectClass writing failed: missing OID")
+                return FlextResult[str].fail(
+                    "RFC objectClass writing failed: missing OID"
+                )
             parts = FlextLdifUtilitiesWriter._build_objectclass_parts(objectclass)
-            return FlextResult.ok(" ".join(parts))
+            return FlextResult[str].ok(" ".join(parts))
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass writing exception")
-            return FlextResult.fail(f"RFC objectClass writing failed: {e}")
+            return FlextResult[str].fail(f"RFC objectClass writing failed: {e}")
 
 
 __all__ = ["FlextLdifUtilitiesWriter"]

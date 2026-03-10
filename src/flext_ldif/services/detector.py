@@ -78,21 +78,30 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         """Determine effective server type based on a prioritized configuration hierarchy."""
         if target_server_type:
             return target_server_type
+        detection_mode_raw = getattr(config, "quirks_detection_mode", "auto")
+        detection_mode = (
+            detection_mode_raw if isinstance(detection_mode_raw, str) else "auto"
+        )
+        configured_server_raw = getattr(config, "quirks_server_type", None)
+        configured_server = (
+            configured_server_raw if isinstance(configured_server_raw, str) else None
+        )
         if getattr(
             config,
             "enable_relaxed_parsing",
             getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
         ):
             return u.Ldif.Server.get_server_type_value("RELAXED")
-        if config.quirks_detection_mode == "manual":
-            if config.quirks_server_type is None:
+        if detection_mode == "manual":
+            if configured_server is None:
                 return u.Ldif.Server.get_server_type_value("RFC")
-            if not config.quirks_server_type.strip():
+            if not configured_server.strip():
                 return u.Ldif.Server.get_server_type_value("RFC")
-            return config.quirks_server_type
-        if config.quirks_detection_mode == "disabled":
+            return configured_server
+        if detection_mode == "disabled":
             return u.Ldif.Server.get_server_type_value("RFC")
-        return config.ldif_default_server_type
+        default_server_raw = getattr(config, "ldif_default_server_type", "rfc")
+        return default_server_raw if isinstance(default_server_raw, str) else "rfc"
 
     def detect_server_type(
         self,
@@ -102,24 +111,21 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     ) -> r[m.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content."""
         max_lines = max_lines or u.Ldif.Server.get_server_detection_default_max_lines()
-        match (ldif_path, ldif_content):
-            case [None, None]:
+        if ldif_path is None and ldif_content is None:
+            return r[m.Ldif.ServerDetectionResult].fail(
+                "Either ldif_path or ldif_content must be provided"
+            )
+        if ldif_content is None and ldif_path is not None:
+            if not ldif_path.exists():
                 return r[m.Ldif.ServerDetectionResult].fail(
-                    "Either ldif_path or ldif_content must be provided"
+                    f"LDIF file not found: {ldif_path}"
                 )
-            case [path, None] if path is not None and (not path.exists()):
+            try:
+                ldif_content = ldif_path.read_text(encoding="utf-8")
+            except UnicodeDecodeError as e:
                 return r[m.Ldif.ServerDetectionResult].fail(
-                    f"LDIF file not found: {path}"
+                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}"
                 )
-            case [path, None] if path is not None:
-                try:
-                    ldif_content = path.read_text(encoding="utf-8")
-                except UnicodeDecodeError as e:
-                    return r[m.Ldif.ServerDetectionResult].fail(
-                        f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}"
-                    )
-            case [_, content] if issubclass(content.__class__, str):
-                pass
         if ldif_content is None:
             return r[m.Ldif.ServerDetectionResult].fail("No LDIF content provided")
         lines = ldif_content.split("\n")
@@ -160,9 +166,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 ldif_path=ldif_path, ldif_content=ldif_content
             )
             if detection_result.is_success:
-                result = detection_result.value
-                if issubclass(result.__class__, m.Ldif.ServerDetectionResult):
-                    return r[str].ok(result.detected_server_type)
+                return r[str].ok(detection_result.value.detected_server_type)
         return r[str].ok("rfc")
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
@@ -295,7 +299,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         case_sensitive: bool = False,
     ) -> None:
         """Extract patterns using OID pattern."""
-        if not pattern or not issubclass(pattern.__class__, str):
+        if not pattern:
             return
         search_content = content if case_sensitive else content_lower
         self._add_pattern_if_match(
@@ -335,7 +339,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         """Extract pattern using pattern attribute from constants."""
         constants = self._get_server_constants(server_type)
         pattern = getattr(constants, pattern_attr, None) if constants else None
-        if pattern and issubclass(pattern.__class__, str):
+        if pattern and isinstance(pattern, str):
             self._add_pattern_if_match(
                 condition=bool(re.search(pattern, content_lower)),
                 description=description,
@@ -437,8 +441,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
-            if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
-                content_lower
+            if tivoli_pattern is not None and re.search(
+                str(tivoli_pattern), content_lower
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
         return patterns
@@ -457,7 +461,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         pattern = (
             getattr(constants, "DETECTION_OID_PATTERN", None) if constants else None
         )
-        if not pattern or not issubclass(pattern.__class__, str):
+        if not pattern or not isinstance(pattern, str):
             return
         self._update_server_scores(
             server_type,
@@ -485,10 +489,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         if not pattern:
             return
         weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
-        if issubclass(pattern.__class__, re.Pattern):
-            if pattern.search(content_lower):
-                scores[server_type] += weight
-        elif issubclass(pattern.__class__, str) and re.search(pattern, content_lower):
+        if re.search(str(pattern), content_lower):
             scores[server_type] += weight
 
     def _update_server_scores(
