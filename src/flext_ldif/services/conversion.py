@@ -15,8 +15,6 @@ from flext_ldif import FlextLdifServer, FlextLdifServiceBase, c, m, p, t, u
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 
-from ._models import _MetadataMappingValue
-
 TUPLE_LENGTH_PAIR = 2
 type _TConvertedModel = (
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
@@ -55,12 +53,19 @@ class FlextLdifConversion(
         return FlextLdifConversion._get_schema_from_attribute(quirk)
 
     @staticmethod
-    def _has_attr(obj: t.ContainerValue, attr_name: str) -> bool:
+    def _has_attr(
+        obj: t.ContainerValue
+        | FlextLdifServersBase
+        | FlextLogger
+        | p.Ldif.SchemaQuirkProtocol
+        | p.Ldif.SchemaConversionPipelineConfigProtocol,
+        attr_name: str,
+    ) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: t.ContainerValue,
+        obj: t.ContainerValue | FlextLdifServersBase | p.Ldif.SchemaQuirkProtocol,
     ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -1547,7 +1552,11 @@ class FlextLdifConversion(
             )
 
     def _convert_to_metadata_attribute_value(
-        self, value: _MetadataMappingValue
+        self,
+        value: t.MetadataValue
+        | Mapping[str, t.MetadataValue]
+        | Sequence[t.MetadataValue]
+        | None,
     ) -> t.MetadataValue:
         """Convert value to MetadataAttributeValue type."""
         if value is None:

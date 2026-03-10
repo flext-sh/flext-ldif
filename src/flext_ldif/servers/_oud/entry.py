@@ -444,7 +444,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         new_attrs: dict[str, list[str]] = dict(attributes_dict)
         commented_vals: dict[str, list[str]] = {}
-        hidden_attrs = set()
+        hidden_attrs: set[str] = set()
         for acl_attr in acl_attribute_names:
             if acl_attr in new_attrs:
                 acl_values = new_attrs[acl_attr]
@@ -458,12 +458,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def update_metadata_with_commented_acls(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         acl_attribute_names: list[str],
         commented_acl_values: Mapping[str, list[str]],
         hidden_attrs: set[str],
         entry_attributes_dict: Mapping[str, list[str]],
-    ) -> FlextLdifModelsDomains.QuirkMetadata:
+    ) -> m.Ldif.QuirkMetadata:
         """Update metadata with commented ACL information.
 
         Args:
@@ -477,7 +477,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Updated metadata with ACL information
 
         """
-        metadata_typed: FlextLdifModelsDomains.QuirkMetadata = metadata
+        metadata_typed: m.Ldif.QuirkMetadata = metadata
         current_extensions: dict[str, t.MetadataValue] = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )

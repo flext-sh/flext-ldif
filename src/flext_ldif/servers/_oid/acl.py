@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import BaseModel, Field
 
 from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -24,6 +25,22 @@ _OidConstants = FlextLdifServersOidConstants
 
 class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
+
+    class OidAclMetadataConfig(BaseModel):
+        acl_line: str = Field(default="")
+        oid_subject_type: str = Field(default="")
+        rfc_subject_type: str = Field(default="")
+        oid_subject_value: str = Field(default="")
+        perms_dict: Mapping[str, bool] = Field(default_factory=dict)
+        target_dn: str = Field(default="entry")
+        target_attrs: list[str] = Field(default_factory=list)
+        acl_filter: str = Field(default="")
+        acl_constraint: str = Field(default="")
+        bindmode: str = Field(default="")
+        deny_group_override: bool = Field(default=False)
+        append_to_all: bool = Field(default=False)
+        bind_ip_filter: str = Field(default="")
+        constrain_to_added_object: str = Field(default="")
 
     RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
         "aci",
@@ -174,20 +191,18 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             return {
                 key: raw_value
                 for key, raw_value in value.items()
-                if isinstance(key, str) and isinstance(raw_value, (str, int, bool))
+                if isinstance(raw_value, (str, int, bool))
             }
         if value is None:
             return {}
         if isinstance(value, str):
             return {"subject_type": value}
-        if isinstance(value, (m.Ldif.AclSubject, m.Ldif.QuirkMetadata)):
-            dumped = value.model_dump()
-            return {
-                key: raw_value
-                for key, raw_value in dumped.items()
-                if isinstance(key, str) and isinstance(raw_value, (str, int, bool))
-            }
-        return {}
+        dumped = value.model_dump()
+        return {
+            key: raw_value
+            for key, raw_value in dumped.items()
+            if isinstance(raw_value, (str, int, bool))
+        }
 
     @staticmethod
     def _parse_oid_permissions(content: str) -> Mapping[str, bool]:
@@ -281,11 +296,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         self, config: FlextLdifServersOidAcl.OidAclMetadataConfig
     ) -> Mapping[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
-        target_attrs_str: str | None = (
-            json.dumps(config.target_attrs) if config.target_attrs else None
+        target_attrs_str: str = (
+            json.dumps(config.target_attrs) if config.target_attrs else ""
         )
-        permissions_str: str | None = (
-            json.dumps(config.perms_dict) if config.perms_dict else None
+        permissions_str: str = (
+            json.dumps(config.perms_dict) if config.perms_dict else ""
         )
         metadata_dict: dict[str, str | int | bool] = dict(
             FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
@@ -367,7 +382,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         source_subject_type_raw = metadata.extensions.get(
             c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE
         )
-        if source_subject_type_raw is None or isinstance(source_subject_type_raw, str):
+        if isinstance(source_subject_type_raw, str):
             return source_subject_type_raw
         msg = f"Expected str | None, got {type(source_subject_type_raw)}"
         raise TypeError(msg)
@@ -431,10 +446,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 "user_dn",
             }:
                 return rfc_type
-            case "bind_rules" | "group":
-                return self._map_bind_rules_to_oid(
-                    rfc_subject_value, source_subject_type
-                )
             case "dn":
                 if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
                     return source_subject_type
@@ -535,13 +546,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 perms_dict=perms_dict,
                 target_dn=target_dn,
                 target_attrs=target_attrs,
-                acl_filter=acl_filter,
-                acl_constraint=acl_constraint,
-                bindmode=bindmode,
+                acl_filter=acl_filter or "",
+                acl_constraint=acl_constraint or "",
+                bindmode=bindmode or "",
                 deny_group_override=deny_group_override,
                 append_to_all=append_to_all,
-                bind_ip_filter=bind_ip_filter,
-                constrain_to_added_object=constrain_to_added_object,
+                bind_ip_filter=bind_ip_filter or "",
+                constrain_to_added_object=constrain_to_added_object or "",
             )
             extensions = self._build_oid_acl_metadata(config)
             server_type: Literal["oid"] = "oid"

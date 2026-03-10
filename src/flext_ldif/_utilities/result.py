@@ -9,16 +9,17 @@ from typing import IO, Self, overload, override
 
 from flext_core import FlextResult, FlextRuntime, t
 
-from flext_ldif import m, p
+from flext_ldif import m
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 r = FlextResult
 
 
-class FlextLdifResult[T]:
+class FlextLdifResult[T: t.ContainerValue]:
     """Extended FlextResult with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
+    _inner: FlextResult[T]
 
     def __init__(self, inner: FlextResult[T] | FlextRuntime.RuntimeResult[T]) -> None:
         """Initialize FlextLdifResult wrapping a FlextResult or RuntimeResult."""
@@ -42,17 +43,6 @@ class FlextLdifResult[T]:
             return f"FlextLdifResult.ok({self.value!r})"
         return f"FlextLdifResult.fail({self.error!r})"
 
-    @override
-    def __eq__(self, other: t.ContainerValue) -> bool:
-        """Check equality with another FlextLdifResult."""
-        if not isinstance(other, FlextLdifResult):
-            return NotImplemented
-        if self.is_success != other.is_success:
-            return False
-        if self.is_success:
-            return bool(self.value == other.value)
-        return self.error == other.error
-
     def __hash__(self) -> int:
         """Hash implementation for FlextLdifResult."""
         return hash(self._inner)
@@ -64,9 +54,9 @@ class FlextLdifResult[T]:
     def __and__(self, other: FlextLdifResult[T]) -> FlextLdifResult[list[T]]:
         """Combine operator: result1 & result2."""
         if self.is_failure:
-            return FlextLdifResult.fail(self.error)
+            return FlextLdifResult[list[T]].fail(self.error)
         if other.is_failure:
-            return FlextLdifResult.fail(other.error)
+            return FlextLdifResult[list[T]].fail(other.error)
         return FlextLdifResult.ok([self.value, other.value])
 
     def __matmul__(
@@ -74,20 +64,15 @@ class FlextLdifResult[T]:
     ) -> FlextLdifResult[T]:
         """Metadata operator: result @ metadata."""
         if self.is_failure:
-            return FlextLdifResult.fail(self.error)
+            return FlextLdifResult[T].fail(self.error)
         value = self.value
         if isinstance(value, Sequence) and (not isinstance(value, str)):
-            return FlextLdifResult.fail(
+            return FlextLdifResult[T].fail(
                 "attach_metadata not yet implemented for sequences"
             )
-        return FlextLdifResult.fail(
+        return FlextLdifResult[T].fail(
             "attach_metadata not yet implemented for single entry"
         )
-
-    @overload
-    def __or__(
-        self, transformer: p.Ldif.TransformerProtocol[T]
-    ) -> FlextLdifResult[T]: ...
 
     @overload
     def __or__(self, transformer: Callable[[T], T]) -> FlextLdifResult[T]: ...
@@ -99,18 +84,11 @@ class FlextLdifResult[T]:
 
     def __or__(
         self,
-        transformer: p.Ldif.TransformerProtocol[T]
-        | Callable[[T], T]
-        | Callable[[T], FlextResult[T]],
+        transformer: Callable[[T], T] | Callable[[T], FlextResult[T]],
     ) -> FlextLdifResult[T]:
         """Pipe operator: result | transformer."""
         if self.is_failure:
-            return FlextLdifResult.fail(self.error)
-        if isinstance(transformer, p.Ldif.TransformerProtocol):
-            transform_result = transformer.apply(self.value)
-            if isinstance(transform_result, FlextResult):
-                return FlextLdifResult.from_result(transform_result)
-            return FlextLdifResult.ok(transform_result)
+            return FlextLdifResult[T].fail(self.error)
         result = transformer(self.value)
         if isinstance(result, FlextResult):
             return FlextLdifResult.from_result(result)
@@ -119,13 +97,30 @@ class FlextLdifResult[T]:
     def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifResult[str]:
         """Write operator: result >> output."""
         if self.is_failure:
-            return FlextLdifResult.fail(self.error)
-        serialized = FlextLdifResult._serialize_entries_to_ldif(self.value)
+            return FlextLdifResult[str].fail(self.error)
+        raw_value = self.value
+        entry_payload: m.Ldif.Entry | Sequence[m.Ldif.Entry]
+        if isinstance(raw_value, m.Ldif.Entry):
+            entry_payload = raw_value
+        elif isinstance(raw_value, Sequence) and (not isinstance(raw_value, str)):
+            entries: list[m.Ldif.Entry] = []
+            for item in raw_value:
+                if not isinstance(item, m.Ldif.Entry):
+                    return FlextLdifResult[str].fail(
+                        "Entry serialization failed: sequence contains non-entry value"
+                    )
+                entries.append(item)
+            entry_payload = entries
+        else:
+            return FlextLdifResult[str].fail(
+                "Entry serialization failed: value must be Entry or sequence of Entry"
+            )
+        serialized = FlextLdifResult._serialize_entries_to_ldif(entry_payload)
         if serialized.is_failure:
             serialized_error = serialized.error
             if serialized_error is None:
-                return FlextLdifResult.fail("Entry serialization failed")
-            return FlextLdifResult.fail(serialized_error)
+                return FlextLdifResult[str].fail("Entry serialization failed")
+            return FlextLdifResult[str].fail(serialized_error)
         ldif_content = serialized.value
         if isinstance(output, str):
             output = Path(output)
@@ -134,13 +129,13 @@ class FlextLdifResult[T]:
             if write_result.is_failure:
                 write_error = write_result.error
                 if write_error is None:
-                    return FlextLdifResult.fail("write_entries_to_file failed")
-                return FlextLdifResult.fail(write_error)
+                    return FlextLdifResult[str].fail("write_entries_to_file failed")
+                return FlextLdifResult[str].fail(write_error)
             return FlextLdifResult.ok(ldif_content)
         try:
             _ = output.write(ldif_content)
         except (ValueError, AttributeError, OSError, TypeError) as exc:
-            return FlextLdifResult.fail(f"write_entries_to_string failed: {exc}")
+            return FlextLdifResult[str].fail(f"write_entries_to_string failed: {exc}")
         return FlextLdifResult.ok(ldif_content)
 
     @property
@@ -165,20 +160,24 @@ class FlextLdifResult[T]:
         return self._inner.value
 
     @classmethod
-    def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
+    def fail(
+        cls: type[FlextLdifResult[T]], error: str | Exception
+    ) -> FlextLdifResult[T]:
         """Create a failed result with the given error."""
         error_msg = str(error) if isinstance(error, Exception) else error
-        return cls(r.fail(error_msg))
+        return cls(r[T].fail(error_msg))
 
-    @classmethod
-    def from_result(cls, result: FlextResult[T]) -> FlextLdifResult[T]:
+    @staticmethod
+    def from_result[TResult: t.ContainerValue](
+        result: FlextResult[TResult],
+    ) -> FlextLdifResult[TResult]:
         """Wrap an existing FlextResult in FlextLdifResult."""
-        return cls(result)
+        return FlextLdifResult(result)
 
-    @classmethod
-    def ok(cls, value: T) -> FlextLdifResult[T]:
+    @staticmethod
+    def ok[TResult: t.ContainerValue](value: TResult) -> FlextLdifResult[TResult]:
         """Create a successful result with the given value."""
-        return cls(r[T].ok(value))
+        return FlextLdifResult(r[TResult].ok(value))
 
     @staticmethod
     def _encode_dn_line(dn_value: str) -> str:
@@ -191,20 +190,9 @@ class FlextLdifResult[T]:
     def _serialize_entries_to_ldif(
         value: Sequence[m.Ldif.Entry] | m.Ldif.Entry,
     ) -> FlextResult[str]:
-        entries: list[m.Ldif.Entry] = []
-        if isinstance(value, m.Ldif.Entry):
-            entries = [value]
-        elif isinstance(value, Sequence) and (not isinstance(value, str)):
-            for item in value:
-                if not isinstance(item, m.Ldif.Entry):
-                    return r[str].fail(
-                        "Entry serialization failed: sequence contains non-entry value"
-                    )
-                entries.append(item)
-        else:
-            return r[str].fail(
-                "Entry serialization failed: value must be Entry or sequence of Entry"
-            )
+        entries: list[m.Ldif.Entry] = (
+            [value] if isinstance(value, m.Ldif.Entry) else list(value)
+        )
         all_lines: list[str] = []
         for entry in entries:
             entry_lines_result = FlextLdifResult._serialize_single_entry(entry)
@@ -239,35 +227,23 @@ class FlextLdifResult[T]:
         lines.append("")
         return r[list[str]].ok(lines)
 
-    def filter(
-        self, predicate: p.Ldif.FilterProtocol[T] | Callable[[T], bool]
-    ) -> FlextLdifResult[T]:
+    def filter(self, predicate: Callable[[T], bool]) -> FlextLdifResult[T]:
         """Filter the result value using a predicate."""
         if self.is_failure:
-            return FlextLdifResult.fail(self.error)
+            return FlextLdifResult[T].fail(self.error)
         value = self.value
-        matches_func: Callable[[T], bool]
-        if isinstance(predicate, p.Ldif.FilterProtocol):
-            filter_protocol = predicate
-
-            def wrapped_matches(item: T) -> bool:
-                return filter_protocol.matches(item)
-
-            matches_func = wrapped_matches
-        elif callable(predicate):
-            matches_func = predicate
-        else:
-            return FlextLdifResult.fail("Invalid predicate type")
-        if matches_func(value):
+        if predicate(value):
             return FlextLdifResult.ok(value)
-        return FlextLdifResult.fail("Value did not match filter predicate")
+        return FlextLdifResult[T].fail("Value did not match filter predicate")
 
-    def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextLdifResult[U]:
+    def flat_map[U: t.ContainerValue](
+        self, func: Callable[[T], FlextResult[U]]
+    ) -> FlextLdifResult[U]:
         """Flat map a function that returns FlextResult."""
         mapped_result = self._inner.flat_map(func)
         return FlextLdifResult(mapped_result)
 
-    def map[U](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
+    def map[U: t.ContainerValue](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
         """Map a function over the success value."""
         mapped_result = self._inner.map(func)
         return FlextLdifResult(mapped_result)
