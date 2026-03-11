@@ -6,7 +6,7 @@ import struct
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import ClassVar, Final, Self, TypeGuard, override
+from typing import ClassVar, Final, Self, TypeIs, cast, override
 
 from flext_core import FlextLogger, FlextTypes, r
 from pydantic import Field
@@ -1405,8 +1405,15 @@ class FlextLdifConversion(
     ]:
         """Convert model between source and target server formats via write->parse pipeline."""
         try:
-            source_quirk = self._resolve_quirk(source)
-            target_quirk = self._resolve_quirk(target)
+            source_schema_result = self._get_schema_quirk_safe(source, "Source")
+            if source_schema_result.is_failure:
+                return r[m.Ldif.SchemaAttribute].fail(source_schema_result.error or "")
+            source_schema = cast(p.Ldif.SchemaQuirkProtocol, source_schema_result.value)
+
+            target_schema_result = self._get_schema_quirk_safe(target, "Target")
+            if target_schema_result.is_failure:
+                return r[m.Ldif.SchemaAttribute].fail(target_schema_result.error or "")
+            target_schema = cast(p.Ldif.SchemaQuirkProtocol, target_schema_result.value)
             if isinstance(model_instance, m.Ldif.Entry):
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
             if isinstance(model_instance, m.Ldif.SchemaAttribute):
