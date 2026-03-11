@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, override
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, m, r
+from flext_core import FlextLogger, FlextUtilities, m, r
 from pydantic import (
     ConfigDict,
     Field,
@@ -615,7 +615,7 @@ class FlextLdifModelsDomains:
             attrs_data: Mapping[
                 str, str | list[str] | bytes | list[bytes] | int | float | bool | None
             ],
-        ) -> FlextResult[Self]:
+        ) -> r[Self]:
             """Create an Attributes instance from data.
 
             Args:
@@ -623,7 +623,7 @@ class FlextLdifModelsDomains:
                 (str, list[str], bytes, list[bytes], int, float, bool, or None)
 
             Returns:
-                FlextResult with Attributes instance or error
+                r[Self] with Attributes instance or error
 
             """
             try:
@@ -635,7 +635,7 @@ class FlextLdifModelsDomains:
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
-                return FlextResult[Self].ok(cls(attributes=normalized_dict))
+                return r[Self].ok(cls(attributes=normalized_dict))
             except (ValueError, TypeError, AttributeError) as e:
                 return r[Self].fail(f"Failed to create Attributes: {e}")
 
@@ -987,7 +987,7 @@ class FlextLdifModelsDomains:
             self,
             data: Mapping[str, str | list[str] | Mapping[str, str]],
             dn_fields: list[str] | None = None,
-        ) -> FlextResult[dict[str, str | list[str] | Mapping[str, str]]]:
+        ) -> r[dict[str, str | list[str] | Mapping[str, str]]]:
             """Normalize DN references in data object to canonical case.
 
             Args:
@@ -996,7 +996,7 @@ class FlextLdifModelsDomains:
                           If None, uses default DN fields from c.
 
             Returns:
-                FlextResult with normalized data dict
+                r[dict[str, str | list[str] | Mapping[str, str]]] with normalized data dict
 
             """
             try:
@@ -1018,7 +1018,7 @@ class FlextLdifModelsDomains:
                         normalized_data[field_name] = self._normalize_dn_list(
                             field_value_list
                         )
-                return FlextResult[dict[str, str | list[str] | Mapping[str, str]]].ok(
+                return r[dict[str, str | list[str] | Mapping[str, str]]].ok(
                     normalized_data
                 )
             except (
@@ -1028,7 +1028,7 @@ class FlextLdifModelsDomains:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[dict[str, str | list[str] | Mapping[str, str]]].fail(
+                return r[dict[str, str | list[str] | Mapping[str, str]]].fail(
                     f"Failed to normalize DN references: {e}"
                 )
 
@@ -1055,11 +1055,11 @@ class FlextLdifModelsDomains:
             value = self._registry[normalized]
             return str(value)
 
-        def validate_oud_consistency(self) -> FlextResult[bool]:
+        def validate_oud_consistency(self) -> r[bool]:
             """Validate DN case consistency for server conversion.
 
             Returns:
-                FlextResult[bool]: True if consistent, False with warnings if not
+                r[bool]: True if consistent, False with warnings if not
 
             """
             inconsistencies: list[dict[str, str | int | list[str]]] = []
@@ -1076,8 +1076,8 @@ class FlextLdifModelsDomains:
                         "variant_count": len(variants),
                     })
             if inconsistencies:
-                return FlextResult[bool].ok(False)
-            return FlextResult[bool].ok(True)
+                return r[bool].ok(False)
+            return r[bool].ok(True)
 
         def _normalize_dn_list(self, dn_list: list[str]) -> list[str]:
             """Normalize a list of DN values.
@@ -2032,10 +2032,10 @@ class FlextLdifModelsDomains:
                 self._attributes_schema = attributes_schema
                 return self
 
-            def build(self) -> FlextResult[FlextLdifModelsDomains.Entry]:
+            def build(self) -> r[FlextLdifModelsDomains.Entry]:
                 """Build the Entry using the accumulated parameters."""
                 if self._dn is None or self._attributes is None:
-                    return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                    return r[FlextLdifModelsDomains.Entry].fail(
                         "DN and attributes are required"
                     )
                 return self._outer_cls.create(
@@ -2193,7 +2193,7 @@ class FlextLdifModelsDomains:
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
             | None = None,
             statistics: FlextLdifModelsDomains.EntryStatistics | None = None,
-        ) -> FlextResult[Self]:
+        ) -> r[Self]:
             """Internal method for Entry creation with composition fields.
 
             Args:
@@ -2211,7 +2211,7 @@ class FlextLdifModelsDomains:
             statistics: Optional entry statistics tracking (transformations, validation, etc.)
 
             Returns:
-            FlextResult with Entry instance or validation error
+            r[Self] with Entry instance or validation error
 
             """
             try:
@@ -2248,9 +2248,9 @@ class FlextLdifModelsDomains:
                 if statistics is not None:
                     entry_data["statistics"] = statistics
                 entry_instance = cls.model_validate(entry_data)
-                return FlextResult.ok(entry_instance)
+                return r.ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[Self](
+                return r[Self](
                     error=f"Failed to create Entry: {e}",
                     is_success=False,
                 )
@@ -2330,7 +2330,7 @@ class FlextLdifModelsDomains:
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
             | None = None,
             statistics: FlextLdifModelsDomains.EntryStatistics | None = None,
-        ) -> FlextResult[Self]:
+        ) -> r[Self]:
             return cls._create_entry(
                 dn=dn,
                 attributes=attributes,
@@ -2347,16 +2347,14 @@ class FlextLdifModelsDomains:
             )
 
         @classmethod
-        def from_ldap3(
-            cls, ldap3_entry: Mapping[str, t.JsonValue]
-        ) -> FlextResult[Self]:
+        def from_ldap3(cls, ldap3_entry: Mapping[str, t.JsonValue]) -> r[Self]:
             """Create Entry from ldap3 Entry object.
 
             Args:
                 ldap3_entry: ldap3 Entry object with entry_dn and entry_attributes_as_dict
 
             Returns:
-                FlextResult with Entry instance or error
+                r[Self] with Entry instance or error
 
             """
             try:
@@ -2383,7 +2381,7 @@ class FlextLdifModelsDomains:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[Self](
+                return r[Self](
                     error=f"Failed to create Entry from ldap3: {e}",
                     is_success=False,
                 )
