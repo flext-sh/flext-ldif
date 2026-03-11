@@ -32,18 +32,20 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         default=False, description="Enable domain event emission for operations"
     )
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
+    _normalizer_instance: FlextLdifDn.Normalizer | None = PrivateAttr(default=None)
+    _parser_instance: FlextLdifDn.Parser | None = PrivateAttr(default=None)
 
     @property
     def _normalizer(self) -> FlextLdifDn.Normalizer:
         """Get or create Normalizer instance."""
-        if not getattr(self, "_normalizer_instance", None) is not None:
+        if self._normalizer_instance is None:
             self._normalizer_instance = FlextLdifDn.Normalizer()
         return self._normalizer_instance
 
     @property
     def _parser(self) -> FlextLdifDn.Parser:
         """Get or create Parser instance."""
-        if not getattr(self, "_parser_instance", None) is not None:
+        if self._parser_instance is None:
             self._parser_instance = FlextLdifDn.Parser()
         return self._parser_instance
 

@@ -250,11 +250,11 @@ class FlextLdifUtilitiesMetadata:
     def _extract_leading_trailing_spaces(definition: str) -> Mapping[str, str]:
         """Extract leading and trailing spaces."""
         details: dict[str, str] = {}
-        trailing_match = re.search(r"\\)\\s*$", definition)
+        trailing_match = re.search(r"\)\s*$", definition)
         details["trailing_spaces"] = (
             definition[trailing_match.end() :] if trailing_match else ""
         )
-        leading_match = re.search(r"^\\s*\\(", definition)
+        leading_match = re.search(r"^\s*\(", definition)
         details["leading_spaces"] = leading_match.group(0)[:-1] if leading_match else ""
         return details
 
@@ -363,7 +363,7 @@ class FlextLdifUtilitiesMetadata:
     def _extract_oid_details(definition: str) -> Mapping[str, str]:
         """Extract OID and spacing details."""
         details: dict[str, str] = {}
-        oid_match = re.search(r"\\(\\s*([0-9.]+)(\\s*)", definition)
+        oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
         if oid_match:
             details["oid_value"] = oid_match.group(1)
             details["oid_spacing_after"] = oid_match.group(2)
@@ -673,14 +673,16 @@ class FlextLdifUtilitiesMetadata:
         entry: m.Ldif.Entry, updated_stats: m.Ldif.EntryStatistics
     ) -> m.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
-        if entry.metadata is None:
-            entry.metadata = m.Ldif.QuirkMetadata.create_for(
+        entry_metadata = entry.metadata
+        if entry_metadata is None:
+            entry_metadata = m.Ldif.QuirkMetadata.create_for(
                 FlextLdifUtilitiesServer.normalize_server_type(
                     c.Ldif.ServerTypes.RFC.value
                 )
             )
+            setattr(entry, "metadata", entry_metadata)
         update_dict: dict[str, t.ContainerValue] = {"processing_stats": updated_stats}
-        updated_metadata = entry.metadata.model_copy(update=update_dict)
+        updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
     @staticmethod
@@ -855,7 +857,7 @@ class FlextLdifUtilitiesMetadata:
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition
         )
-        metadata.schema_format_details = formatting_details
+        setattr(metadata, "schema_format_details", formatting_details)
         logger.debug(
             "Schema formatting preserved in metadata",
             quirk_type=metadata.quirk_type,

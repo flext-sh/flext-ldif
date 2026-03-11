@@ -196,7 +196,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return normalized.lower().startswith(
                 FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
             )
-            return False
 
         @override
         def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:

@@ -41,8 +41,8 @@ u = FlextUtilities
 logger = FlextLogger(__name__)
 
 
-def _conversion_history_factory() -> tuple[dict[str, str], ...]:
-    return ()
+def _conversion_history_factory() -> list[dict[str, str]]:
+    return []
 
 
 class _DNStatisticsFlags(TypedDict, total=False):
@@ -1316,7 +1316,7 @@ class FlextLdifModelsDomains:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )
             if violations:
-                setattr(self, "validation_violations", violations)
+                object.__setattr__(self, "validation_violations", violations)
                 return self
             return self
 
@@ -1831,7 +1831,8 @@ class FlextLdifModelsDomains:
                     ]
                 else:
                     base_attr = attr_desc
-                    options: list[str] = []
+                    attr_options: list[str] = []
+                    options = attr_options
                 if not base_attr or not base_attr[0].isalpha():
                     violations.append(
                         f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
@@ -2248,7 +2249,10 @@ class FlextLdifModelsDomains:
                 entry_instance = cls.model_validate(entry_data)
                 return FlextResult.ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[Self].fail(f"Failed to create Entry: {e}")
+                return FlextResult[Self](
+                    error=f"Failed to create Entry: {e}",
+                    is_success=False,
+                )
 
         @classmethod
         def _normalize_attributes(
@@ -2378,7 +2382,10 @@ class FlextLdifModelsDomains:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[Self].fail(f"Failed to create Entry from ldap3: {e}")
+                return FlextResult[Self](
+                    error=f"Failed to create Entry from ldap3: {e}",
+                    is_success=False,
+                )
 
         def clone(self) -> Self:
             """Create an immutable copy of the entry.
@@ -3197,7 +3204,7 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.DynamicMetadata,
             description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
         )
-        conversion_history: tuple[dict[str, str], ...] = Field(
+        conversion_history: list[dict[str, str]] = Field(
             default_factory=_conversion_history_factory,
             description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
         )

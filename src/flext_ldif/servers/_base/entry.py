@@ -61,10 +61,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             format_options_map: dict[str, t.ContainerValue] = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
-                if isinstance(raw_value, (str, int, float, bool, datetime)):
-                    format_options_map[key] = raw_value
-                else:
-                    format_options_map[key] = [str(item) for item in raw_value]
+                format_options_map[key] = raw_value
             with suppress(Exception):
                 return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
                     dict(format_options_map)

@@ -486,24 +486,21 @@ class FlextLdifUtilitiesDN:
             if isinstance(validation_errors_raw, list)
             else []
         )
-        stats_flags: FlextLdifModelsDomains.DNStatisticsFlags = {
-            "had_tab_chars": flags.get("had_tab_chars", False) is True,
-            "had_trailing_spaces": flags.get("had_trailing_spaces", False) is True,
-            "had_leading_spaces": flags.get("had_leading_spaces", False) is True,
-            "had_extra_spaces": flags.get("had_extra_spaces", False) is True,
-            "was_base64_encoded": flags.get("was_base64_encoded", False) is True,
-            "had_utf8_chars": flags.get("had_utf8_chars", False) is True,
-            "had_escape_sequences": flags.get("had_escape_sequences", False) is True,
-            "validation_status": validation_status,
-            "validation_warnings": validation_warnings,
-            "validation_errors": validation_errors,
-        }
-        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+        stats_domain = FlextLdifModelsDomains.DNStatistics(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
             transformations=transformations,
-            **stats_flags,
+            had_tab_chars=flags.get("had_tab_chars", False) is True,
+            had_trailing_spaces=flags.get("had_trailing_spaces", False) is True,
+            had_leading_spaces=flags.get("had_leading_spaces", False) is True,
+            had_extra_spaces=flags.get("had_extra_spaces", False) is True,
+            was_base64_encoded=flags.get("was_base64_encoded", False) is True,
+            had_utf8_chars=flags.get("had_utf8_chars", False) is True,
+            had_escape_sequences=flags.get("had_escape_sequences", False) is True,
+            validation_status=validation_status,
+            validation_warnings=validation_warnings,
+            validation_errors=validation_errors,
         )
         return (result, stats_domain)
 

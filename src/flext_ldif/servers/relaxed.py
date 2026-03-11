@@ -30,9 +30,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["relaxed", "rfc"])
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-        OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\\(?\\s*([0-9a-zA-Z._\\-]+)"
-        )
+        OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(\s*([0-9a-zA-Z._\-]+)")
         OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
         OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
         OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"

@@ -13,10 +13,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextSettings
+from pydantic import Field
 
 
 class FlextLdifSettings(FlextSettings):
-    pass
+    """LDIF processing settings inheriting base FLEXT configuration."""
+
+    ldif_encoding: str = Field(
+        default="utf-8", description="Default encoding for LDIF read/write operations"
+    )
+    ldif_strict_validation: bool = Field(
+        default=True, description="Enable strict LDIF validation rules"
+    )
 
 
 __all__ = ["FlextLdifSettings"]

@@ -42,7 +42,11 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
             True if object is a Sequence of Entry-like objects
 
         """
-        if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
+        if (
+            not isinstance(obj, ABCSequence)
+            or isinstance(obj, str | bytes)
+            or FlextUtilities.is_dict_like(obj)
+        ):
             return False
         return all(
             getattr(item, "dn", None) is not None

@@ -272,7 +272,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if isinstance(base64_encode_binary_value, bool):
             write_opts_dict["base64_encode_binary"] = base64_encode_binary_value
         return m.Ldif.WriteOptions.model_validate(write_opts_dict)
-        return m.Ldif.WriteOptions(hidden_attrs=list(hidden_attrs_set))
 
     @staticmethod
     def _hook_pre_write_entry_static(
@@ -1285,7 +1284,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry = result.value
             original_dn = dn
             parsed_dn = entry.dn.value if entry.dn else None
-            parsed_attrs = entry.attributes.attributes if entry.attributes else {}
+            parsed_attrs: dict[str, list[str]] = (
+                dict(entry.attributes.attributes) if entry.attributes else {}
+            )
             converted_attrs: dict[str, list[str | bytes]] = {
                 k: list(v) for k, v in parsed_attrs.items()
             }
@@ -1802,9 +1803,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self, aci_value: str, acl_metadata_extensions: dict[str, t.MetadataValue]
     ) -> FlextResult[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
-        has_macros = bool(
-            re.search(r"\\(\\$dn\\)|\\[\\$dn\\]|\\(\\$attr\\.", aci_value)
-        )
+        has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = self._validate_aci_macros(aci_value)
         if validation_result.is_failure:
             return FlextResult[bool].fail(

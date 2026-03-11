@@ -121,4 +121,12 @@ class FlextLdifModelsBases:
     AclElement = AclElement
 
 
-__all__ = ["FlextLdifModelsBases"]
+__all__ = [
+    "AclElement",
+    "FlextLdifModelsBase",
+    "FlextLdifModelsBases",
+    "FrozenIgnoreLdifModel",
+    "FrozenLdifModel",
+    "MutableIgnoreLdifModel",
+    "SchemaElement",
+]

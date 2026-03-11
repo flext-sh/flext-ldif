@@ -13,7 +13,7 @@ from flext_core import m
 from pydantic import ConfigDict, Field
 
 from flext_ldif import t
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
@@ -27,7 +27,7 @@ def _schema_object_classes_factory() -> list[FlextLdifModelsDomains.SchemaObject
 
 
 class FlextLdifModelsCollections:
-    class DynamicCounts(FlextLdifModelsBases.FlextLdifModelsBase):
+    class DynamicCounts(FlextLdifModelsBase):
         model_config = ConfigDict(
             frozen=False, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )
@@ -95,7 +95,7 @@ class FlextLdifModelsCollections:
         def _extra(self) -> dict[str, t.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
-    class SchemaContent(FlextLdifModelsBases.FlextLdifModelsBase):
+    class SchemaContent(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
         attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
             default_factory=_schema_attributes_factory
@@ -111,7 +111,7 @@ class FlextLdifModelsCollections:
         def set_setting(self, key: str, value: str | int | bool) -> None:
             self[key] = value
 
-    class BooleanFlags(FlextLdifModelsBases.FlextLdifModelsBase):
+    class BooleanFlags(FlextLdifModelsBase):
         model_config = ConfigDict(
             frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )

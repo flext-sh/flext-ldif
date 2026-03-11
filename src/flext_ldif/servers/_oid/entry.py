@@ -635,11 +635,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         for k, v in ext.items():
             if isinstance(v, (str, int, bool)):
                 original_extensions[k] = v
-            elif isinstance(v, list):
-                if all(isinstance(item, str) for item in v) or all(
-                    isinstance(item, (str, int, float, bool)) for item in v
-                ):
-                    original_extensions[k] = [str(item) for item in v]
+            elif isinstance(v, list) and (
+                all(isinstance(item, str) for item in v)
+                or all(isinstance(item, (str, int, float, bool)) for item in v)
+            ):
+                original_extensions[k] = [str(item) for item in v]
         return original_extensions
 
     def _get_current_attrs_with_acl_equivalence(

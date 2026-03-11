@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from typing import override
 
 from flext_core import FlextService, FlextSettings, p, s, t
@@ -10,7 +11,8 @@ from flext_ldif.settings import FlextLdifSettings
 
 
 class FlextLdifServiceBase[TDomainResult: t.ContainerValue](
-    FlextService[TDomainResult]
+    FlextService[TDomainResult],
+    ABC,
 ):
     """Base class for LDIF services with typed config helper."""
 

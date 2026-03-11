@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TypeAlias
+
 from flext_tests import FlextTestsTypes
 
 from flext_ldif import FlextLdifTypes
@@ -30,7 +32,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     Short name 't' for convenient access in tests, 'tt' as test-specific alias.
     """
 
-    class LdifTests:
+    class Tests(FlextTestsTypes.Tests):
         """flext-ldif-specific test type definitions namespace.
 
         Use tt.LdifTests.* for flext-ldif-specific test types.
@@ -42,5 +44,5 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 
 
 t = TestsFlextLdifTypes
-GenericFieldsDict = TestsFlextLdifTypes.LdifTests.Fixtures.GenericFieldsDict
+GenericFieldsDict: TypeAlias = dict[str, str]
 __all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

@@ -115,7 +115,7 @@ class FlextLdifUtilitiesServer:
         constants_obj: type | None = vars(cls_with_constants).get("Constants")
         if not isinstance(constants_obj, type):
             return None
-        server_type_raw: str | None = vars(constants_obj).get("SERVER_TYPE")
+        server_type_raw = getattr(constants_obj, "SERVER_TYPE", None)
         if (
             server_type_raw is not None
             and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)

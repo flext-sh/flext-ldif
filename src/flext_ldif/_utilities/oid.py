@@ -20,7 +20,7 @@ class FlextLdifUtilitiesOID:
     def extract_from_definition(definition: str) -> str | None:
         """Extract OID from schema definition string."""
         try:
-            match = re.search(r"\\(\\s*([\\d.]+)", definition)
+            match = re.search(r"\(\s*([\d.]+)", definition)
             if match:
                 return match.group(1)
         except (re.error, AttributeError) as e:
@@ -39,7 +39,7 @@ class FlextLdifUtilitiesOID:
             try:
                 original_format = schema_obj.metadata.extensions.get("original_format")
                 if isinstance(original_format, str):
-                    match = re.search(r"\\(\\s*([\\d.]+)", original_format)
+                    match = re.search(r"\(\s*([\d.]+)", original_format)
                 else:
                     match = None
                 if match:

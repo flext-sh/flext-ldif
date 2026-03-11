@@ -8,6 +8,8 @@ from __future__ import annotations
 from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
 from typing import TypeGuard
 
+from flext_core import FlextUtilities
+
 from flext_ldif import m, t
 
 
@@ -20,7 +22,7 @@ class FlextLdifTypeHelpers:
     ) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and (
-            not isinstance(obj, str | bytes | dict)
+            not isinstance(obj, str | bytes) and not FlextUtilities.is_dict_like(obj)
         )
 
     @staticmethod
@@ -44,7 +46,11 @@ class FlextLdifTypeHelpers:
         obj: t.ContainerValue,
     ) -> TypeGuard[ABCSequence[t.Scalar | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
-        if not isinstance(obj, ABCSequence) or isinstance(obj, str | bytes | dict):
+        if (
+            not isinstance(obj, ABCSequence)
+            or isinstance(obj, str | bytes)
+            or FlextUtilities.is_dict_like(obj)
+        ):
             return False
         return all(isinstance(item, str | int | float | bool | None) for item in obj)
 

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pydantic import ConfigDict, Field
 
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.base import FlextLdifModelsBase
 
 
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
 
-    class ProcessingResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class ProcessingResult(FlextLdifModelsBase):
         """Result of entry processing (transform or validate operation)."""
 
         model_config = ConfigDict(frozen=False, validate_assignment=True)

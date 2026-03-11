@@ -205,7 +205,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
 
     @staticmethod
-    def _parse_oid_permissions(content: str) -> Mapping[str, bool]:
+    def _parse_oid_permissions(content: str) -> dict[str, bool]:
         """Parse OID ACL permissions clause."""
         permissions: dict[str, bool] = {}
         const = _OidConstants
@@ -538,22 +538,22 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
                 group=1,
             )
-            config = self.OidAclMetadataConfig(
-                acl_line=acl_line,
-                oid_subject_type=oid_subject_type,
-                rfc_subject_type=rfc_subject_type,
-                oid_subject_value=oid_subject_value,
-                perms_dict=perms_dict,
-                target_dn=target_dn,
-                target_attrs=target_attrs,
-                acl_filter=acl_filter or "",
-                acl_constraint=acl_constraint or "",
-                bindmode=bindmode or "",
-                deny_group_override=deny_group_override,
-                append_to_all=append_to_all,
-                bind_ip_filter=bind_ip_filter or "",
-                constrain_to_added_object=constrain_to_added_object or "",
-            )
+            config = self.OidAclMetadataConfig.model_validate({
+                "acl_line": acl_line,
+                "oid_subject_type": oid_subject_type,
+                "rfc_subject_type": rfc_subject_type,
+                "oid_subject_value": oid_subject_value,
+                "perms_dict": perms_dict,
+                "target_dn": target_dn,
+                "target_attrs": target_attrs,
+                "acl_filter": acl_filter or "",
+                "acl_constraint": acl_constraint or "",
+                "bindmode": bindmode or "",
+                "deny_group_override": deny_group_override,
+                "append_to_all": append_to_all,
+                "bind_ip_filter": bind_ip_filter or "",
+                "constrain_to_added_object": constrain_to_added_object or "",
+            })
             extensions = self._build_oid_acl_metadata(config)
             server_type: Literal["oid"] = "oid"
             rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(

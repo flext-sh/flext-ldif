@@ -9,10 +9,8 @@ from flext_core import m
 from pydantic import ConfigDict, Field
 
 from flext_ldif import c
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.settings import FlextLdifModelsSettings
-
-FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
 
 
 def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:

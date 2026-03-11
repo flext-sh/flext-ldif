@@ -41,6 +41,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[str].ok(dn_text)
             case list() as dn_list:
                 return r[str].ok(dn_list[0] if dn_list else "")
+        return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
     def _extract_dn_from_object(entry: t.ContainerValue) -> r[str]:
@@ -98,6 +99,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return r[list[str]].ok(values)
             case tuple() | set() | frozenset() as values:
                 return r[list[str]].ok(list(values))
+        return r[list[str]].fail("Unsupported attribute input type")
 
     @staticmethod
     def get_entry_attribute(entry: m.Ldif.Entry, attribute_name: str) -> r[list[str]]:
@@ -148,6 +150,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 return FlextLdifEntries._normalize_string_value(value_text)
             case list() as value_list:
                 return FlextLdifEntries._normalize_list_value(value_list)
+        return r[str].fail("Unsupported attribute value type")
 
     @staticmethod
     def remove_attributes(

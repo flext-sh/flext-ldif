@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Generator,
     ItemsView,
     KeysView,
     Mapping,
@@ -24,7 +23,6 @@ class FlextLdifModelsMetadata:
         """Model with extra='allow' for dynamic field storage."""
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
-        __hash__: ClassVar[None] = None
         transformations: list[t.Scalar] | None = Field(default=None)
         original_format: str | None = Field(default=None)
         schema_source_server: str | None = Field(default=None)
@@ -37,6 +35,10 @@ class FlextLdifModelsMetadata:
                 return dict(self.items()) == other
             return NotImplemented
 
+        def __hash__(self) -> int:
+            msg = "unhashable type: 'DynamicMetadata'"
+            raise TypeError(msg)
+
         def __getitem__(self, key: str) -> t.MetadataValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
@@ -44,10 +46,6 @@ class FlextLdifModelsMetadata:
 
         def __setitem__(self, key: str, value: t.MetadataValue) -> None:
             setattr(self, key, value)
-
-        @override
-        def __iter__(self) -> Generator[tuple[str, t.MetadataValue], None, None]:
-            yield from self._extra().items()
 
         def __len__(self) -> int:
             return len(self._extra())

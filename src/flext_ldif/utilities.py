@@ -64,6 +64,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def normalize_container(value: t.ContainerValue) -> t.ContainerValue:
+            """Normalize a ContainerValue to a canonical form."""
             if FlextUtilities.Guards.is_general_value_type(value):
                 return value
             return str(value)
@@ -72,6 +73,7 @@ class FlextLdifUtilities(FlextUtilities):
         def normalize_mapping(
             mapping: Mapping[str, t.ContainerValue],
         ) -> dict[str, t.ContainerValue]:
+            """Normalize a mapping of ContainerValues to a standard dict form."""
             normalized: dict[str, t.ContainerValue] = {}
             for key, value in mapping.items():
                 normalized[str(key)] = FlextLdifUtilities.Ldif.normalize_container(
@@ -613,13 +615,22 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         @overload
-        def process[T: t.ContainerValue, R: t.ContainerValue](
-            items_or_entries: T | list[T] | tuple[T, ...] | Mapping[str, T],
-            processor_or_config: Callable[[T], R] | Callable[[str, T], R] | None = None,
+        def process(
+            items_or_entries: t.ContainerValue
+            | list[t.ContainerValue]
+            | tuple[t.ContainerValue, ...]
+            | Mapping[str, t.ContainerValue],
+            processor_or_config: Callable[[t.ContainerValue], t.ContainerValue]
+            | Callable[[str, t.ContainerValue], t.ContainerValue]
+            | None = None,
             *,
-            processor: Callable[[T], R] | Callable[[str, T], R] | None = None,
+            processor: Callable[[t.ContainerValue], t.ContainerValue]
+            | Callable[[str, t.ContainerValue], t.ContainerValue]
+            | None = None,
             on_error: str = "collect",
-            predicate: Callable[[T], bool] | Callable[[str, T], bool] | None = None,
+            predicate: Callable[[t.ContainerValue], bool]
+            | Callable[[str, t.ContainerValue], bool]
+            | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
             config: m.Ldif.ProcessConfig | None = None,
@@ -627,7 +638,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[R]]: ...
+        ) -> r[list[t.ContainerValue]]: ...
 
         @staticmethod
         @overload
@@ -648,20 +659,26 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> FlextLdifResult[list[m.Ldif.Entry]]: ...
 
         @staticmethod
-        def process[T: t.ContainerValue, R: t.ContainerValue](
-            items_or_entries: T
-            | list[T]
-            | tuple[T, ...]
-            | Mapping[str, T]
+        def process(
+            items_or_entries: t.ContainerValue
+            | list[t.ContainerValue]
+            | tuple[t.ContainerValue, ...]
+            | Mapping[str, t.ContainerValue]
             | Sequence[m.Ldif.Entry],
-            processor_or_config: Callable[[T], R]
-            | Callable[[str, T], R]
+            processor_or_config: Callable[[t.ContainerValue], t.ContainerValue]
+            | Callable[[str, t.ContainerValue], t.ContainerValue]
             | m.Ldif.ProcessConfig
             | None = None,
             *,
-            processor: Callable[[T], R] | Callable[[str, T], R] | None = None,
+            processor: Callable[[t.ContainerValue], t.ContainerValue]
+            | Callable[[str, t.ContainerValue], t.ContainerValue]
+            | Callable[[m.Ldif.Entry], t.ContainerValue]
+            | None = None,
             on_error: str = "collect",
-            predicate: Callable[[T], bool] | Callable[[str, T], bool] | None = None,
+            predicate: Callable[[t.ContainerValue], bool]
+            | Callable[[str, t.ContainerValue], bool]
+            | Callable[[m.Ldif.Entry], bool]
+            | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
             config: m.Ldif.ProcessConfig | None = None,
@@ -669,7 +686,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[R]] | FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> r[list[t.ContainerValue]] | FlextLdifResult[list[m.Ldif.Entry]]:
             """Universal entry processor."""
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
@@ -698,7 +715,7 @@ class FlextLdifUtilities(FlextUtilities):
                     return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
                 msg = "ProcessConfig requires LDIF entry sequence"
                 return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
-            processor_func: Callable[..., R] = processor_normalized
+            processor_func: Callable[..., t.ContainerValue] = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():
                     dict_items: dict[str, t.ContainerValue] = {}
@@ -709,7 +726,7 @@ class FlextLdifUtilities(FlextUtilities):
                     results = FlextLdifUtilities.Ldif.process_dict_items(
                         dict_items, processor_func, predicate, filter_keys, exclude_keys
                     )
-                    return r[list[R]].ok(results)
+                    return r[list[t.ContainerValue]].ok(results)
                 case list() | tuple():
                     items_list: list[t.ContainerValue] = [
                         FlextLdifUtilities.Ldif.normalize_container(item)
@@ -723,9 +740,9 @@ class FlextLdifUtilities(FlextUtilities):
                         not isinstance(items_or_entries, (str, bytes))
                     ):
                         msg = "Unsupported non-list sequence for single-item processing"
-                        return r[list[R]].fail(msg)
-                    result_item: R = processor_func(items_or_entries)
-                    return r[list[R]].ok([result_item])
+                        return r[list[t.ContainerValue]].fail(msg)
+                    result_item = processor_func(items_or_entries)
+                    return r[list[t.ContainerValue]].ok([result_item])
 
         @staticmethod
         def process_dict_items[R](
@@ -1087,6 +1104,7 @@ class FlextLdifUtilities(FlextUtilities):
                     return [normalize_single(str(v)) for v in seq_value]
                 case set() | frozenset() as set_value:
                     return {normalize_single(str(v)) for v in set_value}
+            return normalize_single(str(value))
 
         nz = normalize_ldif
 

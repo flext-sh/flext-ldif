@@ -496,7 +496,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+        ) -> FlextResult[dict[str, t.ContainerValue]]:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
         parse_result_raw = FlextLdifUtilitiesAttribute.parse(

@@ -1130,7 +1130,7 @@ class FlextLdifConversion(
             entry_metadata = m.Ldif.QuirkMetadata.create_for(
                 source_server_type, extensions=None
             )
-            entry_metadata.acls = [acl]
+            entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else []
             rfc_entry = m.Ldif.Entry.model_validate({
                 "dn": entry_dn,
                 "attributes": entry_attributes,
@@ -1375,26 +1375,28 @@ class FlextLdifConversion(
                 converted_entry = converted_entry.model_copy(
                     update={"attributes": new_attributes}
                 )
-            if source_type_norm == "rfc" and target_type_norm == "oid":
-                if converted_entry.attributes and converted_entry.attributes.attributes:
-                    current_attrs = dict(converted_entry.attributes.attributes)
-                    updated_attrs_rfc_to_oid: dict[str, list[str]] = {}
-                    mapping = (
-                        FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
-                    )
-                    for k, v in current_attrs.items():
-                        lower_k = k.lower()
-                        if lower_k in mapping:
-                            new_key = mapping[lower_k]
-                            updated_attrs_rfc_to_oid[new_key] = v
-                        else:
-                            updated_attrs_rfc_to_oid[lower_k] = v
-                    new_attributes = m.Ldif.Attributes(
-                        attributes=updated_attrs_rfc_to_oid
-                    )
-                    converted_entry = converted_entry.model_copy(
-                        update={"attributes": new_attributes}
-                    )
+            if (
+                source_type_norm == "rfc"
+                and target_type_norm == "oid"
+                and converted_entry.attributes
+                and converted_entry.attributes.attributes
+            ):
+                current_attrs = dict(converted_entry.attributes.attributes)
+                updated_attrs_rfc_to_oid: dict[str, list[str]] = {}
+                mapping = (
+                    FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
+                )
+                for k, v in current_attrs.items():
+                    lower_k = k.lower()
+                    if lower_k in mapping:
+                        new_key = mapping[lower_k]
+                        updated_attrs_rfc_to_oid[new_key] = v
+                    else:
+                        updated_attrs_rfc_to_oid[lower_k] = v
+                new_attributes = m.Ldif.Attributes(attributes=updated_attrs_rfc_to_oid)
+                converted_entry = converted_entry.model_copy(
+                    update={"attributes": new_attributes}
+                )
             entry_dn_model = converted_entry.dn
             if entry_dn_model is not None:
                 dn_value = entry_dn_model.value

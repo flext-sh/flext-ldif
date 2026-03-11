@@ -185,7 +185,7 @@ class FlextLdifUtilitiesParser:
         """Extract OID from schema definition string."""
         if not definition:
             return None
-        oid_pattern = re.compile(r"\\(\\s*([0-9.]+)")
+        oid_pattern = re.compile(r"\(\s*([0-9.]+)")
         match = re.match(oid_pattern, definition.strip())
         return match.group(1) if match else None
 

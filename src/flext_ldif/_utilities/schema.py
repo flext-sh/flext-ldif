@@ -654,7 +654,7 @@ class FlextLdifUtilitiesSchema:
         original = str(getattr(schema_details, "original_string_complete", ""))
         if not original:
             return None
-        definition_match = re.search(r"\\(.*\\)", original, re.DOTALL)
+        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
         if definition_match:
             return [definition_match.group(0)]
         return None
@@ -681,7 +681,7 @@ class FlextLdifUtilitiesSchema:
         )
         if not original:
             return None
-        definition_match = re.search(r"\\(.*\\)", original, re.DOTALL)
+        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
         return [definition_match.group(0)] if definition_match else None
 
     @staticmethod

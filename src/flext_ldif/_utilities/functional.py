@@ -11,15 +11,15 @@ from typing import ClassVar, Literal, overload
 from flext_core import t
 from pydantic import BaseModel
 
-from flext_ldif._models.conversion import FlextLdifModelsConversions
-
-ConvertToBool = FlextLdifModelsConversions.ConvertToBool
-ConvertToDict = FlextLdifModelsConversions.ConvertToDict
-ConvertToFloat = FlextLdifModelsConversions.ConvertToFloat
-ConvertToInt = FlextLdifModelsConversions.ConvertToInt
-ConvertToList = FlextLdifModelsConversions.ConvertToList
-ConvertToStr = FlextLdifModelsConversions.ConvertToStr
-ConvertToTuple = FlextLdifModelsConversions.ConvertToTuple
+from flext_ldif._models._models import (
+    ConvertToBool,
+    ConvertToDict,
+    ConvertToFloat,
+    ConvertToInt,
+    ConvertToList,
+    ConvertToStr,
+    ConvertToTuple,
+)
 
 
 class FlextFunctional:
@@ -277,9 +277,7 @@ class FlextFunctional:
                 return list(default)
             return []
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items: list[t.ContainerValue] = []
-            for sequence_item in value:
-                items.append(sequence_item)
+            items: list[t.ContainerValue] = list(value)
         else:
             items = [value]
         if mapper is not None:
@@ -518,8 +516,20 @@ class FlextFunctional:
         )
         if target_type is None:
             return default
-        if isinstance(value, target_type):
-            return FlextFunctional._to_general(value)
+        if target_type is str and isinstance(value, str):
+            return value
+        if target_type is bool and isinstance(value, bool):
+            return value
+        if target_type is int and isinstance(value, int):
+            return value
+        if target_type is float and isinstance(value, float):
+            return value
+        if target_type is list and isinstance(value, list):
+            return value
+        if target_type is tuple and isinstance(value, tuple):
+            return value
+        if target_type is dict and isinstance(value, dict):
+            return value
         try:
             return cls._convert_with_target(value, target_type, default)
         except (TypeError, ValueError):

@@ -7,7 +7,7 @@ from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif import c, t
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
@@ -34,7 +34,7 @@ class FlextLdifModelsResults:
         | FlextLdifModelsEvents.WriteEvent
     )
 
-    class StatisticsSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+    class StatisticsSummary(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
         total_entries: int = 0
         processed_entries: int = 0
@@ -54,14 +54,14 @@ class FlextLdifModelsResults:
         parse_errors: int = 0
         entries_written: int = 0
 
-    class MigrationSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+    class MigrationSummary(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
         statistics: FlextLdifModelsResults.StatisticsSummary | None = None
         entry_count: int = 0
         output_files: int = 0
         is_empty: bool = True
 
-    class EntryResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class EntryResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         entries_by_category: FlextLdifModelsCollections.FlexibleCategories = Field(
             default_factory=FlextLdifModelsCollections.FlexibleCategories
@@ -331,7 +331,7 @@ class FlextLdifModelsResults:
                 else 0.0
             )
 
-    class MigrationPipelineResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class MigrationPipelineResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         migrated_schema: FlextLdifModelsCollections.SchemaContent = Field(
             default_factory=FlextLdifModelsCollections.SchemaContent
@@ -378,7 +378,7 @@ class FlextLdifModelsResults:
             default_factory=FlextLdifModelsCollections.ConfigSettings
         )
 
-    class ValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class ValidationResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         is_valid: bool = Field()
         total_entries: int = Field(ge=0)
@@ -392,7 +392,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return self.valid_entries / self.total_entries * 100.0
 
-    class EntryAnalysisResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class EntryAnalysisResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         total_entries: int = Field(ge=0)
         objectclass_distribution: FlextLdifModelsCollections.DynamicCounts = Field(
@@ -404,7 +404,7 @@ class FlextLdifModelsResults:
         def unique_objectclasses(self) -> int:
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class ServerDetectionResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field()
         confidence: float = Field(ge=0.0, le=1.0)
@@ -416,7 +416,7 @@ class FlextLdifModelsResults:
         detection_error: str | None = None
         fallback_reason: str | None = None
 
-    class StatisticsResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class StatisticsResult(FlextLdifModelsBase):
         total_entries: int = Field()
         categorized: FlextLdifModelsCollections.DynamicCounts = Field(
             default_factory=FlextLdifModelsCollections.DynamicCounts
@@ -514,34 +514,34 @@ class FlextLdifModelsResults:
         rfc_compliance: str = Field()
         validation_types: list[str] = Field()
 
-    class BatchValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class BatchValidationResult(FlextLdifModelsBase):
         valid: bool = Field()
         errors: list[str] = Field()
         failed_entries: int = Field()
 
-    class ParsingSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+    class ParsingSummary(FlextLdifModelsBase):
         total_parsed: int = Field()
         total_failed: int = Field()
         error_distribution: FlextLdifModelsCollections.DynamicCounts = Field(
             default_factory=FlextLdifModelsCollections.DynamicCounts
         )
 
-    class RdbmsTableSummary(FlextLdifModelsBases.FlextLdifModelsBase):
+    class RdbmsTableSummary(FlextLdifModelsBase):
         table_name: str = Field()
         row_count: int = Field()
         columns: list[str] = Field()
 
-    class LdapConversionResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class LdapConversionResult(FlextLdifModelsBase):
         success: bool = Field()
         errors: list[str] = Field()
         converted_count: int = Field()
 
-    class RfcValidationResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class RfcValidationResult(FlextLdifModelsBase):
         is_valid: bool = Field()
         violations: list[str] = Field()
         validation_types: list[str] = Field()
 
-    class ValidationBatchResult(FlextLdifModelsBases.FlextLdifModelsBase):
+    class ValidationBatchResult(FlextLdifModelsBase):
         results: FlextLdifModelsCollections.BooleanFlags = Field(
             default_factory=FlextLdifModelsCollections.BooleanFlags
         )
