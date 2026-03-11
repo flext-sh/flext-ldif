@@ -11,7 +11,7 @@ from typing import TypeVar
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
 
-from flext_ldif import c, m, t
+from flext_ldif import c, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -30,7 +30,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_must_may(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
+        oc_data: p.Ldif.SchemaObjectClassProtocol, parts: list[str]
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
@@ -56,7 +56,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_sup(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
+        oc_data: p.Ldif.SchemaObjectClassProtocol, parts: list[str]
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
@@ -205,8 +205,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _apply_trailing_spaces(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
         parts: list[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
@@ -220,7 +219,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> list[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -246,8 +245,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_name_part(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -271,7 +269,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_objectclass_parts_from_model(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
     ) -> list[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -294,8 +292,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_obsolete_part(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
         parts: list[str],
         field_order: list[str] | None,
         *,
@@ -324,8 +321,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_x_origin_part(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -587,7 +583,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _get_field_order(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
     ) -> list[str] | None:
         """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
@@ -641,7 +637,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _try_restore_objectclass_original_format(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
         *,
         restore_original: bool = True,
     ) -> list[str] | None:
@@ -661,7 +657,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _try_restore_original_format(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> list[str] | None:
         """Try to restore original format from metadata for perfect round-trip."""
         if not (
@@ -754,27 +750,18 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _write_schema_element(
-        data: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
         expected_type: type[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
+            p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
         ],
         type_name: str,
         parts_builder: Callable[..., list[str]],
     ) -> str:
         """Generic helper for writing schema elements (DRY pattern)."""
-        try:
-            validated_data = expected_type.model_validate(data)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as exc:
-            msg = f"{type_name} must be {expected_type.__name__} model"
-            raise TypeError(msg) from exc
+        if not isinstance(data, expected_type):
+            msg = f"{type_name} must implement {expected_type.__name__}"
+            raise TypeError(msg)
+        validated_data = data
         if not validated_data.oid:
             msg = f"RFC {type_name} writing failed: missing OID"
             raise ValueError(msg)
@@ -827,7 +814,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute | FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -895,7 +882,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -1303,21 +1290,21 @@ class FlextLdifUtilitiesSchema:
         return None
 
     @staticmethod
-    def write_attribute(attr_data: FlextLdifModelsDomains.SchemaAttribute) -> str:
-        """Write RFC 4512 attribute definition string from SchemaAttribute model."""
+    def write_attribute(attr_data: p.Ldif.SchemaAttributeProtocol) -> str:
+        """Write RFC 4512 attribute definition string from SchemaAttribute protocol."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             attr_data,
-            FlextLdifModelsDomains.SchemaAttribute,
+            p.Ldif.SchemaAttributeProtocol,
             "attr_data",
             FlextLdifUtilitiesSchema._build_attribute_parts_from_model,
         )
 
     @staticmethod
-    def write_objectclass(oc_data: FlextLdifModelsDomains.SchemaObjectClass) -> str:
-        """Write RFC 4512 objectClass definition string from SchemaObjectClass model."""
+    def write_objectclass(oc_data: p.Ldif.SchemaObjectClassProtocol) -> str:
+        """Write RFC 4512 objectClass definition string from SchemaObjectClass protocol."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             oc_data,
-            FlextLdifModelsDomains.SchemaObjectClass,
+            p.Ldif.SchemaObjectClassProtocol,
             "oc_data",
             FlextLdifUtilitiesSchema._build_objectclass_parts_from_model,
         )
